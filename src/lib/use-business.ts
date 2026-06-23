@@ -28,7 +28,7 @@ export function useBusinesses() {
 
 export function useActiveBusinessId() {
   const [id, setIdState] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : localStorage.getItem(KEY)
+    typeof window === "undefined" ? null : localStorage.getItem(KEY),
   );
 
   const setId = useCallback((newId: string | null) => {
@@ -61,4 +61,30 @@ export function useActiveBusiness() {
   }, [activeId, businesses, setActiveId]);
 
   return { active, businesses: businesses ?? [], setActiveId, isLoading };
+}
+
+export type MemberRole = "owner" | "admin" | "staff" | "viewer";
+
+// Returns the current user's role within the active business, so the UI can
+// hide/disable actions (e.g. deleting the business, managing members) that
+// the database would reject anyway. RLS remains the real security boundary;
+// this is purely so the interface doesn't show buttons that will just fail.
+export function useMyRole() {
+  const { active } = useActiveBusiness();
+  return useQuery({
+    enabled: !!active?.id,
+    queryKey: ["my-role", active?.id],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user || !active) return null;
+      const { data, error } = await supabase
+        .from("business_members")
+        .select("role")
+        .eq("business_id", active.id)
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.role ?? null) as MemberRole | null;
+    },
+  });
 }

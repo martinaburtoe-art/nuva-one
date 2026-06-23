@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { PageHeader } from "@/components/page-utils";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Send, Loader2 } from "lucide-react";
 import { useActiveBusiness } from "@/lib/use-business";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/ai")({
@@ -17,9 +18,25 @@ export const Route = createFileRoute("/_authenticated/ai")({
 
 function AiPage() {
   const [input, setInput] = useState("");
+  const [token, setToken] = useState<string | null>(null);
   const { active } = useActiveBusiness();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setToken(session?.access_token ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat", headers: { "x-business-id": active?.id ?? "" } }),
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      headers: {
+        "x-business-id": active?.id ?? "",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }),
   });
   const loading = status === "submitted" || status === "streaming";
 
@@ -48,11 +65,16 @@ function AiPage() {
                 <Sparkles className="h-8 w-8 text-primary-foreground" />
               </div>
               <h2 className="mt-6 text-2xl font-bold">¿Cómo te puedo ayudar?</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Pregunta sobre ventas, inventario, finanzas o marketing.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Pregunta sobre ventas, inventario, finanzas o marketing.
+              </p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {suggestions.map((s) => (
-                  <button key={s} onClick={() => setInput(s)}
-                    className="rounded-xl border border-border/60 bg-secondary/30 p-4 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-accent">
+                  <button
+                    key={s}
+                    onClick={() => setInput(s)}
+                    className="rounded-xl border border-border/60 bg-secondary/30 p-4 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-accent"
+                  >
                     {s}
                   </button>
                 ))}
@@ -60,17 +82,22 @@ function AiPage() {
             </div>
           )}
           {messages.map((m) => (
-            <div key={m.id} className={cn("flex gap-3", m.role === "user" ? "justify-end" : "justify-start")}>
+            <div
+              key={m.id}
+              className={cn("flex gap-3", m.role === "user" ? "justify-end" : "justify-start")}
+            >
               {m.role !== "user" && (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary">
                   <Sparkles className="h-4 w-4 text-primary-foreground" />
                 </div>
               )}
-              <div className={cn(
-                "max-w-2xl rounded-2xl px-4 py-3 text-sm leading-relaxed",
-                m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary"
-              )}>
-                {m.parts.map((p, i) => p.type === "text" ? <span key={i}>{p.text}</span> : null)}
+              <div
+                className={cn(
+                  "max-w-2xl rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                  m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary",
+                )}
+              >
+                {m.parts.map((p, i) => (p.type === "text" ? <span key={i}>{p.text}</span> : null))}
               </div>
             </div>
           ))}
@@ -82,8 +109,19 @@ function AiPage() {
         </div>
 
         <form onSubmit={handleSend} className="flex gap-2 border-t bg-background/60 p-4">
-          <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Pregunta algo sobre tu negocio..." disabled={loading} className="h-11" />
-          <Button type="submit" size="lg" disabled={loading || !input.trim()} className="shadow-elegant">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Pregunta algo sobre tu negocio..."
+            disabled={loading}
+            className="h-11"
+          />
+          <Button
+            type="submit"
+            size="lg"
+            disabled={loading || !input.trim()}
+            className="shadow-elegant"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>

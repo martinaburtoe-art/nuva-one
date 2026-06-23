@@ -1,21 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useActiveBusiness } from "@/lib/use-business";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [token, setToken] = useState<string | null>(null);
   const { active } = useActiveBusiness();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setToken(session?.access_token ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      headers: { "x-business-id": active?.id ?? "" },
+      headers: {
+        "x-business-id": active?.id ?? "",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     }),
   });
 
@@ -38,10 +51,12 @@ export function AiChatBubble() {
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
       </button>
 
-      <div className={cn(
-        "fixed bottom-24 right-6 z-50 w-[360px] origin-bottom-right transition-all duration-200",
-        open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
-      )}>
+      <div
+        className={cn(
+          "fixed bottom-24 right-6 z-50 w-[360px] origin-bottom-right transition-all duration-200",
+          open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
+        )}
+      >
         <div className="rounded-2xl border bg-card shadow-elegant">
           <div className="flex items-center gap-2 border-b px-4 py-3">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-primary">
@@ -73,12 +88,21 @@ export function AiChatBubble() {
               </div>
             )}
             {messages.map((m) => (
-              <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-                <div className={cn(
-                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
-                  m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
-                )}>
-                  {m.parts.map((p, i) => p.type === "text" ? <span key={i}>{p.text}</span> : null)}
+              <div
+                key={m.id}
+                className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+              >
+                <div
+                  className={cn(
+                    "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-foreground",
+                  )}
+                >
+                  {m.parts.map((p, i) =>
+                    p.type === "text" ? <span key={i}>{p.text}</span> : null,
+                  )}
                 </div>
               </div>
             ))}
