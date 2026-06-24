@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
@@ -25,7 +25,7 @@ function Dashboard() {
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income"),
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense"),
         supabase.from("products").select("stock, price").eq("business_id", bid),
-        supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid),
+        supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
       const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
       const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
@@ -128,9 +128,9 @@ function Dashboard() {
               { l: "Nueva cotización", h: "/quotes" },
               { l: "Registrar gasto", h: "/finance" },
             ].map((a) => (
-              <a key={a.l} href={a.h} className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:border-primary hover:bg-accent">
+              <Link key={a.l} to={a.h} className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:border-primary hover:bg-accent">
                 {a.l} <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-              </a>
+              </Link>
             ))}
           </div>
         </Card>

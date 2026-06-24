@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,11 @@ function Automations() {
   const del = useBizDelete("automations");
   const [open, setOpen] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState(active?.id ? `https://app.novaflow.cl/webhooks/${active.id}` : "");
+
+  useEffect(() => {
+    if (!active) return;
+    setWebhookUrl((active as any).webhook_url || `https://app.novaflow.cl/webhooks/${active.id}`);
+  }, [active]);
 
   async function saveWebhook() {
     if (!active) return;
