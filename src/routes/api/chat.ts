@@ -8,7 +8,9 @@ import type { Database } from "@/integrations/supabase/types";
 // answers in real data. Uses the user's own JWT (not the service role), so
 // Postgres RLS enforces that only data for businesses the user belongs to
 // can ever be read here -- this endpoint cannot be used to read another
-// business's data even if a malicious x-business-id header is sent.
+// business's data even if a malicious x-business-id header is sent. The
+// caller (the POST handler below) has already verified this token belongs
+// to a real, signed-in user before this function is ever called.
 async function buildBusinessContext(token: string, businessId: string) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -82,20 +84,41 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const body = (await request.json()) as { messages?: UIMessage[] };
-        const messages = body.messages ?? [];
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
         const key = process.env.LOVABLE_API_KEY;
         if (!key) {
           return new Response(JSON.stringify({ error: "AI no configurado" }), { status: 500 });
         }
+        if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+          return new Response(JSON.stringify({ error: "Configuración de Supabase incompleta" }), { status: 500 });
+        }
 
+        // Require a valid, signed-in user. Without this check, the endpoint
+        // would happily stream an AI response to anyone, authenticated or
+        // not, burning AI Gateway credits with no business context at all.
         const authHeader = request.headers.get("authorization") ?? "";
         const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!token) {
+          return new Response(JSON.stringify({ error: "No autenticado" }), { status: 401 });
+        }
+
+        const authedSupabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+          global: { headers: { Authorization: `Bearer ${token}` } },
+          auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+        });
+        const { data: claims, error: claimsError } = await authedSupabase.auth.getClaims(token);
+        if (claimsError || !claims?.claims?.sub) {
+          return new Response(JSON.stringify({ error: "Sesión inválida o expirada" }), { status: 401 });
+        }
+
+        const body = (await request.json()) as { messages?: UIMessage[] };
+        const messages = body.messages ?? [];
         const businessId = request.headers.get("x-business-id") ?? "";
 
         let contextBlock =
           "No hay un negocio activo seleccionado, o no se pudo verificar el acceso del usuario a este negocio.";
-        if (token && businessId) {
+        if (businessId) {
           try {
             const ctx = await buildBusinessContext(token, businessId);
             if (ctx) {
