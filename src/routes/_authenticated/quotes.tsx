@@ -126,8 +126,9 @@ function Quotes() {
     }
   }
 
-  function downloadPdf(quote: any) {
-    generateQuotePdf(quote, active?.name ?? "NovaFlow");
+  async function downloadPdf(quote: any) {
+    const { generateQuotePdf } = await import("@/lib/quote-pdf");
+    await generateQuotePdf(quote, active?.name ?? "NovaFlow");
   }
 
   return (
