@@ -1,9 +1,8 @@
-import jsPDF from "jspdf";
 import { fmtCLP } from "@/lib/biz-data";
 
 type QuoteItem = { name: string; qty: number; price: number };
 
-export function generateQuotePdf(
+export async function generateQuotePdf(
   quote: {
     customer_name: string;
     items: QuoteItem[];
@@ -16,7 +15,12 @@ export function generateQuotePdf(
   },
   businessName: string,
 ) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  // Use a non-static specifier + @vite-ignore so neither the SSR (workerd)
+  // nor client analyzer resolves jspdf at build time; it loads at runtime in the browser.
+  const specifier = "jspdf";
+  const mod: any = await import(/* @vite-ignore */ specifier);
+  const JsPDFCtor = mod.default ?? mod.jsPDF ?? mod;
+  const doc = new JsPDFCtor({ unit: "pt", format: "a4" });
   const marginX = 48;
   let y = 56;
 
