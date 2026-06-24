@@ -31,7 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2, FileText, X, Download, ArrowRightCircle } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
-import { generateQuotePdf } from "@/lib/quote-pdf";
+// quote-pdf is imported dynamically inside the handler so jspdf never enters the SSR/worker bundle.
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/quotes")({
