@@ -159,13 +159,26 @@ function Settings() {
 
         <TabsContent value="billing">
           <Card className="p-6">
-            <h3 className="font-semibold">Plan actual: Starter</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">Plan actual: Pro</h3>
+              <span className="rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                Activo
+              </span>
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Actualiza para desbloquear automatizaciones e IA ilimitada.
+              Tienes acceso completo a todas las funciones Pro de NovaFlow.
             </p>
-            <Button className="mt-4" disabled>
-              Actualizar a Pro <ComingSoonBadge />
-            </Button>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
+              <li className="flex items-center gap-2">✅ Ventas, compras e inventario ilimitados</li>
+              <li className="flex items-center gap-2">✅ Asistente IA ilimitado</li>
+              <li className="flex items-center gap-2">✅ Automatizaciones con webhooks</li>
+              <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
+              <li className="flex items-center gap-2">✅ Indicadores y analítica avanzada</li>
+              <li className="flex items-center gap-2">✅ Marketing y generación de contenido IA</li>
+              <li className="flex items-center gap-2">✅ Roles de equipo (Owner, Admin, Staff, Viewer)</li>
+              <li className="flex items-center gap-2">✅ Soporte prioritario</li>
+            </ul>
           </Card>
         </TabsContent>
       </Tabs>
