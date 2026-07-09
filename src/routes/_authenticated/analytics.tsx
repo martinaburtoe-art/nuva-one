@@ -6,7 +6,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { TrendingUp, Users, Package, DollarSign } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Indicadores — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Indicadores — Nüva One" }] }),
   component: Analytics,
 });
 

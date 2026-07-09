@@ -10,7 +10,7 @@ import { Sparkles, Loader2, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
-  head: () => ({ meta: [{ title: "Empieza — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Empieza — Nüva One" }] }),
   component: Onboarding,
 });
 
@@ -62,7 +62,7 @@ function Onboarding() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-semibold tracking-tight">NovaFlow</span>
+          <span className="font-semibold tracking-tight">Nüva One</span>
         </div>
 
         <div className="mb-6 flex gap-2">

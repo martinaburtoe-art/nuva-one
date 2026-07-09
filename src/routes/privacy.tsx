@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({ meta: [{ title: "Política de Privacidad — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Política de Privacidad — Nüva One" }] }),
   component: Privacy,
 });
 
@@ -15,7 +15,7 @@ function Privacy() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold tracking-tight">NovaFlow</span>
+            <span className="font-semibold tracking-tight">Nüva One</span>
           </Link>
         </div>
       </header>

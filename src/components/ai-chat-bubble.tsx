@@ -67,7 +67,7 @@ export function AiChatBubble() {
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <div className="text-sm font-semibold">Asistente NovaFlow</div>
+              <div className="text-sm font-semibold">Asistente Nüva One</div>
               <div className="text-xs text-muted-foreground">Pregunta sobre tu negocio</div>
             </div>
           </div>

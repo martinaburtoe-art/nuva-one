@@ -10,23 +10,48 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, CreditCard, FileText, Lock } from "lucide-react";
+import { Plus, Trash2, CreditCard, FileText, Lock, Download, FileDown } from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
+import { downloadCsv } from "@/lib/export";
+import { generateMonthlyReportPdf } from "@/lib/monthly-report";
+import { useActiveBusiness } from "@/lib/use-business";
 
 export const Route = createFileRoute("/_authenticated/finance")({
-  head: () => ({ meta: [{ title: "Finanzas — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Finanzas — Nüva One" }] }),
   component: Finance,
 });
 
 function Finance() {
+  const { active } = useActiveBusiness();
   const { data: tx, isLoading } = useBizList<any>("transactions", { order: "tx_date" });
   const { data: sales } = useBizList<any>("sales");
   const { data: purchases } = useBizList<any>("purchases");
   const insert = useBizInsert("transactions");
   const del = useBizDelete("transactions");
   const [open, setOpen] = useState(false);
+
+  async function exportPdf() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const monthTx = (tx ?? []).filter((t) => {
+      const d = new Date(t.tx_date);
+      return d.getFullYear() === y && d.getMonth() === m;
+    });
+    if (monthTx.length === 0) {
+      toast.info("No hay movimientos este mes para reportar");
+      return;
+    }
+    const label = now.toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+    try {
+      await generateMonthlyReportPdf(active?.name ?? "Negocio", monthTx, label);
+    } catch {
+      toast.error("Error al generar el PDF");
+    }
+  }
+
 
   // Transactions auto-created by a sale/purchase trigger must not be deleted
   // directly here -- doing so would leave the originating sale/purchase row
@@ -73,23 +98,46 @@ function Finance() {
   return (
     <>
       <PageHeader title="Finanzas" description="Ingresos, gastos y flujo de caja" action={
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="mr-1.5 h-4 w-4" />Nuevo movimiento</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Registrar movimiento</DialogTitle></DialogHeader>
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div><Label>Tipo</Label>
-                <select name="type" required className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm">
-                  <option value="income">Ingreso</option><option value="expense">Gasto</option>
-                </select>
-              </div>
-              <div><Label htmlFor="category">Categoría</Label><Input id="category" name="category" placeholder="Ej: Ventas, Arriendo, Sueldos" /></div>
-              <div><Label htmlFor="amount">Monto (CLP)</Label><Input id="amount" name="amount" type="number" min={0} required /></div>
-              <div><Label htmlFor="description">Descripción</Label><Input id="description" name="description" /></div>
-              <Button type="submit" className="w-full">Guardar</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={!tx || tx.length === 0}
+            onClick={() =>
+              downloadCsv(
+                "movimientos.csv",
+                (tx ?? []).map((t) => ({
+                  fecha: t.tx_date,
+                  tipo: t.type,
+                  categoria: t.category ?? "",
+                  monto: t.amount,
+                  descripcion: t.description ?? "",
+                })),
+              )
+            }
+          >
+            <Download className="mr-1.5 h-4 w-4" /> CSV
+          </Button>
+          <Button variant="outline" onClick={exportPdf} disabled={!tx || tx.length === 0}>
+            <FileDown className="mr-1.5 h-4 w-4" /> Reporte PDF
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button><Plus className="mr-1.5 h-4 w-4" />Nuevo movimiento</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Registrar movimiento</DialogTitle></DialogHeader>
+              <form onSubmit={onSubmit} className="space-y-4">
+                <div><Label>Tipo</Label>
+                  <select name="type" required className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm">
+                    <option value="income">Ingreso</option><option value="expense">Gasto</option>
+                  </select>
+                </div>
+                <div><Label htmlFor="category">Categoría</Label><Input id="category" name="category" placeholder="Ej: Ventas, Arriendo, Sueldos" /></div>
+                <div><Label htmlFor="amount">Monto (CLP)</Label><Input id="amount" name="amount" type="number" min={0} required /></div>
+                <div><Label htmlFor="description">Descripción</Label><Input id="description" name="description" /></div>
+                <Button type="submit" className="w-full">Guardar</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       } />
 
       <div className="grid gap-4 md:grid-cols-3">

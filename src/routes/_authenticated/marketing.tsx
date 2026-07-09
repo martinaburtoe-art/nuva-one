@@ -19,7 +19,7 @@ import { Plus, Trash2, Instagram, Facebook, Calendar, Megaphone } from "lucide-r
 import { useBizList, useBizInsert, useBizDelete } from "@/lib/biz-data";
 
 export const Route = createFileRoute("/_authenticated/marketing")({
-  head: () => ({ meta: [{ title: "Marketing — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Marketing — Nüva One" }] }),
   component: Marketing,
 });
 

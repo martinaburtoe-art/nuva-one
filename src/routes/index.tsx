@@ -14,10 +14,10 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "NovaFlow — Gestiona todo tu negocio desde un solo lugar" },
+      { title: "Nüva One — Gestiona todo tu negocio desde un solo lugar" },
       { name: "description", content: "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones, marketing y automatización con IA. Empieza gratis." },
-      { property: "og:title", content: "NovaFlow — Tu negocio, todo conectado" },
-      { property: "og:description", content: "Inventario, ventas, finanzas y marketing en una plataforma inteligente." },
+      { property: "og:title", content: "Nüva One — Gestiona todo tu negocio desde un solo lugar" },
+      { property: "og:description", content: "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones, marketing y automatización con IA. Empieza gratis." },
     ],
   }),
   component: Landing,
@@ -31,7 +31,7 @@ function Nav() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-glow">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-lg font-semibold tracking-tight">NovaFlow</span>
+          <span className="text-lg font-semibold tracking-tight">Nüva One</span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
           <a href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Características</a>
@@ -106,17 +106,8 @@ function Hero() {
               </div>
             </div>
           </div>
-          <div className="absolute -left-8 top-1/4 hidden rounded-xl border border-border/60 bg-card p-4 shadow-elegant md:block">
-            <div className="text-xs text-muted-foreground">Cash flow proyectado</div>
-            <div className="text-xl font-semibold text-success">+$3.2M</div>
-          </div>
-          <div className="absolute -right-8 bottom-1/4 hidden rounded-xl border border-border/60 bg-card p-4 shadow-elegant md:block">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <div className="text-xs font-medium">IA: Reabastecer SKU-042</div>
-            </div>
-          </div>
         </div>
+
       </div>
     </section>
   );
@@ -135,7 +126,7 @@ function Problems() {
     <section className="border-y bg-secondary/30 py-24">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Lo que frena a tu PYME, NovaFlow lo resuelve</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Lo que frena a tu PYME, Nüva One lo resuelve</h2>
           <p className="mt-4 text-muted-foreground">Diseñado para quienes manejan demasiado con muy poco tiempo.</p>
         </div>
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -273,7 +264,7 @@ function Testimonials() {
     <section className="border-y bg-secondary/30 py-24">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Negocios que ya confían en NovaFlow</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Negocios que ya confían en Nüva One</h2>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-3">
           {t.map((x) => (
@@ -300,7 +291,7 @@ function FAQ() {
     { q: "¿Mis datos están seguros?", a: "Sí. Usamos cifrado en tránsito y en reposo, aislamiento por negocio con Row-Level Security, y cumplimos con la Ley 19.628 de protección de datos personales en Chile." },
     { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. El plan Starter es gratuito y los planes pagos incluyen 14 días de prueba sin tarjeta." },
     { q: "¿Puedo conectar Instagram y Facebook?", a: "Sí, mediante tu propia cuenta de Meta Business. Te guiamos en la conexión." },
-    { q: "¿Funciona para mi rubro?", a: "Sí. NovaFlow está hecho para cualquier rubro: retail, servicios, manufactura, gastronomía, construcción, salud y más." },
+    { q: "¿Funciona para mi rubro?", a: "Sí. Nüva One está hecho para cualquier rubro: retail, servicios, manufactura, gastronomía, construcción, salud y más." },
     { q: "¿Puedo cancelar cuando quiera?", a: "Sí. Sin contratos ni cargos por cancelación." },
   ];
   return (
@@ -350,7 +341,7 @@ function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
                 <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold">NovaFlow</span>
+              <span className="font-semibold">Nüva One</span>
             </div>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
               La plataforma todo-en-uno para PYMEs en Chile y Latinoamérica.
@@ -380,7 +371,7 @@ function Footer() {
           </div>
         </div>
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t pt-8 text-xs text-muted-foreground sm:flex-row">
-          <p>© {new Date().getFullYear()} NovaFlow. Hecho con <Zap className="inline h-3 w-3" /> en Chile.</p>
+          <p>© {new Date().getFullYear()} Nüva One. Hecho con <Zap className="inline h-3 w-3" /> en Chile.</p>
           <p className="flex items-center gap-1.5"><Shield className="h-3 w-3" /> Datos protegidos · Ley 19.628</p>
         </div>
       </div>

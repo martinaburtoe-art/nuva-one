@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/ai")({
-  head: () => ({ meta: [{ title: "Asistente IA — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Asistente IA — Nüva One" }] }),
   component: AiPage,
 });
 

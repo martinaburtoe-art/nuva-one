@@ -78,7 +78,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </div>
             {!collapsed && (
               <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
-                NovaFlow
+                Nüva One
               </span>
             )}
           </Link>
