@@ -106,17 +106,8 @@ function Hero() {
               </div>
             </div>
           </div>
-          <div className="absolute -left-8 top-1/4 hidden rounded-xl border border-border/60 bg-card p-4 shadow-elegant md:block">
-            <div className="text-xs text-muted-foreground">Cash flow proyectado</div>
-            <div className="text-xl font-semibold text-success">+$3.2M</div>
-          </div>
-          <div className="absolute -right-8 bottom-1/4 hidden rounded-xl border border-border/60 bg-card p-4 shadow-elegant md:block">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <div className="text-xs font-medium">IA: Reabastecer SKU-042</div>
-            </div>
-          </div>
         </div>
+
       </div>
     </section>
   );
