@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/automations")({
-  head: () => ({ meta: [{ title: "Automatizaciones — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Automatizaciones — Nüva One" }] }),
   component: Automations,
 });
 
@@ -64,7 +64,7 @@ function Automations() {
 
   return (
     <>
-      <PageHeader title="Automatizaciones" description="Conecta tu motor de automatización (n8n u otro) y deja que NovaFlow trabaje por ti" action={
+      <PageHeader title="Automatizaciones" description="Conecta tu motor de automatización (n8n u otro) y deja que Nüva One trabaje por ti" action={
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="mr-1.5 h-4 w-4" />Nueva automatización</Button></DialogTrigger>
           <DialogContent>

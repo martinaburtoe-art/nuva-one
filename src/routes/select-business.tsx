@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Plus, Building2, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/select-business")({
-  head: () => ({ meta: [{ title: "Selecciona tu negocio — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Selecciona tu negocio — Nüva One" }] }),
   component: SelectBusiness,
 });
 
@@ -49,7 +49,7 @@ function SelectBusiness() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold tracking-tight">NovaFlow</span>
+            <span className="font-semibold tracking-tight">Nüva One</span>
           </Link>
           <Button variant="ghost" size="sm" onClick={logout}><LogOut className="mr-1.5 h-4 w-4" />Salir</Button>
         </div>

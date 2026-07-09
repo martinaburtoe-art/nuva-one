@@ -35,7 +35,7 @@ import { useActiveBusiness } from "@/lib/use-business";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/quotes")({
-  head: () => ({ meta: [{ title: "Cotizaciones — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Cotizaciones — Nüva One" }] }),
   component: Quotes,
 });
 
@@ -128,7 +128,7 @@ function Quotes() {
 
   async function downloadPdf(quote: any) {
     const { generateQuotePdf } = await import("@/lib/quote-pdf");
-    await generateQuotePdf(quote, active?.name ?? "NovaFlow");
+    await generateQuotePdf(quote, active?.name ?? "Nüva One");
   }
 
   return (

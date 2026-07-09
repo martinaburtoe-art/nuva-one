@@ -33,7 +33,7 @@ import { Plus, Trash2, Package, X } from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
 
 export const Route = createFileRoute("/_authenticated/purchases")({
-  head: () => ({ meta: [{ title: "Compras — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Compras — Nüva One" }] }),
   component: Purchases,
 });
 

@@ -13,7 +13,7 @@ import { Plus, Trash2, Pencil, Boxes, AlertTriangle } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 
 export const Route = createFileRoute("/_authenticated/inventory")({
-  head: () => ({ meta: [{ title: "Inventario — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Inventario — Nüva One" }] }),
   component: Inventory,
 });
 

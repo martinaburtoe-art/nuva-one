@@ -17,7 +17,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Iniciar sesión — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Iniciar sesión — Nüva One" }] }),
   component: AuthPage,
 });
 
@@ -123,16 +123,16 @@ function AuthPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-foreground/10 backdrop-blur">
             <Sparkles className="h-5 w-5" />
           </div>
-          <span className="font-semibold tracking-tight">NovaFlow</span>
+          <span className="font-semibold tracking-tight">Nüva One</span>
         </Link>
         <div className="relative max-w-md text-primary-foreground">
           <h2 className="text-3xl font-bold leading-tight">Tu negocio, todo conectado.</h2>
           <p className="mt-4 text-primary-foreground/80">
-            Únete a miles de PYMEs que ya operan más rápido y mejor con NovaFlow.
+            Únete a miles de PYMEs que ya operan más rápido y mejor con Nüva One.
           </p>
         </div>
         <div className="relative text-xs text-primary-foreground/60">
-          © {new Date().getFullYear()} NovaFlow
+          © {new Date().getFullYear()} Nüva One
         </div>
       </div>
 
@@ -143,7 +143,7 @@ function AuthPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold tracking-tight">NovaFlow</span>
+            <span className="font-semibold tracking-tight">Nüva One</span>
           </Link>
 
           <h1 className="text-3xl font-bold tracking-tight">
