@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, Pencil, Boxes, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Pencil, Boxes, AlertTriangle, Download } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
+import { downloadCsv } from "@/lib/export";
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({ meta: [{ title: "Inventario — Nüva One" }] }),
@@ -54,6 +55,27 @@ function Inventory() {
   return (
     <>
       <PageHeader title="Inventario" description="Catálogo de productos y niveles de stock" action={
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            disabled={!data || data.length === 0}
+            onClick={() =>
+              downloadCsv(
+                "inventario.csv",
+                (data ?? []).map((p) => ({
+                  sku: p.sku ?? "",
+                  nombre: p.name,
+                  categoria: p.category ?? "",
+                  costo: p.cost ?? 0,
+                  precio: p.price ?? 0,
+                  stock: p.stock ?? 0,
+                  alerta_stock_bajo: p.low_stock_threshold ?? 0,
+                })),
+              )
+            }
+          >
+            <Download className="mr-1.5 h-4 w-4" /> Exportar CSV
+          </Button>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
           <DialogTrigger asChild><Button className="shadow-elegant" onClick={openCreate}><Plus className="mr-1.5 h-4 w-4" />Agregar producto</Button></DialogTrigger>
           <DialogContent>
