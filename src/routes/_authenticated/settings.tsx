@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Shield, AlertTriangle, Lock } from "lucide-react";
+import { Trash2, Shield, AlertTriangle, Lock, ClipboardList } from "lucide-react";
 import { useActiveBusiness, useMyRole } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MfaSetup } from "@/components/mfa-setup";
+import { AuditLogView } from "@/components/audit-log-view";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Configuración — Nüva One" }] }),
@@ -59,6 +61,7 @@ function Settings() {
           <TabsTrigger value="business">Negocio</TabsTrigger>
           <TabsTrigger value="team">Equipo</TabsTrigger>
           <TabsTrigger value="security">Seguridad</TabsTrigger>
+          <TabsTrigger value="audit">Auditoría</TabsTrigger>
           <TabsTrigger value="billing">Facturación</TabsTrigger>
         </TabsList>
 
@@ -144,14 +147,28 @@ function Settings() {
               <div className="flex-1">
                 <h3 className="font-semibold">Autenticación de dos factores (2FA)</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Añade una capa extra de seguridad a tu cuenta.
+                  Añade una capa extra de seguridad a tu cuenta con una app autenticadora (TOTP).
                 </p>
-                <Button variant="outline" className="mt-4" disabled>
-                  Activar 2FA
-                </Button>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  <ComingSoonBadge />
+                <div className="mt-4">
+                  <MfaSetup />
+                </div>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <Card className="p-6">
+            <div className="flex items-start gap-3">
+              <ClipboardList className="h-5 w-5 text-primary" />
+              <div className="flex-1">
+                <h3 className="font-semibold">Registro de auditoría</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Historial de cambios y acciones importantes en tu negocio.
                 </p>
+                <div className="mt-4">
+                  <AuditLogView />
+                </div>
               </div>
             </div>
           </Card>
