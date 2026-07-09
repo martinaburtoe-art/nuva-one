@@ -103,6 +103,7 @@ function Inventory() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       } />
 
       {lowStock.length > 0 && (
