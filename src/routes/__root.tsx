@@ -76,10 +76,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "NovaFlow — Gestiona todo tu negocio desde un solo lugar" },
+      { title: "Nüva One — Gestiona todo tu negocio desde un solo lugar" },
       { name: "description", content: "Plataforma todo-en-uno para PYMEs en Chile y Latinoamérica: ventas, inventario, finanzas, marketing y automatización con IA." },
-      { name: "author", content: "NovaFlow" },
-      { property: "og:title", content: "NovaFlow — Plataforma todo-en-uno para tu negocio" },
+      { name: "author", content: "Nüva One" },
+      { property: "og:title", content: "Nüva One — Plataforma todo-en-uno para tu negocio" },
       { property: "og:description", content: "Inventario, ventas, finanzas, cotizaciones y marketing conectados — potenciado por IA." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

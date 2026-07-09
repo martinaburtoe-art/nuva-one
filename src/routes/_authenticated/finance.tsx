@@ -16,7 +16,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/finance")({
-  head: () => ({ meta: [{ title: "Finanzas — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Finanzas — Nüva One" }] }),
   component: Finance,
 });
 

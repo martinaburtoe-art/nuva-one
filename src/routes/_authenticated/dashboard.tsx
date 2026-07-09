@@ -9,7 +9,7 @@ import { TrendingUp, TrendingDown, ShoppingCart, Boxes, DollarSign, ArrowUpRight
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Resumen — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Resumen — Nüva One" }] }),
   component: Dashboard,
 });
 

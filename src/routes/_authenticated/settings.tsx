@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Configuración — NovaFlow" }] }),
+  head: () => ({ meta: [{ title: "Configuración — Nüva One" }] }),
   component: Settings,
 });
 
@@ -166,7 +166,7 @@ function Settings() {
               </span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Tienes acceso completo a todas las funciones Pro de NovaFlow.
+              Tienes acceso completo a todas las funciones Pro de Nüva One.
             </p>
             <ul className="mt-4 space-y-2 text-sm">
               <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
