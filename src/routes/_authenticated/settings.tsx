@@ -175,30 +175,96 @@ function Settings() {
         </TabsContent>
 
         <TabsContent value="billing">
-          <Card className="p-6">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold">Plan actual: Pro</h3>
-              <span className="rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                Activo
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Tienes acceso completo a todas las funciones Pro de Nüva One.
-            </p>
-            <ul className="mt-4 space-y-2 text-sm">
-              <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
-              <li className="flex items-center gap-2">✅ Ventas, compras e inventario ilimitados</li>
-              <li className="flex items-center gap-2">✅ Asistente IA ilimitado</li>
-              <li className="flex items-center gap-2">✅ Automatizaciones con webhooks</li>
-              <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
-              <li className="flex items-center gap-2">✅ Indicadores y analítica avanzada</li>
-              <li className="flex items-center gap-2">✅ Marketing y generación de contenido IA</li>
-              <li className="flex items-center gap-2">✅ Roles de equipo (Owner, Admin, Staff, Viewer)</li>
-              <li className="flex items-center gap-2">✅ Soporte prioritario</li>
-            </ul>
-          </Card>
+          <BillingTab />
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+function BillingTab() {
+  const { active } = useActiveBusiness();
+  const { data: myRole } = useMyRole();
+  const canManage = myRole === "owner" || myRole === "admin";
+  const [loading, setLoading] = useState(false);
+  const plan = (active as any)?.plan ?? "starter";
+  const status = (active as any)?.subscription_status ?? "active";
+  const isPro = plan === "pro";
+
+  async function callBillingEndpoint(path: "checkout" | "portal") {
+    if (!active) return;
+    setLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch(`/api/billing/${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ business_id: active.id }),
+      });
+      const json = await res.json();
+      if (json.url) window.location.href = json.url;
+      else toast.error(json.error ?? "No se pudo iniciar el proceso de pago");
+    } catch {
+      toast.error("Error de conexión con el sistema de pagos");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-2">
+        <h3 className="font-semibold">Plan actual: {isPro ? "Pro" : "Starter"}</h3>
+        <span
+          className={
+            isPro
+              ? "rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground"
+              : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+          }
+        >
+          {status === "active" ? "Activo" : status}
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {isPro
+          ? "Tienes acceso completo a todas las funciones Pro de Nüva One."
+          : "Plan gratuito: hasta 50 productos, 1 usuario, funciones básicas."}
+      </p>
+
+      {isPro ? (
+        <ul className="mt-4 space-y-2 text-sm">
+          <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
+          <li className="flex items-center gap-2">✅ Ventas, compras e inventario ilimitados</li>
+          <li className="flex items-center gap-2">✅ Asistente IA ilimitado</li>
+          <li className="flex items-center gap-2">✅ Automatizaciones con webhooks</li>
+          <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
+          <li className="flex items-center gap-2">✅ Indicadores y analítica avanzada</li>
+          <li className="flex items-center gap-2">✅ Marketing y generación de contenido IA</li>
+          <li className="flex items-center gap-2">✅ Roles de equipo (Owner, Admin, Staff, Viewer)</li>
+          <li className="flex items-center gap-2">✅ Soporte prioritario</li>
+        </ul>
+      ) : (
+        <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <li>— Hasta 50 productos</li>
+          <li>— 1 usuario</li>
+          <li>— Ventas e inventario básico</li>
+        </ul>
+      )}
+
+      {!canManage ? (
+        <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Lock className="h-3 w-3" /> Solo el propietario o administradores pueden gestionar el plan.
+        </p>
+      ) : isPro ? (
+        <Button className="mt-4" variant="outline" disabled={loading} onClick={() => callBillingEndpoint("portal")}>
+          Gestionar suscripción
+        </Button>
+      ) : (
+        <Button className="mt-4" disabled={loading} onClick={() => callBillingEndpoint("checkout")}>
+          Actualizar a Pro — $29.990/mes
+        </Button>
+      )}
+    </Card>
   );
 }

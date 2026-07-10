@@ -142,7 +142,11 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_id: string
+          plan: string
           size: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
           tax_id: string | null
           updated_at: string
           webhook_url: string | null
@@ -154,7 +158,11 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_id?: string
+          plan?: string
           size?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
           tax_id?: string | null
           updated_at?: string
           webhook_url?: string | null
@@ -166,7 +174,11 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_id?: string
+          plan?: string
           size?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
           tax_id?: string | null
           updated_at?: string
           webhook_url?: string | null
@@ -620,7 +632,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_ai_usage: {
+        Args: { p_business_id: string; p_daily_limit: number }
+        Returns: boolean
+      }
     }
     Enums: {
       business_industry:

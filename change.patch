@@ -1,0 +1,952 @@
+﻿diff --git a/package.json b/package.json
+index ae84459..9e34627 100644
+--- a/package.json
++++ b/package.json
+@@ -68,6 +68,7 @@
+     "react-resizable-panels": "^4.6.5",
+     "recharts": "^2.15.4",
+     "sonner": "^2.0.7",
++    "stripe": "^22.3.1",
+     "tailwind-merge": "^3.5.0",
+     "tailwindcss": "^4.2.1",
+     "tw-animate-css": "^1.3.4",
+diff --git a/src/components/dashboard-shell.tsx b/src/components/dashboard-shell.tsx
+index cc268d9..f6948b4 100644
+--- a/src/components/dashboard-shell.tsx
++++ b/src/components/dashboard-shell.tsx
+@@ -20,6 +20,7 @@ import {
+   Building2,
+   ChevronDown,
+   Plus,
++  Menu,
+ } from "lucide-react";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+@@ -33,6 +34,7 @@ import {
+   DropdownMenuLabel,
+   DropdownMenuSeparator,
+ } from "@/components/ui/dropdown-menu";
++import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+ import { AiChatBubble } from "@/components/ai-chat-bubble";
+ import { cn } from "@/lib/utils";
+ import { toast } from "sonner";
+@@ -51,8 +53,14 @@ const nav = [
+   { to: "/settings", label: "Configuración", icon: Settings },
+ ] as const;
+ 
++const mobilePrimaryNav = nav.filter((n) =>
++  ["/dashboard", "/sales", "/inventory", "/ai"].includes(n.to),
++);
++const mobileMoreNav = nav.filter((n) => !mobilePrimaryNav.includes(n as never));
++
+ export function DashboardShell({ children }: { children: ReactNode }) {
+   const [collapsed, setCollapsed] = useState(false);
++  const [moreOpen, setMoreOpen] = useState(false);
+   const pathname = useRouterState({ select: (s) => s.location.pathname });
+   const navigate = useNavigate();
+   const { active, businesses, setActiveId } = useActiveBusiness();
+@@ -64,10 +72,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
+ 
+   return (
+     <div className="flex min-h-screen w-full bg-background">
+-      {/* Sidebar */}
++      {/* Sidebar — desktop only (md and up) */}
+       <aside
+         className={cn(
+-          "sticky top-0 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
++          "sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 md:flex",
+           collapsed ? "w-16" : "w-60",
+         )}
+       >
+@@ -84,7 +92,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
+           </Link>
+         </div>
+ 
+-        {/* Business switcher */}
+         {!collapsed && (
+           <div className="border-b border-sidebar-border p-3">
+             <DropdownMenu>
+@@ -123,19 +130,19 @@ export function DashboardShell({ children }: { children: ReactNode }) {
+ 
+         <nav className="flex-1 space-y-0.5 p-2">
+           {nav.map((item) => {
+-            const active = pathname === item.to;
++            const isActive = pathname === item.to;
+             return (
+               <Link
+                 key={item.to}
+                 to={item.to}
+                 className={cn(
+                   "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
+-                  active
++                  isActive
+                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                 )}
+               >
+-                <item.icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
++                <item.icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
+                 {!collapsed && <span className="truncate">{item.label}</span>}
+               </Link>
+             );
+@@ -161,8 +168,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
+ 
+       {/* Main */}
+       <div className="flex min-w-0 flex-1 flex-col">
+-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/80 px-6 backdrop-blur">
+-          <div className="relative flex-1 max-w-md">
++        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur md:gap-3 md:px-6">
++          <Link to="/dashboard" className="flex shrink-0 items-center gap-2 md:hidden">
++            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
++              <Sparkles className="h-4 w-4 text-primary-foreground" />
++            </div>
++          </Link>
++
++          <div className="relative hidden max-w-md flex-1 md:block">
+             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+             <Input
+               className="pl-9"
+@@ -173,6 +186,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
+               }}
+             />
+           </div>
++
++          <div className="min-w-0 flex-1 truncate text-sm font-medium md:hidden">
++            {active?.name ?? "Nüva One"}
++          </div>
++
+           <Button
+             variant="ghost"
+             size="icon"
+@@ -182,7 +200,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
+           </Button>
+           <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+-              <button className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">
++              <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">
+                 U
+               </button>
+             </DropdownMenuTrigger>
+@@ -198,10 +216,93 @@ export function DashboardShell({ children }: { children: ReactNode }) {
+           </DropdownMenu>
+         </header>
+ 
+-        <main className="flex-1 p-6 lg:p-8 animate-fade-in-up">{children}</main>
++        <main className="flex-1 animate-fade-in-up p-4 pb-24 md:p-8 md:pb-8">{children}</main>
+       </div>
+ 
+-      <AiChatBubble />
++      {/* Bottom tab bar — mobile only */}
++      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center border-t bg-background/95 backdrop-blur md:hidden">
++        {mobilePrimaryNav.map((item) => {
++          const isActive = pathname === item.to;
++          return (
++            <Link
++              key={item.to}
++              to={item.to}
++              className={cn(
++                "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]",
++                isActive ? "text-primary" : "text-muted-foreground",
++              )}
++            >
++              <item.icon className="h-5 w-5" />
++              {item.label}
++            </Link>
++          );
++        })}
++        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
++          <SheetTrigger asChild>
++            <button className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground">
++              <Menu className="h-5 w-5" />
++              Más
++            </button>
++          </SheetTrigger>
++          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-2xl">
++            <div className="mb-2 mt-2">
++              <DropdownMenu>
++                <DropdownMenuTrigger asChild>
++                  <button className="flex w-full items-center gap-2 rounded-lg border p-3 text-left">
++                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-primary text-primary-foreground">
++                      <Building2 className="h-4 w-4" />
++                    </div>
++                    <div className="min-w-0 flex-1">
++                      <div className="truncate text-sm font-medium">{active?.name ?? "Sin negocio"}</div>
++                      <div className="truncate text-xs text-muted-foreground">{active?.industry}</div>
++                    </div>
++                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
++                  </button>
++                </DropdownMenuTrigger>
++                <DropdownMenuContent align="start" className="w-56">
++                  <DropdownMenuLabel>Tus negocios</DropdownMenuLabel>
++                  {businesses.map((b) => (
++                    <DropdownMenuItem key={b.id} onClick={() => setActiveId(b.id)}>
++                      <Building2 className="mr-2 h-4 w-4" /> {b.name}
++                    </DropdownMenuItem>
++                  ))}
++                  <DropdownMenuSeparator />
++                  <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
++                    <Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio
++                  </DropdownMenuItem>
++                </DropdownMenuContent>
++              </DropdownMenu>
++            </div>
++            <div className="grid grid-cols-3 gap-2 py-2">
++              {mobileMoreNav.map((item) => (
++                <Link
++                  key={item.to}
++                  to={item.to}
++                  onClick={() => setMoreOpen(false)}
++                  className={cn(
++                    "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs",
++                    pathname === item.to ? "border-primary text-primary" : "text-muted-foreground",
++                  )}
++                >
++                  <item.icon className="h-5 w-5" />
++                  <span className="text-center leading-tight">{item.label}</span>
++                </Link>
++              ))}
++              <button
++                onClick={logout}
++                className="flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs text-destructive"
++              >
++                <LogOut className="h-5 w-5" />
++                Cerrar sesión
++              </button>
++            </div>
++          </SheetContent>
++        </Sheet>
++      </nav>
++
++      <div className="hidden md:block">
++        <AiChatBubble />
++      </div>
+     </div>
+   );
+ }
+diff --git a/src/integrations/supabase/types.ts b/src/integrations/supabase/types.ts
+index 9f2a97e..714a516 100644
+--- a/src/integrations/supabase/types.ts
++++ b/src/integrations/supabase/types.ts
+@@ -142,7 +142,11 @@ export type Database = {
+           logo_url: string | null
+           name: string
+           owner_id: string
++          plan: string
+           size: string | null
++          stripe_customer_id: string | null
++          stripe_subscription_id: string | null
++          subscription_status: string
+           tax_id: string | null
+           updated_at: string
+           webhook_url: string | null
+@@ -154,7 +158,11 @@ export type Database = {
+           logo_url?: string | null
+           name: string
+           owner_id?: string
++          plan?: string
+           size?: string | null
++          stripe_customer_id?: string | null
++          stripe_subscription_id?: string | null
++          subscription_status?: string
+           tax_id?: string | null
+           updated_at?: string
+           webhook_url?: string | null
+@@ -166,7 +174,11 @@ export type Database = {
+           logo_url?: string | null
+           name?: string
+           owner_id?: string
++          plan?: string
+           size?: string | null
++          stripe_customer_id?: string | null
++          stripe_subscription_id?: string | null
++          subscription_status?: string
+           tax_id?: string | null
+           updated_at?: string
+           webhook_url?: string | null
+@@ -620,7 +632,10 @@ export type Database = {
+       [_ in never]: never
+     }
+     Functions: {
+-      [_ in never]: never
++      increment_ai_usage: {
++        Args: { p_business_id: string; p_daily_limit: number }
++        Returns: boolean
++      }
+     }
+     Enums: {
+       business_industry:
+diff --git a/src/routeTree.gen.ts b/src/routeTree.gen.ts
+index 61db719..b542f76 100644
+--- a/src/routeTree.gen.ts
++++ b/src/routeTree.gen.ts
+@@ -28,6 +28,9 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
+ import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
+ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+ import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
++import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
++import { Route as ApiBillingPortalRouteImport } from './routes/api/billing/portal'
++import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
+ 
+ const TermsRoute = TermsRouteImport.update({
+   id: '/terms',
+@@ -124,6 +127,21 @@ const AuthenticatedAiRoute = AuthenticatedAiRouteImport.update({
+   path: '/ai',
+   getParentRoute: () => AuthenticatedRouteRoute,
+ } as any)
++const ApiBillingWebhookRoute = ApiBillingWebhookRouteImport.update({
++  id: '/api/billing/webhook',
++  path: '/api/billing/webhook',
++  getParentRoute: () => rootRouteImport,
++} as any)
++const ApiBillingPortalRoute = ApiBillingPortalRouteImport.update({
++  id: '/api/billing/portal',
++  path: '/api/billing/portal',
++  getParentRoute: () => rootRouteImport,
++} as any)
++const ApiBillingCheckoutRoute = ApiBillingCheckoutRouteImport.update({
++  id: '/api/billing/checkout',
++  path: '/api/billing/checkout',
++  getParentRoute: () => rootRouteImport,
++} as any)
+ 
+ export interface FileRoutesByFullPath {
+   '/': typeof IndexRoute
+@@ -144,6 +162,9 @@ export interface FileRoutesByFullPath {
+   '/sales': typeof AuthenticatedSalesRoute
+   '/settings': typeof AuthenticatedSettingsRoute
+   '/api/chat': typeof ApiChatRoute
++  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
++  '/api/billing/portal': typeof ApiBillingPortalRoute
++  '/api/billing/webhook': typeof ApiBillingWebhookRoute
+ }
+ export interface FileRoutesByTo {
+   '/': typeof IndexRoute
+@@ -164,6 +185,9 @@ export interface FileRoutesByTo {
+   '/sales': typeof AuthenticatedSalesRoute
+   '/settings': typeof AuthenticatedSettingsRoute
+   '/api/chat': typeof ApiChatRoute
++  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
++  '/api/billing/portal': typeof ApiBillingPortalRoute
++  '/api/billing/webhook': typeof ApiBillingWebhookRoute
+ }
+ export interface FileRoutesById {
+   __root__: typeof rootRouteImport
+@@ -186,6 +210,9 @@ export interface FileRoutesById {
+   '/_authenticated/sales': typeof AuthenticatedSalesRoute
+   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+   '/api/chat': typeof ApiChatRoute
++  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
++  '/api/billing/portal': typeof ApiBillingPortalRoute
++  '/api/billing/webhook': typeof ApiBillingWebhookRoute
+ }
+ export interface FileRouteTypes {
+   fileRoutesByFullPath: FileRoutesByFullPath
+@@ -208,6 +235,9 @@ export interface FileRouteTypes {
+     | '/sales'
+     | '/settings'
+     | '/api/chat'
++    | '/api/billing/checkout'
++    | '/api/billing/portal'
++    | '/api/billing/webhook'
+   fileRoutesByTo: FileRoutesByTo
+   to:
+     | '/'
+@@ -228,6 +258,9 @@ export interface FileRouteTypes {
+     | '/sales'
+     | '/settings'
+     | '/api/chat'
++    | '/api/billing/checkout'
++    | '/api/billing/portal'
++    | '/api/billing/webhook'
+   id:
+     | '__root__'
+     | '/'
+@@ -249,6 +282,9 @@ export interface FileRouteTypes {
+     | '/_authenticated/sales'
+     | '/_authenticated/settings'
+     | '/api/chat'
++    | '/api/billing/checkout'
++    | '/api/billing/portal'
++    | '/api/billing/webhook'
+   fileRoutesById: FileRoutesById
+ }
+ export interface RootRouteChildren {
+@@ -260,6 +296,9 @@ export interface RootRouteChildren {
+   SelectBusinessRoute: typeof SelectBusinessRoute
+   TermsRoute: typeof TermsRoute
+   ApiChatRoute: typeof ApiChatRoute
++  ApiBillingCheckoutRoute: typeof ApiBillingCheckoutRoute
++  ApiBillingPortalRoute: typeof ApiBillingPortalRoute
++  ApiBillingWebhookRoute: typeof ApiBillingWebhookRoute
+ }
+ 
+ declare module '@tanstack/react-router' {
+@@ -397,6 +436,27 @@ declare module '@tanstack/react-router' {
+       preLoaderRoute: typeof AuthenticatedAiRouteImport
+       parentRoute: typeof AuthenticatedRouteRoute
+     }
++    '/api/billing/webhook': {
++      id: '/api/billing/webhook'
++      path: '/api/billing/webhook'
++      fullPath: '/api/billing/webhook'
++      preLoaderRoute: typeof ApiBillingWebhookRouteImport
++      parentRoute: typeof rootRouteImport
++    }
++    '/api/billing/portal': {
++      id: '/api/billing/portal'
++      path: '/api/billing/portal'
++      fullPath: '/api/billing/portal'
++      preLoaderRoute: typeof ApiBillingPortalRouteImport
++      parentRoute: typeof rootRouteImport
++    }
++    '/api/billing/checkout': {
++      id: '/api/billing/checkout'
++      path: '/api/billing/checkout'
++      fullPath: '/api/billing/checkout'
++      preLoaderRoute: typeof ApiBillingCheckoutRouteImport
++      parentRoute: typeof rootRouteImport
++    }
+   }
+ }
+ 
+@@ -440,7 +500,20 @@ const rootRouteChildren: RootRouteChildren = {
+   SelectBusinessRoute: SelectBusinessRoute,
+   TermsRoute: TermsRoute,
+   ApiChatRoute: ApiChatRoute,
++  ApiBillingCheckoutRoute: ApiBillingCheckoutRoute,
++  ApiBillingPortalRoute: ApiBillingPortalRoute,
++  ApiBillingWebhookRoute: ApiBillingWebhookRoute,
+ }
+ export const routeTree = rootRouteImport
+   ._addFileChildren(rootRouteChildren)
+   ._addFileTypes<FileRouteTypes>()
++
++import type { getRouter } from './router.tsx'
++import type { startInstance } from './start.ts'
++declare module '@tanstack/react-start' {
++  interface Register {
++    ssr: true
++    router: Awaited<ReturnType<typeof getRouter>>
++    config: Awaited<ReturnType<typeof startInstance.getOptions>>
++  }
++}
+diff --git a/src/routes/_authenticated/ai.tsx b/src/routes/_authenticated/ai.tsx
+index 175be7a..97f49e4 100644
+--- a/src/routes/_authenticated/ai.tsx
++++ b/src/routes/_authenticated/ai.tsx
+@@ -61,7 +61,7 @@ function AiPage() {
+   return (
+     <>
+       <PageHeader title="Asistente IA" description="Pregunta cualquier cosa sobre tu negocio" />
+-      <Card className="flex h-[calc(100vh-12rem)] flex-col p-0 overflow-hidden">
++      <Card className="flex h-[calc(100dvh-14rem)] flex-col p-0 overflow-hidden md:h-[calc(100vh-12rem)]">
+         <div className="flex-1 space-y-4 overflow-y-auto p-6">
+           {messages.length === 0 && (
+             <div className="mx-auto max-w-2xl pt-12 text-center">
+diff --git a/src/routes/_authenticated/settings.tsx b/src/routes/_authenticated/settings.tsx
+index bce4441..b750b9b 100644
+--- a/src/routes/_authenticated/settings.tsx
++++ b/src/routes/_authenticated/settings.tsx
+@@ -175,30 +175,96 @@ function Settings() {
+         </TabsContent>
+ 
+         <TabsContent value="billing">
+-          <Card className="p-6">
+-            <div className="flex items-center gap-2">
+-              <h3 className="font-semibold">Plan actual: Pro</h3>
+-              <span className="rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+-                Activo
+-              </span>
+-            </div>
+-            <p className="mt-1 text-sm text-muted-foreground">
+-              Tienes acceso completo a todas las funciones Pro de Nüva One.
+-            </p>
+-            <ul className="mt-4 space-y-2 text-sm">
+-              <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
+-              <li className="flex items-center gap-2">✅ Ventas, compras e inventario ilimitados</li>
+-              <li className="flex items-center gap-2">✅ Asistente IA ilimitado</li>
+-              <li className="flex items-center gap-2">✅ Automatizaciones con webhooks</li>
+-              <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
+-              <li className="flex items-center gap-2">✅ Indicadores y analítica avanzada</li>
+-              <li className="flex items-center gap-2">✅ Marketing y generación de contenido IA</li>
+-              <li className="flex items-center gap-2">✅ Roles de equipo (Owner, Admin, Staff, Viewer)</li>
+-              <li className="flex items-center gap-2">✅ Soporte prioritario</li>
+-            </ul>
+-          </Card>
++          <BillingTab />
+         </TabsContent>
+       </Tabs>
+     </>
+   );
+ }
++
++function BillingTab() {
++  const { active } = useActiveBusiness();
++  const { data: myRole } = useMyRole();
++  const canManage = myRole === "owner" || myRole === "admin";
++  const [loading, setLoading] = useState(false);
++  const plan = (active as any)?.plan ?? "starter";
++  const status = (active as any)?.subscription_status ?? "active";
++  const isPro = plan === "pro";
++
++  async function callBillingEndpoint(path: "checkout" | "portal") {
++    if (!active) return;
++    setLoading(true);
++    try {
++      const { data: sessionData } = await supabase.auth.getSession();
++      const token = sessionData.session?.access_token;
++      const res = await fetch(`/api/billing/${path}`, {
++        method: "POST",
++        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
++        body: JSON.stringify({ business_id: active.id }),
++      });
++      const json = await res.json();
++      if (json.url) window.location.href = json.url;
++      else toast.error(json.error ?? "No se pudo iniciar el proceso de pago");
++    } catch {
++      toast.error("Error de conexión con el sistema de pagos");
++    } finally {
++      setLoading(false);
++    }
++  }
++
++  return (
++    <Card className="p-6">
++      <div className="flex items-center gap-2">
++        <h3 className="font-semibold">Plan actual: {isPro ? "Pro" : "Starter"}</h3>
++        <span
++          className={
++            isPro
++              ? "rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground"
++              : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
++          }
++        >
++          {status === "active" ? "Activo" : status}
++        </span>
++      </div>
++      <p className="mt-1 text-sm text-muted-foreground">
++        {isPro
++          ? "Tienes acceso completo a todas las funciones Pro de Nüva One."
++          : "Plan gratuito: hasta 50 productos, 1 usuario, funciones básicas."}
++      </p>
++
++      {isPro ? (
++        <ul className="mt-4 space-y-2 text-sm">
++          <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
++          <li className="flex items-center gap-2">✅ Ventas, compras e inventario ilimitados</li>
++          <li className="flex items-center gap-2">✅ Asistente IA ilimitado</li>
++          <li className="flex items-center gap-2">✅ Automatizaciones con webhooks</li>
++          <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
++          <li className="flex items-center gap-2">✅ Indicadores y analítica avanzada</li>
++          <li className="flex items-center gap-2">✅ Marketing y generación de contenido IA</li>
++          <li className="flex items-center gap-2">✅ Roles de equipo (Owner, Admin, Staff, Viewer)</li>
++          <li className="flex items-center gap-2">✅ Soporte prioritario</li>
++        </ul>
++      ) : (
++        <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
++          <li>— Hasta 50 productos</li>
++          <li>— 1 usuario</li>
++          <li>— Ventas e inventario básico</li>
++        </ul>
++      )}
++
++      {!canManage ? (
++        <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
++          <Lock className="h-3 w-3" /> Solo el propietario o administradores pueden gestionar el plan.
++        </p>
++      ) : isPro ? (
++        <Button className="mt-4" variant="outline" disabled={loading} onClick={() => callBillingEndpoint("portal")}>
++          Gestionar suscripción
++        </Button>
++      ) : (
++        <Button className="mt-4" disabled={loading} onClick={() => callBillingEndpoint("checkout")}>
++          Actualizar a Pro — $29.990/mes
++        </Button>
++      )}
++    </Card>
++  );
++}
+diff --git a/src/routes/api/billing/checkout.ts b/src/routes/api/billing/checkout.ts
+new file mode 100644
+index 0000000..b402093
+--- /dev/null
++++ b/src/routes/api/billing/checkout.ts
+@@ -0,0 +1,68 @@
++import { createFileRoute } from "@tanstack/react-router";
++import Stripe from "stripe";
++
++// Creates a Stripe Checkout session for a business to subscribe to the Pro
++// plan. The business's owner/admin calls this from Settings; on success,
++// Stripe redirects back and the webhook (see /api/billing/webhook) is what
++// actually flips the business to plan = 'pro' -- never trust the client
++// redirect alone for that.
++
++export const Route = createFileRoute("/api/billing/checkout")({
++  server: {
++    handlers: {
++      POST: async ({ request }) => {
++        const secretKey = process.env.STRIPE_SECRET_KEY;
++        const priceId = process.env.STRIPE_PRICE_ID_PRO;
++        const siteUrl = process.env.SITE_URL ?? "https://nuvaone.lovable.app";
++
++        if (!secretKey || !priceId) {
++          return new Response(JSON.stringify({ error: "Billing no configurado" }), { status: 500 });
++        }
++
++        const authHeader = request.headers.get("authorization");
++        if (!authHeader) return new Response("Unauthorized", { status: 401 });
++
++        const { createClient } = await import("@supabase/supabase-js");
++        const supabaseUrl = process.env.SUPABASE_URL!;
++        const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY!;
++        const userClient = createClient(supabaseUrl, anonKey, {
++          global: { headers: { Authorization: authHeader } },
++        });
++
++        const { data: userData, error: userError } = await userClient.auth.getUser();
++        if (userError || !userData.user) return new Response("Unauthorized", { status: 401 });
++
++        const body = await request.json().catch(() => ({}));
++        const businessId = body.business_id as string | undefined;
++        if (!businessId) return new Response("business_id requerido", { status: 400 });
++
++        // RLS on businesses ensures this SELECT only succeeds if the caller
++        // is actually a member of this business -- the anon-key client with
++        // the user's JWT enforces that, not a manual role check here.
++        const { data: business, error: bizError } = await userClient
++          .from("businesses")
++          .select("id, name, stripe_customer_id")
++          .eq("id", businessId)
++          .maybeSingle();
++        if (bizError || !business) return new Response("Negocio no encontrado o sin acceso", { status: 403 });
++
++        const stripe = new Stripe(secretKey);
++
++        const session = await stripe.checkout.sessions.create({
++          mode: "subscription",
++          line_items: [{ price: priceId, quantity: 1 }],
++          customer: business.stripe_customer_id ?? undefined,
++          client_reference_id: business.id,
++          metadata: { business_id: business.id },
++          subscription_data: { metadata: { business_id: business.id } },
++          success_url: `${siteUrl}/settings?upgrade=success`,
++          cancel_url: `${siteUrl}/settings?upgrade=cancelled`,
++        });
++
++        return new Response(JSON.stringify({ url: session.url }), {
++          headers: { "Content-Type": "application/json" },
++        });
++      },
++    },
++  },
++});
+diff --git a/src/routes/api/billing/portal.ts b/src/routes/api/billing/portal.ts
+new file mode 100644
+index 0000000..bef011e
+--- /dev/null
++++ b/src/routes/api/billing/portal.ts
+@@ -0,0 +1,50 @@
++import { createFileRoute } from "@tanstack/react-router";
++import Stripe from "stripe";
++
++// Lets a business owner manage (or cancel) their own subscription without
++// needing to email support -- points to Stripe's hosted Billing Portal.
++
++export const Route = createFileRoute("/api/billing/portal")({
++  server: {
++    handlers: {
++      POST: async ({ request }) => {
++        const secretKey = process.env.STRIPE_SECRET_KEY;
++        const siteUrl = process.env.SITE_URL ?? "https://nuvaone.lovable.app";
++        if (!secretKey) return new Response(JSON.stringify({ error: "Billing no configurado" }), { status: 500 });
++
++        const authHeader = request.headers.get("authorization");
++        if (!authHeader) return new Response("Unauthorized", { status: 401 });
++
++        const { createClient } = await import("@supabase/supabase-js");
++        const userClient = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
++          global: { headers: { Authorization: authHeader } },
++        });
++        const { data: userData, error: userError } = await userClient.auth.getUser();
++        if (userError || !userData.user) return new Response("Unauthorized", { status: 401 });
++
++        const body = await request.json().catch(() => ({}));
++        const businessId = body.business_id as string | undefined;
++        if (!businessId) return new Response("business_id requerido", { status: 400 });
++
++        const { data: business, error: bizError } = await userClient
++          .from("businesses")
++          .select("id, stripe_customer_id")
++          .eq("id", businessId)
++          .maybeSingle();
++        if (bizError || !business?.stripe_customer_id) {
++          return new Response("Este negocio aún no tiene una suscripción activa", { status: 400 });
++        }
++
++        const stripe = new Stripe(secretKey);
++        const session = await stripe.billingPortal.sessions.create({
++          customer: business.stripe_customer_id,
++          return_url: `${siteUrl}/settings`,
++        });
++
++        return new Response(JSON.stringify({ url: session.url }), {
++          headers: { "Content-Type": "application/json" },
++        });
++      },
++    },
++  },
++});
+diff --git a/src/routes/api/billing/webhook.ts b/src/routes/api/billing/webhook.ts
+new file mode 100644
+index 0000000..b9bac9e
+--- /dev/null
++++ b/src/routes/api/billing/webhook.ts
+@@ -0,0 +1,76 @@
++import { createFileRoute } from "@tanstack/react-router";
++import Stripe from "stripe";
++
++// The ONLY place that actually flips a business between 'starter' and 'pro'.
++// Never trust the Checkout success redirect for this -- a user could reach
++// that URL without paying (back button, shared link, etc). Stripe signs
++// every webhook payload, so we verify that signature before touching the DB.
++
++export const Route = createFileRoute("/api/billing/webhook")({
++  server: {
++    handlers: {
++      POST: async ({ request }) => {
++        const secretKey = process.env.STRIPE_SECRET_KEY;
++        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
++        if (!secretKey || !webhookSecret) return new Response("Billing no configurado", { status: 500 });
++
++        const stripe = new Stripe(secretKey);
++        const rawBody = await request.text();
++        const signature = request.headers.get("stripe-signature");
++
++        let event: Stripe.Event;
++        try {
++          event = stripe.webhooks.constructEvent(rawBody, signature ?? "", webhookSecret);
++        } catch (err) {
++          console.error("Stripe webhook signature inválida", err);
++          return new Response("Invalid signature", { status: 400 });
++        }
++
++        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
++
++        async function setPlan(businessId: string, patch: Record<string, unknown>) {
++          const { error } = await supabaseAdmin.from("businesses").update(patch as never).eq("id", businessId);
++          if (error) console.error("Error actualizando plan de negocio", businessId, error);
++        }
++
++        switch (event.type) {
++          case "checkout.session.completed": {
++            const session = event.data.object as Stripe.Checkout.Session;
++            const businessId = session.metadata?.business_id ?? session.client_reference_id;
++            if (businessId) {
++              await setPlan(businessId, {
++                plan: "pro",
++                subscription_status: "active",
++                stripe_customer_id: session.customer as string,
++                stripe_subscription_id: session.subscription as string,
++              });
++            }
++            break;
++          }
++          case "customer.subscription.updated": {
++            const sub = event.data.object as Stripe.Subscription;
++            const businessId = sub.metadata?.business_id;
++            if (businessId) {
++              const active = sub.status === "active" || sub.status === "trialing";
++              await setPlan(businessId, {
++                plan: active ? "pro" : "starter",
++                subscription_status: sub.status,
++              });
++            }
++            break;
++          }
++          case "customer.subscription.deleted": {
++            const sub = event.data.object as Stripe.Subscription;
++            const businessId = sub.metadata?.business_id;
++            if (businessId) {
++              await setPlan(businessId, { plan: "starter", subscription_status: "canceled" });
++            }
++            break;
++          }
++        }
++
++        return new Response("OK", { status: 200 });
++      },
++    },
++  },
++});
+diff --git a/src/routes/api/chat.ts b/src/routes/api/chat.ts
+index 36ede31..f0c7b8e 100644
+--- a/src/routes/api/chat.ts
++++ b/src/routes/api/chat.ts
+@@ -116,6 +116,33 @@ export const Route = createFileRoute("/api/chat")({
+         const messages = body.messages ?? [];
+         const businessId = request.headers.get("x-business-id") ?? "";
+ 
++        // Starter plan: capped at 30 AI messages/day per business (Pro is
++        // unlimited). Checked via the service role so it can't be spoofed by
++        // the client, and incremented atomically to survive concurrent requests.
++        const STARTER_DAILY_AI_LIMIT = 30;
++        if (businessId) {
++          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
++          const { data: bizPlan } = await supabaseAdmin
++            .from("businesses")
++            .select("plan")
++            .eq("id", businessId)
++            .maybeSingle();
++          if (bizPlan?.plan !== "pro") {
++            const { data: allowed } = await supabaseAdmin.rpc("increment_ai_usage", {
++              p_business_id: businessId,
++              p_daily_limit: STARTER_DAILY_AI_LIMIT,
++            });
++            if (allowed === false) {
++              return new Response(
++                JSON.stringify({
++                  error: `Alcanzaste el límite de ${STARTER_DAILY_AI_LIMIT} mensajes diarios del plan Starter. Actualiza a Pro para uso ilimitado.`,
++                }),
++                { status: 429 },
++              );
++            }
++          }
++        }
++
+         let contextBlock =
+           "No hay un negocio activo seleccionado, o no se pudo verificar el acceso del usuario a este negocio.";
+         if (businessId) {
+diff --git a/supabase/migrations/20260709000000_device_tokens.sql b/supabase/migrations/20260709000000_device_tokens.sql
+new file mode 100644
+index 0000000..d25ac69
+--- /dev/null
++++ b/supabase/migrations/20260709000000_device_tokens.sql
+@@ -0,0 +1,26 @@
++-- Device tokens for Firebase Cloud Messaging (FCM) push notifications.
++-- Populated by the mobile app (via Capacitor's Push Notifications plugin)
++-- once a user grants permission; used by the server to target pushes like
++-- "low stock" or "new sale" alerts to that business's team members.
++CREATE TABLE public.device_tokens (
++  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
++  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
++  business_id uuid REFERENCES public.businesses(id) ON DELETE CASCADE,
++  fcm_token text NOT NULL UNIQUE,
++  platform text NOT NULL DEFAULT 'android' CHECK (platform IN ('android', 'ios', 'web')),
++  created_at timestamptz NOT NULL DEFAULT now(),
++  updated_at timestamptz NOT NULL DEFAULT now()
++);
++
++ALTER TABLE public.device_tokens ENABLE ROW LEVEL SECURITY;
++
++-- Each person manages only their own device tokens.
++CREATE POLICY "Users manage own device tokens" ON public.device_tokens
++  FOR ALL USING (user_id = auth.uid())
++  WITH CHECK (user_id = auth.uid());
++
++CREATE INDEX idx_device_tokens_business_id ON public.device_tokens(business_id);
++
++CREATE TRIGGER touch_device_tokens
++  BEFORE UPDATE ON public.device_tokens
++  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+diff --git a/supabase/migrations/20260709210000_billing_plan_enforcement.sql b/supabase/migrations/20260709210000_billing_plan_enforcement.sql
+new file mode 100644
+index 0000000..7957ee3
+--- /dev/null
++++ b/supabase/migrations/20260709210000_billing_plan_enforcement.sql
+@@ -0,0 +1,43 @@
++-- Billing: adds real plan tracking to businesses, backed by Stripe, plus a
++-- DB-level (not just UI-level) enforcement of the Starter plan's product
++-- limit -- this closes the gap where anyone could create unlimited products
++-- for free regardless of what the pricing page promises.
++
++ALTER TABLE public.businesses
++  ADD COLUMN plan text NOT NULL DEFAULT 'starter' CHECK (plan IN ('starter', 'pro')),
++  ADD COLUMN stripe_customer_id text,
++  ADD COLUMN stripe_subscription_id text,
++  ADD COLUMN subscription_status text NOT NULL DEFAULT 'active';
++
++CREATE INDEX idx_businesses_stripe_customer_id ON public.businesses(stripe_customer_id);
++
++-- Hard limit: Starter plan businesses cannot have more than 50 products.
++-- This runs server-side on every insert, so it can't be bypassed by calling
++-- the API directly -- only a real Pro subscription lifts it.
++CREATE OR REPLACE FUNCTION public.enforce_product_plan_limit()
++RETURNS trigger
++LANGUAGE plpgsql
++SECURITY DEFINER
++SET search_path = public
++AS $$
++DECLARE
++  biz_plan text;
++  product_count integer;
++BEGIN
++  SELECT plan INTO biz_plan FROM public.businesses WHERE id = NEW.business_id;
++
++  IF biz_plan = 'starter' THEN
++    SELECT count(*) INTO product_count FROM public.products WHERE business_id = NEW.business_id;
++    IF product_count >= 50 THEN
++      RAISE EXCEPTION 'El plan Starter permite hasta 50 productos. Actualiza a Pro para agregar más.'
++        USING ERRCODE = 'check_violation';
++    END IF;
++  END IF;
++
++  RETURN NEW;
++END;
++$$;
++
++CREATE TRIGGER trg_enforce_product_plan_limit
++  BEFORE INSERT ON public.products
++  FOR EACH ROW EXECUTE FUNCTION public.enforce_product_plan_limit();
+diff --git a/supabase/migrations/20260709220000_ai_usage_limit.sql b/supabase/migrations/20260709220000_ai_usage_limit.sql
+new file mode 100644
+index 0000000..d6285b2
+--- /dev/null
++++ b/supabase/migrations/20260709220000_ai_usage_limit.sql
+@@ -0,0 +1,47 @@
++-- Daily AI message counter per business, used to enforce the Starter plan's
++-- usage cap (Pro is unlimited). Incremented atomically via
++-- increment_ai_usage() so concurrent requests can't race past the limit.
++CREATE TABLE public.ai_usage_daily (
++  business_id uuid NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
++  usage_date date NOT NULL DEFAULT current_date,
++  message_count integer NOT NULL DEFAULT 0,
++  PRIMARY KEY (business_id, usage_date)
++);
++
++ALTER TABLE public.ai_usage_daily ENABLE ROW LEVEL SECURITY;
++
++CREATE POLICY "Members view own ai usage" ON public.ai_usage_daily
++  FOR SELECT USING (private.is_business_member(business_id, auth.uid()));
++
++-- Called only from the server (service role) via /api/chat -- never exposed
++-- directly to the client. Returns false once the daily cap is reached,
++-- without incrementing further, so the caller can show an upgrade prompt.
++CREATE OR REPLACE FUNCTION public.increment_ai_usage(p_business_id uuid, p_daily_limit integer)
++RETURNS boolean
++LANGUAGE plpgsql
++SECURITY DEFINER
++SET search_path = public
++AS $$
++DECLARE
++  current_count integer;
++BEGIN
++  INSERT INTO public.ai_usage_daily (business_id, usage_date, message_count)
++  VALUES (p_business_id, current_date, 0)
++  ON CONFLICT (business_id, usage_date) DO NOTHING;
++
++  SELECT message_count INTO current_count
++  FROM public.ai_usage_daily
++  WHERE business_id = p_business_id AND usage_date = current_date
++  FOR UPDATE;
++
++  IF current_count >= p_daily_limit THEN
++    RETURN false;
++  END IF;
++
++  UPDATE public.ai_usage_daily
++  SET message_count = message_count + 1
++  WHERE business_id = p_business_id AND usage_date = current_date;
++
++  RETURN true;
++END;
++$$;

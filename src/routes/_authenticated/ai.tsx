@@ -61,7 +61,7 @@ function AiPage() {
   return (
     <>
       <PageHeader title="Asistente IA" description="Pregunta cualquier cosa sobre tu negocio" />
-      <Card className="flex h-[calc(100vh-12rem)] flex-col p-0 overflow-hidden">
+      <Card className="flex h-[calc(100dvh-14rem)] flex-col p-0 overflow-hidden md:h-[calc(100vh-12rem)]">
         <div className="flex-1 space-y-4 overflow-y-auto p-6">
           {messages.length === 0 && (
             <div className="mx-auto max-w-2xl pt-12 text-center">

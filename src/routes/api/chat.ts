@@ -116,6 +116,33 @@ export const Route = createFileRoute("/api/chat")({
         const messages = body.messages ?? [];
         const businessId = request.headers.get("x-business-id") ?? "";
 
+        // Starter plan: capped at 30 AI messages/day per business (Pro is
+        // unlimited). Checked via the service role so it can't be spoofed by
+        // the client, and incremented atomically to survive concurrent requests.
+        const STARTER_DAILY_AI_LIMIT = 30;
+        if (businessId) {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data: bizPlan } = await supabaseAdmin
+            .from("businesses")
+            .select("plan")
+            .eq("id", businessId)
+            .maybeSingle();
+          if (bizPlan?.plan !== "pro") {
+            const { data: allowed } = await supabaseAdmin.rpc("increment_ai_usage", {
+              p_business_id: businessId,
+              p_daily_limit: STARTER_DAILY_AI_LIMIT,
+            });
+            if (allowed === false) {
+              return new Response(
+                JSON.stringify({
+                  error: `Alcanzaste el límite de ${STARTER_DAILY_AI_LIMIT} mensajes diarios del plan Starter. Actualiza a Pro para uso ilimitado.`,
+                }),
+                { status: 429 },
+              );
+            }
+          }
+        }
+
         let contextBlock =
           "No hay un negocio activo seleccionado, o no se pudo verificar el acceso del usuario a este negocio.";
         if (businessId) {
