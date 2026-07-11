@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { sendWhatsAppMessage } from "@/lib/whatsapp.server";
 
 // Meta Cloud API webhook. One webhook URL + one verify token per Meta App
 // (configured in Meta for Developers), shared across every WhatsApp number
@@ -98,26 +99,6 @@ Reglas:
   }
 }
 
-async function sendWhatsAppReply(phoneNumberId: string, accessToken: string, to: string, body: string) {
-  const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body },
-    }),
-  });
-  if (!res.ok) {
-    console.error("Error enviando respuesta WhatsApp", res.status, await res.text());
-  }
-}
-
 export const Route = createFileRoute("/api/whatsapp/webhook")({
   server: {
     handlers: {
@@ -185,7 +166,7 @@ export const Route = createFileRoute("/api/whatsapp/webhook")({
               }
 
               const reply = await answerViaAi(connection.business_id, text, connection.auto_general_ai);
-              await sendWhatsAppReply(connection.phone_number_id, connection.access_token, from, reply);
+              await sendWhatsAppMessage(connection.phone_number_id, connection.access_token, from, reply);
               await logMessage(connection.business_id, from, "out", reply, looksLikeCatalogQuery ? "catalog" : "general");
             }
           }

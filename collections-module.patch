@@ -1,0 +1,571 @@
+﻿diff --git a/src/lib/whatsapp.server.ts b/src/lib/whatsapp.server.ts
+new file mode 100644
+index 0000000..ecc7631
+--- /dev/null
++++ b/src/lib/whatsapp.server.ts
+@@ -0,0 +1,40 @@
++// Envío proactivo de mensajes WhatsApp (fuera del flujo de respuesta a un webhook).
++// Reutilizado por: webhook de WhatsApp (respuestas) y el cron de cobranza (recordatorios).
++
++export async function sendWhatsAppMessage(
++  phoneNumberId: string,
++  accessToken: string,
++  to: string,
++  body: string,
++): Promise<boolean> {
++  const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
++  const res = await fetch(url, {
++    method: "POST",
++    headers: {
++      Authorization: `Bearer ${accessToken}`,
++      "Content-Type": "application/json",
++    },
++    body: JSON.stringify({
++      messaging_product: "whatsapp",
++      to,
++      type: "text",
++      text: { body },
++    }),
++  });
++  if (!res.ok) {
++    console.error("Error enviando mensaje WhatsApp", res.status, await res.text());
++    return false;
++  }
++  return true;
++}
++
++export async function findActiveWhatsAppConnection(businessId: string) {
++  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
++  const { data } = await supabaseAdmin
++    .from("whatsapp_connections")
++    .select("id, business_id, phone_number_id, access_token, active")
++    .eq("business_id", businessId)
++    .eq("active", true)
++    .maybeSingle();
++  return data as { id: string; business_id: string; phone_number_id: string; access_token: string; active: boolean } | null;
++}
+diff --git a/src/routes/_authenticated/finance.tsx b/src/routes/_authenticated/finance.tsx
+index 07f8429..416eb64 100644
+--- a/src/routes/_authenticated/finance.tsx
++++ b/src/routes/_authenticated/finance.tsx
+@@ -93,6 +93,14 @@ function Finance() {
+     expByCat[t.category ?? "Otros"] = (expByCat[t.category ?? "Otros"] ?? 0) + Number(t.amount);
+   });
+   const pieData = Object.entries(expByCat).map(([name, value]) => ({ name, value }));
++
++  const creditSales = (sales ?? []).filter((s: any) => s.is_credit && s.status !== "cancelled");
++  const receivable = creditSales.reduce((sum: number, s: any) => sum + (Number(s.total) - Number(s.paid_amount)), 0);
++  const overdueSales = creditSales.filter(
++    (s: any) => Number(s.paid_amount) < Number(s.total) && s.due_date && new Date(s.due_date) < new Date(),
++  );
++  const overdueTotal = overdueSales.reduce((sum: number, s: any) => sum + (Number(s.total) - Number(s.paid_amount)), 0);
++
+   const COLORS = ["oklch(0.55 0.22 268)", "oklch(0.6 0.22 25)", "oklch(0.75 0.17 70)", "oklch(0.65 0.17 155)", "oklch(0.5 0.15 320)"];
+ 
+   return (
+@@ -146,10 +154,18 @@ function Finance() {
+         <Card className="p-5"><div className="text-xs text-muted-foreground">Flujo neto</div><div className="mt-1 text-2xl font-bold text-primary">{fmtCLP(income - expense)}</div></Card>
+       </div>
+ 
++      {creditSales.length > 0 && (
++        <div className="mt-4 grid gap-4 md:grid-cols-2">
++          <Card className="p-5"><div className="text-xs text-muted-foreground">Por cobrar (fiado)</div><div className="mt-1 text-2xl font-bold text-warning">{fmtCLP(receivable)}</div></Card>
++          <Card className="p-5"><div className="text-xs text-muted-foreground">Vencido ({overdueSales.length} venta{overdueSales.length === 1 ? "" : "s"})</div><div className="mt-1 text-2xl font-bold text-destructive">{fmtCLP(overdueTotal)}</div></Card>
++        </div>
++      )}
++
+       <Tabs defaultValue="ledger" className="mt-6">
+         <TabsList>
+           <TabsTrigger value="ledger">Movimientos</TabsTrigger>
+           <TabsTrigger value="breakdown">Gastos por categoría</TabsTrigger>
++          <TabsTrigger value="receivables">Por cobrar</TabsTrigger>
+           <TabsTrigger value="invoicing">Facturación</TabsTrigger>
+         </TabsList>
+ 
+@@ -196,6 +212,40 @@ function Finance() {
+           </Card>
+         </TabsContent>
+ 
++        <TabsContent value="receivables">
++          <Card>
++            {creditSales.length === 0 ? (
++              <EmptyState icon={CreditCard} title="Sin ventas a crédito" description="Marca una venta como 'fiado' en Ventas para hacerle seguimiento aquí." />
++            ) : (
++              <Table>
++                <TableHeader><TableRow><TableHead>Cliente</TableHead><TableHead>Vence</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Pendiente</TableHead></TableRow></TableHeader>
++                <TableBody>
++                  {creditSales
++                    .slice()
++                    .sort((a: any, b: any) => new Date(a.due_date ?? 0).getTime() - new Date(b.due_date ?? 0).getTime())
++                    .map((s: any) => {
++                      const pending = Number(s.total) - Number(s.paid_amount);
++                      const isOverdue = pending > 0 && s.due_date && new Date(s.due_date) < new Date();
++                      const isPaid = pending <= 0;
++                      return (
++                        <TableRow key={s.id}>
++                          <TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell>
++                          <TableCell className="text-muted-foreground">{s.due_date ? new Date(s.due_date).toLocaleDateString("es-CL") : "—"}</TableCell>
++                          <TableCell>
++                            <Badge className={isPaid ? "bg-success/15 text-success" : isOverdue ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}>
++                              {isPaid ? "Pagada" : isOverdue ? "Vencida" : "Por cobrar"}
++                            </Badge>
++                          </TableCell>
++                          <TableCell className="text-right font-medium">{fmtCLP(pending)}</TableCell>
++                        </TableRow>
++                      );
++                    })}
++                </TableBody>
++              </Table>
++            )}
++          </Card>
++        </TabsContent>
++
+         <TabsContent value="invoicing">
+           <Card className="p-8">
+             <div className="flex items-center gap-3">
+diff --git a/src/routes/_authenticated/sales.tsx b/src/routes/_authenticated/sales.tsx
+index 262ec9f..26761b9 100644
+--- a/src/routes/_authenticated/sales.tsx
++++ b/src/routes/_authenticated/sales.tsx
+@@ -29,7 +29,8 @@ import {
+   TableRow,
+ } from "@/components/ui/table";
+ import { Skeleton } from "@/components/ui/skeleton";
+-import { Plus, Trash2, ShoppingCart, X } from "lucide-react";
++import { Switch } from "@/components/ui/switch";
++import { Plus, Trash2, ShoppingCart, X, Clock } from "lucide-react";
+ import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
+ 
+ export const Route = createFileRoute("/_authenticated/sales")({
+@@ -49,17 +50,23 @@ type LineItem = { product_id: string | null; name: string; qty: number; price: n
+ function Sales() {
+   const { data: sales, isLoading } = useBizList<any>("sales", { order: "sale_date" });
+   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
++  const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
+   const insert = useBizInsert("sales");
+   const del = useBizDelete("sales");
+   const upd = useBizUpdate("sales");
+   const [open, setOpen] = useState(false);
+   const [customerName, setCustomerName] = useState("");
++  const [customerId, setCustomerId] = useState<string | null>(null);
+   const [channel, setChannel] = useState("tienda");
+   const [status, setStatus] = useState("paid");
+   const [items, setItems] = useState<LineItem[]>([
+     { product_id: null, name: "", qty: 1, price: 0 },
+   ]);
+   const [manualTotal, setManualTotal] = useState<number | null>(null);
++  const [isCredit, setIsCredit] = useState(false);
++  const [dueDate, setDueDate] = useState("");
++
++  const selectedCustomerPhone = (customers ?? []).find((c: any) => c.id === customerId)?.phone;
+ 
+   const computedTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
+   const total = manualTotal ?? computedTotal;
+@@ -84,16 +91,22 @@ function Sales() {
+     const validItems = items.filter((i) => i.name.trim() !== "");
+     await insert.mutateAsync({
+       customer_name: customerName,
++      customer_id: customerId,
+       channel,
+       status,
+       total,
+       items: validItems as any,
+       notes: fd.get("notes") || null,
++      is_credit: isCredit,
++      due_date: isCredit && dueDate ? dueDate : null,
+     });
+     setOpen(false);
+     setCustomerName("");
++    setCustomerId(null);
+     setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
+     setManualTotal(null);
++    setIsCredit(false);
++    setDueDate("");
+   }
+ 
+   // Stock available for the currently selected product in a row (excluding what's already allocated in other rows)
+@@ -130,7 +143,61 @@ function Sales() {
+                     onChange={(e) => setCustomerName(e.target.value)}
+                     required
+                   />
++                  <Select
++                    value={customerId ?? "__none__"}
++                    onValueChange={(v) => {
++                      if (v === "__none__") {
++                        setCustomerId(null);
++                        return;
++                      }
++                      const c = (customers ?? []).find((x: any) => x.id === v);
++                      setCustomerId(v);
++                      if (c) setCustomerName(c.name);
++                    }}
++                  >
++                    <SelectTrigger className="mt-1">
++                      <SelectValue placeholder="Vincular a cliente existente (opcional, necesario para fiado)" />
++                    </SelectTrigger>
++                    <SelectContent>
++                      <SelectItem value="__none__">— Sin vincular —</SelectItem>
++                      {(customers ?? []).map((c: any) => (
++                        <SelectItem key={c.id} value={c.id}>
++                          {c.name} {c.phone ? `(${c.phone})` : "(sin teléfono)"}
++                        </SelectItem>
++                      ))}
++                    </SelectContent>
++                  </Select>
++                </div>
++
++                <div className="flex items-center justify-between rounded-lg border p-3">
++                  <div>
++                    <Label htmlFor="is_credit" className="cursor-pointer">
++                      Venta a crédito / fiado
++                    </Label>
++                    <p className="text-xs text-muted-foreground">
++                      Activa seguimiento de cobranza y recordatorios automáticos por WhatsApp.
++                    </p>
++                  </div>
++                  <Switch id="is_credit" checked={isCredit} onCheckedChange={setIsCredit} />
+                 </div>
++                {isCredit && (
++                  <div>
++                    <Label htmlFor="due_date">Fecha de vencimiento</Label>
++                    <Input
++                      id="due_date"
++                      type="date"
++                      value={dueDate}
++                      onChange={(e) => setDueDate(e.target.value)}
++                      required
++                    />
++                    {!selectedCustomerPhone && (
++                      <p className="mt-1 text-xs text-warning">
++                        Este cliente no tiene teléfono registrado — no podremos enviarle recordatorios por WhatsApp.
++                      </p>
++                    )}
++                  </div>
++                )}
++
+                 <div className="grid grid-cols-2 gap-3">
+                   <div>
+                     <Label>Canal</Label>
+@@ -307,6 +374,7 @@ function Sales() {
+                 <TableHead>Canal</TableHead>
+                 <TableHead>Items</TableHead>
+                 <TableHead>Estado</TableHead>
++                <TableHead>Cobro</TableHead>
+                 <TableHead className="text-right">Total</TableHead>
+                 <TableHead></TableHead>
+               </TableRow>
+@@ -340,8 +408,27 @@ function Sales() {
+                       <option value="cancelled">Cancelada</option>
+                     </select>
+                   </TableCell>
++                  <TableCell>
++                    {!s.is_credit ? (
++                      <span className="text-xs text-muted-foreground">Contado</span>
++                    ) : Number(s.paid_amount) >= Number(s.total) ? (
++                      <Badge className="bg-success/15 text-success">Pagada</Badge>
++                    ) : s.due_date && new Date(s.due_date) < new Date() ? (
++                      <Badge className="bg-destructive/15 text-destructive">
++                        <Clock className="mr-1 h-3 w-3" />
++                        Vencida
++                      </Badge>
++                    ) : (
++                      <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>
++                    )}
++                  </TableCell>
+                   <TableCell className="text-right font-medium">
+                     {fmtCLP(Number(s.total))}
++                    {s.is_credit && Number(s.paid_amount) < Number(s.total) && (
++                      <p className="text-xs font-normal text-muted-foreground">
++                        Pagado: {fmtCLP(Number(s.paid_amount))}
++                      </p>
++                    )}
+                   </TableCell>
+                   <TableCell>
+                     <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)}>
+diff --git a/src/routes/api/collections/check-overdue.ts b/src/routes/api/collections/check-overdue.ts
+new file mode 100644
+index 0000000..2f98a50
+--- /dev/null
++++ b/src/routes/api/collections/check-overdue.ts
+@@ -0,0 +1,146 @@
++import { createFileRoute } from "@tanstack/react-router";
++import { generateText } from "ai";
++import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
++import { sendWhatsAppMessage, findActiveWhatsAppConnection } from "@/lib/whatsapp.server";
++
++// Llamado 1 vez al día por un cron (pg_cron + pg_net, ver instrucciones de despliegue).
++// Protegido por CRON_SECRET para que no sea invocable públicamente.
++
++const REMINDER_COOLDOWN_DAYS = 3;
++const MAX_REMINDERS_PER_SALE = 3;
++
++async function buildReminderMessage(
++  businessName: string,
++  customerName: string,
++  total: number,
++  paidAmount: number,
++  daysOverdue: number,
++): Promise<string> {
++  const key = process.env.LOVABLE_API_KEY;
++  const pendiente = total - paidAmount;
++  if (!key) {
++    return `Hola ${customerName}, te escribimos de ${businessName} para recordarte tu pago pendiente de $${pendiente.toLocaleString("es-CL")}, vencido hace ${daysOverdue} día(s). ¿Podemos coordinar el pago?`;
++  }
++
++  const tone =
++    daysOverdue <= 5
++      ? "amable y cercano, como un recordatorio suave"
++      : daysOverdue <= 15
++        ? "firme pero respetuoso, dejando claro que ya pasó la fecha"
++        : "serio y directo, indicando que es urgente regularizar";
++
++  const system = `Eres el asistente de cobranza de "${businessName}" en Chile. Escribe UN mensaje de WhatsApp corto (máximo 3 líneas), en español de Chile, tono ${tone}. Nunca amenaces ni uses lenguaje agresivo o legal. El objetivo es que el cliente pague o se contacte para acordar el pago.`;
++  const prompt = `Cliente: ${customerName}. Monto pendiente: $${pendiente.toLocaleString("es-CL")}. Días de atraso: ${daysOverdue}.`;
++
++  try {
++    const gateway = createLovableAiGatewayProvider(key);
++    const model = gateway("google/gemini-3-flash-preview");
++    const { text } = await generateText({ model, system, prompt });
++    return (
++      text.trim() ||
++      `Hola ${customerName}, tienes un pago pendiente de $${pendiente.toLocaleString("es-CL")} con ${businessName}. ¿Nos ayudas a regularizarlo?`
++    );
++  } catch (err) {
++    console.error("Error generando mensaje de cobranza con IA", err);
++    return `Hola ${customerName}, tienes un pago pendiente de $${pendiente.toLocaleString("es-CL")} con ${businessName}. ¿Nos ayudas a regularizarlo?`;
++  }
++}
++
++export const Route = createFileRoute("/api/collections/check-overdue")({
++  server: {
++    handlers: {
++      POST: async ({ request }) => {
++        const secret = process.env.CRON_SECRET;
++        if (secret) {
++          const header = request.headers.get("x-cron-secret");
++          if (header !== secret) {
++            return new Response("Unauthorized", { status: 401 });
++          }
++        }
++
++        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
++
++        // Ventas a crédito, vencidas. paid_amount < total no se puede comparar
++        // columna-contra-columna en supabase-js, así que se filtra en memoria abajo.
++        const { data: candidateSales, error } = await supabaseAdmin
++          .from("sales")
++          .select("id, business_id, customer_id, customer_name, total, paid_amount, due_date, status, businesses(name), customers(phone)")
++          .eq("is_credit", true)
++          .lt("due_date", new Date().toISOString().slice(0, 10))
++          .neq("status", "cancelled");
++
++        if (error) {
++          console.error("Error consultando ventas vencidas", error);
++          return new Response("Error", { status: 500 });
++        }
++
++        const overdueSales = (candidateSales ?? []).filter(
++          (s) => Number(s.paid_amount) < Number(s.total),
++        );
++
++        let sent = 0;
++        let skipped = 0;
++
++        for (const sale of overdueSales) {
++          const customerPhone = (sale as any).customers?.phone;
++          const businessName = (sale as any).businesses?.name ?? "tu proveedor";
++          if (!customerPhone) {
++            skipped++;
++            continue; // No hay teléfono asociado al cliente, no se puede recordar por WhatsApp.
++          }
++
++          const { data: recentReminders } = await supabaseAdmin
++            .from("collection_reminders")
++            .select("id, sent_at")
++            .eq("sale_id", sale.id)
++            .order("sent_at", { ascending: false })
++            .limit(MAX_REMINDERS_PER_SALE);
++
++          if ((recentReminders?.length ?? 0) >= MAX_REMINDERS_PER_SALE) {
++            skipped++;
++            continue; // Ya se enviaron los recordatorios máximos para esta venta.
++          }
++
++          const lastSentAt = recentReminders?.[0]?.sent_at;
++          if (lastSentAt) {
++            const daysSinceLast = (Date.now() - new Date(lastSentAt).getTime()) / 86_400_000;
++            if (daysSinceLast < REMINDER_COOLDOWN_DAYS) {
++              skipped++;
++              continue; // Todavía en cooldown, evita spamear al cliente.
++            }
++          }
++
++          const daysOverdue = Math.floor(
++            (Date.now() - new Date(sale.due_date as string).getTime()) / 86_400_000,
++          );
++
++          const message = await buildReminderMessage(
++            businessName,
++            sale.customer_name ?? "cliente",
++            Number(sale.total),
++            Number(sale.paid_amount),
++            daysOverdue,
++          );
++
++          const connection = await findActiveWhatsAppConnection(sale.business_id);
++          let status: "sent" | "failed" = "failed";
++          if (connection) {
++            const ok = await sendWhatsAppMessage(connection.phone_number_id, connection.access_token, customerPhone, message);
++            status = ok ? "sent" : "failed";
++            if (ok) sent++;
++          }
++
++          await supabaseAdmin.from("collection_reminders").insert({
++            business_id: sale.business_id,
++            sale_id: sale.id,
++            channel: "whatsapp",
++            status,
++            message_content: message,
++          });
++        }
++
++        return Response.json({ ok: true, sent, skipped, total: overdueSales.length });
++      },
++    },
++  },
++});
+diff --git a/src/routes/api/whatsapp/webhook.ts b/src/routes/api/whatsapp/webhook.ts
+index fffcf14..023aefc 100644
+--- a/src/routes/api/whatsapp/webhook.ts
++++ b/src/routes/api/whatsapp/webhook.ts
+@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
+ import { generateText } from "ai";
+ import { createHmac, timingSafeEqual } from "node:crypto";
+ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
++import { sendWhatsAppMessage } from "@/lib/whatsapp.server";
+ 
+ // Meta Cloud API webhook. One webhook URL + one verify token per Meta App
+ // (configured in Meta for Developers), shared across every WhatsApp number
+@@ -98,26 +99,6 @@ Reglas:
+   }
+ }
+ 
+-async function sendWhatsAppReply(phoneNumberId: string, accessToken: string, to: string, body: string) {
+-  const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
+-  const res = await fetch(url, {
+-    method: "POST",
+-    headers: {
+-      Authorization: `Bearer ${accessToken}`,
+-      "Content-Type": "application/json",
+-    },
+-    body: JSON.stringify({
+-      messaging_product: "whatsapp",
+-      to,
+-      type: "text",
+-      text: { body },
+-    }),
+-  });
+-  if (!res.ok) {
+-    console.error("Error enviando respuesta WhatsApp", res.status, await res.text());
+-  }
+-}
+-
+ export const Route = createFileRoute("/api/whatsapp/webhook")({
+   server: {
+     handlers: {
+@@ -185,7 +166,7 @@ export const Route = createFileRoute("/api/whatsapp/webhook")({
+               }
+ 
+               const reply = await answerViaAi(connection.business_id, text, connection.auto_general_ai);
+-              await sendWhatsAppReply(connection.phone_number_id, connection.access_token, from, reply);
++              await sendWhatsAppMessage(connection.phone_number_id, connection.access_token, from, reply);
+               await logMessage(connection.business_id, from, "out", reply, looksLikeCatalogQuery ? "catalog" : "general");
+             }
+           }
+diff --git a/supabase/migrations/20260711000000_collections_module.sql b/supabase/migrations/20260711000000_collections_module.sql
+new file mode 100644
+index 0000000..54f10a8
+--- /dev/null
++++ b/supabase/migrations/20260711000000_collections_module.sql
+@@ -0,0 +1,81 @@
++-- Módulo de cobranza (ventas a crédito / fiado) + recordatorios automáticos por WhatsApp.
++-- No toca el flujo de venta al contado existente: is_credit=false (default) se comporta
++-- exactamente igual que hoy.
++
++ALTER TABLE public.sales
++  ADD COLUMN IF NOT EXISTS is_credit BOOLEAN NOT NULL DEFAULT false,
++  ADD COLUMN IF NOT EXISTS due_date DATE,
++  ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(12,2) NOT NULL DEFAULT 0;
++
++-- Cuando una venta no es a crédito, se considera pagada por completo al crearse.
++CREATE OR REPLACE FUNCTION public.default_paid_amount()
++RETURNS TRIGGER LANGUAGE plpgsql AS $$
++BEGIN
++  IF NOT NEW.is_credit AND NEW.paid_amount = 0 THEN
++    NEW.paid_amount := NEW.total;
++  END IF;
++  RETURN NEW;
++END;
++$$;
++
++DROP TRIGGER IF EXISTS trg_default_paid_amount ON public.sales;
++CREATE TRIGGER trg_default_paid_amount
++  BEFORE INSERT ON public.sales
++  FOR EACH ROW EXECUTE FUNCTION public.default_paid_amount();
++
++-- Abonos parciales contra una venta a crédito.
++CREATE TABLE IF NOT EXISTS public.payments (
++  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++  business_id UUID NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
++  sale_id UUID NOT NULL REFERENCES public.sales(id) ON DELETE CASCADE,
++  amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
++  method TEXT DEFAULT 'efectivo',
++  paid_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
++);
++
++CREATE OR REPLACE FUNCTION public.apply_payment_to_sale()
++RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
++BEGIN
++  UPDATE public.sales
++  SET paid_amount = LEAST(total, paid_amount + NEW.amount)
++  WHERE id = NEW.sale_id AND business_id = NEW.business_id;
++  RETURN NEW;
++END;
++$$;
++
++DROP TRIGGER IF EXISTS trg_apply_payment_to_sale ON public.payments;
++CREATE TRIGGER trg_apply_payment_to_sale
++  AFTER INSERT ON public.payments
++  FOR EACH ROW EXECUTE FUNCTION public.apply_payment_to_sale();
++
++ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
++
++CREATE POLICY "Members view payments" ON public.payments
++  FOR SELECT USING (private.is_business_member(business_id, auth.uid()));
++
++CREATE POLICY "Members insert payments" ON public.payments
++  FOR INSERT WITH CHECK (private.is_business_member(business_id, auth.uid()));
++
++-- Log de recordatorios de cobranza enviados (auditoría + evita spamear al cliente).
++CREATE TABLE IF NOT EXISTS public.collection_reminders (
++  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++  business_id UUID NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
++  sale_id UUID NOT NULL REFERENCES public.sales(id) ON DELETE CASCADE,
++  channel TEXT NOT NULL DEFAULT 'whatsapp',
++  status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent','failed')),
++  message_content TEXT,
++  sent_at TIMESTAMPTZ NOT NULL DEFAULT now()
++);
++
++ALTER TABLE public.collection_reminders ENABLE ROW LEVEL SECURITY;
++
++CREATE POLICY "Members view collection reminders" ON public.collection_reminders
++  FOR SELECT USING (private.is_business_member(business_id, auth.uid()));
++
++CREATE INDEX IF NOT EXISTS idx_sales_credit_overdue
++  ON public.sales(business_id, due_date)
++  WHERE is_credit = true;
++
++CREATE INDEX IF NOT EXISTS idx_collection_reminders_sale
++  ON public.collection_reminders(sent_at DESC);

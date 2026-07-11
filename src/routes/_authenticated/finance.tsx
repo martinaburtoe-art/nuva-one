@@ -93,6 +93,14 @@ function Finance() {
     expByCat[t.category ?? "Otros"] = (expByCat[t.category ?? "Otros"] ?? 0) + Number(t.amount);
   });
   const pieData = Object.entries(expByCat).map(([name, value]) => ({ name, value }));
+
+  const creditSales = (sales ?? []).filter((s: any) => s.is_credit && s.status !== "cancelled");
+  const receivable = creditSales.reduce((sum: number, s: any) => sum + (Number(s.total) - Number(s.paid_amount)), 0);
+  const overdueSales = creditSales.filter(
+    (s: any) => Number(s.paid_amount) < Number(s.total) && s.due_date && new Date(s.due_date) < new Date(),
+  );
+  const overdueTotal = overdueSales.reduce((sum: number, s: any) => sum + (Number(s.total) - Number(s.paid_amount)), 0);
+
   const COLORS = ["oklch(0.55 0.22 268)", "oklch(0.6 0.22 25)", "oklch(0.75 0.17 70)", "oklch(0.65 0.17 155)", "oklch(0.5 0.15 320)"];
 
   return (
@@ -146,10 +154,18 @@ function Finance() {
         <Card className="p-5"><div className="text-xs text-muted-foreground">Flujo neto</div><div className="mt-1 text-2xl font-bold text-primary">{fmtCLP(income - expense)}</div></Card>
       </div>
 
+      {creditSales.length > 0 && (
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Card className="p-5"><div className="text-xs text-muted-foreground">Por cobrar (fiado)</div><div className="mt-1 text-2xl font-bold text-warning">{fmtCLP(receivable)}</div></Card>
+          <Card className="p-5"><div className="text-xs text-muted-foreground">Vencido ({overdueSales.length} venta{overdueSales.length === 1 ? "" : "s"})</div><div className="mt-1 text-2xl font-bold text-destructive">{fmtCLP(overdueTotal)}</div></Card>
+        </div>
+      )}
+
       <Tabs defaultValue="ledger" className="mt-6">
         <TabsList>
           <TabsTrigger value="ledger">Movimientos</TabsTrigger>
           <TabsTrigger value="breakdown">Gastos por categoría</TabsTrigger>
+          <TabsTrigger value="receivables">Por cobrar</TabsTrigger>
           <TabsTrigger value="invoicing">Facturación</TabsTrigger>
         </TabsList>
 
@@ -193,6 +209,40 @@ function Finance() {
                 </PieChart>
               </ResponsiveContainer>
             }
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="receivables">
+          <Card>
+            {creditSales.length === 0 ? (
+              <EmptyState icon={CreditCard} title="Sin ventas a crédito" description="Marca una venta como 'fiado' en Ventas para hacerle seguimiento aquí." />
+            ) : (
+              <Table>
+                <TableHeader><TableRow><TableHead>Cliente</TableHead><TableHead>Vence</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Pendiente</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {creditSales
+                    .slice()
+                    .sort((a: any, b: any) => new Date(a.due_date ?? 0).getTime() - new Date(b.due_date ?? 0).getTime())
+                    .map((s: any) => {
+                      const pending = Number(s.total) - Number(s.paid_amount);
+                      const isOverdue = pending > 0 && s.due_date && new Date(s.due_date) < new Date();
+                      const isPaid = pending <= 0;
+                      return (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{s.due_date ? new Date(s.due_date).toLocaleDateString("es-CL") : "—"}</TableCell>
+                          <TableCell>
+                            <Badge className={isPaid ? "bg-success/15 text-success" : isOverdue ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}>
+                              {isPaid ? "Pagada" : isOverdue ? "Vencida" : "Por cobrar"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">{fmtCLP(pending)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            )}
           </Card>
         </TabsContent>
 

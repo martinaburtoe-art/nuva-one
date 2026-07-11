@@ -29,7 +29,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, ShoppingCart, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Trash2, ShoppingCart, X, Clock } from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
 
 export const Route = createFileRoute("/_authenticated/sales")({
@@ -49,17 +50,23 @@ type LineItem = { product_id: string | null; name: string; qty: number; price: n
 function Sales() {
   const { data: sales, isLoading } = useBizList<any>("sales", { order: "sale_date" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
+  const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
   const insert = useBizInsert("sales");
   const del = useBizDelete("sales");
   const upd = useBizUpdate("sales");
   const [open, setOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [channel, setChannel] = useState("tienda");
   const [status, setStatus] = useState("paid");
   const [items, setItems] = useState<LineItem[]>([
     { product_id: null, name: "", qty: 1, price: 0 },
   ]);
   const [manualTotal, setManualTotal] = useState<number | null>(null);
+  const [isCredit, setIsCredit] = useState(false);
+  const [dueDate, setDueDate] = useState("");
+
+  const selectedCustomerPhone = (customers ?? []).find((c: any) => c.id === customerId)?.phone;
 
   const computedTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
   const total = manualTotal ?? computedTotal;
@@ -84,16 +91,22 @@ function Sales() {
     const validItems = items.filter((i) => i.name.trim() !== "");
     await insert.mutateAsync({
       customer_name: customerName,
+      customer_id: customerId,
       channel,
       status,
       total,
       items: validItems as any,
       notes: fd.get("notes") || null,
+      is_credit: isCredit,
+      due_date: isCredit && dueDate ? dueDate : null,
     });
     setOpen(false);
     setCustomerName("");
+    setCustomerId(null);
     setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
     setManualTotal(null);
+    setIsCredit(false);
+    setDueDate("");
   }
 
   // Stock available for the currently selected product in a row (excluding what's already allocated in other rows)
@@ -130,7 +143,61 @@ function Sales() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     required
                   />
+                  <Select
+                    value={customerId ?? "__none__"}
+                    onValueChange={(v) => {
+                      if (v === "__none__") {
+                        setCustomerId(null);
+                        return;
+                      }
+                      const c = (customers ?? []).find((x: any) => x.id === v);
+                      setCustomerId(v);
+                      if (c) setCustomerName(c.name);
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Vincular a cliente existente (opcional, necesario para fiado)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— Sin vincular —</SelectItem>
+                      {(customers ?? []).map((c: any) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name} {c.phone ? `(${c.phone})` : "(sin teléfono)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <Label htmlFor="is_credit" className="cursor-pointer">
+                      Venta a crédito / fiado
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Activa seguimiento de cobranza y recordatorios automáticos por WhatsApp.
+                    </p>
+                  </div>
+                  <Switch id="is_credit" checked={isCredit} onCheckedChange={setIsCredit} />
+                </div>
+                {isCredit && (
+                  <div>
+                    <Label htmlFor="due_date">Fecha de vencimiento</Label>
+                    <Input
+                      id="due_date"
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      required
+                    />
+                    {!selectedCustomerPhone && (
+                      <p className="mt-1 text-xs text-warning">
+                        Este cliente no tiene teléfono registrado — no podremos enviarle recordatorios por WhatsApp.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Canal</Label>
@@ -307,6 +374,7 @@ function Sales() {
                 <TableHead>Canal</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Cobro</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -340,8 +408,27 @@ function Sales() {
                       <option value="cancelled">Cancelada</option>
                     </select>
                   </TableCell>
+                  <TableCell>
+                    {!s.is_credit ? (
+                      <span className="text-xs text-muted-foreground">Contado</span>
+                    ) : Number(s.paid_amount) >= Number(s.total) ? (
+                      <Badge className="bg-success/15 text-success">Pagada</Badge>
+                    ) : s.due_date && new Date(s.due_date) < new Date() ? (
+                      <Badge className="bg-destructive/15 text-destructive">
+                        <Clock className="mr-1 h-3 w-3" />
+                        Vencida
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right font-medium">
                     {fmtCLP(Number(s.total))}
+                    {s.is_credit && Number(s.paid_amount) < Number(s.total) && (
+                      <p className="text-xs font-normal text-muted-foreground">
+                        Pagado: {fmtCLP(Number(s.paid_amount))}
+                      </p>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)}>
