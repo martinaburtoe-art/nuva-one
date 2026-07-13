@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Plus,
   Menu,
+  Calculator,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ import { toast } from "sonner";
 
 const nav = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard },
+  { to: "/pos", label: "Caja", icon: Calculator },
   { to: "/sales", label: "Ventas", icon: ShoppingCart },
   { to: "/purchases", label: "Compras", icon: Package },
   { to: "/inventory", label: "Inventario", icon: Boxes },
@@ -54,7 +56,7 @@ const nav = [
 ] as const;
 
 const mobilePrimaryNav = nav.filter((n) =>
-  ["/dashboard", "/sales", "/inventory", "/ai"].includes(n.to),
+  ["/dashboard", "/pos", "/inventory", "/ai"].includes(n.to),
 );
 const mobileMoreNav = nav.filter((n) => !mobilePrimaryNav.includes(n as never));
 

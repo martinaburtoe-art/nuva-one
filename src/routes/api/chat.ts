@@ -21,7 +21,7 @@ async function buildBusinessContext(token: string, businessId: string) {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
 
-  const [business, products, sales, transactions, quotes] = await Promise.all([
+  const [business, products, sales, transactions, quotes, purchases] = await Promise.all([
     supabase.from("businesses").select("name, industry, size").eq("id", businessId).maybeSingle(),
     supabase
       .from("products")
@@ -46,6 +46,12 @@ async function buildBusinessContext(token: string, businessId: string) {
       .select("customer_name, status, total, created_at")
       .eq("business_id", businessId)
       .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("purchases")
+      .select("supplier_name, status, total, purchase_date")
+      .eq("business_id", businessId)
+      .order("purchase_date", { ascending: false })
       .limit(20),
   ]);
 
@@ -76,6 +82,7 @@ async function buildBusinessContext(token: string, businessId: string) {
       recent_sales: sales.data ?? [],
       recent_transactions: transactions.data ?? [],
       recent_quotes: quotes.data ?? [],
+      recent_purchases: purchases.data ?? [],
     },
   };
 }

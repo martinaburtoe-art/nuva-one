@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -21,6 +21,7 @@ function AiPage() {
   const [input, setInput] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const { active } = useActiveBusiness();
 
   useEffect(() => {
@@ -43,7 +44,18 @@ function AiPage() {
       },
     }),
     onError: (err) => {
-      toast.error(err.message || "Error al conectar con el asistente. Intenta nuevamente.");
+      let msg = err.message || "Error al conectar con el asistente. Intenta nuevamente.";
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed?.error) msg = parsed.error;
+      } catch {
+        // err.message wasn't JSON — use it as-is
+      }
+      if (/límite.*(diari|starter)/i.test(msg)) {
+        setLimitReached(true);
+      } else {
+        toast.error(msg);
+      }
     },
   });
   const loading = status === "submitted" || status === "streaming";
@@ -62,6 +74,7 @@ function AiPage() {
       toast.error("Tu sesión aún se está cargando, intenta de nuevo en un segundo.");
       return;
     }
+    setLimitReached(false);
     await sendMessage({ text: input });
     setInput("");
   }
@@ -121,18 +134,29 @@ function AiPage() {
           )}
         </div>
 
+        {limitReached && (
+          <div className="mx-4 mb-2 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-accent/40 px-4 py-3 text-sm">
+            <span>Alcanzaste el límite diario de mensajes del plan Starter.</span>
+            <Link
+              to="/settings"
+              className="shrink-0 rounded-lg bg-gradient-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+            >
+              Actualizar a Pro
+            </Link>
+          </div>
+        )}
         <form onSubmit={handleSend} className="flex gap-2 border-t bg-background/60 p-4">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={sessionReady ? "Pregunta algo sobre tu negocio..." : "Cargando sesión..."}
-            disabled={loading || !sessionReady}
+            disabled={loading || !sessionReady || limitReached}
             className="h-11"
           />
           <Button
             type="submit"
             size="lg"
-            disabled={loading || !sessionReady || !input.trim()}
+            disabled={loading || !sessionReady || !input.trim() || limitReached}
             className="shadow-elegant"
           >
             <Send className="h-4 w-4" />
