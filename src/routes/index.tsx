@@ -73,7 +73,7 @@ function Hero() {
             </Link>
             <Button size="lg" variant="outline" className="h-12 px-6">Ver demo</Button>
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">14 días Pro gratis · Cancela cuando quieras</p>
+          <p className="mt-4 text-xs text-muted-foreground">15 días gratis · Cancela cuando quieras</p>
         </div>
 
         {/* Mockup */}
@@ -216,18 +216,17 @@ function Features() {
 
 function Pricing() {
   const plans = [
-    { n: "Starter", p: "Gratis", f: ["1 negocio", "Hasta 50 productos", "Ventas e inventario", "1 usuario"], c: "" },
-    { n: "Pro", p: "$29.990", per: "/mes", f: ["Negocios ilimitados", "Productos ilimitados", "IA + Cotizaciones", "Automatizaciones", "5 usuarios"], c: "Más popular", hi: true },
-    { n: "Enterprise", p: "Personalizado", f: ["Soporte dedicado", "SLA y SAML SSO", "Integración a medida", "Usuarios ilimitados"], c: "" },
+    { n: "Prueba gratuita", p: "Gratis", per: "15 días", f: ["Acceso completo a todos los módulos", "Sin tarjeta de crédito", "Cancela cuando quieras"], c: "" },
+    { n: "Pro", p: "$29.990", per: "/mes", f: ["Todo lo de la prueba, sin límite de tiempo", "Negocios y productos ilimitados", "IA, Caja, WhatsApp y Marketing", "Automatizaciones y equipo"], c: "Más popular", hi: true },
   ];
   return (
     <section id="pricing" className="py-24">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Precios simples y transparentes</h2>
-          <p className="mt-4 text-muted-foreground">Empieza gratis. Crece a tu ritmo.</p>
+          <p className="mt-4 text-muted-foreground">Un solo nivel de funciones. Prueba 15 días gratis, luego Pro.</p>
         </div>
-        <div className="mx-auto mt-16 grid max-w-5xl gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-16 grid max-w-3xl gap-6 md:grid-cols-2">
           {plans.map((p) => (
             <Card key={p.n} className={`relative p-8 transition-transform hover:-translate-y-1 ${p.hi ? "border-primary shadow-elegant md:scale-105" : "border-border/60"}`}>
               {p.c && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-primary">{p.c}</Badge>}
@@ -289,7 +288,7 @@ function Testimonials() {
 function FAQ() {
   const qs = [
     { q: "¿Mis datos están seguros?", a: "Sí. Usamos cifrado en tránsito y en reposo, aislamiento por negocio con Row-Level Security, y cumplimos con la Ley 19.628 de protección de datos personales en Chile." },
-    { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. El plan Starter es gratuito y los planes pagos incluyen 14 días de prueba sin tarjeta." },
+    { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. Tienes 15 días de prueba gratuita con acceso completo, sin tarjeta." },
     { q: "¿Puedo conectar Instagram y Facebook?", a: "Sí, mediante tu propia cuenta de Meta Business. Te guiamos en la conexión." },
     { q: "¿Funciona para mi rubro?", a: "Sí. Nüva One está hecho para cualquier rubro: retail, servicios, manufactura, gastronomía, construcción, salud y más." },
     { q: "¿Puedo cancelar cuando quiera?", a: "Sí. Sin contratos ni cargos por cancelación." },

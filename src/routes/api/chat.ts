@@ -142,7 +142,7 @@ export const Route = createFileRoute("/api/chat")({
             if (allowed === false) {
               return new Response(
                 JSON.stringify({
-                  error: `Alcanzaste el límite de ${STARTER_DAILY_AI_LIMIT} mensajes diarios del plan Starter. Actualiza a Pro para uso ilimitado.`,
+                  error: `Alcanzaste el límite de ${STARTER_DAILY_AI_LIMIT} mensajes diarios de la prueba gratuita. Actualiza a Pro para uso ilimitado.`,
                 }),
                 { status: 429 },
               );

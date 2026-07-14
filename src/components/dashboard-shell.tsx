@@ -22,6 +22,7 @@ import {
   Plus,
   Menu,
   Calculator,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { active, businesses, setActiveId } = useActiveBusiness();
+
+  const plan = (active as any)?.plan ?? "starter";
+  const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
+  const trialDaysLeft = createdAt
+    ? Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000))
+    : 15;
+  const trialExpired = plan !== "pro" && trialDaysLeft <= 0;
+  const isSettingsRoute = pathname.startsWith("/settings");
 
   async function logout() {
     await supabase.auth.signOut();
@@ -218,7 +227,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </DropdownMenu>
         </header>
 
-        <main className="flex-1 animate-fade-in-up p-4 pb-24 md:p-8 md:pb-8">{children}</main>
+        <main className="flex-1 animate-fade-in-up p-4 pb-24 md:p-8 md:pb-8">
+          {trialExpired && !isSettingsRoute ? <TrialExpiredScreen navigate={navigate} /> : children}
+        </main>
       </div>
 
       {/* Bottom tab bar — mobile only */}
@@ -305,6 +316,24 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="hidden md:block">
         <AiChatBubble />
       </div>
+    </div>
+  );
+}
+
+function TrialExpiredScreen({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent">
+        <Lock className="h-6 w-6 text-primary" />
+      </div>
+      <h2 className="text-xl font-bold">Tu prueba gratuita de 15 días terminó</h2>
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+        Actualiza a Pro para seguir usando Nüva One sin interrupciones — mantienes todos tus datos tal
+        como los dejaste.
+      </p>
+      <Button className="mt-5" onClick={() => navigate({ to: "/settings" })}>
+        Actualizar a Pro — $29.990/mes
+      </Button>
     </div>
   );
 }

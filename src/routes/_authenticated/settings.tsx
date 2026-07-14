@@ -61,7 +61,7 @@ function Settings() {
           <TabsTrigger value="business">Negocio</TabsTrigger>
           <TabsTrigger value="team">Equipo</TabsTrigger>
           <TabsTrigger value="security">Seguridad</TabsTrigger>
-          <TabsTrigger value="audit">Auditoría</TabsTrigger>
+          {canManage && <TabsTrigger value="audit">Auditoría</TabsTrigger>}
           <TabsTrigger value="billing">Facturación</TabsTrigger>
         </TabsList>
 
@@ -157,22 +157,26 @@ function Settings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="audit">
-          <Card className="p-6">
-            <div className="flex items-start gap-3">
-              <ClipboardList className="h-5 w-5 text-primary" />
-              <div className="flex-1">
-                <h3 className="font-semibold">Registro de auditoría</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Historial de cambios y acciones importantes en tu negocio.
-                </p>
-                <div className="mt-4">
-                  <AuditLogView />
+        {canManage && (
+          <TabsContent value="audit">
+            <Card className="p-6">
+              <div className="flex items-start gap-3">
+                <ClipboardList className="h-5 w-5 text-primary" />
+                <div className="flex-1">
+                  <h3 className="font-semibold">Registro de auditoría</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Quién hizo qué y cuándo — visible solo para propietarios y administradores. Cada
+                    venta, cambio de stock, cotización o gasto queda registrado automáticamente y no
+                    puede editarse ni borrarse, ni siquiera por un administrador.
+                  </p>
+                  <div className="mt-4">
+                    <AuditLogView />
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
-        </TabsContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="billing">
           <BillingTab />
@@ -190,6 +194,11 @@ function BillingTab() {
   const plan = (active as any)?.plan ?? "starter";
   const status = (active as any)?.subscription_status ?? "active";
   const isPro = plan === "pro";
+  const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
+  const trialDaysLeft = createdAt
+    ? Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000))
+    : 15;
+  const trialExpired = !isPro && trialDaysLeft <= 0;
 
   async function callBillingEndpoint(path: "checkout" | "portal") {
     if (!active) return;
@@ -215,42 +224,40 @@ function BillingTab() {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2">
-        <h3 className="font-semibold">Plan actual: {isPro ? "Pro" : "Starter"}</h3>
+        <h3 className="font-semibold">Plan actual: {isPro ? "Pro" : "Prueba gratuita"}</h3>
         <span
           className={
             isPro
               ? "rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground"
-              : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+              : trialExpired
+                ? "rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive"
+                : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
           }
         >
-          {status === "active" ? "Activo" : status}
+          {isPro ? (status === "active" ? "Activo" : status) : trialExpired ? "Vencida" : `${trialDaysLeft} días restantes`}
         </span>
       </div>
       <p className="mt-1 text-sm text-muted-foreground">
         {isPro
-          ? "Tienes acceso completo a todas las funciones Pro de Nüva One."
-          : "Plan gratuito: hasta 50 productos, 1 usuario, funciones básicas."}
+          ? "Tienes acceso completo a todas las funciones de Nüva One."
+          : trialExpired
+            ? "Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One."
+            : "Prueba gratuita de 15 días con acceso completo — sin tarjeta. Al terminar, necesitas el plan Pro para seguir usando la app."}
       </p>
 
-      {isPro ? (
-        <ul className="mt-4 space-y-2 text-sm">
-          <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
-          <li className="flex items-center gap-2">✅ Ventas, compras e inventario ilimitados</li>
-          <li className="flex items-center gap-2">✅ Asistente IA ilimitado</li>
-          <li className="flex items-center gap-2">✅ Automatizaciones con webhooks</li>
-          <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
-          <li className="flex items-center gap-2">✅ Indicadores y analítica avanzada</li>
-          <li className="flex items-center gap-2">✅ Marketing y generación de contenido IA</li>
-          <li className="flex items-center gap-2">✅ Roles de equipo (Owner, Admin, Staff, Viewer)</li>
-          <li className="flex items-center gap-2">✅ Soporte prioritario</li>
-        </ul>
-      ) : (
-        <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-          <li>— Hasta 50 productos</li>
-          <li>— 1 usuario</li>
-          <li>— Ventas e inventario básico</li>
-        </ul>
-      )}
+      <ul className="mt-4 space-y-2 text-sm">
+        <li className="flex items-center gap-2">✅ Negocios y productos ilimitados</li>
+        <li className="flex items-center gap-2">✅ Ventas, compras, inventario y Caja</li>
+        <li className="flex items-center gap-2">✅ Asistente IA</li>
+        <li className="flex items-center gap-2">✅ Automatizaciones y bot de WhatsApp</li>
+        <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
+        <li className="flex items-center gap-2">✅ Marketing con IA</li>
+        <li className="flex items-center gap-2">✅ Roles de equipo y auditoría</li>
+      </ul>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Todo Nüva One tiene un único nivel de funciones. La única diferencia entre Prueba gratuita y
+        Pro es el tiempo de acceso.
+      </p>
 
       {!canManage ? (
         <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
