@@ -23,11 +23,12 @@ import {
   Menu,
   Calculator,
   Lock,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveBusiness } from "@/lib/use-business";
+import { useActiveBusiness, useMyRole } from "@/lib/use-business";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -53,13 +54,9 @@ const nav = [
   { to: "/quotes", label: "Cotizaciones", icon: FileText },
   { to: "/automations", label: "Automatizaciones", icon: Workflow },
   { to: "/ai", label: "Asistente IA", icon: Sparkles },
+  { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true },
   { to: "/settings", label: "Configuración", icon: Settings },
 ] as const;
-
-const mobilePrimaryNav = nav.filter((n) =>
-  ["/dashboard", "/pos", "/inventory", "/ai"].includes(n.to),
-);
-const mobileMoreNav = nav.filter((n) => !mobilePrimaryNav.includes(n as never));
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -67,6 +64,13 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { active, businesses, setActiveId } = useActiveBusiness();
+  const { data: myRole } = useMyRole();
+  const canManage = myRole === "owner" || myRole === "admin";
+  const visibleNav = nav.filter((item) => !("adminOnly" in item && item.adminOnly) || canManage);
+  const mobilePrimaryNav = visibleNav.filter((n) =>
+    ["/dashboard", "/pos", "/inventory", "/ai"].includes(n.to),
+  );
+  const mobileMoreNav = visibleNav.filter((n) => !mobilePrimaryNav.includes(n));
 
   const plan = (active as any)?.plan ?? "starter";
   const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
@@ -140,7 +144,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         )}
 
         <nav className="flex-1 space-y-0.5 p-2">
-          {nav.map((item) => {
+          {visibleNav.map((item) => {
             const isActive = pathname === item.to;
             return (
               <Link
