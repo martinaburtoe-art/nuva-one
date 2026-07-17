@@ -1,3 +1,0 @@
-function e(e,t,n){if(typeof window>`u`)return;let r=n??(t[0]?Object.keys(t[0]).map(e=>({key:e,label:e})):[]),i=e=>{if(e==null)return``;let t=typeof e==`object`?JSON.stringify(e):String(e);return/[",\n\r]/.test(t)?`"${t.replace(/"/g,`""`)}"`:t},a=r.map(e=>i(e.label)).join(`,`),o=t.map(e=>r.map(t=>i(e[t.key])).join(`,`)).join(`
-`),s=`﻿`+a+`
-`+o,c=new Blob([s],{type:`text/csv;charset=utf-8;`}),l=URL.createObjectURL(c),u=document.createElement(`a`);u.href=l,u.download=e,document.body.appendChild(u),u.click(),document.body.removeChild(u),URL.revokeObjectURL(l)}export{e as t};
