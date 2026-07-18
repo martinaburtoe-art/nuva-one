@@ -12,7 +12,7 @@ import { toast } from "sonner";
 // can be unenrolled from here as well.
 type Factor = { id: string; friendly_name: string | null; status: string };
 
-export function MfaSetup() {
+export function MfaSetup({ onVerified }: { onVerified?: () => void } = {}) {
   const [factors, setFactors] = useState<Factor[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [enrolling, setEnrolling] = useState<{ id: string; qr: string; secret: string } | null>(
@@ -67,6 +67,7 @@ export function MfaSetup() {
     setEnrolling(null);
     setCode("");
     refresh();
+    onVerified?.();
   }
 
   async function unenroll(id: string) {

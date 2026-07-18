@@ -23,6 +23,7 @@ import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authenticated/purchases'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
+import { Route as AuthenticatedMfaRequiredRouteImport } from './routes/_authenticated/mfa-required'
 import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
@@ -106,6 +107,12 @@ const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   path: '/pos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMfaRequiredRoute =
+  AuthenticatedMfaRequiredRouteImport.update({
+    id: '/mfa-required',
+    path: '/mfa-required',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
   id: '/marketing',
   path: '/marketing',
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/finance': typeof AuthenticatedFinanceRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/marketing': typeof AuthenticatedMarketingRoute
+  '/mfa-required': typeof AuthenticatedMfaRequiredRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
@@ -216,6 +224,7 @@ export interface FileRoutesByTo {
   '/finance': typeof AuthenticatedFinanceRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/marketing': typeof AuthenticatedMarketingRoute
+  '/mfa-required': typeof AuthenticatedMfaRequiredRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
@@ -246,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/finance': typeof AuthenticatedFinanceRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
+  '/_authenticated/mfa-required': typeof AuthenticatedMfaRequiredRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/purchases': typeof AuthenticatedPurchasesRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRoute
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/finance'
     | '/inventory'
     | '/marketing'
+    | '/mfa-required'
     | '/pos'
     | '/purchases'
     | '/quotes'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/finance'
     | '/inventory'
     | '/marketing'
+    | '/mfa-required'
     | '/pos'
     | '/purchases'
     | '/quotes'
@@ -333,6 +345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance'
     | '/_authenticated/inventory'
     | '/_authenticated/marketing'
+    | '/_authenticated/mfa-required'
     | '/_authenticated/pos'
     | '/_authenticated/purchases'
     | '/_authenticated/quotes'
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mfa-required': {
+      id: '/_authenticated/mfa-required'
+      path: '/mfa-required'
+      fullPath: '/mfa-required'
+      preLoaderRoute: typeof AuthenticatedMfaRequiredRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/marketing': {
       id: '/_authenticated/marketing'
       path: '/marketing'
@@ -567,6 +587,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
+  AuthenticatedMfaRequiredRoute: typeof AuthenticatedMfaRequiredRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedPurchasesRoute: typeof AuthenticatedPurchasesRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRoute
@@ -583,6 +604,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
+  AuthenticatedMfaRequiredRoute: AuthenticatedMfaRequiredRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedPurchasesRoute: AuthenticatedPurchasesRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRoute,
