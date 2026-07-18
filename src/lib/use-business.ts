@@ -66,6 +66,23 @@ export function useActiveBusiness() {
 
 export type MemberRole = "owner" | "admin" | "staff" | "viewer";
 
+/**
+ * Centralizes the "can this role manage the business" rule instead of
+ * repeating `role === 'owner' || role === 'admin'` inline at every call
+ * site (it was duplicated twice in settings.tsx before this). This is a
+ * UI-only convenience, same as useMyRole's own doc comment says -- RLS is
+ * still the real enforcement boundary, this only decides what buttons to
+ * show.
+ */
+export function canManageBusiness(role: MemberRole | null | undefined): boolean {
+  return role === "owner" || role === "admin";
+}
+
+/** Only the owner can do owner-only things: delete the business, transfer ownership, etc. */
+export function isBusinessOwner(role: MemberRole | null | undefined): boolean {
+  return role === "owner";
+}
+
 // Returns the current user's role within the active business, so the UI can
 // hide/disable actions (e.g. deleting the business, managing members) that
 // the database would reject anyway. RLS remains the real security boundary;

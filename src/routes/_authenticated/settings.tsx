@@ -7,7 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Shield, AlertTriangle, Lock, ClipboardList } from "lucide-react";
-import { useActiveBusiness, useMyRole } from "@/lib/use-business";
+import {
+  useActiveBusiness,
+  useMyRole,
+  canManageBusiness,
+  isBusinessOwner,
+} from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MfaSetup } from "@/components/mfa-setup";
@@ -21,8 +26,8 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function Settings() {
   const { active } = useActiveBusiness();
   const { data: myRole } = useMyRole();
-  const canManage = myRole === "owner" || myRole === "admin";
-  const isOwner = myRole === "owner";
+  const canManage = canManageBusiness(myRole);
+  const isOwner = isBusinessOwner(myRole);
   const navigate = useNavigate();
   const [name, setName] = useState(active?.name ?? "");
   const [taxId, setTaxId] = useState("");
@@ -189,7 +194,7 @@ function Settings() {
 function BillingTab() {
   const { active } = useActiveBusiness();
   const { data: myRole } = useMyRole();
-  const canManage = myRole === "owner" || myRole === "admin";
+  const canManage = canManageBusiness(myRole);
   const [loading, setLoading] = useState(false);
   const plan = (active as any)?.plan ?? "starter";
   const status = (active as any)?.subscription_status ?? "active";
