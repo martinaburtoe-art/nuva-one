@@ -1,0 +1,46 @@
+name: CI
+
+# Runs on every push and PR to main. This is the minimum safety net Nüva One
+# had zero of before: if this goes red, something is actually broken --
+# investigate before merging/deploying, don't just re-run it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test
+
+      # NOTE: this is a *static* build check (does the app compile/bundle),
+      # not a runtime check. Vite happily builds even with the VITE_SUPABASE_*
+      # vars unset -- it just inlines `undefined`, which would break at
+      # runtime, not at build time. Catching that class of bug needs a real
+      # E2E test hitting a live/staging Supabase project, which is the next
+      # step up from this baseline (see FASE 5 del roadmap), not something to
+      # fake here with placeholder values that would hide real misconfiguration.
+      - name: Build
+        run: npm run build
