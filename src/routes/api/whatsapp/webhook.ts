@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp.server";
+import { verifyHmacSha256Signature } from "@/lib/webhook-security.server";
 
 // Meta Cloud API webhook. One webhook URL + one verify token per Meta App
 // (configured in Meta for Developers), shared across every WhatsApp number
@@ -19,19 +19,6 @@ type WhatsAppConnection = {
   auto_general_ai: boolean;
   active: boolean;
 };
-
-function verifySignature(
-  rawBody: string,
-  signatureHeader: string | null,
-  appSecret: string,
-): boolean {
-  if (!signatureHeader) return false;
-  const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
-  const a = Buffer.from(expected);
-  const b = Buffer.from(signatureHeader);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
-}
 
 async function findConnection(phoneNumberId: string): Promise<WhatsAppConnection | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -147,7 +134,7 @@ export const Route = createFileRoute("/api/whatsapp/webhook")({
 
         if (appSecret) {
           const signature = request.headers.get("x-hub-signature-256");
-          if (!verifySignature(rawBody, signature, appSecret)) {
+          if (!verifyHmacSha256Signature(rawBody, signature, appSecret)) {
             return new Response("Invalid signature", { status: 401 });
           }
         }

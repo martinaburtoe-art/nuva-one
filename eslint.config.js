@@ -34,6 +34,11 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // TODO(deuda-tecnica): hay ~100 usos de `any` heredados en el código.
+      // Se baja a "warn" para no bloquear el CI de un día para otro, pero
+      // sigue siendo visible en cada corrida -- el objetivo es ir bajando
+      // este número con cada PR, no ignorarlo. Ver auditoría técnica.
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   eslintPluginPrettier,

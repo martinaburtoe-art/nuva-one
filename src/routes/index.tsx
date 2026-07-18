@@ -72,7 +72,8 @@ const STRUCTURED_DATA = {
           price: "29990",
           priceCurrency: "CLP",
           priceValidUntil: "2027-12-31",
-          description: "Negocios y productos ilimitados, IA, Caja, WhatsApp, Marketing y automatizaciones.",
+          description:
+            "Negocios y productos ilimitados, IA, Caja, WhatsApp, Marketing y automatizaciones.",
         },
       ],
     },
@@ -193,8 +194,8 @@ function Hero() {
             .
           </h1>
           <p className="mt-6 text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Inventario, ventas, finanzas, cotizaciones y marketing conectados en una sola
-            plataforma — con un asistente de IA que responde con los datos reales de tu negocio.
+            Inventario, ventas, finanzas, cotizaciones y marketing conectados en una sola plataforma
+            — con un asistente de IA que responde con los datos reales de tu negocio.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }}>
@@ -267,8 +268,8 @@ function Hero() {
           Nüva One es una plataforma de gestión todo-en-uno para pequeñas y medianas empresas en
           Chile y Latinoamérica. Integra inventario, ventas, finanzas, cotizaciones, compras y
           marketing en Meta en un solo sistema, con un asistente de inteligencia artificial que
-          responde preguntas usando los datos reales del negocio. Incluye 15 días de prueba
-          gratuita sin tarjeta de crédito.
+          responde preguntas usando los datos reales del negocio. Incluye 15 días de prueba gratuita
+          sin tarjeta de crédito.
         </p>
       </div>
     </section>
@@ -715,12 +716,10 @@ function ExitIntentPopup() {
         <Badge variant="secondary" className="mb-4 w-fit rounded-full px-3 py-1 text-xs">
           <Sparkles className="mr-1.5 h-3 w-3" /> Antes de irte
         </Badge>
-        <h3 className="text-xl font-semibold tracking-tight">
-          Tienes 15 días gratis esperándote
-        </h3>
+        <h3 className="text-xl font-semibold tracking-tight">Tienes 15 días gratis esperándote</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Acceso completo a inventario, ventas, finanzas y el asistente IA. Sin tarjeta de
-          crédito, cancela cuando quieras.
+          Acceso completo a inventario, ventas, finanzas y el asistente IA. Sin tarjeta de crédito,
+          cancela cuando quieras.
         </p>
         <Link to="/auth" search={{ mode: "signup" }} className="mt-6 block">
           <Button className="w-full" onClick={() => setOpen(false)}>
@@ -737,7 +736,6 @@ function Landing() {
     <div className="min-h-screen">
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
       />
       <Nav />
