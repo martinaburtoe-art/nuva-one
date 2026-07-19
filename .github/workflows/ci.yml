@@ -44,3 +44,23 @@ jobs:
       # fake here with placeholder values that would hide real misconfiguration.
       - name: Build
         run: npm run build
+
+  database-tests:
+    name: pgTAP database tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Spins up a throwaway local Postgres (via Docker, already available
+      # on this runner), applies every migration in supabase/migrations,
+      # then runs every *.sql file in supabase/tests/database with pgTAP.
+      # Nothing here touches the real project -- this is a brand new,
+      # disposable database created and destroyed within this job.
+      - name: Run pgTAP tests
+        run: supabase test db
