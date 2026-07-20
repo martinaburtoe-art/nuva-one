@@ -96,6 +96,37 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
         let skipped = 0;
         const expired = expiredQuotes?.length ?? 0;
 
+        // Batch-fetch followups for ALL candidates in one round trip instead of
+        // one query per quote inside the loop below (was N+1: with e.g. 200
+        // candidates that's 200 extra sequential DB calls on every cron run).
+        const candidateIds = (candidates ?? []).map((q) => q.id);
+        const followupsByQuote = new Map<string, { id: string; sent_at: string }[]>();
+        if (candidateIds.length > 0) {
+          const { data: allFollowups } = await supabaseAdmin
+            .from("quote_followups")
+            .select("id, quote_id, sent_at")
+            .in("quote_id", candidateIds)
+            .order("sent_at", { ascending: false });
+          for (const f of allFollowups ?? []) {
+            const list = followupsByQuote.get(f.quote_id) ?? [];
+            list.push({ id: f.id, sent_at: f.sent_at });
+            followupsByQuote.set(f.quote_id, list);
+          }
+        }
+
+        // Cache WhatsApp connections per business_id -- multiple quotes usually
+        // belong to the same business, so this collapses repeat lookups too.
+        const connectionByBusiness = new Map<
+          string,
+          Awaited<ReturnType<typeof findActiveWhatsAppConnection>>
+        >();
+        async function getConnection(businessId: string) {
+          if (!connectionByBusiness.has(businessId)) {
+            connectionByBusiness.set(businessId, await findActiveWhatsAppConnection(businessId));
+          }
+          return connectionByBusiness.get(businessId) ?? null;
+        }
+
         for (const quote of candidates ?? []) {
           if (quote.valid_until && quote.valid_until < todayIso) continue; // ya expiró arriba
 
@@ -106,19 +137,17 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
             continue;
           }
 
-          const { data: recentFollowups } = await supabaseAdmin
-            .from("quote_followups")
-            .select("id, sent_at")
-            .eq("quote_id", quote.id)
-            .order("sent_at", { ascending: false })
-            .limit(MAX_FOLLOWUPS_PER_QUOTE);
+          const recentFollowups = (followupsByQuote.get(quote.id) ?? []).slice(
+            0,
+            MAX_FOLLOWUPS_PER_QUOTE,
+          );
 
-          if ((recentFollowups?.length ?? 0) >= MAX_FOLLOWUPS_PER_QUOTE) {
+          if (recentFollowups.length >= MAX_FOLLOWUPS_PER_QUOTE) {
             skipped++;
             continue;
           }
 
-          const lastSentAt = recentFollowups?.[0]?.sent_at;
+          const lastSentAt = recentFollowups[0]?.sent_at;
           if (lastSentAt) {
             const daysSinceLast = (Date.now() - new Date(lastSentAt).getTime()) / 86_400_000;
             if (daysSinceLast < FOLLOWUP_COOLDOWN_DAYS) {
@@ -146,7 +175,7 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
             daysSinceSent,
           );
 
-          const connection = await findActiveWhatsAppConnection(quote.business_id);
+          const connection = await getConnection(quote.business_id);
           let status: "sent" | "failed" = "failed";
           if (connection) {
             const ok = await sendWhatsAppMessage(

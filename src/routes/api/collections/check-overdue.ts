@@ -87,6 +87,37 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
         let sent = 0;
         let skipped = 0;
 
+        // Batch-fetch reminders for ALL overdue sales in one round trip instead
+        // of one query per sale inside the loop below (N+1: e.g. 300 overdue
+        // sales meant 300 extra sequential DB calls on every cron run).
+        const saleIds = overdueSales.map((s) => s.id);
+        const remindersBySale = new Map<string, { id: string; sent_at: string }[]>();
+        if (saleIds.length > 0) {
+          const { data: allReminders } = await supabaseAdmin
+            .from("collection_reminders")
+            .select("id, sale_id, sent_at")
+            .in("sale_id", saleIds)
+            .order("sent_at", { ascending: false });
+          for (const r of allReminders ?? []) {
+            const list = remindersBySale.get(r.sale_id) ?? [];
+            list.push({ id: r.id, sent_at: r.sent_at });
+            remindersBySale.set(r.sale_id, list);
+          }
+        }
+
+        // Cache WhatsApp connections per business_id -- multiple sales usually
+        // belong to the same business, so this collapses repeat lookups too.
+        const connectionByBusiness = new Map<
+          string,
+          Awaited<ReturnType<typeof findActiveWhatsAppConnection>>
+        >();
+        async function getConnection(businessId: string) {
+          if (!connectionByBusiness.has(businessId)) {
+            connectionByBusiness.set(businessId, await findActiveWhatsAppConnection(businessId));
+          }
+          return connectionByBusiness.get(businessId) ?? null;
+        }
+
         for (const sale of overdueSales) {
           const customerPhone = (sale as any).customers?.phone;
           const businessName = (sale as any).businesses?.name ?? "tu proveedor";
@@ -95,19 +126,17 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
             continue; // No hay teléfono asociado al cliente, no se puede recordar por WhatsApp.
           }
 
-          const { data: recentReminders } = await supabaseAdmin
-            .from("collection_reminders")
-            .select("id, sent_at")
-            .eq("sale_id", sale.id)
-            .order("sent_at", { ascending: false })
-            .limit(MAX_REMINDERS_PER_SALE);
+          const recentReminders = (remindersBySale.get(sale.id) ?? []).slice(
+            0,
+            MAX_REMINDERS_PER_SALE,
+          );
 
-          if ((recentReminders?.length ?? 0) >= MAX_REMINDERS_PER_SALE) {
+          if (recentReminders.length >= MAX_REMINDERS_PER_SALE) {
             skipped++;
             continue; // Ya se enviaron los recordatorios máximos para esta venta.
           }
 
-          const lastSentAt = recentReminders?.[0]?.sent_at;
+          const lastSentAt = recentReminders[0]?.sent_at;
           if (lastSentAt) {
             const daysSinceLast = (Date.now() - new Date(lastSentAt).getTime()) / 86_400_000;
             if (daysSinceLast < REMINDER_COOLDOWN_DAYS) {
@@ -128,7 +157,7 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
             daysOverdue,
           );
 
-          const connection = await findActiveWhatsAppConnection(sale.business_id);
+          const connection = await getConnection(sale.business_id);
           let status: "sent" | "failed" = "failed";
           if (connection) {
             const ok = await sendWhatsAppMessage(
