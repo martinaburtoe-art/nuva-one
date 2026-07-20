@@ -257,7 +257,10 @@ function BillingTab() {
       </p>
 
       <ul className="mt-4 space-y-2 text-sm">
-        <li className="flex items-center gap-2">✅ Negocios y productos ilimitados</li>
+        <li className="flex items-center gap-2">
+          ✅ {isPro ? "Productos ilimitados" : "Hasta 50 productos (ilimitados en Pro)"}
+        </li>
+        <li className="flex items-center gap-2">✅ Negocios ilimitados</li>
         <li className="flex items-center gap-2">✅ Ventas, compras, inventario y Caja</li>
         <li className="flex items-center gap-2">✅ Asistente IA</li>
         <li className="flex items-center gap-2">✅ Automatizaciones y bot de WhatsApp</li>
@@ -266,8 +269,8 @@ function BillingTab() {
         <li className="flex items-center gap-2">✅ Roles de equipo y auditoría</li>
       </ul>
       <p className="mt-2 text-xs text-muted-foreground">
-        Todo Nüva One tiene un único nivel de funciones. La única diferencia entre Prueba gratuita y
-        Pro es el tiempo de acceso.
+        Todo Nüva One tiene el mismo set de funciones. Las únicas diferencias entre Prueba gratuita
+        y Pro son el tiempo de acceso y el tope de 50 productos.
       </p>
 
       {!canManage ? (
