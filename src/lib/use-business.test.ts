@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageBusiness, isBusinessOwner } from "./use-business";
+import { canManageBusiness, canWriteOperations, isBusinessOwner } from "./use-business";
 
 describe("canManageBusiness", () => {
   it.each(["owner", "admin"] as const)("returns true for role '%s'", (role) => {
@@ -28,5 +28,23 @@ describe("isBusinessOwner", () => {
   it("returns false for null/undefined", () => {
     expect(isBusinessOwner(null)).toBe(false);
     expect(isBusinessOwner(undefined)).toBe(false);
+  });
+});
+
+describe("canWriteOperations", () => {
+  it.each(["owner", "admin", "staff"] as const)(
+    "returns true for role '%s' (mirrors RLS: owner/admin/staff can write)",
+    (role) => {
+      expect(canWriteOperations(role)).toBe(true);
+    },
+  );
+
+  it("returns false for 'viewer' (read-only, mirrors RLS policy)", () => {
+    expect(canWriteOperations("viewer")).toBe(false);
+  });
+
+  it("returns false for null/undefined (not yet loaded, or not a member)", () => {
+    expect(canWriteOperations(null)).toBe(false);
+    expect(canWriteOperations(undefined)).toBe(false);
   });
 });
