@@ -12,7 +12,6 @@ import {
   FileText,
   Workflow,
   Settings,
-  Search,
   Bell,
   LogOut,
   ChevronsLeft,
@@ -26,7 +25,6 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness, useMyRole } from "@/lib/use-business";
 import {
@@ -39,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AiChatBubble } from "@/components/ai-chat-bubble";
+import { GlobalSearch } from "@/components/global-search";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -190,16 +189,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </Link>
 
-          <div className="relative hidden max-w-md flex-1 md:block">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Buscar... (próximamente)"
-              onFocus={(e) => {
-                e.currentTarget.blur();
-                toast.info("La búsqueda global está en desarrollo");
-              }}
-            />
+          <div className="hidden max-w-md flex-1 md:block">
+            <GlobalSearch visibleNav={visibleNav} />
           </div>
 
           <div className="min-w-0 flex-1 truncate text-sm font-medium md:hidden">
