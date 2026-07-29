@@ -55,6 +55,15 @@ export async function getOrCreateConversation(
     .select("*")
     .single();
 
+  // Unique violation on idx_ai_conversations_active_unique means a
+  // concurrent request won the race and already created this exact
+  // conversation between our SELECT and our INSERT -- not a real error,
+  // just fetch the row it created and use that instead.
+  if (error?.code === "23505") {
+    const { data: winner } = await query.maybeSingle();
+    if (winner) return winner;
+  }
+
   if (error || !created) throw new Error(`No se pudo crear la conversación: ${error?.message}`);
   return created;
 }
