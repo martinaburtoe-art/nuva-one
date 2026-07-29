@@ -51,7 +51,7 @@ const nav = [
   { to: "/analytics", label: "Indicadores", icon: BarChart3 },
   { to: "/marketing", label: "Marketing", icon: Megaphone },
   { to: "/quotes", label: "Cotizaciones", icon: FileText },
-  { to: "/automations", label: "Automatizaciones", icon: Workflow },
+  { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow },
   { to: "/ai", label: "Asistente IA", icon: Sparkles },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true },
   { to: "/settings", label: "Configuración", icon: Settings },

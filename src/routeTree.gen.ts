@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SelectBusinessRouteImport } from './routes/select-business'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -46,6 +47,11 @@ const TermsRoute = TermsRouteImport.update({
 const SelectBusinessRoute = SelectBusinessRouteImport.update({
   id: '/select-business',
   path: '/select-business',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
   '/terms': typeof TermsRoute
   '/ai': typeof AuthenticatedAiRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
   '/terms': typeof TermsRoute
   '/ai': typeof AuthenticatedAiRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
   '/terms': typeof TermsRoute
   '/_authenticated/ai': typeof AuthenticatedAiRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/privacy'
+    | '/reset-password'
     | '/select-business'
     | '/terms'
     | '/ai'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/privacy'
+    | '/reset-password'
     | '/select-business'
     | '/terms'
     | '/ai'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/privacy'
+    | '/reset-password'
     | '/select-business'
     | '/terms'
     | '/_authenticated/ai'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SelectBusinessRoute: typeof SelectBusinessRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -392,6 +405,13 @@ declare module '@tanstack/react-router' {
       path: '/select-business'
       fullPath: '/select-business'
       preLoaderRoute: typeof SelectBusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -622,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SelectBusinessRoute: SelectBusinessRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,

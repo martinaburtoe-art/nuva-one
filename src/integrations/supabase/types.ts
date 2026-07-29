@@ -962,6 +962,41 @@ export type Database = {
           },
         ];
       };
+      whatsapp_owner_links: {
+        Row: {
+          active: boolean;
+          business_id: string;
+          created_at: string;
+          id: string;
+          owner_phone_number: string;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          business_id: string;
+          created_at?: string;
+          id?: string;
+          owner_phone_number: string;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          business_id?: string;
+          created_at?: string;
+          id?: string;
+          owner_phone_number?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_owner_links_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: true;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       whatsapp_messages: {
         Row: {
           body: string;
