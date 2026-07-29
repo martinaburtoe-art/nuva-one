@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -751,6 +752,7 @@ function Landing() {
       </main>
       <Footer />
       <ExitIntentPopup />
+      <PublicAiChatWidget />
     </div>
   );
 }
