@@ -7,3 +7,34 @@ export function createLovableAiGatewayProvider(apiKey: string) {
     headers: { "Lovable-API-Key": apiKey },
   });
 }
+
+// Groq exposes an OpenAI-compatible endpoint, so this reuses the exact same
+// adapter as Lovable above -- no new SDK dependency needed.
+export function createGroqProvider(apiKey: string) {
+  return createOpenAICompatible({
+    name: "groq",
+    baseURL: "https://api.groq.com/openai/v1",
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+}
+
+// Single entry point for every call site (web chat, WhatsApp webhook, quote
+// follow-ups, etc). Switching AI provider later (e.g. Groq free tier caps
+// out under load) means changing env vars only -- never touching call sites.
+export function getChatModel() {
+  const provider = (process.env.AI_PROVIDER ?? "groq").toLowerCase();
+
+  if (provider === "groq") {
+    const key = process.env.GROQ_API_KEY;
+    if (!key) throw new Error("GROQ_API_KEY no configurado");
+    return createGroqProvider(key)(process.env.GROQ_MODEL ?? "llama-3.1-8b-instant");
+  }
+
+  if (provider === "lovable") {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("LOVABLE_API_KEY no configurado");
+    return createLovableAiGatewayProvider(key)("google/gemini-3-flash-preview");
+  }
+
+  throw new Error(`Proveedor de IA desconocido: "${provider}"`);
+}

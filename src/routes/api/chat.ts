@@ -1,9 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import {
+  convertToModelMessages,
+  generateText,
+  streamText,
+  type ModelMessage,
+  type UIMessage,
+} from "ai";
 import { createClient } from "@supabase/supabase-js";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { getChatModel } from "@/lib/ai-gateway.server";
 import { wrapAsDataBlock } from "@/lib/prompt-security.server";
+import {
+  appendMessage,
+  buildContextMessages,
+  getOrCreateConversation,
+  maybeSummarize,
+} from "@/lib/ai-memory.server";
 import type { Database } from "@/integrations/supabase/types";
+
+// Pulls the plain text out of the last user message in a UIMessage[] array,
+// tolerating both the `parts` shape (current AI SDK) and a legacy `content`
+// string, in case older client messages are still floating in local state.
+function lastUserText(messages: UIMessage[]): string {
+  const last = [...messages].reverse().find((m) => m.role === "user");
+  if (!last) return "";
+  const anyLast = last as any;
+  if (typeof anyLast.content === "string") return anyLast.content;
+  if (Array.isArray(anyLast.parts)) {
+    return anyLast.parts
+      .filter((p: any) => p.type === "text")
+      .map((p: any) => p.text)
+      .join("\n");
+  }
+  return "";
+}
 
 const TRIAL_DAYS = 15;
 
@@ -93,7 +122,8 @@ async function buildBusinessContext(token: string, businessId: string) {
     business: business.data,
     summary: {
       plan: business.data.plan,
-      trial_days_left: business.data.plan === "pro" ? null : trialDaysLeft(business.data.created_at),
+      trial_days_left:
+        business.data.plan === "pro" ? null : trialDaysLeft(business.data.created_at),
       net_cash_flow: income - expense,
       total_income: income,
       total_expense: expense,
@@ -118,10 +148,6 @@ export const Route = createFileRoute("/api/chat")({
       POST: async ({ request }) => {
         const SUPABASE_URL = process.env.SUPABASE_URL;
         const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) {
-          return new Response(JSON.stringify({ error: "AI no configurado" }), { status: 500 });
-        }
         if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
           return new Response(JSON.stringify({ error: "Configuración de Supabase incompleta" }), {
             status: 500,
@@ -199,7 +225,8 @@ export const Route = createFileRoute("/api/chat")({
             const arr = out[key];
             if (Array.isArray(arr) && arr.length > 5) {
               out[key] = arr.slice(0, 5);
-              out[`${key}_note`] = `Mostrando solo los 5 más recientes de ${arr.length} (recortado por tamaño).`;
+              out[`${key}_note`] =
+                `Mostrando solo los 5 más recientes de ${arr.length} (recortado por tamaño).`;
               json = JSON.stringify(out);
             }
           }
@@ -223,8 +250,30 @@ export const Route = createFileRoute("/api/chat")({
           }
         }
 
-        const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        let model;
+        try {
+          model = getChatModel();
+        } catch (err: any) {
+          console.error("AI provider error", err);
+          return new Response(JSON.stringify({ error: "AI no configurado" }), { status: 500 });
+        }
+
+        // Server-owned memory: this business+user's conversation, shared
+        // conceptually with WhatsApp (same tables, different channel/ref).
+        // Sessions auto-expire after 7 days of inactivity (see ai-memory.server.ts).
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const conversation = businessId
+          ? await getOrCreateConversation(supabaseAdmin, {
+              businessId,
+              channel: "web",
+              userId: claims.claims.sub,
+            })
+          : null;
+
+        const userText = lastUserText(messages);
+        if (conversation && userText) {
+          await appendMessage(supabaseAdmin, conversation.id, "user", userText);
+        }
 
         const system = `Eres el asistente de Nüva One, una plataforma de gestión para PYMEs en Chile y Latinoamérica. Respondes en español neutro de LatAm, en tono profesional pero cercano. Eres breve y accionable.
 
@@ -239,10 +288,37 @@ SEGURIDAD (no negociable):
 ${contextBlock}`;
 
         try {
+          // When there's a live conversation, the model sees server-owned
+          // memory (rolling summary + last 10 messages) instead of whatever
+          // the client happens to have in local state -- this is what makes
+          // memory consistent across devices/tabs and, conceptually, with
+          // WhatsApp. Falls back to the client-sent array only if there's no
+          // business context to hang a conversation off of.
+          const modelMessages: ModelMessage[] = conversation
+            ? ([
+                ...(await buildContextMessages(supabaseAdmin, conversation)),
+                { role: "user" as const, content: userText },
+              ] as ModelMessage[])
+            : await convertToModelMessages(messages);
+
           const result = streamText({
             model,
             system,
-            messages: await convertToModelMessages(messages),
+            messages: modelMessages,
+            onFinish: async ({ text }) => {
+              if (!conversation) return;
+              await appendMessage(
+                supabaseAdmin,
+                conversation.id,
+                "assistant",
+                text,
+                process.env.GROQ_MODEL ?? "llama-3.1-8b-instant",
+              );
+              await maybeSummarize(supabaseAdmin, conversation, async (prompt) => {
+                const { text: summary } = await generateText({ model, prompt });
+                return summary;
+              });
+            },
           });
           return result.toUIMessageStreamResponse({ originalMessages: messages });
         } catch (err: any) {

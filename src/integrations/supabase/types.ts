@@ -8,6 +8,91 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          business_id: string;
+          channel: Database["public"]["Enums"]["ai_channel"];
+          created_at: string;
+          external_ref: string | null;
+          id: string;
+          last_message_at: string;
+          status: string;
+          summary: string | null;
+          summary_up_to: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          business_id: string;
+          channel: Database["public"]["Enums"]["ai_channel"];
+          created_at?: string;
+          external_ref?: string | null;
+          id?: string;
+          last_message_at?: string;
+          status?: string;
+          summary?: string | null;
+          summary_up_to?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          business_id?: string;
+          channel?: Database["public"]["Enums"]["ai_channel"];
+          created_at?: string;
+          external_ref?: string | null;
+          id?: string;
+          last_message_at?: string;
+          status?: string;
+          summary?: string | null;
+          summary_up_to?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ai_messages: {
+        Row: {
+          content: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          model: string | null;
+          role: Database["public"]["Enums"]["ai_role"];
+          tokens_used: number | null;
+        };
+        Insert: {
+          content: string;
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          model?: string | null;
+          role: Database["public"]["Enums"]["ai_role"];
+          tokens_used?: number | null;
+        };
+        Update: {
+          content?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          model?: string | null;
+          role?: Database["public"]["Enums"]["ai_role"];
+          tokens_used?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "ai_conversations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_log: {
         Row: {
           action: string;
@@ -934,6 +1019,8 @@ export type Database = {
       };
     };
     Enums: {
+      ai_channel: "web" | "whatsapp";
+      ai_role: "user" | "assistant" | "system";
       business_industry:
         | "retail"
         | "food"
@@ -1072,6 +1159,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_channel: ["web", "whatsapp"],
+      ai_role: ["user", "assistant", "system"],
       business_industry: [
         "retail",
         "food",
