@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
@@ -24,13 +24,21 @@ export function PublicAiChatWidget() {
   const [authChecked, setAuthChecked] = useState(false);
   const [activeId] = useActiveBusinessId();
 
+  // Mirrors ai-chat-bubble.tsx: refs feed a per-request fetch so the
+  // Authorization header is never frozen at the pre-login `null` state.
+  // `token`/`activeId` state stays for gating the UI (signed_out/no_business/ready).
+  const tokenRef = useRef<string | null>(null);
+  const businessIdRef = useRef<string>("");
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setToken(data.session?.access_token ?? null);
+      tokenRef.current = data.session?.access_token ?? null;
+      setToken(tokenRef.current);
       setAuthChecked(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setToken(session?.access_token ?? null);
+      tokenRef.current = session?.access_token ?? null;
+      setToken(tokenRef.current);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -52,6 +60,9 @@ export function PublicAiChatWidget() {
   });
 
   const active = businesses?.find((b) => b.id === activeId) ?? businesses?.[0] ?? null;
+  useEffect(() => {
+    businessIdRef.current = active?.id ?? "";
+  }, [active?.id]);
 
   const state: "loading" | "signed_out" | "no_business" | "ready" = !authChecked
     ? "loading"
@@ -66,13 +77,22 @@ export function PublicAiChatWidget() {
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      headers: {
-        "x-business-id": active?.id ?? "",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        headers.set("x-business-id", businessIdRef.current);
+        if (tokenRef.current) headers.set("Authorization", `Bearer ${tokenRef.current}`);
+        return fetch(input, { ...init, headers });
       },
     }),
     onError: (err) => {
-      toast.error(err.message || "Error al conectar con el asistente. Intenta nuevamente.");
+      let msg = err.message || "Error al conectar con el asistente. Intenta nuevamente.";
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed?.error) msg = parsed.error;
+      } catch {
+        // err.message wasn't JSON -- use it as-is
+      }
+      toast.error(msg);
     },
   });
 

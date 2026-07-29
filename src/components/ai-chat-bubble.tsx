@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
@@ -12,13 +12,25 @@ import { toast } from "sonner";
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [token, setToken] = useState<string | null>(null);
   const { active } = useActiveBusiness();
 
+  // Read auth/business via refs + a custom fetch (evaluated per-request)
+  // instead of a static headers object -- useChat only captures `transport`
+  // on its first render, so a plain headers object freezes in the
+  // pre-login `token === null` state forever, sending every request with
+  // no Authorization header and failing with "No autenticado".
+  const tokenRef = useRef<string | null>(null);
+  const businessIdRef = useRef<string>("");
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? null));
+    businessIdRef.current = active?.id ?? "";
+  }, [active?.id]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      tokenRef.current = data.session?.access_token ?? null;
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setToken(session?.access_token ?? null);
+      tokenRef.current = session?.access_token ?? null;
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -26,13 +38,22 @@ export function AiChatBubble() {
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      headers: {
-        "x-business-id": active?.id ?? "",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        headers.set("x-business-id", businessIdRef.current);
+        if (tokenRef.current) headers.set("Authorization", `Bearer ${tokenRef.current}`);
+        return fetch(input, { ...init, headers });
       },
     }),
     onError: (err) => {
-      toast.error(err.message || "Error al conectar con el asistente. Intenta nuevamente.");
+      let msg = err.message || "Error al conectar con el asistente. Intenta nuevamente.";
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed?.error) msg = parsed.error;
+      } catch {
+        // err.message wasn't JSON -- use it as-is
+      }
+      toast.error(msg);
     },
   });
 
