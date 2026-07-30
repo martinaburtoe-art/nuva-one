@@ -10,6 +10,7 @@ import { useActiveBusinessId } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { extractChatErrorMessage } from "@/lib/chat-error";
 
 // Same assistant as the in-app AiChatBubble (same /api/chat endpoint, same
 // shared ai_conversations/ai_messages memory), but mountable on the public
@@ -85,14 +86,7 @@ export function PublicAiChatWidget() {
       },
     }),
     onError: (err) => {
-      let msg = err.message || "Error al conectar con el asistente. Intenta nuevamente.";
-      try {
-        const parsed = JSON.parse(err.message);
-        if (parsed?.error) msg = parsed.error;
-      } catch {
-        // err.message wasn't JSON -- use it as-is
-      }
-      toast.error(msg);
+      toast.error(extractChatErrorMessage(err.message));
     },
   });
 

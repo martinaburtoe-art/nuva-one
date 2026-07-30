@@ -8,6 +8,7 @@ import { useActiveBusiness } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { extractChatErrorMessage } from "@/lib/chat-error";
 
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
@@ -46,14 +47,7 @@ export function AiChatBubble() {
       },
     }),
     onError: (err) => {
-      let msg = err.message || "Error al conectar con el asistente. Intenta nuevamente.";
-      try {
-        const parsed = JSON.parse(err.message);
-        if (parsed?.error) msg = parsed.error;
-      } catch {
-        // err.message wasn't JSON -- use it as-is
-      }
-      toast.error(msg);
+      toast.error(extractChatErrorMessage(err.message));
     },
   });
 
@@ -62,6 +56,21 @@ export function AiChatBubble() {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+
+    // Belt-and-suspenders: re-check the session right before sending instead
+    // of only trusting the mount-time effect. Closes the one real gap in the
+    // ref approach -- a token that expired or hadn't loaded yet by the time
+    // the user hit send -- so this request is never fired with a missing
+    // Authorization header (which is what "No autenticado" means).
+    if (!tokenRef.current) {
+      const { data } = await supabase.auth.getSession();
+      tokenRef.current = data.session?.access_token ?? null;
+      if (!tokenRef.current) {
+        toast.error("Tu sesión expiró. Vuelve a iniciar sesión para usar el asistente.");
+        return;
+      }
+    }
+
     await sendMessage({ text: input });
     setInput("");
   }
