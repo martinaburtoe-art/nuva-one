@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/billing/portal")({
     handlers: {
       POST: async ({ request }) => {
         const secretKey = process.env.STRIPE_SECRET_KEY;
-        const siteUrl = process.env.SITE_URL ?? "https://nuvaone.lovable.app";
+        const siteUrl = process.env.SITE_URL ?? "https://nuva-one.vercel.app";
         if (!secretKey)
           return new Response(JSON.stringify({ error: "Billing no configurado" }), { status: 500 });
 

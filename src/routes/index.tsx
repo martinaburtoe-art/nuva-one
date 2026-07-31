@@ -56,7 +56,7 @@ const STRUCTURED_DATA = {
       name: "Nüva One",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
-      url: "https://nuvaone.lovable.app",
+      url: "https://nuva-one.vercel.app",
       description:
         "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones, marketing y automatización con IA.",
       offers: [
@@ -81,7 +81,7 @@ const STRUCTURED_DATA = {
     {
       "@type": "Organization",
       name: "Nüva One",
-      url: "https://nuvaone.lovable.app",
+      url: "https://nuva-one.vercel.app",
     },
     {
       "@type": "FAQPage",
@@ -118,7 +118,7 @@ export const Route = createFileRoute("/")({
           "Reemplaza planillas sueltas por una plataforma con inventario, ventas, finanzas, cotizaciones, marketing y un asistente IA. 15 días gratis, sin tarjeta.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://nuvaone.lovable.app/" }],
+    links: [{ rel: "canonical", href: "https://nuva-one.vercel.app/" }],
   }),
   component: Landing,
 });
