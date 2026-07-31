@@ -13,8 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageCircle, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageCircle, Plus, Trash2, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { toast } from "sonner";
+import { ShiftsWeekGrid } from "@/components/shifts/shifts-week-grid";
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -38,6 +39,7 @@ function getWeekStart(offsetWeeks = 0): string {
 
 export function ShiftsTable({ businessId }: { businessId: string }) {
   const [weekOffset, setWeekOffset] = useState(0);
+  const [view, setView] = useState<"dashboard" | "table">("dashboard");
   const weekStart = useMemo(() => getWeekStart(weekOffset), [weekOffset]);
   const queryClient = useQueryClient();
 
@@ -135,9 +137,29 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={sendAllWhatsApp} disabled={!shifts?.length}>
-          <MessageCircle className="h-4 w-4 mr-2" /> Enviar todos por WhatsApp
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-md border p-0.5">
+            <Button
+              variant={view === "dashboard" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2"
+              onClick={() => setView("dashboard")}
+            >
+              <LayoutGrid className="h-3.5 w-3.5 mr-1" /> Dashboard
+            </Button>
+            <Button
+              variant={view === "table" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2"
+              onClick={() => setView("table")}
+            >
+              <List className="h-3.5 w-3.5 mr-1" /> Tabla
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" onClick={sendAllWhatsApp} disabled={!shifts?.length}>
+            <MessageCircle className="h-4 w-4 mr-2" /> Enviar todos por WhatsApp
+          </Button>
+        </div>
       </div>
 
       <Card className="p-4 space-y-3">
@@ -180,17 +202,21 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
         </Button>
       </Card>
 
-      <Card className="p-0 overflow-hidden">
-        {isLoading ? (
-          <div className="p-4 space-y-2">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-          </div>
-        ) : !shifts?.length ? (
-          <p className="p-6 text-sm text-muted-foreground text-center">
+      {isLoading ? (
+        <Card className="p-4 space-y-2">
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-full" />
+        </Card>
+      ) : !shifts?.length ? (
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground text-center">
             Sin turnos asignados esta semana.
           </p>
-        ) : (
+        </Card>
+      ) : view === "dashboard" ? (
+        <ShiftsWeekGrid shifts={shifts} onDelete={deleteShift} onWhatsApp={sendWhatsApp} />
+      ) : (
+        <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -230,8 +256,8 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
               ))}
             </TableBody>
           </Table>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
