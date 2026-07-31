@@ -124,11 +124,24 @@ export function MfaSetup({ onVerified }: { onVerified?: () => void } = {}) {
       ) : enrolling ? (
         <div className="space-y-3">
           <div className="rounded-md border bg-white p-4">
-            <div
-              className="mx-auto h-44 w-44"
-              // Supabase returns a full <svg>...</svg> string; render it directly
-              dangerouslySetInnerHTML={{ __html: enrolling.qr }}
-            />
+            {enrolling.qr.startsWith("data:") ? (
+              // Current Supabase versions return a full data URI
+              // (data:image/svg+xml;utf-8,<svg>...) -- render as an image
+              // src, not raw HTML, or the URI text prefix shows up as
+              // literal text overlapping the code.
+              <img
+                src={enrolling.qr}
+                alt="Código QR para activar 2FA"
+                className="mx-auto h-44 w-44"
+              />
+            ) : (
+              // Older/self-hosted Supabase versions return a bare
+              // <svg>...</svg> string instead.
+              <div
+                className="mx-auto h-44 w-44"
+                dangerouslySetInnerHTML={{ __html: enrolling.qr }}
+              />
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             Escanea con Google Authenticator, 1Password o Authy. También puedes ingresar la clave
