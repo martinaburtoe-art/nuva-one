@@ -32,13 +32,32 @@ export function MfaSetup({ onVerified }: { onVerified?: () => void } = {}) {
 
   async function startEnroll() {
     setLoading(true);
+
+    // Clean up any orphaned factor from a previous enrollment that was
+    // started but never verified (closed tab, switched apps and lost the
+    // code, etc.) -- Supabase requires a unique friendly_name per user, and
+    // otherwise every retry the same day would collide with the leftover
+    // and fail with "A factor with the friendly name ... already exists",
+    // permanently blocking enrollment with no way to recover from this screen.
+    const stale = (factors ?? []).filter((f) => f.status !== "verified");
+    for (const f of stale) {
+      await supabase.auth.mfa.unenroll({ factorId: f.id });
+    }
+
+    // Include the time (not just the date) so two enrollments on the same
+    // day can never collide on friendly_name again, regardless of cleanup.
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",
-      friendlyName: `Nüva One ${new Date().toLocaleDateString("es-CL")}`,
+      friendlyName: `Nüva One ${new Date().toLocaleString("es-CL")}`,
     });
     setLoading(false);
     if (error || !data) {
-      toast.error(error?.message || "No se pudo iniciar el registro");
+      toast.error(
+        error?.message?.includes("already exists")
+          ? "Ya existe un intento de activación previo. Intenta de nuevo."
+          : "No se pudo iniciar el registro de 2FA. Intenta de nuevo.",
+      );
+      refresh();
       return;
     }
     setEnrolling({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
@@ -50,7 +69,7 @@ export function MfaSetup({ onVerified }: { onVerified?: () => void } = {}) {
     const challenge = await supabase.auth.mfa.challenge({ factorId: enrolling.id });
     if (challenge.error || !challenge.data) {
       setLoading(false);
-      toast.error(challenge.error?.message || "Error al desafiar el código");
+      toast.error("Error al generar el código de verificación. Intenta de nuevo.");
       return;
     }
     const { error } = await supabase.auth.mfa.verify({
@@ -60,7 +79,7 @@ export function MfaSetup({ onVerified }: { onVerified?: () => void } = {}) {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message || "Código incorrecto");
+      toast.error("Código incorrecto. Verifica la hora de tu teléfono e intenta de nuevo.");
       return;
     }
     toast.success("2FA activado");
@@ -73,7 +92,7 @@ export function MfaSetup({ onVerified }: { onVerified?: () => void } = {}) {
   async function unenroll(id: string) {
     if (!confirm("¿Desactivar 2FA?")) return;
     const { error } = await supabase.auth.mfa.unenroll({ factorId: id });
-    if (error) toast.error(error.message);
+    if (error) toast.error("No se pudo desactivar 2FA. Intenta de nuevo.");
     else {
       toast.success("2FA desactivado");
       refresh();
