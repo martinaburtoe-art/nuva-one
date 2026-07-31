@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Nüva One",
   webDir: "dist",
   server: {
-    url: "https://nuvaone.lovable.app",
+    url: "https://nuva-one.vercel.app",
     cleartext: false,
   },
 };
