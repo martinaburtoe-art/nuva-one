@@ -20,6 +20,7 @@ import {
   capContext,
 } from "@/lib/business-context.server";
 import type { Database } from "@/integrations/supabase/types";
+import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 
 // Pulls the plain text out of the last user message in a UIMessage[] array,
 // tolerating both the `parts` shape (current AI SDK) and a legacy `content`
@@ -45,9 +46,8 @@ function lastUserText(messages: UIMessage[]): string {
 // below) has already verified this token belongs to a real, signed-in user
 // before this function is ever called.
 async function buildAuthedBusinessContext(token: string, businessId: string) {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || !businessId) return null;
+  const { url: SUPABASE_URL, anonKey: SUPABASE_PUBLISHABLE_KEY, ok } = getServerSupabaseEnv();
+  if (!ok || !businessId) return null;
 
   const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -61,9 +61,8 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const SUPABASE_URL = process.env.SUPABASE_URL;
-        const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-        if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+        const { url: SUPABASE_URL, anonKey: SUPABASE_PUBLISHABLE_KEY, ok } = getServerSupabaseEnv();
+        if (!ok) {
           return new Response(JSON.stringify({ error: "Configuración de Supabase incompleta" }), {
             status: 500,
           });

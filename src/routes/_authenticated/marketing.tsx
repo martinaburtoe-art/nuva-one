@@ -86,7 +86,7 @@ function MetaConnectionCard() {
         .select("id, business_id, provider, status, account_name, page_id, connected_at")
         .eq("business_id", active!.id);
       if (error) throw error;
-      return (data ?? []) as MarketingIntegration[];
+      return (data ?? []) as unknown as MarketingIntegration[];
     },
   });
   const integration = data?.find((i) => i.provider === "meta");

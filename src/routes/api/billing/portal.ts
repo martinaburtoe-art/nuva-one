@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
+import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 
 // Lets a business owner manage (or cancel) their own subscription without
 // needing to email support -- points to Stripe's hosted Billing Portal.
@@ -17,13 +18,10 @@ export const Route = createFileRoute("/api/billing/portal")({
         if (!authHeader) return new Response("Unauthorized", { status: 401 });
 
         const { createClient } = await import("@supabase/supabase-js");
-        const userClient = createClient(
-          process.env.SUPABASE_URL!,
-          process.env.SUPABASE_PUBLISHABLE_KEY!,
-          {
-            global: { headers: { Authorization: authHeader } },
-          },
-        );
+        const { url: supabaseUrl, anonKey } = getServerSupabaseEnv();
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
         const { data: userData, error: userError } = await userClient.auth.getUser();
         if (userError || !userData.user) return new Response("Unauthorized", { status: 401 });
 

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { checkRateLimit } from "@/lib/rate-limit.server";
+import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 
 // Creates a Stripe Checkout session for a business to subscribe to the Pro
 // plan. The business's owner/admin calls this from Settings; on success,
@@ -24,8 +25,7 @@ export const Route = createFileRoute("/api/billing/checkout")({
         if (!authHeader) return new Response("Unauthorized", { status: 401 });
 
         const { createClient } = await import("@supabase/supabase-js");
-        const supabaseUrl = process.env.SUPABASE_URL!;
-        const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY!;
+        const { url: supabaseUrl, anonKey } = getServerSupabaseEnv();
         const userClient = createClient(supabaseUrl, anonKey, {
           global: { headers: { Authorization: authHeader } },
         });
