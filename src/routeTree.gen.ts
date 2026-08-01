@@ -39,6 +39,8 @@ import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webh
 import { Route as ApiBillingPortalRouteImport } from './routes/api/billing/portal'
 import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
 import { Route as ApiMarketingMetaStartRouteImport } from './routes/api/marketing/meta/start'
+import { Route as ApiMarketingMetaPublishRouteImport } from './routes/api/marketing/meta/publish'
+import { Route as ApiMarketingMetaOverviewRouteImport } from './routes/api/marketing/meta/overview'
 import { Route as ApiMarketingMetaCallbackRouteImport } from './routes/api/marketing/meta/callback'
 
 const TermsRoute = TermsRouteImport.update({
@@ -193,6 +195,17 @@ const ApiMarketingMetaStartRoute = ApiMarketingMetaStartRouteImport.update({
   path: '/api/marketing/meta/start',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMarketingMetaPublishRoute = ApiMarketingMetaPublishRouteImport.update({
+  id: '/api/marketing/meta/publish',
+  path: '/api/marketing/meta/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMarketingMetaOverviewRoute =
+  ApiMarketingMetaOverviewRouteImport.update({
+    id: '/api/marketing/meta/overview',
+    path: '/api/marketing/meta/overview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiMarketingMetaCallbackRoute =
   ApiMarketingMetaCallbackRouteImport.update({
     id: '/api/marketing/meta/callback',
@@ -230,6 +243,8 @@ export interface FileRoutesByFullPath {
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/api/marketing/meta/callback': typeof ApiMarketingMetaCallbackRoute
+  '/api/marketing/meta/overview': typeof ApiMarketingMetaOverviewRoute
+  '/api/marketing/meta/publish': typeof ApiMarketingMetaPublishRoute
   '/api/marketing/meta/start': typeof ApiMarketingMetaStartRoute
 }
 export interface FileRoutesByTo {
@@ -262,6 +277,8 @@ export interface FileRoutesByTo {
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/api/marketing/meta/callback': typeof ApiMarketingMetaCallbackRoute
+  '/api/marketing/meta/overview': typeof ApiMarketingMetaOverviewRoute
+  '/api/marketing/meta/publish': typeof ApiMarketingMetaPublishRoute
   '/api/marketing/meta/start': typeof ApiMarketingMetaStartRoute
 }
 export interface FileRoutesById {
@@ -296,6 +313,8 @@ export interface FileRoutesById {
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/api/marketing/meta/callback': typeof ApiMarketingMetaCallbackRoute
+  '/api/marketing/meta/overview': typeof ApiMarketingMetaOverviewRoute
+  '/api/marketing/meta/publish': typeof ApiMarketingMetaPublishRoute
   '/api/marketing/meta/start': typeof ApiMarketingMetaStartRoute
 }
 export interface FileRouteTypes {
@@ -330,6 +349,8 @@ export interface FileRouteTypes {
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
     | '/api/marketing/meta/callback'
+    | '/api/marketing/meta/overview'
+    | '/api/marketing/meta/publish'
     | '/api/marketing/meta/start'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -362,6 +383,8 @@ export interface FileRouteTypes {
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
     | '/api/marketing/meta/callback'
+    | '/api/marketing/meta/overview'
+    | '/api/marketing/meta/publish'
     | '/api/marketing/meta/start'
   id:
     | '__root__'
@@ -395,6 +418,8 @@ export interface FileRouteTypes {
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
     | '/api/marketing/meta/callback'
+    | '/api/marketing/meta/overview'
+    | '/api/marketing/meta/publish'
     | '/api/marketing/meta/start'
   fileRoutesById: FileRoutesById
 }
@@ -415,6 +440,8 @@ export interface RootRouteChildren {
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
   ApiMarketingMetaCallbackRoute: typeof ApiMarketingMetaCallbackRoute
+  ApiMarketingMetaOverviewRoute: typeof ApiMarketingMetaOverviewRoute
+  ApiMarketingMetaPublishRoute: typeof ApiMarketingMetaPublishRoute
   ApiMarketingMetaStartRoute: typeof ApiMarketingMetaStartRoute
 }
 
@@ -630,6 +657,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMarketingMetaStartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/marketing/meta/publish': {
+      id: '/api/marketing/meta/publish'
+      path: '/api/marketing/meta/publish'
+      fullPath: '/api/marketing/meta/publish'
+      preLoaderRoute: typeof ApiMarketingMetaPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/marketing/meta/overview': {
+      id: '/api/marketing/meta/overview'
+      path: '/api/marketing/meta/overview'
+      fullPath: '/api/marketing/meta/overview'
+      preLoaderRoute: typeof ApiMarketingMetaOverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/marketing/meta/callback': {
       id: '/api/marketing/meta/callback'
       path: '/api/marketing/meta/callback'
@@ -694,6 +735,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
   ApiMarketingMetaCallbackRoute: ApiMarketingMetaCallbackRoute,
+  ApiMarketingMetaOverviewRoute: ApiMarketingMetaOverviewRoute,
+  ApiMarketingMetaPublishRoute: ApiMarketingMetaPublishRoute,
   ApiMarketingMetaStartRoute: ApiMarketingMetaStartRoute,
 }
 export const routeTree = rootRouteImport

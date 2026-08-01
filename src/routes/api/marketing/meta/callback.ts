@@ -63,6 +63,8 @@ export const Route = createFileRoute("/api/marketing/meta/callback")({
               status: "connected",
               account_name: page.name,
               page_id: page.instagram_business_account?.id || page.id,
+              fb_page_id: page.id,
+              ig_user_id: page.instagram_business_account?.id || null,
               access_token: page.access_token,
               connected_at: new Date().toISOString(),
             },

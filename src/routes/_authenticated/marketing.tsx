@@ -186,7 +186,97 @@ function MetaConnectionCard() {
   );
 }
 
+function MetaOverviewCard() {
+  const { active } = useActiveBusiness();
+  const { data: integ } = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["marketing_integrations", active?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("marketing_integrations" as any)
+        .select("status")
+        .eq("business_id", active!.id)
+        .eq("provider", "meta")
+        .maybeSingle();
+      if (error) throw error;
+      return data as unknown as { status: string } | null;
+    },
+  });
+  const isConnected = integ?.status === "connected";
+
+  const { data: overview, isLoading } = useQuery({
+    enabled: !!active?.id && isConnected,
+    queryKey: ["marketing_overview", active?.id],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      const res = await fetch(`/api/marketing/meta/overview?business_id=${active!.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("No se pudo cargar");
+      return res.json();
+    },
+  });
+
+  if (!isConnected) return null;
+
+  return (
+    <Card className="mb-6 p-5">
+      {isLoading ? (
+        <Skeleton className="h-24 w-full" />
+      ) : !overview ? (
+        <p className="text-sm text-muted-foreground">No se pudo cargar la información de la cuenta.</p>
+      ) : (
+        <>
+          <div className="flex items-center gap-3">
+            {(overview.ig?.picture || overview.fb?.picture) && (
+              <img
+                src={overview.ig?.picture || overview.fb?.picture}
+                alt=""
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            )}
+            <div className="flex-1">
+              <p className="text-sm font-medium">
+                {overview.ig?.username ? `@${overview.ig.username}` : overview.fb?.name}
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                {overview.ig && <span>{overview.ig.followers_count ?? 0} seguidores IG</span>}
+                {overview.fb && <span>{overview.fb.fan_count ?? 0} seguidores FB</span>}
+                <span>{overview.unread_comments ?? 0} comentarios recientes</span>
+              </div>
+            </div>
+          </div>
+          {overview.media?.length > 0 && (
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+              {overview.media.map((m: any) => (
+                <a
+                  key={m.id}
+                  href={m.permalink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative aspect-square overflow-hidden rounded-md bg-muted"
+                >
+                  <img
+                    src={m.thumbnail_url || m.media_url}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-[10px] text-white opacity-0 group-hover:opacity-100">
+                    ♥ {m.like_count ?? 0} · 💬 {m.comments_count ?? 0}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
 function Marketing() {
+  const { active } = useActiveBusiness();
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const { data, isLoading } = useBizList<MarketingPost>("marketing_posts", {
@@ -198,6 +288,7 @@ function Marketing() {
   const [open, setOpen] = useState(false);
   const [platforms, setPlatforms] = useState<string[]>(["instagram"]);
   const [filter, setFilter] = useState<"all" | "draft" | "scheduled" | "published">("all");
+  const [publishing, setPublishing] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -205,12 +296,56 @@ function Marketing() {
     const scheduledFor = fd.get("scheduled_for") as string;
     await insert.mutateAsync({
       content: fd.get("content"),
+      image_url: fd.get("image_url") || null,
       platforms,
       scheduled_for: scheduledFor || null,
       status: scheduledFor ? "scheduled" : "draft",
     });
     setOpen(false);
     setPlatforms(["instagram"]);
+  }
+
+  async function publishNow(e: React.MouseEvent<HTMLButtonElement>) {
+    const form = e.currentTarget.form;
+    if (!form || !active) return;
+    const fd = new FormData(form);
+    const content = String(fd.get("content") || "").trim();
+    const imageUrl = String(fd.get("image_url") || "").trim() || null;
+    if (!content) {
+      toast.error("Escribe el contenido primero");
+      return;
+    }
+    setPublishing(true);
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    const res = await fetch("/api/marketing/meta/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ business_id: active.id, content, image_url: imageUrl, platforms }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setPublishing(false);
+    if (!res.ok && res.status !== 207) {
+      toast.error(json.error || "No se pudo publicar");
+      return;
+    }
+    const failed = Object.entries(json.results || {}).filter(([, r]: any) => !r.ok);
+    if (failed.length) {
+      failed.forEach(([platform, r]: any) => toast.error(`${platform}: ${r.error}`));
+    }
+    const succeeded = Object.entries(json.results || {}).filter(([, r]: any) => r.ok);
+    if (succeeded.length) {
+      await insert.mutateAsync({
+        content,
+        image_url: imageUrl,
+        platforms: succeeded.map(([p]) => p),
+        scheduled_for: null,
+        status: "published",
+      });
+      toast.success("Publicado en " + succeeded.map(([p]) => p).join(", "));
+      setOpen(false);
+      setPlatforms(["instagram"]);
+    }
   }
 
   function markPublished(id: string) {
@@ -278,9 +413,18 @@ function Marketing() {
                     <Label htmlFor="scheduled_for">Fecha y hora (opcional)</Label>
                     <Input id="scheduled_for" name="scheduled_for" type="datetime-local" />
                   </div>
-                  <Button type="submit" className="w-full">
-                    Guardar
-                  </Button>
+                  <div>
+                    <Label htmlFor="image_url">URL de imagen (opcional, requerida para Instagram)</Label>
+                    <Input id="image_url" name="image_url" placeholder="https://..." />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" variant="outline" className="flex-1">
+                      Guardar borrador
+                    </Button>
+                    <Button type="button" className="flex-1" onClick={publishNow} disabled={publishing}>
+                      {publishing ? "Publicando..." : "Publicar ahora"}
+                    </Button>
+                  </div>
                 </form>
               </DialogContent>
             </Dialog>
@@ -289,6 +433,7 @@ function Marketing() {
       />
 
       <MetaConnectionCard />
+      <MetaOverviewCard />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {(["all", "draft", "scheduled", "published"] as const).map((f) => (
