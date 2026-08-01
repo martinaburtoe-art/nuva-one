@@ -75,8 +75,7 @@ function MetaConnectionCard() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   const { data, isLoading } = useQuery({
     enabled: !!active?.id,
@@ -93,31 +92,36 @@ function MetaConnectionCard() {
   const integration = data?.find((i) => i.provider === "meta");
   const isConnected = integration?.status === "connected";
 
-  async function connect(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Toast según ?meta=... al volver del callback de Facebook
+  useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const meta = params.get("meta");
+    if (!meta) return;
+    if (meta === "connected") toast.success("Cuenta de Meta conectada");
+    else if (meta === "cancelled") toast.info("Conexión cancelada");
+    else if (meta === "sin_paginas") toast.error("Tu cuenta no administra ninguna página de Facebook");
+    else toast.error("No se pudo conectar con Meta");
+    window.history.replaceState({}, "", window.location.pathname);
+    qc.invalidateQueries({ queryKey: ["marketing_integrations", active?.id] });
+  });
+
+  async function connect() {
     if (!active) return;
-    setSaving(true);
-    const fd = new FormData(e.currentTarget);
-    const payload = {
-      business_id: active.id,
-      provider: "meta",
-      status: "connected",
-      account_name: String(fd.get("account_name") || ""),
-      page_id: String(fd.get("page_id") || ""),
-      access_token: String(fd.get("access_token") || ""),
-      connected_at: new Date().toISOString(),
-    };
-    const { error } = await supabase
-      .from("marketing_integrations" as any)
-      .upsert(payload, { onConflict: "business_id,provider" });
-    setSaving(false);
-    if (error) {
-      toast.error("No se pudo conectar: " + error.message);
+    setConnecting(true);
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    const res = await fetch("/api/marketing/meta/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ business_id: active.id }),
+    });
+    setConnecting(false);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.url) {
+      toast.error("No se pudo iniciar la conexión con Meta");
       return;
     }
-    toast.success("Cuenta de Meta conectada");
-    qc.invalidateQueries({ queryKey: ["marketing_integrations", active.id] });
-    setOpen(false);
+    window.location.href = json.url;
   }
 
   async function disconnect() {
@@ -161,9 +165,8 @@ function MetaConnectionCard() {
             <>
               <p className="text-sm font-medium">Conecta tu cuenta de Meta Business</p>
               <p className="text-xs text-muted-foreground">
-                Vincula tu página de Instagram/Facebook pegando el token de acceso de tu cuenta de
-                Meta Developer. Queda guardado y listo para publicar automáticamente ni bien
-                actives el envío real.
+                Inicia sesión con Facebook para vincular tu página de Facebook e Instagram. Nüva
+                One solo pedirá los permisos necesarios para publicar contenido.
               </p>
             </>
           )}
@@ -173,39 +176,10 @@ function MetaConnectionCard() {
             <Unlink className="mr-1.5 h-3.5 w-3.5" /> Desconectar
           </Button>
         ) : (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Link2 className="mr-1.5 h-3.5 w-3.5" /> Conectar Meta
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Conectar cuenta de Meta</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={connect} className="space-y-4">
-                <div>
-                  <Label htmlFor="account_name">Nombre de la cuenta/página</Label>
-                  <Input id="account_name" name="account_name" placeholder="Mi Negocio" required />
-                </div>
-                <div>
-                  <Label htmlFor="page_id">ID de página / Instagram Business ID</Label>
-                  <Input id="page_id" name="page_id" placeholder="1234567890" />
-                </div>
-                <div>
-                  <Label htmlFor="access_token">Token de acceso (Meta Graph API)</Label>
-                  <Textarea id="access_token" name="access_token" rows={3} required />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Obténlo desde developers.facebook.com → tu app → Graph API Explorer (token de
-                    larga duración).
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={saving}>
-                  {saving ? "Guardando..." : "Guardar conexión"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" size="sm" onClick={connect} disabled={connecting}>
+            <Link2 className="mr-1.5 h-3.5 w-3.5" />
+            {connecting ? "Conectando..." : "Conectar con Facebook"}
+          </Button>
         )}
       </div>
     </Card>
