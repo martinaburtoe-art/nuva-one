@@ -13,6 +13,7 @@ import { useBizList, useBizInsert, useBizUpdate, useBizDelete } from "@/lib/biz-
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
 import { normalizeWhatsAppNumber, isPlausiblePhoneNumber } from "@/lib/phone";
 import { toast } from "sonner";
+import { ModuleGuard } from "@/components/module-guard";
 
 export const Route = createFileRoute("/_authenticated/automations")({
   head: () => ({ meta: [{ title: "Vinculación WhatsApp — Nüva One" }] }),
@@ -116,6 +117,7 @@ function WhatsAppLinking() {
   }
 
   return (
+    <ModuleGuard module="automations">
     <>
       <PageHeader
         title="Vinculación WhatsApp"
@@ -322,5 +324,6 @@ function WhatsAppLinking() {
         </div>
       </Card>
     </>
+    </ModuleGuard>
   );
 }

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveBusiness, useMyRole } from "@/lib/use-business";
+import { useActiveBusiness, useMyMembership, hasModulePermission, type ModuleKey } from "@/lib/use-business";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -42,17 +42,17 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const nav = [
-  { to: "/dashboard", label: "Resumen", icon: LayoutDashboard },
-  { to: "/pos", label: "Caja", icon: Calculator },
-  { to: "/sales", label: "Ventas", icon: ShoppingCart },
-  { to: "/purchases", label: "Compras", icon: Package },
-  { to: "/inventory", label: "Inventario", icon: Boxes },
-  { to: "/finance", label: "Finanzas", icon: CreditCard },
-  { to: "/analytics", label: "Indicadores", icon: BarChart3 },
-  { to: "/marketing", label: "Marketing", icon: Megaphone },
-  { to: "/quotes", label: "Cotizaciones", icon: FileText },
-  { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow },
-  { to: "/ai", label: "Asistente IA", icon: Sparkles },
+  { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard" },
+  { to: "/pos", label: "Caja", icon: Calculator, module: "pos" },
+  { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales" },
+  { to: "/purchases", label: "Compras", icon: Package, module: "purchases" },
+  { to: "/inventory", label: "Inventario", icon: Boxes, module: "inventory" },
+  { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance" },
+  { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics" },
+  { to: "/marketing", label: "Marketing", icon: Megaphone, module: "marketing" },
+  { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes" },
+  { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
+  { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai" },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true },
   { to: "/settings", label: "Configuración", icon: Settings },
 ] as const;
@@ -63,9 +63,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { active, businesses, setActiveId } = useActiveBusiness();
-  const { data: myRole } = useMyRole();
+  const { data: membership } = useMyMembership();
+  const myRole = membership?.role ?? null;
   const canManage = myRole === "owner" || myRole === "admin";
-  const visibleNav = nav.filter((item) => !("adminOnly" in item && item.adminOnly) || canManage);
+  const visibleNav = nav.filter((item) => {
+    if ("adminOnly" in item && item.adminOnly) return canManage;
+    if ("module" in item && item.module) {
+      return hasModulePermission(myRole, membership?.permissions, item.module as ModuleKey);
+    }
+    return true;
+  });
   const mobilePrimaryNav = visibleNav.filter((n) =>
     ["/dashboard", "/pos", "/inventory", "/ai"].includes(n.to),
   );

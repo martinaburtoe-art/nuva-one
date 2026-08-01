@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ModuleGuard } from "@/components/module-guard";
 import {
   Search,
   Plus,
@@ -144,6 +145,7 @@ function POS() {
         status: "paid",
         total,
         sale_date: today,
+        payment_method: method,
         items: cart.map((i) => ({
           product_id: i.product_id,
           name: i.name,
@@ -170,6 +172,7 @@ function POS() {
   }
 
   return (
+    <ModuleGuard module="pos">
     <>
       <PageHeader
         title="Caja"
@@ -510,5 +513,6 @@ function POS() {
         </DialogContent>
       </Dialog>
     </>
+    </ModuleGuard>
   );
 }

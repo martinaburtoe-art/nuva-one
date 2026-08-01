@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MfaSetup } from "@/components/mfa-setup";
 import { AuditLogView } from "@/components/audit-log-view";
+import { TeamManagement } from "@/components/team-management";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Configuración — Nüva One" }] }),
@@ -120,29 +121,7 @@ function Settings() {
         </TabsContent>
 
         <TabsContent value="team">
-          <Card className="p-6">
-            <h3 className="font-semibold">Miembros del equipo</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Invita personas y asigna roles (Propietario, Admin, Staff, Solo lectura).
-            </p>
-            {canManage ? (
-              <>
-                <div className="mt-4 flex gap-2">
-                  <Input type="email" placeholder="email@ejemplo.cl" disabled />
-                  <Button disabled>Invitar</Button>
-                </div>
-                <p className="mt-3 text-xs text-muted-foreground flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" /> Funcionalidad de invitaciones por email{" "}
-                  <ComingSoonBadge />
-                </p>
-              </>
-            ) : (
-              <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Lock className="h-3 w-3" /> Solo el propietario o administradores pueden gestionar
-                al equipo.
-              </p>
-            )}
-          </Card>
+          {active && <TeamManagement businessId={active.id} canManage={canManage} />}
         </TabsContent>
 
         <TabsContent value="security">

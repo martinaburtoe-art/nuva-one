@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { ModuleGuard } from "@/components/module-guard";
 import {
   Dialog,
   DialogContent,
@@ -252,6 +253,7 @@ function Marketing() {
   const filtered = filter === "all" ? posts : posts.filter((p) => p.status === filter);
 
   return (
+    <ModuleGuard module="marketing">
     <>
       <PageHeader
         title="Marketing"
@@ -388,5 +390,6 @@ function Marketing() {
         </div>
       )}
     </>
+    </ModuleGuard>
   );
 }

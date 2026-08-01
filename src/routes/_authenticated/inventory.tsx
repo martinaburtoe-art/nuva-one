@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ModuleGuard } from "@/components/module-guard";
 import {
   Dialog,
   DialogContent,
@@ -126,6 +127,7 @@ function Inventory() {
   const lowStock = (data ?? []).filter((p) => p.stock <= p.low_stock_threshold);
 
   return (
+    <ModuleGuard module="inventory">
     <>
       <PageHeader
         title="Inventario"
@@ -397,5 +399,6 @@ function Inventory() {
         )}
       </Card>
     </>
+    </ModuleGuard>
   );
 }

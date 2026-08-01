@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ModuleGuard } from "@/components/module-guard";
 import {
   Dialog,
   DialogContent,
@@ -139,6 +140,7 @@ function Finance() {
   ];
 
   return (
+    <ModuleGuard module="finance">
     <>
       <PageHeader
         title="Finanzas"
@@ -428,5 +430,6 @@ function Finance() {
         </TabsContent>
       </Tabs>
     </>
+    </ModuleGuard>
   );
 }

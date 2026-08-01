@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModuleGuard } from "@/components/module-guard";
 import {
   Dialog,
   DialogContent,
@@ -140,6 +141,7 @@ function Quotes() {
   }
 
   return (
+    <ModuleGuard module="quotes">
     <>
       <PageHeader
         title="Cotizaciones"
@@ -398,5 +400,6 @@ function Quotes() {
         )}
       </Card>
     </>
+    </ModuleGuard>
   );
 }

@@ -11,6 +11,7 @@ import { useActiveBusiness } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ModuleGuard } from "@/components/module-guard";
 
 export const Route = createFileRoute("/_authenticated/ai")({
   head: () => ({ meta: [{ title: "Asistente IA — Nüva One" }] }),
@@ -94,6 +95,7 @@ function AiPage() {
   }
 
   return (
+    <ModuleGuard module="ai">
     <>
       <PageHeader title="Asistente IA" description="Pregunta cualquier cosa sobre tu negocio" />
       <Card className="flex h-[calc(100dvh-14rem)] flex-col p-0 overflow-hidden md:h-[calc(100vh-12rem)]">
@@ -177,5 +179,6 @@ function AiPage() {
         </form>
       </Card>
     </>
+    </ModuleGuard>
   );
 }

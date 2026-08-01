@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ModuleGuard } from "@/components/module-guard";
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,7 @@ function Sales() {
   const [customerName, setCustomerName] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [channel, setChannel] = useState("tienda");
+  const [paymentMethod, setPaymentMethod] = useState("efectivo");
   const [status, setStatus] = useState("paid");
   const [items, setItems] = useState<LineItem[]>([
     { product_id: null, name: "", qty: 1, price: 0 },
@@ -97,6 +99,7 @@ function Sales() {
       customer_name: customerName,
       customer_id: customerId,
       channel,
+      payment_method: paymentMethod,
       status,
       total,
       items: validItems as any,
@@ -121,6 +124,7 @@ function Sales() {
   }
 
   return (
+    <ModuleGuard module="sales">
     <>
       <PageHeader
         title="Ventas"
@@ -220,19 +224,34 @@ function Sales() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Estado</Label>
-                    <Select value={status} onValueChange={setStatus}>
+                    <Label>Método de pago</Label>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="paid">Pagada</SelectItem>
-                        <SelectItem value="draft">Borrador</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
+                        <SelectItem value="efectivo">Efectivo</SelectItem>
+                        <SelectItem value="tarjeta">Tarjeta</SelectItem>
+                        <SelectItem value="transferencia">Transferencia</SelectItem>
+                        <SelectItem value="credito">Crédito</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div>
+                  <Label>Estado</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="paid">Pagada</SelectItem>
+                      <SelectItem value="draft">Borrador</SelectItem>
+                      <SelectItem value="cancelled">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -449,5 +468,6 @@ function Sales() {
         )}
       </Card>
     </>
+    </ModuleGuard>
   );
 }

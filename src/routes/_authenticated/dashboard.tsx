@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
 import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { fmtCLP } from "@/lib/biz-data";
+import { DateRangeFilter, dmyToIso } from "@/components/date-range-filter";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
+import { ModuleGuard } from "@/components/module-guard";
 import {
   TrendingUp,
   TrendingDown,
@@ -12,6 +17,7 @@ import {
   Boxes,
   DollarSign,
   ArrowUpRight,
+  X,
 } from "lucide-react";
 import {
   Area,
@@ -62,37 +68,91 @@ function Dashboard() {
     },
   });
 
-  // Build a 6-month chart from transactions
-  const { data: chartData } = useQuery({
+  // Filtros del gráfico de ingresos/gastos
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const isoFrom = dmyToIso(dateFrom);
+  const isoTo = dmyToIso(dateTo);
+
+  // Trae todas las transacciones una vez; el filtrado/agrupado se hace en el
+  // cliente para poder alternar entre vista mensual (por defecto) y diaria
+  // (cuando se elige un rango de fechas puntual) sin re-consultar.
+  const { data: allTx } = useQuery({
     enabled: !!active?.id,
-    queryKey: ["chart", active?.id],
+    queryKey: ["chart-tx", active?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("transactions")
-        .select("amount, type, tx_date")
+        .select("amount, type, tx_date, category")
         .eq("business_id", active!.id);
-      const byMonth: Record<string, { mes: string; ingresos: number; gastos: number }> = {};
-      const now = new Date();
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${d.getFullYear()}-${d.getMonth()}`;
-        byMonth[key] = {
-          mes: d.toLocaleDateString("es-CL", { month: "short" }),
-          ingresos: 0,
-          gastos: 0,
-        };
-      }
-      (data ?? []).forEach((r: any) => {
-        const d = new Date(r.tx_date);
-        const key = `${d.getFullYear()}-${d.getMonth()}`;
-        if (byMonth[key]) {
-          if (r.type === "income") byMonth[key].ingresos += Number(r.amount);
-          else byMonth[key].gastos += Number(r.amount);
-        }
-      });
-      return Object.values(byMonth);
+      if (error) throw error;
+      return data ?? [];
     },
   });
+
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    (allTx ?? []).forEach((t: any) => t.category && set.add(t.category));
+    return Array.from(set)
+      .sort()
+      .map((c) => ({ value: c, label: c }));
+  }, [allTx]);
+
+  const hasChartFilters = !!dateFrom || !!dateTo || categories.length > 0;
+
+  const chartData = useMemo(() => {
+    const rows = (allTx ?? []).filter((r: any) => {
+      if (isoFrom && r.tx_date < isoFrom) return false;
+      if (isoTo && r.tx_date > isoTo) return false;
+      if (categories.length > 0 && !categories.includes(r.category)) return false;
+      return true;
+    });
+
+    // Con rango de fechas propio: agrupar por día. Sin rango: últimos 6 meses.
+    if (isoFrom || isoTo) {
+      const byDay: Record<string, { fecha: string; ingresos: number; gastos: number }> = {};
+      rows.forEach((r: any) => {
+        const key = r.tx_date;
+        if (!byDay[key]) {
+          byDay[key] = {
+            fecha: new Date(key + "T00:00:00").toLocaleDateString("es-CL", {
+              day: "2-digit",
+              month: "2-digit",
+            }),
+            ingresos: 0,
+            gastos: 0,
+          };
+        }
+        if (r.type === "income") byDay[key].ingresos += Number(r.amount);
+        else byDay[key].gastos += Number(r.amount);
+      });
+      return Object.keys(byDay)
+        .sort()
+        .map((k) => byDay[k]);
+    }
+
+    const byMonth: Record<string, { mes: string; ingresos: number; gastos: number }> = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      byMonth[key] = {
+        mes: d.toLocaleDateString("es-CL", { month: "short" }),
+        ingresos: 0,
+        gastos: 0,
+      };
+    }
+    rows.forEach((r: any) => {
+      const d = new Date(r.tx_date);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (byMonth[key]) {
+        if (r.type === "income") byMonth[key].ingresos += Number(r.amount);
+        else byMonth[key].gastos += Number(r.amount);
+      }
+    });
+    return Object.values(byMonth);
+  }, [allTx, isoFrom, isoTo, categories]);
 
   const cards = [
     { l: "Ingresos", v: fmtCLP(kpis?.income ?? 0), i: TrendingUp, c: "text-success" },
@@ -103,6 +163,7 @@ function Dashboard() {
   ];
 
   return (
+    <ModuleGuard module="dashboard">
     <>
       <PageHeader
         title={`Hola, ${active?.name ?? "negocio"}`}
@@ -123,10 +184,39 @@ function Dashboard() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="p-6 lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold">Ingresos vs Gastos</h3>
-              <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
+              <p className="text-xs text-muted-foreground">
+                {isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <DateRangeFilter
+                from={dateFrom}
+                to={dateTo}
+                onFromChange={setDateFrom}
+                onToChange={setDateTo}
+              />
+              <MultiSelectFilter
+                label="Categoría"
+                options={categoryOptions}
+                selected={categories}
+                onChange={setCategories}
+              />
+              {hasChartFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDateFrom("");
+                    setDateTo("");
+                    setCategories([]);
+                  }}
+                >
+                  <X className="mr-1 h-3.5 w-3.5" /> Quitar filtros
+                </Button>
+              )}
             </div>
           </div>
           <ResponsiveContainer width="100%" height={280}>
@@ -142,7 +232,11 @@ function Dashboard() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" />
-              <XAxis dataKey="mes" stroke="oklch(0.5 0.02 270)" fontSize={12} />
+              <XAxis
+                dataKey={isoFrom || isoTo ? "fecha" : "mes"}
+                stroke="oklch(0.5 0.02 270)"
+                fontSize={12}
+              />
               <YAxis
                 stroke="oklch(0.5 0.02 270)"
                 fontSize={12}
@@ -191,5 +285,6 @@ function Dashboard() {
         </Card>
       </div>
     </>
+    </ModuleGuard>
   );
 }

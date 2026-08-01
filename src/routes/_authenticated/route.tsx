@@ -26,6 +26,14 @@ export const Route = createFileRoute("/_authenticated")({
       }
     }
 
+    // Si alguien invitó a esta persona por correo antes de que tuviera cuenta,
+    // esto la vincula automáticamente al negocio con el rol/puesto/permisos
+    // que le asignaron. No debe bloquear el login si falla.
+    supabase.rpc("claim_pending_invitations").then(
+      () => {},
+      () => {},
+    );
+
     return { user: data.user };
   },
   component: AuthLayout,
