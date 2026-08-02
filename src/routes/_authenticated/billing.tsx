@@ -53,10 +53,16 @@ const tipoLabel: Record<number, string> = {
 
 type Integration = {
   status: string;
+  provider: string;
   environment: "dev" | "prod";
   rut: string | null;
   razon_social: string | null;
 };
+
+const FISCAL_PROVIDERS = [
+  { value: "openfactura", label: "OpenFactura (Haulmer)" },
+  { value: "libredte", label: "LibreDTE" },
+] as const;
 
 function ConnectionCard() {
   const { active } = useActiveBusiness();
@@ -65,7 +71,9 @@ function ConnectionCard() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [provider, setProvider] = useState<string>("openfactura");
   const [apiKey, setApiKey] = useState("");
+  const [apiUrl, setApiUrl] = useState("");
   const [environment, setEnvironment] = useState<"dev" | "prod">("dev");
 
   const { data: integ, isLoading } = useQuery({
@@ -74,9 +82,10 @@ function ConnectionCard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("billing_integrations" as any)
-        .select("status, environment, rut, razon_social")
+        .select("status, provider, environment, rut, razon_social")
         .eq("business_id", active!.id)
-        .eq("provider", "openfactura")
+        .eq("type", "fiscal")
+        .eq("status", "connected")
         .maybeSingle();
       if (error) throw error;
       return data as unknown as Integration | null;
@@ -86,7 +95,11 @@ function ConnectionCard() {
 
   async function connect() {
     if (!active || !apiKey.trim()) {
-      toast.error("Pega tu API Key de OpenFactura");
+      toast.error("Pega tu API Key del proveedor elegido");
+      return;
+    }
+    if (provider === "libredte" && !apiUrl.trim()) {
+      toast.error("LibreDTE requiere la URL de tu API");
       return;
     }
     setSaving(true);
@@ -95,7 +108,13 @@ function ConnectionCard() {
     const res = await fetch("/api/billing/sii/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ business_id: active.id, api_key: apiKey.trim(), environment }),
+      body: JSON.stringify({
+        business_id: active.id,
+        provider,
+        api_key: apiKey.trim(),
+        api_url: apiUrl.trim() || undefined,
+        environment,
+      }),
     });
     const json = await res.json().catch(() => ({}));
     setSaving(false);
@@ -107,20 +126,21 @@ function ConnectionCard() {
     qc.invalidateQueries({ queryKey: ["billing_integrations", active.id] });
     setOpen(false);
     setApiKey("");
+    setApiUrl("");
   }
 
   async function disconnect() {
-    if (!active) return;
+    if (!active || !integ) return;
     const { error } = await supabase
       .from("billing_integrations" as any)
       .update({ status: "disconnected", api_key: null })
       .eq("business_id", active.id)
-      .eq("provider", "openfactura");
+      .eq("provider", integ.provider);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Cuenta SII desconectada");
+    toast.success("Cuenta desconectada");
     qc.invalidateQueries({ queryKey: ["billing_integrations", active.id] });
   }
 
@@ -143,11 +163,11 @@ function ConnectionCard() {
             </>
           ) : (
             <>
-              <p className="text-sm font-medium">Conecta tu cuenta de OpenFactura</p>
+              <p className="text-sm font-medium">Conecta tu proveedor de facturación electrónica</p>
               <p className="text-xs text-muted-foreground">
-                Pega la API Key de tu cuenta OpenFactura (openfactura.cl), donde ya configuraste tu
-                certificado digital ante el SII. Nüva One nunca ve ni guarda tu certificado, solo
-                usa esta clave para emitir documentos en tu nombre.
+                Elige OpenFactura o LibreDTE y pega tu API Key (ya con tu certificado digital
+                configurado ante el SII). Nüva One nunca ve ni guarda tu certificado, solo usa esta
+                clave para emitir documentos en tu nombre.
               </p>
             </>
           )}
@@ -161,33 +181,61 @@ function ConnectionCard() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
-              <Link2 className="mr-1.5 h-3.5 w-3.5" /> Conectar OpenFactura
+              <Link2 className="mr-1.5 h-3.5 w-3.5" /> Conectar facturación
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Conectar OpenFactura</DialogTitle>
+              <DialogTitle>Conectar proveedor de facturación</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <div>
+                <Label htmlFor="provider">Proveedor</Label>
+                <Select value={provider} onValueChange={setProvider}>
+                  <SelectTrigger id="provider">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FISCAL_PROVIDERS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="api_key">API Key</Label>
                 <Input
                   id="api_key"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Tu API Key de OpenFactura"
+                  placeholder="Tu API Key"
                 />
-                <button
-                  type="button"
-                  className="mt-1 text-xs text-primary underline"
-                  onClick={() => {
-                    setApiKey(DEMO_API_KEY);
-                    setEnvironment("dev");
-                  }}
-                >
-                  Usar clave pública de prueba (CAF simulado, solo para probar)
-                </button>
+                {provider === "openfactura" && (
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-primary underline"
+                    onClick={() => {
+                      setApiKey(DEMO_API_KEY);
+                      setEnvironment("dev");
+                    }}
+                  >
+                    Usar clave pública de prueba (CAF simulado, solo para probar)
+                  </button>
+                )}
               </div>
+              {provider === "libredte" && (
+                <div>
+                  <Label htmlFor="api_url">URL de tu API LibreDTE</Label>
+                  <Input
+                    id="api_url"
+                    value={apiUrl}
+                    onChange={(e) => setApiUrl(e.target.value)}
+                    placeholder="https://tu-instancia.libredte.cl/api"
+                  />
+                </div>
+              )}
               <div>
                 <Label htmlFor="environment">Ambiente</Label>
                 <Select value={environment} onValueChange={(v: any) => setEnvironment(v)}>
@@ -374,9 +422,10 @@ function BillingSii() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("billing_integrations" as any)
-        .select("status, environment, rut, razon_social")
+        .select("status, provider, environment, rut, razon_social")
         .eq("business_id", active!.id)
-        .eq("provider", "openfactura")
+        .eq("type", "fiscal")
+        .eq("status", "connected")
         .maybeSingle();
       if (error) throw error;
       return data as unknown as Integration | null;
