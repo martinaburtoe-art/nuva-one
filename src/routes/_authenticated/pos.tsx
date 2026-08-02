@@ -510,10 +510,14 @@ function POS() {
                 <div>
                   <Label className="text-xs">Recibido</Label>
                   <Input
-                    type="number"
-                    min={0}
-                    value={received || ""}
-                    onChange={(e) => setReceived(Number(e.target.value))}
+                    type="text"
+                    inputMode="numeric"
+                    value={received ? fmtCLP(received) : ""}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      setReceived(digits ? Number(digits) : 0);
+                    }}
+                    placeholder="$0"
                     className="h-10 text-right"
                   />
                 </div>
