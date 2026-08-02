@@ -29,6 +29,7 @@ import { Route as AuthenticatedInventoryRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
@@ -38,6 +39,8 @@ import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/col
 import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
 import { Route as ApiBillingPortalRouteImport } from './routes/api/billing/portal'
 import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
+import { Route as ApiBillingSiiEmitRouteImport } from './routes/api/billing/sii/emit'
+import { Route as ApiBillingSiiConnectRouteImport } from './routes/api/billing/sii/connect'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -139,6 +142,11 @@ const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAutomationsRoute =
   AuthenticatedAutomationsRouteImport.update({
     id: '/automations',
@@ -186,6 +194,16 @@ const ApiBillingCheckoutRoute = ApiBillingCheckoutRouteImport.update({
   path: '/api/billing/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBillingSiiEmitRoute = ApiBillingSiiEmitRouteImport.update({
+  id: '/api/billing/sii/emit',
+  path: '/api/billing/sii/emit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingSiiConnectRoute = ApiBillingSiiConnectRouteImport.update({
+  id: '/api/billing/sii/connect',
+  path: '/api/billing/sii/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -198,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AuthenticatedAiRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRoute
@@ -216,6 +235,8 @@ export interface FileRoutesByFullPath {
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/sii/connect': typeof ApiBillingSiiConnectRoute
+  '/api/billing/sii/emit': typeof ApiBillingSiiEmitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -228,6 +249,7 @@ export interface FileRoutesByTo {
   '/ai': typeof AuthenticatedAiRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRoute
@@ -246,6 +268,8 @@ export interface FileRoutesByTo {
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/sii/connect': typeof ApiBillingSiiConnectRoute
+  '/api/billing/sii/emit': typeof ApiBillingSiiEmitRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -260,6 +284,7 @@ export interface FileRoutesById {
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finance': typeof AuthenticatedFinanceRoute
@@ -278,6 +303,8 @@ export interface FileRoutesById {
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/sii/connect': typeof ApiBillingSiiConnectRoute
+  '/api/billing/sii/emit': typeof ApiBillingSiiEmitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -292,6 +319,7 @@ export interface FileRouteTypes {
     | '/ai'
     | '/analytics'
     | '/automations'
+    | '/billing'
     | '/customers'
     | '/dashboard'
     | '/finance'
@@ -310,6 +338,8 @@ export interface FileRouteTypes {
     | '/api/collections/check-overdue'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
+    | '/api/billing/sii/connect'
+    | '/api/billing/sii/emit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -322,6 +352,7 @@ export interface FileRouteTypes {
     | '/ai'
     | '/analytics'
     | '/automations'
+    | '/billing'
     | '/customers'
     | '/dashboard'
     | '/finance'
@@ -340,6 +371,8 @@ export interface FileRouteTypes {
     | '/api/collections/check-overdue'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
+    | '/api/billing/sii/connect'
+    | '/api/billing/sii/emit'
   id:
     | '__root__'
     | '/'
@@ -353,6 +386,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ai'
     | '/_authenticated/analytics'
     | '/_authenticated/automations'
+    | '/_authenticated/billing'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
     | '/_authenticated/finance'
@@ -371,6 +405,8 @@ export interface FileRouteTypes {
     | '/api/collections/check-overdue'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
+    | '/api/billing/sii/connect'
+    | '/api/billing/sii/emit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -389,6 +425,8 @@ export interface RootRouteChildren {
   ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
+  ApiBillingSiiConnectRoute: typeof ApiBillingSiiConnectRoute
+  ApiBillingSiiEmitRoute: typeof ApiBillingSiiEmitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -533,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/automations': {
       id: '/_authenticated/automations'
       path: '/automations'
@@ -596,6 +641,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBillingCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/sii/emit': {
+      id: '/api/billing/sii/emit'
+      path: '/api/billing/sii/emit'
+      fullPath: '/api/billing/sii/emit'
+      preLoaderRoute: typeof ApiBillingSiiEmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/sii/connect': {
+      id: '/api/billing/sii/connect'
+      path: '/api/billing/sii/connect'
+      fullPath: '/api/billing/sii/connect'
+      preLoaderRoute: typeof ApiBillingSiiConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -603,6 +662,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiRoute: typeof AuthenticatedAiRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
@@ -620,6 +680,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiRoute: AuthenticatedAiRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
@@ -652,6 +713,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
+  ApiBillingSiiConnectRoute: ApiBillingSiiConnectRoute,
+  ApiBillingSiiEmitRoute: ApiBillingSiiEmitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

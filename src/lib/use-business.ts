@@ -126,6 +126,7 @@ export const MODULES = [
   { key: "pos", label: "Caja (POS)" },
   { key: "sales", label: "Ventas" },
   { key: "customers", label: "Clientes" },
+  { key: "billing", label: "Facturación SII" },
   { key: "purchases", label: "Compras" },
   { key: "inventory", label: "Inventario" },
   { key: "finance", label: "Finanzas" },

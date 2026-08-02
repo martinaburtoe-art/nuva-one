@@ -23,6 +23,7 @@ import {
   Calculator,
   CalendarClock,
   Users,
+  Receipt,
 } from "lucide-react";
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { to: "/pos", label: "Caja", icon: Calculator },
   { to: "/sales", label: "Ventas", icon: ShoppingCart },
   { to: "/customers", label: "Clientes", icon: Users },
+  { to: "/billing", label: "Facturación SII", icon: Receipt },
   { to: "/purchases", label: "Compras", icon: Package },
   { to: "/inventory", label: "Inventario", icon: Boxes },
   { to: "/finance", label: "Finanzas", icon: CreditCard },
