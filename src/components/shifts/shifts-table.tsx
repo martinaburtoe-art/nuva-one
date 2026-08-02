@@ -59,6 +59,33 @@ function getWeekStartsInMonth(weekStartISO: string): string[] {
 
 type TimeBlock = { start_time: string; end_time: string };
 
+// Fecha real (día + mes corto) de cada día de la semana que empieza en
+// weekStartISO, para mostrar "Dom 2 ago" en vez de solo "Domingo".
+function getWeekDates(weekStartISO: string): Date[] {
+  const monday = new Date(weekStartISO + "T00:00:00");
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+function formatDayChip(date: Date): string {
+  const dayNum = date.getDate();
+  const month = date.toLocaleDateString("es-CL", { month: "short" }).replace(".", "");
+  return `${dayNum} ${month}`;
+}
+
+// Etiqueta completa ("Domingo 2 de agosto") para un turno puntual, calculada
+// a partir de SU PROPIO week_start (no de la semana que se esté viendo).
+function shiftDateLabel(weekStartISO: string, dayOfWeek: number): string {
+  const dates = getWeekDates(weekStartISO);
+  const date = dates[dayOfWeek];
+  const dayName = DAYS[dayOfWeek];
+  const dateStr = date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
+  return `${dayName} ${dateStr}`;
+}
+
 export function ShiftsTable({ businessId }: { businessId: string }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [view, setView] = useState<"dashboard" | "table">("dashboard");
@@ -78,6 +105,8 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
       return (data ?? []) as Shift[];
     },
   });
+
+  const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
   const [draft, setDraft] = useState({
     employee_name: "",
@@ -167,7 +196,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
       return;
     }
     const msg = encodeURIComponent(
-      `Hola ${shift.employee_name}, tu turno es el ${DAYS[shift.day_of_week]} de ${shift.start_time.slice(0, 5)} a ${shift.end_time.slice(0, 5)}.`,
+      `Hola ${shift.employee_name}, tu turno es el ${shiftDateLabel(shift.week_start, shift.day_of_week)} de ${shift.start_time.slice(0, 5)} a ${shift.end_time.slice(0, 5)}.`,
     );
     const phone = shift.employee_phone.replace(/\D/g, "");
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
@@ -249,13 +278,14 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
                 key={i}
                 type="button"
                 onClick={() => toggleDay(i)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                className={`flex flex-col items-center leading-tight text-xs px-2.5 py-1 rounded-full border transition-colors ${
                   selectedDays.includes(i)
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-background hover:bg-muted"
                 }`}
               >
-                {d.slice(0, 3)}
+                <span>{d.slice(0, 3)}</span>
+                <span className="text-[10px] opacity-80">{formatDayChip(weekDates[i])}</span>
               </button>
             ))}
             <button
@@ -334,7 +364,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
           </p>
         </Card>
       ) : view === "dashboard" ? (
-        <ShiftsWeekGrid shifts={shifts} onDelete={deleteShift} onWhatsApp={sendWhatsApp} />
+        <ShiftsWeekGrid shifts={shifts} onDelete={deleteShift} onWhatsApp={sendWhatsApp} weekStart={weekStart} />
       ) : (
         <Card className="p-0 overflow-hidden">
           <Table>
@@ -350,7 +380,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
               {shifts.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell>{s.employee_name}</TableCell>
-                  <TableCell>{DAYS[s.day_of_week]}</TableCell>
+                  <TableCell>{shiftDateLabel(s.week_start, s.day_of_week)}</TableCell>
                   <TableCell>
                     {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
                   </TableCell>

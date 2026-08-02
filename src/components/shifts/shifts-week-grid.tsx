@@ -38,16 +38,25 @@ function toMinutes(t: string) {
   return h * 60 + m;
 }
 
+function dateForDay(weekStartISO: string, dayIdx: number): string {
+  const monday = new Date(weekStartISO + "T00:00:00");
+  const d = new Date(monday);
+  d.setDate(monday.getDate() + dayIdx);
+  return d.toLocaleDateString("es-CL", { day: "numeric", month: "short" }).replace(".", "");
+}
+
 export function ShiftsWeekGrid({
   shifts,
   onDelete,
   onWhatsApp,
   activeDays = 7,
+  weekStart,
 }: {
   shifts: Shift[];
   onDelete: (id: string) => void;
   onWhatsApp: (shift: Shift) => void;
   activeDays?: number;
+  weekStart: string;
 }) {
   const { startHour, endHour } = useMemo(() => {
     if (!shifts.length) return { startHour: 8, endHour: 20 };
@@ -89,6 +98,9 @@ export function ShiftsWeekGrid({
                 className="p-2 text-center text-sm font-semibold border-l"
               >
                 {d}
+                <div className="text-[11px] font-normal text-muted-foreground">
+                  {dateForDay(weekStart, i)}
+                </div>
                 <div className="text-xs font-normal text-muted-foreground">
                   {byDay.get(i)?.length ?? 0} turno{(byDay.get(i)?.length ?? 0) === 1 ? "" : "s"}
                 </div>
