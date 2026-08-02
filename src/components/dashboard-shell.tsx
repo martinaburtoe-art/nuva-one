@@ -22,6 +22,7 @@ import {
   Calculator,
   Lock,
   CalendarClock,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,7 @@ const nav = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard" },
   { to: "/pos", label: "Caja", icon: Calculator, module: "pos" },
   { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales" },
+  { to: "/customers", label: "Clientes", icon: Users, module: "customers" },
   { to: "/purchases", label: "Compras", icon: Package, module: "purchases" },
   { to: "/inventory", label: "Inventario", icon: Boxes, module: "inventory" },
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance" },

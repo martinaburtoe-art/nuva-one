@@ -25,7 +25,7 @@ export function trialDaysLeft(createdAt: string | null): number {
 export async function buildBusinessContext(supabase: SupabaseClient<Database>, businessId: string) {
   if (!businessId) return null;
 
-  const [business, products, sales, transactions, quotes, purchases] =
+  const [business, products, sales, transactions, quotes, purchases, customers] =
     await Promise.all([
       supabase
         .from("businesses")
@@ -62,6 +62,12 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
         .eq("business_id", businessId)
         .order("purchase_date", { ascending: false })
         .limit(20),
+      supabase
+        .from("customers")
+        .select("name, phone, status, tags, notes")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false })
+        .limit(30),
     ]);
 
   // If RLS (web caller) or the explicit business_id filter (admin caller)
@@ -95,6 +101,7 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
       recent_transactions: transactions.data ?? [],
       recent_quotes: quotes.data ?? [],
       recent_purchases: purchases.data ?? [],
+      customers: customers.data ?? [],
     },
   };
 }
@@ -111,6 +118,7 @@ export function capContext(summary: Record<string, any>): Record<string, any> {
     "recent_quotes",
     "recent_transactions",
     "recent_sales",
+    "customers",
   ];
   const out = { ...summary };
   let json = JSON.stringify(out);

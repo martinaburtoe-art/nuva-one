@@ -125,6 +125,7 @@ export const MODULES = [
   { key: "dashboard", label: "Resumen" },
   { key: "pos", label: "Caja (POS)" },
   { key: "sales", label: "Ventas" },
+  { key: "customers", label: "Clientes" },
   { key: "purchases", label: "Compras" },
   { key: "inventory", label: "Inventario" },
   { key: "finance", label: "Finanzas" },

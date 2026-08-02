@@ -399,33 +399,45 @@ export type Database = {
       }
       customers: {
         Row: {
+          address: string | null
           business_id: string
           created_at: string
           email: string | null
           id: string
+          last_contact_at: string | null
           name: string
           notes: string | null
           phone: string | null
+          status: string
+          tags: string[]
           tax_id: string | null
         }
         Insert: {
+          address?: string | null
           business_id: string
           created_at?: string
           email?: string | null
           id?: string
+          last_contact_at?: string | null
           name: string
           notes?: string | null
           phone?: string | null
+          status?: string
+          tags?: string[]
           tax_id?: string | null
         }
         Update: {
+          address?: string | null
           business_id?: string
           created_at?: string
           email?: string | null
           id?: string
+          last_contact_at?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
+          status?: string
+          tags?: string[]
           tax_id?: string | null
         }
         Relationships: [

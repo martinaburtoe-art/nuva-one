@@ -22,12 +22,14 @@ import {
   Settings,
   Calculator,
   CalendarClock,
+  Users,
 } from "lucide-react";
 
 const navItems = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { to: "/pos", label: "Caja", icon: Calculator },
   { to: "/sales", label: "Ventas", icon: ShoppingCart },
+  { to: "/customers", label: "Clientes", icon: Users },
   { to: "/purchases", label: "Compras", icon: Package },
   { to: "/inventory", label: "Inventario", icon: Boxes },
   { to: "/finance", label: "Finanzas", icon: CreditCard },
