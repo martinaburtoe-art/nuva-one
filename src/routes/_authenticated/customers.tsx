@@ -40,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2, Users, Search, Phone, Mail, MapPin, Pencil } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
+import { formatRut, normalizeRut } from "@/lib/rut";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/customers")({
@@ -82,6 +83,7 @@ function Customers() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
   const [tagsInput, setTagsInput] = useState("");
+  const [rutInput, setRutInput] = useState("");
 
   // Métricas de compra por cliente, calculadas desde las ventas ya cargadas
   // (sin nueva tabla ni endpoint: reusa lo que otros módulos ya traen).
@@ -108,7 +110,8 @@ function Customers() {
           c.name.toLowerCase().includes(q) ||
           c.phone?.toLowerCase().includes(q) ||
           c.email?.toLowerCase().includes(q) ||
-          c.tax_id?.toLowerCase().includes(q),
+          c.tax_id?.toLowerCase().includes(q) ||
+          (c.tax_id && normalizeRut(c.tax_id).toLowerCase().includes(normalizeRut(q))),
       );
     }
     return list;
@@ -127,12 +130,14 @@ function Customers() {
   function openNew() {
     setEditing(null);
     setTagsInput("");
+    setRutInput("");
     setOpen(true);
   }
 
   function openEdit(c: Customer) {
     setEditing(c);
     setTagsInput((c.tags ?? []).join(", "));
+    setRutInput(formatRut(c.tax_id ?? ""));
     setOpen(true);
   }
 
@@ -147,7 +152,7 @@ function Customers() {
       name: String(fd.get("name") || "").trim(),
       phone: String(fd.get("phone") || "") || null,
       email: String(fd.get("email") || "") || null,
-      tax_id: String(fd.get("tax_id") || "") || null,
+      tax_id: rutInput ? formatRut(rutInput) : null,
       address: String(fd.get("address") || "") || null,
       status: String(fd.get("status") || "active"),
       notes: String(fd.get("notes") || "") || null,
@@ -209,7 +214,13 @@ function Customers() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label htmlFor="tax_id">RUT</Label>
-                        <Input id="tax_id" name="tax_id" defaultValue={editing?.tax_id ?? ""} />
+                        <Input
+                          id="tax_id"
+                          value={rutInput}
+                          onChange={(e) => setRutInput(formatRut(e.target.value))}
+                          placeholder="12.345.678-9"
+                          maxLength={12}
+                        />
                       </div>
                       <div>
                         <Label htmlFor="status">Estado</Label>
@@ -386,7 +397,7 @@ function Customers() {
                       </div>
                     )}
                     {detail.tax_id && (
-                      <div className="text-muted-foreground">RUT: {detail.tax_id}</div>
+                      <div className="text-muted-foreground">RUT: {formatRut(detail.tax_id)}</div>
                     )}
                   </div>
 

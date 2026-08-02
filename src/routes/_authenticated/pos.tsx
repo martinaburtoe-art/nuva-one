@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useBizList, useBizInsert, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
+import { formatRut, normalizeRut } from "@/lib/rut";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -60,10 +61,6 @@ function POS() {
   const [newCustomerName, setNewCustomerName] = useState("");
   const [registering, setRegistering] = useState(false);
 
-  function normalizeRut(v: string) {
-    return v.replace(/[.\s]/g, "").replace(/-/g, "").toUpperCase();
-  }
-
   const rutClean = normalizeRut(rutInput);
   const rutLooksValid = rutClean.length >= 7;
   const foundByRut = useMemo(() => {
@@ -84,7 +81,7 @@ function POS() {
     try {
       const created: any = await insertCustomer.mutateAsync({
         name: newCustomerName.trim(),
-        tax_id: rutInput.trim(),
+        tax_id: formatRut(rutInput),
         status: "active",
       });
       setMatchedCustomer(created);
@@ -449,7 +446,9 @@ function POS() {
                 <div className="flex items-center justify-between rounded-lg border bg-success/10 px-3 py-2">
                   <div>
                     <p className="text-sm font-medium">{matchedCustomer.name}</p>
-                    <p className="text-xs text-muted-foreground">{matchedCustomer.tax_id || rutInput}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatRut(matchedCustomer.tax_id || rutInput)}
+                    </p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={clearCustomer}>
                     Quitar
@@ -459,9 +458,10 @@ function POS() {
                 <>
                   <Input
                     value={rutInput}
-                    onChange={(e) => setRutInput(e.target.value)}
+                    onChange={(e) => setRutInput(formatRut(e.target.value))}
                     placeholder="12.345.678-9"
                     className="h-10"
+                    maxLength={12}
                   />
                   {rutLooksValid && !foundByRut && (
                     <div className="mt-2 space-y-2 rounded-lg border border-dashed p-2.5">

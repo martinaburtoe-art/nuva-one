@@ -32,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Receipt, Link2, Unlink, Download, Plus } from "lucide-react";
 import { useBizList, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
+import { formatRut } from "@/lib/rut";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -136,7 +137,8 @@ function ConnectionCard() {
             <>
               <p className="text-sm font-medium">{integ?.razon_social ?? "Cuenta conectada"}</p>
               <p className="text-xs text-muted-foreground">
-                RUT {integ?.rut} · Ambiente {integ?.environment === "prod" ? "Producción" : "Prueba"}
+                RUT {formatRut(integ?.rut ?? "")} · Ambiente{" "}
+                {integ?.environment === "prod" ? "Producción" : "Prueba"}
               </p>
             </>
           ) : (
@@ -324,7 +326,13 @@ function EmitDialog({ integration }: { integration: Integration | null | undefin
             <>
               <div>
                 <Label htmlFor="rut">RUT del receptor</Label>
-                <Input id="rut" value={rut} onChange={(e) => setRut(e.target.value)} placeholder="76.123.456-7" />
+                <Input
+                  id="rut"
+                  value={rut}
+                  onChange={(e) => setRut(formatRut(e.target.value))}
+                  placeholder="76.123.456-7"
+                  maxLength={12}
+                />
               </div>
               <div>
                 <Label htmlFor="rs">Razón social</Label>

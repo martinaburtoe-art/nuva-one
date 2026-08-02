@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSiiIntegration, openFacturaBaseUrl } from "@/lib/billing-sii-auth.server";
+import { rutForSii } from "@/lib/rut";
 
 type Item = { name: string; qty: number; price: number };
 
@@ -64,7 +65,7 @@ export const Route = createFileRoute("/api/billing/sii/emit")({
             ...(receptor?.rut
               ? {
                   Receptor: {
-                    RUTRecep: receptor.rut,
+                    RUTRecep: rutForSii(receptor.rut),
                     RznSocRecep: receptor.name,
                     GiroRecep: receptor.giro || "Sin giro informado",
                     DirRecep: receptor.address || undefined,
