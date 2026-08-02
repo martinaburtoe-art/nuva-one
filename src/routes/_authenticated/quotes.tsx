@@ -29,9 +29,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
+import { CurrencyInput } from "@/components/ui/currency-input";
 // quote-pdf is imported dynamically inside the handler so jspdf never enters the SSR/worker bundle.
 import { toast } from "sonner";
 
@@ -70,12 +71,19 @@ function Quotes() {
   const [customer, setCustomer] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [discountPct, setDiscountPct] = useState(0);
+  const [validUntil, setValidUntil] = useState("");
+  const [terms, setTerms] = useState(
+    "Cotización válida por 15 días. Precios en pesos chilenos, IVA incluido. Forma de pago a coordinar.",
+  );
 
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
 
   const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
-  const tax = Math.round(subtotal * 0.19);
-  const total = subtotal + tax;
+  const discountAmount = Math.round(subtotal * (discountPct / 100));
+  const taxable = subtotal - discountAmount;
+  const tax = Math.round(taxable * 0.19);
+  const total = taxable + tax;
 
   function pickProduct(idx: number, productId: string) {
     const p = (products ?? []).find((x: any) => x.id === productId);
@@ -98,14 +106,38 @@ function Quotes() {
       customer_id: customerId,
       items: validItems as any,
       subtotal,
+      discount_pct: discountPct,
       tax,
       total,
+      valid_until: validUntil || null,
+      terms: terms.trim() || null,
       status,
     });
     setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
     setCustomer("");
     setCustomerId(null);
+    setDiscountPct(0);
+    setValidUntil("");
     setOpen(false);
+  }
+
+  function duplicateQuote(quote: any) {
+    setItems(
+      (quote.items ?? []).length
+        ? quote.items.map((it: any) => ({
+            product_id: it.product_id ?? null,
+            name: it.name,
+            qty: Number(it.qty) || 1,
+            price: Number(it.price) || 0,
+          }))
+        : [{ product_id: null, name: "", qty: 1, price: 0 }],
+    );
+    setCustomer(quote.customer_name ?? "");
+    setCustomerId(quote.customer_id ?? null);
+    setDiscountPct(Number(quote.discount_pct) || 0);
+    setTerms(quote.terms ?? terms);
+    setOpen(true);
+    toast.info("Cotización duplicada como borrador, revisa y guarda");
   }
 
   async function convertToSale(quote: any) {
@@ -137,7 +169,11 @@ function Quotes() {
 
   async function downloadPdf(quote: any) {
     const { generateQuotePdf } = await import("@/lib/quote-pdf");
-    await generateQuotePdf(quote, active?.name ?? "Nüva One");
+    await generateQuotePdf(quote, {
+      name: active?.name ?? "Nüva One",
+      logo_url: active?.logo_url ?? null,
+      tax_id: (active as any)?.tax_id ?? null,
+    });
   }
 
   return (
@@ -194,7 +230,7 @@ function Quotes() {
                 </div>
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <Label>Items</Label>
+                    <Label>Productos</Label>
                     <Button
                       type="button"
                       size="sm"
@@ -216,10 +252,10 @@ function Quotes() {
                             onValueChange={(v) => (v === "__free__" ? null : pickProduct(idx, v))}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Producto o texto libre" />
+                              <SelectValue placeholder="Selecciona un producto" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="__free__">— Texto libre —</SelectItem>
+                              <SelectItem value="__free__">— Producto personalizado —</SelectItem>
                               {(products ?? []).map((p: any) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.name}
@@ -230,7 +266,7 @@ function Quotes() {
                           {it.product_id === null && (
                             <Input
                               className="mt-1"
-                              placeholder="Descripción"
+                              placeholder="Descripción del producto"
                               value={it.name}
                               onChange={(e) => {
                                 const c = [...items];
@@ -251,15 +287,13 @@ function Quotes() {
                             setItems(c);
                           }}
                         />
-                        <Input
+                        <CurrencyInput
                           className="col-span-3"
-                          type="number"
-                          min={0}
                           placeholder="Precio"
                           value={it.price}
-                          onChange={(e) => {
+                          onChange={(n) => {
                             const c = [...items];
-                            c[idx].price = Number(e.target.value);
+                            c[idx].price = n;
                             setItems(c);
                           }}
                         />
@@ -276,11 +310,52 @@ function Quotes() {
                     ))}
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="discount">Descuento (%)</Label>
+                    <Input
+                      id="discount"
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={discountPct}
+                      onChange={(e) => setDiscountPct(Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="valid_until">Válida hasta</Label>
+                    <Input
+                      id="valid_until"
+                      type="date"
+                      value={validUntil}
+                      onChange={(e) => setValidUntil(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="terms">Condiciones (aparecen en el PDF)</Label>
+                  <textarea
+                    id="terms"
+                    className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+                    rows={2}
+                    value={terms}
+                    onChange={(e) => setTerms(e.target.value)}
+                  />
+                </div>
+
                 <div className="rounded-lg bg-secondary/40 p-4">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal</span>
                     <span>{fmtCLP(subtotal)}</span>
                   </div>
+                  {discountPct > 0 && (
+                    <div className="flex justify-between text-sm text-destructive">
+                      <span>Descuento ({discountPct}%)</span>
+                      <span>-{fmtCLP(discountAmount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span>IVA (19%)</span>
                     <span>{fmtCLP(tax)}</span>
@@ -331,6 +406,7 @@ function Quotes() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>N°</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Estado</TableHead>
@@ -342,6 +418,9 @@ function Quotes() {
             <TableBody>
               {data.map((q) => (
                 <TableRow key={q.id}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
+                  </TableCell>
                   <TableCell className="font-medium">{q.customer_name}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(q.created_at).toLocaleDateString("es-CL")}
@@ -376,6 +455,14 @@ function Quotes() {
                         onClick={() => downloadPdf(q)}
                       >
                         <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Duplicar cotización"
+                        onClick={() => duplicateQuote(q)}
+                      >
+                        <Copy className="h-4 w-4" />
                       </Button>
                       {q.status === "accepted" && !convertedQuoteIds.has(q.id) && (
                         <Button

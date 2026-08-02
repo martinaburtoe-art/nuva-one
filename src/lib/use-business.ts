@@ -9,6 +9,7 @@ export type Business = {
   name: string;
   industry: string;
   logo_url: string | null;
+  tax_id: string | null;
   owner_id: string;
   webhook_url: string | null;
 };
@@ -19,7 +20,7 @@ export function useBusinesses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("businesses")
-        .select("id, name, industry, logo_url, owner_id, webhook_url")
+        .select("id, name, industry, logo_url, tax_id, owner_id, webhook_url")
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Business[];
