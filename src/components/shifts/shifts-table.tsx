@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageCircle, Plus, Trash2, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { MessageCircle, Plus, Trash2, ChevronLeft, ChevronRight, LayoutGrid, List, X } from "lucide-react";
 import { toast } from "sonner";
 import { ShiftsWeekGrid } from "@/components/shifts/shifts-week-grid";
 
@@ -36,6 +36,28 @@ function getWeekStart(offsetWeeks = 0): string {
   monday.setDate(now.getDate() - day + 1 + offsetWeeks * 7);
   return monday.toISOString().slice(0, 10);
 }
+
+// Todas las semanas (lunes de inicio) cuyo rango toca el mes de weekStartISO.
+// Se usa para "Repetir: todo el mes" -- misma semántica de semana (lunes a
+// domingo) que ya usa el dashboard, solo que abarca varias.
+function getWeekStartsInMonth(weekStartISO: string): string[] {
+  const ref = new Date(weekStartISO + "T00:00:00");
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const cur = new Date(firstDay);
+  const dow = cur.getDay() === 0 ? 7 : cur.getDay();
+  cur.setDate(cur.getDate() - dow + 1);
+  const result: string[] = [];
+  while (cur <= lastDay) {
+    result.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 7);
+  }
+  return result;
+}
+
+type TimeBlock = { start_time: string; end_time: string };
 
 export function ShiftsTable({ businessId }: { businessId: string }) {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -60,32 +82,74 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
   const [draft, setDraft] = useState({
     employee_name: "",
     employee_phone: "",
-    day_of_week: 0,
-    start_time: "09:00",
-    end_time: "18:00",
   });
+  const [selectedDays, setSelectedDays] = useState<number[]>([0]);
+  const [blocks, setBlocks] = useState<TimeBlock[]>([{ start_time: "09:00", end_time: "18:00" }]);
+  const [repeatMode, setRepeatMode] = useState<"week" | "month">("week");
+  const [saving, setSaving] = useState(false);
+
+  function toggleDay(d: number) {
+    setSelectedDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()));
+  }
+
+  function selectAllDays() {
+    setSelectedDays(selectedDays.length === 7 ? [] : [0, 1, 2, 3, 4, 5, 6]);
+  }
+
+  function updateBlock(i: number, patch: Partial<TimeBlock>) {
+    setBlocks((prev) => prev.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+  }
+
+  function addBlock() {
+    setBlocks((prev) => [...prev, { start_time: "15:00", end_time: "18:00" }]);
+  }
+
+  function removeBlock(i: number) {
+    setBlocks((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev));
+  }
 
   async function addShift() {
     if (!draft.employee_name.trim()) {
       toast.error("Ingresa el nombre del empleado");
       return;
     }
-    const { error } = await supabase.from("shifts").insert({
-      business_id: businessId,
-      week_start: weekStart,
-      employee_name: draft.employee_name.trim(),
-      employee_phone: draft.employee_phone.trim() || null,
-      day_of_week: draft.day_of_week,
-      start_time: draft.start_time,
-      end_time: draft.end_time,
-    });
+    if (selectedDays.length === 0) {
+      toast.error("Selecciona al menos un día");
+      return;
+    }
+    for (const b of blocks) {
+      if (b.end_time <= b.start_time) {
+        toast.error("La hora de término debe ser mayor a la de inicio en cada bloque");
+        return;
+      }
+    }
+
+    const weekStarts = repeatMode === "month" ? getWeekStartsInMonth(weekStart) : [weekStart];
+
+    const rows = weekStarts.flatMap((ws) =>
+      selectedDays.flatMap((day) =>
+        blocks.map((b) => ({
+          business_id: businessId,
+          week_start: ws,
+          employee_name: draft.employee_name.trim(),
+          employee_phone: draft.employee_phone.trim() || null,
+          day_of_week: day,
+          start_time: b.start_time,
+          end_time: b.end_time,
+        })),
+      ),
+    );
+
+    setSaving(true);
+    const { error } = await supabase.from("shifts").insert(rows);
+    setSaving(false);
     if (error) {
       toast.error("No se pudo guardar el turno");
       return;
     }
     setDraft((d) => ({ ...d, employee_name: "", employee_phone: "" }));
     queryClient.invalidateQueries({ queryKey: ["shifts", businessId, weekStart] });
-    toast.success("Turno agregado");
+    toast.success(`${rows.length} turno(s) agregado(s)`);
   }
 
   async function deleteShift(id: string) {
@@ -162,9 +226,9 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
         </div>
       </div>
 
-      <Card className="p-4 space-y-3">
+      <Card className="p-4 space-y-4">
         <p className="text-sm font-medium">Agregar turno</p>
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <Input
             placeholder="Nombre del empleado"
             value={draft.employee_name}
@@ -175,30 +239,86 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
             value={draft.employee_phone}
             onChange={(e) => setDraft((d) => ({ ...d, employee_phone: e.target.value }))}
           />
-          <select
-            className="border rounded-md px-3 py-2 text-sm bg-background"
-            value={draft.day_of_week}
-            onChange={(e) => setDraft((d) => ({ ...d, day_of_week: Number(e.target.value) }))}
-          >
-            {DAYS.map((d, i) => (
-              <option key={i} value={i}>
-                {d}
-              </option>
-            ))}
-          </select>
-          <Input
-            type="time"
-            value={draft.start_time}
-            onChange={(e) => setDraft((d) => ({ ...d, start_time: e.target.value }))}
-          />
-          <Input
-            type="time"
-            value={draft.end_time}
-            onChange={(e) => setDraft((d) => ({ ...d, end_time: e.target.value }))}
-          />
         </div>
-        <Button size="sm" onClick={addShift}>
-          <Plus className="h-4 w-4 mr-2" /> Agregar
+
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-1.5">Días</p>
+          <div className="flex flex-wrap gap-1.5">
+            {DAYS.map((d, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => toggleDay(i)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  selectedDays.includes(i)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background hover:bg-muted"
+                }`}
+              >
+                {d.slice(0, 3)}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={selectAllDays}
+              className="text-xs px-2.5 py-1 rounded-full border bg-background hover:bg-muted"
+            >
+              {selectedDays.length === 7 ? "Ninguno" : "Toda la semana"}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-1.5">
+            Horario {blocks.length > 1 ? "(turno partido)" : ""}
+          </p>
+          <div className="space-y-2">
+            {blocks.map((b, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  type="time"
+                  value={b.start_time}
+                  onChange={(e) => updateBlock(i, { start_time: e.target.value })}
+                  className="w-32"
+                />
+                <span className="text-xs text-muted-foreground">a</span>
+                <Input
+                  type="time"
+                  value={b.end_time}
+                  onChange={(e) => updateBlock(i, { end_time: e.target.value })}
+                  className="w-32"
+                />
+                {blocks.length > 1 && (
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeBlock(i)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addBlock}
+            className="mt-1.5 text-xs text-primary underline"
+          >
+            + Agregar bloque horario (ej: 09:00–13:00 y 15:00–18:00)
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-medium text-muted-foreground">Repetir:</p>
+          <select
+            className="border rounded-md px-2 py-1.5 text-xs bg-background"
+            value={repeatMode}
+            onChange={(e) => setRepeatMode(e.target.value as "week" | "month")}
+          >
+            <option value="week">Solo esta semana</option>
+            <option value="month">Todo el mes</option>
+          </select>
+        </div>
+
+        <Button size="sm" onClick={addShift} disabled={saving}>
+          <Plus className="h-4 w-4 mr-2" /> {saving ? "Agregando..." : "Agregar"}
         </Button>
       </Card>
 
