@@ -129,7 +129,6 @@ export const MODULES = [
   { key: "inventory", label: "Inventario" },
   { key: "finance", label: "Finanzas" },
   { key: "analytics", label: "Indicadores" },
-  { key: "marketing", label: "Marketing" },
   { key: "quotes", label: "Cotizaciones" },
   { key: "automations", label: "Vinculación WhatsApp" },
   { key: "ai", label: "Asistente IA" },

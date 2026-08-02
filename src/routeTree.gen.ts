@@ -25,7 +25,6 @@ import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authenticated/purchases'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedMfaRequiredRouteImport } from './routes/_authenticated/mfa-required'
-import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -38,10 +37,6 @@ import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/col
 import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
 import { Route as ApiBillingPortalRouteImport } from './routes/api/billing/portal'
 import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
-import { Route as ApiMarketingMetaStartRouteImport } from './routes/api/marketing/meta/start'
-import { Route as ApiMarketingMetaPublishRouteImport } from './routes/api/marketing/meta/publish'
-import { Route as ApiMarketingMetaOverviewRouteImport } from './routes/api/marketing/meta/overview'
-import { Route as ApiMarketingMetaCallbackRouteImport } from './routes/api/marketing/meta/callback'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -123,11 +118,6 @@ const AuthenticatedMfaRequiredRoute =
     path: '/mfa-required',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
-  id: '/marketing',
-  path: '/marketing',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
@@ -190,28 +180,6 @@ const ApiBillingCheckoutRoute = ApiBillingCheckoutRouteImport.update({
   path: '/api/billing/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiMarketingMetaStartRoute = ApiMarketingMetaStartRouteImport.update({
-  id: '/api/marketing/meta/start',
-  path: '/api/marketing/meta/start',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMarketingMetaPublishRoute = ApiMarketingMetaPublishRouteImport.update({
-  id: '/api/marketing/meta/publish',
-  path: '/api/marketing/meta/publish',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMarketingMetaOverviewRoute =
-  ApiMarketingMetaOverviewRouteImport.update({
-    id: '/api/marketing/meta/overview',
-    path: '/api/marketing/meta/overview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiMarketingMetaCallbackRoute =
-  ApiMarketingMetaCallbackRouteImport.update({
-    id: '/api/marketing/meta/callback',
-    path: '/api/marketing/meta/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -227,7 +195,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRoute
   '/inventory': typeof AuthenticatedInventoryRoute
-  '/marketing': typeof AuthenticatedMarketingRoute
   '/mfa-required': typeof AuthenticatedMfaRequiredRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
@@ -242,10 +209,6 @@ export interface FileRoutesByFullPath {
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
-  '/api/marketing/meta/callback': typeof ApiMarketingMetaCallbackRoute
-  '/api/marketing/meta/overview': typeof ApiMarketingMetaOverviewRoute
-  '/api/marketing/meta/publish': typeof ApiMarketingMetaPublishRoute
-  '/api/marketing/meta/start': typeof ApiMarketingMetaStartRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -261,7 +224,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRoute
   '/inventory': typeof AuthenticatedInventoryRoute
-  '/marketing': typeof AuthenticatedMarketingRoute
   '/mfa-required': typeof AuthenticatedMfaRequiredRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
@@ -276,10 +238,6 @@ export interface FileRoutesByTo {
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
-  '/api/marketing/meta/callback': typeof ApiMarketingMetaCallbackRoute
-  '/api/marketing/meta/overview': typeof ApiMarketingMetaOverviewRoute
-  '/api/marketing/meta/publish': typeof ApiMarketingMetaPublishRoute
-  '/api/marketing/meta/start': typeof ApiMarketingMetaStartRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -297,7 +255,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finance': typeof AuthenticatedFinanceRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
-  '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
   '/_authenticated/mfa-required': typeof AuthenticatedMfaRequiredRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/purchases': typeof AuthenticatedPurchasesRoute
@@ -312,10 +269,6 @@ export interface FileRoutesById {
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
-  '/api/marketing/meta/callback': typeof ApiMarketingMetaCallbackRoute
-  '/api/marketing/meta/overview': typeof ApiMarketingMetaOverviewRoute
-  '/api/marketing/meta/publish': typeof ApiMarketingMetaPublishRoute
-  '/api/marketing/meta/start': typeof ApiMarketingMetaStartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -333,7 +286,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/finance'
     | '/inventory'
-    | '/marketing'
     | '/mfa-required'
     | '/pos'
     | '/purchases'
@@ -348,10 +300,6 @@ export interface FileRouteTypes {
     | '/api/collections/check-overdue'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
-    | '/api/marketing/meta/callback'
-    | '/api/marketing/meta/overview'
-    | '/api/marketing/meta/publish'
-    | '/api/marketing/meta/start'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -367,7 +315,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/finance'
     | '/inventory'
-    | '/marketing'
     | '/mfa-required'
     | '/pos'
     | '/purchases'
@@ -382,10 +329,6 @@ export interface FileRouteTypes {
     | '/api/collections/check-overdue'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
-    | '/api/marketing/meta/callback'
-    | '/api/marketing/meta/overview'
-    | '/api/marketing/meta/publish'
-    | '/api/marketing/meta/start'
   id:
     | '__root__'
     | '/'
@@ -402,7 +345,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/finance'
     | '/_authenticated/inventory'
-    | '/_authenticated/marketing'
     | '/_authenticated/mfa-required'
     | '/_authenticated/pos'
     | '/_authenticated/purchases'
@@ -417,10 +359,6 @@ export interface FileRouteTypes {
     | '/api/collections/check-overdue'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
-    | '/api/marketing/meta/callback'
-    | '/api/marketing/meta/overview'
-    | '/api/marketing/meta/publish'
-    | '/api/marketing/meta/start'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -439,10 +377,6 @@ export interface RootRouteChildren {
   ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
-  ApiMarketingMetaCallbackRoute: typeof ApiMarketingMetaCallbackRoute
-  ApiMarketingMetaOverviewRoute: typeof ApiMarketingMetaOverviewRoute
-  ApiMarketingMetaPublishRoute: typeof ApiMarketingMetaPublishRoute
-  ApiMarketingMetaStartRoute: typeof ApiMarketingMetaStartRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -559,13 +493,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMfaRequiredRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/marketing': {
-      id: '/_authenticated/marketing'
-      path: '/marketing'
-      fullPath: '/marketing'
-      preLoaderRoute: typeof AuthenticatedMarketingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/inventory': {
       id: '/_authenticated/inventory'
       path: '/inventory'
@@ -650,34 +577,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBillingCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/marketing/meta/start': {
-      id: '/api/marketing/meta/start'
-      path: '/api/marketing/meta/start'
-      fullPath: '/api/marketing/meta/start'
-      preLoaderRoute: typeof ApiMarketingMetaStartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/marketing/meta/publish': {
-      id: '/api/marketing/meta/publish'
-      path: '/api/marketing/meta/publish'
-      fullPath: '/api/marketing/meta/publish'
-      preLoaderRoute: typeof ApiMarketingMetaPublishRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/marketing/meta/overview': {
-      id: '/api/marketing/meta/overview'
-      path: '/api/marketing/meta/overview'
-      fullPath: '/api/marketing/meta/overview'
-      preLoaderRoute: typeof ApiMarketingMetaOverviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/marketing/meta/callback': {
-      id: '/api/marketing/meta/callback'
-      path: '/api/marketing/meta/callback'
-      fullPath: '/api/marketing/meta/callback'
-      preLoaderRoute: typeof ApiMarketingMetaCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -688,7 +587,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
-  AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
   AuthenticatedMfaRequiredRoute: typeof AuthenticatedMfaRequiredRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedPurchasesRoute: typeof AuthenticatedPurchasesRoute
@@ -705,7 +603,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
-  AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
   AuthenticatedMfaRequiredRoute: AuthenticatedMfaRequiredRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedPurchasesRoute: AuthenticatedPurchasesRoute,
@@ -734,10 +631,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
-  ApiMarketingMetaCallbackRoute: ApiMarketingMetaCallbackRoute,
-  ApiMarketingMetaOverviewRoute: ApiMarketingMetaOverviewRoute,
-  ApiMarketingMetaPublishRoute: ApiMarketingMetaPublishRoute,
-  ApiMarketingMetaStartRoute: ApiMarketingMetaStartRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

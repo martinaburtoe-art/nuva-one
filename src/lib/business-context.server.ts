@@ -1,5 +1,5 @@
 // Builds a lightweight, current snapshot of a business (sales, inventory,
-// finances, quotes, purchases, marketing) to ground the AI assistant's
+// finances, quotes, purchases) to ground the AI assistant's
 // answers in real data. Shared by:
 //   - /api/chat (web dashboard chat), called with a user-authed client so
 //     Postgres RLS enforces access -- this function itself does no auth
@@ -25,7 +25,7 @@ export function trialDaysLeft(createdAt: string | null): number {
 export async function buildBusinessContext(supabase: SupabaseClient<Database>, businessId: string) {
   if (!businessId) return null;
 
-  const [business, products, sales, transactions, quotes, purchases, marketingPosts] =
+  const [business, products, sales, transactions, quotes, purchases] =
     await Promise.all([
       supabase
         .from("businesses")
@@ -62,12 +62,6 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
         .eq("business_id", businessId)
         .order("purchase_date", { ascending: false })
         .limit(20),
-      supabase
-        .from("marketing_posts")
-        .select("content, platforms, status, scheduled_for")
-        .eq("business_id", businessId)
-        .order("scheduled_for", { ascending: false })
-        .limit(15),
     ]);
 
   // If RLS (web caller) or the explicit business_id filter (admin caller)
@@ -101,7 +95,6 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
       recent_transactions: transactions.data ?? [],
       recent_quotes: quotes.data ?? [],
       recent_purchases: purchases.data ?? [],
-      recent_marketing_posts: marketingPosts.data ?? [],
     },
   };
 }
@@ -118,7 +111,6 @@ export function capContext(summary: Record<string, any>): Record<string, any> {
     "recent_quotes",
     "recent_transactions",
     "recent_sales",
-    "recent_marketing_posts",
   ];
   const out = { ...summary };
   let json = JSON.stringify(out);
