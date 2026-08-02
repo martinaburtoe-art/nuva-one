@@ -43,13 +43,62 @@ function POS() {
     ascending: true,
   });
   const { data: sales } = useBizList<any>("sales", { order: "created_at" });
+  const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
   const insert = useBizInsert("sales");
+  const insertCustomer = useBizInsert("customers");
 
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [method, setMethod] = useState<PayMethod>("efectivo");
   const [received, setReceived] = useState<number>(0);
   const [showReceipt, setShowReceipt] = useState<any | null>(null);
+
+  // Vincular la venta a un cliente por RUT: si existe en el CRM se adjunta
+  // solo; si no existe, se puede registrar sin salir de la caja.
+  const [rutInput, setRutInput] = useState("");
+  const [matchedCustomer, setMatchedCustomer] = useState<any | null>(null);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [registering, setRegistering] = useState(false);
+
+  function normalizeRut(v: string) {
+    return v.replace(/[.\s]/g, "").replace(/-/g, "").toUpperCase();
+  }
+
+  const rutClean = normalizeRut(rutInput);
+  const rutLooksValid = rutClean.length >= 7;
+  const foundByRut = useMemo(() => {
+    if (!rutLooksValid) return null;
+    return (customers ?? []).find((c: any) => c.tax_id && normalizeRut(c.tax_id) === rutClean) ?? null;
+  }, [customers, rutClean, rutLooksValid]);
+
+  useEffect(() => {
+    setMatchedCustomer(foundByRut);
+  }, [foundByRut]);
+
+  async function registerCustomerFromPos() {
+    if (!newCustomerName.trim()) {
+      toast.error("Ingresa el nombre del cliente");
+      return;
+    }
+    setRegistering(true);
+    try {
+      const created: any = await insertCustomer.mutateAsync({
+        name: newCustomerName.trim(),
+        tax_id: rutInput.trim(),
+        status: "active",
+      });
+      setMatchedCustomer(created);
+      toast.success("Cliente registrado");
+    } finally {
+      setRegistering(false);
+    }
+  }
+
+  function clearCustomer() {
+    setRutInput("");
+    setMatchedCustomer(null);
+    setNewCustomerName("");
+  }
 
   const favKey = active ? `nuva.pos.favs.${active.id}` : null;
   const [favs, setFavs] = useState<string[]>([]);
@@ -140,7 +189,8 @@ function POS() {
       .join(" — ");
     try {
       const saved: any = await insert.mutateAsync({
-        customer_name: "Venta mostrador",
+        customer_name: matchedCustomer?.name ?? "Venta mostrador",
+        customer_id: matchedCustomer?.id ?? null,
         channel: "tienda",
         status: "paid",
         total,
@@ -166,6 +216,7 @@ function POS() {
       setCart([]);
       setReceived(0);
       setMethod("efectivo");
+      clearCustomer();
     } catch {
       // toast handled by hook
     }
@@ -392,6 +443,48 @@ function POS() {
           </div>
 
           <div className="mt-3 space-y-3 border-t pt-3">
+            <div>
+              <Label className="mb-1.5 block text-xs">RUT del cliente (opcional)</Label>
+              {matchedCustomer ? (
+                <div className="flex items-center justify-between rounded-lg border bg-success/10 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium">{matchedCustomer.name}</p>
+                    <p className="text-xs text-muted-foreground">{matchedCustomer.tax_id || rutInput}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={clearCustomer}>
+                    Quitar
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Input
+                    value={rutInput}
+                    onChange={(e) => setRutInput(e.target.value)}
+                    placeholder="12.345.678-9"
+                    className="h-10"
+                  />
+                  {rutLooksValid && !foundByRut && (
+                    <div className="mt-2 space-y-2 rounded-lg border border-dashed p-2.5">
+                      <p className="text-xs text-muted-foreground">
+                        No hay un cliente con ese RUT. Regístralo para llevar su historial:
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          value={newCustomerName}
+                          onChange={(e) => setNewCustomerName(e.target.value)}
+                          placeholder="Nombre del cliente"
+                          className="h-9 flex-1"
+                        />
+                        <Button size="sm" onClick={registerCustomerFromPos} disabled={registering}>
+                          {registering ? "..." : "Registrar"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             <div>
               <Label className="mb-1.5 block text-xs">Método de pago</Label>
               <div className="grid grid-cols-3 gap-1.5">
