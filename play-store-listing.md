@@ -45,8 +45,20 @@ Para todo público (no contiene contenido sensible)
 - [ ] Video promocional (opcional)
 
 ## Checklist técnico restante antes de subir a Play Console
+- [x] Target API level 36 (Android 16) — ya cumplido, verificado en `android/variables.gradle`
+- [x] Firma de release configurada (keystore + build.gradle)
+- [x] Minificación + ProGuard con reglas de Capacitor
+- [x] Eliminación de cuenta accesible in-app (Configuración > Seguridad)
+- [x] Aviso de "sin conexión" (evita pantalla en blanco, mitiga rechazo por política 4.3)
 - [ ] Generar cuenta de desarrollador en Play Console (pago único USD 25)
-- [ ] Guardar el keystore (`nuva-one-release.keystore`) y su contraseña en un gestor de contraseñas — sin él no puedes actualizar la app nunca más
+- [ ] Guardar el keystore (`nuva-one-release.keystore`) y su contraseña en un gestor de contraseñas
 - [ ] Generar el AAB firmado: `cd android && ./gradlew bundleRelease`
-- [ ] Completar el formulario "Data safety" de Play Console (qué datos recolecta la app: teléfono, datos de negocio, etc.)
-- [ ] Decidir: implementar push notifications de verdad (requiere proyecto Firebase) o dejarlo fuera del release inicial
+- [ ] Completar el formulario "Data safety" de Play Console — debe declarar:
+      - Datos de contacto (email, teléfono) — recolectados, usados para funcionalidad de la cuenta
+      - Datos financieros (ventas, inventario, facturación) — recolectados, no compartidos con terceros
+      - Mensajes de WhatsApp (números, contenido) — recolectados, usados para el asistente IA
+      - Eliminación de cuenta: SÍ disponible in-app (Configuración > Seguridad > "Eliminar mi cuenta")
+- [ ] Verificar que `/privacy` y `/terms` cargan sin necesidad de login (Google los revisa así)
+- [ ] Decidir: implementar push notifications de verdad (requiere proyecto Firebase) o mantenerlo fuera
+- [ ] Probar la app en un teléfono real de gama baja (pantalla chica, Android 10-12) antes de publicar
+
