@@ -35,6 +35,7 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as ApiWhatsappWebhookRouteImport } from './routes/api/whatsapp/webhook'
 import { Route as ApiQuotesFollowUpRouteImport } from './routes/api/quotes/follow-up'
+import { Route as ApiNotificationsLowStockCheckRouteImport } from './routes/api/notifications/low-stock-check'
 import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/collections/check-overdue'
 import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
 import { Route as ApiBillingPortalRouteImport } from './routes/api/billing/portal'
@@ -177,6 +178,12 @@ const ApiQuotesFollowUpRoute = ApiQuotesFollowUpRouteImport.update({
   path: '/api/quotes/follow-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNotificationsLowStockCheckRoute =
+  ApiNotificationsLowStockCheckRouteImport.update({
+    id: '/api/notifications/low-stock-check',
+    path: '/api/notifications/low-stock-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiCollectionsCheckOverdueRoute =
   ApiCollectionsCheckOverdueRouteImport.update({
     id: '/api/collections/check-overdue',
@@ -260,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/api/billing/portal': typeof ApiBillingPortalRoute
   '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
@@ -297,6 +305,7 @@ export interface FileRoutesByTo {
   '/api/billing/portal': typeof ApiBillingPortalRoute
   '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
@@ -336,6 +345,7 @@ export interface FileRoutesById {
   '/api/billing/portal': typeof ApiBillingPortalRoute
   '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
@@ -375,6 +385,7 @@ export interface FileRouteTypes {
     | '/api/billing/portal'
     | '/api/billing/webhook'
     | '/api/collections/check-overdue'
+    | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
     | '/api/billing/payments/create'
@@ -412,6 +423,7 @@ export interface FileRouteTypes {
     | '/api/billing/portal'
     | '/api/billing/webhook'
     | '/api/collections/check-overdue'
+    | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
     | '/api/billing/payments/create'
@@ -450,6 +462,7 @@ export interface FileRouteTypes {
     | '/api/billing/portal'
     | '/api/billing/webhook'
     | '/api/collections/check-overdue'
+    | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
     | '/api/billing/payments/create'
@@ -474,6 +487,7 @@ export interface RootRouteChildren {
   ApiBillingPortalRoute: typeof ApiBillingPortalRoute
   ApiBillingWebhookRoute: typeof ApiBillingWebhookRoute
   ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
+  ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
   ApiBillingPaymentsCreateRoute: typeof ApiBillingPaymentsCreateRoute
@@ -668,6 +682,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiQuotesFollowUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/notifications/low-stock-check': {
+      id: '/api/notifications/low-stock-check'
+      path: '/api/notifications/low-stock-check'
+      fullPath: '/api/notifications/low-stock-check'
+      preLoaderRoute: typeof ApiNotificationsLowStockCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/collections/check-overdue': {
       id: '/api/collections/check-overdue'
       path: '/api/collections/check-overdue'
@@ -794,6 +815,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBillingPortalRoute: ApiBillingPortalRoute,
   ApiBillingWebhookRoute: ApiBillingWebhookRoute,
   ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
+  ApiNotificationsLowStockCheckRoute: ApiNotificationsLowStockCheckRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
   ApiBillingPaymentsCreateRoute: ApiBillingPaymentsCreateRoute,

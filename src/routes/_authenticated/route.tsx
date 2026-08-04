@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { usePushNotifications } from "@/lib/use-push-notifications";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -40,6 +41,8 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
+  const { user } = Route.useRouteContext();
+  usePushNotifications(user?.id);
   return (
     <DashboardShell>
       <Outlet />
