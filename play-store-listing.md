@@ -65,6 +65,21 @@ Para todo público (no contiene contenido sensible)
       3. Descargar `google-services.json` → colocar en `android/app/google-services.json`
       4. Generar service account (Configuración del proyecto > Cuentas de servicio > Generar clave privada)
       5. En Vercel, agregar variables de entorno: `FIREBASE_PROJECT_ID` y `FIREBASE_SERVICE_ACCOUNT_JSON` (el JSON completo de la service account, como string)
-      6. Configurar un cron (pg_cron/pg_net o Vercel Cron) que llame `POST /api/notifications/low-stock-check` cada cierta hora, con header `x-cron-secret`
+      6. [HECHO] Los 3 crons ya están programados vía pg_cron/pg_net directo en Supabase:
+         `nuva-check-overdue-daily` (09:00 Chile), `nuva-quotes-followup-daily` (09:30 Chile),
+         `nuva-low-stock-check-every-6h` (cada 6 horas)
+
+## ⚠️ ACCIÓN URGENTE — CRON_SECRET
+Los 3 crons de arriba ya están corriendo contra producción, pero solo funcionarán con
+autenticación real si agregas esta variable de entorno en Vercel (Project Settings >
+Environment Variables), exactamente con este valor:
+
+```
+CRON_SECRET=d2407b2112e50b89a6281a6c4e72177b8cb3cd2acaaa100cdee9e4c04a1ebc0e
+```
+
+Sin esto, los endpoints `check-overdue`, `follow-up` y `low-stock-check` aceptan
+peticiones sin autenticar (el código actual omite la validación si la variable no
+existe). Agrégala cuanto antes y vuelve a desplegar.
 - [ ] Probar la app en un teléfono real de gama baja (pantalla chica, Android 10-12) antes de publicar
 
