@@ -107,7 +107,7 @@ function AiPage() {
               </div>
               <h2 className="mt-6 text-2xl font-bold">¿Cómo te puedo ayudar?</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Pregunta sobre ventas, inventario, finanzas o marketing.
+                Pregunta sobre ventas, inventario, finanzas o cotizaciones.
               </p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {suggestions.map((s) => (

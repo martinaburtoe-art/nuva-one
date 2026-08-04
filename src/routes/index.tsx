@@ -58,7 +58,7 @@ const STRUCTURED_DATA = {
       operatingSystem: "Web",
       url: "https://nuva-one.vercel.app",
       description:
-        "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones, marketing y automatización con IA.",
+        "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones y un asistente de IA por WhatsApp.",
       offers: [
         {
           "@type": "Offer",
@@ -103,7 +103,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Reemplaza planillas sueltas por una plataforma con inventario, ventas, finanzas, cotizaciones, marketing y un asistente IA. 15 días gratis, sin tarjeta.",
+          "Reemplaza planillas sueltas por una plataforma con inventario, ventas, finanzas, cotizaciones y un asistente IA por WhatsApp. 15 días gratis, sin tarjeta.",
       },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
@@ -115,7 +115,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Reemplaza planillas sueltas por una plataforma con inventario, ventas, finanzas, cotizaciones, marketing y un asistente IA. 15 días gratis, sin tarjeta.",
+          "Reemplaza planillas sueltas por una plataforma con inventario, ventas, finanzas, cotizaciones y un asistente IA por WhatsApp. 15 días gratis, sin tarjeta.",
       },
     ],
     links: [{ rel: "canonical", href: "https://nuva-one.vercel.app/" }],
@@ -195,8 +195,8 @@ function Hero() {
             .
           </h1>
           <p className="mt-6 text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Inventario, ventas, finanzas, cotizaciones y marketing conectados en una sola plataforma
-            — con un asistente de IA que responde con los datos reales de tu negocio.
+            Inventario, ventas, finanzas y cotizaciones conectados en una sola plataforma
+            — con un asistente de IA por WhatsApp que responde con los datos reales de tu negocio.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }}>
@@ -267,8 +267,8 @@ function Hero() {
 
         <p className="mx-auto mt-12 max-w-3xl text-center text-sm text-muted-foreground">
           Nüva One es una plataforma de gestión todo-en-uno para pequeñas y medianas empresas en
-          Chile y Latinoamérica. Integra inventario, ventas, finanzas, cotizaciones, compras y
-          marketing en Meta en un solo sistema, con un asistente de inteligencia artificial que
+          Chile y Latinoamérica. Integra inventario, ventas, finanzas, cotizaciones y compras
+          en un solo sistema, con un asistente de inteligencia artificial por WhatsApp que
           responde preguntas usando los datos reales del negocio. Incluye 15 días de prueba gratuita
           sin tarjeta de crédito.
         </p>
@@ -340,7 +340,7 @@ function HowItWorks() {
   const steps = [
     { n: "01", t: "Crea tu cuenta", d: "Registro en menos de un minuto, sin tarjeta." },
     { n: "02", t: "Conecta tus canales", d: "Productos, redes sociales y datos del negocio." },
-    { n: "03", t: "Gestiona todo en uno", d: "Ventas, inventario, finanzas y marketing." },
+    { n: "03", t: "Gestiona todo en uno", d: "Ventas, inventario, finanzas y asistente IA por WhatsApp." },
     { n: "04", t: "Decide con IA", d: "Insights y automatizaciones que ahorran horas." },
   ];
   return (
