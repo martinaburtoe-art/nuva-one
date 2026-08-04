@@ -35,10 +35,11 @@ function Privacy() {
         <h2>1. Responsable del tratamiento de datos</h2>
         <p>
           El responsable del tratamiento de los datos personales recolectados a través de Nüva One
-          es [RAZÓN SOCIAL], RUT [COMPLETAR], con domicilio en [COMPLETAR], Chile. Contacto para
-          materias de privacidad: [correo, ej. privacidad@nuvaone.cl]. [Si corresponde, incluir aquí
-          los datos del Delegado de Protección de Datos (DPO) que exige la Ley N.º 21.719 cuando el
-          volumen o sensibilidad de los datos tratados lo requiera.]
+          es Martín Ariel Aburto Espinoza, RUT 21.553.180-5, operando como persona natural con
+          domicilio en Talca, Región del Maule, Chile. Contacto para materias de privacidad:
+          privacidad@nuvaone.cl. Si el volumen o sensibilidad de los datos tratados lo requiere en
+          el futuro conforme a la Ley N.º 21.719, se designará e informará aquí un Delegado de
+          Protección de Datos (DPO).
         </p>
 
         <h2>2. Qué información recolectamos</h2>
