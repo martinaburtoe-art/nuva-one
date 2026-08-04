@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/billing/sii/process-queue")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         const { data: jobs, error } = await supabaseAdmin
-          .from("billing_emit_queue" as any)
+          .from("billing_emit_queue")
           .select("*")
           .eq("status", "pending")
           .order("created_at", { ascending: true })
@@ -37,12 +37,12 @@ export const Route = createFileRoute("/api/billing/sii/process-queue")({
 
         for (const job of jobs as any[]) {
           await supabaseAdmin
-            .from("billing_emit_queue" as any)
+            .from("billing_emit_queue")
             .update({ status: "processing", attempts: job.attempts + 1 })
             .eq("id", job.id);
 
           const { data: integration } = await supabaseAdmin
-            .from("billing_integrations" as any)
+            .from("billing_integrations")
             .select("*")
             .eq("business_id", job.business_id)
             .eq("type", "fiscal")
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/api/billing/sii/process-queue")({
           const adapter = integration ? getFiscalAdapter((integration as any).provider) : null;
           if (!integration || !adapter) {
             await supabaseAdmin
-              .from("billing_emit_queue" as any)
+              .from("billing_emit_queue")
               .update({ status: "failed", last_error: "Sin proveedor fiscal conectado" })
               .eq("id", job.id);
             failed++;
@@ -72,7 +72,7 @@ export const Route = createFileRoute("/api/billing/sii/process-queue")({
           const result = await adapter.emit(decrypted, sale as any);
 
           const { data: doc } = await supabaseAdmin
-            .from("billing_documents" as any)
+            .from("billing_documents")
             .upsert(
               {
                 business_id: job.business_id,
@@ -95,7 +95,7 @@ export const Route = createFileRoute("/api/billing/sii/process-queue")({
             .single();
 
           await supabaseAdmin
-            .from("billing_emit_queue" as any)
+            .from("billing_emit_queue")
             .update({
               status: result.ok ? "done" : "failed",
               last_error: result.errorMessage,

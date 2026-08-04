@@ -25,8 +25,20 @@ export async function checkRateLimit(
 
   if (error) {
     // Fail OPEN, not closed: a rate-limiter outage should not take down
-    // checkout/billing for every user. Log it so it doesn't go unnoticed.
+    // checkout/billing for every user. console.error alone is invisible
+    // once the serverless invocation ends, so also persist it to
+    // system_alerts -- best-effort, must never throw or block the request
+    // that's already failing open.
     console.error("check_rate_limit RPC error, allowing request through:", error);
+    try {
+      await supabaseAdmin.from("system_alerts").insert({
+        source: "rate_limit_fail_open",
+        message: `check_rate_limit RPC failed for bucket "${bucketKey}"; request allowed through`,
+        metadata: { bucketKey, maxRequests, windowSeconds, error: error.message },
+      });
+    } catch (alertError) {
+      console.error("Failed to persist rate-limit alert:", alertError);
+    }
     return true;
   }
 

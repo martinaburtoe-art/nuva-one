@@ -43,13 +43,13 @@ export const Route = createFileRoute("/api/billing/sii/connect")({
         // activar el nuevo: nunca deben quedar dos proveedores "connected"
         // al mismo tiempo (folios/credenciales no deben mezclarse).
         await client
-          .from("billing_integrations" as any)
+          .from("billing_integrations")
           .update({ status: "disconnected" })
           .eq("business_id", businessId)
           .eq("type", "fiscal")
           .eq("status", "connected");
 
-        const { error: upsertError } = await client.from("billing_integrations" as any).upsert(
+        const { error: upsertError } = await client.from("billing_integrations").upsert(
           {
             business_id: businessId,
             provider,

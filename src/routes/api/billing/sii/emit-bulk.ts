@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/billing/sii/emit-bulk")({
         }));
 
         const { data, error } = await client
-          .from("billing_emit_queue" as any)
+          .from("billing_emit_queue")
           .upsert(rows, { onConflict: "business_id,idempotency_key", ignoreDuplicates: true })
           .select("id");
 

@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const rpcMock = vi.fn();
+const insertMock = vi.fn().mockResolvedValue({ data: null, error: null });
+const fromMock = vi.fn((..._args: unknown[]) => ({ insert: insertMock }));
 
 vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
     rpc: (...args: unknown[]) => rpcMock(...args),
+    from: (...args: unknown[]) => fromMock(...args),
   },
 }));
 
@@ -13,6 +16,8 @@ const { checkRateLimit } = await import("./rate-limit.server");
 describe("checkRateLimit", () => {
   afterEach(() => {
     rpcMock.mockReset();
+    insertMock.mockClear();
+    fromMock.mockClear();
   });
 
   it("returns true when the RPC allows the request", async () => {
@@ -41,5 +46,24 @@ describe("checkRateLimit", () => {
     await expect(checkRateLimit("bucket:1", 10, 3600)).resolves.toBe(true);
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
+  });
+
+  it("persists a system_alerts row when the RPC errors, so the outage is queryable later", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    rpcMock.mockResolvedValue({ data: null, error: new Error("connection refused") });
+    await checkRateLimit("bucket:1", 10, 3600);
+    expect(fromMock).toHaveBeenCalledWith("system_alerts");
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "rate_limit_fail_open" }),
+    );
+    vi.restoreAllMocks();
+  });
+
+  it("still returns true (never throws) even if persisting the alert itself fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    rpcMock.mockResolvedValue({ data: null, error: new Error("connection refused") });
+    insertMock.mockRejectedValueOnce(new Error("insert failed"));
+    await expect(checkRateLimit("bucket:1", 10, 3600)).resolves.toBe(true);
+    vi.restoreAllMocks();
   });
 });

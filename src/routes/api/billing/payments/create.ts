@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         if (!client) return new Response("Unauthorized", { status: 401 });
 
         const { data: integration } = await client
-          .from("billing_integrations" as any)
+          .from("billing_integrations")
           .select("*")
           .eq("business_id", businessId)
           .eq("type", "payment")

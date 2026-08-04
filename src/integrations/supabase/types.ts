@@ -213,6 +213,232 @@ export type Database = {
           },
         ]
       }
+      billing_documents: {
+        Row: {
+          business_id: string
+          created_at: string
+          customer_id: string | null
+          environment: string
+          error_message: string | null
+          folio: number | null
+          id: string
+          idempotency_key: string | null
+          iva_amount: number | null
+          net_amount: number | null
+          pdf_base64: string | null
+          provider: string | null
+          raw_response: Json | null
+          receptor_name: string | null
+          receptor_rut: string | null
+          sale_id: string | null
+          status: string
+          tipo_dte: number
+          total: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          customer_id?: string | null
+          environment?: string
+          error_message?: string | null
+          folio?: number | null
+          id?: string
+          idempotency_key?: string | null
+          iva_amount?: number | null
+          net_amount?: number | null
+          pdf_base64?: string | null
+          provider?: string | null
+          raw_response?: Json | null
+          receptor_name?: string | null
+          receptor_rut?: string | null
+          sale_id?: string | null
+          status?: string
+          tipo_dte: number
+          total?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          customer_id?: string | null
+          environment?: string
+          error_message?: string | null
+          folio?: number | null
+          id?: string
+          idempotency_key?: string | null
+          iva_amount?: number | null
+          net_amount?: number | null
+          pdf_base64?: string | null
+          provider?: string | null
+          raw_response?: Json | null
+          receptor_name?: string | null
+          receptor_rut?: string | null
+          sale_id?: string | null
+          status?: string
+          tipo_dte?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_emit_queue: {
+        Row: {
+          attempts: number
+          business_id: string
+          created_at: string
+          document_id: string | null
+          id: string
+          idempotency_key: string
+          last_error: string | null
+          payload: Json
+          sale_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          business_id: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          idempotency_key: string
+          last_error?: string | null
+          payload: Json
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          business_id?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          idempotency_key?: string
+          last_error?: string | null
+          payload?: Json
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_emit_queue_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_emit_queue_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "billing_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_emit_queue_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_integrations: {
+        Row: {
+          acteco: string | null
+          api_key: string | null
+          api_url: string | null
+          business_id: string
+          cdg_sii_sucur: string | null
+          comuna: string | null
+          config: Json
+          connected_at: string | null
+          created_at: string
+          direccion: string | null
+          environment: string
+          giro: string | null
+          id: string
+          provider: string
+          razon_social: string | null
+          rut: string | null
+          secret_key: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          acteco?: string | null
+          api_key?: string | null
+          api_url?: string | null
+          business_id: string
+          cdg_sii_sucur?: string | null
+          comuna?: string | null
+          config?: Json
+          connected_at?: string | null
+          created_at?: string
+          direccion?: string | null
+          environment?: string
+          giro?: string | null
+          id?: string
+          provider?: string
+          razon_social?: string | null
+          rut?: string | null
+          secret_key?: string | null
+          status?: string
+          type?: string
+        }
+        Update: {
+          acteco?: string | null
+          api_key?: string | null
+          api_url?: string | null
+          business_id?: string
+          cdg_sii_sucur?: string | null
+          comuna?: string | null
+          config?: Json
+          connected_at?: string | null
+          created_at?: string
+          direccion?: string | null
+          environment?: string
+          giro?: string | null
+          id?: string
+          provider?: string
+          razon_social?: string | null
+          rut?: string | null
+          secret_key?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_integrations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_invites: {
         Row: {
           business_id: string
@@ -572,6 +798,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_webhook_events: {
+        Row: {
+          id: string
+          provider: string
+          received_at: string
+          token: string
+        }
+        Insert: {
+          id?: string
+          provider: string
+          received_at?: string
+          token: string
+        }
+        Update: {
+          id?: string
+          provider?: string
+          received_at?: string
+          token?: string
+        }
+        Relationships: []
       }
       payments: {
         Row: {
@@ -1073,6 +1320,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          source: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          source?: string
+        }
+        Relationships: []
       }
       transactions: {
         Row: {

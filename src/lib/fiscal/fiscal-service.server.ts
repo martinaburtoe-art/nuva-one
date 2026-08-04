@@ -38,7 +38,7 @@ export async function getActiveFiscalIntegration(
   if (!client) return { error: new Response("Unauthorized", { status: 401 }) };
 
   const { data, error } = await client
-    .from("billing_integrations" as any)
+    .from("billing_integrations")
     .select("*")
     .eq("business_id", businessId)
     .eq("type", "fiscal")
@@ -61,7 +61,7 @@ export async function emitFiscalDocument(
   sale: NormalizedSale,
 ) {
   const { data: existing } = await client
-    .from("billing_documents" as any)
+    .from("billing_documents")
     .select("*")
     .eq("business_id", businessId)
     .eq("idempotency_key", sale.idempotencyKey)
@@ -79,7 +79,7 @@ export async function emitFiscalDocument(
   // idempotency_key en paralelo, el UNIQUE constraint hace fallar al segundo
   // insert y evitamos emitir el documento tributario dos veces.
   const { data: placeholder, error: insertError } = await client
-    .from("billing_documents" as any)
+    .from("billing_documents")
     .insert({
       business_id: businessId,
       sale_id: sale.saleId,
@@ -101,7 +101,7 @@ export async function emitFiscalDocument(
   if (insertError || !placeholder) {
     // Carrera perdida: alguien más ya insertó con este idempotency_key.
     const { data: raced } = await client
-      .from("billing_documents" as any)
+      .from("billing_documents")
       .select("*")
       .eq("business_id", businessId)
       .eq("idempotency_key", sale.idempotencyKey)
@@ -113,7 +113,7 @@ export async function emitFiscalDocument(
   const result = await adapter.emit(integration, sale);
 
   const { data: saved } = await client
-    .from("billing_documents" as any)
+    .from("billing_documents")
     .update({
       status: result.ok ? "emitted" : "error",
       folio: result.folio,

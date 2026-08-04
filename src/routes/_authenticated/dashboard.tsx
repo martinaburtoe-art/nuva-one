@@ -18,6 +18,8 @@ import {
   DollarSign,
   ArrowUpRight,
   X,
+  MessageCircle,
+  Circle,
 } from "lucide-react";
 import {
   Area,
@@ -64,6 +66,7 @@ function Dashboard() {
         net: income - expense,
         inventoryValue,
         salesCount: salesCount.count ?? 0,
+        productsCount: (products.data ?? []).length,
       };
     },
   });
@@ -169,6 +172,50 @@ function Dashboard() {
         title={`Hola, ${active?.name ?? "negocio"}`}
         description="Esto es lo que está pasando hoy."
       />
+
+      {kpis !== undefined && kpis.productsCount === 0 && kpis.salesCount === 0 && (
+        <Card className="mb-6 border-primary/30 bg-accent/40 p-6">
+          <h3 className="font-semibold">Primeros pasos con Nüva One</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Tu negocio está creado. Estos 3 pasos toman menos de 10 minutos y dejan tu cuenta
+            lista para operar de verdad.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <Link
+              to="/inventory"
+              className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
+            >
+              <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Carga tus primeros productos</div>
+                <div className="text-xs text-muted-foreground">Inventario</div>
+              </div>
+            </Link>
+            <Link
+              to="/pos"
+              className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
+            >
+              <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Registra tu primera venta</div>
+                <div className="text-xs text-muted-foreground">Caja / POS</div>
+              </div>
+            </Link>
+            <Link
+              to="/automations"
+              className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
+            >
+              <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Vincula tu WhatsApp</div>
+                <div className="text-xs text-muted-foreground">
+                  Consulta tu negocio desde el celular
+                </div>
+              </div>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         {cards.map((c) => (

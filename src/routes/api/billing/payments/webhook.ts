@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/billing/payments/webhook")({
         // en vez de confiar ciegamente en el POST recibido.
         if (!token) return new Response("Falta token", { status: 400 });
 
-        await supabaseAdmin.from("payment_webhook_events" as any).insert({
+        await supabaseAdmin.from("payment_webhook_events").insert({
           provider,
           token,
           received_at: new Date().toISOString(),
