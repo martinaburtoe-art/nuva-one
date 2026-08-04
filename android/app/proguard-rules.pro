@@ -19,3 +19,14 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# --- Capacitor: required so minification doesn't break the JS<->native bridge ---
+-keep class com.getcapacitor.** { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin public class * extends com.getcapacitor.Plugin
+-keep public class * extends com.getcapacitor.Plugin { public *; }
+-keepclassmembers class * extends com.getcapacitor.Plugin { @com.getcapacitor.annotation.PermissionCallback <methods>; }
+-keepattributes *Annotation*
+-keepattributes JavascriptInterface
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
