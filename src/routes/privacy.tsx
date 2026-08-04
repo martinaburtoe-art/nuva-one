@@ -186,8 +186,10 @@ function Privacy() {
 
         <h2>13. Contacto</h2>
         <p>
-          Para consultas sobre privacidad o para ejercer tus derechos: [correo, ej.
-          privacidad@nuvaone.cl]
+          Para consultas sobre privacidad, para ejercer tus derechos ARCO (acceso, rectificación,
+          cancelación, oposición) o para solicitar la eliminación de tu cuenta y datos, escribe a
+          privacidad@nuvaone.cl. Responderemos dentro de un plazo razonable conforme a la Ley N.º
+          21.719.
         </p>
       </main>
     </div>

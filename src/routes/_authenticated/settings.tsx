@@ -59,6 +59,24 @@ function Settings() {
     }
   }
 
+  async function requestAccountDeletion() {
+    if (
+      !confirm(
+        "¿Solicitar la eliminación de tu cuenta de Nüva One? Te contactaremos para confirmar y coordinar el proceso antes de eliminar cualquier dato.",
+      )
+    )
+      return;
+    const { data } = await supabase.auth.getUser();
+    const email = data.user?.email ?? "(sin email disponible)";
+    const userId = data.user?.id ?? "(sin id disponible)";
+    const subject = encodeURIComponent("Solicitud de eliminación de cuenta — Nüva One");
+    const body = encodeURIComponent(
+      `Solicito la eliminación de mi cuenta de Nüva One.\n\nEmail: ${email}\nUser ID: ${userId}\n\n(No borres nada todavía sin confirmar conmigo por este medio.)`,
+    );
+    window.location.href = `mailto:privacidad@nuvaone.cl?subject=${subject}&body=${body}`;
+    toast.info("Se abrió tu app de correo para enviar la solicitud a privacidad@nuvaone.cl");
+  }
+
   return (
     <>
       <PageHeader title="Configuración" description="Gestiona tu negocio, equipo y preferencias" />
@@ -124,7 +142,7 @@ function Settings() {
           {active && <TeamManagement businessId={active.id} canManage={canManage} />}
         </TabsContent>
 
-        <TabsContent value="security">
+        <TabsContent value="security" className="space-y-6">
           <Card className="p-6">
             <div className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-primary" />
@@ -139,7 +157,39 @@ function Settings() {
               </div>
             </div>
           </Card>
+
+          <Card className="border-destructive/30 p-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-destructive">Eliminar mi cuenta</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Esto es distinto a eliminar un negocio: elimina tu cuenta personal de Nüva One
+                  (tu acceso, tu perfil y tu membresía en cualquier negocio). Si eres propietario
+                  de un negocio con datos contables sujetos a retención tributaria (SII), primero
+                  te contactaremos para coordinar la transferencia o cierre correspondiente.
+                </p>
+                <Button
+                  variant="destructive"
+                  className="mt-4"
+                  onClick={requestAccountDeletion}
+                >
+                  <Trash2 className="mr-1.5 h-4 w-4" />
+                  Solicitar eliminación de mi cuenta
+                </Button>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Procesamos las solicitudes dentro de un plazo razonable. También puedes escribir
+                  directamente a{" "}
+                  <a href="mailto:privacidad@nuvaone.cl" className="underline">
+                    privacidad@nuvaone.cl
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
+          </Card>
         </TabsContent>
+
 
         {canManage && (
           <TabsContent value="audit">
