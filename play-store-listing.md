@@ -59,6 +59,12 @@ Para todo público (no contiene contenido sensible)
       - Mensajes de WhatsApp (números, contenido) — recolectados, usados para el asistente IA
       - Eliminación de cuenta: SÍ disponible in-app (Configuración > Seguridad > "Eliminar mi cuenta")
 - [ ] Verificar que `/privacy` y `/terms` cargan sin necesidad de login (Google los revisa así)
-- [ ] Decidir: implementar push notifications de verdad (requiere proyecto Firebase) o mantenerlo fuera
+- [x] Push notifications implementadas en código (alertas de stock bajo) — falta solo:
+      1. Crear proyecto en https://console.firebase.google.com
+      2. Agregar app Android con applicationId `cl.nuvaone.app`
+      3. Descargar `google-services.json` → colocar en `android/app/google-services.json`
+      4. Generar service account (Configuración del proyecto > Cuentas de servicio > Generar clave privada)
+      5. En Vercel, agregar variables de entorno: `FIREBASE_PROJECT_ID` y `FIREBASE_SERVICE_ACCOUNT_JSON` (el JSON completo de la service account, como string)
+      6. Configurar un cron (pg_cron/pg_net o Vercel Cron) que llame `POST /api/notifications/low-stock-check` cada cierta hora, con header `x-cron-secret`
 - [ ] Probar la app en un teléfono real de gama baja (pantalla chica, Android 10-12) antes de publicar
 
