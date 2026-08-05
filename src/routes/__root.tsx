@@ -37,11 +37,39 @@ function NotFoundComponent() {
   );
 }
 
+// Después de cada deploy, Vite genera archivos JS con nombres/hash nuevos.
+// Si alguien tiene una pestaña abierta desde antes del deploy, su HTML viejo
+// intenta pedir un chunk que ya no existe -> 404 -> "Esta página no cargó".
+// No es un bug de la app, es inevitable con code-splitting; lo mitigamos
+// recargando automáticamente UNA vez (con guardia en sessionStorage para
+// no entrar en loop si el error es de verdad).
+function isStaleChunkError(error: Error): boolean {
+  const msg = `${error.message} ${error.name}`.toLowerCase();
+  return (
+    msg.includes("failed to fetch dynamically imported module") ||
+    msg.includes("failed to import") ||
+    msg.includes("importing a module script failed") ||
+    msg.includes("error loading dynamically imported module") ||
+    (msg.includes("failed to load") && msg.includes("chunk"))
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+
+    if (isStaleChunkError(error)) {
+      const RELOAD_GUARD_KEY = "nuva_stale_chunk_reload_at";
+      const lastReload = Number(sessionStorage.getItem(RELOAD_GUARD_KEY) ?? 0);
+      // Solo auto-recargamos si no lo intentamos en los últimos 10s, para
+      // no quedar en un ciclo infinito si el problema persiste.
+      if (Date.now() - lastReload > 10_000) {
+        sessionStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
+        window.location.reload();
+      }
+    }
   }, [error]);
 
   return (
@@ -144,7 +172,28 @@ function RootComponent() {
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
-    return () => sub.subscription.unsubscribe();
+
+    // Red de seguridad extra: un dynamic import() fallido a veces rechaza
+    // como promesa no manejada en vez de llegar al error boundary de la
+    // ruta (ej. si pasa durante el prefetch de una ruta antes de navegar).
+    function onUnhandledRejection(event: PromiseRejectionEvent) {
+      const reason = event?.reason;
+      const err = reason instanceof Error ? reason : new Error(String(reason));
+      if (isStaleChunkError(err)) {
+        const RELOAD_GUARD_KEY = "nuva_stale_chunk_reload_at";
+        const lastReload = Number(sessionStorage.getItem(RELOAD_GUARD_KEY) ?? 0);
+        if (Date.now() - lastReload > 10_000) {
+          sessionStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
+          window.location.reload();
+        }
+      }
+    }
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
   }, [router, queryClient]);
 
   return (
