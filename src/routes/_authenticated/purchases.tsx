@@ -40,6 +40,9 @@ export const Route = createFileRoute("/_authenticated/purchases")({
 
 type LineItem = { product_id: string | null; name: string; qty: number; price: number };
 
+const formatCLPInput = (n: number) => `$${new Intl.NumberFormat("es-CL").format(n)}`;
+const parseCLPInput = (s: string) => Number(s.replace(/[^0-9]/g, "")) || 0;
+
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
 
 function Purchases() {
@@ -145,10 +148,10 @@ function Purchases() {
                             onValueChange={(v) => (v === "__free__" ? null : pickProduct(idx, v))}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Producto del catálogo o texto libre" />
+                              <SelectValue placeholder="Producto del catálogo o producto" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="__free__">— Texto libre —</SelectItem>
+                              <SelectItem value="__free__">— Producto —</SelectItem>
                               {(products ?? []).map((p: any) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.name} ({p.stock} en stock)
@@ -169,26 +172,30 @@ function Purchases() {
                             />
                           )}
                         </div>
-                        <Input
-                          className="col-span-2"
-                          type="number"
-                          min={1}
-                          value={it.qty}
-                          onChange={(e) => {
-                            const c = [...items];
-                            c[idx].qty = Number(e.target.value);
-                            setItems(c);
-                          }}
-                        />
+                        <div className="col-span-2 flex flex-col gap-1">
+                          <Input
+                            type="number"
+                            min={1}
+                            value={it.qty}
+                            onChange={(e) => {
+                              const c = [...items];
+                              c[idx].qty = Number(e.target.value);
+                              setItems(c);
+                            }}
+                          />
+                          <span className="text-center text-[10px] text-muted-foreground">
+                            unidades
+                          </span>
+                        </div>
                         <Input
                           className="col-span-3"
-                          type="number"
-                          min={0}
+                          type="text"
+                          inputMode="numeric"
                           placeholder="Costo unit."
-                          value={it.price}
+                          value={it.price ? formatCLPInput(it.price) : ""}
                           onChange={(e) => {
                             const c = [...items];
-                            c[idx].price = Number(e.target.value);
+                            c[idx].price = parseCLPInput(e.target.value);
                             setItems(c);
                           }}
                         />
@@ -212,10 +219,10 @@ function Purchases() {
                   </Label>
                   <Input
                     id="total"
-                    type="number"
-                    min={0}
-                    value={total}
-                    onChange={(e) => setManualTotal(Number(e.target.value))}
+                    type="text"
+                    inputMode="numeric"
+                    value={total ? formatCLPInput(total) : ""}
+                    onChange={(e) => setManualTotal(parseCLPInput(e.target.value))}
                     className="text-right text-base font-semibold"
                   />
                 </div>
