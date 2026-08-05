@@ -75,6 +75,7 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
   if (!business.data) return null;
 
   const lowStock = (products.data ?? []).filter((p) => p.stock <= p.low_stock_threshold);
+  const totalStockUnits = (products.data ?? []).reduce((s, p) => s + (p.stock ?? 0), 0);
   const income = (transactions.data ?? [])
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + Number(t.amount), 0);
@@ -92,6 +93,18 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
       total_income: income,
       total_expense: expense,
       product_count: products.data?.length ?? 0,
+      // Antes solo mandábamos el conteo y los productos con stock bajo, así
+      // que el asistente no podía responder preguntas de stock normales
+      // ("¿cuántas unidades tengo de X?", "¿cuánto stock total tengo?").
+      // Ahora va el total de unidades y el detalle por producto (nota: los
+      // 50 más recientes, ver query de arriba; capContext puede recortar
+      // más si el negocio tiene demasiados).
+      total_stock_units: totalStockUnits,
+      products: (products.data ?? []).map((p) => ({
+        name: p.name,
+        sku: p.sku,
+        stock: p.stock,
+      })),
       low_stock_products: lowStock.map((p) => ({
         name: p.name,
         stock: p.stock,
@@ -119,6 +132,7 @@ export function capContext(summary: Record<string, any>): Record<string, any> {
     "recent_transactions",
     "recent_sales",
     "customers",
+    "products",
   ];
   const out = { ...summary };
   let json = JSON.stringify(out);
