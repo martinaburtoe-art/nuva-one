@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, Package, X } from "lucide-react";
+import { Plus, Trash2, Package, X, Eye } from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
 
 export const Route = createFileRoute("/_authenticated/purchases")({
@@ -60,6 +60,7 @@ function Purchases() {
     { product_id: null, name: "", qty: 1, price: 0 },
   ]);
   const [manualTotal, setManualTotal] = useState<number | null>(null);
+  const [detailPurchase, setDetailPurchase] = useState<any | null>(null);
 
   const computedTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
   const total = manualTotal ?? computedTotal;
@@ -286,10 +287,20 @@ function Purchases() {
                   <TableCell className="text-muted-foreground">
                     {new Date(p.purchase_date).toLocaleDateString("es-CL")}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {Array.isArray(p.items) && p.items.length > 0
-                      ? `${p.items.length} producto(s)`
-                      : "—"}
+                  <TableCell className="max-w-[220px] text-xs text-muted-foreground">
+                    {Array.isArray(p.items) && p.items.length > 0 ? (
+                      <button
+                        onClick={() => setDetailPurchase(p)}
+                        className="text-left underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        <span className="line-clamp-1">
+                          {p.items[0].qty}× {p.items[0].name}
+                          {p.items.length > 1 ? ` +${p.items.length - 1} más` : ""}
+                        </span>
+                      </button>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell>
                     <select
@@ -305,9 +316,14 @@ function Purchases() {
                   </TableCell>
                   <TableCell className="text-right">{fmtCLP(Number(p.total))}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => del.mutate(p.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => setDetailPurchase(p)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => del.mutate(p.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -315,6 +331,78 @@ function Purchases() {
           </Table>
         )}
       </Card>
+
+      <Dialog open={!!detailPurchase} onOpenChange={(v) => !v && setDetailPurchase(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalle de la orden</DialogTitle>
+          </DialogHeader>
+          {detailPurchase && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div className="text-xs text-muted-foreground">Proveedor</div>
+                  <div className="font-medium">{detailPurchase.supplier_name ?? "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Fecha</div>
+                  <div className="font-medium">
+                    {new Date(detailPurchase.purchase_date).toLocaleDateString("es-CL")}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Estado</div>
+                  <div className="font-medium capitalize">
+                    {{ pending: "Pendiente", received: "Recibida", paid: "Pagada", cancelled: "Cancelada" }[
+                      detailPurchase.status as string
+                    ] ?? detailPurchase.status}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Total</div>
+                  <div className="font-semibold">{fmtCLP(Number(detailPurchase.total))}</div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">Productos comprados</Label>
+                {Array.isArray(detailPurchase.items) && detailPurchase.items.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Producto</TableHead>
+                        <TableHead className="text-right">Cantidad</TableHead>
+                        <TableHead className="text-right">Costo unit.</TableHead>
+                        <TableHead className="text-right">Subtotal</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {detailPurchase.items.map((it: LineItem, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell className="text-right">
+                            {it.qty} unidad{it.qty === 1 ? "" : "es"}
+                          </TableCell>
+                          <TableCell className="text-right">{fmtCLP(Number(it.price))}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            {fmtCLP(Number(it.qty) * Number(it.price))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sin productos registrados.</p>
+                )}
+              </div>
+
+              <div className="flex justify-end border-t pt-3 text-base font-bold">
+                <span>Total: {fmtCLP(Number(detailPurchase.total))}</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
     </ModuleGuard>
   );
