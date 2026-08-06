@@ -32,16 +32,25 @@ function Settings() {
   const navigate = useNavigate();
   const [name, setName] = useState(active?.name ?? "");
   const [taxId, setTaxId] = useState("");
+  const [giro, setGiro] = useState("");
+  const [address, setAddress] = useState("");
+  const [comuna, setComuna] = useState("");
 
   useEffect(() => {
-    if (active) setName(active.name);
+    if (active) {
+      setName(active.name);
+      setTaxId(active.tax_id ?? "");
+      setGiro(active.giro ?? "");
+      setAddress(active.address ?? "");
+      setComuna(active.comuna ?? "");
+    }
   }, [active]);
 
   async function save() {
     if (!active) return;
     const { error } = await supabase
       .from("businesses")
-      .update({ name, tax_id: taxId })
+      .update({ name, tax_id: taxId, giro, address, comuna })
       .eq("id", active.id);
     if (error) toast.error("Error");
     else toast.success("Guardado");
@@ -112,6 +121,40 @@ function Settings() {
                   disabled={!canManage}
                 />
               </div>
+              <div>
+                <Label htmlFor="giro">Giro</Label>
+                <Input
+                  id="giro"
+                  value={giro}
+                  onChange={(e) => setGiro(e.target.value)}
+                  placeholder="Venta al por menor de artículos deportivos"
+                  disabled={!canManage}
+                />
+              </div>
+              <div>
+                <Label htmlFor="address">Dirección</Label>
+                <Input
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Av. Siempre Viva 123"
+                  disabled={!canManage}
+                />
+              </div>
+              <div>
+                <Label htmlFor="comuna">Comuna</Label>
+                <Input
+                  id="comuna"
+                  value={comuna}
+                  onChange={(e) => setComuna(e.target.value)}
+                  placeholder="Talca"
+                  disabled={!canManage}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Estos datos aparecen en la boleta/comprobante impreso de Caja, igual que en el
+                retail: úsalos exactamente como están registrados ante el SII.
+              </p>
               <Button onClick={save} disabled={!canManage}>
                 Guardar cambios
               </Button>

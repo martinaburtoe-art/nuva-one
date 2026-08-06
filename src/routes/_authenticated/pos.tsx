@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,11 +36,22 @@ export const Route = createFileRoute("/_authenticated/pos")({
 
 type CartItem = { product_id: string; name: string; qty: number; price: number; stock: number };
 type PayMethod = "efectivo" | "tarjeta" | "transferencia";
+type ReceiptData = {
+  saleId?: string;
+  items: CartItem[];
+  total: number;
+  method: PayMethod;
+  received?: number;
+  change?: number;
+  at: Date;
+  customerName?: string;
+};
 
 function POS() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const { active } = useActiveBusiness();
+  const navigate = useNavigate();
   const { data: products, isLoading } = useBizList<any>("products", {
     order: "name",
     ascending: true,
@@ -52,7 +65,23 @@ function POS() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [method, setMethod] = useState<PayMethod>("efectivo");
   const [received, setReceived] = useState<number>(0);
-  const [showReceipt, setShowReceipt] = useState<any | null>(null);
+  const [showReceipt, setShowReceipt] = useState<ReceiptData | null>(null);
+
+  const { data: receiptDoc } = useQuery({
+    queryKey: ["sale-billing-doc", showReceipt?.saleId],
+    queryFn: async () => {
+      if (!showReceipt?.saleId) return null;
+      const { data } = await supabase
+        .from("billing_documents" as any)
+        .select("folio, tipo_dte")
+        .eq("sale_id", showReceipt.saleId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data as { folio: number; tipo_dte: number } | null;
+    },
+    enabled: !!showReceipt?.saleId,
+  });
 
   // Vincular la venta a un cliente por RUT: si existe en el CRM se adjunta
   // solo; si no existe, se puede registrar sin salir de la caja.
@@ -202,13 +231,14 @@ function POS() {
         notes,
       });
       setShowReceipt({
-        id: saved?.id,
+        saleId: saved?.id,
         items: cart,
         total,
         method,
         received,
         change,
         at: new Date(),
+        customerName: matchedCustomer?.name,
       });
       setCart([]);
       setReceived(0);
@@ -217,6 +247,23 @@ function POS() {
     } catch {
       // toast handled by hook
     }
+  }
+
+  function reopenReceipt(s: any) {
+    setShowReceipt({
+      saleId: s.id,
+      items: (Array.isArray(s.items) ? s.items : []).map((i: any) => ({
+        product_id: i.product_id,
+        name: i.name,
+        qty: i.qty,
+        price: i.price,
+        stock: 0,
+      })),
+      total: Number(s.total),
+      method: (s.payment_method ?? "efectivo") as PayMethod,
+      at: new Date(s.created_at),
+      customerName: s.customer_name !== "Venta mostrador" ? s.customer_name : undefined,
+    });
   }
 
   return (
@@ -352,9 +399,10 @@ function POS() {
               </div>
               <div className="max-h-48 space-y-1 overflow-y-auto">
                 {todaySales.slice(0, 8).map((s: any) => (
-                  <div
+                  <button
                     key={s.id}
-                    className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-accent/60"
+                    onClick={() => reopenReceipt(s)}
+                    className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent/60"
                   >
                     <span className="text-muted-foreground">
                       {new Date(s.created_at).toLocaleTimeString("es-CL", {
@@ -365,7 +413,7 @@ function POS() {
                       {Array.isArray(s.items) ? s.items.length : 0} ítem(s)
                     </span>
                     <span className="font-semibold">{fmtCLP(Number(s.total))}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </Card>
@@ -551,54 +599,140 @@ function POS() {
       </div>
 
       <Dialog open={!!showReceipt} onOpenChange={(v) => !v && setShowReceipt(null)}>
-        <DialogContent className="max-w-sm print:shadow-none">
+        <DialogContent className="max-w-sm print:max-w-full print:shadow-none">
           <DialogHeader>
-            <DialogTitle>Boleta</DialogTitle>
+            <DialogTitle>
+              {receiptDoc?.folio ? `Boleta Electrónica N° ${receiptDoc.folio}` : "Comprobante de venta"}
+            </DialogTitle>
           </DialogHeader>
-          {showReceipt && (
-            <div className="space-y-3 text-sm">
-              <div className="text-center">
-                <div className="text-base font-bold">{active?.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {showReceipt.at.toLocaleString("es-CL")}
-                </div>
-              </div>
-              <div className="border-t border-dashed" />
-              <div className="space-y-1">
-                {showReceipt.items.map((i: CartItem) => (
-                  <div key={i.product_id} className="flex justify-between gap-2">
-                    <span>
-                      {i.qty}× {i.name}
+          {showReceipt &&
+            (() => {
+              const neto = Math.round(showReceipt.total / 1.19);
+              const iva = showReceipt.total - neto;
+              return (
+                <div className="space-y-3 font-mono text-sm">
+                  <div className="space-y-0.5 text-center">
+                    {active?.logo_url && (
+                      <img
+                        src={active.logo_url}
+                        alt=""
+                        className="mx-auto mb-1 h-10 w-10 rounded object-contain"
+                      />
+                    )}
+                    <div className="text-base font-bold uppercase tracking-wide">
+                      {active?.name}
+                    </div>
+                    {active?.giro && (
+                      <div className="text-[11px] text-muted-foreground">{active.giro}</div>
+                    )}
+                    {active?.tax_id && (
+                      <div className="text-[11px]">RUT: {formatRut(active.tax_id)}</div>
+                    )}
+                    {(active?.address || active?.comuna) && (
+                      <div className="text-[11px] text-muted-foreground">
+                        {[active?.address, active?.comuna].filter(Boolean).join(", ")}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t-2 border-dashed" />
+
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold">
+                      {receiptDoc?.folio
+                        ? `BOLETA ELECTRÓNICA N° ${receiptDoc.folio}`
+                        : "COMPROBANTE DE VENTA"}
                     </span>
-                    <span>{fmtCLP(i.qty * i.price)}</span>
+                    <span className="text-muted-foreground">
+                      {showReceipt.at.toLocaleString("es-CL")}
+                    </span>
                   </div>
-                ))}
-              </div>
-              <div className="border-t border-dashed" />
-              <div className="flex justify-between font-bold">
-                <span>Total</span>
-                <span>{fmtCLP(showReceipt.total)}</span>
-              </div>
-              <div className="text-xs text-muted-foreground capitalize">
-                Pago: {showReceipt.method}
-              </div>
-              {showReceipt.method === "efectivo" && (
-                <>
-                  <div className="flex justify-between text-xs">
-                    <span>Recibido</span>
-                    <span>{fmtCLP(showReceipt.received)}</span>
+                  {showReceipt.customerName && (
+                    <div className="text-[11px] text-muted-foreground">
+                      Cliente: {showReceipt.customerName}
+                    </div>
+                  )}
+
+                  <div className="border-t border-dashed" />
+
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[10px] uppercase text-muted-foreground">
+                      <span>Detalle</span>
+                      <span>Importe</span>
+                    </div>
+                    {showReceipt.items.map((i: CartItem) => (
+                      <div key={i.product_id} className="flex justify-between gap-2">
+                        <span className="flex-1">
+                          {i.name}
+                          <span className="block text-[11px] text-muted-foreground">
+                            {i.qty} × {fmtCLP(i.price)}
+                          </span>
+                        </span>
+                        <span className="font-medium">{fmtCLP(i.qty * i.price)}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span>Vuelto</span>
-                    <span>{fmtCLP(showReceipt.change)}</span>
+
+                  <div className="border-t border-dashed" />
+
+                  <div className="space-y-0.5 text-[11px] text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Subtotal neto</span>
+                      <span>{fmtCLP(neto)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>IVA (19%)</span>
+                      <span>{fmtCLP(iva)}</span>
+                    </div>
                   </div>
-                </>
-              )}
-              <div className="pt-2 text-center text-[10px] text-muted-foreground">
-                ¡Gracias por su compra!
-              </div>
-            </div>
-          )}
+                  <div className="flex justify-between border-t pt-1.5 text-base font-bold">
+                    <span>TOTAL</span>
+                    <span>{fmtCLP(showReceipt.total)}</span>
+                  </div>
+
+                  <div className="text-[11px] text-muted-foreground capitalize">
+                    Forma de pago: {showReceipt.method}
+                  </div>
+                  {showReceipt.method === "efectivo" && showReceipt.received != null && (
+                    <>
+                      <div className="flex justify-between text-[11px]">
+                        <span>Recibido</span>
+                        <span>{fmtCLP(showReceipt.received)}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px]">
+                        <span>Vuelto</span>
+                        <span>{fmtCLP(showReceipt.change ?? 0)}</span>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="border-t border-dashed" />
+
+                  {receiptDoc?.folio ? (
+                    <p className="text-center text-[10px] text-muted-foreground">
+                      Documento tributario registrado ante el SII.
+                    </p>
+                  ) : (
+                    <div className="rounded-md bg-warning/10 p-2 text-center text-[10px] text-warning print:hidden">
+                      Aún no es una Boleta Electrónica ante el SII.{" "}
+                      <button
+                        className="font-semibold underline"
+                        onClick={() => {
+                          setShowReceipt(null);
+                          navigate({ to: "/billing" });
+                        }}
+                      >
+                        Regístrala en Facturación SII →
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="pt-1 text-center text-[10px] text-muted-foreground">
+                    ¡Gracias por su compra!
+                  </div>
+                </div>
+              );
+            })()}
           <div className="flex gap-2 print:hidden">
             <Button variant="outline" className="flex-1" onClick={() => setShowReceipt(null)}>
               Cerrar

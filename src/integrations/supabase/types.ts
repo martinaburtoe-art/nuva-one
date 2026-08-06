@@ -529,7 +529,10 @@ export type Database = {
       }
       businesses: {
         Row: {
+          address: string | null
+          comuna: string | null
           created_at: string
+          giro: string | null
           id: string
           industry: Database["public"]["Enums"]["business_industry"]
           logo_url: string | null
@@ -545,7 +548,10 @@ export type Database = {
           webhook_url: string | null
         }
         Insert: {
+          address?: string | null
+          comuna?: string | null
           created_at?: string
+          giro?: string | null
           id?: string
           industry?: Database["public"]["Enums"]["business_industry"]
           logo_url?: string | null
@@ -561,7 +567,10 @@ export type Database = {
           webhook_url?: string | null
         }
         Update: {
+          address?: string | null
+          comuna?: string | null
           created_at?: string
+          giro?: string | null
           id?: string
           industry?: Database["public"]["Enums"]["business_industry"]
           logo_url?: string | null
