@@ -40,6 +40,16 @@ export const Route = createFileRoute("/_authenticated/purchases")({
 
 type LineItem = { product_id: string | null; name: string; qty: number; price: number };
 
+const PURCHASE_CATEGORIES = [
+  "Insumos",
+  "Mercadería para reventa",
+  "Equipamiento",
+  "Arriendo",
+  "Servicios",
+  "Marketing",
+  "Otro",
+];
+
 const formatCLPInput = (n: number) => `$${new Intl.NumberFormat("es-CL").format(n)}`;
 const parseCLPInput = (s: string) => Number(s.replace(/[^0-9]/g, "")) || 0;
 
@@ -56,6 +66,7 @@ function Purchases() {
   const [open, setOpen] = useState(false);
   const [supplierName, setSupplierName] = useState("");
   const [status, setStatus] = useState("pending");
+  const [category, setCategory] = useState(PURCHASE_CATEGORIES[0]);
   const [items, setItems] = useState<LineItem[]>([
     { product_id: null, name: "", qty: 1, price: 0 },
   ]);
@@ -86,12 +97,14 @@ function Purchases() {
       supplier_name: supplierName,
       total,
       status,
+      category,
       items: validItems as any,
     });
     setOpen(false);
     setSupplierName("");
     setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
     setManualTotal(null);
+    setCategory(PURCHASE_CATEGORIES[0]);
   }
 
   return (
@@ -123,6 +136,25 @@ function Purchases() {
                     onChange={(e) => setSupplierName(e.target.value)}
                     required
                   />
+                </div>
+
+                <div>
+                  <Label>Categoría del gasto</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PURCHASE_CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Esta categoría es la que verás en Finanzas → Gastos por categoría.
+                  </p>
                 </div>
 
                 <div>
@@ -273,6 +305,7 @@ function Purchases() {
             <TableHeader>
               <TableRow>
                 <TableHead>Proveedor</TableHead>
+                <TableHead>Categoría</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Estado</TableHead>
@@ -284,6 +317,11 @@ function Purchases() {
               {data.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.supplier_name ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-normal">
+                      {p.category ?? "Insumos"}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(p.purchase_date).toLocaleDateString("es-CL")}
                   </TableCell>
@@ -343,6 +381,10 @@ function Purchases() {
                 <div>
                   <div className="text-xs text-muted-foreground">Proveedor</div>
                   <div className="font-medium">{detailPurchase.supplier_name ?? "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Categoría</div>
+                  <div className="font-medium">{detailPurchase.category ?? "Insumos"}</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground">Fecha</div>

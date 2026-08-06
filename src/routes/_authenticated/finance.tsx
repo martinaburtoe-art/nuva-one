@@ -37,6 +37,46 @@ export const Route = createFileRoute("/_authenticated/finance")({
   component: Finance,
 });
 
+const EXPENSE_CATEGORIES = [
+  "Insumos",
+  "Mercadería para reventa",
+  "Equipamiento",
+  "Arriendo",
+  "Servicios",
+  "Marketing",
+  "Otro",
+];
+const INCOME_CATEGORIES = ["Ventas", "Servicios prestados", "Otros ingresos"];
+
+type RangeKey = "month" | "last_month" | "quarter" | "year" | "all";
+const RANGE_LABEL: Record<RangeKey, string> = {
+  month: "Este mes",
+  last_month: "Mes pasado",
+  quarter: "Este trimestre",
+  year: "Este año",
+  all: "Todo",
+};
+
+function inRange(dateStr: string, range: RangeKey) {
+  if (range === "all") return true;
+  const d = new Date(dateStr);
+  const now = new Date();
+  if (range === "month") {
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }
+  if (range === "last_month") {
+    const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return d.getFullYear() === lm.getFullYear() && d.getMonth() === lm.getMonth();
+  }
+  if (range === "quarter") {
+    const q = Math.floor(now.getMonth() / 3);
+    const dq = Math.floor(d.getMonth() / 3);
+    return d.getFullYear() === now.getFullYear() && dq === q;
+  }
+  if (range === "year") return d.getFullYear() === now.getFullYear();
+  return true;
+}
+
 function Finance() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
@@ -47,6 +87,11 @@ function Finance() {
   const insert = useBizInsert("transactions");
   const del = useBizDelete("transactions");
   const [open, setOpen] = useState(false);
+  const [txType, setTxType] = useState<"income" | "expense">("expense");
+  const [txCategory, setTxCategory] = useState(EXPENSE_CATEGORIES[0]);
+  const [txCategoryOther, setTxCategoryOther] = useState("");
+  const [breakdownRange, setBreakdownRange] = useState<RangeKey>("month");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   async function exportPdf() {
     const now = new Date();
@@ -92,13 +137,17 @@ function Finance() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const category = txCategory === "Otro" ? txCategoryOther.trim() || "Otro" : txCategory;
     await insert.mutateAsync({
       type: fd.get("type"),
-      category: fd.get("category"),
+      category,
       amount: Number(fd.get("amount")),
       description: fd.get("description"),
     });
     setOpen(false);
+    setTxType("expense");
+    setTxCategory(EXPENSE_CATEGORIES[0]);
+    setTxCategoryOther("");
   }
 
   const income = (tx ?? [])
@@ -108,14 +157,18 @@ function Finance() {
     .filter((t) => t.type === "expense")
     .reduce((s, t) => s + Number(t.amount), 0);
 
-  // Pie of expense categories
+  // Pie of expense categories, respetando el filtro de rango de fechas
+  const breakdownTx = (tx ?? []).filter(
+    (t) => t.type === "expense" && inRange(t.tx_date, breakdownRange),
+  );
   const expByCat: Record<string, number> = {};
-  (tx ?? [])
-    .filter((t) => t.type === "expense")
-    .forEach((t) => {
-      expByCat[t.category ?? "Otros"] = (expByCat[t.category ?? "Otros"] ?? 0) + Number(t.amount);
-    });
-  const pieData = Object.entries(expByCat).map(([name, value]) => ({ name, value }));
+  breakdownTx.forEach((t) => {
+    expByCat[t.category ?? "Otro"] = (expByCat[t.category ?? "Otro"] ?? 0) + Number(t.amount);
+  });
+  const breakdownTotal = Object.values(expByCat).reduce((s, v) => s + v, 0);
+  const pieData = Object.entries(expByCat)
+    .map(([name, value]) => ({ name, value, pct: breakdownTotal ? (value / breakdownTotal) * 100 : 0 }))
+    .sort((a, b) => b.value - a.value);
 
   const creditSales = (sales ?? []).filter((s: any) => s.is_credit && s.status !== "cancelled");
   const receivable = creditSales.reduce(
@@ -182,10 +235,17 @@ function Finance() {
                   </DialogHeader>
                   <form onSubmit={onSubmit} className="space-y-4">
                     <div>
-                      <Label>Tipo</Label>
+                      <Label htmlFor="type">Tipo</Label>
                       <select
+                        id="type"
                         name="type"
                         required
+                        value={txType}
+                        onChange={(e) => {
+                          const v = e.target.value as "income" | "expense";
+                          setTxType(v);
+                          setTxCategory(v === "income" ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]);
+                        }}
                         className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm"
                       >
                         <option value="income">Ingreso</option>
@@ -194,11 +254,30 @@ function Finance() {
                     </div>
                     <div>
                       <Label htmlFor="category">Categoría</Label>
-                      <Input
+                      <select
                         id="category"
-                        name="category"
-                        placeholder="Ej: Ventas, Arriendo, Sueldos"
-                      />
+                        value={txCategory}
+                        onChange={(e) => setTxCategory(e.target.value)}
+                        className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm"
+                      >
+                        {(txType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                      {txCategory === "Otro" && (
+                        <Input
+                          className="mt-2"
+                          placeholder="Especifica la categoría"
+                          value={txCategoryOther}
+                          onChange={(e) => setTxCategoryOther(e.target.value)}
+                        />
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Misma lista de categorías que usan las órdenes de compra, para que el
+                        gráfico de gastos no se fragmente.
+                      </p>
                     </div>
                     <div>
                       <Label htmlFor="amount">Monto (CLP)</Label>
@@ -329,22 +408,126 @@ function Finance() {
 
         <TabsContent value="breakdown">
           <Card className="p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(RANGE_LABEL) as RangeKey[]).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setBreakdownRange(r);
+                      setSelectedCategory(null);
+                    }}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      breakdownRange === r
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/70"
+                    }`}
+                  >
+                    {RANGE_LABEL[r]}
+                  </button>
+                ))}
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-muted-foreground">Total gastos ({RANGE_LABEL[breakdownRange]})</div>
+                <div className="text-lg font-bold text-destructive">{fmtCLP(breakdownTotal)}</div>
+              </div>
+            </div>
+
             {pieData.length === 0 ? (
               <EmptyState
                 title="Sin datos para mostrar"
-                description="Registra gastos para ver la distribución."
+                description="Registra gastos para ver la distribución en este período."
               />
             ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={120} label>
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => fmtCLP(v)} />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="grid gap-6 md:grid-cols-2">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      outerRadius={110}
+                      onClick={(d: any) =>
+                        setSelectedCategory((prev) => (prev === d.name ? null : d.name))
+                      }
+                    >
+                      {pieData.map((d, i) => (
+                        <Cell
+                          key={i}
+                          fill={COLORS[i % COLORS.length]}
+                          className="cursor-pointer"
+                          opacity={selectedCategory && selectedCategory !== d.name ? 0.35 : 1}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => fmtCLP(v)} />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                <div className="space-y-1.5">
+                  {pieData.map((d, i) => (
+                    <button
+                      key={d.name}
+                      onClick={() =>
+                        setSelectedCategory((prev) => (prev === d.name ? null : d.name))
+                      }
+                      className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${
+                        selectedCategory === d.name ? "border-primary bg-primary/5" : "hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                        />
+                        {d.name}
+                      </span>
+                      <span className="flex items-center gap-2 tabular-nums">
+                        <span className="text-xs text-muted-foreground">{d.pct.toFixed(1)}%</span>
+                        <span className="font-semibold">{fmtCLP(d.value)}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedCategory && (
+              <div className="mt-6 border-t pt-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Movimientos en "{selectedCategory}"</h4>
+                  <button
+                    className="text-xs text-muted-foreground underline"
+                    onClick={() => setSelectedCategory(null)}
+                  >
+                    Quitar filtro
+                  </button>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead className="text-right">Monto</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {breakdownTx
+                      .filter((t) => (t.category ?? "Otro") === selectedCategory)
+                      .map((t) => (
+                        <TableRow key={t.id}>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(t.tx_date).toLocaleDateString("es-CL")}
+                          </TableCell>
+                          <TableCell>{t.description ?? "—"}</TableCell>
+                          <TableCell className="text-right font-medium text-destructive">
+                            {fmtCLP(Number(t.amount))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </Card>
         </TabsContent>

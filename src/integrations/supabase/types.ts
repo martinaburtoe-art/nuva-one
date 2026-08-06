@@ -954,6 +954,7 @@ export type Database = {
       purchases: {
         Row: {
           business_id: string
+          category: string
           created_at: string
           id: string
           items: Json
@@ -968,6 +969,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          category?: string
           created_at?: string
           id?: string
           items?: Json
@@ -982,6 +984,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          category?: string
           created_at?: string
           id?: string
           items?: Json
