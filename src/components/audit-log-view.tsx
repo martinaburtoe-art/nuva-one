@@ -198,78 +198,90 @@ export function AuditLogView() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-        <div className="rounded-lg border bg-card p-3">
+    <div className="w-full min-w-0 space-y-4">
+      {/* KPIs: scroll horizontal en móvil, grilla fija desde tablet */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-5">
+        <div className="w-[128px] shrink-0 rounded-lg border bg-card p-3 sm:w-auto">
           <p className="text-[11px] font-medium text-muted-foreground">Total eventos</p>
           <p className="text-xl font-bold">{kpis.total}</p>
         </div>
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-500/10">
+        <div className="w-[128px] shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-500/10 sm:w-auto">
           <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
             Creaciones
           </p>
           <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{kpis.inserts}</p>
         </div>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-500/10">
+        <div className="w-[128px] shrink-0 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-500/10 sm:w-auto">
           <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
             Modificaciones
           </p>
           <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{kpis.updates}</p>
         </div>
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-500/10">
+        <div className="w-[128px] shrink-0 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-500/10 sm:w-auto">
           <p className="text-[11px] font-medium text-red-700 dark:text-red-400">Eliminaciones</p>
           <p className="text-xl font-bold text-red-700 dark:text-red-400">{kpis.deletes}</p>
         </div>
-        <div className="rounded-lg border bg-card p-3">
+        <div className="w-[128px] shrink-0 rounded-lg border bg-card p-3 sm:w-auto">
           <p className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-            <Users className="h-3 w-3" /> Usuarios activos
+            <Users className="h-3 w-3 shrink-0" /> Usuarios activos
           </p>
           <p className="text-xl font-bold">{kpis.activeUsers}</p>
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
+      {/* Filtros: apilados y a ancho completo en móvil, en línea desde tablet */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="relative w-full sm:w-44">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 w-44 pl-8 text-sm"
+            className="h-9 w-full pl-8 text-sm sm:h-8"
           />
         </div>
-        <MultiSelectFilter
-          label="Acción"
-          options={actionOptions}
-          selected={actionFilter}
-          onChange={setActionFilter}
-        />
-        <MultiSelectFilter
-          label="Módulo"
-          options={entityOptions}
-          selected={entityFilter}
-          onChange={setEntityFilter}
-        />
-        <Input
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className="h-8 w-[140px] text-sm"
-        />
-        <span className="text-xs text-muted-foreground">–</span>
-        <Input
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          className="h-8 w-[140px] text-sm"
-        />
+
+        <div className="flex gap-2">
+          <MultiSelectFilter
+            label="Acción"
+            options={actionOptions}
+            selected={actionFilter}
+            onChange={setActionFilter}
+          />
+          <MultiSelectFilter
+            label="Módulo"
+            options={entityOptions}
+            selected={entityFilter}
+            onChange={setEntityFilter}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase text-muted-foreground">Desde</span>
+            <Input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="h-9 w-full text-sm sm:h-8 sm:w-[132px]"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase text-muted-foreground">Hasta</span>
+            <Input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="h-9 w-full text-sm sm:h-8 sm:w-[132px]"
+            />
+          </div>
+        </div>
+
         {hasActiveFilters && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-xs"
+            className="h-8 self-start text-xs sm:self-auto"
             onClick={() => {
               setActionFilter([]);
               setEntityFilter([]);
@@ -281,16 +293,23 @@ export function AuditLogView() {
             Limpiar filtros
           </Button>
         )}
-        <div className="ml-auto flex items-center gap-2">
+
+        <div className="flex gap-2 sm:ml-auto">
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none"
             disabled={filtered.length === 0}
             onClick={handleExportCsv}
           >
             <Download className="mr-1.5 h-4 w-4" /> CSV
           </Button>
-          <Button size="sm" disabled={filtered.length === 0 || exporting} onClick={handleExportPdf}>
+          <Button
+            size="sm"
+            className="flex-1 sm:flex-none"
+            disabled={filtered.length === 0 || exporting}
+            onClick={handleExportPdf}
+          >
             <FileText className="mr-1.5 h-4 w-4" /> {exporting ? "Generando…" : "Informe PDF"}
           </Button>
         </div>
@@ -307,51 +326,86 @@ export function AuditLogView() {
           Ningún evento coincide con los filtros aplicados.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Acción</TableHead>
-                <TableHead>Módulo</TableHead>
-                <TableHead>Usuario</TableHead>
-                <TableHead>Detalle</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((r) => (
-                <TableRow key={r.id} className="cursor-pointer" onClick={() => setDetailRow(r)}>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString("es-CL")}
-                  </TableCell>
-                  <TableCell>
-                    <ActionBadge action={r.action} />
-                  </TableCell>
-                  <TableCell className="text-xs">{entityLabel(r.entity)}</TableCell>
-                  <TableCell className="text-xs">
-                    <div className="font-medium">{displayUserName(r.user_id, users)}</div>
-                    {users[r.user_id ?? ""]?.role && (
-                      <div className="text-[10px] capitalize text-muted-foreground">
-                        {users[r.user_id ?? ""]?.role}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="max-w-[260px] truncate text-xs text-muted-foreground">
-                    {summarizeAuditEntry(r.action, r.entity, r.metadata)}
-                  </TableCell>
-                  <TableCell>
-                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                  </TableCell>
+        <>
+          {/* Móvil: lista de tarjetas (evita apretar una tabla ancha en pantallas chicas) */}
+          <div className="space-y-2 sm:hidden">
+            {filtered.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setDetailRow(r)}
+                className="w-full rounded-lg border bg-card p-3 text-left transition-colors active:bg-muted"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <ActionBadge action={r.action} />
+                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                    {new Date(r.created_at).toLocaleString("es-CL", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-sm font-medium">{entityLabel(r.entity)}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                  {summarizeAuditEntry(r.action, r.entity, r.metadata)}
+                </p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  {displayUserName(r.user_id, users)}
+                  {users[r.user_id ?? ""]?.role && ` · ${users[r.user_id ?? ""]?.role}`}
+                </p>
+              </button>
+            ))}
+          </div>
+
+          {/* Tablet / escritorio: tabla completa, con scroll horizontal propio si hace falta */}
+          <div className="hidden overflow-x-auto rounded-md border sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Acción</TableHead>
+                  <TableHead>Módulo</TableHead>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Detalle</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((r) => (
+                  <TableRow key={r.id} className="cursor-pointer" onClick={() => setDetailRow(r)}>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString("es-CL")}
+                    </TableCell>
+                    <TableCell>
+                      <ActionBadge action={r.action} />
+                    </TableCell>
+                    <TableCell className="text-xs">{entityLabel(r.entity)}</TableCell>
+                    <TableCell className="text-xs">
+                      <div className="font-medium">{displayUserName(r.user_id, users)}</div>
+                      {users[r.user_id ?? ""]?.role && (
+                        <div className="text-[10px] capitalize text-muted-foreground">
+                          {users[r.user_id ?? ""]?.role}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-[260px] truncate text-xs text-muted-foreground">
+                      {summarizeAuditEntry(r.action, r.entity, r.metadata)}
+                    </TableCell>
+                    <TableCell>
+                      <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
       <p className="text-xs text-muted-foreground">
-        Mostrando {filtered.length} de {data?.length ?? 0} eventos registrados (últimos 200). Haz
-        clic en una fila para ver el detalle completo.
+        Mostrando {filtered.length} de {data?.length ?? 0} eventos registrados (últimos 200). Toca
+        un evento para ver el detalle completo.
       </p>
 
       <Dialog open={!!detailRow} onOpenChange={(open) => !open && setDetailRow(null)}>

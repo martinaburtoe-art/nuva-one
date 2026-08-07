@@ -207,16 +207,12 @@ function Settings() {
               <div className="flex-1">
                 <h3 className="font-semibold text-destructive">Eliminar mi cuenta</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Esto es distinto a eliminar un negocio: elimina tu cuenta personal de Nüva One
-                  (tu acceso, tu perfil y tu membresía en cualquier negocio). Si eres propietario
-                  de un negocio con datos contables sujetos a retención tributaria (SII), primero
-                  te contactaremos para coordinar la transferencia o cierre correspondiente.
+                  Esto es distinto a eliminar un negocio: elimina tu cuenta personal de Nüva One (tu
+                  acceso, tu perfil y tu membresía en cualquier negocio). Si eres propietario de un
+                  negocio con datos contables sujetos a retención tributaria (SII), primero te
+                  contactaremos para coordinar la transferencia o cierre correspondiente.
                 </p>
-                <Button
-                  variant="destructive"
-                  className="mt-4"
-                  onClick={requestAccountDeletion}
-                >
+                <Button variant="destructive" className="mt-4" onClick={requestAccountDeletion}>
                   <Trash2 className="mr-1.5 h-4 w-4" />
                   Solicitar eliminación de mi cuenta
                 </Button>
@@ -233,13 +229,12 @@ function Settings() {
           </Card>
         </TabsContent>
 
-
         {canManage && (
           <TabsContent value="audit">
-            <Card className="p-6">
+            <Card className="p-4 sm:p-6">
               <div className="flex items-start gap-3">
-                <ClipboardList className="h-5 w-5 text-primary" />
-                <div className="flex-1">
+                <ClipboardList className="hidden h-5 w-5 shrink-0 text-primary sm:block" />
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold">Registro de auditoría</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Quién hizo qué y cuándo — visible solo para propietarios y administradores. Cada
