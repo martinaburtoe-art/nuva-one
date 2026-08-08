@@ -1,4 +1,4 @@
-import type { PaymentAdapter, PaymentIntent, PaymentResult } from "../types";
+import type { PaymentAdapter, PaymentIntent, PaymentResult, PaymentStatusResult } from "../types";
 
 // VSB no tiene un endpoint público único documentado igual que Flow, por eso
 // el negocio configura su propia api_url (URL base entregada por VSB al
@@ -7,7 +7,13 @@ import type { PaymentAdapter, PaymentIntent, PaymentResult } from "../types";
 export const vsbAdapter: PaymentAdapter = {
   async createPayment({ apiKey, apiUrl }, intent: PaymentIntent): Promise<PaymentResult> {
     if (!apiUrl) {
-      return { ok: false, paymentUrl: null, token: null, errorMessage: "Falta api_url de VSB", raw: null };
+      return {
+        ok: false,
+        paymentUrl: null,
+        token: null,
+        errorMessage: "Falta api_url de VSB",
+        raw: null,
+      };
     }
     try {
       const res = await fetch(`${apiUrl.replace(/\/$/, "")}/charges`, {
@@ -24,11 +30,63 @@ export const vsbAdapter: PaymentAdapter = {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json?.payment_url) {
-        return { ok: false, paymentUrl: null, token: null, errorMessage: json?.message || "Error creando pago en VSB", raw: json };
+        return {
+          ok: false,
+          paymentUrl: null,
+          token: null,
+          errorMessage: json?.message || "Error creando pago en VSB",
+          raw: json,
+        };
       }
-      return { ok: true, paymentUrl: json.payment_url, token: json.id ?? null, errorMessage: null, raw: json };
+      return {
+        ok: true,
+        paymentUrl: json.payment_url,
+        token: json.id ?? null,
+        errorMessage: null,
+        raw: json,
+      };
     } catch {
-      return { ok: false, paymentUrl: null, token: null, errorMessage: "No se pudo contactar a VSB", raw: null };
+      return {
+        ok: false,
+        paymentUrl: null,
+        token: null,
+        errorMessage: "No se pudo contactar a VSB",
+        raw: null,
+      };
+    }
+  },
+
+  // Verificación server-to-server: se ajustará la ruta exacta cuando se
+  // confirme la documentación oficial del contrato, pero el principio de
+  // "nunca confiar solo en el webhook" aplica igual mientras tanto.
+  async checkStatus({ apiKey, apiUrl }, token): Promise<PaymentStatusResult> {
+    if (!apiUrl)
+      return { ok: false, status: "unknown", commerceOrder: null, amount: null, raw: null };
+    try {
+      const res = await fetch(`${apiUrl.replace(/\/$/, "")}/charges/${encodeURIComponent(token)}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok)
+        return { ok: false, status: "unknown", commerceOrder: null, amount: null, raw: json };
+      const raw = String(json?.status ?? "").toLowerCase();
+      const status: PaymentStatusResult["status"] =
+        raw === "paid" || raw === "approved"
+          ? "paid"
+          : raw === "pending"
+            ? "pending"
+            : raw === "rejected" || raw === "failed" || raw === "cancelled"
+              ? "rejected"
+              : "unknown";
+      return {
+        ok: true,
+        status,
+        commerceOrder: json?.reference ?? null,
+        amount: json?.amount != null ? Number(json.amount) : null,
+        raw: json,
+      };
+    } catch {
+      return { ok: false, status: "unknown", commerceOrder: null, amount: null, raw: null };
     }
   },
 };

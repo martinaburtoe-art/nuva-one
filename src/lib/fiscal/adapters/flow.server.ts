@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { PaymentAdapter, PaymentIntent, PaymentResult } from "../types";
+import type { PaymentAdapter, PaymentIntent, PaymentResult, PaymentStatusResult } from "../types";
 
 function baseUrl(environment: string): string {
   return environment === "prod" ? "https://www.flow.cl/api" : "https://sandbox.flow.cl/api";
@@ -13,8 +13,20 @@ function sign(params: Record<string, string>, secretKey: string): string {
   return crypto.createHmac("sha256", secretKey).update(toSign).digest("hex");
 }
 
+// Códigos de estado documentados por Flow (GET /payment/getStatus):
+// 1 = pendiente, 2 = pagada, 3 = rechazada, 4 = anulada.
+const FLOW_STATUS: Record<number, PaymentStatusResult["status"]> = {
+  1: "pending",
+  2: "paid",
+  3: "rejected",
+  4: "rejected",
+};
+
 export const flowAdapter: PaymentAdapter = {
-  async createPayment({ apiKey, secretKey, environment }, intent: PaymentIntent): Promise<PaymentResult> {
+  async createPayment(
+    { apiKey, secretKey, environment },
+    intent: PaymentIntent,
+  ): Promise<PaymentResult> {
     const params: Record<string, string> = {
       apiKey,
       commerceOrder: intent.commerceOrder,
@@ -35,11 +47,54 @@ export const flowAdapter: PaymentAdapter = {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json?.url || !json?.token) {
-        return { ok: false, paymentUrl: null, token: null, errorMessage: json?.message || "Error creando pago en Flow", raw: json };
+        return {
+          ok: false,
+          paymentUrl: null,
+          token: null,
+          errorMessage: json?.message || "Error creando pago en Flow",
+          raw: json,
+        };
       }
-      return { ok: true, paymentUrl: `${json.url}?token=${json.token}`, token: json.token, errorMessage: null, raw: json };
+      return {
+        ok: true,
+        paymentUrl: `${json.url}?token=${json.token}`,
+        token: json.token,
+        errorMessage: null,
+        raw: json,
+      };
     } catch {
-      return { ok: false, paymentUrl: null, token: null, errorMessage: "No se pudo contactar a Flow", raw: null };
+      return {
+        ok: false,
+        paymentUrl: null,
+        token: null,
+        errorMessage: "No se pudo contactar a Flow",
+        raw: null,
+      };
+    }
+  },
+
+  // Verificación server-to-server obligatoria antes de marcar un pago como
+  // confirmado: nunca confiar en el POST recibido en el webhook por sí solo.
+  async checkStatus({ apiKey, secretKey, environment }, token): Promise<PaymentStatusResult> {
+    const params: Record<string, string> = { apiKey, token };
+    params.s = sign(params, secretKey);
+    try {
+      const res = await fetch(
+        `${baseUrl(environment)}/payment/getStatus?${new URLSearchParams(params).toString()}`,
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok)
+        return { ok: false, status: "unknown", commerceOrder: null, amount: null, raw: json };
+      const status = FLOW_STATUS[Number(json?.status)] ?? "unknown";
+      return {
+        ok: true,
+        status,
+        commerceOrder: json?.commerceOrder ?? null,
+        amount: json?.amount != null ? Number(json.amount) : null,
+        raw: json,
+      };
+    } catch {
+      return { ok: false, status: "unknown", commerceOrder: null, amount: null, raw: null };
     }
   },
 };

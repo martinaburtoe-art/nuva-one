@@ -40,12 +40,10 @@ import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/col
 import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
 import { Route as ApiBillingPortalRouteImport } from './routes/api/billing/portal'
 import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
-import { Route as ApiBillingSiiProcessQueueRouteImport } from './routes/api/billing/sii/process-queue'
-import { Route as ApiBillingSiiEmitBulkRouteImport } from './routes/api/billing/sii/emit-bulk'
-import { Route as ApiBillingSiiEmitRouteImport } from './routes/api/billing/sii/emit'
-import { Route as ApiBillingSiiConnectRouteImport } from './routes/api/billing/sii/connect'
 import { Route as ApiBillingPaymentsWebhookRouteImport } from './routes/api/billing/payments/webhook'
+import { Route as ApiBillingPaymentsDisconnectRouteImport } from './routes/api/billing/payments/disconnect'
 import { Route as ApiBillingPaymentsCreateRouteImport } from './routes/api/billing/payments/create'
+import { Route as ApiBillingPaymentsConnectRouteImport } from './routes/api/billing/payments/connect'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -205,37 +203,28 @@ const ApiBillingCheckoutRoute = ApiBillingCheckoutRouteImport.update({
   path: '/api/billing/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBillingSiiProcessQueueRoute =
-  ApiBillingSiiProcessQueueRouteImport.update({
-    id: '/api/billing/sii/process-queue',
-    path: '/api/billing/sii/process-queue',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiBillingSiiEmitBulkRoute = ApiBillingSiiEmitBulkRouteImport.update({
-  id: '/api/billing/sii/emit-bulk',
-  path: '/api/billing/sii/emit-bulk',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBillingSiiEmitRoute = ApiBillingSiiEmitRouteImport.update({
-  id: '/api/billing/sii/emit',
-  path: '/api/billing/sii/emit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBillingSiiConnectRoute = ApiBillingSiiConnectRouteImport.update({
-  id: '/api/billing/sii/connect',
-  path: '/api/billing/sii/connect',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiBillingPaymentsWebhookRoute =
   ApiBillingPaymentsWebhookRouteImport.update({
     id: '/api/billing/payments/webhook',
     path: '/api/billing/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiBillingPaymentsDisconnectRoute =
+  ApiBillingPaymentsDisconnectRouteImport.update({
+    id: '/api/billing/payments/disconnect',
+    path: '/api/billing/payments/disconnect',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiBillingPaymentsCreateRoute =
   ApiBillingPaymentsCreateRouteImport.update({
     id: '/api/billing/payments/create',
     path: '/api/billing/payments/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingPaymentsConnectRoute =
+  ApiBillingPaymentsConnectRouteImport.update({
+    id: '/api/billing/payments/connect',
+    path: '/api/billing/payments/connect',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -270,12 +259,10 @@ export interface FileRoutesByFullPath {
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
+  '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
   '/api/billing/payments/webhook': typeof ApiBillingPaymentsWebhookRoute
-  '/api/billing/sii/connect': typeof ApiBillingSiiConnectRoute
-  '/api/billing/sii/emit': typeof ApiBillingSiiEmitRoute
-  '/api/billing/sii/emit-bulk': typeof ApiBillingSiiEmitBulkRoute
-  '/api/billing/sii/process-queue': typeof ApiBillingSiiProcessQueueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -308,12 +295,10 @@ export interface FileRoutesByTo {
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
+  '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
   '/api/billing/payments/webhook': typeof ApiBillingPaymentsWebhookRoute
-  '/api/billing/sii/connect': typeof ApiBillingSiiConnectRoute
-  '/api/billing/sii/emit': typeof ApiBillingSiiEmitRoute
-  '/api/billing/sii/emit-bulk': typeof ApiBillingSiiEmitBulkRoute
-  '/api/billing/sii/process-queue': typeof ApiBillingSiiProcessQueueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -348,12 +333,10 @@ export interface FileRoutesById {
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
+  '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
   '/api/billing/payments/webhook': typeof ApiBillingPaymentsWebhookRoute
-  '/api/billing/sii/connect': typeof ApiBillingSiiConnectRoute
-  '/api/billing/sii/emit': typeof ApiBillingSiiEmitRoute
-  '/api/billing/sii/emit-bulk': typeof ApiBillingSiiEmitBulkRoute
-  '/api/billing/sii/process-queue': typeof ApiBillingSiiProcessQueueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -388,12 +371,10 @@ export interface FileRouteTypes {
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
+    | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
+    | '/api/billing/payments/disconnect'
     | '/api/billing/payments/webhook'
-    | '/api/billing/sii/connect'
-    | '/api/billing/sii/emit'
-    | '/api/billing/sii/emit-bulk'
-    | '/api/billing/sii/process-queue'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -426,12 +407,10 @@ export interface FileRouteTypes {
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
+    | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
+    | '/api/billing/payments/disconnect'
     | '/api/billing/payments/webhook'
-    | '/api/billing/sii/connect'
-    | '/api/billing/sii/emit'
-    | '/api/billing/sii/emit-bulk'
-    | '/api/billing/sii/process-queue'
   id:
     | '__root__'
     | '/'
@@ -465,12 +444,10 @@ export interface FileRouteTypes {
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
     | '/api/whatsapp/webhook'
+    | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
+    | '/api/billing/payments/disconnect'
     | '/api/billing/payments/webhook'
-    | '/api/billing/sii/connect'
-    | '/api/billing/sii/emit'
-    | '/api/billing/sii/emit-bulk'
-    | '/api/billing/sii/process-queue'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -490,12 +467,10 @@ export interface RootRouteChildren {
   ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
+  ApiBillingPaymentsConnectRoute: typeof ApiBillingPaymentsConnectRoute
   ApiBillingPaymentsCreateRoute: typeof ApiBillingPaymentsCreateRoute
+  ApiBillingPaymentsDisconnectRoute: typeof ApiBillingPaymentsDisconnectRoute
   ApiBillingPaymentsWebhookRoute: typeof ApiBillingPaymentsWebhookRoute
-  ApiBillingSiiConnectRoute: typeof ApiBillingSiiConnectRoute
-  ApiBillingSiiEmitRoute: typeof ApiBillingSiiEmitRoute
-  ApiBillingSiiEmitBulkRoute: typeof ApiBillingSiiEmitBulkRoute
-  ApiBillingSiiProcessQueueRoute: typeof ApiBillingSiiProcessQueueRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -717,34 +692,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBillingCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/sii/process-queue': {
-      id: '/api/billing/sii/process-queue'
-      path: '/api/billing/sii/process-queue'
-      fullPath: '/api/billing/sii/process-queue'
-      preLoaderRoute: typeof ApiBillingSiiProcessQueueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/billing/sii/emit-bulk': {
-      id: '/api/billing/sii/emit-bulk'
-      path: '/api/billing/sii/emit-bulk'
-      fullPath: '/api/billing/sii/emit-bulk'
-      preLoaderRoute: typeof ApiBillingSiiEmitBulkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/billing/sii/emit': {
-      id: '/api/billing/sii/emit'
-      path: '/api/billing/sii/emit'
-      fullPath: '/api/billing/sii/emit'
-      preLoaderRoute: typeof ApiBillingSiiEmitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/billing/sii/connect': {
-      id: '/api/billing/sii/connect'
-      path: '/api/billing/sii/connect'
-      fullPath: '/api/billing/sii/connect'
-      preLoaderRoute: typeof ApiBillingSiiConnectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/billing/payments/webhook': {
       id: '/api/billing/payments/webhook'
       path: '/api/billing/payments/webhook'
@@ -752,11 +699,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBillingPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/payments/disconnect': {
+      id: '/api/billing/payments/disconnect'
+      path: '/api/billing/payments/disconnect'
+      fullPath: '/api/billing/payments/disconnect'
+      preLoaderRoute: typeof ApiBillingPaymentsDisconnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/billing/payments/create': {
       id: '/api/billing/payments/create'
       path: '/api/billing/payments/create'
       fullPath: '/api/billing/payments/create'
       preLoaderRoute: typeof ApiBillingPaymentsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/payments/connect': {
+      id: '/api/billing/payments/connect'
+      path: '/api/billing/payments/connect'
+      fullPath: '/api/billing/payments/connect'
+      preLoaderRoute: typeof ApiBillingPaymentsConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -818,12 +779,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiNotificationsLowStockCheckRoute: ApiNotificationsLowStockCheckRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
+  ApiBillingPaymentsConnectRoute: ApiBillingPaymentsConnectRoute,
   ApiBillingPaymentsCreateRoute: ApiBillingPaymentsCreateRoute,
+  ApiBillingPaymentsDisconnectRoute: ApiBillingPaymentsDisconnectRoute,
   ApiBillingPaymentsWebhookRoute: ApiBillingPaymentsWebhookRoute,
-  ApiBillingSiiConnectRoute: ApiBillingSiiConnectRoute,
-  ApiBillingSiiEmitRoute: ApiBillingSiiEmitRoute,
-  ApiBillingSiiEmitBulkRoute: ApiBillingSiiEmitBulkRoute,
-  ApiBillingSiiProcessQueueRoute: ApiBillingSiiProcessQueueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -28,4 +28,25 @@ export interface PaymentAdapter {
     },
     intent: PaymentIntent,
   ): Promise<PaymentResult>;
+  /** Consulta el estado real del pago directamente al proveedor (server-to-
+   * server, firmado). Nunca se debe marcar un pago como confirmado solo por
+   * el POST/redirect recibido del navegador o del webhook sin esta
+   * verificación. */
+  checkStatus(
+    params: {
+      apiKey: string;
+      secretKey: string;
+      apiUrl: string;
+      environment: "dev" | "prod";
+    },
+    token: string,
+  ): Promise<PaymentStatusResult>;
 }
+
+export type PaymentStatusResult = {
+  ok: boolean;
+  status: "paid" | "pending" | "rejected" | "unknown";
+  commerceOrder: string | null;
+  amount: number | null;
+  raw: any;
+};

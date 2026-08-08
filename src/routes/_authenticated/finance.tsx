@@ -24,13 +24,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, CreditCard, FileText, Lock, Download, FileDown } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  CreditCard,
+  FileText,
+  Lock,
+  Download,
+  FileDown,
+  Link2,
+  Unplug,
+  Copy,
+} from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
 import { downloadCsv } from "@/lib/export";
 import { generateMonthlyReportPdf } from "@/lib/monthly-report";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/finance")({
   head: () => ({ meta: [{ title: "Finanzas — Nüva One" }] }),
@@ -341,6 +360,7 @@ function Finance() {
             <TabsTrigger value="ledger">Movimientos</TabsTrigger>
             <TabsTrigger value="breakdown">Gastos por categoría</TabsTrigger>
             <TabsTrigger value="receivables">Por cobrar</TabsTrigger>
+            <TabsTrigger value="payments">Cobros online</TabsTrigger>
             <TabsTrigger value="invoicing">Facturación</TabsTrigger>
           </TabsList>
 
@@ -560,6 +580,7 @@ function Finance() {
                       <TableHead>Vence</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead className="text-right">Pendiente</TableHead>
+                      <TableHead className="text-right"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -596,6 +617,15 @@ function Finance() {
                             <TableCell className="text-right font-medium">
                               {fmtCLP(pending)}
                             </TableCell>
+                            <TableCell className="text-right">
+                              {!isPaid && (
+                                <ChargeOnlineButton
+                                  saleId={s.id}
+                                  amount={pending}
+                                  subject={`Venta ${s.customer_name ?? ""}`}
+                                />
+                              )}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -603,6 +633,10 @@ function Finance() {
                 </Table>
               )}
             </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <PaymentsTabContent />
           </TabsContent>
 
           <TabsContent value="invoicing">
@@ -626,5 +660,226 @@ function Finance() {
         </Tabs>
       </>
     </ModuleGuard>
+  );
+}
+
+/** Botón por fila de "Por cobrar": crea un link de pago (Flow/VSB) para esa
+ * venta y lo copia/abre. La confirmación real del pago SIEMPRE llega por el
+ * webhook server-to-server (ver /api/billing/payments/webhook), nunca desde
+ * este botón -- este solo genera el link para mandárselo al cliente. */
+function ChargeOnlineButton({
+  saleId,
+  amount,
+  subject,
+}: {
+  saleId: string;
+  amount: number;
+  subject: string;
+}) {
+  const { active } = useActiveBusiness();
+  const [loading, setLoading] = useState(false);
+
+  async function handleCharge() {
+    if (!active) return;
+    setLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/api/billing/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ business_id: active.id, sale_id: saleId, amount, subject }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        toast.error(json.error ?? "No se pudo generar el link de cobro");
+        return;
+      }
+      await navigator.clipboard.writeText(json.payment_url).catch(() => {});
+      toast.success("Link de cobro copiado al portapapeles");
+      window.open(json.payment_url, "_blank");
+    } catch {
+      toast.error("Error de conexión con la pasarela de pago");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Button size="sm" variant="outline" onClick={handleCharge} disabled={loading}>
+      <Link2 className="mr-1.5 h-3.5 w-3.5" />
+      {loading ? "Generando..." : "Cobrar online"}
+    </Button>
+  );
+}
+
+/** Pestaña "Cobros online": conectar/desconectar Flow o VSB para poder
+ * generar links de pago desde Ventas y desde "Por cobrar". */
+function PaymentsTabContent() {
+  const { active } = useActiveBusiness();
+  const { data: myRole } = useMyRole();
+  const canManage = canWriteOperations(myRole);
+  const { data: integrations, refetch } = useBizList<any>("billing_integrations", {
+    order: "created_at",
+  });
+  const activePayment = (integrations ?? []).find(
+    (i: any) => i.type === "payment" && i.status === "connected",
+  );
+
+  const [provider, setProvider] = useState<"flow" | "vsb">("flow");
+  const [apiKey, setApiKey] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+  const [apiUrl, setApiUrl] = useState("");
+  const [environment, setEnvironment] = useState<"dev" | "prod">("dev");
+  const [saving, setSaving] = useState(false);
+
+  async function connect() {
+    if (!active) return;
+    setSaving(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/api/billing/payments/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          business_id: active.id,
+          provider,
+          api_key: apiKey,
+          secret_key: secretKey,
+          api_url: apiUrl,
+          environment,
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        toast.error(json.error ?? "No se pudo conectar la pasarela");
+        return;
+      }
+      toast.success(`${provider === "flow" ? "Flow" : "VSB"} conectado`);
+      setApiKey("");
+      setSecretKey("");
+      setApiUrl("");
+      refetch();
+    } catch {
+      toast.error("Error de conexión");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function disconnect() {
+    if (!active) return;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/billing/payments/disconnect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ business_id: active.id }),
+    });
+    const json = await res.json();
+    if (json.ok) {
+      toast.success("Pasarela desconectada");
+      refetch();
+    } else {
+      toast.error(json.error ?? "No se pudo desconectar");
+    }
+  }
+
+  return (
+    <Card className="p-8">
+      <div className="flex items-center gap-3">
+        <Link2 className="h-6 w-6 text-primary" />
+        <div className="flex-1">
+          <h3 className="font-semibold">Cobros online</h3>
+          <p className="text-sm text-muted-foreground">
+            Genera links de pago para tus ventas a crédito o pendientes. La confirmación de cada
+            pago se verifica directamente con el proveedor (nunca solo por el navegador del
+            cliente), así que el estado que ves aquí siempre es real.
+          </p>
+        </div>
+      </div>
+
+      {activePayment ? (
+        <div className="mt-6 flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <p className="text-sm font-medium">
+              Conectado: {activePayment.provider === "flow" ? "Flow" : "VSB"} ·{" "}
+              <span className="text-muted-foreground">
+                {activePayment.environment === "prod" ? "Producción" : "Pruebas (sandbox)"}
+              </span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Usa el botón "Cobrar online" en Por cobrar / Ventas para generar links de pago.
+            </p>
+          </div>
+          {canManage && (
+            <Button variant="outline" size="sm" onClick={disconnect}>
+              <Unplug className="mr-1.5 h-3.5 w-3.5" />
+              Desconectar
+            </Button>
+          )}
+        </div>
+      ) : canManage ? (
+        <div className="mt-6 space-y-4">
+          <div>
+            <Label>Pasarela</Label>
+            <Select value={provider} onValueChange={(v) => setProvider(v as "flow" | "vsb")}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="flow">Flow</SelectItem>
+                <SelectItem value="vsb">VSB</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>API Key</Label>
+            <Input className="mt-1" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+          </div>
+          {provider === "flow" ? (
+            <div>
+              <Label>Secret Key</Label>
+              <Input
+                className="mt-1"
+                type="password"
+                value={secretKey}
+                onChange={(e) => setSecretKey(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div>
+              <Label>URL base de VSB</Label>
+              <Input
+                className="mt-1"
+                placeholder="https://api.vsb.cl"
+                value={apiUrl}
+                onChange={(e) => setApiUrl(e.target.value)}
+              />
+            </div>
+          )}
+          <div>
+            <Label>Ambiente</Label>
+            <Select value={environment} onValueChange={(v) => setEnvironment(v as "dev" | "prod")}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dev">Pruebas (sandbox)</SelectItem>
+                <SelectItem value="prod">Producción</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={connect} disabled={saving || !apiKey}>
+            {saving ? "Conectando..." : "Conectar pasarela"}
+          </Button>
+        </div>
+      ) : (
+        <p className="mt-6 text-sm text-muted-foreground">
+          Solo el dueño o un administrador puede conectar una pasarela de pago.
+        </p>
+      )}
+    </Card>
   );
 }
