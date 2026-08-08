@@ -29,13 +29,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Receipt, Download, Copy, ExternalLink, ClipboardCheck } from "lucide-react";
+import {
+  Receipt,
+  Download,
+  Copy,
+  ExternalLink,
+  ClipboardCheck,
+  FileCheck2,
+  FileDown,
+} from "lucide-react";
 import { useBizList, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
 import { formatRut, rutForSii } from "@/lib/rut";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  generateSiiDeclarationPdf,
+  type PendingSaleForDeclaration,
+} from "@/lib/sii-declaration-pdf";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({ meta: [{ title: "Facturación SII — Nüva One" }] }),
@@ -103,6 +115,119 @@ function InfoCard() {
   );
 }
 
+/** Ventas pagadas que aún no tienen un documento SII registrado: son las que
+ * hay que declarar. Al declarar el lote se insertan de una vez y desaparecen
+ * de aquí, así no queda información acumulada que el negocio pueda volver a
+ * declarar por error (y reportar el mismo elemento dos veces al SII). */
+function PendingDeclarationCard() {
+  const { active } = useActiveBusiness();
+  const qc = useQueryClient();
+  const { data: sales } = useBizList<any>("sales", { order: "sale_date" });
+  const { data: docs } = useBizList<any>("billing_documents", { order: "created_at" });
+  const [downloading, setDownloading] = useState(false);
+  const [declaring, setDeclaring] = useState(false);
+
+  const declaredSaleIds = useMemo(
+    () => new Set((docs ?? []).map((d: any) => d.sale_id).filter(Boolean)),
+    [docs],
+  );
+  const pending = useMemo<PendingSaleForDeclaration[]>(
+    () =>
+      (sales ?? [])
+        .filter((s: any) => s.status === "paid" && !declaredSaleIds.has(s.id))
+        .map((s: any) => ({
+          id: s.id,
+          sale_date: s.sale_date,
+          customer_name: s.customer_name,
+          total: Number(s.total),
+        })),
+    [sales, declaredSaleIds],
+  );
+  const pendingTotal = pending.reduce((sum, s) => sum + s.total, 0);
+
+  async function handleDownload() {
+    if (!active || pending.length === 0) return;
+    setDownloading(true);
+    try {
+      const base64 = await generateSiiDeclarationPdf(pending, active);
+      const byteChars = atob(base64);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `declaracion-sii-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("No se pudo generar el documento");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  async function handleDeclare() {
+    if (!active || pending.length === 0) return;
+    const ok = window.confirm(
+      `Vas a marcar ${pending.length} venta(s) por ${fmtCLP(pendingTotal)} como declaradas en el SII. ` +
+        "Hazlo solo después de emitir cada boleta/factura en el Portal MiPyme. Esta acción no se puede deshacer.",
+    );
+    if (!ok) return;
+    setDeclaring(true);
+    const { error } = await supabase.from("billing_documents" as any).insert(
+      pending.map((s) => ({
+        business_id: active.id,
+        sale_id: s.id,
+        tipo_dte: 39,
+        environment: "prod",
+        status: "emitted",
+        emission_mode: "manual",
+        total: s.total,
+        net_amount: Math.round(s.total / 1.19),
+        iva_amount: s.total - Math.round(s.total / 1.19),
+      })),
+    );
+    setDeclaring(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Lote declarado — las ventas ya no aparecerán como pendientes");
+    qc.invalidateQueries({ queryKey: ["billing_documents", active.id] });
+  }
+
+  if (pending.length === 0) return null;
+
+  return (
+    <Card className="mb-6 p-5">
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium">Pendientes por declarar en el SII</p>
+        <p className="text-xs text-muted-foreground">
+          {pending.length} venta(s) pagada(s) sin documento registrado · {fmtCLP(pendingTotal)} en
+          total. Descarga el documento, decláralas en el Portal MiPyme y luego marca el lote como
+          declarado.
+        </p>
+      </div>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={handleDownload}
+          disabled={downloading}
+        >
+          <FileDown className="mr-1.5 h-4 w-4" />
+          {downloading ? "Generando..." : "Descargar documento SII"}
+        </Button>
+        <Button className="flex-1" onClick={handleDeclare} disabled={declaring}>
+          <FileCheck2 className="mr-1.5 h-4 w-4" />
+          {declaring ? "Guardando..." : "Ya lo declaré ✓"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 type Step = "prepare" | "register";
 
 function SiiAssistDialog() {
@@ -124,7 +249,12 @@ function SiiAssistDialog() {
   const requiresReceptor = REQUIRE_RECEPTOR.has(tipoDte);
 
   const items = useMemo(
-    () => (Array.isArray(sale?.items) ? sale.items : []) as { name: string; qty: number; price: number }[],
+    () =>
+      (Array.isArray(sale?.items) ? sale.items : []) as {
+        name: string;
+        qty: number;
+        price: number;
+      }[],
     [sale],
   );
   const grossTotal = sale ? Number(sale.total) : 0;
@@ -151,7 +281,9 @@ function SiiAssistDialog() {
       requiresReceptor ? `Giro receptor: ${giro || "—"}` : null,
       "",
       "Ítems:",
-      ...items.map((it) => `- ${it.name} · Cantidad: ${it.qty} · Precio unit.: ${fmtCLP(Number(it.price))}`),
+      ...items.map(
+        (it) => `- ${it.name} · Cantidad: ${it.qty} · Precio unit.: ${fmtCLP(Number(it.price))}`,
+      ),
       "",
       `Monto neto: ${fmtCLP(netAmount)}`,
       `IVA (19%): ${fmtCLP(ivaAmount)}`,
@@ -261,8 +393,8 @@ function SiiAssistDialog() {
                 <SelectContent>
                   {(sales ?? []).map((s: any) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {new Date(s.sale_date).toLocaleDateString("es-CL")} · {s.customer_name || "Sin cliente"} ·{" "}
-                      {fmtCLP(Number(s.total))}
+                      {new Date(s.sale_date).toLocaleDateString("es-CL")} ·{" "}
+                      {s.customer_name || "Sin cliente"} · {fmtCLP(Number(s.total))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -282,7 +414,11 @@ function SiiAssistDialog() {
                 </div>
                 <div>
                   <Label htmlFor="rs">Razón social</Label>
-                  <Input id="rs" value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} />
+                  <Input
+                    id="rs"
+                    value={razonSocial}
+                    onChange={(e) => setRazonSocial(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="giro">Giro</Label>
@@ -366,6 +502,7 @@ function BillingSii() {
         />
 
         <InfoCard />
+        <PendingDeclarationCard />
 
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
@@ -397,7 +534,9 @@ function BillingSii() {
                     </TableCell>
                     <TableCell className="text-sm">{tipoLabel[d.tipo_dte] ?? d.tipo_dte}</TableCell>
                     <TableCell className="text-sm">{d.folio ?? "—"}</TableCell>
-                    <TableCell className="text-sm">{d.receptor_name || "Consumidor final"}</TableCell>
+                    <TableCell className="text-sm">
+                      {d.receptor_name || "Consumidor final"}
+                    </TableCell>
                     <TableCell className="text-right">{fmtCLP(Number(d.total))}</TableCell>
                     <TableCell>
                       <span
@@ -415,7 +554,9 @@ function BillingSii() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => downloadPdf(d.pdf_base64, `documento-${d.folio ?? d.id}.pdf`)}
+                          onClick={() =>
+                            downloadPdf(d.pdf_base64, `documento-${d.folio ?? d.id}.pdf`)
+                          }
                         >
                           <Download className="h-4 w-4" />
                         </Button>
