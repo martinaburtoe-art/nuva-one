@@ -73,8 +73,7 @@ const STRUCTURED_DATA = {
           price: "29990",
           priceCurrency: "CLP",
           priceValidUntil: "2027-12-31",
-          description:
-            "Negocios y productos ilimitados, IA, Caja, WhatsApp, Marketing y automatizaciones.",
+          description: "Negocios y productos ilimitados, IA, Caja, WhatsApp y automatizaciones.",
         },
       ],
     },
@@ -195,8 +194,8 @@ function Hero() {
             .
           </h1>
           <p className="mt-6 text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Inventario, ventas, finanzas y cotizaciones conectados en una sola plataforma
-            — con un asistente de IA por WhatsApp que responde con los datos reales de tu negocio.
+            Inventario, ventas, finanzas y cotizaciones conectados en una sola plataforma — con un
+            asistente de IA por WhatsApp que responde con los datos reales de tu negocio.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }}>
@@ -267,10 +266,10 @@ function Hero() {
 
         <p className="mx-auto mt-12 max-w-3xl text-center text-sm text-muted-foreground">
           Nüva One es una plataforma de gestión todo-en-uno para pequeñas y medianas empresas en
-          Chile y Latinoamérica. Integra inventario, ventas, finanzas, cotizaciones y compras
-          en un solo sistema, con un asistente de inteligencia artificial por WhatsApp que
-          responde preguntas usando los datos reales del negocio. Incluye 15 días de prueba gratuita
-          sin tarjeta de crédito.
+          Chile y Latinoamérica. Integra inventario, ventas, finanzas, cotizaciones y compras en un
+          solo sistema, con un asistente de inteligencia artificial por WhatsApp que responde
+          preguntas usando los datos reales del negocio. Incluye 15 días de prueba gratuita sin
+          tarjeta de crédito.
         </p>
       </div>
     </section>
@@ -340,7 +339,11 @@ function HowItWorks() {
   const steps = [
     { n: "01", t: "Crea tu cuenta", d: "Registro en menos de un minuto, sin tarjeta." },
     { n: "02", t: "Conecta tus canales", d: "Productos, redes sociales y datos del negocio." },
-    { n: "03", t: "Gestiona todo en uno", d: "Ventas, inventario, finanzas y asistente IA por WhatsApp." },
+    {
+      n: "03",
+      t: "Gestiona todo en uno",
+      d: "Ventas, inventario, finanzas y asistente IA por WhatsApp.",
+    },
     { n: "04", t: "Decide con IA", d: "Insights y automatizaciones que ahorran horas." },
   ];
   return (
@@ -437,8 +440,8 @@ function Pricing() {
       f: [
         "Todo lo de la prueba, sin límite de tiempo",
         "Negocios y productos ilimitados",
-        "IA, Caja, WhatsApp y Marketing",
-        "Automatizaciones y equipo",
+        "IA, Caja, WhatsApp y roles de equipo",
+        "Automatizaciones",
       ],
       c: "Más popular",
       hi: true,

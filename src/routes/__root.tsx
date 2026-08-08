@@ -112,14 +112,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones, marketing y automatización con IA. Empieza gratis.",
+          "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones y automatización con IA. Empieza gratis.",
       },
       { name: "author", content: "Nüva One" },
       { property: "og:title", content: "Nüva One — Gestiona todo tu negocio desde un solo lugar" },
       {
         property: "og:description",
         content:
-          "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones, marketing y automatización con IA. Empieza gratis.",
+          "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones y automatización con IA. Empieza gratis.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -127,7 +127,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "twitter:description",
         content:
-          "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones, marketing y automatización con IA. Empieza gratis.",
+          "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones y automatización con IA. Empieza gratis.",
       },
       {
         property: "og:image",

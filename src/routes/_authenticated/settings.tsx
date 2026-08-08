@@ -332,7 +332,6 @@ function BillingTab() {
         <li className="flex items-center gap-2">✅ Asistente IA</li>
         <li className="flex items-center gap-2">✅ Automatizaciones y bot de WhatsApp</li>
         <li className="flex items-center gap-2">✅ Cotizaciones en PDF</li>
-        <li className="flex items-center gap-2">✅ Marketing con IA</li>
         <li className="flex items-center gap-2">✅ Roles de equipo y auditoría</li>
       </ul>
       <p className="mt-2 text-xs text-muted-foreground">
