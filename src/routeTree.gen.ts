@@ -37,9 +37,10 @@ import { Route as ApiWhatsappWebhookRouteImport } from './routes/api/whatsapp/we
 import { Route as ApiQuotesFollowUpRouteImport } from './routes/api/quotes/follow-up'
 import { Route as ApiNotificationsLowStockCheckRouteImport } from './routes/api/notifications/low-stock-check'
 import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/collections/check-overdue'
-import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
-import { Route as ApiBillingPortalRouteImport } from './routes/api/billing/portal'
-import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
+import { Route as ApiBillingSubscribeRunChargesRouteImport } from './routes/api/billing/subscribe/run-charges'
+import { Route as ApiBillingSubscribeRegisterRouteImport } from './routes/api/billing/subscribe/register'
+import { Route as ApiBillingSubscribeCancelRouteImport } from './routes/api/billing/subscribe/cancel'
+import { Route as ApiBillingSubscribeCallbackRouteImport } from './routes/api/billing/subscribe/callback'
 import { Route as ApiBillingPaymentsWebhookRouteImport } from './routes/api/billing/payments/webhook'
 import { Route as ApiBillingPaymentsDisconnectRouteImport } from './routes/api/billing/payments/disconnect'
 import { Route as ApiBillingPaymentsCreateRouteImport } from './routes/api/billing/payments/create'
@@ -188,21 +189,30 @@ const ApiCollectionsCheckOverdueRoute =
     path: '/api/collections/check-overdue',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiBillingWebhookRoute = ApiBillingWebhookRouteImport.update({
-  id: '/api/billing/webhook',
-  path: '/api/billing/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBillingPortalRoute = ApiBillingPortalRouteImport.update({
-  id: '/api/billing/portal',
-  path: '/api/billing/portal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBillingCheckoutRoute = ApiBillingCheckoutRouteImport.update({
-  id: '/api/billing/checkout',
-  path: '/api/billing/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiBillingSubscribeRunChargesRoute =
+  ApiBillingSubscribeRunChargesRouteImport.update({
+    id: '/api/billing/subscribe/run-charges',
+    path: '/api/billing/subscribe/run-charges',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingSubscribeRegisterRoute =
+  ApiBillingSubscribeRegisterRouteImport.update({
+    id: '/api/billing/subscribe/register',
+    path: '/api/billing/subscribe/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingSubscribeCancelRoute =
+  ApiBillingSubscribeCancelRouteImport.update({
+    id: '/api/billing/subscribe/cancel',
+    path: '/api/billing/subscribe/cancel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingSubscribeCallbackRoute =
+  ApiBillingSubscribeCallbackRouteImport.update({
+    id: '/api/billing/subscribe/callback',
+    path: '/api/billing/subscribe/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiBillingPaymentsWebhookRoute =
   ApiBillingPaymentsWebhookRouteImport.update({
     id: '/api/billing/payments/webhook',
@@ -252,9 +262,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
-  '/api/billing/portal': typeof ApiBillingPortalRoute
-  '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -263,6 +270,10 @@ export interface FileRoutesByFullPath {
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
   '/api/billing/payments/webhook': typeof ApiBillingPaymentsWebhookRoute
+  '/api/billing/subscribe/callback': typeof ApiBillingSubscribeCallbackRoute
+  '/api/billing/subscribe/cancel': typeof ApiBillingSubscribeCancelRoute
+  '/api/billing/subscribe/register': typeof ApiBillingSubscribeRegisterRoute
+  '/api/billing/subscribe/run-charges': typeof ApiBillingSubscribeRunChargesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -288,9 +299,6 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
-  '/api/billing/portal': typeof ApiBillingPortalRoute
-  '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -299,6 +307,10 @@ export interface FileRoutesByTo {
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
   '/api/billing/payments/webhook': typeof ApiBillingPaymentsWebhookRoute
+  '/api/billing/subscribe/callback': typeof ApiBillingSubscribeCallbackRoute
+  '/api/billing/subscribe/cancel': typeof ApiBillingSubscribeCancelRoute
+  '/api/billing/subscribe/register': typeof ApiBillingSubscribeRegisterRoute
+  '/api/billing/subscribe/run-charges': typeof ApiBillingSubscribeRunChargesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -326,9 +338,6 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shifts': typeof AuthenticatedShiftsRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
-  '/api/billing/portal': typeof ApiBillingPortalRoute
-  '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -337,6 +346,10 @@ export interface FileRoutesById {
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
   '/api/billing/payments/webhook': typeof ApiBillingPaymentsWebhookRoute
+  '/api/billing/subscribe/callback': typeof ApiBillingSubscribeCallbackRoute
+  '/api/billing/subscribe/cancel': typeof ApiBillingSubscribeCancelRoute
+  '/api/billing/subscribe/register': typeof ApiBillingSubscribeRegisterRoute
+  '/api/billing/subscribe/run-charges': typeof ApiBillingSubscribeRunChargesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -364,9 +377,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shifts'
     | '/api/chat'
-    | '/api/billing/checkout'
-    | '/api/billing/portal'
-    | '/api/billing/webhook'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -375,6 +385,10 @@ export interface FileRouteTypes {
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
     | '/api/billing/payments/webhook'
+    | '/api/billing/subscribe/callback'
+    | '/api/billing/subscribe/cancel'
+    | '/api/billing/subscribe/register'
+    | '/api/billing/subscribe/run-charges'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -400,9 +414,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shifts'
     | '/api/chat'
-    | '/api/billing/checkout'
-    | '/api/billing/portal'
-    | '/api/billing/webhook'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -411,6 +422,10 @@ export interface FileRouteTypes {
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
     | '/api/billing/payments/webhook'
+    | '/api/billing/subscribe/callback'
+    | '/api/billing/subscribe/cancel'
+    | '/api/billing/subscribe/register'
+    | '/api/billing/subscribe/run-charges'
   id:
     | '__root__'
     | '/'
@@ -437,9 +452,6 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/shifts'
     | '/api/chat'
-    | '/api/billing/checkout'
-    | '/api/billing/portal'
-    | '/api/billing/webhook'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -448,6 +460,10 @@ export interface FileRouteTypes {
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
     | '/api/billing/payments/webhook'
+    | '/api/billing/subscribe/callback'
+    | '/api/billing/subscribe/cancel'
+    | '/api/billing/subscribe/register'
+    | '/api/billing/subscribe/run-charges'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -460,9 +476,6 @@ export interface RootRouteChildren {
   SelectBusinessRoute: typeof SelectBusinessRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
-  ApiBillingCheckoutRoute: typeof ApiBillingCheckoutRoute
-  ApiBillingPortalRoute: typeof ApiBillingPortalRoute
-  ApiBillingWebhookRoute: typeof ApiBillingWebhookRoute
   ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
   ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
@@ -471,6 +484,10 @@ export interface RootRouteChildren {
   ApiBillingPaymentsCreateRoute: typeof ApiBillingPaymentsCreateRoute
   ApiBillingPaymentsDisconnectRoute: typeof ApiBillingPaymentsDisconnectRoute
   ApiBillingPaymentsWebhookRoute: typeof ApiBillingPaymentsWebhookRoute
+  ApiBillingSubscribeCallbackRoute: typeof ApiBillingSubscribeCallbackRoute
+  ApiBillingSubscribeCancelRoute: typeof ApiBillingSubscribeCancelRoute
+  ApiBillingSubscribeRegisterRoute: typeof ApiBillingSubscribeRegisterRoute
+  ApiBillingSubscribeRunChargesRoute: typeof ApiBillingSubscribeRunChargesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -671,25 +688,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCollectionsCheckOverdueRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/webhook': {
-      id: '/api/billing/webhook'
-      path: '/api/billing/webhook'
-      fullPath: '/api/billing/webhook'
-      preLoaderRoute: typeof ApiBillingWebhookRouteImport
+    '/api/billing/subscribe/run-charges': {
+      id: '/api/billing/subscribe/run-charges'
+      path: '/api/billing/subscribe/run-charges'
+      fullPath: '/api/billing/subscribe/run-charges'
+      preLoaderRoute: typeof ApiBillingSubscribeRunChargesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/portal': {
-      id: '/api/billing/portal'
-      path: '/api/billing/portal'
-      fullPath: '/api/billing/portal'
-      preLoaderRoute: typeof ApiBillingPortalRouteImport
+    '/api/billing/subscribe/register': {
+      id: '/api/billing/subscribe/register'
+      path: '/api/billing/subscribe/register'
+      fullPath: '/api/billing/subscribe/register'
+      preLoaderRoute: typeof ApiBillingSubscribeRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/checkout': {
-      id: '/api/billing/checkout'
-      path: '/api/billing/checkout'
-      fullPath: '/api/billing/checkout'
-      preLoaderRoute: typeof ApiBillingCheckoutRouteImport
+    '/api/billing/subscribe/cancel': {
+      id: '/api/billing/subscribe/cancel'
+      path: '/api/billing/subscribe/cancel'
+      fullPath: '/api/billing/subscribe/cancel'
+      preLoaderRoute: typeof ApiBillingSubscribeCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/subscribe/callback': {
+      id: '/api/billing/subscribe/callback'
+      path: '/api/billing/subscribe/callback'
+      fullPath: '/api/billing/subscribe/callback'
+      preLoaderRoute: typeof ApiBillingSubscribeCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/billing/payments/webhook': {
@@ -772,9 +796,6 @@ const rootRouteChildren: RootRouteChildren = {
   SelectBusinessRoute: SelectBusinessRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
-  ApiBillingCheckoutRoute: ApiBillingCheckoutRoute,
-  ApiBillingPortalRoute: ApiBillingPortalRoute,
-  ApiBillingWebhookRoute: ApiBillingWebhookRoute,
   ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
   ApiNotificationsLowStockCheckRoute: ApiNotificationsLowStockCheckRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
@@ -783,6 +804,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBillingPaymentsCreateRoute: ApiBillingPaymentsCreateRoute,
   ApiBillingPaymentsDisconnectRoute: ApiBillingPaymentsDisconnectRoute,
   ApiBillingPaymentsWebhookRoute: ApiBillingPaymentsWebhookRoute,
+  ApiBillingSubscribeCallbackRoute: ApiBillingSubscribeCallbackRoute,
+  ApiBillingSubscribeCancelRoute: ApiBillingSubscribeCancelRoute,
+  ApiBillingSubscribeRegisterRoute: ApiBillingSubscribeRegisterRoute,
+  ApiBillingSubscribeRunChargesRoute: ApiBillingSubscribeRunChargesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

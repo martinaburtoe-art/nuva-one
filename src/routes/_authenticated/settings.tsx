@@ -272,13 +272,13 @@ function BillingTab() {
     : 15;
   const trialExpired = !isPro && trialDaysLeft <= 0;
 
-  async function callBillingEndpoint(path: "checkout" | "portal") {
+  async function callBillingEndpoint(path: "register") {
     if (!active) return;
     setLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      const res = await fetch(`/api/billing/${path}`, {
+      const res = await fetch(`/api/billing/subscribe/${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ business_id: active.id }),
@@ -349,14 +349,43 @@ function BillingTab() {
           className="mt-4"
           variant="outline"
           disabled={loading}
-          onClick={() => callBillingEndpoint("portal")}
+          onClick={async () => {
+            if (!active) return;
+            setLoading(true);
+            try {
+              const { data: sessionData } = await supabase.auth.getSession();
+              const token = sessionData.session?.access_token;
+              const res = await fetch("/api/billing/subscribe/cancel", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ business_id: active.id }),
+              });
+              const json = await res.json();
+              if (json.ok) {
+                toast.success("Suscripción cancelada — volviste al plan Starter");
+                window.location.reload();
+              } else {
+                toast.error(json.error ?? "No se pudo cancelar");
+              }
+            } catch {
+              toast.error("Error de conexión");
+            } finally {
+              setLoading(false);
+            }
+          }}
         >
-          Gestionar suscripción
+          Cancelar suscripción
         </Button>
       ) : (
-        <Button className="mt-4" disabled={loading} onClick={() => callBillingEndpoint("checkout")}>
+        <Button className="mt-4" disabled={loading} onClick={() => callBillingEndpoint("register")}>
           Actualizar a Pro — $29.990/mes
         </Button>
+      )}
+      {!isPro && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          El pago se procesa con Flow. Te pediremos registrar una tarjeta para el cargo automático
+          mensual — el cobro se realiza de inmediato al confirmar.
+        </p>
       )}
     </Card>
   );

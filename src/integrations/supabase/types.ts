@@ -523,6 +523,10 @@ export type Database = {
       };
       businesses: {
         Row: {
+          billing_failed_attempts: number;
+          flow_card_status: string;
+          flow_customer_id: string | null;
+          next_charge_date: string | null;
           address: string | null;
           comuna: string | null;
           created_at: string;
@@ -542,6 +546,10 @@ export type Database = {
           webhook_url: string | null;
         };
         Insert: {
+          billing_failed_attempts?: number;
+          flow_card_status?: string;
+          flow_customer_id?: string | null;
+          next_charge_date?: string | null;
           address?: string | null;
           comuna?: string | null;
           created_at?: string;
@@ -561,6 +569,10 @@ export type Database = {
           webhook_url?: string | null;
         };
         Update: {
+          billing_failed_attempts?: number;
+          flow_card_status?: string;
+          flow_customer_id?: string | null;
+          next_charge_date?: string | null;
           address?: string | null;
           comuna?: string | null;
           created_at?: string;
@@ -795,6 +807,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "marketing_posts_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      subscription_charges: {
+        Row: {
+          amount: number;
+          business_id: string;
+          commerce_order: string;
+          created_at: string;
+          flow_order: string | null;
+          id: string;
+          status: string;
+        };
+        Insert: {
+          amount: number;
+          business_id: string;
+          commerce_order: string;
+          created_at?: string;
+          flow_order?: string | null;
+          id?: string;
+          status: string;
+        };
+        Update: {
+          amount?: number;
+          business_id?: string;
+          commerce_order?: string;
+          created_at?: string;
+          flow_order?: string | null;
+          id?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "subscription_charges_business_id_fkey";
             columns: ["business_id"];
             isOneToOne: false;
             referencedRelation: "businesses";
