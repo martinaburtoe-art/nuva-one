@@ -13,14 +13,16 @@
 -- authenticated (usado por el cliente anon-key + JWT del usuario) pierde el
 -- permiso UPDATE sobre las columnas de facturación; solo service_role
 -- (usado por supabaseAdmin en los endpoints server-side) puede tocarlas.
+--
+-- OJO: en Postgres, REVOKE UPDATE (columna) NO anula un GRANT UPDATE ya
+-- existente a nivel de TABLA completa (que es justo lo que había desde el
+-- GRANT original de esta tabla) -- los privilegios de columna son
+-- ADITIVOS al de tabla, no restrictivos. Por eso hay que revocar el
+-- UPDATE de tabla completo primero y re-otorgarlo solo en las columnas
+-- que sí debe poder editar un dueño/admin desde Ajustes.
 
-REVOKE UPDATE (
-  plan,
-  subscription_status,
-  stripe_customer_id,
-  stripe_subscription_id,
-  flow_customer_id,
-  flow_card_status,
-  next_charge_date,
-  billing_failed_attempts
-) ON public.businesses FROM authenticated;
+REVOKE UPDATE ON public.businesses FROM authenticated;
+
+GRANT UPDATE (
+  name, industry, size, logo_url, tax_id, webhook_url, giro, address, comuna
+) ON public.businesses TO authenticated;
