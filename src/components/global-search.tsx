@@ -37,7 +37,8 @@ const navItems = [
   { to: "/finance", label: "Finanzas", icon: CreditCard },
   { to: "/analytics", label: "Indicadores", icon: BarChart3 },
   { to: "/quotes", label: "Cotizaciones", icon: FileText },
-  { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow },
+  // Oculto del buscador junto con el ítem del menú lateral (ver dashboard-shell.tsx).
+  // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow },
   { to: "/ai", label: "Asistente IA", icon: Sparkles },
   { to: "/shifts", label: "Turnos", icon: CalendarClock },
   { to: "/settings", label: "Configuración", icon: Settings },

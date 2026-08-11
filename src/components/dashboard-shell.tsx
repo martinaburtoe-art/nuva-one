@@ -53,7 +53,10 @@ const nav = [
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance" },
   { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics" },
   { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes" },
-  { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
+  // "Vinculación WhatsApp" oculta del menú a pedido de Martín (11-08-2026):
+  // la ruta /automations, el módulo "automations" y todo el backend siguen
+  // intactos -- reactivar es solo descomentar esta línea.
+  // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
   { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai" },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true },
   { to: "/settings", label: "Configuración", icon: Settings },
