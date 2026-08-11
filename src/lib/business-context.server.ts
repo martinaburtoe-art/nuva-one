@@ -22,6 +22,16 @@ export function trialDaysLeft(createdAt: string | null): number {
   return Math.max(0, TRIAL_DAYS - elapsedDays);
 }
 
+// Fecha de "hoy" en horario de Chile, formato YYYY-MM-DD -- mismo formato en
+// que Postgres devuelve las columnas DATE (sale_date, purchase_date, etc.),
+// así el modelo puede comparar strings directamente en vez de adivinar qué
+// día es "hoy" (sin esto, el asistente no tiene ninguna ancla temporal real
+// y termina alucinando fechas al responder preguntas relativas como "hoy",
+// "esta semana" o "ayer").
+function todayInChile(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date());
+}
+
 export async function buildBusinessContext(supabase: SupabaseClient<Database>, businessId: string) {
   if (!businessId) return null;
 
@@ -86,6 +96,7 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
   return {
     business: business.data,
     summary: {
+      today: todayInChile(),
       plan: business.data.plan,
       trial_days_left:
         business.data.plan === "pro" ? null : trialDaysLeft(business.data.created_at),
