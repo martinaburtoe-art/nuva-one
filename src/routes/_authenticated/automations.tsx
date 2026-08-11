@@ -49,13 +49,26 @@ function WhatsAppLinking() {
       return;
     }
     const normalized = normalizeWhatsAppNumber(ownerPhone);
-    if (ownerLink) {
-      await ownerUpdate.mutateAsync({
-        id: ownerLink.id,
-        patch: { owner_phone_number: normalized, active: true },
-      });
-    } else {
-      await ownerInsert.mutateAsync({ owner_phone_number: normalized, active: true });
+    try {
+      if (ownerLink) {
+        await ownerUpdate.mutateAsync({
+          id: ownerLink.id,
+          patch: { owner_phone_number: normalized, active: true },
+        });
+      } else {
+        await ownerInsert.mutateAsync({ owner_phone_number: normalized, active: true });
+      }
+    } catch (err: any) {
+      // Índice único parcial en whatsapp_owner_links (owner_phone_number
+      // WHERE active = true) -- este número ya está vinculado como owner de
+      // OTRO negocio.
+      if (err?.code === "23505") {
+        toast.error(
+          "Ese número de WhatsApp ya está vinculado a otro negocio en Nüva One. Cada número solo puede estar vinculado a un negocio a la vez.",
+        );
+        return;
+      }
+      throw err;
     }
   }
 
