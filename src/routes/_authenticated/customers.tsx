@@ -15,12 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -37,7 +32,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, Users, Search, Phone, Mail, MapPin, Pencil } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Users,
+  Search,
+  Phone,
+  Mail,
+  MapPin,
+  Pencil,
+  StickyNote,
+  PhoneCall,
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  Clock,
+} from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
 import { formatRut, normalizeRut } from "@/lib/rut";
@@ -57,7 +67,19 @@ type Customer = {
   address: string | null;
   notes: string | null;
   status: "lead" | "active" | "inactive";
+  pipeline_stage: "new" | "contacted" | "qualified" | "proposal" | "won" | "lost";
+  last_contacted_at: string | null;
   tags: string[];
+  created_at: string;
+};
+
+type Activity = {
+  id: string;
+  customer_id: string;
+  type: "note" | "call" | "meeting" | "email" | "task";
+  content: string;
+  due_date: string | null;
+  completed: boolean;
   created_at: string;
 };
 
@@ -67,15 +89,43 @@ const statusLabel: Record<string, { l: string; c: string }> = {
   inactive: { l: "Inactivo", c: "bg-muted text-muted-foreground" },
 };
 
+const stageLabel: Record<Customer["pipeline_stage"], { l: string; c: string }> = {
+  new: { l: "Nuevo", c: "bg-muted text-muted-foreground" },
+  contacted: { l: "Contactado", c: "bg-blue-500/15 text-blue-600" },
+  qualified: { l: "Calificado", c: "bg-purple-500/15 text-purple-600" },
+  proposal: { l: "Propuesta", c: "bg-warning/15 text-warning" },
+  won: { l: "Ganado", c: "bg-success/15 text-success" },
+  lost: { l: "Perdido", c: "bg-destructive/15 text-destructive" },
+};
+
+const activityMeta: Record<Activity["type"], { l: string; icon: any }> = {
+  note: { l: "Nota", icon: StickyNote },
+  call: { l: "Llamada", icon: PhoneCall },
+  meeting: { l: "Reunión", icon: CalendarDays },
+  email: { l: "Email", icon: Mail },
+  task: { l: "Tarea", icon: Clock },
+};
+
 function Customers() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const { data, isLoading } = useBizList<Customer>("customers", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales", { order: "sale_date" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at" });
+  const { data: activities } = useBizList<Activity>("customer_activities", {
+    order: "created_at",
+    ascending: false,
+  });
   const insert = useBizInsert("customers");
   const update = useBizUpdate("customers");
   const del = useBizDelete("customers");
+  const insertActivity = useBizInsert("customer_activities");
+  const updateActivity = useBizUpdate("customer_activities");
+  const deleteActivity = useBizDelete("customer_activities");
+
+  const [activityType, setActivityType] = useState<Activity["type"]>("note");
+  const [activityContent, setActivityContent] = useState("");
+  const [activityDue, setActivityDue] = useState("");
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -177,89 +227,147 @@ function Customers() {
   function customerQuotes(id: string) {
     return (quotes ?? []).filter((q) => q.customer_id === id);
   }
+  function customerActivities(id: string) {
+    return (activities ?? []).filter((a) => a.customer_id === id);
+  }
+
+  const openTasksCount = useMemo(
+    () => (activities ?? []).filter((a) => a.type === "task" && !a.completed).length,
+    [activities],
+  );
+
+  async function onAddActivity(customerId: string) {
+    if (!activityContent.trim()) {
+      toast.error("Escribe un contenido");
+      return;
+    }
+    await insertActivity.mutateAsync({
+      customer_id: customerId,
+      type: activityType,
+      content: activityContent.trim(),
+      due_date: activityType === "task" && activityDue ? new Date(activityDue).toISOString() : null,
+    });
+    setActivityContent("");
+    setActivityDue("");
+    setActivityType("note");
+  }
+
+  async function onToggleTask(a: Activity) {
+    await updateActivity.mutateAsync({
+      id: a.id,
+      patch: {
+        completed: !a.completed,
+        completed_at: !a.completed ? new Date().toISOString() : null,
+      },
+    });
+  }
+
+  async function onStageChange(c: Customer, stage: Customer["pipeline_stage"]) {
+    await update.mutateAsync({ id: c.id, patch: { pipeline_stage: stage } });
+    setDetail((d) => (d && d.id === c.id ? { ...d, pipeline_stage: stage } : d));
+  }
 
   return (
     <ModuleGuard module="customers">
       <div className="p-4 md:p-6">
         <PageHeader
           title="Clientes"
-          description="CRM: ficha de cada cliente, historial de compras y seguimiento."
+          description="CRM: pipeline, historial de compras y seguimiento con tareas y actividades."
           action={
-            canWrite && (
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={openNew}>
-                    <Plus className="mr-1.5 h-4 w-4" /> Nuevo cliente
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{editing ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={onSubmit} className="space-y-3">
-                    <div>
-                      <Label htmlFor="name">Nombre *</Label>
-                      <Input id="name" name="name" defaultValue={editing?.name} required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
+            <>
+              {openTasksCount > 0 && (
+                <Badge variant="secondary" className="mr-2 gap-1 align-middle">
+                  <Clock className="h-3 w-3" /> {openTasksCount} tarea
+                  {openTasksCount > 1 ? "s" : ""} pendiente
+                  {openTasksCount > 1 ? "s" : ""}
+                </Badge>
+              )}
+              {canWrite && (
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={openNew}>
+                      <Plus className="mr-1.5 h-4 w-4" /> Nuevo cliente
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{editing ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={onSubmit} className="space-y-3">
                       <div>
-                        <Label htmlFor="phone">Teléfono</Label>
-                        <Input id="phone" name="phone" defaultValue={editing?.phone ?? ""} />
+                        <Label htmlFor="name">Nombre *</Label>
+                        <Input id="name" name="name" defaultValue={editing?.name} required />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="phone">Teléfono</Label>
+                          <Input id="phone" name="phone" defaultValue={editing?.phone ?? ""} />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            defaultValue={editing?.email ?? ""}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="tax_id">RUT</Label>
+                          <Input
+                            id="tax_id"
+                            value={rutInput}
+                            onChange={(e) => setRutInput(formatRut(e.target.value))}
+                            placeholder="12.345.678-9"
+                            maxLength={12}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="status">Estado</Label>
+                          <Select name="status" defaultValue={editing?.status ?? "active"}>
+                            <SelectTrigger id="status">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="lead">Prospecto</SelectItem>
+                              <SelectItem value="active">Activo</SelectItem>
+                              <SelectItem value="inactive">Inactivo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" name="email" type="email" defaultValue={editing?.email ?? ""} />
+                        <Label htmlFor="address">Dirección</Label>
+                        <Input id="address" name="address" defaultValue={editing?.address ?? ""} />
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor="tax_id">RUT</Label>
+                        <Label htmlFor="tags">Etiquetas (separadas por coma)</Label>
                         <Input
-                          id="tax_id"
-                          value={rutInput}
-                          onChange={(e) => setRutInput(formatRut(e.target.value))}
-                          placeholder="12.345.678-9"
-                          maxLength={12}
+                          id="tags"
+                          value={tagsInput}
+                          onChange={(e) => setTagsInput(e.target.value)}
+                          placeholder="mayorista, frecuente, VIP"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="status">Estado</Label>
-                        <Select name="status" defaultValue={editing?.status ?? "active"}>
-                          <SelectTrigger id="status">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="lead">Prospecto</SelectItem>
-                            <SelectItem value="active">Activo</SelectItem>
-                            <SelectItem value="inactive">Inactivo</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="notes">Notas</Label>
+                        <Textarea
+                          id="notes"
+                          name="notes"
+                          rows={3}
+                          defaultValue={editing?.notes ?? ""}
+                        />
                       </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="address">Dirección</Label>
-                      <Input id="address" name="address" defaultValue={editing?.address ?? ""} />
-                    </div>
-                    <div>
-                      <Label htmlFor="tags">Etiquetas (separadas por coma)</Label>
-                      <Input
-                        id="tags"
-                        value={tagsInput}
-                        onChange={(e) => setTagsInput(e.target.value)}
-                        placeholder="mayorista, frecuente, VIP"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="notes">Notas</Label>
-                      <Textarea id="notes" name="notes" rows={3} defaultValue={editing?.notes ?? ""} />
-                    </div>
-                    <Button type="submit" className="w-full">
-                      {editing ? "Guardar cambios" : "Crear cliente"}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            )
+                      <Button type="submit" className="w-full">
+                        {editing ? "Guardar cambios" : "Crear cliente"}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </>
           }
         />
 
@@ -279,7 +387,9 @@ function Customers() {
                 key={s}
                 onClick={() => setStatusFilter(s)}
                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                  statusFilter === s ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                  statusFilter === s
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "text-muted-foreground"
                 }`}
               >
                 {s === "all" ? "Todos" : statusLabel[s].l} ({counts[s]})
@@ -307,6 +417,7 @@ function Customers() {
                   <TableHead>Nombre</TableHead>
                   <TableHead>Contacto</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Etapa</TableHead>
                   <TableHead className="text-right">Total comprado</TableHead>
                   <TableHead className="text-right">Última compra</TableHead>
                   <TableHead className="w-10" />
@@ -316,11 +427,7 @@ function Customers() {
                 {filtered.map((c) => {
                   const stats = statsByCustomer.get(c.id);
                   return (
-                    <TableRow
-                      key={c.id}
-                      className="cursor-pointer"
-                      onClick={() => setDetail(c)}
-                    >
+                    <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
                       <TableCell className="font-medium">
                         {c.name}
                         {c.tags?.length > 0 && (
@@ -337,8 +444,17 @@ function Customers() {
                         {c.phone || c.email || "—"}
                       </TableCell>
                       <TableCell>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}
+                        >
                           {statusLabel[c.status].l}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}
+                        >
+                          {stageLabel[c.pipeline_stage ?? "new"].l}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">{fmtCLP(stats?.total ?? 0)}</TableCell>
@@ -380,6 +496,32 @@ function Customers() {
                   <SheetTitle>{detail.name}</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4 space-y-4">
+                  <div>
+                    <Label className="text-xs">Etapa del pipeline</Label>
+                    <Select
+                      value={detail.pipeline_stage ?? "new"}
+                      onValueChange={(v) => onStageChange(detail, v as Customer["pipeline_stage"])}
+                      disabled={!canWrite}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(stageLabel).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>
+                            {v.l}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {detail.last_contacted_at && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Último contacto:{" "}
+                        {new Date(detail.last_contacted_at).toLocaleDateString("es-CL")}
+                      </p>
+                    )}
+                  </div>
+
                   <div className="space-y-1.5 text-sm">
                     {detail.phone && (
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -427,7 +569,10 @@ function Customers() {
                     ) : (
                       <div className="space-y-2">
                         {customerSales(detail.id).map((s) => (
-                          <div key={s.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between rounded-md border p-2 text-sm"
+                          >
                             <span>{new Date(s.sale_date).toLocaleDateString("es-CL")}</span>
                             <span className="text-muted-foreground">{s.channel ?? "—"}</span>
                             <span className="font-medium">{fmtCLP(Number(s.total))}</span>
@@ -444,12 +589,133 @@ function Customers() {
                     ) : (
                       <div className="space-y-2">
                         {customerQuotes(detail.id).map((q) => (
-                          <div key={q.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
+                          <div
+                            key={q.id}
+                            className="flex items-center justify-between rounded-md border p-2 text-sm"
+                          >
                             <span>{new Date(q.created_at).toLocaleDateString("es-CL")}</span>
                             <span className="text-muted-foreground">{q.status}</span>
                             <span className="font-medium">{fmtCLP(Number(q.total))}</span>
                           </div>
                         ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-sm font-medium">Actividades y tareas</p>
+                    {canWrite && (
+                      <div className="mb-3 space-y-2 rounded-md border p-2">
+                        <div className="flex gap-2">
+                          <Select
+                            value={activityType}
+                            onValueChange={(v) => setActivityType(v as Activity["type"])}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(activityMeta).map(([k, v]) => (
+                                <SelectItem key={k} value={k}>
+                                  {v.l}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {activityType === "task" && (
+                            <Input
+                              type="date"
+                              value={activityDue}
+                              onChange={(e) => setActivityDue(e.target.value)}
+                              className="w-36"
+                            />
+                          )}
+                        </div>
+                        <Textarea
+                          rows={2}
+                          placeholder={
+                            activityType === "task"
+                              ? "Descripción de la tarea..."
+                              : "Escribe una nota..."
+                          }
+                          value={activityContent}
+                          onChange={(e) => setActivityContent(e.target.value)}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => onAddActivity(detail.id)}
+                          disabled={insertActivity.isPending}
+                        >
+                          <Plus className="mr-1 h-3.5 w-3.5" /> Agregar
+                        </Button>
+                      </div>
+                    )}
+
+                    {customerActivities(detail.id).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Sin actividades registradas.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {customerActivities(detail.id).map((a) => {
+                          const Icon = activityMeta[a.type].icon;
+                          const overdue =
+                            a.type === "task" &&
+                            !a.completed &&
+                            a.due_date &&
+                            new Date(a.due_date) < new Date();
+                          return (
+                            <div
+                              key={a.id}
+                              className="flex items-start gap-2 rounded-md border p-2 text-sm"
+                            >
+                              {a.type === "task" ? (
+                                <button
+                                  onClick={() => canWrite && onToggleTask(a)}
+                                  className="mt-0.5 shrink-0"
+                                  disabled={!canWrite}
+                                >
+                                  {a.completed ? (
+                                    <CheckCircle2 className="h-4 w-4 text-success" />
+                                  ) : (
+                                    <Circle
+                                      className={`h-4 w-4 ${overdue ? "text-destructive" : "text-muted-foreground"}`}
+                                    />
+                                  )}
+                                </button>
+                              ) : (
+                                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                              )}
+                              <div className="flex-1">
+                                <p
+                                  className={
+                                    a.completed ? "text-muted-foreground line-through" : ""
+                                  }
+                                >
+                                  {a.content}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {activityMeta[a.type].l} ·{" "}
+                                  {new Date(a.created_at).toLocaleDateString("es-CL")}
+                                  {a.due_date && (
+                                    <span className={overdue ? "text-destructive" : ""}>
+                                      {" "}
+                                      · vence {new Date(a.due_date).toLocaleDateString("es-CL")}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              {canWrite && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 shrink-0"
+                                  onClick={() => deleteActivity.mutate(a.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
