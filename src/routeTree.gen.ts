@@ -17,6 +17,9 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NegociosIndexRouteImport } from './routes/negocios/index'
+import { Route as ForoIndexRouteImport } from './routes/foro/index'
+import { Route as ForoTopicIdRouteImport } from './routes/foro/$topicId'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedShiftsRouteImport } from './routes/_authenticated/shifts'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -83,6 +86,21 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NegociosIndexRoute = NegociosIndexRouteImport.update({
+  id: '/negocios/',
+  path: '/negocios/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForoIndexRoute = ForoIndexRouteImport.update({
+  id: '/foro/',
+  path: '/foro/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForoTopicIdRoute = ForoTopicIdRouteImport.update({
+  id: '/foro/$topicId',
+  path: '/foro/$topicId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -262,6 +280,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
   '/api/chat': typeof ApiChatRoute
+  '/foro/$topicId': typeof ForoTopicIdRoute
+  '/foro/': typeof ForoIndexRoute
+  '/negocios/': typeof NegociosIndexRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -299,6 +320,9 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
   '/api/chat': typeof ApiChatRoute
+  '/foro/$topicId': typeof ForoTopicIdRoute
+  '/foro': typeof ForoIndexRoute
+  '/negocios': typeof NegociosIndexRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -338,6 +362,9 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shifts': typeof AuthenticatedShiftsRoute
   '/api/chat': typeof ApiChatRoute
+  '/foro/$topicId': typeof ForoTopicIdRoute
+  '/foro/': typeof ForoIndexRoute
+  '/negocios/': typeof NegociosIndexRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -377,6 +404,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shifts'
     | '/api/chat'
+    | '/foro/$topicId'
+    | '/foro/'
+    | '/negocios/'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -414,6 +444,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shifts'
     | '/api/chat'
+    | '/foro/$topicId'
+    | '/foro'
+    | '/negocios'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -452,6 +485,9 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/shifts'
     | '/api/chat'
+    | '/foro/$topicId'
+    | '/foro/'
+    | '/negocios/'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -476,6 +512,9 @@ export interface RootRouteChildren {
   SelectBusinessRoute: typeof SelectBusinessRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  ForoTopicIdRoute: typeof ForoTopicIdRoute
+  ForoIndexRoute: typeof ForoIndexRoute
+  NegociosIndexRoute: typeof NegociosIndexRoute
   ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
   ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
@@ -546,6 +585,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/negocios/': {
+      id: '/negocios/'
+      path: '/negocios'
+      fullPath: '/negocios/'
+      preLoaderRoute: typeof NegociosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foro/': {
+      id: '/foro/'
+      path: '/foro'
+      fullPath: '/foro/'
+      preLoaderRoute: typeof ForoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foro/$topicId': {
+      id: '/foro/$topicId'
+      path: '/foro/$topicId'
+      fullPath: '/foro/$topicId'
+      preLoaderRoute: typeof ForoTopicIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -796,6 +856,9 @@ const rootRouteChildren: RootRouteChildren = {
   SelectBusinessRoute: SelectBusinessRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  ForoTopicIdRoute: ForoTopicIdRoute,
+  ForoIndexRoute: ForoIndexRoute,
+  NegociosIndexRoute: NegociosIndexRoute,
   ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
   ApiNotificationsLowStockCheckRoute: ApiNotificationsLowStockCheckRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,

@@ -157,6 +157,12 @@ function Nav() {
           >
             FAQ
           </a>
+          <Link
+            to="/foro"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Foro
+          </Link>
         </nav>
         <div className="flex items-center gap-2">
           <Link to="/auth">
@@ -270,6 +276,140 @@ function Hero() {
           solo sistema, con un asistente de inteligencia artificial por WhatsApp que responde
           preguntas usando los datos reales del negocio. Incluye 15 días de prueba gratuita sin
           tarjeta de crédito.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+const SHOWCASE_TABS = [
+  { id: "dashboard", label: "Resumen" },
+  { id: "ventas", label: "Ventas" },
+  { id: "whatsapp", label: "Asistente IA" },
+] as const;
+
+function ProductShowcase() {
+  const [tab, setTab] = useState<(typeof SHOWCASE_TABS)[number]["id"]>("dashboard");
+
+  return (
+    <section className="border-t bg-secondary/20 py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto mb-8 flex max-w-xs items-center justify-center gap-1 rounded-full border bg-background p-1 shadow-soft">
+          {SHOWCASE_TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                tab === t.id
+                  ? "bg-gradient-primary text-primary-foreground shadow-elegant"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border/60 bg-card shadow-elegant">
+          {/* Browser chrome */}
+          <div className="flex items-center gap-2 border-b bg-secondary/40 px-4 py-3">
+            <div className="flex gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-success/60" />
+            </div>
+            <div className="ml-2 flex-1 rounded-md bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+              nuva-one.vercel.app/{tab === "dashboard" ? "dashboard" : tab}
+            </div>
+          </div>
+
+          {tab === "dashboard" && (
+            <div className="grid gap-4 p-6 sm:grid-cols-4">
+              {[
+                { l: "Ingresos", v: "$359.910", t: "+22%" },
+                { l: "Gastos", v: "$170.000", t: "-6%" },
+                { l: "Ventas", v: "6", t: "hoy" },
+                { l: "Inventario", v: "$599.850", t: "valorizado" },
+              ].map((k) => (
+                <div key={k.l} className="rounded-lg border bg-background p-4 shadow-soft">
+                  <div className="text-xs text-muted-foreground">{k.l}</div>
+                  <div className="mt-1 text-xl font-semibold">{k.v}</div>
+                  <div className="mt-1 text-xs text-success">{k.t}</div>
+                </div>
+              ))}
+              <div className="col-span-full mt-2 grid h-36 grid-cols-12 items-end gap-1 rounded-lg border bg-background p-4">
+                {[30, 45, 40, 60, 55, 75, 65, 85, 78, 95, 88, 100].map((h, i) => (
+                  <div
+                    key={i}
+                    className="rounded-t bg-gradient-primary opacity-80"
+                    style={{ height: `${h}%` }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === "ventas" && (
+            <div className="p-6">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-sm font-semibold">Ventas recientes</div>
+                <div className="rounded-md bg-gradient-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
+                  + Nueva venta
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-lg border">
+                <div className="grid grid-cols-5 gap-2 bg-secondary/40 px-4 py-2 text-xs font-medium text-muted-foreground">
+                  <div>Cliente</div>
+                  <div>Fecha</div>
+                  <div>Canal</div>
+                  <div>Estado</div>
+                  <div className="text-right">Total</div>
+                </div>
+                {[
+                  { c: "Venta mostrador", f: "09-08-2026", t: "$39.990" },
+                  { c: "Venta mostrador", f: "06-08-2026", t: "$119.970" },
+                  { c: "Martín Aburto", f: "05-08-2026", t: "$79.980" },
+                ].map((row, i) => (
+                  <div key={i} className="grid grid-cols-5 gap-2 border-t px-4 py-3 text-sm">
+                    <div className="font-medium">{row.c}</div>
+                    <div className="text-muted-foreground">{row.f}</div>
+                    <div>
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">Tienda</span>
+                    </div>
+                    <div>
+                      <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs text-success">
+                        Pagada
+                      </span>
+                    </div>
+                    <div className="text-right font-semibold">{row.t}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === "whatsapp" && (
+            <div className="flex justify-center bg-[#0b141a] p-6">
+              <div className="w-full max-w-sm space-y-2 rounded-xl bg-[#0b141a] p-2">
+                <div className="ml-auto max-w-[85%] rounded-lg rounded-tr-none bg-[#005c4b] px-3 py-2 text-sm text-white">
+                  Cuánto vendí este mes
+                </div>
+                <div className="mr-auto max-w-[85%] rounded-lg rounded-tl-none bg-[#202c33] px-3 py-2 text-sm text-white">
+                  El total de ingresos este mes es de $359.910.
+                </div>
+                <div className="ml-auto max-w-[85%] rounded-lg rounded-tr-none bg-[#005c4b] px-3 py-2 text-sm text-white">
+                  Y el producto con menos stock?
+                </div>
+                <div className="mr-auto max-w-[85%] rounded-lg rounded-tl-none bg-[#202c33] px-3 py-2 text-sm text-white">
+                  Zapatillas Running talla 40 — quedan 2 unidades. ¿Genero una orden de compra?
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+          Así se ve Nüva One por dentro — datos de ejemplo, la misma estructura que vas a usar con
+          tu negocio desde el primer día.
         </p>
       </div>
     </section>
@@ -745,6 +885,7 @@ function Landing() {
       <Nav />
       <main>
         <Hero />
+        <ProductShowcase />
         <Problems />
         <HowItWorks />
         <Features />

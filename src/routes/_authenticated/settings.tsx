@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Shield, AlertTriangle, Lock, ClipboardList } from "lucide-react";
+import { Trash2, Shield, AlertTriangle, Lock, ClipboardList, Globe } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useActiveBusiness,
   useMyRole,
@@ -166,6 +168,8 @@ function Settings() {
               )}
             </div>
           </Card>
+
+          <PublicProfileCard canManage={canManage} />
 
           {isOwner && (
             <Card className="border-destructive/30 p-6">
@@ -387,6 +391,122 @@ function BillingTab() {
           mensual — el cobro se realiza de inmediato al confirmar.
         </p>
       )}
+    </Card>
+  );
+}
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 60);
+}
+
+function PublicProfileCard({ canManage }: { canManage: boolean }) {
+  const { active } = useActiveBusiness();
+  const [enabled, setEnabled] = useState(false);
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (active) {
+      setEnabled(active.public_enabled ?? false);
+      setSlug(active.public_slug ?? slugify(active.name));
+      setDescription(active.public_description ?? "");
+    }
+  }, [active]);
+
+  async function save(nextEnabled: boolean) {
+    if (!active) return;
+    setSaving(true);
+    const finalSlug = slug.trim() ? slugify(slug) : slugify(active.name);
+    const { error } = await supabase
+      .from("businesses")
+      .update({
+        public_enabled: nextEnabled,
+        public_slug: finalSlug,
+        public_description: description || null,
+      })
+      .eq("id", active.id);
+    setSaving(false);
+    if (error) {
+      if ((error as any).code === "23505") {
+        toast.error("Ese nombre de perfil público (URL) ya está en uso, prueba otro.");
+      } else {
+        toast.error("No se pudo guardar el perfil público");
+      }
+      return;
+    }
+    setEnabled(nextEnabled);
+    toast.success(nextEnabled ? "Perfil público activado" : "Perfil público desactivado");
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-start gap-3">
+        <Globe className="h-5 w-5 text-primary" />
+        <div className="flex-1">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="font-semibold">Perfil público</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Muestra tu negocio en el{" "}
+                <a href="/negocios" className="underline" target="_blank" rel="noreferrer">
+                  directorio público
+                </a>{" "}
+                y junto a tus publicaciones del{" "}
+                <a href="/foro" className="underline" target="_blank" rel="noreferrer">
+                  foro
+                </a>
+                . Solo se muestra nombre, rubro y la descripción que escribas aquí — nunca tu RUT,
+                dirección ni otros datos privados.
+              </p>
+            </div>
+            <Switch
+              checked={enabled}
+              disabled={!canManage || saving}
+              onCheckedChange={(v) => save(v)}
+            />
+          </div>
+
+          {enabled && (
+            <div className="mt-4 space-y-3">
+              <div>
+                <Label htmlFor="pub-slug">URL pública</Label>
+                <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                  <span>nuva-one.vercel.app/negocios/</span>
+                  <Input
+                    id="pub-slug"
+                    value={slug}
+                    onChange={(e) => setSlug(slugify(e.target.value))}
+                    disabled={!canManage}
+                    className="h-8 w-48"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="pub-desc">Descripción corta</Label>
+                <Textarea
+                  id="pub-desc"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={!canManage}
+                  rows={3}
+                  maxLength={300}
+                  placeholder="Ej: Vendemos artículos deportivos en Talca, despacho a toda la región del Maule."
+                />
+              </div>
+              <Button size="sm" disabled={!canManage || saving} onClick={() => save(true)}>
+                Guardar
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     </Card>
   );
 }

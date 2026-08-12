@@ -15,6 +15,9 @@ export type Business = {
   comuna: string | null;
   owner_id: string;
   webhook_url: string | null;
+  public_enabled: boolean;
+  public_slug: string | null;
+  public_description: string | null;
 };
 
 export function useBusinesses() {
@@ -23,7 +26,9 @@ export function useBusinesses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("businesses")
-        .select("id, name, industry, logo_url, tax_id, giro, address, comuna, owner_id, webhook_url")
+        .select(
+          "id, name, industry, logo_url, tax_id, giro, address, comuna, owner_id, webhook_url, public_enabled, public_slug, public_description",
+        )
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Business[];
