@@ -191,11 +191,11 @@ function Hero() {
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1733697968338-21feb4b7a4c3?fm=jpg&q=80&w=2400&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1674105763702-7d69c4c74ef2?fm=jpg&q=80&w=2400&auto=format&fit=crop"
           alt=""
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/70 to-background" />
       </div>
       <div className="relative mx-auto max-w-7xl px-6 py-24 lg:py-32">
         <div className="mx-auto max-w-3xl text-center animate-fade-in-up">
@@ -453,7 +453,27 @@ function ForumPreview() {
     },
   });
 
-  if (!isLoading && (!topics || topics.length === 0)) return null;
+  if (!isLoading && (!topics || topics.length === 0)) {
+    return (
+      <section className="border-t bg-secondary/20 py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <Badge variant="secondary" className="mb-3">
+            Comunidad
+          </Badge>
+          <h2 className="text-3xl font-bold tracking-tight">Foro de PyMEs chilenas</h2>
+          <p className="mt-2 max-w-xl text-muted-foreground">
+            Un espacio para resolver dudas de ventas, marketing, finanzas y operación entre dueños
+            de negocio. Sé el primero en abrir un tema.
+          </p>
+          <Link to="/foro" className="mt-6 inline-block">
+            <Button variant="outline">
+              Ir al foro <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="border-t bg-secondary/20 py-20">
@@ -530,7 +550,27 @@ function BusinessNetworkPreview() {
     },
   });
 
-  if (!isLoading && (!businesses || businesses.length === 0)) return null;
+  if (!isLoading && (!businesses || businesses.length === 0)) {
+    return (
+      <section className="border-t py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <Badge variant="secondary" className="mb-3">
+            Red de contactos
+          </Badge>
+          <h2 className="text-3xl font-bold tracking-tight">Conecta con otras PyMEs</h2>
+          <p className="mt-2 max-w-xl text-muted-foreground">
+            Publicita tu negocio con fotos, redes sociales y contacto directo — como un LinkedIn de
+            PyMEs chilenas. Disponible en el plan Pro.
+          </p>
+          <Link to="/negocios" className="mt-6 inline-block">
+            <Button variant="outline">
+              Ver directorio <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="border-t py-20">
