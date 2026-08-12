@@ -188,8 +188,16 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-mesh">
-      <div className="mx-auto max-w-7xl px-6 py-24 lg:py-32">
+    <section className="relative overflow-hidden">
+      <div className="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1733697968338-21feb4b7a4c3?fm=jpg&q=80&w=2400&auto=format&fit=crop"
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/80 to-background" />
+      </div>
+      <div className="relative mx-auto max-w-7xl px-6 py-24 lg:py-32">
         <div className="mx-auto max-w-3xl text-center animate-fade-in-up">
           <Badge
             variant="secondary"
