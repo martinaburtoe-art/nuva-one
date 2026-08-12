@@ -681,6 +681,7 @@ export type Database = {
           id: string
           reply_count: number
           title: string
+          views: number
         }
         Insert: {
           author_user_id: string
@@ -693,6 +694,7 @@ export type Database = {
           id?: string
           reply_count?: number
           title: string
+          views?: number
         }
         Update: {
           author_user_id?: string
@@ -705,6 +707,7 @@ export type Database = {
           id?: string
           reply_count?: number
           title?: string
+          views?: number
         }
         Relationships: []
       }
@@ -1333,6 +1336,7 @@ export type Database = {
       }
       claim_pending_invitations: { Args: never; Returns: number }
       cleanup_rate_limit_counters: { Args: never; Returns: undefined }
+      increment_forum_topic_views: { Args: { topic_id: string }; Returns: undefined }
       get_business_members: {
         Args: { p_business_id: string }
         Returns: {

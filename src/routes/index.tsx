@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +28,8 @@ import {
   Zap,
   Shield,
   Globe,
+  MessageSquare,
+  Eye,
 } from "lucide-react";
 
 const FAQ_ITEMS = [
@@ -411,6 +415,91 @@ function ProductShowcase() {
           Así se ve Nüva One por dentro — datos de ejemplo, la misma estructura que vas a usar con
           tu negocio desde el primer día.
         </p>
+      </div>
+    </section>
+  );
+}
+
+const FORUM_CATEGORY_LABELS: Record<string, string> = {
+  general: "General",
+  ventas: "Ventas",
+  marketing: "Marketing",
+  finanzas: "Finanzas",
+  operaciones: "Operaciones",
+  tecnologia: "Tecnología",
+  legal: "Legal",
+};
+
+function ForumPreview() {
+  const { data: topics, isLoading } = useQuery({
+    queryKey: ["forum_topics_preview"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("forum_topics")
+        .select("id, title, body, category, business_name, business_industry, reply_count, views")
+        .order("views", { ascending: false })
+        .limit(4);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (!isLoading && (!topics || topics.length === 0)) return null;
+
+  return (
+    <section className="border-t bg-secondary/20 py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Badge variant="secondary" className="mb-3">
+              Comunidad
+            </Badge>
+            <h2 className="text-3xl font-bold tracking-tight">Foro más popular</h2>
+            <p className="mt-2 max-w-xl text-muted-foreground">
+              Dueños de PyMEs chilenas resolviendo dudas de ventas, marketing, finanzas y operación.
+              Abierto para leer sin cuenta.
+            </p>
+          </div>
+          <Link to="/foro">
+            <Button variant="outline">
+              Ver todos los temas <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {isLoading &&
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-56 animate-pulse rounded-xl border bg-card" />
+            ))}
+          {topics?.map((t) => (
+            <Link
+              key={t.id}
+              to="/foro/$topicId"
+              params={{ topicId: t.id }}
+              className="group flex flex-col rounded-xl border bg-card p-5 shadow-soft transition-shadow hover:shadow-elegant"
+            >
+              <Badge variant="secondary" className="mb-2 w-fit text-[10px]">
+                {FORUM_CATEGORY_LABELS[t.category] ?? t.category}
+              </Badge>
+              <h3 className="line-clamp-2 text-sm font-semibold group-hover:text-primary">
+                {t.title}
+              </h3>
+              <p className="mt-1.5 line-clamp-3 flex-1 text-xs text-muted-foreground">{t.body}</p>
+              <div className="mt-3 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+                <span className="truncate">{t.business_name}</span>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <Eye className="h-3.5 w-3.5" /> {t.views}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MessageSquare className="h-3.5 w-3.5" /> {t.reply_count}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -886,6 +975,7 @@ function Landing() {
       <main>
         <Hero />
         <ProductShowcase />
+        <ForumPreview />
         <Problems />
         <HowItWorks />
         <Features />

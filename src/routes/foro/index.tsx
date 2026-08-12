@@ -51,6 +51,7 @@ type Topic = {
   business_name: string;
   business_industry: string | null;
   reply_count: number;
+  views: number;
   created_at: string;
 };
 
@@ -61,7 +62,7 @@ function useTopics(category: string | "all") {
       let q = supabase
         .from("forum_topics")
         .select(
-          "id, title, body, category, business_name, business_industry, reply_count, created_at",
+          "id, title, body, category, business_name, business_industry, reply_count, views, created_at",
         )
         .order("created_at", { ascending: false })
         .limit(50);
@@ -253,8 +254,11 @@ function ForoIndex() {
                   <h2 className="truncate text-base font-semibold">{t.title}</h2>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{t.body}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                  <MessageSquare className="h-4 w-4" /> {t.reply_count}
+                <div className="flex shrink-0 flex-col items-end gap-1 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MessageSquare className="h-4 w-4" /> {t.reply_count}
+                  </span>
+                  <span className="text-xs">{t.views} vistas</span>
                 </div>
               </div>
             </Link>

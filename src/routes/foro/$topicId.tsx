@@ -60,6 +60,7 @@ function TopicDetail() {
         .eq("id", topicId)
         .single();
       if (error) throw error;
+      supabase.rpc("increment_forum_topic_views", { topic_id: topicId }).then();
       return data as Topic;
     },
   });
