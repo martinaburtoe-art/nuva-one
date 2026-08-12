@@ -30,6 +30,7 @@ import {
   Globe,
   MessageSquare,
   Eye,
+  Building2,
 } from "lucide-react";
 
 const FAQ_ITEMS = [
@@ -499,6 +500,109 @@ function ForumPreview() {
               </div>
             </Link>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BusinessNetworkPreview() {
+  const { data: businesses, isLoading } = useQuery({
+    queryKey: ["businesses_public_preview"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("businesses_public")
+        .select(
+          "id, name, industry, public_slug, public_description, logo_url, public_photos, comuna",
+        )
+        .order("created_at", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (!isLoading && (!businesses || businesses.length === 0)) return null;
+
+  return (
+    <section className="border-t py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Badge variant="secondary" className="mb-3">
+              Red de contactos
+            </Badge>
+            <h2 className="text-3xl font-bold tracking-tight">Conecta con otras PyMEs</h2>
+            <p className="mt-2 max-w-xl text-muted-foreground">
+              Negocios chilenos que activaron su perfil público en Nüva One: fotos, redes sociales y
+              contacto directo — como un LinkedIn de PyMEs.
+            </p>
+          </div>
+          <Link to="/negocios">
+            <Button variant="outline">
+              Ver directorio completo <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {isLoading &&
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-48 animate-pulse rounded-xl border bg-card" />
+            ))}
+          {businesses?.map((b) => {
+            const cover = b.public_photos?.[0];
+            return (
+              <Link
+                key={b.id}
+                to="/negocios/$slug"
+                params={{ slug: b.public_slug ?? "" }}
+                className="group overflow-hidden rounded-xl border bg-card shadow-soft transition-shadow hover:shadow-elegant"
+              >
+                <div className="aspect-[16/9] w-full overflow-hidden bg-secondary/40">
+                  {cover ? (
+                    <img
+                      src={cover}
+                      alt={b.name ?? ""}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Building2 className="h-6 w-6 text-muted-foreground/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center gap-2">
+                    {b.logo_url ? (
+                      <img
+                        src={b.logo_url}
+                        alt=""
+                        className="h-7 w-7 shrink-0 rounded-full border object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-[10px] font-semibold text-primary-foreground">
+                        {(b.name ?? "?").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-semibold group-hover:text-primary">
+                        {b.name}
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {b.industry}
+                      </Badge>
+                    </div>
+                  </div>
+                  {b.public_description && (
+                    <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                      {b.public_description}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -976,6 +1080,7 @@ function Landing() {
         <Hero />
         <ProductShowcase />
         <ForumPreview />
+        <BusinessNetworkPreview />
         <Problems />
         <HowItWorks />
         <Features />

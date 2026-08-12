@@ -2,11 +2,21 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { PageHeader, ComingSoonBadge } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Shield, AlertTriangle, Lock, ClipboardList, Globe } from "lucide-react";
+import {
+  Trash2,
+  Shield,
+  AlertTriangle,
+  Lock,
+  ClipboardList,
+  Globe,
+  ImagePlus,
+  X,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -20,6 +30,12 @@ import { toast } from "sonner";
 import { MfaSetup } from "@/components/mfa-setup";
 import { AuditLogView } from "@/components/audit-log-view";
 import { TeamManagement } from "@/components/team-management";
+import {
+  MAX_BUSINESS_PHOTOS,
+  uploadBusinessPhoto,
+  deleteBusinessPhoto,
+  validateBusinessPhoto,
+} from "@/lib/business-photo";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Configuración — Nüva One" }] }),
@@ -405,33 +421,54 @@ function slugify(input: string): string {
     .slice(0, 60);
 }
 
+const SOCIAL_FIELDS = [
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/tu_negocio" },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/tu_negocio" },
+  { key: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/company/tu_negocio" },
+  { key: "whatsapp", label: "WhatsApp", placeholder: "+56 9 1234 5678" },
+  { key: "website", label: "Sitio web", placeholder: "https://tunegocio.cl" },
+] as const;
+
 function PublicProfileCard({ canManage }: { canManage: boolean }) {
   const { active } = useActiveBusiness();
   const [enabled, setEnabled] = useState(false);
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [social, setSocial] = useState<Record<string, string>>({});
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const isPro = (active?.plan ?? "starter") === "pro";
 
   useEffect(() => {
     if (active) {
       setEnabled(active.public_enabled ?? false);
       setSlug(active.public_slug ?? slugify(active.name));
       setDescription(active.public_description ?? "");
+      setPhotos(active.public_photos ?? []);
+      setSocial(active.public_social_links ?? {});
+      setContactEmail(active.public_contact_email ?? "");
+      setContactPhone(active.public_contact_phone ?? "");
     }
   }, [active]);
 
-  async function save(nextEnabled: boolean) {
-    if (!active) return;
+  async function persist(
+    fields: Partial<{
+      public_enabled: boolean;
+      public_slug: string;
+      public_description: string | null;
+      public_photos: string[];
+      public_social_links: Record<string, string>;
+      public_contact_email: string | null;
+      public_contact_phone: string | null;
+    }>,
+  ) {
+    if (!active) return false;
     setSaving(true);
-    const finalSlug = slug.trim() ? slugify(slug) : slugify(active.name);
-    const { error } = await supabase
-      .from("businesses")
-      .update({
-        public_enabled: nextEnabled,
-        public_slug: finalSlug,
-        public_description: description || null,
-      })
-      .eq("id", active.id);
+    const { error } = await supabase.from("businesses").update(fields).eq("id", active.id);
     setSaving(false);
     if (error) {
       if ((error as any).code === "23505") {
@@ -439,10 +476,90 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
       } else {
         toast.error("No se pudo guardar el perfil público");
       }
-      return;
+      return false;
     }
+    return true;
+  }
+
+  async function save(nextEnabled: boolean) {
+    const finalSlug = slug.trim() ? slugify(slug) : slugify(active?.name ?? "");
+    const ok = await persist({
+      public_enabled: nextEnabled,
+      public_slug: finalSlug,
+      public_description: description || null,
+      public_social_links: social,
+      public_contact_email: contactEmail || null,
+      public_contact_phone: contactPhone || null,
+    });
+    if (!ok) return;
     setEnabled(nextEnabled);
     toast.success(nextEnabled ? "Perfil público activado" : "Perfil público desactivado");
+  }
+
+  async function handlePhotoUpload(files: FileList | null) {
+    if (!files || !active) return;
+    const remaining = MAX_BUSINESS_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      toast.error(`Máximo ${MAX_BUSINESS_PHOTOS} fotos`);
+      return;
+    }
+    const toUpload = Array.from(files).slice(0, remaining);
+    setUploading(true);
+    const uploaded: string[] = [];
+    for (const file of toUpload) {
+      const err = validateBusinessPhoto(file);
+      if (err) {
+        toast.error(err);
+        continue;
+      }
+      try {
+        const url = await uploadBusinessPhoto(active.id, file);
+        uploaded.push(url);
+      } catch {
+        toast.error(`No se pudo subir ${file.name}`);
+      }
+    }
+    setUploading(false);
+    if (uploaded.length === 0) return;
+    const next = [...photos, ...uploaded];
+    setPhotos(next);
+    await persist({ public_photos: next });
+    toast.success("Fotos subidas");
+  }
+
+  async function removePhoto(url: string) {
+    const next = photos.filter((p) => p !== url);
+    setPhotos(next);
+    await persist({ public_photos: next });
+    deleteBusinessPhoto(url);
+  }
+
+  function updateSocial(key: string, value: string) {
+    setSocial((prev) => ({ ...prev, [key]: value }));
+  }
+
+  if (!isPro) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-start gap-3">
+          <Lock className="h-5 w-5 text-muted-foreground" />
+          <div className="flex-1">
+            <h3 className="font-semibold">Perfil público y red de contactos</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Publicita tu negocio en el{" "}
+              <a href="/negocios" className="underline" target="_blank" rel="noreferrer">
+                directorio de Nüva One
+              </a>{" "}
+              con hasta {MAX_BUSINESS_PHOTOS} fotos, descripción, redes sociales y botón de contacto
+              directo — como un LinkedIn de PyMEs chilenas. Disponible en el plan Pro.
+            </p>
+            <Badge variant="secondary" className="mt-3">
+              Función Pro
+            </Badge>
+          </div>
+        </div>
+      </Card>
+    );
   }
 
   return (
@@ -452,7 +569,7 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
         <div className="flex-1">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h3 className="font-semibold">Perfil público</h3>
+              <h3 className="font-semibold">Perfil público y red de contactos</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Muestra tu negocio en el{" "}
                 <a href="/negocios" className="underline" target="_blank" rel="noreferrer">
@@ -462,8 +579,8 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
                 <a href="/foro" className="underline" target="_blank" rel="noreferrer">
                   foro
                 </a>
-                . Solo se muestra nombre, rubro y la descripción que escribas aquí — nunca tu RUT,
-                dirección ni otros datos privados.
+                . Cualquier persona podrá ver tus fotos, descripción, redes sociales y contactarte —
+                nunca tu RUT, dirección ni otros datos privados.
               </p>
             </div>
             <Switch
@@ -474,7 +591,7 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
           </div>
 
           {enabled && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-5">
               <div>
                 <Label htmlFor="pub-slug">URL pública</Label>
                 <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
@@ -488,18 +605,98 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
                   />
                 </div>
               </div>
+
               <div>
-                <Label htmlFor="pub-desc">Descripción corta</Label>
+                <Label htmlFor="pub-desc">Descripción</Label>
                 <Textarea
                   id="pub-desc"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={!canManage}
                   rows={3}
-                  maxLength={300}
+                  maxLength={500}
                   placeholder="Ej: Vendemos artículos deportivos en Talca, despacho a toda la región del Maule."
                 />
               </div>
+
+              <div>
+                <Label>
+                  Fotos ({photos.length}/{MAX_BUSINESS_PHOTOS})
+                </Label>
+                <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                  {photos.map((url) => (
+                    <div
+                      key={url}
+                      className="group relative aspect-square overflow-hidden rounded-lg border"
+                    >
+                      <img src={url} alt="" className="h-full w-full object-cover" />
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(url)}
+                          className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {canManage && photos.length < MAX_BUSINESS_PHOTOS && (
+                    <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground hover:border-primary hover:text-primary">
+                      <ImagePlus className="h-5 w-5" />
+                      <span className="text-[10px]">{uploading ? "Subiendo..." : "Agregar"}</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        multiple
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => handlePhotoUpload(e.target.files)}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label>Redes sociales y sitio web</Label>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {SOCIAL_FIELDS.map((f) => (
+                    <Input
+                      key={f.key}
+                      value={social[f.key] ?? ""}
+                      onChange={(e) => updateSocial(f.key, e.target.value)}
+                      disabled={!canManage}
+                      placeholder={`${f.label}: ${f.placeholder}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="pub-email">Correo de contacto</Label>
+                  <Input
+                    id="pub-email"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    disabled={!canManage}
+                    placeholder="contacto@tunegocio.cl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="pub-phone">Teléfono de contacto</Label>
+                  <Input
+                    id="pub-phone"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    disabled={!canManage}
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+              </div>
+
               <Button size="sm" disabled={!canManage || saving} onClick={() => save(true)}>
                 Guardar
               </Button>

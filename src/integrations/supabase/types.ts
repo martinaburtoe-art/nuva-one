@@ -424,9 +424,13 @@ export type Database = {
           next_charge_date: string | null
           owner_id: string
           plan: string
+          public_contact_email: string | null
+          public_contact_phone: string | null
           public_description: string | null
           public_enabled: boolean
+          public_photos: string[]
           public_slug: string | null
+          public_social_links: Json
           size: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -450,9 +454,13 @@ export type Database = {
           next_charge_date?: string | null
           owner_id?: string
           plan?: string
+          public_contact_email?: string | null
+          public_contact_phone?: string | null
           public_description?: string | null
           public_enabled?: boolean
+          public_photos?: string[]
           public_slug?: string | null
+          public_social_links?: Json
           size?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -476,9 +484,13 @@ export type Database = {
           next_charge_date?: string | null
           owner_id?: string
           plan?: string
+          public_contact_email?: string | null
+          public_contact_phone?: string | null
           public_description?: string | null
           public_enabled?: boolean
+          public_photos?: string[]
           public_slug?: string | null
+          public_social_links?: Json
           size?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -1303,22 +1315,35 @@ export type Database = {
     Views: {
       businesses_public: {
         Row: {
+          comuna: string | null
           created_at: string | null
           id: string | null
           industry: Database["public"]["Enums"]["business_industry"] | null
+          logo_url: string | null
           name: string | null
+          public_contact_email: string | null
+          public_contact_phone: string | null
           public_description: string | null
+          public_photos: string[] | null
           public_slug: string | null
+          public_social_links: Json | null
         }
         Insert: {
+          comuna?: string | null
           created_at?: string | null
           id?: string | null
           industry?: Database["public"]["Enums"]["business_industry"] | null
+          logo_url?: string | null
           name?: string | null
+          public_contact_email?: string | null
+          public_contact_phone?: string | null
           public_description?: string | null
+          public_photos?: string[] | null
           public_slug?: string | null
+          public_social_links?: Json | null
         }
         Update: {
+          comuna?: string | null
           created_at?: string | null
           id?: string | null
           industry?: Database["public"]["Enums"]["business_industry"] | null
