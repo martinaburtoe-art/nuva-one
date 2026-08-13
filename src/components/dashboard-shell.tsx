@@ -24,6 +24,7 @@ import {
   CalendarClock,
   Users,
   Receipt,
+  MessagesSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +64,9 @@ const nav = [
   // intactos -- reactivar es solo descomentar esta línea.
   // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
   { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai" },
+  // Sin `module`: visible para todos los miembros del negocio, como
+  // /settings -- la comunidad no es un módulo operativo con permisos.
+  { to: "/foro", label: "Comunidad", icon: MessagesSquare },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true },
   { to: "/settings", label: "Configuración", icon: Settings },
 ] as const;
