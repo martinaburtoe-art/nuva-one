@@ -20,8 +20,8 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
         <ShieldAlert className="h-10 w-10" />
         <p className="font-medium text-foreground">No tienes acceso a esta sección</p>
         <p className="max-w-sm text-sm">
-          El dueño o un administrador del negocio puede habilitarte este módulo desde
-          Configuración → Equipo.
+          El dueño o un administrador del negocio puede habilitarte este módulo desde Configuración
+          → Equipo.
         </p>
       </div>
     );

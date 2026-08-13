@@ -27,7 +27,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveBusiness, useMyMembership, hasModulePermission, type ModuleKey } from "@/lib/use-business";
+import {
+  useActiveBusiness,
+  useMyMembership,
+  hasModulePermission,
+  type ModuleKey,
+} from "@/lib/use-business";
 import {
   DropdownMenu,
   DropdownMenuTrigger,

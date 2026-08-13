@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /_authenticated/
+Disallow: /api/
+Disallow: /reset-password
+Disallow: /onboarding
+
+Sitemap: https://nuvaone.cl/sitemap.xml

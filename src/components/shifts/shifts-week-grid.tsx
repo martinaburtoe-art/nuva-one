@@ -93,10 +93,7 @@ export function ShiftsWeekGrid({
           >
             <div className="p-2" />
             {days.map((d, i) => (
-              <div
-                key={d}
-                className="p-2 text-center text-sm font-semibold border-l"
-              >
+              <div key={d} className="p-2 text-center text-sm font-semibold border-l">
                 {d}
                 <div className="text-[11px] font-normal text-muted-foreground">
                   {dateForDay(weekStart, i)}
@@ -109,7 +106,10 @@ export function ShiftsWeekGrid({
           </div>
 
           {/* Cuerpo del grid */}
-          <div className="relative grid" style={{ gridTemplateColumns: `64px repeat(${days.length}, 1fr)` }}>
+          <div
+            className="relative grid"
+            style={{ gridTemplateColumns: `64px repeat(${days.length}, 1fr)` }}
+          >
             {/* Columna de horas */}
             <div className="relative" style={{ height: gridHeight }}>
               {hours.map((h, i) => (
@@ -125,11 +125,7 @@ export function ShiftsWeekGrid({
 
             {/* Columnas de días */}
             {days.map((_, dayIdx) => (
-              <div
-                key={dayIdx}
-                className="relative border-l"
-                style={{ height: gridHeight }}
-              >
+              <div key={dayIdx} className="relative border-l" style={{ height: gridHeight }}>
                 {/* Líneas de hora */}
                 {hours.map((h, i) => (
                   <div

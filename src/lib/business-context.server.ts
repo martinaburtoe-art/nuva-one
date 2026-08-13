@@ -35,8 +35,8 @@ function todayInChile(): string {
 export async function buildBusinessContext(supabase: SupabaseClient<Database>, businessId: string) {
   if (!businessId) return null;
 
-  const [business, products, sales, transactions, quotes, purchases, customers] =
-    await Promise.all([
+  const [business, products, sales, transactions, quotes, purchases, customers] = await Promise.all(
+    [
       supabase
         .from("businesses")
         .select("name, industry, size, plan, created_at")
@@ -78,7 +78,8 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
         .eq("business_id", businessId)
         .order("created_at", { ascending: false })
         .limit(30),
-    ]);
+    ],
+  );
 
   // If RLS (web caller) or the explicit business_id filter (admin caller)
   // turned up nothing, treat as "no context" rather than erroring loudly.

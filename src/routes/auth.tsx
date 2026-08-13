@@ -229,8 +229,8 @@ function AuthPage() {
                     forgotSent ? (
                       <div className="space-y-4 text-sm">
                         <p>
-                          Si existe una cuenta con ese correo, te enviamos un enlace para restablecer tu
-                          contraseña. Revisa tu bandeja de entrada (y spam).
+                          Si existe una cuenta con ese correo, te enviamos un enlace para
+                          restablecer tu contraseña. Revisa tu bandeja de entrada (y spam).
                         </p>
                         <button
                           type="button"
@@ -247,7 +247,13 @@ function AuthPage() {
                       <form onSubmit={handleForgotPassword} className="space-y-4">
                         <div>
                           <Label htmlFor="forgot_email">Email</Label>
-                          <Input id="forgot_email" name="email" type="email" required className="mt-1.5" />
+                          <Input
+                            id="forgot_email"
+                            name="email"
+                            type="email"
+                            required
+                            className="mt-1.5"
+                          />
                           <p className="mt-1 text-xs text-muted-foreground">
                             Te enviaremos un enlace para restablecer tu contraseña.
                           </p>
@@ -266,43 +272,43 @@ function AuthPage() {
                       </form>
                     )
                   ) : (
-                  <form onSubmit={handleEmail} className="space-y-4">
-                    {tab === "signup" && (
-                      <div>
-                        <Label htmlFor="full_name">Nombre completo</Label>
-                        <Input id="full_name" name="full_name" required className="mt-1.5" />
-                      </div>
-                    )}
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" name="email" type="email" required className="mt-1.5" />
-                    </div>
-                    <div>
-                      <Label htmlFor="password">Contraseña</Label>
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                        minLength={8}
-                        className="mt-1.5"
-                      />
-                      <p className="mt-1 text-xs text-muted-foreground">Mínimo 8 caracteres</p>
-                      {tab === "login" && (
-                        <button
-                          type="button"
-                          onClick={() => setForgotMode(true)}
-                          className="mt-1.5 text-xs text-muted-foreground hover:underline"
-                        >
-                          ¿Olvidaste tu contraseña?
-                        </button>
+                    <form onSubmit={handleEmail} className="space-y-4">
+                      {tab === "signup" && (
+                        <div>
+                          <Label htmlFor="full_name">Nombre completo</Label>
+                          <Input id="full_name" name="full_name" required className="mt-1.5" />
+                        </div>
                       )}
-                    </div>
-                    <Button type="submit" className="w-full shadow-elegant" disabled={loading}>
-                      {loading && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                      {tab === "login" ? "Entrar" : "Crear cuenta"}
-                    </Button>
-                  </form>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" name="email" type="email" required className="mt-1.5" />
+                      </div>
+                      <div>
+                        <Label htmlFor="password">Contraseña</Label>
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          required
+                          minLength={8}
+                          className="mt-1.5"
+                        />
+                        <p className="mt-1 text-xs text-muted-foreground">Mínimo 8 caracteres</p>
+                        {tab === "login" && (
+                          <button
+                            type="button"
+                            onClick={() => setForgotMode(true)}
+                            className="mt-1.5 text-xs text-muted-foreground hover:underline"
+                          >
+                            ¿Olvidaste tu contraseña?
+                          </button>
+                        )}
+                      </div>
+                      <Button type="submit" className="w-full shadow-elegant" disabled={loading}>
+                        {loading && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+                        {tab === "login" ? "Entrar" : "Crear cuenta"}
+                      </Button>
+                    </form>
                   )}
                 </TabsContent>
 

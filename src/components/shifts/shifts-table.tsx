@@ -13,7 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageCircle, Plus, Trash2, ChevronLeft, ChevronRight, LayoutGrid, List, X } from "lucide-react";
+import {
+  MessageCircle,
+  Plus,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ShiftsWeekGrid } from "@/components/shifts/shifts-week-grid";
 
@@ -118,7 +127,9 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
   const [saving, setSaving] = useState(false);
 
   function toggleDay(d: number) {
-    setSelectedDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()));
+    setSelectedDays((prev) =>
+      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort(),
+    );
   }
 
   function selectAllDays() {
@@ -319,7 +330,12 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
                   className="w-32"
                 />
                 {blocks.length > 1 && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeBlock(i)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => removeBlock(i)}
+                  >
                     <X className="h-3.5 w-3.5" />
                   </Button>
                 )}
@@ -364,7 +380,12 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
           </p>
         </Card>
       ) : view === "dashboard" ? (
-        <ShiftsWeekGrid shifts={shifts} onDelete={deleteShift} onWhatsApp={sendWhatsApp} weekStart={weekStart} />
+        <ShiftsWeekGrid
+          shifts={shifts}
+          onDelete={deleteShift}
+          onWhatsApp={sendWhatsApp}
+          weekStart={weekStart}
+        />
       ) : (
         <Card className="p-0 overflow-hidden">
           <Table>

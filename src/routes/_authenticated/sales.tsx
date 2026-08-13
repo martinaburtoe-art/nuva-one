@@ -125,349 +125,355 @@ function Sales() {
 
   return (
     <ModuleGuard module="sales">
-    <>
-      <PageHeader
-        title="Ventas"
-        description="Pedidos y transacciones — se conecta automáticamente con Inventario y Finanzas"
-        action={
-          !canWrite ? undefined : (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="shadow-elegant">
-                <Plus className="mr-1.5 h-4 w-4" />
-                Nueva venta
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Registrar venta</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={onSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="customer_name">Cliente</Label>
-                  <Input
-                    id="customer_name"
-                    name="customer_name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    required
-                  />
-                  <Select
-                    value={customerId ?? "__none__"}
-                    onValueChange={(v) => {
-                      if (v === "__none__") {
-                        setCustomerId(null);
-                        return;
-                      }
-                      const c = (customers ?? []).find((x: any) => x.id === v);
-                      setCustomerId(v);
-                      if (c) setCustomerName(c.name);
-                    }}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Vincular a cliente existente (opcional, necesario para fiado)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">— Sin vincular —</SelectItem>
-                      {(customers ?? []).map((c: any) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name} {c.phone ? `(${c.phone})` : "(sin teléfono)"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+      <>
+        <PageHeader
+          title="Ventas"
+          description="Pedidos y transacciones — se conecta automáticamente con Inventario y Finanzas"
+          action={
+            !canWrite ? undefined : (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="shadow-elegant">
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Nueva venta
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Registrar venta</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={onSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="customer_name">Cliente</Label>
+                      <Input
+                        id="customer_name"
+                        name="customer_name"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        required
+                      />
+                      <Select
+                        value={customerId ?? "__none__"}
+                        onValueChange={(v) => {
+                          if (v === "__none__") {
+                            setCustomerId(null);
+                            return;
+                          }
+                          const c = (customers ?? []).find((x: any) => x.id === v);
+                          setCustomerId(v);
+                          if (c) setCustomerName(c.name);
+                        }}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Vincular a cliente existente (opcional, necesario para fiado)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— Sin vincular —</SelectItem>
+                          {(customers ?? []).map((c: any) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name} {c.phone ? `(${c.phone})` : "(sin teléfono)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <Label htmlFor="is_credit" className="cursor-pointer">
-                      Venta a crédito / fiado
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Activa seguimiento de cobranza y recordatorios automáticos por WhatsApp.
-                    </p>
-                  </div>
-                  <Switch id="is_credit" checked={isCredit} onCheckedChange={setIsCredit} />
-                </div>
-                {isCredit && (
-                  <div>
-                    <Label htmlFor="due_date">Fecha de vencimiento</Label>
-                    <Input
-                      id="due_date"
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      required
-                    />
-                    {!selectedCustomerPhone && (
-                      <p className="mt-1 text-xs text-warning">
-                        Este cliente no tiene teléfono registrado — no podremos enviarle
-                        recordatorios por WhatsApp.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Canal</Label>
-                    <Select value={channel} onValueChange={setChannel}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="tienda">Tienda</SelectItem>
-                        <SelectItem value="online">Online</SelectItem>
-                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                        <SelectItem value="instagram">Instagram</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Método de pago</Label>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="efectivo">Efectivo</SelectItem>
-                        <SelectItem value="tarjeta">Tarjeta</SelectItem>
-                        <SelectItem value="transferencia">Transferencia</SelectItem>
-                        <SelectItem value="credito">Crédito</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Estado</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="paid">Pagada</SelectItem>
-                      <SelectItem value="draft">Borrador</SelectItem>
-                      <SelectItem value="cancelled">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <Label>Productos (opcional, descuenta stock automáticamente)</Label>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setItems([...items, { product_id: null, name: "", qty: 1, price: 0 }])
-                      }
-                    >
-                      <Plus className="mr-1 h-3 w-3" />
-                      Agregar línea
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {items.map((it, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-2">
-                        <div className="col-span-5">
-                          <Select
-                            value={it.product_id ?? "__free__"}
-                            onValueChange={(v) => (v === "__free__" ? null : pickProduct(idx, v))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Producto del catálogo o texto libre" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__free__">— Texto libre —</SelectItem>
-                              {(products ?? []).map((p: any) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.name} ({p.stock} en stock)
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {it.product_id === null && (
-                            <Input
-                              className="mt-1"
-                              placeholder="Descripción"
-                              value={it.name}
-                              onChange={(e) => {
-                                const c = [...items];
-                                c[idx].name = e.target.value;
-                                setItems(c);
-                              }}
-                            />
-                          )}
-                        </div>
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <Label htmlFor="is_credit" className="cursor-pointer">
+                          Venta a crédito / fiado
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Activa seguimiento de cobranza y recordatorios automáticos por WhatsApp.
+                        </p>
+                      </div>
+                      <Switch id="is_credit" checked={isCredit} onCheckedChange={setIsCredit} />
+                    </div>
+                    {isCredit && (
+                      <div>
+                        <Label htmlFor="due_date">Fecha de vencimiento</Label>
                         <Input
-                          className="col-span-2"
-                          type="number"
-                          min={1}
-                          value={it.qty}
-                          max={it.product_id ? (stockHint(it.product_id) ?? undefined) : undefined}
-                          onChange={(e) => {
-                            const c = [...items];
-                            c[idx].qty = Number(e.target.value);
-                            setItems(c);
-                          }}
+                          id="due_date"
+                          type="date"
+                          value={dueDate}
+                          onChange={(e) => setDueDate(e.target.value)}
+                          required
                         />
-                        <Input
-                          className="col-span-3"
-                          type="number"
-                          min={0}
-                          placeholder="Precio"
-                          value={it.price}
-                          onChange={(e) => {
-                            const c = [...items];
-                            c[idx].price = Number(e.target.value);
-                            setItems(c);
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="col-span-1"
-                          onClick={() => setItems(items.filter((_, i) => i !== idx))}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                        {it.product_id && it.qty > (stockHint(it.product_id) ?? Infinity) && (
-                          <p className="col-span-12 -mt-1 text-xs text-destructive">
-                            Stock insuficiente: solo quedan {stockHint(it.product_id)} unidades.
+                        {!selectedCustomerPhone && (
+                          <p className="mt-1 text-xs text-warning">
+                            Este cliente no tiene teléfono registrado — no podremos enviarle
+                            recordatorios por WhatsApp.
                           </p>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-lg bg-secondary/40 p-4">
-                  <Label htmlFor="total" className="shrink-0">
-                    Total (CLP)
-                  </Label>
-                  <Input
-                    id="total"
-                    type="number"
-                    min={0}
-                    value={total}
-                    onChange={(e) => setManualTotal(Number(e.target.value))}
-                    className="text-right text-base font-semibold"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="notes">Notas</Label>
-                  <Input id="notes" name="notes" />
-                </div>
-                <Button type="submit" className="w-full" disabled={insert.isPending}>
-                  Guardar venta
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-          )
-        }
-      />
-
-      <Card>
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : !sales || sales.length === 0 ? (
-          <EmptyState
-            icon={ShoppingCart}
-            title="Sin ventas todavía"
-            description="Empieza registrando tu primera venta."
-            action={
-              <Button onClick={() => setOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" />
-                Nueva venta
-              </Button>
-            }
-          />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Canal</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Cobro</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sales.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(s.sale_date).toLocaleDateString("es-CL")}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {s.channel}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {Array.isArray(s.items) && s.items.length > 0
-                      ? `${s.items.length} producto(s)`
-                      : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <select
-                      value={s.status}
-                      onChange={(e) => upd.mutate({ id: s.id, patch: { status: e.target.value } })}
-                      className="rounded-md border bg-background px-2 py-1 text-xs"
-                    >
-                      <option value="pending">Pendiente</option>
-                      <option value="paid">Pagada</option>
-                      <option value="draft">Borrador</option>
-                      <option value="cancelled">Cancelada</option>
-                    </select>
-                  </TableCell>
-                  <TableCell>
-                    {!s.is_credit ? (
-                      <span className="text-xs text-muted-foreground">Contado</span>
-                    ) : Number(s.paid_amount) >= Number(s.total) ? (
-                      <Badge className="bg-success/15 text-success">Pagada</Badge>
-                    ) : s.due_date && new Date(s.due_date) < new Date() ? (
-                      <Badge className="bg-destructive/15 text-destructive">
-                        <Clock className="mr-1 h-3 w-3" />
-                        Vencida
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {fmtCLP(Number(s.total))}
-                    {s.is_credit && Number(s.paid_amount) < Number(s.total) && (
-                      <p className="text-xs font-normal text-muted-foreground">
-                        Pagado: {fmtCLP(Number(s.paid_amount))}
-                      </p>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)}>
-                      <Trash2 className="h-4 w-4" />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Canal</Label>
+                        <Select value={channel} onValueChange={setChannel}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="tienda">Tienda</SelectItem>
+                            <SelectItem value="online">Online</SelectItem>
+                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                            <SelectItem value="instagram">Instagram</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Método de pago</Label>
+                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="efectivo">Efectivo</SelectItem>
+                            <SelectItem value="tarjeta">Tarjeta</SelectItem>
+                            <SelectItem value="transferencia">Transferencia</SelectItem>
+                            <SelectItem value="credito">Crédito</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Estado</Label>
+                      <Select value={status} onValueChange={setStatus}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendiente</SelectItem>
+                          <SelectItem value="paid">Pagada</SelectItem>
+                          <SelectItem value="draft">Borrador</SelectItem>
+                          <SelectItem value="cancelled">Cancelada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <Label>Productos (opcional, descuenta stock automáticamente)</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setItems([...items, { product_id: null, name: "", qty: 1, price: 0 }])
+                          }
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Agregar línea
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {items.map((it, idx) => (
+                          <div key={idx} className="grid grid-cols-12 gap-2">
+                            <div className="col-span-5">
+                              <Select
+                                value={it.product_id ?? "__free__"}
+                                onValueChange={(v) =>
+                                  v === "__free__" ? null : pickProduct(idx, v)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Producto del catálogo o texto libre" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__free__">— Texto libre —</SelectItem>
+                                  {(products ?? []).map((p: any) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.name} ({p.stock} en stock)
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {it.product_id === null && (
+                                <Input
+                                  className="mt-1"
+                                  placeholder="Descripción"
+                                  value={it.name}
+                                  onChange={(e) => {
+                                    const c = [...items];
+                                    c[idx].name = e.target.value;
+                                    setItems(c);
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <Input
+                              className="col-span-2"
+                              type="number"
+                              min={1}
+                              value={it.qty}
+                              max={
+                                it.product_id ? (stockHint(it.product_id) ?? undefined) : undefined
+                              }
+                              onChange={(e) => {
+                                const c = [...items];
+                                c[idx].qty = Number(e.target.value);
+                                setItems(c);
+                              }}
+                            />
+                            <Input
+                              className="col-span-3"
+                              type="number"
+                              min={0}
+                              placeholder="Precio"
+                              value={it.price}
+                              onChange={(e) => {
+                                const c = [...items];
+                                c[idx].price = Number(e.target.value);
+                                setItems(c);
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="col-span-1"
+                              onClick={() => setItems(items.filter((_, i) => i !== idx))}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                            {it.product_id && it.qty > (stockHint(it.product_id) ?? Infinity) && (
+                              <p className="col-span-12 -mt-1 text-xs text-destructive">
+                                Stock insuficiente: solo quedan {stockHint(it.product_id)} unidades.
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 rounded-lg bg-secondary/40 p-4">
+                      <Label htmlFor="total" className="shrink-0">
+                        Total (CLP)
+                      </Label>
+                      <Input
+                        id="total"
+                        type="number"
+                        min={0}
+                        value={total}
+                        onChange={(e) => setManualTotal(Number(e.target.value))}
+                        className="text-right text-base font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="notes">Notas</Label>
+                      <Input id="notes" name="notes" />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={insert.isPending}>
+                      Guardar venta
                     </Button>
-                  </TableCell>
-                </TableRow>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )
+          }
+        />
+
+        <Card>
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
               ))}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
-    </>
+            </div>
+          ) : !sales || sales.length === 0 ? (
+            <EmptyState
+              icon={ShoppingCart}
+              title="Sin ventas todavía"
+              description="Empieza registrando tu primera venta."
+              action={
+                <Button onClick={() => setOpen(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Nueva venta
+                </Button>
+              }
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Canal</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Cobro</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sales.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(s.sale_date).toLocaleDateString("es-CL")}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {s.channel}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {Array.isArray(s.items) && s.items.length > 0
+                        ? `${s.items.length} producto(s)`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        value={s.status}
+                        onChange={(e) =>
+                          upd.mutate({ id: s.id, patch: { status: e.target.value } })
+                        }
+                        className="rounded-md border bg-background px-2 py-1 text-xs"
+                      >
+                        <option value="pending">Pendiente</option>
+                        <option value="paid">Pagada</option>
+                        <option value="draft">Borrador</option>
+                        <option value="cancelled">Cancelada</option>
+                      </select>
+                    </TableCell>
+                    <TableCell>
+                      {!s.is_credit ? (
+                        <span className="text-xs text-muted-foreground">Contado</span>
+                      ) : Number(s.paid_amount) >= Number(s.total) ? (
+                        <Badge className="bg-success/15 text-success">Pagada</Badge>
+                      ) : s.due_date && new Date(s.due_date) < new Date() ? (
+                        <Badge className="bg-destructive/15 text-destructive">
+                          <Clock className="mr-1 h-3 w-3" />
+                          Vencida
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {fmtCLP(Number(s.total))}
+                      {s.is_credit && Number(s.paid_amount) < Number(s.total) && (
+                        <p className="text-xs font-normal text-muted-foreground">
+                          Pagado: {fmtCLP(Number(s.paid_amount))}
+                        </p>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+      </>
     </ModuleGuard>
   );
 }

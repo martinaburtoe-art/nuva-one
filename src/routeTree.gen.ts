@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SelectBusinessRouteImport } from './routes/select-business'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -53,6 +54,11 @@ import { Route as ApiBillingPaymentsConnectRouteImport } from './routes/api/bill
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SelectBusinessRoute = SelectBusinessRouteImport.update({
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/ai': typeof AuthenticatedAiRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/ai': typeof AuthenticatedAiRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -353,6 +361,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/select-business'
+    | '/sitemap.xml'
     | '/terms'
     | '/ai'
     | '/analytics'
@@ -437,6 +447,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/select-business'
+    | '/sitemap.xml'
     | '/terms'
     | '/ai'
     | '/analytics'
@@ -479,6 +490,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/select-business'
+    | '/sitemap.xml'
     | '/terms'
     | '/_authenticated/ai'
     | '/_authenticated/analytics'
@@ -522,6 +534,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SelectBusinessRoute: typeof SelectBusinessRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ForoTopicIdRoute: typeof ForoTopicIdRoute
@@ -549,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/select-business': {
@@ -874,6 +894,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SelectBusinessRoute: SelectBusinessRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ForoTopicIdRoute: ForoTopicIdRoute,

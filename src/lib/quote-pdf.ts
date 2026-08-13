@@ -96,7 +96,9 @@ export async function generateQuotePdf(quote: Quote, businessNameOrBiz: string |
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(210, 216, 226);
-    doc.text(new Date(quote.created_at).toLocaleDateString("es-CL"), pageW - marginX, 64, { align: "right" });
+    doc.text(new Date(quote.created_at).toLocaleDateString("es-CL"), pageW - marginX, 64, {
+      align: "right",
+    });
     doc.setTextColor(0, 0, 0);
   }
 
@@ -166,9 +168,14 @@ export async function generateQuotePdf(quote: Quote, businessNameOrBiz: string |
     doc.text(String(item.name ?? "—").slice(0, 55), marginX + 10, y + 16);
     doc.text(String(item.qty ?? 0), marginX + contentW - 220, y + 16);
     doc.text(fmtCLP(Number(item.price ?? 0)), marginX + contentW - 165, y + 16);
-    doc.text(fmtCLP(Number(item.qty ?? 0) * Number(item.price ?? 0)), marginX + contentW - 10, y + 16, {
-      align: "right",
-    });
+    doc.text(
+      fmtCLP(Number(item.qty ?? 0) * Number(item.price ?? 0)),
+      marginX + contentW - 10,
+      y + 16,
+      {
+        align: "right",
+      },
+    );
     y += rowH;
   });
 
@@ -176,7 +183,9 @@ export async function generateQuotePdf(quote: Quote, businessNameOrBiz: string |
   const boxW = 230;
   const boxX = marginX + contentW - boxW;
   const hasDiscount = Number(quote.discount_pct) > 0;
-  const discountAmount = hasDiscount ? Math.round(quote.subtotal * (Number(quote.discount_pct) / 100)) : 0;
+  const discountAmount = hasDiscount
+    ? Math.round(quote.subtotal * (Number(quote.discount_pct) / 100))
+    : 0;
   const linesCount = 2 + (hasDiscount ? 1 : 0);
   const summaryH = linesCount * 20 + 34;
 

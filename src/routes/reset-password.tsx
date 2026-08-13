@@ -68,12 +68,14 @@ function ResetPassword() {
         </Link>
 
         <h1 className="text-3xl font-bold tracking-tight">Nueva contraseña</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Elige una contraseña nueva para tu cuenta.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Elige una contraseña nueva para tu cuenta.
+        </p>
 
         {!ready ? (
           <p className="mt-8 text-sm text-muted-foreground">
-            Verificando enlace de recuperación… Si llegaste aquí sin venir desde el correo, este enlace
-            puede haber expirado.{" "}
+            Verificando enlace de recuperación… Si llegaste aquí sin venir desde el correo, este
+            enlace puede haber expirado.{" "}
             <Link to="/auth" className="underline">
               Volver a iniciar sesión
             </Link>

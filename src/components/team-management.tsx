@@ -75,8 +75,7 @@ function PermissionChecklist({
   if (role === "admin") {
     return (
       <p className="flex items-center gap-1.5 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-        <Lock className="h-3 w-3" /> Los administradores tienen acceso completo a todos los
-        módulos.
+        <Lock className="h-3 w-3" /> Los administradores tienen acceso completo a todos los módulos.
       </p>
     );
   }
@@ -87,10 +86,7 @@ function PermissionChecklist({
         return (
           <label key={m.key} className="flex items-center justify-between gap-2 text-sm">
             <span>{m.label}</span>
-            <Switch
-              checked={checked}
-              onCheckedChange={(v) => onChange({ ...value, [m.key]: v })}
-            />
+            <Switch checked={checked} onCheckedChange={(v) => onChange({ ...value, [m.key]: v })} />
           </label>
         );
       })}
@@ -302,7 +298,11 @@ export function TeamManagement({
                 </div>
                 <div>
                   <Label className="mb-2 block">Permisos por módulo</Label>
-                  <PermissionChecklist role={inviteRole} value={invitePerms} onChange={setInvitePerms} />
+                  <PermissionChecklist
+                    role={inviteRole}
+                    value={invitePerms}
+                    onChange={setInvitePerms}
+                  />
                 </div>
               </div>
               <DialogFooter>

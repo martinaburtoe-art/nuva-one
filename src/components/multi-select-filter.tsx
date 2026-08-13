@@ -32,9 +32,7 @@ export function MultiSelectFilter({
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56 p-2">
-        {options.length === 0 && (
-          <p className="p-2 text-xs text-muted-foreground">Sin opciones</p>
-        )}
+        {options.length === 0 && <p className="p-2 text-xs text-muted-foreground">Sin opciones</p>}
         <div className="max-h-64 space-y-1 overflow-y-auto">
           {options.map((opt) => (
             <label

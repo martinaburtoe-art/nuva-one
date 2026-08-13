@@ -48,8 +48,8 @@ describe("audit-labels", () => {
 
   it("resuelve el nombre visible de un usuario", () => {
     const users = {
-      "u1": { full_name: "María López", email: "maria@x.cl" },
-      "u2": { full_name: null, email: "sin-nombre@x.cl" },
+      u1: { full_name: "María López", email: "maria@x.cl" },
+      u2: { full_name: null, email: "sin-nombre@x.cl" },
     };
     expect(displayUserName("u1", users)).toBe("María López");
     expect(displayUserName("u2", users)).toBe("sin-nombre@x.cl");

@@ -167,171 +167,171 @@ function Dashboard() {
 
   return (
     <ModuleGuard module="dashboard">
-    <>
-      <PageHeader
-        title={`Hola, ${active?.name ?? "negocio"}`}
-        description="Esto es lo que está pasando hoy."
-      />
+      <>
+        <PageHeader
+          title={`Hola, ${active?.name ?? "negocio"}`}
+          description="Esto es lo que está pasando hoy."
+        />
 
-      {kpis !== undefined && kpis.productsCount === 0 && kpis.salesCount === 0 && (
-        <Card className="mb-6 border-primary/30 bg-accent/40 p-6">
-          <h3 className="font-semibold">Primeros pasos con Nüva One</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tu negocio está creado. Estos 3 pasos toman menos de 10 minutos y dejan tu cuenta
-            lista para operar de verdad.
-          </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <Link
-              to="/inventory"
-              className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
-            >
-              <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Carga tus primeros productos</div>
-                <div className="text-xs text-muted-foreground">Inventario</div>
-              </div>
-            </Link>
-            <Link
-              to="/pos"
-              className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
-            >
-              <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Registra tu primera venta</div>
-                <div className="text-xs text-muted-foreground">Caja / POS</div>
-              </div>
-            </Link>
-            <Link
-              to="/automations"
-              className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
-            >
-              <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Vincula tu WhatsApp</div>
-                <div className="text-xs text-muted-foreground">
-                  Consulta tu negocio desde el celular
-                </div>
-              </div>
-            </Link>
-          </div>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-        {cards.map((c) => (
-          <Card key={c.l} className="p-5 transition-all hover:-translate-y-0.5 hover:shadow-soft">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">{c.l}</span>
-              <c.i className={`h-4 w-4 ${c.c}`} />
-            </div>
-            <div className="mt-2 text-2xl font-bold tracking-tight">{c.v}</div>
-          </Card>
-        ))}
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="p-6 lg:col-span-2">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-semibold">Ingresos vs Gastos</h3>
-              <p className="text-xs text-muted-foreground">
-                {isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-end gap-2">
-              <DateRangeFilter
-                from={dateFrom}
-                to={dateTo}
-                onFromChange={setDateFrom}
-                onToChange={setDateTo}
-              />
-              <MultiSelectFilter
-                label="Categoría"
-                options={categoryOptions}
-                selected={categories}
-                onChange={setCategories}
-              />
-              {hasChartFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDateFrom("");
-                    setDateTo("");
-                    setCategories([]);
-                  }}
-                >
-                  <X className="mr-1 h-3.5 w-3.5" /> Quitar filtros
-                </Button>
-              )}
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={chartData ?? []}>
-              <defs>
-                <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="ge" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" />
-              <XAxis
-                dataKey={isoFrom || isoTo ? "fecha" : "mes"}
-                stroke="oklch(0.5 0.02 270)"
-                fontSize={12}
-              />
-              <YAxis
-                stroke="oklch(0.5 0.02 270)"
-                fontSize={12}
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-              />
-              <Tooltip
-                contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="ingresos"
-                stroke="oklch(0.55 0.22 268)"
-                fill="url(#gi)"
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="gastos"
-                stroke="oklch(0.6 0.22 25)"
-                fill="url(#ge)"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="font-semibold">Acciones rápidas</h3>
-          <p className="text-xs text-muted-foreground">Lo más usado</p>
-          <div className="mt-4 space-y-2">
-            {[
-              { l: "Registrar venta", h: "/sales" },
-              { l: "Agregar producto", h: "/inventory" },
-              { l: "Nueva cotización", h: "/quotes" },
-              { l: "Registrar gasto", h: "/finance" },
-            ].map((a) => (
+        {kpis !== undefined && kpis.productsCount === 0 && kpis.salesCount === 0 && (
+          <Card className="mb-6 border-primary/30 bg-accent/40 p-6">
+            <h3 className="font-semibold">Primeros pasos con Nüva One</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Tu negocio está creado. Estos 3 pasos toman menos de 10 minutos y dejan tu cuenta
+              lista para operar de verdad.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <Link
-                key={a.l}
-                to={a.h}
-                className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:border-primary hover:bg-accent"
+                to="/inventory"
+                className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
               >
-                {a.l} <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Carga tus primeros productos</div>
+                  <div className="text-xs text-muted-foreground">Inventario</div>
+                </div>
               </Link>
-            ))}
-          </div>
-        </Card>
-      </div>
-    </>
+              <Link
+                to="/pos"
+                className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
+              >
+                <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Registra tu primera venta</div>
+                  <div className="text-xs text-muted-foreground">Caja / POS</div>
+                </div>
+              </Link>
+              <Link
+                to="/automations"
+                className="flex items-start gap-2 rounded-lg border border-border bg-background p-3 transition-all hover:border-primary hover:shadow-soft"
+              >
+                <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div>
+                  <div className="text-sm font-medium">Vincula tu WhatsApp</div>
+                  <div className="text-xs text-muted-foreground">
+                    Consulta tu negocio desde el celular
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          {cards.map((c) => (
+            <Card key={c.l} className="p-5 transition-all hover:-translate-y-0.5 hover:shadow-soft">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">{c.l}</span>
+                <c.i className={`h-4 w-4 ${c.c}`} />
+              </div>
+              <div className="mt-2 text-2xl font-bold tracking-tight">{c.v}</div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-3">
+          <Card className="p-6 lg:col-span-2">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-semibold">Ingresos vs Gastos</h3>
+                <p className="text-xs text-muted-foreground">
+                  {isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-end gap-2">
+                <DateRangeFilter
+                  from={dateFrom}
+                  to={dateTo}
+                  onFromChange={setDateFrom}
+                  onToChange={setDateTo}
+                />
+                <MultiSelectFilter
+                  label="Categoría"
+                  options={categoryOptions}
+                  selected={categories}
+                  onChange={setCategories}
+                />
+                {hasChartFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateFrom("");
+                      setDateTo("");
+                      setCategories([]);
+                    }}
+                  >
+                    <X className="mr-1 h-3.5 w-3.5" /> Quitar filtros
+                  </Button>
+                )}
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={chartData ?? []}>
+                <defs>
+                  <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="ge" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" />
+                <XAxis
+                  dataKey={isoFrom || isoTo ? "fecha" : "mes"}
+                  stroke="oklch(0.5 0.02 270)"
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke="oklch(0.5 0.02 270)"
+                  fontSize={12}
+                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="ingresos"
+                  stroke="oklch(0.55 0.22 268)"
+                  fill="url(#gi)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="gastos"
+                  stroke="oklch(0.6 0.22 25)"
+                  fill="url(#ge)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="font-semibold">Acciones rápidas</h3>
+            <p className="text-xs text-muted-foreground">Lo más usado</p>
+            <div className="mt-4 space-y-2">
+              {[
+                { l: "Registrar venta", h: "/sales" },
+                { l: "Agregar producto", h: "/inventory" },
+                { l: "Nueva cotización", h: "/quotes" },
+                { l: "Registrar gasto", h: "/finance" },
+              ].map((a) => (
+                <Link
+                  key={a.l}
+                  to={a.h}
+                  className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:border-primary hover:bg-accent"
+                >
+                  {a.l} <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </>
     </ModuleGuard>
   );
 }

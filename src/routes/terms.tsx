@@ -36,9 +36,8 @@ function Terms() {
         <p>
           Nüva One es operado por Martín Ariel Aburto Espinoza, RUT 21.553.180-5, persona natural
           con domicilio en Talca, Región del Maule, Chile ("Nüva One", "nosotros"). Estos Términos
-          rigen el uso de la plataforma
-          de gestión Nüva One (sitio web, aplicación y API) por parte de personas naturales o
-          jurídicas ("el usuario", "tú").
+          rigen el uso de la plataforma de gestión Nüva One (sitio web, aplicación y API) por parte
+          de personas naturales o jurídicas ("el usuario", "tú").
         </p>
 
         <h2>2. Aceptación de los términos</h2>
@@ -173,9 +172,9 @@ function Terms() {
         <h2>13. Ley aplicable y jurisdicción</h2>
         <p>
           Estos Términos se rigen por las leyes de la República de Chile. Cualquier controversia
-          será sometida a los tribunales ordinarios de justicia de la ciudad de Talca, sin
-          perjuicio de los derechos que asisten al consumidor conforme a la Ley N.º 19.496 de acudir
-          a los tribunales de su domicilio.
+          será sometida a los tribunales ordinarios de justicia de la ciudad de Talca, sin perjuicio
+          de los derechos que asisten al consumidor conforme a la Ley N.º 19.496 de acudir a los
+          tribunales de su domicilio.
         </p>
 
         <h2>14. Contacto</h2>

@@ -60,7 +60,12 @@ function DateField({
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="icon" type="button" aria-label={`Elegir fecha: ${label}`}>
+            <Button
+              variant="outline"
+              size="icon"
+              type="button"
+              aria-label={`Elegir fecha: ${label}`}
+            >
               <CalendarIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>

@@ -178,315 +178,321 @@ function Quotes() {
 
   return (
     <ModuleGuard module="quotes">
-    <>
-      <PageHeader
-        title="Cotizaciones"
-        description="Crea cotizaciones desde tu catálogo y convierte las aceptadas en ventas con un clic"
-        action={
-          !canWrite ? undefined : (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="shadow-elegant">
-                <Plus className="mr-1.5 h-4 w-4" />
-                Nueva cotización
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Nueva cotización</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="customer">Cliente</Label>
-                  <Input
-                    id="customer"
-                    value={customer}
-                    onChange={(e) => setCustomer(e.target.value)}
-                  />
-                  <Select
-                    value={customerId ?? "__none__"}
-                    onValueChange={(v) => {
-                      if (v === "__none__") {
-                        setCustomerId(null);
-                        return;
-                      }
-                      const c = (customers ?? []).find((x: any) => x.id === v);
-                      setCustomerId(v);
-                      if (c) setCustomer(c.name);
-                    }}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Vincular a cliente existente (necesario para seguimiento por WhatsApp)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">— Sin vincular —</SelectItem>
-                      {(customers ?? []).map((c: any) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name} {c.phone ? `(${c.phone})` : "(sin teléfono)"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <Label>Productos</Label>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setItems([...items, { product_id: null, name: "", qty: 1, price: 0 }])
-                      }
-                    >
-                      <Plus className="mr-1 h-3 w-3" />
-                      Agregar línea
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {items.map((it, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-2">
-                        <div className="col-span-6">
-                          <Select
-                            value={it.product_id ?? "__free__"}
-                            onValueChange={(v) => (v === "__free__" ? null : pickProduct(idx, v))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona un producto" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__free__">— Producto personalizado —</SelectItem>
-                              {(products ?? []).map((p: any) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {it.product_id === null && (
+      <>
+        <PageHeader
+          title="Cotizaciones"
+          description="Crea cotizaciones desde tu catálogo y convierte las aceptadas en ventas con un clic"
+          action={
+            !canWrite ? undefined : (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="shadow-elegant">
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Nueva cotización
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Nueva cotización</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="customer">Cliente</Label>
+                      <Input
+                        id="customer"
+                        value={customer}
+                        onChange={(e) => setCustomer(e.target.value)}
+                      />
+                      <Select
+                        value={customerId ?? "__none__"}
+                        onValueChange={(v) => {
+                          if (v === "__none__") {
+                            setCustomerId(null);
+                            return;
+                          }
+                          const c = (customers ?? []).find((x: any) => x.id === v);
+                          setCustomerId(v);
+                          if (c) setCustomer(c.name);
+                        }}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Vincular a cliente existente (necesario para seguimiento por WhatsApp)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— Sin vincular —</SelectItem>
+                          {(customers ?? []).map((c: any) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name} {c.phone ? `(${c.phone})` : "(sin teléfono)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <Label>Productos</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setItems([...items, { product_id: null, name: "", qty: 1, price: 0 }])
+                          }
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Agregar línea
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {items.map((it, idx) => (
+                          <div key={idx} className="grid grid-cols-12 gap-2">
+                            <div className="col-span-6">
+                              <Select
+                                value={it.product_id ?? "__free__"}
+                                onValueChange={(v) =>
+                                  v === "__free__" ? null : pickProduct(idx, v)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona un producto" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__free__">
+                                    — Producto personalizado —
+                                  </SelectItem>
+                                  {(products ?? []).map((p: any) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {it.product_id === null && (
+                                <Input
+                                  className="mt-1"
+                                  placeholder="Descripción del producto"
+                                  value={it.name}
+                                  onChange={(e) => {
+                                    const c = [...items];
+                                    c[idx].name = e.target.value;
+                                    setItems(c);
+                                  }}
+                                />
+                              )}
+                            </div>
                             <Input
-                              className="mt-1"
-                              placeholder="Descripción del producto"
-                              value={it.name}
+                              className="col-span-2"
+                              type="number"
+                              min={1}
+                              value={it.qty}
                               onChange={(e) => {
                                 const c = [...items];
-                                c[idx].name = e.target.value;
+                                c[idx].qty = Number(e.target.value);
                                 setItems(c);
                               }}
                             />
-                          )}
-                        </div>
+                            <CurrencyInput
+                              className="col-span-3"
+                              placeholder="Precio"
+                              value={it.price}
+                              onChange={(n) => {
+                                const c = [...items];
+                                c[idx].price = n;
+                                setItems(c);
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="col-span-1"
+                              onClick={() => setItems(items.filter((_, i) => i !== idx))}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="discount">Descuento (%)</Label>
                         <Input
-                          className="col-span-2"
+                          id="discount"
                           type="number"
-                          min={1}
-                          value={it.qty}
-                          onChange={(e) => {
-                            const c = [...items];
-                            c[idx].qty = Number(e.target.value);
-                            setItems(c);
-                          }}
+                          min={0}
+                          max={100}
+                          value={discountPct}
+                          onChange={(e) => setDiscountPct(Number(e.target.value))}
                         />
-                        <CurrencyInput
-                          className="col-span-3"
-                          placeholder="Precio"
-                          value={it.price}
-                          onChange={(n) => {
-                            const c = [...items];
-                            c[idx].price = n;
-                            setItems(c);
-                          }}
+                      </div>
+                      <div>
+                        <Label htmlFor="valid_until">Válida hasta</Label>
+                        <Input
+                          id="valid_until"
+                          type="date"
+                          value={validUntil}
+                          onChange={(e) => setValidUntil(e.target.value)}
                         />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="terms">Condiciones (aparecen en el PDF)</Label>
+                      <textarea
+                        id="terms"
+                        className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+                        rows={2}
+                        value={terms}
+                        onChange={(e) => setTerms(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="rounded-lg bg-secondary/40 p-4">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>{fmtCLP(subtotal)}</span>
+                      </div>
+                      {discountPct > 0 && (
+                        <div className="flex justify-between text-sm text-destructive">
+                          <span>Descuento ({discountPct}%)</span>
+                          <span>-{fmtCLP(discountAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span>IVA (19%)</span>
+                        <span>{fmtCLP(tax)}</span>
+                      </div>
+                      <div className="mt-2 flex justify-between border-t pt-2 text-base font-semibold">
+                        <span>Total</span>
+                        <span>{fmtCLP(total)}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => save("draft")}
+                        disabled={insert.isPending}
+                      >
+                        Guardar borrador
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        onClick={() => save("sent")}
+                        disabled={insert.isPending}
+                      >
+                        Enviar
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )
+          }
+        />
+
+        <Card>
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : !data || data.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="Sin cotizaciones"
+              description="Crea tu primera cotización profesional."
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>N°</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Seguimiento</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((q) => (
+                  <TableRow key={q.id}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
+                    </TableCell>
+                    <TableCell className="font-medium">{q.customer_name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(q.created_at).toLocaleDateString("es-CL")}
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        value={q.status}
+                        onChange={(e) =>
+                          upd.mutate({ id: q.id, patch: { status: e.target.value } })
+                        }
+                        className="rounded-md border bg-background px-2 py-1 text-xs"
+                      >
+                        {Object.entries(statusLabel).map(([k, v]) => (
+                          <option key={k} value={k}>
+                            {v.l}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {(q.status === "sent" || q.status === "viewed") && q.sent_at
+                        ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta`
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {fmtCLP(Number(q.total))}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
-                          type="button"
-                          size="icon"
                           variant="ghost"
-                          className="col-span-1"
-                          onClick={() => setItems(items.filter((_, i) => i !== idx))}
+                          size="icon"
+                          title="Descargar PDF"
+                          onClick={() => downloadPdf(q)}
                         >
-                          <X className="h-4 w-4" />
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Duplicar cotización"
+                          onClick={() => duplicateQuote(q)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        {q.status === "accepted" && !convertedQuoteIds.has(q.id) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Convertir a venta"
+                            disabled={convertingId === q.id}
+                            onClick={() => convertToSale(q)}
+                          >
+                            <ArrowRightCircle className="h-4 w-4 text-success" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="discount">Descuento (%)</Label>
-                    <Input
-                      id="discount"
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={discountPct}
-                      onChange={(e) => setDiscountPct(Number(e.target.value))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="valid_until">Válida hasta</Label>
-                    <Input
-                      id="valid_until"
-                      type="date"
-                      value={validUntil}
-                      onChange={(e) => setValidUntil(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="terms">Condiciones (aparecen en el PDF)</Label>
-                  <textarea
-                    id="terms"
-                    className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
-                    rows={2}
-                    value={terms}
-                    onChange={(e) => setTerms(e.target.value)}
-                  />
-                </div>
-
-                <div className="rounded-lg bg-secondary/40 p-4">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal</span>
-                    <span>{fmtCLP(subtotal)}</span>
-                  </div>
-                  {discountPct > 0 && (
-                    <div className="flex justify-between text-sm text-destructive">
-                      <span>Descuento ({discountPct}%)</span>
-                      <span>-{fmtCLP(discountAmount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm">
-                    <span>IVA (19%)</span>
-                    <span>{fmtCLP(tax)}</span>
-                  </div>
-                  <div className="mt-2 flex justify-between border-t pt-2 text-base font-semibold">
-                    <span>Total</span>
-                    <span>{fmtCLP(total)}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => save("draft")}
-                    disabled={insert.isPending}
-                  >
-                    Guardar borrador
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={() => save("sent")}
-                    disabled={insert.isPending}
-                  >
-                    Enviar
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          )
-        }
-      />
-
-      <Card>
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : !data || data.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="Sin cotizaciones"
-            description="Crea tu primera cotización profesional."
-          />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>N°</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Seguimiento</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((q) => (
-                <TableRow key={q.id}>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
-                  </TableCell>
-                  <TableCell className="font-medium">{q.customer_name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(q.created_at).toLocaleDateString("es-CL")}
-                  </TableCell>
-                  <TableCell>
-                    <select
-                      value={q.status}
-                      onChange={(e) => upd.mutate({ id: q.id, patch: { status: e.target.value } })}
-                      className="rounded-md border bg-background px-2 py-1 text-xs"
-                    >
-                      {Object.entries(statusLabel).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v.l}
-                        </option>
-                      ))}
-                    </select>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {(q.status === "sent" || q.status === "viewed") && q.sent_at
-                      ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta`
-                      : "—"}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {fmtCLP(Number(q.total))}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Descargar PDF"
-                        onClick={() => downloadPdf(q)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Duplicar cotización"
-                        onClick={() => duplicateQuote(q)}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      {q.status === "accepted" && !convertedQuoteIds.has(q.id) && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Convertir a venta"
-                          disabled={convertingId === q.id}
-                          onClick={() => convertToSale(q)}
-                        >
-                          <ArrowRightCircle className="h-4 w-4 text-success" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
-    </>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+      </>
     </ModuleGuard>
   );
 }
