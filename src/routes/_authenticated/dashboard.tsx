@@ -11,6 +11,7 @@ import { DateRangeFilter, dmyToIso } from "@/components/date-range-filter";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
+import { ExplainMyBusiness } from "@/components/explain-my-business";
 import {
   TrendingUp,
   TrendingDown,
@@ -233,6 +234,7 @@ function Dashboard() {
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           <div className="space-y-6">
             <NuvaScoreCard />
+            <ExplainMyBusiness />
           </div>
 
           <Card className="p-6 lg:col-span-2">

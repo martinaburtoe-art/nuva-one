@@ -42,6 +42,7 @@ import { Route as ApiWhatsappWebhookRouteImport } from './routes/api/whatsapp/we
 import { Route as ApiQuotesFollowUpRouteImport } from './routes/api/quotes/follow-up'
 import { Route as ApiNotificationsLowStockCheckRouteImport } from './routes/api/notifications/low-stock-check'
 import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/collections/check-overdue'
+import { Route as ApiBusinessExplainRouteImport } from './routes/api/business/explain'
 import { Route as ApiBillingSubscribeRunChargesRouteImport } from './routes/api/billing/subscribe/run-charges'
 import { Route as ApiBillingSubscribeRegisterRouteImport } from './routes/api/billing/subscribe/register'
 import { Route as ApiBillingSubscribeCancelRouteImport } from './routes/api/billing/subscribe/cancel'
@@ -219,6 +220,11 @@ const ApiCollectionsCheckOverdueRoute =
     path: '/api/collections/check-overdue',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiBusinessExplainRoute = ApiBusinessExplainRouteImport.update({
+  id: '/api/business/explain',
+  path: '/api/business/explain',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBillingSubscribeRunChargesRoute =
   ApiBillingSubscribeRunChargesRouteImport.update({
     id: '/api/billing/subscribe/run-charges',
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/negocios/$slug': typeof NegociosSlugRoute
   '/foro/': typeof ForoIndexRoute
   '/negocios/': typeof NegociosIndexRoute
+  '/api/business/explain': typeof ApiBusinessExplainRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -339,6 +346,7 @@ export interface FileRoutesByTo {
   '/negocios/$slug': typeof NegociosSlugRoute
   '/foro': typeof ForoIndexRoute
   '/negocios': typeof NegociosIndexRoute
+  '/api/business/explain': typeof ApiBusinessExplainRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/negocios/$slug': typeof NegociosSlugRoute
   '/foro/': typeof ForoIndexRoute
   '/negocios/': typeof NegociosIndexRoute
+  '/api/business/explain': typeof ApiBusinessExplainRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
@@ -427,6 +436,7 @@ export interface FileRouteTypes {
     | '/negocios/$slug'
     | '/foro/'
     | '/negocios/'
+    | '/api/business/explain'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -469,6 +479,7 @@ export interface FileRouteTypes {
     | '/negocios/$slug'
     | '/foro'
     | '/negocios'
+    | '/api/business/explain'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/negocios/$slug'
     | '/foro/'
     | '/negocios/'
+    | '/api/business/explain'
     | '/api/collections/check-overdue'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
@@ -541,6 +553,7 @@ export interface RootRouteChildren {
   NegociosSlugRoute: typeof NegociosSlugRoute
   ForoIndexRoute: typeof ForoIndexRoute
   NegociosIndexRoute: typeof NegociosIndexRoute
+  ApiBusinessExplainRoute: typeof ApiBusinessExplainRoute
   ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
   ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
@@ -788,6 +801,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCollectionsCheckOverdueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/business/explain': {
+      id: '/api/business/explain'
+      path: '/api/business/explain'
+      fullPath: '/api/business/explain'
+      preLoaderRoute: typeof ApiBusinessExplainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/billing/subscribe/run-charges': {
       id: '/api/billing/subscribe/run-charges'
       path: '/api/billing/subscribe/run-charges'
@@ -901,6 +921,7 @@ const rootRouteChildren: RootRouteChildren = {
   NegociosSlugRoute: NegociosSlugRoute,
   ForoIndexRoute: ForoIndexRoute,
   NegociosIndexRoute: NegociosIndexRoute,
+  ApiBusinessExplainRoute: ApiBusinessExplainRoute,
   ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
   ApiNotificationsLowStockCheckRoute: ApiNotificationsLowStockCheckRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
