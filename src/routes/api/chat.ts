@@ -95,9 +95,24 @@ export const Route = createFileRoute("/api/chat")({
         // Starter plan: capped at 30 AI messages/day per business (Pro is
         // unlimited). Checked via the service role so it can't be spoofed by
         // the client, and incremented atomically to survive concurrent requests.
+        //
+        // increment_ai_usage() runs as service role and bypasses RLS by
+        // design (it has to, to atomically increment a counter regardless of
+        // who's asking). That means THIS handler is the only thing standing
+        // between an authenticated user and incrementing -- or reading the
+        // exhaustion state of -- another business's daily AI quota just by
+        // sending a different x-business-id header. isBusinessMember() closes
+        // that gap: no membership, no RPC call, full stop.
         const STARTER_DAILY_AI_LIMIT = 30;
         if (businessId) {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { isBusinessMember } = await import("@/lib/business-auth.server");
+          const isMember = await isBusinessMember(authedSupabase, businessId, claims.claims.sub);
+          if (!isMember) {
+            return new Response(JSON.stringify({ error: "No tienes acceso a este negocio" }), {
+              status: 403,
+            });
+          }
           const { data: bizPlan } = await supabaseAdmin
             .from("businesses")
             .select("plan")

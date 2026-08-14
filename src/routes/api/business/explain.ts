@@ -86,8 +86,21 @@ export const Route = createFileRoute("/api/business/explain")({
           });
         }
 
-        const STARTER_DAILY_AI_LIMIT = 30;
+        // Same tenant-isolation gap as /api/chat: increment_ai_usage() runs
+        // as service role and bypasses RLS, so this explicit membership
+        // check is the only thing preventing an authenticated user from
+        // spending or reading another business's daily AI quota via a
+        // spoofed x-business-id header. See chat.ts for the full rationale.
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { isBusinessMember } = await import("@/lib/business-auth.server");
+        const isMember = await isBusinessMember(authedSupabase, businessId, claims.claims.sub);
+        if (!isMember) {
+          return new Response(JSON.stringify({ error: "No tienes acceso a este negocio" }), {
+            status: 403,
+          });
+        }
+
+        const STARTER_DAILY_AI_LIMIT = 30;
         const { data: bizPlan } = await supabaseAdmin
           .from("businesses")
           .select("plan")
