@@ -6,6 +6,9 @@ import { wrapAsDataBlock } from "@/lib/prompt-security.server";
 import { buildBusinessContext, capContext } from "@/lib/business-context.server";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
+import { checkRateLimit } from "@/lib/rate-limit.server";
+
+const EXPLAIN_RATE_LIMIT_PER_MINUTE = 3;
 
 // "Explícame mi negocio": convierte el mismo snapshot de datos que ya usa
 // el chat (/api/chat) en un resumen corto de 3 a 6 insights accionables,
@@ -98,6 +101,20 @@ export const Route = createFileRoute("/api/business/explain")({
           return new Response(JSON.stringify({ error: "No tienes acceso a este negocio" }), {
             status: 403,
           });
+        }
+
+        // Per authenticated user, same reasoning as /api/chat -- identity
+        // comes from the verified JWT claim, never from client input.
+        const withinExplainRateLimit = await checkRateLimit(
+          `explain:${claims.claims.sub}`,
+          EXPLAIN_RATE_LIMIT_PER_MINUTE,
+          60,
+        );
+        if (!withinExplainRateLimit) {
+          return new Response(
+            JSON.stringify({ error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." }),
+            { status: 429 },
+          );
         }
 
         const STARTER_DAILY_AI_LIMIT = 30;
