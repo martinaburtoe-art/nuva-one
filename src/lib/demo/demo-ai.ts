@@ -17,7 +17,7 @@ export function demoAiAnswer(question: string) {
   if (q.includes("venta") || q.includes("ingreso")) {
     return `Alma Café registra ${money(liveRevenue)} de ingresos del período y un margen saludable. La oportunidad está en aumentar la recurrencia de clientes.`;
   }
-  if (q.includes("recomend") || q.includes("qué harías") || q.includes("que harías")) {
+  if (q.includes("recomend") || q.includes("suger") || q.includes("qué harías") || q.includes("que harías")) {
     return "Priorizaría reposición de Granos Colombia, una campaña para clientes recurrentes y seguimiento comercial a los clientes de mayor valor.";
   }
   return "En esta demo puedo analizar ventas, inventario y oportunidades comerciales usando los datos ficticios de Alma Café.";
