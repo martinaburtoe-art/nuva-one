@@ -11,7 +11,8 @@ describe("parseInsights", () => {
   });
 
   it("despoja fences de markdown antes de parsear", () => {
-    const raw = "```json\n[{\"signal\":\"info\",\"title\":\"Todo tranquilo\",\"detail\":\"Sin novedades\"}]\n```";
+    const raw =
+      '```json\n[{"signal":"info","title":"Todo tranquilo","detail":"Sin novedades"}]\n```';
     expect(parseInsights(raw)).toHaveLength(1);
   });
 
@@ -40,6 +41,8 @@ describe("parseInsights", () => {
   });
 
   it("lanza si el JSON no es un array", () => {
-    expect(() => parseInsights(JSON.stringify({ signal: "info", title: "X", detail: "Y" }))).toThrow();
+    expect(() =>
+      parseInsights(JSON.stringify({ signal: "info", title: "X", detail: "Y" })),
+    ).toThrow();
   });
 });
