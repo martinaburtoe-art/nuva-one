@@ -16,10 +16,7 @@ const homepageShowcasePlugin = {
     if (start === -1 || end === -1) return null;
     const importLine = 'import { HomeProductShowcase } from "@/components/home-product-showcase";\n';
     const transformed = code.slice(0, start) + "function ProductShowcase() { return <HomeProductShowcase />; }\n\n" + code.slice(end);
-    return {
-      code: transformed.includes("HomeProductShowcase") ? transformed : importLine + transformed,
-      map: null,
-    };
+    return { code: importLine + transformed, map: null };
   },
 };
 
