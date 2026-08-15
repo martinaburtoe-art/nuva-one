@@ -45,7 +45,7 @@ function Dashboard() {
     queryKey: ["kpis", active?.id],
     queryFn: async () => {
       const bid = active!.id;
-      const [sales, expenses, products, salesCount, transactionsCount] = await Promise.all([
+      const [sales, expenses, products, salesCount] = await Promise.all([
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income"),
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense"),
         supabase.from("products").select("stock, price").eq("business_id", bid),
@@ -54,10 +54,6 @@ function Dashboard() {
           .select("id", { count: "exact", head: true })
           .eq("business_id", bid)
           .neq("status", "cancelled"),
-        supabase
-          .from("transactions")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", bid),
       ]);
       const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
       const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
@@ -72,7 +68,6 @@ function Dashboard() {
         inventoryValue,
         salesCount: salesCount.count ?? 0,
         productsCount: (products.data ?? []).length,
-        transactionsCount: transactionsCount.count ?? 0,
       };
     },
   });
@@ -166,9 +161,10 @@ function Dashboard() {
     { l: "Valor inventario", v: fmtCLP(kpis?.inventoryValue ?? 0), i: Boxes, c: "text-foreground" },
   ];
 
+  const transactionsCount = allTx?.length ?? 0;
   const showActivation =
     kpis !== undefined &&
-    (kpis.productsCount === 0 || kpis.salesCount === 0 || kpis.transactionsCount === 0);
+    (kpis.productsCount === 0 || kpis.salesCount === 0 || transactionsCount === 0);
 
   return (
     <ModuleGuard module="dashboard">
@@ -183,7 +179,7 @@ function Dashboard() {
             <ActivationChecklist
               hasProducts={kpis.productsCount > 0}
               hasSales={kpis.salesCount > 0}
-              hasTransactions={kpis.transactionsCount > 0}
+              hasTransactions={transactionsCount > 0}
             />
           </div>
         )}
