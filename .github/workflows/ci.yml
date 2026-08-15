@@ -57,11 +57,15 @@ jobs:
         with:
           version: latest
 
-      # Spins up a throwaway local Postgres (via Docker, already available
-      # on this runner), applies every migration in supabase/migrations,
-      # then runs every *.sql file in supabase/tests/database with pgTAP.
-      # Nothing here touches the real project -- this is a brand new,
-      # disposable database created and destroyed within this job.
+      # `supabase test db` only connects to an already-running local stack
+      # (default: 127.0.0.1:54322) -- it does not start one itself. Without
+      # this step the job fails immediately with ECONNREFUSED before any
+      # pgTAP file even runs. `supabase start` spins up the local Docker
+      # stack (Postgres, GoTrue, PostgREST, Realtime, Storage, Kong) and
+      # applies every migration in supabase/migrations as part of startup.
+      - name: Start Supabase local stack
+        run: supabase start
+
       # Spins up a throwaway local Postgres (via Docker, already available
       # on this runner), applies every migration in supabase/migrations,
       # then runs every *.sql file in supabase/tests/database with pgTAP.
