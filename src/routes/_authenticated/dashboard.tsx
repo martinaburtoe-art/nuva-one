@@ -12,7 +12,8 @@ import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { ExplainMyBusiness } from "@/components/explain-my-business";
-import { TrendingUp, TrendingDown, ShoppingCart, Boxes, DollarSign, ArrowUpRight, X, MessageCircle, Circle, CheckCircle2, Sparkles } from "lucide-react";
+import { BusinessInsightCard } from "@/components/business-insight-card";
+import { TrendingUp, TrendingDown, ShoppingCart, Boxes, DollarSign, ArrowUpRight, X, CheckCircle2, Sparkles } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -25,11 +26,7 @@ function Dashboard() {
   const [onboardingFocus, setOnboardingFocus] = useState("Todo");
 
   useEffect(() => {
-    try {
-      setOnboardingFocus(localStorage.getItem("nuva-onboarding-focus") || "Todo");
-    } catch {
-      // localStorage may be unavailable in restricted environments.
-    }
+    try { setOnboardingFocus(localStorage.getItem("nuva-onboarding-focus") || "Todo"); } catch { /* restricted environments */ }
   }, []);
 
   const { data: kpis } = useQuery({
@@ -109,7 +106,7 @@ function Dashboard() {
     { l: "Valor inventario", v: fmtCLP(kpis?.inventoryValue ?? 0), i: Boxes, c: "text-foreground" },
   ];
 
-  const focusAction = onboardingFocus === "Ventas" ? { label: "Registra tu primera venta", href: "/pos", module: "Ventas" } : onboardingFocus === "Inventario" ? { label: "Carga tus primeros productos", href: "/inventory", module: "Inventario" } : onboardingFocus === "Finanzas" ? { label: "Registra tu primer movimiento", href: "/finance", module: "Finanzas" } : onboardingFocus === "Clientes" ? { label: "Crea tu primer cliente", href: "/crm", module: "Clientes" } : { label: "Completa tu primera operación", href: "/sales", module: "Operación" };
+  const focusAction = onboardingFocus === "Ventas" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "Inventario" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "Finanzas" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "Clientes" ? { label: "Crea tu primer cliente", href: "/crm" } : { label: "Completa tu primera operación", href: "/sales" };
   const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0;
 
   return (
@@ -136,7 +133,9 @@ function Dashboard() {
           </Card>
         )}
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">{cards.map((c) => <Card key={c.l} className="p-5 transition-all hover:-translate-y-0.5 hover:shadow-soft"><div className="flex items-center justify-between"><span className="text-xs font-medium text-muted-foreground">{c.l}</span><c.i className={`h-4 w-4 ${c.c}`} /></div><div className="mt-2 text-2xl font-bold tracking-tight">{c.v}</div></Card>)}</div>
+        <BusinessInsightCard income={kpis?.income ?? 0} expense={kpis?.expense ?? 0} inventoryValue={kpis?.inventoryValue ?? 0} productsCount={kpis?.productsCount ?? 0} salesCount={kpis?.salesCount ?? 0} />
+
+        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">{cards.map((c) => <Card key={c.l} className="p-5 transition-all hover:-translate-y-0.5 hover:shadow-soft"><div className="flex items-center justify-between"><span className="text-xs font-medium text-muted-foreground">{c.l}</span><c.i className={`h-4 w-4 ${c.c}`} /></div><div className="mt-2 text-2xl font-bold tracking-tight">{c.v}</div></Card>)}</div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           <div className="space-y-6"><NuvaScoreCard /><ExplainMyBusiness /></div>
