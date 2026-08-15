@@ -16,10 +16,17 @@ if (start < 0 || end < 0) {
 }
 
 const workflow = readFileSync(workflowPath, "utf8");
-const match = workflow.match(/replacement = r'''([\\s\\S]*?)'''/);
-if (!match) {
-  throw new Error("Could not recover the approved homepage showcase replacement");
+const marker = "replacement = r'''";
+const replacementStart = workflow.indexOf(marker);
+if (replacementStart < 0) {
+  throw new Error("Could not find homepage showcase replacement marker");
 }
+const contentStart = replacementStart + marker.length;
+const contentEnd = workflow.indexOf("'''", contentStart);
+if (contentEnd < 0) {
+  throw new Error("Could not find homepage showcase replacement terminator");
+}
+const replacement = workflow.slice(contentStart, contentEnd);
 
-writeFileSync(indexPath, text.slice(0, start) + match[1] + text.slice(end));
+writeFileSync(indexPath, text.slice(0, start) + replacement + text.slice(end));
 console.log("Homepage showcase integrated for this build");
