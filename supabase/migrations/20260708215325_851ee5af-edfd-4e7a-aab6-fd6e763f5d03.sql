@@ -120,6 +120,18 @@ DROP POLICY IF EXISTS "Members insert audit_log" ON public.audit_log;
 CREATE POLICY "Members insert audit_log" ON public.audit_log
   FOR INSERT WITH CHECK (private.is_business_member(business_id, auth.uid()));
 
+-- businesses: "Members or owner see business" was not covered above (it
+-- postdates "Members see business" and was missed in this migration's
+-- original pass), so it still points at public.is_business_member and
+-- blocks the DROP FUNCTION below on a clean/CI database build.
+DROP POLICY IF EXISTS "Members or owner see business" ON public.businesses;
+CREATE POLICY "Members or owner see business" ON public.businesses
+  FOR SELECT
+  USING (
+    auth.uid() = owner_id
+    OR private.is_business_member(id, auth.uid())
+  );
+
 -- Now safe to drop the public versions.
 DROP FUNCTION IF EXISTS public.is_business_member(uuid, uuid);
 DROP FUNCTION IF EXISTS public.has_business_role(uuid, uuid, member_role[]);
