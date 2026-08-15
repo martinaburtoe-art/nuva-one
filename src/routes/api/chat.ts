@@ -21,6 +21,9 @@ import {
 } from "@/lib/business-context.server";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
+import { checkRateLimit } from "@/lib/rate-limit.server";
+
+const CHAT_RATE_LIMIT_PER_MINUTE = 8;
 
 // Pulls the plain text out of the last user message in a UIMessage[] array,
 // tolerating both the `parts` shape (current AI SDK) and a legacy `content`
@@ -86,6 +89,25 @@ export const Route = createFileRoute("/api/chat")({
           return new Response(JSON.stringify({ error: "Sesión inválida o expirada" }), {
             status: 401,
           });
+        }
+
+        // Per-authenticated-user, not per-business: businessId is optional
+        // on this route (see contextBlock fallback below), so a bucket keyed
+        // only on business_id would leave the no-business-context path with
+        // zero rate limiting at all -- an authenticated user could otherwise
+        // stream unlimited AI responses just by omitting x-business-id.
+        // Identity comes from the verified JWT claim, never from anything
+        // the client could set directly.
+        const withinChatRateLimit = await checkRateLimit(
+          `chat:${claims.claims.sub}`,
+          CHAT_RATE_LIMIT_PER_MINUTE,
+          60,
+        );
+        if (!withinChatRateLimit) {
+          return new Response(
+            JSON.stringify({ error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." }),
+            { status: 429 },
+          );
         }
 
         const body = (await request.json()) as { messages?: UIMessage[] };
