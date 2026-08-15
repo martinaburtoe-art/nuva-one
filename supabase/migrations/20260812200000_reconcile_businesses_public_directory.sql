@@ -25,9 +25,9 @@ COMMENT ON COLUMN public.businesses.comuna IS
 -- 20260811160000 (que no filtraba por plan) por la vigente en producción.
 CREATE OR REPLACE VIEW public.businesses_public AS
 SELECT
-  id, name, industry, public_slug, public_description,
+  id, name, industry, public_slug, public_description, created_at,
   logo_url, public_photos, public_social_links,
-  public_contact_email, public_contact_phone, comuna, created_at
+  public_contact_email, public_contact_phone, comuna
 FROM public.businesses
 WHERE public_enabled = true AND plan = 'pro';
 
