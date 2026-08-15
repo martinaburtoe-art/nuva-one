@@ -35,10 +35,142 @@ function Nav() { return <header className="sticky top-0 z-50 glass border-b bord
 
 function Hero() { return <section className="relative overflow-hidden"><div className="absolute inset-0"><img src="https://images.unsplash.com/photo-1556761175-4b46a572b786?fm=jpg&q=85&w=2400&auto=format&fit=crop" alt="Equipo de una pequeña empresa trabajando en su negocio" className="h-full w-full object-cover object-center" /><div className="absolute inset-0 bg-gradient-to-b from-background/45 via-background/70 to-background" /></div><div className="relative mx-auto max-w-7xl px-6 py-24 lg:py-32"><div className="mx-auto max-w-3xl text-center animate-fade-in-up"><Badge variant="secondary" className="mb-6 rounded-full border border-border/60 bg-background/60 px-4 py-1.5 text-xs font-medium backdrop-blur"><Sparkles className="mr-1.5 h-3 w-3" /> Nüva IA integrada a tu negocio</Badge><h1 className="text-balance text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">Deja las planillas. <span className="bg-gradient-primary bg-clip-text text-transparent">Maneja tu PYME desde un solo lugar</span>.</h1><p className="mt-6 text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">Inventario, ventas, finanzas y cotizaciones conectados en una sola plataforma, con inteligencia para entender lo que ocurre en tu negocio.</p><div className="mt-10 flex flex-wrap items-center justify-center gap-3"><Link to="/demo"><Button size="lg" className="h-12 px-6 shadow-elegant transition-transform hover:scale-105">Ver demo interactiva <ArrowRight className="ml-1.5 h-4 w-4" /></Button></Link><Link to="/auth" search={{ mode: "signup" }}><Button size="lg" variant="outline" className="h-12 px-6">Empezar gratis</Button></Link></div><div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success" /> 15 días gratis</span><span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success" /> Sin tarjeta de crédito</span><span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success" /> Cancela cuando quieras</span><span className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-success" /> Datos protegidos</span></div></div><p className="mx-auto mt-16 max-w-3xl text-center text-sm text-muted-foreground">Nüva One integra inventario, ventas, finanzas, cotizaciones, compras, marketing y Nüva IA en un solo sistema para pequeñas y medianas empresas en Chile y Latinoamérica.</p></div></section>; }
 
-const SHOWCASE_TABS = [{ id: "dashboard", label: "Resumen" }, { id: "ventas", label: "Ventas" }, { id: "ia", label: "Nüva IA" }] as const;
-function ProductShowcase() { const [tab,setTab]=useState<(typeof SHOWCASE_TABS)[number]["id"]>("dashboard"); return <section className="border-t bg-secondary/20 py-20"><div className="mx-auto max-w-6xl px-6"><div className="mx-auto mb-8 flex max-w-xs items-center justify-center gap-1 rounded-full border bg-background p-1 shadow-soft">{SHOWCASE_TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${tab===t.id?"bg-gradient-primary text-primary-foreground shadow-elegant":"text-muted-foreground hover:text-foreground"}`}>{t.label}</button>)}</div><div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border/60 bg-card shadow-elegant"><div className="flex items-center gap-2 border-b bg-secondary/40 px-4 py-3"><div className="flex gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-destructive/60"/><div className="h-2.5 w-2.5 rounded-full bg-warning/60"/><div className="h-2.5 w-2.5 rounded-full bg-success/60"/></div><div className="ml-2 flex-1 rounded-md bg-background/80 px-3 py-1 text-xs text-muted-foreground">Nüva One / {tab}</div></div>{tab==="dashboard"&&<div className="grid gap-4 p-6 sm:grid-cols-4">{[{l:"Ingresos",v:"$1.284.500",t:"+18,4%"},{l:"Gastos",v:"$532.400",t:"controlados"},{l:"Ventas",v:"86",t:"este mes"},{l:"Inventario",v:"$3.599.850",t:"valorizado"}].map(k=><div key={k.l} className="rounded-lg border bg-background p-4 shadow-soft"><div className="text-xs text-muted-foreground">{k.l}</div><div className="mt-1 text-xl font-semibold">{k.v}</div><div className="mt-1 text-xs text-success">{k.t}</div></div>)}<div className="col-span-full mt-2 grid h-36 grid-cols-12 items-end gap-1 rounded-lg border bg-background p-4">{[30,45,40,60,55,75,65,85,78,95,88,100].map((h,i)=><div key={i} className="rounded-t bg-gradient-primary opacity-80" style={{height:`${h}%`}}/>)}</div></div>}{tab==="ventas"&&<div className="p-6"><div className="mb-3 flex items-center justify-between"><div><div className="text-sm font-semibold">Ventas recientes</div><div className="text-xs text-muted-foreground">Ejemplo de la vista que usarás dentro de Nüva One</div></div><div className="rounded-md bg-gradient-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">+ Nueva venta</div></div><div className="overflow-hidden rounded-lg border"><div className="grid grid-cols-5 gap-2 bg-secondary/40 px-4 py-2 text-xs font-medium text-muted-foreground"><div>Cliente</div><div>Fecha</div><div>Canal</div><div>Estado</div><div className="text-right">Total</div></div>{[{c:"Comercial Los Andes",f:"09-08-2026",t:"$39.990"},{c:"Distribuidora Maule",f:"06-08-2026",t:"$119.970"},{c:"Tienda Centro",f:"05-08-2026",t:"$79.980"}].map((row,i)=><div key={i} className="grid grid-cols-5 gap-2 border-t px-4 py-3 text-sm"><div className="font-medium">{row.c}</div><div className="text-muted-foreground">{row.f}</div><div><span className="rounded-full bg-secondary px-2 py-0.5 text-xs">Tienda</span></div><div><span className="rounded-full bg-success/15 px-2 py-0.5 text-xs text-success">Pagada</span></div><div className="text-right font-semibold">{row.t}</div></div>)}</div></div>}{tab==="ia"&&<div className="p-6"><div className="rounded-xl border bg-background p-5"><div className="flex items-center justify-between"><div><div className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="h-4 w-4"/> Nüva IA</div><div className="mt-1 text-xs text-muted-foreground">Análisis de tu negocio en un solo lugar</div></div><Badge variant="secondary">Datos de ejemplo</Badge></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border p-4"><div className="text-xs text-muted-foreground">Ventas del mes</div><div className="mt-1 text-lg font-semibold">$1.284.500</div><div className="text-xs text-success">↑ 18,4%</div></div><div className="rounded-lg border p-4"><div className="text-xs text-muted-foreground">Stock crítico</div><div className="mt-1 text-lg font-semibold">7 productos</div><div className="text-xs text-warning">Revisar reposición</div></div><div className="rounded-lg border p-4"><div className="text-xs text-muted-foreground">Margen estimado</div><div className="mt-1 text-lg font-semibold">31,6%</div><div className="text-xs text-success">Saludable</div></div></div><div className="mt-4 rounded-lg bg-secondary/50 p-4"><div className="text-xs font-medium">Recomendación de Nüva IA</div><p className="mt-1 text-sm text-muted-foreground">Tus ventas crecieron 18,4% este mes. Hay 7 productos con stock crítico; conviene priorizar la reposición de los 3 de mayor rotación.</p></div><div className="mt-4 flex flex-wrap gap-2"><span className="rounded-full border px-3 py-1.5 text-xs">Analizar ventas</span><span className="rounded-full border px-3 py-1.5 text-xs">Revisar inventario</span><span className="rounded-full border px-3 py-1.5 text-xs">Analizar rentabilidad</span></div></div></div>}</div><p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">Así se ve Nüva One por dentro — una previsualización de los módulos que tendrás disponibles con tu negocio.</p></div></section>; }
+const SHOWCASE_MODULES = [
+            { id: "ventas", label: "Ventas", hint: "Controla tus ventas" },
+            { id: "caja", label: "Caja", hint: "Mira tu flujo" },
+            { id: "inventario", label: "Inventario", hint: "Controla tu stock" },
+            { id: "finanzas", label: "Finanzas", hint: "Entiende tus números" },
+            { id: "cotizaciones", label: "Cotizaciones", hint: "Convierte oportunidades" },
+            { id: "ia", label: "Nüva IA", hint: "Decide con inteligencia" },
+          ] as const;
 
-function DemoAndComparison(){return <section id="demo" className="border-t py-24"><div className="mx-auto max-w-7xl px-6"><div className="mx-auto max-w-3xl text-center"><Badge variant="secondary" className="mb-3">Demo interactiva</Badge><h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Conoce Nüva One antes de crear tu cuenta</h2><p className="mt-4 text-muted-foreground">Explora cómo se conectan ventas, inventario, finanzas y Nüva IA. La demo usa datos ficticios para que puedas recorrer el producto sin riesgo.</p><Link to="/demo" className="mt-8 inline-block"><Button size="lg" className="shadow-elegant">Entrar a la demo <ArrowRight className="ml-1.5 h-4 w-4"/></Button></Link></div><div className="mx-auto mt-14 overflow-hidden rounded-2xl border bg-card shadow-elegant"><div className="grid md:grid-cols-4"><div className="bg-gradient-primary p-7 text-primary-foreground md:col-span-1"><div className="text-sm font-semibold">¿Por qué Nüva One?</div><div className="mt-3 text-2xl font-bold">Una sola vista para decidir mejor.</div><p className="mt-4 text-sm text-primary-foreground/80">Menos planillas, menos herramientas separadas y más control.</p></div><div className="overflow-x-auto md:col-span-3"><table className="w-full min-w-[620px] text-sm"><thead><tr className="border-b bg-secondary/40"><th className="px-5 py-4 text-left font-semibold">Capacidad</th><th className="px-5 py-4 text-center font-semibold">Nüva One</th><th className="px-5 py-4 text-center font-semibold">Planillas</th><th className="px-5 py-4 text-center font-semibold">Herramientas separadas</th></tr></thead><tbody>{[["Ventas + clientes","✓","Parcial","✓"],["Inventario conectado","✓","Manual","Parcial"],["Finanzas y flujo de caja","✓","Manual","✓"],["Nüva IA con contexto del negocio","✓","—","Parcial"],["Cotizaciones y operaciones","✓","Manual","✓"],["Comunidad y red de PyMEs","✓","—","—"],["Todo en un solo sistema","✓","—","—"]].map(([a,b,c,d])=><tr key={a} className="border-b last:border-0"><td className="px-5 py-3.5 font-medium">{a}</td><td className="px-5 py-3.5 text-center font-semibold text-primary">{b}</td><td className="px-5 py-3.5 text-center text-muted-foreground">{c}</td><td className="px-5 py-3.5 text-center text-muted-foreground">{d}</td></tr>)}</tbody></table></div></div></div></div></section>;}
+          type ShowcaseModule = (typeof SHOWCASE_MODULES)[number]["id"];
+
+          function ProductShowcase() {
+            const [module, setModule] = useState<ShowcaseModule>("ventas");
+
+            return (
+              <section className="border-t bg-secondary/20 py-20 sm:py-24">
+                <div className="mx-auto max-w-7xl px-5 sm:px-6">
+                  <div className="mx-auto max-w-3xl text-center">
+                    <Badge variant="secondary" className="rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
+                      Producto en acción
+                    </Badge>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+                      Así se ve Nüva One por dentro
+                    </h2>
+                    <p className="mt-4 text-muted-foreground">
+                      Explora los módulos principales y descubre, de un vistazo, cómo puedes gestionar tu negocio desde un solo lugar.
+                    </p>
+                  </div>
+
+                  <div className="relative mx-auto mt-12 max-w-6xl overflow-hidden rounded-[2rem] border border-border/70 bg-card shadow-[0_30px_90px_-30px_oklch(0.35_0.12_270/0.35)]">
+                    <div className="flex items-center gap-2 border-b bg-secondary/40 px-4 py-3 sm:px-5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
+                      <div className="ml-2 flex-1 rounded-md border bg-background/80 px-3 py-1.5 text-[10px] text-muted-foreground sm:text-xs">
+                        app.nuva-one.cl / {module}
+                      </div>
+                    </div>
+
+                    <div className="grid lg:grid-cols-[205px_1fr]">
+                      <aside className="border-b bg-secondary/20 p-3 lg:border-b-0 lg:border-r sm:p-4">
+                        <div className="mb-3 flex items-center gap-2 px-2 py-2 text-sm font-semibold">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground shadow-glow">
+                            <Sparkles className="h-4 w-4" />
+                          </span>
+                          <span>Nüva One</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-1">
+                          {SHOWCASE_MODULES.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setModule(item.id)}
+                              className={`rounded-xl px-3 py-2.5 text-left transition-all ${module === item.id ? "bg-primary/10 font-semibold text-primary shadow-soft" : "text-muted-foreground hover:bg-background hover:text-foreground"}`}
+                            >
+                              <div className="text-xs sm:text-sm">{item.label}</div>
+                              <div className="mt-0.5 hidden text-[10px] font-normal opacity-70 lg:block">{item.hint}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </aside>
+
+                      <div className="min-w-0 p-4 sm:p-6">
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                          <div>
+                            <div className="text-xs text-muted-foreground">Vista previa del módulo</div>
+                            <h3 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{SHOWCASE_MODULES.find((item) => item.id === module)?.label}</h3>
+                          </div>
+                          <Badge variant="secondary">Datos de ejemplo</Badge>
+                        </div>
+
+                        {module === "ventas" && (
+                          <div className="mt-5 overflow-hidden rounded-2xl border bg-background">
+                            <div className="grid grid-cols-[1.5fr_1fr_auto] gap-3 bg-secondary/40 px-4 py-3 text-[10px] font-medium text-muted-foreground sm:text-xs">
+                              <span>Cliente</span><span>Estado</span><span className="text-right">Total</span>
+                            </div>
+                            {[['Comercial Los Andes', '$420.000'], ['Distribuidora Maule', '$285.000'], ['Tienda Centro', '$179.500']].map(([client, total]) => (
+                              <div key={client} className="grid grid-cols-[1.5fr_1fr_auto] items-center gap-3 border-t px-4 py-3 text-xs sm:text-sm">
+                                <span className="font-medium">{client}</span><span className="text-success">Pagada</span><span className="text-right font-semibold">{total}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {module === "caja" && (
+                          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                            {[['Saldo disponible', '$428.300'], ['Ingresos', '$1.284.500'], ['Egresos', '$856.200']].map(([label, value]) => (
+                              <div key={label} className="rounded-2xl border bg-background p-4"><div className="text-xs text-muted-foreground">{label}</div><div className="mt-2 text-xl font-semibold">{value}</div><div className="mt-1 text-[11px] text-success">Actualizado hoy</div></div>
+                            ))}
+                          </div>
+                        )}
+
+                        {module === "inventario" && (
+                          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                            {[['Café Premium 250 g', '24 un.', 'Normal'], ['Granos Colombia 1 kg', '4 un.', 'Stock crítico'], ['Vaso térmico', '7 un.', 'Reponer'], ['Pack Empresa', '38 un.', 'Normal']].map(([product, stock, status]) => (
+                              <div key={product} className="flex items-center justify-between rounded-2xl border bg-background p-4"><div><div className="text-sm font-medium">{product}</div><div className="mt-1 text-xs text-muted-foreground">Stock: {stock}</div></div><span className={`rounded-full px-2.5 py-1 text-[10px] ${status === 'Normal' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>{status}</span></div>
+                            ))}
+                          </div>
+                        )}
+
+                        {module === "finanzas" && (
+                          <div className="mt-5 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+                            <div className="rounded-2xl border bg-background p-5"><div className="text-xs text-muted-foreground">Resultado del período</div><div className="mt-1 text-2xl font-bold">$428.300</div><div className="mt-1 text-xs text-success">Margen estimado 32,8%</div><div className="mt-5 flex h-28 items-end gap-2">{[38,52,47,68,61,82,74,94,86,100].map((height, index) => <div key={index} className="flex-1 rounded-t bg-gradient-primary opacity-80" style={{ height: `${height}%` }} />)}</div></div>
+                            <div className="rounded-2xl border bg-background p-5"><div className="text-sm font-semibold">Indicadores</div><div className="mt-4 space-y-3 text-xs"><div className="flex justify-between"><span className="text-muted-foreground">Ingresos</span><span className="font-semibold">+18,4%</span></div><div className="flex justify-between"><span className="text-muted-foreground">Gastos</span><span className="font-semibold">$532.400</span></div><div className="flex justify-between"><span className="text-muted-foreground">Rentabilidad</span><span className="font-semibold text-success">Saludable</span></div></div></div>
+                          </div>
+                        )}
+
+                        {module === "cotizaciones" && (
+                          <div className="mt-5 space-y-3">
+                            {[['Cotización #1048', 'Comercial Los Andes', '$420.000', 'Enviada'], ['Cotización #1047', 'Distribuidora Maule', '$285.000', 'Aceptada'], ['Cotización #1046', 'Tienda Centro', '$179.500', 'En revisión']].map(([quote, client, total, status]) => (
+                              <div key={quote} className="flex flex-col gap-2 rounded-2xl border bg-background p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="text-sm font-medium">{quote}</div><div className="text-xs text-muted-foreground">{client}</div></div><div className="flex items-center gap-4"><span className="text-sm font-semibold">{total}</span><span className="rounded-full bg-secondary px-2.5 py-1 text-[10px]">{status}</span></div></div>
+                            ))}
+                          </div>
+                        )}
+
+                        {module === "ia" && (
+                          <div className="mt-5 rounded-2xl border bg-background p-5 sm:p-6">
+                            <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /><div><div className="text-sm font-semibold">Nüva IA</div><div className="text-xs text-muted-foreground">Analiza tu negocio y te ayuda a decidir</div></div></div>
+                            <div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border p-4"><div className="text-xs text-muted-foreground">Ventas</div><div className="mt-1 text-lg font-semibold">+18,4%</div></div><div className="rounded-xl border p-4"><div className="text-xs text-muted-foreground">Stock crítico</div><div className="mt-1 text-lg font-semibold">7 productos</div></div><div className="rounded-xl border p-4"><div className="text-xs text-muted-foreground">Margen</div><div className="mt-1 text-lg font-semibold">32,8%</div></div></div>
+                            <div className="mt-4 rounded-xl bg-primary/5 p-4 text-sm"><div className="font-medium">Recomendación</div><p className="mt-1 text-muted-foreground">Prioriza la reposición de los 3 productos con mayor rotación y revisa el margen de las categorías con menor rentabilidad.</p></div>
+                          </div>
+                        )}
+
+                        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                          <p className="text-xs text-muted-foreground">Previsualización del producto · Sin datos reales</p>
+                          <Link to="/demo"><Button size="sm">Explorar demo completa <ArrowRight className="ml-1 h-3.5 w-3.5" /></Button></Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          function DemoAndComparison(){return <section id="demo" className="border-t py-24"><div className="mx-auto max-w-7xl px-6"><div className="mx-auto max-w-3xl text-center"><Badge variant="secondary" className="mb-3">Demo interactiva</Badge><h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Conoce Nüva One antes de crear tu cuenta</h2><p className="mt-4 text-muted-foreground">Explora cómo se conectan ventas, inventario, finanzas y Nüva IA. La demo usa datos ficticios para que puedas recorrer el producto sin riesgo.</p><Link to="/demo" className="mt-8 inline-block"><Button size="lg" className="shadow-elegant">Entrar a la demo <ArrowRight className="ml-1.5 h-4 w-4"/></Button></Link></div><div className="mx-auto mt-14 overflow-hidden rounded-2xl border bg-card shadow-elegant"><div className="grid md:grid-cols-4"><div className="bg-gradient-primary p-7 text-primary-foreground md:col-span-1"><div className="text-sm font-semibold">¿Por qué Nüva One?</div><div className="mt-3 text-2xl font-bold">Una sola vista para decidir mejor.</div><p className="mt-4 text-sm text-primary-foreground/80">Menos planillas, menos herramientas separadas y más control.</p></div><div className="overflow-x-auto md:col-span-3"><table className="w-full min-w-[620px] text-sm"><thead><tr className="border-b bg-secondary/40"><th className="px-5 py-4 text-left font-semibold">Capacidad</th><th className="px-5 py-4 text-center font-semibold">Nüva One</th><th className="px-5 py-4 text-center font-semibold">Planillas</th><th className="px-5 py-4 text-center font-semibold">Herramientas separadas</th></tr></thead><tbody>{[["Ventas + clientes","✓","Parcial","✓"],["Inventario conectado","✓","Manual","Parcial"],["Finanzas y flujo de caja","✓","Manual","✓"],["Nüva IA con contexto del negocio","✓","—","Parcial"],["Cotizaciones y operaciones","✓","Manual","✓"],["Comunidad y red de PyMEs","✓","—","—"],["Todo en un solo sistema","✓","—","—"]].map(([a,b,c,d])=><tr key={a} className="border-b last:border-0"><td className="px-5 py-3.5 font-medium">{a}</td><td className="px-5 py-3.5 text-center font-semibold text-primary">{b}</td><td className="px-5 py-3.5 text-center text-muted-foreground">{c}</td><td className="px-5 py-3.5 text-center text-muted-foreground">{d}</td></tr>)}</tbody></table></div></div></div></div></section>;}
 
 const FORUM_CATEGORY_LABELS:Record<string,string>={general:"General",ventas:"Ventas",marketing:"Marketing",finanzas:"Finanzas",operaciones:"Operaciones",tecnologia:"Tecnología",legal:"Legal"};
 function ForumPreview(){const{data:topics,isLoading}=useQuery({queryKey:["forum_topics_preview"],queryFn:async()=>{const{data,error}=await supabase.from("forum_topics").select("id, title, body, category, business_name, business_industry, reply_count, views").order("views",{ascending:false}).limit(4);if(error)throw error;return data;}});if(!isLoading&&(!topics||topics.length===0))return <section className="border-t bg-secondary/20 py-20"><div className="mx-auto max-w-6xl px-6"><Badge variant="secondary" className="mb-3">Comunidad</Badge><h2 className="text-3xl font-bold tracking-tight">Foro de PyMEs chilenas</h2><p className="mt-2 max-w-xl text-muted-foreground">Un espacio para resolver dudas de ventas, marketing, finanzas y operación entre dueños de negocio. Sé el primero en abrir un tema.</p><Link to="/foro" className="mt-6 inline-block"><Button variant="outline">Ir al foro <ArrowRight className="ml-1.5 h-4 w-4"/></Button></Link></div></section>;return <section className="border-t bg-secondary/20 py-20"><div className="mx-auto max-w-6xl px-6"><div className="mb-10 flex flex-wrap items-end justify-between gap-4"><div><Badge variant="secondary" className="mb-3">Comunidad</Badge><h2 className="text-3xl font-bold tracking-tight">Foro más popular</h2><p className="mt-2 max-w-xl text-muted-foreground">Dueños de PyMEs chilenas resolviendo dudas de ventas, marketing, finanzas y operación. Abierto para leer sin cuenta.</p></div><Link to="/foro"><Button variant="outline">Ver todos los temas <ArrowRight className="ml-1.5 h-4 w-4"/></Button></Link></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{isLoading&&Array.from({length:4}).map((_,i)=><div key={i} className="h-56 animate-pulse rounded-xl border bg-card"/>)}{topics?.map(t=><Link key={t.id} to="/foro/$topicId" params={{topicId:t.id}} className="group flex flex-col rounded-xl border bg-card p-5 shadow-soft transition-shadow hover:shadow-elegant"><Badge variant="secondary" className="mb-2 w-fit text-[10px]">{FORUM_CATEGORY_LABELS[t.category]??t.category}</Badge><h3 className="line-clamp-2 text-sm font-semibold group-hover:text-primary">{t.title}</h3><p className="mt-1.5 line-clamp-3 flex-1 text-xs text-muted-foreground">{t.body}</p><div className="mt-3 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground"><span className="truncate">{t.business_name}</span><div className="flex shrink-0 items-center gap-3"><span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5"/>{t.views}</span><span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5"/>{t.reply_count}</span></div></div></Link>)}</div></div></section>;}
