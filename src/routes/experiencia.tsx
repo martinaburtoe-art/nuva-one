@@ -135,7 +135,9 @@ function ExperiencePage() {
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                     <div>
                       <div className="text-xs text-muted-foreground">Resumen del negocio</div>
-                      <div className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">Buenos días 👋</div>
+                      <div className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                        Buenos días 👋
+                      </div>
                     </div>
                     <div className="rounded-full border bg-success/5 px-3 py-1 text-xs text-success">
                       Negocio saludable
@@ -143,10 +145,30 @@ function ExperiencePage() {
                   </div>
 
                   <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-                    <MiniMetric icon={<TrendingUp className="h-3.5 w-3.5" />} label="Ingresos" value="$4,82 M" trend="+18,4%" />
-                    <MiniMetric icon={<WalletCards className="h-3.5 w-3.5" />} label="Flujo neto" value="$1,36 M" trend="+9,2%" />
-                    <MiniMetric icon={<Boxes className="h-3.5 w-3.5" />} label="Inventario" value="$2,14 M" trend="128 SKU" />
-                    <MiniMetric icon={<BarChart3 className="h-3.5 w-3.5" />} label="Nüva Score" value="86/100" trend="+6 pts" />
+                    <MiniMetric
+                      icon={<TrendingUp className="h-3.5 w-3.5" />}
+                      label="Ingresos"
+                      value="$4,82 M"
+                      trend="+18,4%"
+                    />
+                    <MiniMetric
+                      icon={<WalletCards className="h-3.5 w-3.5" />}
+                      label="Flujo neto"
+                      value="$1,36 M"
+                      trend="+9,2%"
+                    />
+                    <MiniMetric
+                      icon={<Boxes className="h-3.5 w-3.5" />}
+                      label="Inventario"
+                      value="$2,14 M"
+                      trend="128 SKU"
+                    />
+                    <MiniMetric
+                      icon={<BarChart3 className="h-3.5 w-3.5" />}
+                      label="Nüva Score"
+                      value="86/100"
+                      trend="+6 pts"
+                    />
                   </div>
 
                   <div className="mt-4 grid gap-4 md:grid-cols-[1.5fr_1fr]">
@@ -159,14 +181,16 @@ function ExperiencePage() {
                         <BarChart3 className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="mt-5 flex h-36 items-end gap-2 sm:gap-3">
-                        {[38, 54, 48, 67, 61, 78, 72, 92, 84, 100, 91, 112].map((height, index) => (
-                          <div key={index} className="flex h-full flex-1 items-end">
-                            <div
-                              className="w-full rounded-t bg-gradient-primary opacity-80 transition-transform duration-500 hover:scale-y-105"
-                              style={{ height: `${Math.min(height, 100)}%` }}
-                            />
-                          </div>
-                        ))}
+                        {[38, 54, 48, 67, 61, 78, 72, 92, 84, 100, 91, 112].map(
+                          (height, index) => (
+                            <div key={index} className="flex h-full flex-1 items-end">
+                              <div
+                                className="w-full rounded-t bg-gradient-primary opacity-80 transition-transform duration-500 hover:scale-y-105"
+                                style={{ height: `${Math.min(height, 100)}%` }}
+                              />
+                            </div>
+                          ),
+                        )}
                       </div>
                     </div>
 
@@ -196,34 +220,65 @@ function ExperiencePage() {
       <section className="border-y bg-secondary/20 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <Feature icon={<TrendingUp />} title="Entiende" text="Convierte tus movimientos en indicadores claros y accionables." />
-            <Feature icon={<Boxes />} title="Controla" text="Mantén ventas, inventario y finanzas conectados en el mismo lugar." />
-            <Feature icon={<Bot />} title="Decide" text="Usa IA para interpretar tu negocio y detectar oportunidades." />
+            <Feature
+              icon={<TrendingUp />}
+              title="Entiende"
+              text="Convierte tus movimientos en indicadores claros y accionables."
+            />
+            <Feature
+              icon={<Boxes />}
+              title="Controla"
+              text="Mantén ventas, inventario y finanzas conectados en el mismo lugar."
+            />
+            <Feature
+              icon={<Bot />}
+              title="Decide"
+              text="Usa IA para interpretar tu negocio y detectar oportunidades."
+            />
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-5xl px-5 py-20 text-center sm:px-6 sm:py-24">
         <Sparkles className="mx-auto h-7 w-7 text-primary" />
-        <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Tu negocio merece una vista así.</h2>
+        <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          Tu negocio merece una vista así.
+        </h2>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-          Explora la demo con datos ficticios o crea tu cuenta para empezar a trabajar con tus propios datos.
+          Explora la demo con datos ficticios o crea tu cuenta para empezar a trabajar con tus propios
+          datos.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link to="/demo">
-            <Button size="lg">Ver demo interactiva <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
+            <Button size="lg">
+              Ver demo interactiva <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
           </Link>
           <Link to="/auth" search={{ mode: "signup" }}>
-            <Button size="lg" variant="outline">Empezar gratis</Button>
+            <Button size="lg" variant="outline">
+              Empezar gratis
+            </Button>
           </Link>
         </div>
-        <p className="mt-5 text-xs text-muted-foreground">Nüva One · Gestión inteligente para PYMEs</p>
+        <p className="mt-5 text-xs text-muted-foreground">
+          Nüva One · Gestión inteligente para PYMEs
+        </p>
       </section>
     </main>
   );
 }
 
-function MiniMetric({ icon, label, value, trend }: { icon: React.ReactNode; label: string; value: string; trend: string }) {
+function MiniMetric({
+  icon,
+  label,
+  value,
+  trend,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  trend: string;
+}) {
   return (
     <div className="rounded-xl border bg-card p-3">
       <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -236,10 +291,20 @@ function MiniMetric({ icon, label, value, trend }: { icon: React.ReactNode; labe
   );
 }
 
-function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function Feature({
+  icon,
+  title,
+  text,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+}) {
   return (
     <div className="rounded-2xl border bg-card/80 p-5 shadow-soft transition-transform duration-300 hover:-translate-y-1">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">{icon}</div>
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </div>
       <h3 className="mt-4 font-semibold">{title}</h3>
       <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{text}</p>
     </div>
