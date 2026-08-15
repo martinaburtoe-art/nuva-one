@@ -1,0 +1,57 @@
+name: Apply homepage showcase integration
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, 'integrate interactive homepage product preview') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Apply showcase safely
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          index = Path('src/routes/index.tsx')
+          workflow = Path('.github/workflows/integrate-home-showcase.yml').read_text()
+          text = index.read_text()
+          start = text.index('const SHOWCASE_TABS =')
+          end = text.index('function DemoAndComparison', start)
+          match = re.search(r"replacement = r'''(.*?)'''", workflow, re.S)
+          if not match:
+              raise SystemExit('Could not recover homepage showcase replacement')
+          replacement = match.group(1)
+          index.write_text(text[:start] + replacement + text[end:])
+          print('Homepage showcase integrated')
+          PY
+
+      - name: Verify
+        run: |
+          grep -n "SHOWCASE_MODULES" src/routes/index.tsx
+          grep -n "Caja" src/routes/index.tsx
+          grep -n "Cotizaciones" src/routes/index.tsx
+          grep -n "Nüva IA" src/routes/index.tsx
+          npm ci
+          npm run typecheck
+          npm run build
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/index.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: integrate interactive homepage product preview"
+          git push
