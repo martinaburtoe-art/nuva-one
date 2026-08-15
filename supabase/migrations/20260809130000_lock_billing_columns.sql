@@ -23,11 +23,12 @@
 
 REVOKE UPDATE ON public.businesses FROM authenticated;
 
--- Reconciliación de drift (mismo patrón que 20260812200000): estas dos
+-- Reconciliación de drift (mismo patrón que 20260812200000): estas tres
 -- columnas ya existen en producción sin migración trackeada.
 ALTER TABLE public.businesses
   ADD COLUMN IF NOT EXISTS giro TEXT,
-  ADD COLUMN IF NOT EXISTS address TEXT;
+  ADD COLUMN IF NOT EXISTS address TEXT,
+  ADD COLUMN IF NOT EXISTS comuna TEXT;
 
 GRANT UPDATE (
   name, industry, size, logo_url, tax_id, webhook_url, giro, address, comuna
