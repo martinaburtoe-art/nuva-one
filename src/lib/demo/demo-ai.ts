@@ -1,13 +1,19 @@
-import { DEMO_BUSINESS, DEMO_PRODUCTS, money } from "./demo-data";
+import { DEMO_BUSINESS, money, type DemoProduct } from "./demo-data";
 
-export function demoAiAnswer(question: string) {
+export function demoAiAnswer(
+  question: string,
+  state: { products: DemoProduct[]; revenue: number } = {
+    products: [],
+    revenue: DEMO_BUSINESS.monthlyRevenue,
+  },
+) {
   const q = question.toLowerCase();
   if (q.includes("stock") || q.includes("inventario")) {
-    const low = DEMO_PRODUCTS.filter((product) => product.stock <= product.reorderAt);
-    return `Tienes ${low.length} productos para revisar. Recomiendo reponer ${low.map((p) => p.name).join(", ")}.`;
+    const low = state.products.filter((product) => product.stock <= product.reorderAt);
+    return `Tienes ${low.length} productos para revisar. Recomiendo reponer ${low.map((p) => p.name).join(", ") || "los productos que estén bajo su punto de reposición"}.`;
   }
   if (q.includes("venta") || q.includes("ingreso")) {
-    return `Alma Café registra ${money(DEMO_BUSINESS.monthlyRevenue)} de ingresos del período y un margen saludable. La oportunidad está en aumentar la recurrencia de clientes.`;
+    return `Alma Café registra ${money(state.revenue)} de ingresos del período y un margen saludable. La oportunidad está en aumentar la recurrencia de clientes.`;
   }
   if (q.includes("recomend") || q.includes("qué harías") || q.includes("que harías")) {
     return "Priorizaría reposición de Granos Colombia, una campaña para clientes recurrentes y seguimiento comercial a los clientes de mayor valor.";
