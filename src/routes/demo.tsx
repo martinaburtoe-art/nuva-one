@@ -11,115 +11,43 @@ import { GuidedTour } from "@/components/demo/guided-tour";
 import { trackDemoEvent } from "@/lib/demo/demo-analytics";
 
 export const Route = createFileRoute("/demo")({
-  head: () => ({
-    meta: [
-      { title: "Demo interactiva — Nüva One" },
-      { name: "description", content: "Explora Nüva One con una demo ficticia de Alma Café. Sin registro, sin tarjeta y sin datos reales." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Demo interactiva — Nüva One" }, { name: "description", content: "Explora Nüva One con una demo ficticia de Alma Café. Sin registro, sin tarjeta y sin datos reales." }] }),
   component: DemoPage,
 });
 
-function DemoPage() {
-  return <DemoStateProvider><DemoExperience /></DemoStateProvider>;
-}
+function DemoPage() { return <DemoStateProvider><DemoExperience /></DemoStateProvider>; }
 
 function DemoExperience() {
   const [tourStep, setTourStep] = useState(0);
   const [tourOpen, setTourOpen] = useState(true);
   const [aiQuestion, setAiQuestion] = useState("¿Qué debería hacer primero?");
   const [aiAnswer, setAiAnswer] = useState(() => demoAiAnswer("¿Qué debería hacer primero?"));
-  const { products, sales, customers, simulatedSales, revenueDelta, sell, reset } = useDemoState();
-
+  const { products, customers, simulatedSales, revenueDelta, sell, reset } = useDemoState();
   const lowStock = useMemo(() => products.filter((product) => product.stock <= product.reorderAt), [products]);
   const revenue = DEMO_BUSINESS.monthlyRevenue + revenueDelta;
 
-  const simulateSale = () => {
-    sell("coffee");
-    trackDemoEvent("simulated_sale", { product: "coffee" });
-    setTourOpen(false);
-  };
-
-  const askAi = () => {
-    setAiAnswer(demoAiAnswer(aiQuestion));
-    trackDemoEvent("tour_step", { step: 8, action: "ai_question" });
-  };
-
-  const resetDemo = () => {
-    reset();
-    setAiQuestion("¿Qué debería hacer primero?");
-    setAiAnswer(demoAiAnswer("¿Qué debería hacer primero?"));
-    setTourStep(0);
-    setTourOpen(true);
-  };
+  const simulateSale = () => { sell("coffee"); trackDemoEvent("simulated_sale", { product: "coffee" }); setTourOpen(false); };
+  const askAi = () => { setAiAnswer(demoAiAnswer(aiQuestion)); trackDemoEvent("tour_step", { step: 8, action: "ai_question" }); };
+  const resetDemo = () => { reset(); setAiQuestion("¿Qué debería hacer primero?"); setAiAnswer(demoAiAnswer("¿Qué debería hacer primero?")); setTourStep(0); setTourOpen(true); };
 
   return (
     <main className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-2 font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span>Nüva One</Link>
-          <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><span className="h-2 w-2 rounded-full bg-success" /> Demo segura · datos ficticios</div>
-          <div className="flex gap-2"><Button variant="ghost" size="sm" onClick={resetDemo}><RotateCcw className="mr-1 h-3.5 w-3.5" />Reiniciar</Button><Link to="/auth" search={{ mode: "signup" }}><Button size="sm">Crear mi cuenta <ArrowRight className="ml-1 h-4 w-4" /></Button></Link></div>
-        </div>
-      </header>
-
+      <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6"><Link to="/" className="flex items-center gap-2 font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span>Nüva One</Link><div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><span className="h-2 w-2 rounded-full bg-success" /> Demo segura · datos ficticios</div><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={resetDemo}><RotateCcw className="mr-1 h-3.5 w-3.5" />Reiniciar</Button><Link to="/auth" search={{ mode: "signup" }}><Button size="sm">Crear mi cuenta <ArrowRight className="ml-1 h-4 w-4" /></Button></Link></div></div></header>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <section className="mb-8 rounded-3xl border bg-gradient-to-br from-card via-card to-secondary/50 p-6 shadow-elegant sm:p-8" data-demo="overview">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-            <div>
-              <Badge className="mb-3">Demo interactiva</Badge>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Así se siente manejar <span className="bg-gradient-primary bg-clip-text text-transparent">Alma Café</span> con Nüva One.</h1>
-              <p className="mt-3 max-w-2xl text-muted-foreground">Explora un negocio ficticio, toma una decisión y observa cómo Nüva conecta inventario, ventas, finanzas, clientes e IA.</p>
-            </div>
-            <div className="rounded-2xl border bg-background/70 px-5 py-4"><div className="text-xs text-muted-foreground">Negocio de demostración</div><div className="font-semibold">{DEMO_BUSINESS.name}</div><div className="text-xs text-muted-foreground">{DEMO_BUSINESS.industry} · {DEMO_BUSINESS.location}</div></div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-demo="score">
-          <Metric icon={<CircleDollarSign className="h-4 w-4" />} label="Ingresos" value={money(revenue)} trend={simulatedSales ? `+${money(revenueDelta)}` : "+18%"} />
-          <Metric icon={<TrendingUp className="h-4 w-4" />} label="Nüva Score" value={`${DEMO_BUSINESS.score}/100`} trend="Buen nivel" />
-          <Metric icon={<Boxes className="h-4 w-4" />} label="Alertas de stock" value={String(lowStock.length)} trend="Requiere atención" />
-          <Metric icon={<Users className="h-4 w-4" />} label="Clientes activos" value={String(customers.length)} trend="Conectados" />
-        </section>
-
-        <section className="mt-6 grid gap-6 lg:grid-cols-3" data-demo="explain">
-          <Card className="p-5 lg:col-span-2">
-            <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /><h2 className="font-semibold">Explícame mi negocio</h2></div>
-            <p className="mt-2 text-sm text-muted-foreground">Nüva transforma los números en decisiones comprensibles.</p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <Insight title="Fortaleza" text="El margen permite crecer sin perder control." />
-              <Insight title="Alerta" text={`${lowStock.length} productos están bajo el punto de reposición.`} />
-              <Insight title="Oportunidad" text="Los clientes recurrentes pueden aumentar su frecuencia." />
-            </div>
-          </Card>
-          <Card className="p-5" data-demo="recommendation"><div className="flex items-center gap-2"><Lightbulb className="h-5 w-5 text-primary" /><h2 className="font-semibold">Siguiente mejor acción</h2></div><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Reponer Granos Colombia y contactar a clientes de mayor valor con una oferta de recompra.</p><Button className="mt-5 w-full" variant="outline" onClick={() => setTourOpen(true)}>Ver por qué <ArrowRight className="ml-1 h-4 w-4" /></Button></Card>
-        </section>
-
-        <section className="mt-6 grid gap-6 lg:grid-cols-2" data-demo="inventory">
-          <Card className="p-5"><div className="flex items-center justify-between"><div><h2 className="font-semibold">Inventario</h2><p className="text-sm text-muted-foreground">Detecta qué necesita atención.</p></div><Boxes className="h-5 w-5 text-primary" /></div><div className="mt-4 space-y-3">{products.map((product) => <div key={product.id} className="flex items-center justify-between rounded-xl border p-3"><div><div className="text-sm font-medium">{product.name}</div><div className="text-xs text-muted-foreground">{product.category}</div></div><Badge variant={product.stock <= product.reorderAt ? "destructive" : "secondary"}>{product.stock} un.</Badge></div>)}</div></Card>
-          <Card className="p-5" data-demo="sale"><div className="flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-primary" /><h2 className="font-semibold">Prueba una venta</h2></div><p className="mt-2 text-sm text-muted-foreground">Simula la venta de un café. No se procesa ningún pago ni se escribe en una base de datos.</p><div className="mt-5 rounded-2xl border bg-secondary/30 p-4"><div className="flex items-center justify-between"><div><div className="font-medium">Café de especialidad 250 g</div><div className="text-sm text-muted-foreground">Stock actual: {products.find((p) => p.id === "coffee")?.stock ?? 0}</div></div><div className="text-lg font-semibold">{money(8_990)}</div></div><Button className="mt-4 w-full" onClick={simulateSale} disabled={(products.find((p) => p.id === "coffee")?.stock ?? 0) === 0}>{simulatedSales ? "Venta simulada nuevamente" : "Simular venta"} <ArrowRight className="ml-1 h-4 w-4" /></Button></div>{simulatedSales > 0 && <div className="mt-3 flex items-center gap-2 text-sm text-success"><CheckCircle2 className="h-4 w-4" />Ingresos y stock se actualizaron en la demo.</div>}</Card>
-        </section>
-
-        <section className="mt-6 grid gap-6 lg:grid-cols-2" data-demo="finance">
-          <Card className="p-5"><div className="flex items-center gap-2"><CircleDollarSign className="h-5 w-5 text-primary" /><h2 className="font-semibold">Finanzas</h2></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl border p-4"><div className="text-xs text-muted-foreground">Ingresos</div><div className="mt-1 text-xl font-semibold">{money(revenue)}</div></div><div className="rounded-xl border p-4"><div className="text-xs text-muted-foreground">Gastos</div><div className="mt-1 text-xl font-semibold">{money(DEMO_BUSINESS.monthlyExpenses)}</div></div></div></Card>
-          <Card className="p-5" data-demo="crm"><div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h2 className="font-semibold">CRM</h2></div><div className="mt-4 space-y-2">{customers.map((customer) => <div key={customer.id} className="flex items-center justify-between rounded-lg border p-3"><div><div className="text-sm font-medium">{customer.name}</div><div className="text-xs text-muted-foreground">{customer.company} · {customer.lastPurchase}</div></div><span className="text-sm font-medium">{money(customer.value)}</span></div>)}</div></Card>
-        </section>
-
-        <section className="mt-6" data-demo="ai"><Card className="p-5 sm:p-6"><div className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /><h2 className="font-semibold">Asistente IA · demo</h2></div><p className="mt-2 text-sm text-muted-foreground">Haz una pregunta sobre Alma Café. La respuesta es local y simulada: no hay llamadas a modelos ni consumo de cuota.</p><div className="mt-4 flex flex-col gap-2 sm:flex-row"><input value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") askAi(); }} className="h-10 flex-1 rounded-md border bg-background px-3 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring" aria-label="Pregunta para la IA demo" /><Button onClick={askAi}>Preguntar</Button></div><div className="mt-4 rounded-xl bg-secondary/40 p-4 text-sm leading-relaxed">{aiAnswer}</div></Card></section>
-
+        <section className="mb-8 rounded-3xl border bg-gradient-to-br from-card via-card to-secondary/50 p-6 shadow-elegant sm:p-8" data-demo="overview"><div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"><div><Badge className="mb-3">Demo interactiva</Badge><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Así se siente manejar <span className="bg-gradient-primary bg-clip-text text-transparent">Alma Café</span> con Nüva One.</h1><p className="mt-3 max-w-2xl text-muted-foreground">Explora un negocio ficticio, toma una decisión y observa cómo Nüva conecta inventario, ventas, finanzas, clientes e IA.</p></div><div className="rounded-2xl border bg-background/70 px-5 py-4"><div className="text-xs text-muted-foreground">Negocio de demostración</div><div className="font-semibold">{DEMO_BUSINESS.name}</div><div className="text-xs text-muted-foreground">{DEMO_BUSINESS.industry} · {DEMO_BUSINESS.location}</div></div></div></section>
+        <section className="mb-8 rounded-3xl border bg-primary/[0.04] p-6 sm:p-8" data-demo="value-map"><div className="mx-auto max-w-3xl text-center"><Badge variant="secondary" className="rounded-full">Una muestra del ecosistema Nüva One</Badge><h2 className="mt-3 text-2xl font-bold sm:text-3xl">No es solo un dashboard. Es una forma de dirigir tu negocio.</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">Esta demo muestra solo una parte de la plataforma. Nüva One conecta operación, análisis e inteligencia para ayudarte a <strong className="text-foreground">entender</strong> lo que ocurre, <strong className="text-foreground">controlar</strong> tu negocio y <strong className="text-foreground">decidir</strong> qué hacer después.</p><div className="mt-6 grid gap-3 sm:grid-cols-3"><ValueStep number="01" title="Entiende" text="Nüva Score y Explícame mi negocio convierten datos en contexto." /><ValueStep number="02" title="Controla" text="Ventas, inventario, finanzas y clientes conectados." /><ValueStep number="03" title="Decide" text="Nüva IA y recomendaciones te ayudan a actuar." /></div></div></section>
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-demo="score"><Metric icon={<CircleDollarSign className="h-4 w-4" />} label="Ingresos" value={money(revenue)} trend={simulatedSales ? `+${money(revenueDelta)}` : "+18%"} /><Metric icon={<TrendingUp className="h-4 w-4" />} label="Nüva Score" value={`${DEMO_BUSINESS.score}/100`} trend="Buen nivel" /><Metric icon={<Boxes className="h-4 w-4" />} label="Alertas de stock" value={String(lowStock.length)} trend="Requiere atención" /><Metric icon={<Users className="h-4 w-4" />} label="Clientes activos" value={String(customers.length)} trend="Conectados" /></section>
+        <section className="mt-6 grid gap-6 lg:grid-cols-3" data-demo="explain"><Card className="p-5 lg:col-span-2"><div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /><h2 className="font-semibold">Explícame mi negocio</h2></div><p className="mt-2 text-sm text-muted-foreground">Nüva transforma los números en decisiones comprensibles.</p><div className="mt-5 grid gap-3 sm:grid-cols-3"><Insight title="Fortaleza" text="El margen permite crecer sin perder control." /><Insight title="Alerta" text={`${lowStock.length} productos están bajo el punto de reposición.`} /><Insight title="Oportunidad" text="Los clientes recurrentes pueden aumentar su frecuencia." /></div></Card><Card className="p-5" data-demo="recommendation"><div className="flex items-center gap-2"><Lightbulb className="h-5 w-5 text-primary" /><h2 className="font-semibold">Siguiente mejor acción</h2></div><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Reponer Granos Colombia y contactar a clientes de mayor valor con una oferta de recompra.</p><Button className="mt-5 w-full" variant="outline" onClick={() => setTourOpen(true)}>Ver por qué <ArrowRight className="ml-1 h-4 w-4" /></Button></Card></section>
+        <section className="mt-6 grid gap-6 lg:grid-cols-2" data-demo="inventory"><Card className="p-5"><div className="flex items-center justify-between"><div><h2 className="font-semibold">Inventario</h2><p className="text-sm text-muted-foreground">Detecta qué necesita atención.</p></div><Boxes className="h-5 w-5 text-primary" /></div><div className="mt-4 space-y-3">{products.map((product) => <div key={product.id} className="flex items-center justify-between rounded-xl border p-3"><div><div className="text-sm font-medium">{product.name}</div><div className="text-xs text-muted-foreground">{product.category}</div></div><Badge variant={product.stock <= product.reorderAt ? "destructive" : "secondary"}>{product.stock} un.</Badge></div>)}</div></Card><Card className="p-5" data-demo="sale"><div className="flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-primary" /><h2 className="font-semibold">Prueba una venta</h2></div><p className="mt-2 text-sm text-muted-foreground">Simula la venta de un café. No se procesa ningún pago ni se escribe en una base de datos.</p><div className="mt-5 rounded-2xl border bg-secondary/30 p-4"><div className="flex items-center justify-between"><div><div className="font-medium">Café de especialidad 250 g</div><div className="text-sm text-muted-foreground">Stock actual: {products.find((p) => p.id === "coffee")?.stock ?? 0}</div></div><div className="text-lg font-semibold">{money(8_990)}</div></div><Button className="mt-4 w-full" onClick={simulateSale} disabled={(products.find((p) => p.id === "coffee")?.stock ?? 0) === 0}>{simulatedSales ? "Venta simulada nuevamente" : "Simular venta"} <ArrowRight className="ml-1 h-4 w-4" /></Button></div>{simulatedSales > 0 && <div className="mt-3 flex items-center gap-2 text-sm text-success"><CheckCircle2 className="h-4 w-4" />Ingresos y stock se actualizaron en la demo.</div>}</Card></section>
+        <section className="mt-6 grid gap-6 lg:grid-cols-2" data-demo="finance"><Card className="p-5"><div className="flex items-center gap-2"><CircleDollarSign className="h-5 w-5 text-primary" /><h2 className="font-semibold">Finanzas</h2></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl border p-4"><div className="text-xs text-muted-foreground">Ingresos</div><div className="mt-1 text-xl font-semibold">{money(revenue)}</div></div><div className="rounded-xl border p-4"><div className="text-xs text-muted-foreground">Gastos</div><div className="mt-1 text-xl font-semibold">{money(DEMO_BUSINESS.monthlyExpenses)}</div></div></div></Card><Card className="p-5" data-demo="crm"><div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h2 className="font-semibold">CRM</h2></div><div className="mt-4 space-y-2">{customers.map((customer) => <div key={customer.id} className="flex items-center justify-between rounded-lg border p-3"><div><div className="text-sm font-medium">{customer.name}</div><div className="text-xs text-muted-foreground">{customer.company} · {customer.lastPurchase}</div></div><span className="text-sm font-medium">{money(customer.value)}</span></div>)}</div></Card></section>
+        <section className="mt-6" data-demo="ai"><Card className="p-5 sm:p-6"><div className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /><h2 className="font-semibold">Nüva IA · demo</h2></div><p className="mt-2 text-sm text-muted-foreground">Haz una pregunta sobre Alma Café. En esta experiencia la respuesta es local y simulada: no hay llamadas a modelos ni consumo de cuota.</p><div className="mt-4 flex flex-col gap-2 sm:flex-row"><input value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") askAi(); }} className="h-10 flex-1 rounded-md border bg-background px-3 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring" aria-label="Pregunta para Nüva IA demo" /><Button onClick={askAi}>Preguntar</Button></div><div className="mt-4 rounded-xl bg-secondary/40 p-4 text-sm leading-relaxed">{aiAnswer}</div></Card></section>
         <section className="mt-8 rounded-3xl border bg-card p-6 text-center shadow-elegant sm:p-8" data-demo="cta"><Sparkles className="mx-auto h-7 w-7 text-primary" /><h2 className="mt-3 text-2xl font-bold">¿Listo para ver tus propios datos así?</h2><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Crea tu cuenta y comienza con 15 días gratis. Sin tarjeta de crédito.</p><div className="mt-5 flex flex-wrap justify-center gap-3"><Link to="/auth" search={{ mode: "signup" }}><Button size="lg" onClick={() => trackDemoEvent("cta_clicked", { location: "demo_end" })}>Empezar gratis <ArrowRight className="ml-1 h-4 w-4" /></Button></Link><Link to="/"><Button size="lg" variant="outline">Volver al inicio</Button></Link></div></section>
       </div>
-
       {tourOpen && <GuidedTour step={tourStep} onStep={setTourStep} onClose={() => setTourOpen(false)} />}
       <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground">Demo pública de Nüva One · Todos los datos de esta experiencia son ficticios.</footer>
     </main>
   );
 }
-
-function Metric({ icon, label, value, trend }: { icon: React.ReactNode; label: string; value: string; trend: string }) {
-  return <Card className="p-4"><div className="flex items-center gap-2 text-muted-foreground">{icon}<span className="text-xs">{label}</span></div><div className="mt-2 text-2xl font-semibold">{value}</div><div className="mt-1 text-xs text-success">{trend}</div></Card>;
-}
-
-function Insight({ title, text }: { title: string; text: string }) {
-  return <div className="rounded-xl border bg-secondary/20 p-4"><div className="text-xs font-semibold text-primary">{title}</div><p className="mt-1 text-sm text-muted-foreground">{text}</p></div>;
-}
+function Metric({ icon, label, value, trend }: { icon: React.ReactNode; label: string; value: string; trend: string }) { return <Card className="p-4"><div className="flex items-center gap-2 text-muted-foreground">{icon}<span className="text-xs">{label}</span></div><div className="mt-2 text-2xl font-semibold">{value}</div><div className="mt-1 text-xs text-success">{trend}</div></Card>; }
+function Insight({ title, text }: { title: string; text: string }) { return <div className="rounded-xl border bg-secondary/20 p-4"><div className="text-xs font-semibold text-primary">{title}</div><p className="mt-1 text-sm text-muted-foreground">{text}</p></div>; }
+function ValueStep({ number, title, text }: { number: string; title: string; text: string }) { return <div className="rounded-2xl border bg-background/70 p-4 text-left"><div className="text-xs font-semibold text-primary">{number}</div><div className="mt-1 font-semibold">{title}</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{text}</p></div>; }
