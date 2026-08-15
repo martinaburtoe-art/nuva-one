@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node scripts/apply-home-showcase.mjs && node scripts/clarify-home-showcase.mjs && npm run build",
+  "buildCommand": "node scripts/apply-home-showcase.mjs && node scripts/clarify-home-showcase.mjs && node scripts/enhance-home-showcase.mjs && npm run build",
   "crons": [
     {
       "path": "/api/billing/subscribe/run-charges",
