@@ -41,6 +41,24 @@ export function CinematicBridge({ onContinue }: { onContinue: () => void }) {
             </div>
           </Card>
         </div>
+
+        <div className={`relative mx-auto mt-8 max-w-5xl transition-all delay-500 duration-1000 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}>
+          <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-card to-card p-5 sm:p-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-xl">
+                <div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10"><Sparkles className="h-4 w-4 text-primary" /></span><span className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Nüva Intelligence</span></div>
+                <h3 className="mt-3 text-xl font-bold sm:text-2xl">Nüva encontró algo que deberías saber.</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">No se limita a mostrar métricas. Conecta señales del negocio y las convierte en una decisión que puedes tomar.</p>
+              </div>
+              <div className="w-full max-w-md rounded-2xl border bg-background/80 p-4 shadow-soft">
+                <div className="flex items-center justify-between gap-3"><div><div className="text-xs font-medium text-warning">ATENCIÓN</div><div className="mt-1 text-sm font-semibold">Inventario cerca del punto de reposición</div></div><Boxes className="h-5 w-5 text-warning" /></div>
+                <p className="mt-3 text-xs leading-5 text-muted-foreground">4 productos necesitan revisión. Nüva puede llevarte directamente al inventario para actuar.</p>
+                <div className="mt-4 flex flex-wrap gap-2"><span className="rounded-full bg-secondary px-3 py-1 text-[11px] text-muted-foreground">Detectar</span><span className="rounded-full bg-secondary px-3 py-1 text-[11px] text-muted-foreground">Explicar</span><span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary">Actuar</span></div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
         <div className="relative mt-9 flex justify-center"><Button size="lg" onClick={onContinue} className="shadow-elegant">Seguir explorando Nüva One <ArrowRight className="ml-1.5 h-4 w-4" /></Button></div>
       </div>
     </section>
