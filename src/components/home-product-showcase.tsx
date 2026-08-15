@@ -1,98 +1,71 @@
-import { BarChart3, Bot, Boxes, Check, Sparkles, TrendingUp, WalletCards, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { BarChart3, Boxes, CircleDollarSign, FileText, LayoutDashboard, Package, Sparkles, ShoppingCart, TrendingUp } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
 
-function MiniMetric({ icon, label, value, trend }: { icon: React.ReactNode; label: string; value: string; trend: string }) {
-  return (
-    <div className="rounded-xl border bg-card p-3 shadow-soft sm:p-4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div>
-      <div className="mt-1 text-lg font-semibold tracking-tight sm:text-xl">{value}</div>
-      <div className="mt-1 text-[11px] text-success">{trend}</div>
-    </div>
-  );
-}
+const MODULES = [
+  { id: "ventas", label: "Ventas", icon: TrendingUp },
+  { id: "caja", label: "Caja", icon: CircleDollarSign },
+  { id: "inventario", label: "Inventario", icon: Boxes },
+  { id: "finanzas", label: "Finanzas", icon: BarChart3 },
+  { id: "cotizaciones", label: "Cotizaciones", icon: FileText },
+  { id: "ia", label: "Nüva IA", icon: Sparkles },
+] as const;
+
+type ModuleId = (typeof MODULES)[number]["id"];
 
 export function HomeProductShowcase() {
+  const [active, setActive] = useState<ModuleId>("ventas");
+
   return (
-    <section className="relative border-y bg-secondary/20 py-20 sm:py-24">
-      <div className="absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> Así se ve Nüva One por dentro
-          </span>
-          <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Todo tu negocio. <span className="bg-gradient-primary bg-clip-text text-transparent">Una sola vista.</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-balance text-muted-foreground">
-            Una previsualización del panel que tus clientes encontrarán al entrar a Nüva One: indicadores, ventas, inventario, finanzas y Nüva IA conectados.
-          </p>
+    <section className="border-t bg-secondary/20 py-20" id="producto">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-sm font-medium text-primary">Así se ve Nüva One por dentro</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Tu negocio, visualizado en un solo lugar.</h2>
+          <p className="mt-4 text-muted-foreground">Explora una previsualización de los módulos que tendrás disponibles para gestionar tu PYME.</p>
         </div>
 
-        <div className="relative mx-auto mt-12 max-w-6xl [perspective:1800px]">
-          <div className="absolute -inset-8 rounded-[3rem] bg-primary/10 blur-3xl" />
-          <div className="relative rounded-[1.5rem] border border-border/70 bg-card/95 p-2 shadow-[0_35px_100px_-35px_oklch(0.35_0.12_270/0.45)] backdrop-blur-xl sm:rounded-[2rem] sm:p-3">
-            <div className="overflow-hidden rounded-[1.15rem] border bg-background sm:rounded-[1.5rem]">
-              <div className="flex items-center gap-2 border-b bg-secondary/40 px-4 py-3">
-                <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
-                <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-                <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
-                <div className="ml-3 flex-1 rounded-md border bg-background/80 px-3 py-1.5 text-[10px] text-muted-foreground sm:text-xs">app.nuva-one.cl / resumen</div>
+        <div className="mx-auto mt-12 overflow-hidden rounded-[1.5rem] border border-border/60 bg-card shadow-elegant">
+          <div className="flex items-center gap-2 border-b bg-secondary/40 px-4 py-3">
+            <div className="flex gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-destructive/60" /><span className="h-2.5 w-2.5 rounded-full bg-warning/60" /><span className="h-2.5 w-2.5 rounded-full bg-success/60" /></div>
+            <div className="ml-2 flex-1 rounded-md bg-background/80 px-3 py-1 text-xs text-muted-foreground">app.nuva-one.cl / {active}</div>
+          </div>
+
+          <div className="grid min-h-[430px] md:grid-cols-[190px_1fr]">
+            <aside className="border-b bg-secondary/30 p-3 md:border-b-0 md:border-r">
+              <div className="mb-4 flex items-center gap-2 px-2 py-2 text-sm font-semibold"><div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-primary"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>Nüva One</div>
+              <div className="mb-3 flex items-center gap-2 rounded-lg bg-background px-3 py-2 text-xs font-medium shadow-soft"><LayoutDashboard className="h-3.5 w-3.5 text-primary" /> Mi negocio</div>
+              <div className="space-y-1">
+                {MODULES.map(({ id, label, icon: Icon }) => (
+                  <button key={id} type="button" onClick={() => setActive(id)} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-medium transition-all ${active === id ? "bg-gradient-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-background hover:text-foreground"}`}>
+                    <Icon className="h-3.5 w-3.5" />{label}
+                  </button>
+                ))}
               </div>
+            </aside>
 
-              <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[185px_1fr]">
-                <aside className="hidden rounded-xl border bg-secondary/30 p-3 lg:block">
-                  <div className="mb-5 flex items-center gap-2 px-2 text-sm font-semibold">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-3.5 w-3.5" /></span>
-                    Nüva One
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    {["Resumen", "Ventas", "Inventario", "Finanzas", "Clientes"].map((item, i) => (
-                      <div key={item} className={`rounded-lg px-3 py-2 ${i === 0 ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground"}`}>{item}</div>
-                    ))}
-                  </div>
-                </aside>
-
-                <div className="min-w-0">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-                    <div><div className="text-xs text-muted-foreground">Resumen del negocio</div><div className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">Buenos días 👋</div></div>
-                    <div className="rounded-full border bg-success/5 px-3 py-1 text-xs text-success">Negocio saludable</div>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-                    <MiniMetric icon={<TrendingUp className="h-3.5 w-3.5" />} label="Ingresos" value="$4,82 M" trend="+18,4%" />
-                    <MiniMetric icon={<WalletCards className="h-3.5 w-3.5" />} label="Flujo neto" value="$1,36 M" trend="+9,2%" />
-                    <MiniMetric icon={<Boxes className="h-3.5 w-3.5" />} label="Inventario" value="$2,14 M" trend="128 SKU" />
-                    <MiniMetric icon={<BarChart3 className="h-3.5 w-3.5" />} label="Nüva Score" value="86/100" trend="+6 pts" />
-                  </div>
-
-                  <div className="mt-4 grid gap-4 md:grid-cols-[1.5fr_1fr]">
-                    <div className="rounded-xl border bg-card p-4">
-                      <div className="flex items-center justify-between"><div><div className="text-sm font-medium">Ingresos vs. gastos</div><div className="text-[11px] text-muted-foreground">Últimos 6 meses</div></div><BarChart3 className="h-4 w-4 text-muted-foreground" /></div>
-                      <div className="mt-5 flex h-36 items-end gap-2 sm:gap-3">{[38,54,48,67,61,78,72,92,84,100,91,96].map((height,index)=><div key={index} className="flex h-full flex-1 items-end"><div className="w-full rounded-t bg-gradient-primary opacity-80" style={{height:`${height}%`}} /></div>)}</div>
-                    </div>
-                    <div className="rounded-xl border bg-card p-4">
-                      <div className="flex items-center gap-2"><Bot className="h-4 w-4 text-primary" /><div className="text-sm font-medium">Nüva IA</div></div>
-                      <p className="mt-3 text-xs leading-5 text-muted-foreground">Detecté una oportunidad: 4 productos están cerca de su punto de reposición.</p>
-                      <div className="mt-4 rounded-lg bg-primary/5 p-3 text-xs">Recomiendo revisar inventario antes del próximo ciclo de ventas.</div>
-                      <Link to="/demo"><Button variant="outline" size="sm" className="mt-3 w-full">Ver análisis <ArrowRight className="ml-1 h-3.5 w-3.5" /></Button></Link>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    {[{title:"Ventas",text:"86 ventas este mes",icon:<TrendingUp className="h-4 w-4"/>},{title:"Inventario",text:"7 productos por reponer",icon:<Boxes className="h-4 w-4"/>},{title:"Decisiones",text:"Nüva IA detecta oportunidades",icon:<Bot className="h-4 w-4"/>}].map(item=><div key={item.title} className="rounded-xl border bg-secondary/20 p-3"><div className="flex items-center gap-2 text-xs font-medium">{item.icon}{item.title}</div><div className="mt-1 text-xs text-muted-foreground">{item.text}</div></div>)}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Preview active={active} />
           </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-          {["Datos ficticios para la demo", "Sin planillas dispersas", "Ventas + inventario + finanzas", "IA para decidir"].map(item=><span key={item} className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success" />{item}</span>)}
+        <div className="mt-7 flex justify-center">
+          <Link to="/demo" className="inline-flex items-center rounded-xl bg-gradient-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02]">Explorar demo completa <span className="ml-2">→</span></Link>
         </div>
-        <div className="mt-7 text-center"><Link to="/demo"><Button size="lg" className="h-12 px-7 shadow-elegant">Explorar demo completa <ArrowRight className="ml-1.5 h-4 w-4" /></Button></Link></div>
       </div>
     </section>
   );
 }
+
+function Preview({ active }: { active: ModuleId }) {
+  if (active === "ventas") return <div className="p-5 sm:p-7"><Header title="Ventas" subtitle="Gestiona tus ventas y clientes" /><div className="grid gap-3 sm:grid-cols-3"><Stat label="Ventas del mes" value="$1.284.500" trend="+18,4%" /><Stat label="Transacciones" value="86" trend="este mes" /><Stat label="Ticket promedio" value="$14.936" trend="+6,2%" /></div><div className="mt-5 overflow-hidden rounded-xl border"><div className="grid grid-cols-[1.5fr_1fr_1fr] gap-2 bg-secondary/40 px-4 py-3 text-[11px] font-semibold text-muted-foreground"><span>Cliente</span><span>Estado</span><span className="text-right">Total</span></div>{[["Comercial Los Andes","Pagada","$39.990"],["Distribuidora Maule","Pagada","$119.970"],["Tienda Centro","Pendiente","$79.980"]].map(([name,status,total]) => <div key={name} className="grid grid-cols-[1.5fr_1fr_1fr] gap-2 border-t px-4 py-3 text-xs"><span className="font-medium">{name}</span><span className={status === "Pagada" ? "text-success" : "text-warning"}>{status}</span><span className="text-right font-semibold">{total}</span></div>)}</div></div>;
+  if (active === "caja") return <div className="p-5 sm:p-7"><Header title="Caja" subtitle="Controla ingresos y egresos en tiempo real" /><div className="grid gap-3 sm:grid-cols-3"><Stat label="Saldo disponible" value="$428.300" trend="+12,7%" /><Stat label="Ingresos" value="$1.284.500" trend="este mes" /><Stat label="Egresos" value="$856.200" trend="controlados" /></div><div className="mt-5 rounded-xl border p-5"><div className="text-xs text-muted-foreground">Flujo de caja</div><div className="mt-5 flex h-32 items-end gap-2">{[35,48,42,62,58,76,68,85,72,92,80,100].map((h, i) => <div key={i} className="flex-1 rounded-t bg-gradient-primary opacity-80" style={{ height: `${h}%` }} />)}</div></div></div>;
+  if (active === "inventario") return <div className="p-5 sm:p-7"><Header title="Inventario" subtitle="Stock unificado y alertas automáticas" /><div className="grid gap-3 sm:grid-cols-3"><Stat label="Productos" value="248" trend="activos" /><Stat label="Valor inventario" value="$3.599.850" trend="actualizado" /><Stat label="Stock crítico" value="7" trend="revisar" /></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><InventoryRow name="Pack Premium" stock="3 unidades" status="Crítico" /><InventoryRow name="Polera Pro" stock="18 unidades" status="Normal" /><InventoryRow name="Mochila Elite" stock="5 unidades" status="Bajo" /></div></div>;
+  if (active === "finanzas") return <div className="p-5 sm:p-7"><Header title="Finanzas" subtitle="Entiende la salud financiera de tu negocio" /><div className="grid gap-3 sm:grid-cols-3"><Stat label="Ingresos" value="$1.284.500" trend="+18,4%" /><Stat label="Gastos" value="$532.400" trend="-4,1%" /><Stat label="Margen" value="31,6%" trend="saludable" /></div><div className="mt-5 rounded-xl border p-5"><div className="flex items-center gap-2 text-xs font-semibold"><BarChart3 className="h-4 w-4 text-primary" /> Rentabilidad mensual</div><div className="mt-5 flex h-28 items-end gap-3">{[42,55,49,66,61,75,71,88].map((h, i) => <div key={i} className="flex-1 rounded-t bg-gradient-primary opacity-80" style={{ height: `${h}%` }} />)}</div></div></div>;
+  if (active === "cotizaciones") return <div className="p-5 sm:p-7"><Header title="Cotizaciones" subtitle="Crea y sigue propuestas profesionales" /><div className="grid gap-3 sm:grid-cols-3"><Stat label="Enviadas" value="24" trend="este mes" /><Stat label="Aceptadas" value="17" trend="70,8%" /><Stat label="Pendientes" value="7" trend="seguimiento" /></div><div className="mt-5 space-y-2"><QuoteRow name="Comercial Los Andes" amount="$420.000" status="Aceptada" /><QuoteRow name="Distribuidora Maule" amount="$285.000" status="Pendiente" /><QuoteRow name="Tienda Centro" amount="$179.500" status="En revisión" /></div></div>;
+  return <div className="p-5 sm:p-7"><Header title="Nüva IA" subtitle="Tu asistente inteligente para entender y decidir" /><div className="grid gap-3 sm:grid-cols-3"><Stat label="Ventas" value="+18,4%" trend="vs. mes anterior" /><Stat label="Stock crítico" value="7" trend="productos" /><Stat label="Margen" value="31,6%" trend="saludable" /></div><div className="mt-5 rounded-xl border bg-secondary/30 p-5"><div className="flex items-center gap-2 text-xs font-semibold"><Sparkles className="h-4 w-4 text-primary" /> Recomendación de Nüva IA</div><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Tus ventas crecieron 18,4% este mes. Conviene reponer 3 productos de alta rotación y revisar los 7 artículos con stock crítico.</p><div className="mt-4 flex flex-wrap gap-2"><span className="rounded-full border bg-background px-3 py-1.5 text-[11px]">Analizar ventas</span><span className="rounded-full border bg-background px-3 py-1.5 text-[11px]">Revisar inventario</span><span className="rounded-full border bg-background px-3 py-1.5 text-[11px]">Analizar rentabilidad</span></div></div></div>;
+}
+
+function Header({ title, subtitle }: { title: string; subtitle: string }) { return <div className="mb-5"><h3 className="text-lg font-semibold">{title}</h3><p className="mt-1 text-xs text-muted-foreground">{subtitle}</p></div>; }
+function Stat({ label, value, trend }: { label: string; value: string; trend: string }) { return <div className="rounded-xl border bg-background p-4"><div className="text-[11px] text-muted-foreground">{label}</div><div className="mt-1 text-lg font-bold">{value}</div><div className="mt-1 text-[11px] text-success">{trend}</div></div>; }
+function InventoryRow({ name, stock, status }: { name: string; stock: string; status: string }) { return <div className="flex items-center justify-between rounded-xl border bg-background p-4 text-xs"><div className="flex items-center gap-3"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary"><Package className="h-4 w-4" /></div><div><div className="font-medium">{name}</div><div className="mt-0.5 text-muted-foreground">{stock}</div></div></div><span className={status === "Crítico" ? "text-destructive" : status === "Bajo" ? "text-warning" : "text-success"}>{status}</span></div>; }
+function QuoteRow({ name, amount, status }: { name: string; amount: string; status: string }) { return <div className="flex items-center justify-between rounded-xl border bg-background p-4 text-xs"><div><div className="font-medium">{name}</div><div className="mt-0.5 text-muted-foreground">{amount}</div></div><span className="rounded-full bg-secondary px-2.5 py-1">{status}</span></div>; }
