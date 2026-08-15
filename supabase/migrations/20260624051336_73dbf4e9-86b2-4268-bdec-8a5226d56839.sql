@@ -1,13 +1,19 @@
 DROP POLICY IF EXISTS "Owner/admin manage members" ON public.business_members;
 
+DROP POLICY IF EXISTS "Owner/admin insert members" ON public.business_members;
+
 CREATE POLICY "Owner/admin insert members" ON public.business_members
   FOR INSERT
   WITH CHECK (public.has_business_role(business_id, auth.uid(), ARRAY['owner','admin']::public.member_role[]));
+
+DROP POLICY IF EXISTS "Owner/admin update members" ON public.business_members;
 
 CREATE POLICY "Owner/admin update members" ON public.business_members
   FOR UPDATE
   USING (public.has_business_role(business_id, auth.uid(), ARRAY['owner','admin']::public.member_role[]))
   WITH CHECK (public.has_business_role(business_id, auth.uid(), ARRAY['owner','admin']::public.member_role[]));
+
+DROP POLICY IF EXISTS "Owner/admin or self delete members" ON public.business_members;
 
 CREATE POLICY "Owner/admin or self delete members" ON public.business_members
   FOR DELETE
@@ -178,9 +184,13 @@ CREATE INDEX IF NOT EXISTS idx_sales_quote ON public.sales(quote_id);
 
 DROP POLICY IF EXISTS "Members access audit_log" ON public.audit_log;
 
+DROP POLICY IF EXISTS "Members read audit_log" ON public.audit_log;
+
 CREATE POLICY "Members read audit_log" ON public.audit_log
   FOR SELECT
   USING (public.is_business_member(business_id, auth.uid()));
+
+DROP POLICY IF EXISTS "Members insert audit_log" ON public.audit_log;
 
 CREATE POLICY "Members insert audit_log" ON public.audit_log
   FOR INSERT
