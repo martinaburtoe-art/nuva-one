@@ -58,6 +58,7 @@ export function BusinessInsightCard({ income, expense, inventoryValue, productsC
 
   const tone = kind === "warning" ? "border-warning/30 bg-warning/[0.06]" : kind === "positive" ? "border-success/30 bg-success/[0.05]" : "border-primary/25 bg-primary/[0.05]";
   const iconTone = kind === "warning" ? "bg-warning/10 text-warning" : kind === "positive" ? "bg-success/10 text-success" : "bg-primary/10 text-primary";
+  const nextStep = kind === "warning" ? "Atiende esta señal antes de tomar una nueva decisión." : kind === "positive" ? "Convierte esta señal en una oportunidad de crecimiento." : "Registra una primera operación para desbloquear análisis más precisos.";
 
   return (
     <Card className={`relative overflow-hidden p-6 ${tone}`}>
@@ -93,10 +94,21 @@ export function BusinessInsightCard({ income, expense, inventoryValue, productsC
           <Link to="/ai" className="shrink-0"><Button variant="outline">Preguntar a Nüva IA<ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
         </div>
 
+        <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Sparkles className="h-4 w-4" /></div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Siguiente decisión</p>
+              <p className="mt-1 text-sm font-medium">{nextStep}</p>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           <span className="rounded-full border bg-background/60 px-2.5 py-1">Datos del negocio</span>
           <span className="rounded-full border bg-background/60 px-2.5 py-1">Señal determinística</span>
           <span className="rounded-full border bg-background/60 px-2.5 py-1">Acción sugerida</span>
+          <span className="rounded-full border bg-background/60 px-2.5 py-1">Siguiente decisión</span>
         </div>
       </div>
     </Card>
