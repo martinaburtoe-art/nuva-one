@@ -19,7 +19,9 @@ export function demoAiAnswer(question: string) {
   }
   if (
     q.includes("recomend") ||
+    q.includes("recomiend") ||
     q.includes("suger") ||
+    q.includes("sugier") ||
     q.includes("qué harías") ||
     q.includes("que harías")
   ) {
