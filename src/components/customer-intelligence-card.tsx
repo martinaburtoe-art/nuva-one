@@ -16,18 +16,21 @@ type Props = {
   onAskAI?: () => void;
 };
 
-function healthScore(stats: { total: number; count: number; last: string | null } | undefined, maxTotal: number) {
+type CustomerStats = { total: number; count: number; last: string | null };
+
+function healthBreakdown(stats: CustomerStats | undefined, maxTotal: number) {
   if (!stats?.count || !stats.last) return null;
   const days = Math.max(0, (Date.now() - new Date(stats.last).getTime()) / 86400000);
-  const recency = Math.max(0, 100 - days * 2.5);
-  const frequency = Math.min(100, stats.count * 12.5);
-  const value = maxTotal > 0 ? Math.min(100, (stats.total / maxTotal) * 100) : 0;
-  return Math.round(recency * 0.45 + frequency * 0.25 + value * 0.3);
+  const recency = Math.round(Math.max(0, 100 - days * 2.5));
+  const frequency = Math.round(Math.min(100, stats.count * 12.5));
+  const value = Math.round(maxTotal > 0 ? Math.min(100, (stats.total / maxTotal) * 100) : 0);
+  const score = Math.round(recency * 0.45 + frequency * 0.25 + value * 0.3);
+  return { score, recency, frequency, value, days: Math.round(days) };
 }
 
 export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCustomers, onAskAI }: Props) {
   const now = Date.now();
-  const stats = new Map<string, { total: number; count: number; last: string | null }>();
+  const stats = new Map<string, CustomerStats>();
   for (const sale of sales ?? []) {
     if (!sale.customer_id) continue;
     const current = stats.get(sale.customer_id) ?? { total: 0, count: 0, last: null };
@@ -48,6 +51,8 @@ export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCusto
   const proposalCustomers = new Set((quotes ?? []).filter((q) => ["draft", "sent", "pending"].includes(String(q.status))).map((q) => q.customer_id).filter(Boolean));
   const priorities = atRisk.length + proposalCustomers.size;
   const totalRevenue = sales.reduce((sum, s) => sum + (Number(s.total) || 0), 0);
+  const priorityCustomer = atRisk[0];
+  const priorityHealth = priorityCustomer ? healthBreakdown(stats.get(priorityCustomer.id), maxTotal) : null;
 
   const title = !customers.length
     ? "Nüva todavía está aprendiendo de tus clientes"
@@ -79,15 +84,33 @@ export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCusto
           <Metric icon={Target} label="Ventas registradas" value={fmtCLP(totalRevenue)} />
         </div>
 
+        {priorityCustomer && priorityHealth && (
+          <div className="mt-5 rounded-xl border border-warning/20 bg-warning/[0.035] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-warning">Prioridad #1</p>
+                <p className="mt-1 text-base font-semibold">{priorityCustomer.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{priorityHealth.days} días desde su última compra · Health {priorityHealth.score}/100</p>
+              </div>
+              <Badge variant="outline" className="border-warning/30 text-warning">Recuperar relación</Badge>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <MiniScore label="Recencia" value={priorityHealth.recency} />
+              <MiniScore label="Frecuencia" value={priorityHealth.frequency} />
+              <MiniScore label="Valor" value={priorityHealth.value} />
+            </div>
+          </div>
+        )}
+
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border bg-background/70 p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prioridades</p>
             <div className="mt-3 space-y-2">
               {atRisk.slice(0, 3).map((customer) => {
-                const score = healthScore(stats.get(customer.id), maxTotal);
+                const score = healthBreakdown(stats.get(customer.id), maxTotal)?.score;
                 return (
                   <div key={customer.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-                    <div><p className="font-medium">{customer.name}</p><p className="text-xs text-muted-foreground">Sin compra reciente{score !== null ? ` · Health ${score}` : ""}</p></div>
+                    <div><p className="font-medium">{customer.name}</p><p className="text-xs text-muted-foreground">Sin compra reciente{score !== undefined ? ` · Health ${score}` : ""}</p></div>
                     <Badge variant="outline" className="text-warning">Revisar</Badge>
                   </div>
                 );
@@ -118,12 +141,13 @@ export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCusto
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Clientes de mayor valor</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               {highValue.map((customer) => {
-                const score = healthScore(stats.get(customer.id), maxTotal);
+                const health = healthBreakdown(stats.get(customer.id), maxTotal);
                 return (
                   <div key={customer.id} className="rounded-lg border p-3">
-                    <div className="flex items-start justify-between gap-2"><p className="truncate text-sm font-medium">{customer.name}</p>{score !== null && <span className="text-xs font-semibold text-primary">{score}/100</span>}</div>
+                    <div className="flex items-start justify-between gap-2"><p className="truncate text-sm font-medium">{customer.name}</p>{health && <span className="text-xs font-semibold text-primary">{health.score}/100</span>}</div>
                     <p className="mt-1 text-sm font-bold tabular-nums">{fmtCLP(stats.get(customer.id)?.total ?? 0)}</p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">Customer Health Score · recencia + frecuencia + valor</p>
+                    {health && <div className="mt-2 grid grid-cols-3 gap-1 text-[10px] text-muted-foreground"><span>R {health.recency}</span><span>F {health.frequency}</span><span>V {health.value}</span></div>}
+                    <p className="mt-1 text-[11px] text-muted-foreground">Customer Health Score</p>
                   </div>
                 );
               })}
@@ -133,6 +157,10 @@ export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCusto
       </div>
     </Card>
   );
+}
+
+function MiniScore({ label, value }: { label: string; value: number }) {
+  return <div className="rounded-lg border bg-background/60 p-2.5"><div className="flex justify-between text-[11px]"><span className="text-muted-foreground">{label}</span><span className="font-semibold">{value}</span></div><div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} /></div></div>;
 }
 
 function Metric({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
