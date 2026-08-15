@@ -23,17 +23,19 @@ export function FinanceIntelligenceCard({
   const net = income - expense;
   const margin = income > 0 ? (net / income) * 100 : null;
   const expenseRatio = income > 0 ? (expense / income) * 100 : null;
+  const receivableRatio = income > 0 ? (receivable / income) * 100 : null;
 
-  const hasData = income > 0 || expense > 0;
+  const hasData = income > 0 || expense > 0 || receivable > 0;
   const overdueAttention = overdueTotal > 0;
   const negative = net < 0;
   const highExpenseRatio = expenseRatio !== null && expenseRatio >= 70;
+  const collectionRisk = overdueTotal > 0 && receivable > 0 && overdueTotal / receivable >= 0.35;
 
   const status = !hasData
     ? "observing"
     : negative || overdueAttention
       ? "attention"
-      : highExpenseRatio
+      : highExpenseRatio || collectionRisk
         ? "watch"
         : "opportunity";
 
@@ -49,19 +51,27 @@ export function FinanceIntelligenceCard({
       label: "Atención",
       title: negative
         ? "Tus gastos están superando tus ingresos"
-        : "Hay dinero pendiente que merece atención",
+        : collectionRisk
+          ? "Una parte relevante de lo pendiente está vencida"
+          : "Hay dinero pendiente que merece atención",
       icon: AlertTriangle,
       tone: "text-destructive",
       message: negative
         ? "Tu flujo neto está bajo presión. Revisa los gastos de mayor impacto antes de tomar nuevas decisiones."
-        : "Nüva detectó cuentas vencidas. Prioriza la cobranza para proteger tu flujo de caja.",
+        : collectionRisk
+          ? "La cobranza vencida puede tensionar tu flujo de caja. Prioriza las cuentas con mayor impacto."
+          : "Nüva detectó cuentas vencidas. Prioriza la cobranza para proteger tu flujo de caja.",
     },
     watch: {
       label: "Vigilancia",
-      title: "Tus gastos están consumiendo una parte importante de tus ingresos",
+      title: highExpenseRatio
+        ? "Tus gastos están consumiendo una parte importante de tus ingresos"
+        : "Tu dinero por cobrar merece seguimiento",
       icon: TrendingDown,
       tone: "text-warning",
-      message: "Tu estructura de gastos merece revisión para proteger el margen del negocio.",
+      message: highExpenseRatio
+        ? "Tu estructura de gastos merece revisión para proteger el margen del negocio."
+        : "Mantén seguimiento de las cuentas por cobrar para evitar que se conviertan en presión de caja.",
     },
     opportunity: {
       label: "Oportunidad",
@@ -102,13 +112,19 @@ export function FinanceIntelligenceCard({
         <div className="mt-5 rounded-xl border bg-background/70 p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Por qué importa</p>
           <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{config.message}</p>
-          {(expenseRatio !== null || receivable > 0) && (
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {expenseRatio !== null && <span className="rounded-full bg-secondary px-2.5 py-1">Gastos: {expenseRatio.toFixed(1)}% de ingresos</span>}
-              {receivable > 0 && <span className="rounded-full bg-secondary px-2.5 py-1">Por cobrar: {fmtCLP(receivable)}</span>}
-              {overdueTotal > 0 && <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-destructive">Vencido: {fmtCLP(overdueTotal)}</span>}
-            </div>
-          )}
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            {expenseRatio !== null && (
+              <span className="rounded-full bg-secondary px-2.5 py-1">Gastos: {expenseRatio.toFixed(1)}% de ingresos</span>
+            )}
+            {receivable > 0 && (
+              <span className="rounded-full bg-secondary px-2.5 py-1">
+                Por cobrar: {fmtCLP(receivable)}{receivableRatio !== null ? ` · ${receivableRatio.toFixed(1)}% de ingresos` : ""}
+              </span>
+            )}
+            {overdueTotal > 0 && (
+              <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-destructive">Vencido: {fmtCLP(overdueTotal)}</span>
+            )}
+          </div>
         </div>
 
         <div className="mt-5 flex flex-col gap-3 rounded-xl border border-primary/15 bg-primary/[0.035] p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -117,9 +133,13 @@ export function FinanceIntelligenceCard({
             <div>
               <p className="text-sm font-semibold">Siguiente decisión</p>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                {negative || overdueAttention
-                  ? "Prioriza esta señal antes de asumir nuevos compromisos de gasto."
-                  : "Revisa el detalle financiero y conversa con Nüva para decidir el siguiente paso."}
+                {negative
+                  ? "Prioriza controlar el gasto antes de asumir nuevos compromisos."
+                  : overdueAttention
+                    ? "Prioriza la cobranza vencida para proteger tu flujo de caja."
+                    : highExpenseRatio
+                      ? "Revisa los gastos de mayor impacto y protege tu margen."
+                      : "Revisa el detalle financiero y conversa con Nüva para decidir el siguiente paso."}
               </p>
             </div>
           </div>
@@ -136,7 +156,8 @@ export function FinanceIntelligenceCard({
         <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
           <span className="rounded-full bg-secondary px-2.5 py-1">Datos reales del negocio</span>
           <span className="rounded-full bg-secondary px-2.5 py-1">Señal determinística</span>
-          <span className="rounded-full bg-secondary px-2.5 py-1">Acción sugerida</span>
+          <span className="rounded-full bg-secondary px-2.5 py-1">Impacto financiero</span>
+          <span className="rounded-full bg-secondary px-2.5 py-1">Siguiente decisión</span>
         </div>
       </div>
     </Card>
