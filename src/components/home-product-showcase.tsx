@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, Boxes, CircleDollarSign, FileText, LayoutDashboard, Package, Sparkles, ShoppingCart, TrendingUp } from "lucide-react";
+import { BarChart3, Boxes, CircleDollarSign, FileText, LayoutDashboard, Package, Sparkles, TrendingUp } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 const MODULES = [
@@ -19,10 +19,10 @@ export function HomeProductShowcase() {
   return (
     <section className="border-t bg-secondary/20 py-20" id="producto">
       <div className="mx-auto max-w-6xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium text-primary">Así se ve Nüva One por dentro</p>
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-medium text-primary">Una pequeña muestra de todo lo que puedes hacer con Nüva One</p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Tu negocio, visualizado en un solo lugar.</h2>
-          <p className="mt-4 text-muted-foreground">Explora una previsualización de los módulos que tendrás disponibles para gestionar tu PYME.</p>
+          <p className="mt-4 text-muted-foreground">Explora algunas de nuestras herramientas para gestionar, analizar y hacer crecer tu PYME. Y esto es solo el comienzo.</p>
         </div>
 
         <div className="mx-auto mt-12 overflow-hidden rounded-[1.5rem] border border-border/60 bg-card shadow-elegant">
@@ -48,8 +48,10 @@ export function HomeProductShowcase() {
           </div>
         </div>
 
-        <div className="mt-7 flex justify-center">
-          <Link to="/demo" className="inline-flex items-center rounded-xl bg-gradient-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02]">Explorar demo completa <span className="ml-2">→</span></Link>
+        <div className="mx-auto mt-7 max-w-2xl text-center">
+          <p className="text-sm font-medium">Y esto es solo el comienzo.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Nüva One reúne muchas más herramientas para administrar tu negocio desde un solo lugar.</p>
+          <Link to="/demo" className="mt-4 inline-flex items-center rounded-xl bg-gradient-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02]">Descubrir todo Nüva One <span className="ml-2">→</span></Link>
         </div>
       </div>
     </section>
