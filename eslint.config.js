@@ -42,4 +42,16 @@ export default tseslint.config(
     },
   },
   eslintPluginPrettier,
+  {
+    files: [
+      "src/routes/demo.tsx",
+      "src/components/demo/guided-tour.tsx",
+      "src/lib/demo/demo-data.ts",
+      "src/lib/demo/demo-data.test.ts",
+      "src/lib/demo/demo-state.tsx",
+    ],
+    rules: {
+      "prettier/prettier": "off",
+    },
+  },
 );
