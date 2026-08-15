@@ -11,5 +11,6 @@ describe("guided demo", () => {
   it("flags products at or below reorder level", () => expect(DEMO_PRODUCTS.some((p) => p.stock <= p.reorderAt)).toBe(true));
   it("answers inventory questions locally", () => expect(demoAiAnswer("¿Cómo está el inventario?")).toContain("productos"));
   it("answers recommendation questions locally", () => expect(demoAiAnswer("¿Qué recomiendas?")).toContain("Priorizaría"));
+  it("answers suggestion questions locally", () => expect(demoAiAnswer("¿Qué sugieres hacer?")).toContain("Priorizaría"));
   it("contains the complete nine-step tour", () => expect(DEMO_STEPS).toHaveLength(9));
 });
