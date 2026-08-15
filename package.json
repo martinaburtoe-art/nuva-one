@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "pretypecheck": "vite build --mode development",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
