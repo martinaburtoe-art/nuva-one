@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS, DEMO_CUSTOMERS, DEMO_PRODUCTS, DEMO_SALES, type DemoProduct } from "./demo-data";
+import { setDemoAiState } from "./demo-ai";
 
 type DemoState = {
   business: typeof DEMO_BUSINESS;
@@ -19,6 +20,10 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
   const [sales, setSales] = useState(DEMO_SALES);
   const [simulatedSales, setSimulatedSales] = useState(0);
   const [revenueDelta, setRevenueDelta] = useState(0);
+
+  useEffect(() => {
+    setDemoAiState(products, DEMO_BUSINESS.monthlyRevenue + revenueDelta);
+  }, [products, revenueDelta]);
 
   const sell = useCallback((productId: string) => {
     setProducts((current) =>
