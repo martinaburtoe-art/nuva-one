@@ -36,13 +36,11 @@ export function ActivationChecklist({
     <Card className="p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-primary">
-            Activación
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wider text-primary">Activación</p>
           <h3 className="mt-1 font-semibold">Prepara Nüva para medir tu negocio</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Completa estos pasos con datos reales. Nüva Score comenzará a calcularse cuando
-            exista información suficiente.
+            Completa estos pasos con datos reales. Nüva Score comenzará a calcularse cuando exista
+            información suficiente.
           </p>
         </div>
         <span className="shrink-0 text-sm font-semibold">
