@@ -16,6 +16,15 @@ type Props = {
   onAskAI?: () => void;
 };
 
+function healthScore(stats: { total: number; count: number; last: string | null } | undefined, maxTotal: number) {
+  if (!stats?.count || !stats.last) return null;
+  const days = Math.max(0, (Date.now() - new Date(stats.last).getTime()) / 86400000);
+  const recency = Math.max(0, 100 - days * 2.5);
+  const frequency = Math.min(100, stats.count * 12.5);
+  const value = maxTotal > 0 ? Math.min(100, (stats.total / maxTotal) * 100) : 0;
+  return Math.round(recency * 0.45 + frequency * 0.25 + value * 0.3);
+}
+
 export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCustomers, onAskAI }: Props) {
   const now = Date.now();
   const stats = new Map<string, { total: number; count: number; last: string | null }>();
@@ -29,6 +38,7 @@ export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCusto
   }
 
   const active = customers.filter((c) => c.status === "active");
+  const maxTotal = Math.max(0, ...active.map((c) => stats.get(c.id)?.total ?? 0));
   const highValue = active.filter((c) => (stats.get(c.id)?.total ?? 0) > 0).sort((a, b) => (stats.get(b.id)?.total ?? 0) - (stats.get(a.id)?.total ?? 0)).slice(0, 3);
   const atRisk = active.filter((c) => {
     const last = stats.get(c.id)?.last;
@@ -73,12 +83,15 @@ export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCusto
           <div className="rounded-xl border bg-background/70 p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prioridades</p>
             <div className="mt-3 space-y-2">
-              {atRisk.slice(0, 3).map((customer) => (
-                <div key={customer.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-                  <div><p className="font-medium">{customer.name}</p><p className="text-xs text-muted-foreground">Sin compra reciente</p></div>
-                  <Badge variant="outline" className="text-warning">Revisar</Badge>
-                </div>
-              ))}
+              {atRisk.slice(0, 3).map((customer) => {
+                const score = healthScore(stats.get(customer.id), maxTotal);
+                return (
+                  <div key={customer.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
+                    <div><p className="font-medium">{customer.name}</p><p className="text-xs text-muted-foreground">Sin compra reciente{score !== null ? ` · Health ${score}` : ""}</p></div>
+                    <Badge variant="outline" className="text-warning">Revisar</Badge>
+                  </div>
+                );
+              })}
               {proposalCustomers.size > 0 && <div className="rounded-lg border p-3 text-sm"><span className="font-medium">{proposalCustomers.size}</span> cliente{proposalCustomers.size === 1 ? "" : "s"} con cotizaciones que requieren seguimiento.</div>}
               {!atRisk.length && !proposalCustomers.size && <p className="text-sm text-muted-foreground">No se detectan prioridades críticas con los datos disponibles.</p>}
             </div>
@@ -104,7 +117,16 @@ export function CustomerIntelligenceCard({ customers, sales, quotes, onViewCusto
           <div className="mt-5 rounded-xl border bg-background/60 p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Clientes de mayor valor</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {highValue.map((customer) => <div key={customer.id} className="rounded-lg border p-3"><p className="truncate text-sm font-medium">{customer.name}</p><p className="mt-1 text-sm font-bold tabular-nums">{fmtCLP(stats.get(customer.id)?.total ?? 0)}</p></div>)}
+              {highValue.map((customer) => {
+                const score = healthScore(stats.get(customer.id), maxTotal);
+                return (
+                  <div key={customer.id} className="rounded-lg border p-3">
+                    <div className="flex items-start justify-between gap-2"><p className="truncate text-sm font-medium">{customer.name}</p>{score !== null && <span className="text-xs font-semibold text-primary">{score}/100</span>}</div>
+                    <p className="mt-1 text-sm font-bold tabular-nums">{fmtCLP(stats.get(customer.id)?.total ?? 0)}</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">Customer Health Score · recencia + frecuencia + valor</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
