@@ -58,7 +58,7 @@ function HomepageDemo() {
                 <div className="p-5">
                   <div className="flex items-center justify-between"><div><div className="text-[11px] text-muted-foreground">Resumen del negocio</div><div className="mt-1 text-lg font-semibold">Buenos días 👋</div></div><Badge variant="outline" className="border-success/30 text-success">Saludable</Badge></div>
                   <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {[["Ingresos", "$4,82 M", "+18,4%"],["Flujo neto", "$1,36 M", "+9,2%"],["Inventario", "$2,14 M", "128 SKU"],["Nüva Score", "86/100", "+6 pts"]].map(([label, value, trend]) => (
+                    {[['Ingresos', '$4,82 M', '+18,4%'],['Flujo neto', '$1,36 M', '+9,2%'],['Inventario', '$2,14 M', '128 SKU'],['Nüva Score', '86/100', '+6 pts']].map(([label, value, trend]) => (
                       <div key={label} className="rounded-xl border bg-card p-3"><div className="text-[10px] text-muted-foreground">{label}</div><div className="mt-1 text-sm font-semibold">{value}</div><div className="mt-1 text-[10px] text-success">{trend}</div></div>
                     ))}
                   </div>
@@ -98,6 +98,17 @@ function NuvaComparison() {
 
 text = text.replace('<ProductShowcase />', '<ProductShowcase />\n      <HomepageDemo />', 1)
 text = text.replace('<Pricing />', '<NuvaComparison />\n      <Pricing />', 1)
+
+# Make the showcase clearly product-oriented rather than personal/demo-only.
+text = text.replace('{ id: "whatsapp", label: "Asistente IA" }', '{ id: "whatsapp", label: "Nüva IA" }', 1)
+text = text.replace('{c:"Martín Aburto",f:"05-08-2026",t:"$79.980"}', '{c:"Comercial Los Andes",f:"05-08-2026",t:"$79.980"}', 1)
+
+old_ai = '''{tab === "whatsapp" && <div className="flex justify-center bg-[#0b141a] p-6"><div className="w-full max-w-sm space-y-2 rounded-xl bg-[#0b141a] p-2"><div className="ml-auto max-w-[85%] rounded-lg rounded-tr-none bg-[#005c4b] px-3 py-2 text-sm text-white">Cuánto vendí este mes</div><div className="mr-auto max-w-[85%] rounded-lg rounded-tl-none bg-[#202c33] px-3 py-2 text-sm text-white">El total de ingresos este mes es de $359.910.</div><div className="ml-auto max-w-[85%] rounded-lg rounded-tr-none bg-[#005c4b] px-3 py-2 text-sm text-white">Y el producto con menos stock?</div><div className="mr-auto max-w-[85%] rounded-lg rounded-tl-none bg-[#202c33] px-3 py-2 text-sm text-white">Zapatillas Running talla 40 — quedan 2 unidades. ¿Genero una orden de compra?</div></div></div>}'''
+new_ai = '''{tab === "whatsapp" && <div className="bg-secondary/20 p-6"><div className="mx-auto max-w-3xl overflow-hidden rounded-xl border bg-background shadow-soft"><div className="flex items-center justify-between border-b px-4 py-3"><div><div className="text-sm font-semibold">Nüva IA</div><div className="text-[11px] text-muted-foreground">Asistente de negocio</div></div><Badge variant="outline" className="border-success/30 text-success">Datos actualizados</Badge></div><div className="grid gap-3 p-4 sm:grid-cols-3"><div className="rounded-lg border bg-card p-3"><div className="text-[10px] text-muted-foreground">Ventas del mes</div><div className="mt-1 text-lg font-semibold">$359.910</div><div className="text-[10px] text-success">+18,4%</div></div><div className="rounded-lg border bg-card p-3"><div className="text-[10px] text-muted-foreground">Stock crítico</div><div className="mt-1 text-lg font-semibold">7 productos</div><div className="text-[10px] text-warning">Requiere atención</div></div><div className="rounded-lg border bg-card p-3"><div className="text-[10px] text-muted-foreground">Margen estimado</div><div className="mt-1 text-lg font-semibold">31,8%</div><div className="text-[10px] text-success">+2,1 pts</div></div></div><div className="border-t p-4"><div className="text-xs font-medium">¿Qué quieres analizar?</div><div className="mt-3 flex flex-wrap gap-2"><span className="rounded-full border bg-secondary/50 px-3 py-1.5 text-[11px]">Analizar mis ventas</span><span className="rounded-full border bg-secondary/50 px-3 py-1.5 text-[11px]">Revisar inventario</span><span className="rounded-full border bg-secondary/50 px-3 py-1.5 text-[11px]">Analizar rentabilidad</span></div><div className="mt-4 rounded-lg bg-primary/5 p-3"><div className="flex items-center gap-2 text-xs font-medium"><Sparkles className="h-3.5 w-3.5 text-primary" /> Recomendación de Nüva IA</div><p className="mt-2 text-[11px] leading-5 text-muted-foreground">Detecté 7 productos con stock crítico. Tres tienen alta rotación y podrían afectar tus próximas ventas. Te recomiendo revisar su reposición esta semana.</p></div></div></div></div>}'''
+if old_ai not in text:
+    raise SystemExit('Expected AI preview block was not found; refusing to modify the page.')
+text = text.replace(old_ai, new_ai, 1)
+
 path.write_text(text, encoding='utf-8')
 PY
 
