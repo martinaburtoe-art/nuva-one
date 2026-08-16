@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { AlertTriangle, ArrowUpRight, CheckCircle2, Clock3, Mail, PhoneCall, Users, WalletCards } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,9 @@ type Signal = { title: string; detail: string; href: "/customers" | "/quotes"; t
 const OPEN_STAGES = ["new", "contacted", "qualified", "proposal"];
 
 export function NuvaOperatingPulse() {
+  const pathname = useLocation({ select: (location) => location.pathname });
+  if (pathname !== "/customers") return null;
+
   const { data: customers } = useBizList<Customer>("customers", { order: "name" });
   const { data: activities } = useBizList<Activity>("customer_activities", { order: "created_at", ascending: false });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at", ascending: false });
