@@ -1,4 +1,4 @@
-name: Apply homepage showcase integration
+name: Finalize public homepage integration
 
 on:
   push:
@@ -8,8 +8,9 @@ permissions:
   contents: write
 
 jobs:
-  apply:
-    if: ${{ !contains(github.event.head_commit.message, 'integrate interactive homepage product preview') }}
+  finalize:
+    # The workflow may create one follow-up commit. Do not run itself again.
+    if: ${{ !contains(github.event.head_commit.message, 'integrate PYME Radar into homepage') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,41 +18,47 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Apply showcase safely
+      - name: Ensure PYME Radar is integrated only on the public homepage
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           index = Path('src/routes/index.tsx')
-          workflow = Path('.github/workflows/integrate-home-showcase.yml').read_text()
           text = index.read_text()
-          start = text.index('const SHOWCASE_TABS =')
-          end = text.index('function DemoAndComparison', start)
-          match = re.search(r"replacement = r'''(.*?)'''", workflow, re.S)
-          if not match:
-              raise SystemExit('Could not recover homepage showcase replacement')
-          replacement = match.group(1)
-          index.write_text(text[:start] + replacement + text[end:])
-          print('Homepage showcase integrated')
+
+          import_line = 'import { PymeNewsRadar } from "@/components/pyme-news-radar";'
+          if import_line not in text:
+              marker = 'import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";'
+              if marker not in text:
+                  raise SystemExit('Homepage import marker not found')
+              text = text.replace(marker, marker + '\n' + import_line, 1)
+
+          if '<PymeNewsRadar />' not in text:
+              marker = '<Hero/><ProductShowcase/>'
+              if marker not in text:
+                  raise SystemExit('Homepage landing composition marker not found')
+              text = text.replace(marker, '<Hero/><ProductShowcase/><section className="border-t bg-secondary/20 py-20"><div className="mx-auto max-w-7xl px-6"><PymeNewsRadar /></div></section>', 1)
+
+          index.write_text(text)
+          print('PYME Radar integration verified')
           PY
 
-      - name: Verify
+      - name: Verify homepage integration
         run: |
-          grep -n "SHOWCASE_MODULES" src/routes/index.tsx
-          grep -n "Caja" src/routes/index.tsx
-          grep -n "Cotizaciones" src/routes/index.tsx
-          grep -n "Nüva IA" src/routes/index.tsx
+          grep -n "pyme-news-radar" src/routes/index.tsx
+          grep -n "PymeNewsRadar" src/routes/index.tsx
           npm ci
+          npm run lint
           npm run typecheck
+          npm test -- --run
           npm run build
 
-      - name: Commit
+      - name: Commit verified integration
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/routes/index.tsx
           git diff --cached --quiet && exit 0
-          git commit -m "feat: integrate interactive homepage product preview"
+          git commit -m "feat: integrate PYME Radar into homepage"
           git push
