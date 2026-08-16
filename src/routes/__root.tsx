@@ -17,7 +17,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
 import { PymeNewsHub } from "@/components/pyme-news-hub-v2";
-import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
 
 function NotFoundComponent() {
   return (
@@ -102,35 +101,20 @@ function RouteEnhancements() {
     if (typeof document === "undefined") return;
     const path = location.pathname;
     const isLanding = path === "/";
-    const isCustomers = path === "/customers";
-    if (!isLanding && !isCustomers) {
+    if (!isLanding) {
       setMount(null);
       return;
     }
 
     const mountNode = document.createElement("div");
-    mountNode.dataset.nuvaRouteEnhancement = isLanding ? "pyme-radar" : "operating-pulse";
+    mountNode.dataset.nuvaRouteEnhancement = "pyme-radar";
 
-    if (isLanding) {
-      const main = document.querySelector("main");
-      if (!main) return;
-      mountNode.className = "mx-auto max-w-7xl px-6 py-12 sm:py-16";
-      const firstSection = main.firstElementChild;
-      if (firstSection?.nextSibling) main.insertBefore(mountNode, firstSection.nextSibling);
-      else main.appendChild(mountNode);
-    } else {
-      const main = document.querySelector("main");
-      const content = main?.firstElementChild;
-      if (!content) return;
-
-      // The CRM intelligence belongs to the Customers page content, not to
-      // the global document shell. Mount it immediately after the page header
-      // so it reads as a native CRM section and keeps the sidebar/header intact.
-      mountNode.className = "mb-6 w-full";
-      const pageHeader = content.firstElementChild;
-      if (pageHeader?.nextSibling) content.insertBefore(mountNode, pageHeader.nextSibling);
-      else content.appendChild(mountNode);
-    }
+    const main = document.querySelector("main");
+    if (!main) return;
+    mountNode.className = "mx-auto max-w-7xl px-6 py-12 sm:py-16";
+    const firstSection = main.firstElementChild;
+    if (firstSection?.nextSibling) main.insertBefore(mountNode, firstSection.nextSibling);
+    else main.appendChild(mountNode);
 
     setMount(mountNode);
     return () => {
@@ -140,7 +124,7 @@ function RouteEnhancements() {
   }, [location.pathname]);
 
   if (!mount) return null;
-  return createPortal(location.pathname === "/" ? <PymeNewsHub /> : <NuvaOperatingPulse />, mount);
+  return createPortal(<PymeNewsHub />, mount);
 }
 
 function RootComponent() {
