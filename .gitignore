@@ -38,3 +38,5 @@ dist-ssr
 .vercel
 .vercel-redeploy-trigger
 coverage
+
+# CI readiness validation
