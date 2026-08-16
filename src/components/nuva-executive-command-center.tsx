@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowUpRight, CheckCircle2, CircleDollarSign, Package, Users, Zap, FileText, ShieldAlert } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CheckCircle2, CircleDollarSign, Package, Users, Zap, FileText, ShieldAlert, Gauge } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 
@@ -10,6 +10,7 @@ type Product = { stock?: number | string | null; min_stock?: number | string | n
 type Props = { customers?: Customer[]; sales?: Sale[]; activities?: Activity[]; quotes?: Quote[]; products?: Product[]; executionScore?: number };
 const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
 const score = (value: number, target: number) => Math.max(0, Math.min(100, Math.round((value / Math.max(target, 1)) * 100)));
+const healthLabel = (value: number) => value >= 80 ? "Saludable" : value >= 60 ? "Estable" : value >= 40 ? "Atención" : "Crítico";
 
 export function NuvaExecutiveCommandCenter({ customers = [], sales = [], activities = [], quotes = [], products = [], executionScore = 0 }: Props) {
   const revenue = sales.reduce((sum, s) => sum + Number(s.total ?? 0), 0);
@@ -37,7 +38,7 @@ export function NuvaExecutiveCommandCenter({ customers = [], sales = [], activit
 
   return <section className="space-y-5">
     <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-background"><div className="p-6 md:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-6"><div className="max-w-2xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary"><Zap className="h-4 w-4" /> Nüva Executive Intelligence</div><h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">Nüva encontró lo que merece tu atención.</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Estado, evidencia, impacto y decisión en una sola vista ejecutiva.</p></div><div className="rounded-2xl border bg-background/80 px-5 py-4 text-center shadow-sm"><div className="text-xs text-muted-foreground">Business Health</div><div className="mt-1 text-3xl font-bold tabular-nums">{health}</div><div className="text-xs font-medium">/ 100</div></div></div>
+      <div className="flex flex-wrap items-start justify-between gap-6"><div className="max-w-2xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary"><Zap className="h-4 w-4" /> Nüva Executive Intelligence</div><h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">Nüva encontró lo que merece tu atención.</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Estado, evidencia, impacto y decisión en una sola vista ejecutiva.</p></div><div className="min-w-36 rounded-2xl border bg-background/80 px-5 py-4 text-center shadow-sm"><div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><Gauge className="h-3.5 w-3.5" /> Business Health</div><div className="mt-1 text-3xl font-bold tabular-nums">{health}</div><div className="text-xs font-medium">{healthLabel(health)} · /100</div></div></div>
       <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric icon={<CircleDollarSign className="h-4 w-4" />} label="Ventas registradas" value={money(revenue)} /><Metric icon={<Users className="h-4 w-4" />} label="Clientes activos" value={String(activeCustomers)} /><Metric icon={<AlertTriangle className="h-4 w-4" />} label="Tareas vencidas" value={String(overdue)} /><Metric icon={<CheckCircle2 className="h-4 w-4" />} label="Execution Score" value={`${executionScore}/100`} /></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3"><Signal icon={<Package className="h-4 w-4" />} label="Inventario" value={`${inventory}/100`} /><Signal icon={<FileText className="h-4 w-4" />} label="Cotizaciones" value={String(pendingQuotes.length)} /><Signal icon={<CircleDollarSign className="h-4 w-4" />} label="Pipeline abierto" value={money(pendingQuoteValue)} /></div>
     </div></Card>
