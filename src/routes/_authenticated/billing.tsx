@@ -37,6 +37,7 @@ import {
   ClipboardCheck,
   FileCheck2,
   FileDown,
+  Package,
 } from "lucide-react";
 import { useBizList, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
@@ -48,6 +49,7 @@ import {
   generateSiiDeclarationPdf,
   type PendingSaleForDeclaration,
 } from "@/lib/sii-declaration-pdf";
+import { downloadSiiReadyPack } from "@/lib/sii-pack";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({ meta: [{ title: "Facturación SII — Nüva One" }] }),
@@ -115,16 +117,13 @@ function InfoCard() {
   );
 }
 
-/** Ventas pagadas que aún no tienen un documento SII registrado: son las que
- * hay que declarar. Al declarar el lote se insertan de una vez y desaparecen
- * de aquí, así no queda información acumulada que el negocio pueda volver a
- * declarar por error (y reportar el mismo elemento dos veces al SII). */
 function PendingDeclarationCard() {
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
   const { data: sales } = useBizList<any>("sales", { order: "sale_date" });
   const { data: docs } = useBizList<any>("billing_documents", { order: "created_at" });
   const [downloading, setDownloading] = useState(false);
+  const [packDownloading, setPackDownloading] = useState(false);
   const [declaring, setDeclaring] = useState(false);
 
   const declaredSaleIds = useMemo(
@@ -167,6 +166,21 @@ function PendingDeclarationCard() {
     }
   }
 
+  async function handlePackDownload() {
+    if (!active || pending.length === 0) return;
+    setPackDownloading(true);
+    try {
+      await downloadSiiReadyPack(pending, active);
+      toast.success("Pack SII Ready descargado", {
+        description: "Incluye expediente PDF, CSV estructurado, checklist y guía de control.",
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo generar el pack SII Ready");
+    } finally {
+      setPackDownloading(false);
+    }
+  }
+
   async function handleDeclare() {
     if (!active || pending.length === 0) return;
     const ok = window.confirm(
@@ -205,24 +219,27 @@ function PendingDeclarationCard() {
         <p className="text-sm font-medium">Pendientes por declarar en el SII</p>
         <p className="text-xs text-muted-foreground">
           {pending.length} venta(s) pagada(s) sin documento registrado · {fmtCLP(pendingTotal)} en
-          total. Descarga el documento, decláralas en el Portal MiPyme y luego marca el lote como
-          declarado.
+          total. Prepara el expediente, decláralas en el Portal MiPyme y luego registra el folio real.
         </p>
       </div>
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={handleDownload}
-          disabled={downloading}
-        >
-          <FileDown className="mr-1.5 h-4 w-4" />
-          {downloading ? "Generando..." : "Descargar documento SII"}
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <Button variant="outline" onClick={handlePackDownload} disabled={packDownloading}>
+          <Package className="mr-1.5 h-4 w-4" />
+          {packDownloading ? "Preparando pack..." : "Descargar Pack SII Ready"}
         </Button>
-        <Button className="flex-1" onClick={handleDeclare} disabled={declaring}>
+        <Button variant="outline" onClick={handleDownload} disabled={downloading}>
+          <FileDown className="mr-1.5 h-4 w-4" />
+          {downloading ? "Generando..." : "Solo PDF"}
+        </Button>
+        <Button onClick={handleDeclare} disabled={declaring}>
           <FileCheck2 className="mr-1.5 h-4 w-4" />
           {declaring ? "Guardando..." : "Ya lo declaré ✓"}
         </Button>
+      </div>
+      <div className="mt-3 rounded-xl border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+        <strong className="text-foreground">Pack SII Ready:</strong> expediente PDF profesional +
+        CSV estructurado + checklist de revisión + guía de control. No es un DTE emitido ni una
+        validación oficial del SII.
       </div>
     </Card>
   );
@@ -489,7 +506,6 @@ function SiiAssistDialog() {
 }
 
 function BillingSii() {
-  const { active } = useActiveBusiness();
   const { data: docs, isLoading } = useBizList<any>("billing_documents", { order: "created_at" });
 
   return (
