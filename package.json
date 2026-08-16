@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "load:test": "node scripts/load-test.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",
