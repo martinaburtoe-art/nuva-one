@@ -26,12 +26,12 @@ const OPEN_STAGES = ["new", "contacted", "qualified", "proposal"];
 
 export function NuvaOperatingPulse() {
   const pathname = useLocation({ select: (location) => location.pathname });
-  if (pathname !== "/customers") return null;
+  const enabled = pathname === "/customers";
 
-  const { data: customers } = useBizList<Customer>("customers", { order: "name" });
-  const { data: activities } = useBizList<Activity>("customer_activities", { order: "created_at", ascending: false });
-  const { data: quotes } = useBizList<any>("quotes", { order: "created_at", ascending: false });
-  const { data: sales } = useBizList<any>("sales", { order: "sale_date", ascending: false });
+  const { data: customers } = useBizList<Customer>("customers", { order: "name", enabled });
+  const { data: activities } = useBizList<Activity>("customer_activities", { order: "created_at", ascending: false, enabled });
+  const { data: quotes } = useBizList<any>("quotes", { order: "created_at", ascending: false, enabled });
+  const { data: sales } = useBizList<any>("sales", { order: "sale_date", ascending: false, enabled });
 
   const crm = useMemo(() => {
     const list = customers ?? [];
@@ -58,6 +58,8 @@ export function NuvaOperatingPulse() {
     if (!result.length) result.push({ title: "Relación comercial bajo control", detail: "No detectamos seguimientos vencidos ni señales críticas en tu cartera.", href: "/customers", tone: "positive" });
     return result.slice(0, 3);
   }, [crm]);
+
+  if (!enabled) return null;
 
   return (
     <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
