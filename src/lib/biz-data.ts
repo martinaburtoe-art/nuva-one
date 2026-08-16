@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "./use-business";
 import { toast } from "sonner";
 
-export function useBizList<T = any>(table: string, opts?: { order?: string; ascending?: boolean; enabled?: boolean }) {
+export function useBizList<T = any>(
+  table: string,
+  opts?: { order?: string; ascending?: boolean; enabled?: boolean },
+) {
   const { active } = useActiveBusiness();
   return useQuery({
     enabled: !!active?.id && (opts?.enabled ?? true),
