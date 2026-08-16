@@ -49,6 +49,7 @@ export default tseslint.config(
       "src/lib/demo/demo-data.ts",
       "src/lib/demo/demo-data.test.ts",
       "src/lib/demo/demo-state.tsx",
+      "scripts/**/*.mjs",
     ],
     rules: {
       "prettier/prettier": "off",
