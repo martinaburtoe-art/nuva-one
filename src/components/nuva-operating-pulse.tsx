@@ -57,44 +57,80 @@ export function NuvaOperatingPulse() {
   }, [crm]);
 
   return (
-    <Card className="mb-6 overflow-hidden border-primary/15 bg-gradient-to-br from-background via-primary/[0.025] to-background">
-      <div className="border-b p-5 md:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary"><WalletCards className="h-4 w-4" /> Nüva Operating Pulse</div>
-            <h2 className="mt-1 text-lg font-semibold">Inteligencia comercial de tus clientes</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Detecta oportunidades, riesgos y seguimientos antes de que se conviertan en ventas perdidas.</p>
+    <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
+      <div className="px-4 py-4 md:px-5 md:py-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+              <WalletCards className="h-3.5 w-3.5" />
+              Nüva Operating Pulse
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 className="text-base font-semibold tracking-tight">Inteligencia comercial</h2>
+              <span className="hidden text-xs text-muted-foreground sm:inline">Señales de tu cartera y pipeline en tiempo real</span>
+            </div>
           </div>
-          <Badge variant="secondary" className="gap-1"><Clock3 className="h-3 w-3" /> CRM en tiempo real</Badge>
+          <Badge variant="secondary" className="shrink-0 gap-1 text-[11px] font-medium">
+            <Clock3 className="h-3 w-3" /> CRM en tiempo real
+          </Badge>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+        <div className="mt-4 grid grid-cols-2 divide-x divide-y overflow-hidden rounded-lg border bg-muted/20 md:grid-cols-4 md:divide-y-0">
           <Metric icon={Users} label="Clientes" value={crm.total} />
           <Metric icon={Users} label="Prospectos" value={crm.prospects} />
           <Metric icon={ArrowUpRight} label="Pipeline abierto" value={crm.openPipeline} />
           <Metric icon={CheckCircle2} label="Seguimientos pendientes" value={crm.pendingTasks} critical={crm.pendingTasks > 0} />
         </div>
       </div>
-      <div className="grid gap-3 p-5 md:grid-cols-3 md:p-6">
-        {signals.map((signal) => (
-          <div key={signal.title} className="rounded-xl border bg-background/75 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className={`rounded-lg p-2 ${signal.tone === "critical" ? "bg-destructive/10 text-destructive" : signal.tone === "attention" ? "bg-amber-500/10 text-amber-600" : "bg-success/10 text-success"}`}>{signal.tone === "positive" ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}</div>
-              <Badge variant={signal.tone === "critical" ? "destructive" : signal.tone === "attention" ? "secondary" : "outline"}>{signal.tone === "critical" ? "Crítico" : signal.tone === "attention" ? "Atención" : "OK"}</Badge>
+
+      <div className="border-t bg-muted/[0.08] px-4 py-4 md:px-5">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold text-foreground">Señales para actuar</p>
+          <span className="text-[11px] text-muted-foreground">Actualizado automáticamente</span>
+        </div>
+        <div className="grid gap-2 md:grid-cols-3">
+          {signals.map((signal) => (
+            <div key={signal.title} className="flex min-h-[104px] flex-col rounded-lg border bg-background p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className={`rounded-md p-1.5 ${signal.tone === "critical" ? "bg-destructive/10 text-destructive" : signal.tone === "attention" ? "bg-amber-500/10 text-amber-600" : "bg-success/10 text-success"}`}>
+                  {signal.tone === "positive" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                </div>
+                <Badge variant={signal.tone === "critical" ? "destructive" : signal.tone === "attention" ? "secondary" : "outline"} className="text-[10px]">
+                  {signal.tone === "critical" ? "Crítico" : signal.tone === "attention" ? "Atención" : "OK"}
+                </Badge>
+              </div>
+              <h3 className="mt-2 text-xs font-semibold">{signal.title}</h3>
+              <p className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-muted-foreground">{signal.detail}</p>
+              <Link to={signal.href} className="mt-auto pt-2 text-[11px] font-semibold text-primary">
+                Resolver ahora <ArrowUpRight className="ml-0.5 inline h-3 w-3" />
+              </Link>
             </div>
-            <h3 className="mt-3 text-sm font-semibold">{signal.title}</h3>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{signal.detail}</p>
-            <Link to={signal.href} className="mt-3 inline-flex items-center text-xs font-semibold text-primary">Resolver ahora <ArrowUpRight className="ml-1 h-3.5 w-3.5" /></Link>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/20 px-5 py-3 md:px-6">
-        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><PhoneCall className="h-3.5 w-3.5" /> {crm.active} clientes activos</span><span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {crm.openQuotes} cotizaciones abiertas</span><span>Ventas asociadas: {new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(crm.revenue)}</span></div>
-        <Button asChild size="sm" variant="outline"><Link to="/customers">Gestionar CRM <ArrowUpRight className="ml-1 h-3.5 w-3.5" /></Link></Button>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2.5 md:px-5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5"><PhoneCall className="h-3 w-3" /> {crm.active} activos</span>
+          <span className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {crm.openQuotes} cotizaciones abiertas</span>
+          <span>Ventas asociadas: {new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(crm.revenue)}</span>
+        </div>
+        <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">
+          <Link to="/customers">Gestionar CRM <ArrowUpRight className="ml-1 h-3 w-3" /></Link>
+        </Button>
       </div>
     </Card>
   );
 }
 
 function Metric({ icon: Icon, label, value, critical }: { icon: typeof Users; label: string; value: number; critical?: boolean }) {
-  return <div className="rounded-xl border bg-background/70 p-3"><div className="flex items-center gap-2"><Icon className={`h-4 w-4 ${critical ? "text-destructive" : "text-primary"}`} /><span className="text-[11px] text-muted-foreground">{label}</span></div><p className="mt-1 text-xl font-bold">{value}</p></div>;
+  return (
+    <div className="min-w-0 px-3 py-2.5">
+      <div className="flex items-center gap-1.5">
+        <Icon className={`h-3.5 w-3.5 ${critical ? "text-destructive" : "text-primary"}`} />
+        <span className="truncate text-[11px] text-muted-foreground">{label}</span>
+      </div>
+      <p className="mt-0.5 text-lg font-bold leading-none tracking-tight">{value}</p>
+    </div>
+  );
 }
