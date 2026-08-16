@@ -17,6 +17,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
 import { PymeNewsHub } from "@/components/pyme-news-hub-v2";
+import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
 
 function NotFoundComponent() {
   return (
@@ -101,20 +102,36 @@ function RouteEnhancements() {
     if (typeof document === "undefined") return;
     const path = location.pathname;
     const isLanding = path === "/";
-    if (!isLanding) {
+    const isCustomers = path === "/customers";
+    if (!isLanding && !isCustomers) {
       setMount(null);
       return;
     }
 
     const mountNode = document.createElement("div");
-    mountNode.dataset.nuvaRouteEnhancement = "pyme-radar";
+    mountNode.dataset.nuvaRouteEnhancement = isLanding ? "pyme-radar" : "operating-pulse";
 
-    const main = document.querySelector("main");
-    if (!main) return;
-    mountNode.className = "mx-auto max-w-7xl px-6 py-12 sm:py-16";
-    const firstSection = main.firstElementChild;
-    if (firstSection?.nextSibling) main.insertBefore(mountNode, firstSection.nextSibling);
-    else main.appendChild(mountNode);
+    if (isLanding) {
+      const main = document.querySelector("main");
+      if (!main) return;
+      mountNode.className = "mx-auto max-w-7xl px-6 py-12 sm:py-16";
+      const firstSection = main.firstElementChild;
+      if (firstSection?.nextSibling) main.insertBefore(mountNode, firstSection.nextSibling);
+      else main.appendChild(mountNode);
+    } else {
+      // Keep Operating Pulse in the same visual position at the top of Clientes,
+      // but mount it inside the actual CRM page content rather than the global shell.
+      const heading = Array.from(document.querySelectorAll("main h1")).find(
+        (node) => node.textContent?.trim() === "Clientes",
+      );
+      const pageHeader = heading?.parentElement?.parentElement;
+      const content = pageHeader?.parentElement;
+      if (!pageHeader || !content) return;
+
+      mountNode.className = "mb-6 w-full";
+      if (pageHeader.nextSibling) content.insertBefore(mountNode, pageHeader.nextSibling);
+      else content.appendChild(mountNode);
+    }
 
     setMount(mountNode);
     return () => {
@@ -124,7 +141,7 @@ function RouteEnhancements() {
   }, [location.pathname]);
 
   if (!mount) return null;
-  return createPortal(<PymeNewsHub />, mount);
+  return createPortal(location.pathname === "/" ? <PymeNewsHub /> : <NuvaOperatingPulse />, mount);
 }
 
 function RootComponent() {
