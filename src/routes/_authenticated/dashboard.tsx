@@ -13,7 +13,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { ExplainMyBusiness } from "@/components/explain-my-business";
 import { BusinessInsightCard } from "@/components/business-insight-card";
-import { PymeNewsHub } from "@/components/pyme-news-hub";
+import { PymeNewsRadar } from "@/components/pyme-news-radar";
 import { TrendingUp, TrendingDown, ShoppingCart, Boxes, DollarSign, ArrowUpRight, X, CheckCircle2, Sparkles } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -78,78 +78,28 @@ function Dashboard() {
       return true;
     });
     if (isoFrom || isoTo) {
-      const byDay: Record<string, { fecha: string; ingresos: number; gastos: number }> = {};
-      rows.forEach((r: any) => {
-        const key = r.tx_date;
-        if (!byDay[key]) byDay[key] = { fecha: new Date(key + "T00:00:00").toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }), ingresos: 0, gastos: 0 };
-        if (r.type === "income") byDay[key].ingresos += Number(r.amount); else byDay[key].gastos += Number(r.amount);
-      });
-      return Object.keys(byDay).sort().map((k) => byDay[k]);
+      const grouped = new Map<string, { date: string; income: number; expense: number }>();
+      rows.forEach((r: any) => { const key = r.tx_date; const current = grouped.get(key) || { date: key, income: 0, expense: 0 }; if (r.type === "income") current.income += Number(r.amount); else current.expense += Number(r.amount); grouped.set(key, current); });
+      return Array.from(grouped.values()).sort((a, b) => a.date.localeCompare(b.date));
     }
-    const byMonth: Record<string, { mes: string; ingresos: number; gastos: number }> = {};
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      byMonth[`${d.getFullYear()}-${d.getMonth()}`] = { mes: d.toLocaleDateString("es-CL", { month: "short" }), ingresos: 0, gastos: 0 };
-    }
-    rows.forEach((r: any) => {
-      const d = new Date(r.tx_date); const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (byMonth[key]) { if (r.type === "income") byMonth[key].ingresos += Number(r.amount); else byMonth[key].gastos += Number(r.amount); }
-    });
-    return Object.values(byMonth);
+    return rows.slice().sort((a: any, b: any) => String(a.tx_date).localeCompare(String(b.tx_date))).map((r: any) => ({ date: r.tx_date, income: r.type === "income" ? Number(r.amount) : 0, expense: r.type === "expense" ? Number(r.amount) : 0 }));
   }, [allTx, isoFrom, isoTo, categories]);
 
-  const cards = [
-    { l: "Ingresos", v: fmtCLP(kpis?.income ?? 0), i: TrendingUp, c: "text-success" },
-    { l: "Gastos", v: fmtCLP(kpis?.expense ?? 0), i: TrendingDown, c: "text-destructive" },
-    { l: "Flujo neto", v: fmtCLP(kpis?.net ?? 0), i: DollarSign, c: "text-primary" },
-    { l: "Ventas", v: String(kpis?.salesCount ?? 0), i: ShoppingCart, c: "text-foreground" },
-    { l: "Valor inventario", v: fmtCLP(kpis?.inventoryValue ?? 0), i: Boxes, c: "text-foreground" },
-  ];
-
-  const focusAction = onboardingFocus === "Ventas" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "Inventario" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "Finanzas" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "Clientes" ? { label: "Crea tu primer cliente", href: "/crm" } : { label: "Completa tu primera operación", href: "/sales" };
-  const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0;
-
-  return (
-    <ModuleGuard module="dashboard">
-      <>
-        <PageHeader title={`Hola, ${active?.name ?? "negocio"}`} description="Esto es lo que está pasando hoy." />
-
-        {kpis !== undefined && !hasActivity && (
-          <Card className="mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/[0.08] via-accent/40 to-background p-6 shadow-soft">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><Sparkles className="h-4 w-4" /> Activación de Nüva One</div>
-                <h2 className="mt-2 text-xl font-bold">Tu Nüva One está listo. Ahora hagamos que empiece a trabajar para ti.</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Tu foco inicial es <strong className="text-foreground">{onboardingFocus}</strong>. Completa una primera operación y comenzaremos a construir tu visión del negocio.</p>
-              </div>
-              <Link to={focusAction.href} className="shrink-0"><Button size="lg">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
-            </div>
-            <div className="mt-6 grid gap-2 sm:grid-cols-4">
-              <ActivationStep done title="Negocio creado" />
-              <ActivationStep done={hasActivity} title="Primera operación" />
-              <ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" />
-              <ActivationStep done={false} title="Primer análisis" />
-            </div>
-          </Card>
-        )}
-
-        <BusinessInsightCard income={kpis?.income ?? 0} expense={kpis?.expense ?? 0} inventoryValue={kpis?.inventoryValue ?? 0} productsCount={kpis?.productsCount ?? 0} salesCount={kpis?.salesCount ?? 0} />
-        <div className="mt-6"><PymeNewsHub /></div>
-
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">{cards.map((c) => <Card key={c.l} className="p-5 transition-all hover:-translate-y-0.5 hover:shadow-soft"><div className="flex items-center justify-between"><span className="text-xs font-medium text-muted-foreground">{c.l}</span><c.i className={`h-4 w-4 ${c.c}`} /></div><div className="mt-2 text-2xl font-bold tracking-tight">{c.v}</div></Card>)}</div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <div className="space-y-6"><NuvaScoreCard /><ExplainMyBusiness /></div>
-          <Card className="p-6 lg:col-span-2">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Ingresos vs Gastos</h3><p className="text-xs text-muted-foreground">{isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}</p></div><div className="flex flex-wrap items-end gap-2"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" /> Quitar filtros</Button>}</div></div>
-            <ResponsiveContainer width="100%" height={280}><AreaChart data={chartData ?? []}><defs><linearGradient id="gi" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0.4} /><stop offset="100%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0} /></linearGradient><linearGradient id="ge" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0.3} /><stop offset="100%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0} /></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey={isoFrom || isoTo ? "fecha" : "mes"} stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Area type="monotone" dataKey="ingresos" stroke="oklch(0.55 0.22 268)" fill="url(#gi)" strokeWidth={2} /><Area type="monotone" dataKey="gastos" stroke="oklch(0.6 0.22 25)" fill="url(#ge)" strokeWidth={2} /></AreaChart></ResponsiveContainer>
-          </Card>
-          <Card className="p-6"><h3 className="font-semibold">Acciones rápidas</h3><p className="text-xs text-muted-foreground">Lo más usado</p><div className="mt-4 space-y-2">{[{ l: "Registrar venta", h: "/sales" }, { l: "Agregar producto", h: "/inventory" }, { l: "Nueva cotización", h: "/quotes" }, { l: "Registrar gasto", h: "/finance" }].map((a) => <Link key={a.l} to={a.h} className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:border-primary hover:bg-accent">{a.l} <ArrowUpRight className="h-4 w-4 text-muted-foreground" /></Link>)}</div></Card>
-        </div>
-      </>
-    </ModuleGuard>
-  );
+  return <ModuleGuard module="dashboard"><div className="space-y-6">
+    <PageHeader title="Resumen ejecutivo" description="La visión operativa de tu negocio en un solo lugar." />
+    <PymeNewsRadar />
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <MetricCard title="Ingresos" value={fmtCLP(kpis?.income ?? 0)} icon={<TrendingUp className="h-4 w-4" />} />
+      <MetricCard title="Gastos" value={fmtCLP(kpis?.expense ?? 0)} icon={<TrendingDown className="h-4 w-4" />} />
+      <MetricCard title="Resultado" value={fmtCLP(kpis?.net ?? 0)} icon={<DollarSign className="h-4 w-4" />} />
+      <MetricCard title="Inventario" value={fmtCLP(kpis?.inventoryValue ?? 0)} icon={<Boxes className="h-4 w-4" />} />
+    </div>
+    <div className="grid gap-4 lg:grid-cols-3">
+      <div className="lg:col-span-2"><Card className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Evolución financiera</h2><p className="text-sm text-muted-foreground">Ingresos y gastos registrados.</p></div><div className="flex flex-wrap gap-2"><DateRangeFilter dateFrom={dateFrom} dateTo={dateTo} onChange={(from, to) => { setDateFrom(from); setDateTo(to); }} /><MultiSelectFilter options={categoryOptions} value={categories} onChange={setCategories} placeholder="Categorías" />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" />Limpiar</Button>}</div></div><div className="mt-5 h-[280px]">{chartData.length ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis /><Tooltip formatter={(value: number) => fmtCLP(value)} /><Area type="monotone" dataKey="income" name="Ingresos" fill="currentColor" fillOpacity={0.12} stroke="currentColor" /><Area type="monotone" dataKey="expense" name="Gastos" fill="currentColor" fillOpacity={0.06} stroke="currentColor" /></AreaChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No hay movimientos para los filtros seleccionados.</div>}</div></Card></div>
+      <div className="space-y-4"><NuvaScoreCard /><BusinessInsightCard /></div>
+    </div>
+    <ExplainMyBusiness />
+  </div></ModuleGuard>;
 }
 
-function ActivationStep({ done, title }: { done: boolean; title: string }) { return <div className="flex items-center gap-2 rounded-xl border bg-background/70 p-3 text-sm"><CheckCircle2 className={`h-4 w-4 shrink-0 ${done ? "text-success" : "text-muted-foreground/40"}`} /><span className={done ? "font-medium" : "text-muted-foreground"}>{title}</span></div>; }
+function MetricCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) { return <Card className="p-5"><div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{title}</div><p className="mt-2 text-2xl font-bold tabular-nums">{value}</p></Card>; }
