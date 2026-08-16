@@ -11,6 +11,7 @@
 - [x] Guarded multi-tenant load-test harness committed at `scripts/load-test.mjs`.
 - [x] Production `/dashboard` no longer renders Nüva Operating Pulse.
 - [x] Production `/customers` renders the CRM Operating Pulse through `PageHeader`.
+- [x] Production deployment is READY and aliases `nuva-one.vercel.app`.
 - [ ] Run staged 10 → 25 → 50 → 100 VU load test with a dedicated test account.
 - [ ] Enable Supabase leaked-password protection in Auth settings.
 - [ ] Review intentional GraphQL exposure warnings or disable GraphQL if unused.
