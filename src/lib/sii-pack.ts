@@ -9,7 +9,7 @@ function crc32(data: Uint8Array) {
   let crc = 0xffffffff;
   for (const byte of data) {
     crc ^= byte;
-    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (0xedb883b6 & -(crc & 1));
+    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
   }
   return (crc ^ 0xffffffff) >>> 0;
 }
@@ -31,7 +31,7 @@ function zip(files: PackFile[]) {
     ]);
     locals.push(local);
     const central = concat([
-      u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(file.data.length), u32(file.data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset), name,
+      u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(0), u32(crc), u32(file.data.length), u32(file.data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(offset), name,
     ]);
     centrals.push(central);
     offset += local.length;
@@ -123,6 +123,7 @@ function manifest(business: Business, sales: PendingSaleForDeclaration[], date: 
       "02_DATOS/resumen-tributario-estimado.csv",
       "03_CONTROL/checklist-sii-ready.md",
       "03_CONTROL/validacion-previa.txt",
+      "04_CONTROL/MANIFEST.json",
       "04_CONTROL/README.txt",
     ],
     generated_date: date,
