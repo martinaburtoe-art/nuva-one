@@ -1,1 +1,1 @@
-export const PYME_RADAR_RELEASE = "2.0.1";
+export const PYME_RADAR_RELEASE = "2.0.2";
