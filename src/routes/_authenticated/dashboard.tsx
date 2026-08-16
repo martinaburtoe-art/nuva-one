@@ -13,6 +13,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { ExplainMyBusiness } from "@/components/explain-my-business";
 import { BusinessInsightCard } from "@/components/business-insight-card";
+import { PymeNewsHub } from "@/components/pyme-news-hub";
 import { TrendingUp, TrendingDown, ShoppingCart, Boxes, DollarSign, ArrowUpRight, X, CheckCircle2, Sparkles } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -134,6 +135,7 @@ function Dashboard() {
         )}
 
         <BusinessInsightCard income={kpis?.income ?? 0} expense={kpis?.expense ?? 0} inventoryValue={kpis?.inventoryValue ?? 0} productsCount={kpis?.productsCount ?? 0} salesCount={kpis?.salesCount ?? 0} />
+        <div className="mt-6"><PymeNewsHub /></div>
 
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">{cards.map((c) => <Card key={c.l} className="p-5 transition-all hover:-translate-y-0.5 hover:shadow-soft"><div className="flex items-center justify-between"><span className="text-xs font-medium text-muted-foreground">{c.l}</span><c.i className={`h-4 w-4 ${c.c}`} /></div><div className="mt-2 text-2xl font-bold tracking-tight">{c.v}</div></Card>)}</div>
 
