@@ -35,10 +35,14 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "warn",
-      "prettier/prettier": "warn",
     },
   },
   eslintPluginPrettier,
+  {
+    rules: {
+      "prettier/prettier": "warn",
+    },
+  },
   {
     files: [
       "src/routes/demo.tsx",
@@ -46,8 +50,6 @@ export default tseslint.config(
       "src/lib/demo/demo-data.ts",
       "src/lib/demo/demo-data.test.ts",
       "src/lib/demo/demo-state.tsx",
-      "src/components/business-insight-card.tsx",
-      "scripts/**/*.mjs",
     ],
     rules: {
       "prettier/prettier": "off",
