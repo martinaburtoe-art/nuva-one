@@ -129,8 +129,7 @@ function RouteEnhancements() {
       if (!pageHeader || !content) return;
 
       mountNode.className = "mb-6 w-full";
-      if (pageHeader.nextSibling) content.insertBefore(mountNode, pageHeader.nextSibling);
-      else content.appendChild(mountNode);
+      content.insertBefore(mountNode, pageHeader);
     }
 
     setMount(mountNode);
