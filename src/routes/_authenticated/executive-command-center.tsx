@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { NuvaExecutiveCommandCenter } from "@/components/nuva-executive-command-center";
 import { NuvaExecutionScore } from "@/components/nuva-execution-score";
+import { NuvaTrendIntelligence } from "@/components/nuva-trend-intelligence";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/executive-command-center")({
@@ -22,5 +23,5 @@ function ExecutiveCommandCenter() {
   const completed = tasks.filter((x: any) => x.completed).length;
   const executionScore = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
 
-  return <ModuleGuard module="customers"><div className="p-4 md:p-6"><PageHeader title="Executive Intelligence" description="La vista ejecutiva de Nüva: qué está pasando, qué importa y qué hacer ahora." />{loading ? <div className="space-y-4"><Skeleton className="h-56 w-full" /><Skeleton className="h-40 w-full" /></div> : <div className="space-y-5"><NuvaExecutiveCommandCenter customers={customers ?? []} sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} products={products ?? []} executionScore={executionScore} /><NuvaExecutionScore activities={activities ?? []} priorities={(customers ?? []).length} /></div>}</div></ModuleGuard>;
+  return <ModuleGuard module="customers"><div className="p-4 md:p-6"><PageHeader title="Executive Intelligence" description="La vista ejecutiva de Nüva: qué está pasando, qué importa y qué hacer ahora." />{loading ? <div className="space-y-4"><Skeleton className="h-56 w-full" /><Skeleton className="h-40 w-full" /></div> : <div className="space-y-5"><NuvaExecutiveCommandCenter customers={customers ?? []} sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} products={products ?? []} executionScore={executionScore} /><NuvaTrendIntelligence sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} /><NuvaExecutionScore activities={activities ?? []} priorities={(customers ?? []).length} /></div>}</div></ModuleGuard>;
 }
