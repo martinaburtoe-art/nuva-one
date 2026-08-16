@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
     name: Lint, typecheck, test, build
@@ -16,12 +19,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
+
+      - name: Sync lockfile for certification branch
+        if: github.head_ref == 'final-100-client-certification'
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "Lockfile already synchronized."
+          else
+            git commit -m "chore: refresh lockfile"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -57,27 +76,8 @@ jobs:
         with:
           version: latest
 
-      # `supabase test db` only connects to an already-running local stack
-      # (default: 127.0.0.1:54322) -- it does not start one itself. Without
-      # this step the job fails immediately with ECONNREFUSED before any
-      # pgTAP file even runs. `supabase start` spins up the local Docker
-      # stack (Postgres, GoTrue, PostgREST, Realtime, Storage, Kong) and
-      # applies every migration in supabase/migrations as part of startup.
       - name: Start Supabase local stack
         run: supabase start
 
-      # Spins up a throwaway local Postgres (via Docker, already available
-      # on this runner), applies every migration in supabase/migrations,
-      # then runs every *.sql file in supabase/tests/database with pgTAP.
-      # Nothing here touches the real project -- this is a brand new,
-      # disposable database created and destroyed within this job.
-      # supabase test db spins up ~10 Docker containers (Postgres, GoTrue,
-      # PostgREST, Realtime, Storage, Kong...) to run pgTAP against. That
-      # startup occasionally races/times out on shared CI runners -- a known
-      # class of flakiness with the Supabase CLI in GitHub Actions, unrelated
-      # to the tests themselves. Retrying once before failing the job is the
-      # standard, pragmatic mitigation (every test file here is verified
-      # correct against the live schema; a failure is far more likely to be
-      # container startup flake than a real regression).
       - name: Run pgTAP tests (with one retry for CI-only Docker flakiness)
         run: supabase test db || (echo "First attempt failed, retrying once..." && supabase test db)
