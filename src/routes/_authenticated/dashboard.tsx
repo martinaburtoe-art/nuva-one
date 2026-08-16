@@ -13,7 +13,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { ExplainMyBusiness } from "@/components/explain-my-business";
 import { BusinessInsightCard } from "@/components/business-insight-card";
-import { PymeNewsHub } from "@/components/pyme-news-hub";
+import { PymeNewsHub } from "@/components/pyme-news-hub-v2";
 import { TrendingUp, TrendingDown, ShoppingCart, Boxes, DollarSign, ArrowUpRight, X, CheckCircle2, Sparkles } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
