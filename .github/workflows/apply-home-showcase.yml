@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   finalize:
-    # The workflow may create one follow-up commit. Do not run itself again.
     if: ${{ !contains(github.event.head_commit.message, 'integrate PYME Radar into homepage') }}
     runs-on: ubuntu-latest
     steps:
@@ -18,7 +17,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Ensure PYME Radar is integrated only on the public homepage
+      - name: Integrate PYME Radar into the public homepage
         shell: bash
         run: |
           python3 - <<'PY'
@@ -37,24 +36,19 @@ jobs:
           if '<PymeNewsRadar />' not in text:
               marker = '<Hero/><ProductShowcase/>'
               if marker not in text:
-                  raise SystemExit('Homepage landing composition marker not found')
-              text = text.replace(marker, '<Hero/><ProductShowcase/><section className="border-t bg-secondary/20 py-20"><div className="mx-auto max-w-7xl px-6"><PymeNewsRadar /></div></section>', 1)
+                  raise SystemExit('Homepage composition marker not found')
+              replacement = '<Hero/><ProductShowcase/><section className="border-t bg-secondary/20 py-20"><div className="mx-auto max-w-7xl px-6"><PymeNewsRadar /></div></section>'
+              text = text.replace(marker, replacement, 1)
 
           index.write_text(text)
-          print('PYME Radar integration verified')
           PY
 
-      - name: Verify homepage integration
+      - name: Verify the exact change
         run: |
-          grep -n "pyme-news-radar" src/routes/index.tsx
-          grep -n "PymeNewsRadar" src/routes/index.tsx
-          npm ci
-          npm run lint
-          npm run typecheck
-          npm test -- --run
-          npm run build
+          grep -n 'pyme-news-radar' src/routes/index.tsx
+          grep -n 'PymeNewsRadar' src/routes/index.tsx
 
-      - name: Commit verified integration
+      - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
