@@ -1,9 +1,7 @@
--- harden the database for multi-tenant production growth.
--- this migration does not change business data or tenant semantics.
+-- Harden Nüva One for multi-tenant production growth.
+-- No business data is changed.
 
--- 1. Remove anonymous Data API access from private application tables.
--- These tables are used only after authentication; RLS remains the row-level defense
--- for authenticated users, while the grant removal also keeps them out of anon GraphQL.
+-- Remove anonymous Data API access from private application tables.
 revoke all on table public.profiles from anon;
 revoke all on table public.businesses from anon;
 revoke all on table public.business_members from anon;
@@ -16,7 +14,6 @@ revoke all on table public.purchases from anon;
 revoke all on table public.transactions from anon;
 revoke all on table public.quotes from anon;
 revoke all on table public.automations from anon;
-revoke all on table public.marketing_posts from anon;
 revoke all on table public.audit_log from anon;
 revoke all on table public.customer_activities from anon;
 revoke all on table public.collection_reminders from anon;
@@ -37,14 +34,16 @@ revoke all on table public.whatsapp_owner_links from anon;
 revoke all on table public.ai_conversations from anon;
 revoke all on table public.ai_messages from anon;
 revoke all on table public.ai_usage_daily from anon;
+revoke all on table public.shifts from anon;
+revoke all on table public.forum_topics from anon;
+revoke all on table public.forum_replies from anon;
 
--- 2. Keep SECURITY DEFINER application functions callable only by signed-in users.
--- Trigger-only forum functions intentionally remain callable by the database trigger path.
+-- SECURITY DEFINER API wrappers must not be callable anonymously.
 revoke execute on function public.claim_pending_invitations() from anon;
 revoke execute on function public.get_business_members(uuid) from anon;
 revoke execute on function public.invite_team_member(uuid, text, public.member_role, text, jsonb) from anon;
 
--- 3. Add indexes for uncovered foreign keys reported by Supabase Performance Advisor.
+-- Cover foreign keys reported by the performance advisor.
 create index if not exists idx_ai_conversations_user_id on public.ai_conversations(user_id);
 create index if not exists idx_billing_documents_customer_id on public.billing_documents(customer_id);
 create index if not exists idx_billing_documents_sale_id on public.billing_documents(sale_id);
@@ -58,8 +57,7 @@ create index if not exists idx_forum_topics_author_user_id on public.forum_topic
 create index if not exists idx_payment_intents_business_id on public.payment_intents(business_id);
 create index if not exists idx_subscription_charges_business_id on public.subscription_charges(business_id);
 
--- 4. Add tenant-first compound indexes for the highest-volume SaaS access patterns.
--- These support the common business_id filter plus chronological CRM/finance reads.
+-- Tenant-first indexes for common CRM/finance chronological reads.
 create index if not exists idx_customers_business_created_at on public.customers(business_id, created_at desc);
 create index if not exists idx_products_business_created_at on public.products(business_id, created_at desc);
 create index if not exists idx_sales_business_sale_date_created_at on public.sales(business_id, sale_date desc, created_at desc);
@@ -72,12 +70,10 @@ create index if not exists idx_whatsapp_messages_business_created_at on public.w
 create index if not exists idx_ai_messages_conversation_created_at on public.ai_messages(conversation_id, created_at asc);
 create index if not exists idx_billing_documents_business_created_at on public.billing_documents(business_id, created_at desc);
 
--- 5. Remove one confirmed duplicate index. The remaining index has the same definition.
+-- Remove the confirmed duplicate pending-invite index.
 drop index if exists public.idx_business_invites_pending_unique;
 
--- 6. Optimize RLS policies that call auth.uid()/auth.jwt() directly.
--- Supabase recommends wrapping JWT helper calls in SELECT so PostgreSQL can
--- initialize/cache the value once per statement instead of evaluating it per row.
+-- Optimize auth helper calls in RLS init plans.
 do $$
 declare
   p record;
@@ -97,51 +93,42 @@ begin
   loop
     new_qual := p.qual;
     new_check := p.with_check;
-
     if new_qual is not null then
       new_qual := replace(new_qual, 'auth.uid()', '(select auth.uid())');
       new_qual := replace(new_qual, 'auth.jwt()', '(select auth.jwt())');
-      new_qual := replace(new_qual, 'auth.UID()', '(select auth.uid())');
-      new_qual := replace(new_qual, 'auth.JWT()', '(select auth.jwt())');
       execute format('alter policy %I on %I using (%s)', p.policyname, p.tablename, new_qual);
     end if;
-
     if new_check is not null then
       new_check := replace(new_check, 'auth.uid()', '(select auth.uid())');
       new_check := replace(new_check, 'auth.jwt()', '(select auth.jwt())');
-      new_check := replace(new_check, 'auth.UID()', '(select auth.uid())');
-      new_check := replace(new_check, 'auth.JWT()', '(select auth.jwt())');
       execute format('alter policy %I on %I with check (%s)', p.policyname, p.tablename, new_check);
     end if;
   end loop;
 end;
 $$;
 
--- 7. Remove the redundant audit-log SELECT policy. Admins are already members,
--- so the broader member policy grants the same read access without a second OR branch.
+-- Admins are members, so this duplicate audit-log SELECT policy is unnecessary.
 drop policy if exists "Admins read audit_log" on public.audit_log;
 
--- 8. Restrict the private invite/member policies to authenticated callers.
--- This removes unnecessary anon policy evaluation while preserving the existing checks.
+-- Explicitly restrict these policies to signed-in users.
 alter policy "Invitee can view own invite" on public.business_invites to authenticated;
 alter policy "Owner/admin manage business invites" on public.business_invites to authenticated;
 alter policy "Members access customer_activities" on public.customer_activities to authenticated;
 alter policy "Owner/admin manage own whatsapp link" on public.whatsapp_owner_links to authenticated;
 
--- 9. Core tenant-scoped policies should never be evaluated for anonymous callers.
--- The data tables above already have their anon privileges revoked; this explicit role
--- target also makes the authorization contract clear in pg_policies and GraphQL.
+-- Keep all private-table policies out of the anonymous role.
 do $$
 declare
   t text;
   p record;
   private_tables constant text[] := array[
-    'customers','suppliers','products','sales','purchases','transactions','quotes',
-    'automations','marketing_posts','audit_log','billing_integrations','billing_documents',
-    'billing_emit_queue','payment_intents','subscription_charges','business_members','businesses',
-    'profiles','collection_reminders','quote_followups','payment_webhook_events','payments',
-    'rate_limit_counters','system_alerts','device_tokens','whatsapp_connections','whatsapp_messages',
-    'whatsapp_owner_links','ai_conversations','ai_messages','ai_usage_daily'
+    'profiles','businesses','business_members','business_invites','customers','suppliers',
+    'products','sales','purchases','transactions','quotes','automations','audit_log',
+    'customer_activities','collection_reminders','quote_followups','billing_integrations',
+    'billing_documents','billing_emit_queue','payment_intents','payment_webhook_events',
+    'payments','subscription_charges','rate_limit_counters','system_alerts','device_tokens',
+    'whatsapp_connections','whatsapp_messages','whatsapp_owner_links','ai_conversations',
+    'ai_messages','ai_usage_daily','shifts','forum_topics','forum_replies'
   ];
 begin
   foreach t in array private_tables loop
@@ -156,10 +143,6 @@ begin
 end;
 $$;
 
--- 10. Keep the public showcase view intentionally public.
--- It exposes only explicitly public business fields and filters public_enabled/pro plans.
--- Its SECURITY DEFINER status is therefore retained until the showcase is migrated to
--- a dedicated public schema/RPC that can preserve public visibility without bypassing RLS.
-
+-- businesses_public intentionally remains public for the Pro showcase.
 comment on view public.businesses_public is
   'Public Nüva showcase view. Exposes only public business fields and only public_enabled Pro businesses.';
