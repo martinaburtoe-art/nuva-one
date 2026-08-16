@@ -119,9 +119,17 @@ function RouteEnhancements() {
       if (firstSection?.nextSibling) main.insertBefore(mountNode, firstSection.nextSibling);
       else main.appendChild(mountNode);
     } else {
-      const root = document.getElementById("root") ?? document.body;
-      mountNode.className = "mx-auto w-full max-w-7xl px-4 pt-4 md:px-6";
-      root.insertBefore(mountNode, root.firstChild);
+      const main = document.querySelector("main");
+      const content = main?.firstElementChild;
+      if (!content) return;
+
+      // The CRM intelligence belongs to the Customers page content, not to
+      // the global document shell. Mount it immediately after the page header
+      // so it reads as a native CRM section and keeps the sidebar/header intact.
+      mountNode.className = "mb-6 w-full";
+      const pageHeader = content.firstElementChild;
+      if (pageHeader?.nextSibling) content.insertBefore(mountNode, pageHeader.nextSibling);
+      else content.appendChild(mountNode);
     }
 
     setMount(mountNode);
