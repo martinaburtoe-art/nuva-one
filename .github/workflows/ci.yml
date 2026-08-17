@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - final-100-client-certification
+      - feature/platform-command-center
   pull_request:
     branches:
       - main
@@ -23,10 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: "npm"
@@ -51,21 +52,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
+      - name: Inspect Docker runtime
+        run: |
+          docker version
+          docker info
+          docker system df
+
       - name: Start Supabase local database
-        run: supabase db start
+        run: supabase start -x studio,imgproxy --ignore-health-check
+        timeout-minutes: 10
+
+      - name: Verify local database is reachable
+        run: |
+          supabase status
+          supabase db reset --debug
+        timeout-minutes: 10
+
+      - name: Run pgTAP tests
+        run: supabase test db --local
         timeout-minutes: 10
 
       - name: Show Supabase status on failure
         if: failure()
-        run: supabase status || true
-
-      - name: Run pgTAP tests
-        run: supabase test db
-        timeout-minutes: 10
+        run: |
+          supabase status || true
+          docker ps -a || true
