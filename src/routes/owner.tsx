@@ -17,12 +17,9 @@ export const Route = createFileRoute("/owner")({
 });
 
 async function loadMetrics(): Promise<Metrics> {
-  const { data: sessionData } = await supabase.auth.getSession(); const token = sessionData.session?.access_token;
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined; const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-  if (!token || !url || !key) throw new Error("No se pudo autenticar el panel de propietario.");
-  const response = await fetch(`${url}/rest/v1/rpc/get_platform_owner_metrics`, { method: "POST", headers: { apikey: key, Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: "{}" });
-  if (!response.ok) throw new Error("No se pudieron cargar los indicadores de Nüva.");
-  return (await response.json()) as Metrics;
+  const { data, error } = await supabase.functions.invoke("owner-metrics", { body: {} });
+  if (error) throw new Error("No se pudieron cargar los indicadores de Nüva.");
+  return data as Metrics;
 }
 
 function OwnerConsole() {
@@ -37,7 +34,7 @@ function OwnerConsole() {
       {error ? <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100"><XCircle className="h-5 w-5" />{error}</div> : null}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{cards.map(([label, value, Icon]) => <div key={label} className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/20"><div className="flex items-center justify-between"><span className="text-sm text-white/55">{label}</span><Icon className="h-5 w-5 text-cyan-200/70" /></div><div className="mt-4 text-3xl font-semibold">{loading ? "—" : value.toLocaleString("es-CL")}</div></div>)}</section>
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_.65fr]"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><div className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="h-4 w-4 text-cyan-200" /> Intelligence</div><h2 className="mt-2 text-xl font-semibold">Qué está pasando en Nüva</h2><div className="mt-5 grid gap-3 sm:grid-cols-3"><Signal label="Mensajes IA" value={metrics?.ai_messages ?? 0} /><Signal label="Cotizaciones" value={metrics?.quotes ?? 0} /><Signal label="Membresías" value={metrics?.memberships ?? 0} /></div><p className="mt-5 text-sm leading-6 text-white/50">Esta primera versión usa métricas reales y agregadas. La siguiente capa incorporará activación, retención, funnel y telemetría del Command Center.</p></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><div className="flex items-center gap-2 text-sm font-semibold"><CircleDollarSign className="h-4 w-4 text-emerald-200" /> Economía</div><div className="mt-6 space-y-4"><Money label="Ingresos registrados" value={metrics?.income ?? 0} /><Money label="Gastos registrados" value={metrics?.expenses ?? 0} /><div className="border-t border-white/10 pt-4"><Money label="Neto" value={net} /></div></div></div></section>
-      <footer className="mt-6 text-xs text-white/30">Actualizado: {metrics ? new Date(metrics.generated_at).toLocaleString("es-CL") : "—"} · Acceso protegido por app_metadata.platform_role=owner + RPC server-side.</footer>
+      <footer className="mt-6 text-xs text-white/30">Actualizado: {metrics ? new Date(metrics.generated_at).toLocaleString("es-CL") : "—"} · Acceso protegido por app_metadata.platform_role=owner + Edge Function + service-role RPC.</footer>
     </div></div>
   );
 }
