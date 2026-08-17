@@ -11,10 +11,11 @@ const items = [
   ["Datos", Boxes, 207], ["Insights", ChartNoAxesCombined, 240],
 ] as const;
 
-const FULL_DURATION = 9400;
+// Cinematic sequence: product reveal -> central welcome -> soft gradient exit.
+const FULL_DURATION = 10500;
 const REDUCED_DURATION = 1800;
-const EXIT_DURATION = 1800;
-const WELCOME_DELAY = 6300;
+const EXIT_DURATION = 2000;
+const WELCOME_DELAY = 6500;
 
 export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void }) {
   const [visible, setVisible] = useState(false);
@@ -43,18 +44,18 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
       className={`nuva-launch ${reduced ? "nuva-launch--reduced" : ""} ${exiting ? "nuva-launch--exiting" : ""}`}
       style={{ "--nuva-welcome-delay": `${WELCOME_DELAY}ms` } as CSSProperties}>
       <style>{`
-        .nuva-launch--exiting { animation: nuva-launch-exit ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1) forwards !important; will-change: opacity,transform,filter; }
-        .nuva-launch--exiting .nuva-launch__ambient { animation: nuva-launch-exit-ambient ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1) forwards !important; }
-        .nuva-launch--exiting .nuva-launch__grid,.nuva-launch--exiting .nuva-launch__light-beam,.nuva-launch--exiting .nuva-launch__ring,.nuva-launch--exiting .nuva-launch__orbit,.nuva-launch--exiting .nuva-launch__core,.nuva-launch--exiting .nuva-launch__tagline { animation-play-state: paused !important; transition: opacity ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1),filter ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1),transform ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1); opacity:.18; filter:blur(2px); }
-        .nuva-launch--exiting .nuva-launch__welcome { animation: nuva-welcome-exit ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1) forwards !important; }
-        .nuva-launch__welcome { z-index:20; opacity:0; animation:nuva-welcome-final 1200ms cubic-bezier(.16,1,.3,1) var(--nuva-welcome-delay) both; }
-        .nuva-launch__welcome-title { font-size:clamp(2.7rem,7vw,6.8rem) !important; font-weight:800 !important; letter-spacing:-.055em; color:#080812 !important; text-shadow:0 3px 18px rgba(255,255,255,.92),0 0 42px rgba(139,92,246,.18); }
-        .nuva-launch__welcome-subtitle { font-size:clamp(1rem,2vw,1.45rem) !important; margin-top:.65rem; color:#11111b !important; font-weight:600; }
-        @keyframes nuva-welcome-final { 0%{opacity:0;transform:translate(-50%,18px) scale(.96);filter:blur(12px)} 20%{opacity:1;transform:translate(-50%,0) scale(1);filter:blur(0)} 100%{opacity:1;transform:translate(-50%,0) scale(1);filter:blur(0)} }
-        @keyframes nuva-welcome-exit { 0%{opacity:1;transform:translate(-50%,0) scale(1);filter:blur(0)} 50%{opacity:.72;transform:translate(-50%,-2px) scale(1.01);filter:blur(1px)} 100%{opacity:0;transform:translate(-50%,-8px) scale(1.025);filter:blur(9px)} }
-        @keyframes nuva-launch-exit { 0%{opacity:1;transform:scale(1);filter:blur(0)} 35%{opacity:.97;transform:scale(1.006);filter:blur(.1px)} 70%{opacity:.55;transform:scale(1.02);filter:blur(1.4px)} 100%{opacity:0;transform:scale(1.04);filter:blur(7px)} }
-        @keyframes nuva-launch-exit-ambient { 0%{opacity:1;transform:scale(1);filter:blur(0)} 55%{opacity:.62;transform:scale(1.04);filter:blur(2px)} 100%{opacity:0;transform:scale(1.1);filter:blur(11px)} }
-        @media (prefers-reduced-motion:reduce){.nuva-launch__welcome{animation:none!important;opacity:1;transform:translate(-50%,0);filter:none}.nuva-launch--exiting{animation-duration:450ms!important}}
+        .nuva-launch--exiting { animation: nuva-launch-exit ${EXIT_DURATION}ms cubic-bezier(.16,1,.3,1) forwards !important; will-change: opacity,transform,filter; }
+        .nuva-launch--exiting .nuva-launch__ambient { animation: nuva-launch-exit-ambient ${EXIT_DURATION}ms cubic-bezier(.16,1,.3,1) forwards !important; }
+        .nuva-launch--exiting .nuva-launch__grid,.nuva-launch--exiting .nuva-launch__light-beam,.nuva-launch--exiting .nuva-launch__ring,.nuva-launch--exiting .nuva-launch__orbit,.nuva-launch--exiting .nuva-launch__core,.nuva-launch--exiting .nuva-launch__tagline { animation-play-state: paused !important; transition: opacity ${EXIT_DURATION}ms cubic-bezier(.16,1,.3,1),filter ${EXIT_DURATION}ms cubic-bezier(.16,1,.3,1),transform ${EXIT_DURATION}ms cubic-bezier(.16,1,.3,1); opacity:.1; filter:blur(3px); }
+        .nuva-launch--exiting .nuva-launch__welcome { animation: nuva-welcome-exit ${EXIT_DURATION}ms cubic-bezier(.16,1,.3,1) forwards !important; }
+        .nuva-launch__welcome { top:50% !important; left:50%; z-index:20; opacity:0; white-space:nowrap; text-align:center; transform:translate(-50%,-50%); animation:nuva-welcome-final 1000ms cubic-bezier(.16,1,.3,1) var(--nuva-welcome-delay) both; }
+        .nuva-launch__welcome-title { font-size:clamp(2.7rem,7vw,6.8rem) !important; font-weight:800 !important; letter-spacing:-.055em; line-height:1.02; color:#080812 !important; text-shadow:0 3px 18px rgba(255,255,255,.96),0 0 42px rgba(139,92,246,.18); }
+        .nuva-launch__welcome-subtitle { font-size:clamp(1rem,2vw,1.45rem) !important; margin-top:.75rem; color:#11111b !important; font-weight:600; letter-spacing:-.01em; }
+        @keyframes nuva-welcome-final { 0%{opacity:0;transform:translate(-50%,-50%) scale(.94);filter:blur(16px)} 35%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)} }
+        @keyframes nuva-welcome-exit { 0%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)} 45%{opacity:.72;transform:translate(-50%,-50%) scale(1.012);filter:blur(1px)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.035);filter:blur(12px)} }
+        @keyframes nuva-launch-exit { 0%{opacity:1;transform:scale(1);filter:blur(0)} 30%{opacity:.98;transform:scale(1.004);filter:blur(.1px)} 68%{opacity:.58;transform:scale(1.018);filter:blur(1.5px)} 100%{opacity:0;transform:scale(1.045);filter:blur(8px)} }
+        @keyframes nuva-launch-exit-ambient { 0%{opacity:1;transform:scale(1);filter:blur(0)} 55%{opacity:.55;transform:scale(1.045);filter:blur(2px)} 100%{opacity:0;transform:scale(1.12);filter:blur(13px)} }
+        @media (prefers-reduced-motion:reduce){.nuva-launch__welcome{animation:none!important;opacity:1;transform:translate(-50%,-50%);filter:none}.nuva-launch--exiting{animation-duration:450ms!important}}
       `}</style>
       <div className="nuva-launch__ambient" /><div className="nuva-launch__grid" />
       <div className="nuva-launch__light-beam nuva-launch__light-beam--one" /><div className="nuva-launch__light-beam nuva-launch__light-beam--two" />
