@@ -40,7 +40,7 @@ export function NuvaLaunchExperience() {
 
     const timer = window.setTimeout(
       () => setVisible(false),
-      media.matches ? 900 : 3400,
+      media.matches ? 1200 : 4600,
     );
 
     return () => window.clearTimeout(timer);
