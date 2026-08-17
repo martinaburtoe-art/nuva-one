@@ -29,27 +29,41 @@ const items = [
   ["Insights", ChartNoAxesCombined, 240],
 ] as const;
 
-const FULL_DURATION = 6200;
-const REDUCED_DURATION = 1200;
+const FULL_DURATION = 7000;
+const REDUCED_DURATION = 1600;
+const EXIT_DURATION = 1100;
 
 export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void }) {
   const [visible, setVisible] = useState(false);
   const [reduced, setReduced] = useState(false);
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduced(media.matches);
     setVisible(true);
-    const timer = window.setTimeout(() => {
+
+    const total = media.matches ? REDUCED_DURATION : FULL_DURATION;
+    const exitAt = Math.max(0, total - EXIT_DURATION);
+
+    const exitTimer = window.setTimeout(() => setExiting(true), exitAt);
+    const completeTimer = window.setTimeout(() => {
       setVisible(false);
       onComplete();
-    }, media.matches ? REDUCED_DURATION : FULL_DURATION);
-    return () => window.clearTimeout(timer);
+    }, total);
+
+    return () => {
+      window.clearTimeout(exitTimer);
+      window.clearTimeout(completeTimer);
+    };
   }, [onComplete]);
 
   const finish = () => {
-    setVisible(false);
-    onComplete();
+    setExiting(true);
+    window.setTimeout(() => {
+      setVisible(false);
+      onComplete();
+    }, EXIT_DURATION);
   };
 
   if (!visible) return null;
@@ -58,8 +72,44 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
     <div
       aria-label="Bienvenido a Nüva One"
       aria-live="polite"
-      className={`nuva-launch ${reduced ? "nuva-launch--reduced" : ""}`}
+      className={`nuva-launch ${reduced ? "nuva-launch--reduced" : ""} ${exiting ? "nuva-launch--exiting" : ""}`}
     >
+      <style>{`
+        .nuva-launch--exiting {
+          animation: nuva-launch-exit ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1) forwards !important;
+        }
+        .nuva-launch--exiting .nuva-launch__ambient {
+          animation: nuva-launch-exit-ambient ${EXIT_DURATION}ms ease-out forwards !important;
+        }
+        .nuva-launch--exiting .nuva-launch__grid,
+        .nuva-launch--exiting .nuva-launch__light-beam,
+        .nuva-launch--exiting .nuva-launch__ring,
+        .nuva-launch--exiting .nuva-launch__orbit,
+        .nuva-launch--exiting .nuva-launch__core,
+        .nuva-launch--exiting .nuva-launch__tagline {
+          animation-play-state: paused !important;
+        }
+        .nuva-launch--exiting .nuva-launch__welcome {
+          opacity: 1 !important;
+          transform: translateY(0) scale(1) !important;
+        }
+        .nuva-launch__welcome {
+          z-index: 20;
+        }
+        @keyframes nuva-launch-exit {
+          0% { opacity: 1; transform: scale(1); filter: blur(0); }
+          45% { opacity: .92; transform: scale(1.015); filter: blur(.15px); }
+          100% { opacity: 0; transform: scale(1.045); filter: blur(7px); }
+        }
+        @keyframes nuva-launch-exit-ambient {
+          0% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1.12); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .nuva-launch--exiting { animation-duration: 450ms !important; }
+        }
+      `}</style>
+
       <div className="nuva-launch__ambient" />
       <div className="nuva-launch__grid" />
       <div className="nuva-launch__light-beam nuva-launch__light-beam--one" />
