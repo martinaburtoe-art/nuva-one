@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import { captureBrowserPerformance, trackPageView, trackPlatformEvent } from "./lib/platform-telemetry";
 
 export const getRouter = () => {
   const queryClient = new QueryClient();
@@ -11,6 +12,23 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
   });
+
+  // First-party navigation telemetry. It is deliberately fire-and-forget so
+  // observability can never block or break the application.
+  router.subscribe("onResolved", ({ toLocation }) => {
+    const route = toLocation.pathname;
+    trackPageView(route);
+    trackPlatformEvent({
+      event_name: "route_resolved",
+      event_type: "performance",
+      route,
+      metadata: { source: "tanstack-router" },
+    });
+  });
+
+  if (typeof window !== "undefined") {
+    window.setTimeout(captureBrowserPerformance, 0);
+  }
 
   return router;
 };
