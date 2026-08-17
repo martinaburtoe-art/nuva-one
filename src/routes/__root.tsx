@@ -8,7 +8,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
-import { PymeNewsHub } from "@/components/pyme-news-hub-v2";
 import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
 import { NuvaLaunchExperience } from "@/components/nuva-launch-experience";
 
@@ -24,7 +23,7 @@ function isStaleChunkError(error: Error): boolean {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error); const router = useRouter();
   useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); if (isStaleChunkError(error)) { const key = "nuva_stale_chunk_reload_at"; const lastReload = Number(sessionStorage.getItem(key) ?? 0); if (Date.now() - lastReload > 10_000) { sessionStorage.setItem(key, String(Date.now())); window.location.reload(); } } }, [error]);
-  return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="max-w-md text-center"><h1 className="text-xl font-semibold tracking-tight text-foreground">Esta página no cargó</h1><p className="mt-2 text-sm text-muted-foreground">Algo salió mal. Puedes intentar de nuevo o volver al inicio.</p><div className="mt-6 flex flex-wrap justify-center gap-2"><button onClick={() => { router.invalidate(); reset(); }} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Reintentar</button><a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent">Inicio</a></div></div></div>;
+  return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="max-w-md text-center"><h1 className="text-xl font-semibold tracking-tight text-foreground">Esta página no cargó</h1><p className="mt-2 text-sm text-muted-foreground">Algo salió mal. Puedes intentar de nuevo o volver al inicio.</p><div className="mt-6 flex flex-wrap justify-center gap-2"><button onClick={() => { router.invalidate(); reset(); }} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Reintentar</button><a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground">Inicio</a></div></div></div>;
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -38,14 +37,13 @@ function RouteEnhancements() {
   const location = useLocation(); const [mount, setMount] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const path = location.pathname; const isLanding = path === "/"; const isCustomers = path === "/customers";
-    if (!isLanding && !isCustomers) { setMount(null); return; }
-    const mountNode = document.createElement("div"); mountNode.dataset.nuvaRouteEnhancement = isLanding ? "pyme-radar" : "operating-pulse";
-    if (isLanding) { const main = document.querySelector("main"); if (!main) return; mountNode.className = "mx-auto max-w-7xl px-6 py-12 sm:py-16"; const firstSection = main.firstElementChild; if (firstSection?.nextSibling) main.insertBefore(mountNode, firstSection.nextSibling); else main.appendChild(mountNode); }
-    else { const heading = Array.from(document.querySelectorAll("main h1")).find((node) => node.textContent?.trim() === "Clientes"); const pageHeader = heading?.parentElement?.parentElement; const content = pageHeader?.parentElement; if (!pageHeader || !content) return; mountNode.className = "mb-6 w-full"; content.insertBefore(mountNode, pageHeader); }
+    const path = location.pathname; const isCustomers = path === "/customers";
+    if (!isCustomers) { setMount(null); return; }
+    const mountNode = document.createElement("div"); mountNode.dataset.nuvaRouteEnhancement = "operating-pulse";
+    const heading = Array.from(document.querySelectorAll("main h1")).find((node) => node.textContent?.trim() === "Clientes"); const pageHeader = heading?.parentElement?.parentElement; const content = pageHeader?.parentElement; if (!pageHeader || !content) return; mountNode.className = "mb-6 w-full"; content.insertBefore(mountNode, pageHeader);
     setMount(mountNode); return () => { setMount(null); mountNode.remove(); };
   }, [location.pathname]);
-  if (!mount) return null; return createPortal(location.pathname === "/" ? <PymeNewsHub /> : <NuvaOperatingPulse />, mount);
+  if (!mount) return null; return createPortal(<NuvaOperatingPulse />, mount);
 }
 
 function RootComponent() {
