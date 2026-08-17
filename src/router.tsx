@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import { trackPageView, trackPlatformEvent } from "./lib/platform-telemetry";
+import { captureBrowserPerformance, trackPageView, trackPlatformEvent } from "./lib/platform-telemetry";
 
 export const getRouter = () => {
   const queryClient = new QueryClient();
@@ -25,6 +25,10 @@ export const getRouter = () => {
       metadata: { source: "tanstack-router" },
     });
   });
+
+  if (typeof window !== "undefined") {
+    window.setTimeout(captureBrowserPerformance, 0);
+  }
 
   return router;
 };
