@@ -9,7 +9,6 @@ export const Route = createFileRoute("/api/billing/subscribe/cancel")({
       POST: async ({ request }) => {
         const client = await authedUserClient(request);
         if (!client) return new Response("Unauthorized", { status: 401 });
-
         const body = await request.json().catch(() => ({}));
         const businessId = body.business_id as string | undefined;
         if (!businessId) return new Response("business_id requerido", { status: 400 });
@@ -21,8 +20,13 @@ export const Route = createFileRoute("/api/billing/subscribe/cancel")({
           .maybeSingle();
         if (bizError || !business) return new Response("Negocio no encontrado o sin acceso", { status: 403 });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: subscription } = await supabaseAdmin
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!supabaseUrl || !serviceRoleKey) return new Response(JSON.stringify({ error: "Supabase no configurado" }), { status: 500 });
+        const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+
+        const { data: subscription } = await admin
           .from("billing_subscriptions")
           .select("id, provider_subscription_id")
           .eq("business_id", businessId)
@@ -38,28 +42,22 @@ export const Route = createFileRoute("/api/billing/subscribe/cancel")({
           const response = await fetch(`${MP_API}/preapproval/${encodeURIComponent(subscription.provider_subscription_id)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ status: "cancelled" }),
+            body: JSON.stringify({ status: "canceled" }),
           });
           if (!response.ok) {
             console.error("Mercado Pago cancellation failed", response.status, await response.text());
             return new Response(JSON.stringify({ error: "Mercado Pago no pudo cancelar la suscripción" }), { status: 502 });
           }
+          await admin.from("billing_subscriptions").update({ status: "canceled", updated_at: new Date().toISOString() }).eq("id", subscription.id);
         }
 
-        await supabaseAdmin
-          .from("billing_subscriptions")
-          .update({ status: "canceled", updated_at: new Date().toISOString() })
-          .eq("id", subscription?.id ?? "00000000-0000-0000-0000-000000000000");
-
-        const { error } = await supabaseAdmin
+        const { error } = await admin
           .from("businesses")
           .update({ plan: "starter", subscription_status: "canceled", next_charge_date: null })
           .eq("id", businessId);
         if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
 
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
       },
     },
   },
