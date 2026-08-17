@@ -16,14 +16,10 @@ if (text.includes(newTitle) && text.includes(newDescription)) {
 }
 
 if (!text.includes(oldTitle) || !text.includes(oldDescription)) {
-  throw new Error(
-    "Expected homepage showcase copy was not found; refusing to modify the page.",
-  );
+  throw new Error("Expected homepage showcase copy was not found; refusing to modify the page.");
 }
 
-const updated = text
-  .replace(oldTitle, newTitle)
-  .replace(oldDescription, newDescription);
+const updated = text.replace(oldTitle, newTitle).replace(oldDescription, newDescription);
 
 writeFileSync(indexPath, updated, "utf8");
 console.log("Homepage showcase copy clarified");
