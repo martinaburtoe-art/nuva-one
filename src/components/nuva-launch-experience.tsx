@@ -29,10 +29,10 @@ const items = [
   ["Insights", ChartNoAxesCombined, 240],
 ] as const;
 
-// Product reveal -> welcome -> graceful exit.
-const FULL_DURATION = 8500;
+// Product reveal -> welcome -> soft gradient transition.
+const FULL_DURATION = 9000;
 const REDUCED_DURATION = 1800;
-const EXIT_DURATION = 1100;
+const EXIT_DURATION = 1700;
 const WELCOME_DELAY = 6200;
 
 export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void }) {
@@ -80,9 +80,10 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
       <style>{`
         .nuva-launch--exiting {
           animation: nuva-launch-exit ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1) forwards !important;
+          will-change: opacity, transform, filter;
         }
         .nuva-launch--exiting .nuva-launch__ambient {
-          animation: nuva-launch-exit-ambient ${EXIT_DURATION}ms ease-out forwards !important;
+          animation: nuva-launch-exit-ambient ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1) forwards !important;
         }
         .nuva-launch--exiting .nuva-launch__grid,
         .nuva-launch--exiting .nuva-launch__light-beam,
@@ -91,11 +92,12 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
         .nuva-launch--exiting .nuva-launch__core,
         .nuva-launch--exiting .nuva-launch__tagline {
           animation-play-state: paused !important;
+          transition: opacity ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1), filter ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1), transform ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1);
+          opacity: .18;
+          filter: blur(2px);
         }
         .nuva-launch--exiting .nuva-launch__welcome {
-          opacity: 1 !important;
-          transform: translate(-50%, 0) scale(1) !important;
-          filter: blur(0) !important;
+          animation: nuva-welcome-exit ${EXIT_DURATION}ms cubic-bezier(.22,1,.36,1) forwards !important;
         }
         .nuva-launch__welcome {
           z-index: 20;
@@ -107,14 +109,21 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
           18% { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0); }
           100% { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0); }
         }
+        @keyframes nuva-welcome-exit {
+          0% { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+          55% { opacity: .72; transform: translate(-50%, -2px) scale(1.008); filter: blur(1px); }
+          100% { opacity: 0; transform: translate(-50%, -7px) scale(1.018); filter: blur(8px); }
+        }
         @keyframes nuva-launch-exit {
           0% { opacity: 1; transform: scale(1); filter: blur(0); }
-          45% { opacity: .92; transform: scale(1.015); filter: blur(.15px); }
-          100% { opacity: 0; transform: scale(1.045); filter: blur(7px); }
+          35% { opacity: .96; transform: scale(1.006); filter: blur(.1px); }
+          70% { opacity: .58; transform: scale(1.018); filter: blur(1.2px); }
+          100% { opacity: 0; transform: scale(1.035); filter: blur(6px); }
         }
         @keyframes nuva-launch-exit-ambient {
-          0% { opacity: 1; transform: scale(1); }
-          100% { opacity: 0; transform: scale(1.12); }
+          0% { opacity: 1; transform: scale(1); filter: blur(0); }
+          55% { opacity: .62; transform: scale(1.035); filter: blur(2px); }
+          100% { opacity: 0; transform: scale(1.09); filter: blur(10px); }
         }
         @media (prefers-reduced-motion: reduce) {
           .nuva-launch__welcome { animation: none !important; opacity: 1; transform: translate(-50%, 0); filter: none; }
