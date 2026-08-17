@@ -15,6 +15,14 @@ export default {
       return Response.json({ error: "Unable to load owner metrics" }, { status: 500 });
     }
 
-    return Response.json(data, { headers: { "Cache-Control": "private, max-age=30" } });
+    const { data: telemetry, error: telemetryError } = await ctx.supabaseAdmin.rpc("platform_metrics", {});
+
+    return Response.json(
+      {
+        ...(data as Record<string, unknown>),
+        telemetry: telemetryError ? null : telemetry,
+      },
+      { headers: { "Cache-Control": "private, max-age=30" } },
+    );
   }),
 };
