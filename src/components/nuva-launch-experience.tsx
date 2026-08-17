@@ -66,7 +66,8 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
       className={`nuva-launch ${reduced ? "nuva-launch--reduced" : ""} ${phaseClass}`}
     >
       <style>{`
-        /* Nüva launch v2: the phase state is the single source of truth. */
+        /* Nüva launch v3: one deterministic timeline, no legacy flight animation. */
+        .nuva-launch { --nuva-radius: clamp(175px, 27vw, 330px); }
         .nuva-launch .nuva-launch__module { animation: none !important; }
         .nuva-launch__orbit { transform-origin: 50% 50%; }
 
@@ -79,7 +80,7 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
           transition-delay: var(--nuva-delay);
         }
 
-        /* ORBIT: stable circular arrangement plus subtle individual float. */
+        /* ORBIT: stable circular arrangement plus restrained individual float. */
         .nuva-launch--orbit .nuva-launch__orbit {
           animation: nuva-orbit-drift ${ORBIT_MS}ms cubic-bezier(.45,0,.55,1) both;
         }
@@ -89,10 +90,9 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
           transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1);
           transition: opacity 900ms cubic-bezier(.16,1,.3,1), filter 900ms cubic-bezier(.16,1,.3,1), transform 1200ms cubic-bezier(.16,1,.3,1);
           transition-delay: var(--nuva-delay);
-          animation: nuva-module-float ${ORBIT_MS}ms cubic-bezier(.37,0,.63,1) var(--nuva-delay) both;
         }
 
-        /* CONVERGE: all modules travel inward together, preserving radial order. */
+        /* CONVERGE: every module travels inward on its own radial line. */
         .nuva-launch--converge .nuva-launch__module {
           opacity: .12;
           filter: blur(5px);
@@ -102,7 +102,7 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
         }
         .nuva-launch--converge .nuva-launch__orbit { animation: none; }
 
-        /* CORE: becomes the only visual anchor after convergence. */
+        /* CORE: becomes the visual anchor after convergence. */
         .nuva-launch--intro .nuva-launch__core { transform: scale(.84); opacity: .72; }
         .nuva-launch--orbit .nuva-launch__core { transform: scale(1); opacity: 1; transition: transform 1000ms cubic-bezier(.16,1,.3,1), opacity 800ms ease; }
         .nuva-launch--converge .nuva-launch__core { transform: scale(1.1); opacity: 1; transition: transform ${CONVERGE_MS}ms cubic-bezier(.16,1,.3,1); }
@@ -168,16 +168,8 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
 
         @keyframes nuva-orbit-drift {
           0% { transform: rotate(-2deg); }
-          35% { transform: rotate(2deg); }
-          70% { transform: rotate(-1deg); }
+          50% { transform: rotate(2deg); }
           100% { transform: rotate(0deg); }
-        }
-        @keyframes nuva-module-float {
-          0% { margin-top: 0; }
-          22% { margin-top: -7px; }
-          52% { margin-top: 4px; }
-          78% { margin-top: -3px; }
-          100% { margin-top: 0; }
         }
         @keyframes nuva-welcome-in {
           0% { opacity: 0; transform: translate(-50%,-50%) scale(.88); filter: blur(18px); }
@@ -202,8 +194,9 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
         .nuva-launch--reduced { animation: none !important; }
         .nuva-launch--reduced .nuva-launch__welcome { opacity: 1 !important; visibility: visible !important; animation: none !important; }
         @media (max-width: 640px) {
+          .nuva-launch { --nuva-radius: min(35vw, 165px); }
           .nuva-launch__stage { width: 100vw; height: 100vw; max-height: 100svh; }
-          .nuva-launch__module { --nuva-radius: min(35vw, 165px); min-width: 58px; gap: 5px; }
+          .nuva-launch__module { min-width: 58px; gap: 5px; }
           .nuva-launch__module-icon { width: 42px; height: 42px; border-radius: 13px; }
           .nuva-launch__module-icon svg { width: 19px; height: 19px; }
           .nuva-launch__module span { font-size: 8px; }
