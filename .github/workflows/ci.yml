@@ -58,8 +58,14 @@ jobs:
         with:
           version: latest
 
-      - name: Start Supabase local stack
-        run: supabase start
+      - name: Start Supabase local database
+        run: supabase db start
+        timeout-minutes: 10
+
+      - name: Show Supabase status on failure
+        if: failure()
+        run: supabase status || true
 
       - name: Run pgTAP tests
         run: supabase test db
+        timeout-minutes: 10
