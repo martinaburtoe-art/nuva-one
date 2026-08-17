@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signature, x-request-id",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -45,9 +45,8 @@ Deno.serve(async (req) => {
 
     const service = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
     const body = await req.json();
-    const action = body?.action;
 
-    if (action === "create_subscription") {
+    if (body?.action === "create_subscription") {
       const businessId = String(body.business_id ?? "");
       const planCode = String(body.plan_code ?? "");
       const interval = body.interval === "year" ? "year" : "month";
@@ -58,16 +57,21 @@ Deno.serve(async (req) => {
 
       const { data: plan } = await service.from("billing_plans").select("id,code,name,monthly_amount,annual_amount,currency").eq("code", planCode).eq("active", true).maybeSingle();
       if (!plan) return json({ error: "Plan not found" }, 404);
-
       const amount = interval === "year" ? plan.annual_amount : plan.monthly_amount;
-      const externalReference = `nuva:${businessId}:${plan.code}:${interval}`;
-      const origin = req.headers.get("origin") ?? env("NUVA_APP_URL");
-      const backUrl = `${origin.replace(/\/$/, "")}/configuracion?billing=success`;
+      if (!amount) return json({ error: "Plan price is not configured" }, 400);
 
+      const externalReference = `nuva:${businessId}:${plan.code}:${interval}`;
+      const appUrl = env("NUVA_APP_URL").replace(/\/$/, "");
+      const backUrl = `${appUrl}/configuracion?billing=success`;
+
+      // A dedicated MP plan is created for the pending checkout so the
+      // webhook can deterministically map the resulting preapproval back to
+      // the Nüva tenant. Credentials stay server-side.
       const mpPlan = await mp("/preapproval_plan", {
         method: "POST",
         body: JSON.stringify({
           reason: `Nüva One ${plan.name}`,
+          external_reference: externalReference,
           auto_recurring: {
             frequency: 1,
             frequency_type: interval === "year" ? "years" : "months",
@@ -94,10 +98,10 @@ Deno.serve(async (req) => {
       }).select("id").single();
       if (error) throw error;
 
-      return json({ ok: true, subscription_id: subscription.id, provider_plan_id: mpPlanId, checkout_url: mpPlan.init_point ?? mpPlan.back_url ?? null });
+      return json({ ok: true, subscription_id: subscription.id, provider_plan_id: mpPlanId, checkout_url: mpPlan.init_point ?? null });
     }
 
-    if (action === "sync_subscription") {
+    if (body?.action === "sync_subscription") {
       const subscriptionId = String(body.subscription_id ?? "");
       if (!subscriptionId) return json({ error: "subscription_id is required" }, 400);
       const { data: local } = await service.from("billing_subscriptions").select("id,business_id,provider_subscription_id").eq("id", subscriptionId).maybeSingle();
@@ -112,6 +116,6 @@ Deno.serve(async (req) => {
     return json({ error: "Unsupported action" }, 400);
   } catch (error) {
     console.error("mercadopago-billing", error);
-    return json({ error: error instanceof Error ? error.message : "Billing unavailable" }, 500);
+    return json({ error: "Billing unavailable" }, 500);
   }
 });
