@@ -84,7 +84,10 @@ Deno.serve(async (req) => {
       const recurring = (subscriptionRemote.auto_recurring ?? {}) as Record<string, unknown>;
       const start = typeof recurring.start_date === "string" ? recurring.start_date : null;
       const next = typeof subscriptionRemote.next_payment_date === "string" ? subscriptionRemote.next_payment_date : null;
-      const { error } = await service.from("billing_subscriptions").update({
+      const externalReference = String(subscriptionRemote.external_reference ?? "");
+      const businessId = externalReference.match(/^nuva:([^:]+):/)?.[1] ?? "";
+
+      const { data: localSubscription, error } = await service.from("billing_subscriptions").update({
         provider_subscription_id: providerId,
         provider_plan_id: providerPlanId || undefined,
         status,
@@ -92,8 +95,21 @@ Deno.serve(async (req) => {
         current_period_end: next,
         metadata: { external_reference: subscriptionRemote.external_reference ?? null, last_remote_status: subscriptionRemote.status ?? null },
         updated_at: new Date().toISOString(),
-      }).eq("provider", "mercadopago").eq("provider_plan_id", providerPlanId);
+      }).eq("provider", "mercadopago").eq("provider_plan_id", providerPlanId).select("id,business_id,plan_id").maybeSingle();
       if (error) throw error;
+
+      const targetBusinessId = localSubscription?.business_id ?? businessId;
+      if (targetBusinessId) {
+        const businessUpdate = status === "active"
+          ? { plan: "pro", subscription_status: "active", billing_provider: "mercadopago", mercadopago_plan_id: providerPlanId || null, mercadopago_subscription_id: providerId, billing_failed_attempts: 0 }
+          : status === "paused" || status === "past_due"
+            ? { subscription_status: status, billing_provider: "mercadopago", mercadopago_plan_id: providerPlanId || null, mercadopago_subscription_id: providerId }
+            : status === "canceled"
+              ? { plan: "starter", subscription_status: "canceled", billing_provider: "mercadopago", mercadopago_plan_id: providerPlanId || null, mercadopago_subscription_id: providerId }
+              : { subscription_status: status, billing_provider: "mercadopago", mercadopago_plan_id: providerPlanId || null, mercadopago_subscription_id: providerId };
+        const { error: businessError } = await service.from("businesses").update(businessUpdate).eq("id", targetBusinessId);
+        if (businessError) throw businessError;
+      }
     }
 
     if (paymentRemote) {
