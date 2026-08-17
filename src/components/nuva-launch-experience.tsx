@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   Bot,
   Boxes,
@@ -69,7 +69,7 @@ export function NuvaLaunchExperience() {
                 {
                   "--nuva-angle": `${angle}deg`,
                   "--nuva-delay": `${index * 55}ms`,
-                } as React.CSSProperties
+                } as CSSProperties
               }
             >
               <div className="nuva-launch__module-icon">
