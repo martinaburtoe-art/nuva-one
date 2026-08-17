@@ -29,10 +29,7 @@ if (updated.includes(oldHint)) {
   changed = true;
 }
 
-if (
-  updated.includes(oldButton) &&
-  !updated.includes("aria-label={`Ver una muestra del módulo")
-) {
+if (updated.includes(oldButton) && !updated.includes("aria-label={`Ver una muestra del módulo")) {
   updated = updated.replace(oldButton, newButton);
   changed = true;
 }
