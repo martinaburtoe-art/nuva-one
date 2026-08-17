@@ -29,9 +29,11 @@ const items = [
   ["Insights", ChartNoAxesCombined, 240],
 ] as const;
 
-const FULL_DURATION = 7000;
-const REDUCED_DURATION = 1600;
+// Product reveal -> welcome -> graceful exit.
+const FULL_DURATION = 8500;
+const REDUCED_DURATION = 1800;
 const EXIT_DURATION = 1100;
+const WELCOME_DELAY = 6200;
 
 export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void }) {
   const [visible, setVisible] = useState(false);
@@ -73,6 +75,7 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
       aria-label="Bienvenido a Nüva One"
       aria-live="polite"
       className={`nuva-launch ${reduced ? "nuva-launch--reduced" : ""} ${exiting ? "nuva-launch--exiting" : ""}`}
+      style={{ "--nuva-welcome-delay": `${WELCOME_DELAY}ms` } as CSSProperties}
     >
       <style>{`
         .nuva-launch--exiting {
@@ -91,10 +94,18 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
         }
         .nuva-launch--exiting .nuva-launch__welcome {
           opacity: 1 !important;
-          transform: translateY(0) scale(1) !important;
+          transform: translate(-50%, 0) scale(1) !important;
+          filter: blur(0) !important;
         }
         .nuva-launch__welcome {
           z-index: 20;
+          opacity: 0;
+          animation: nuva-welcome-final 1100ms cubic-bezier(.16,1,.3,1) var(--nuva-welcome-delay) both;
+        }
+        @keyframes nuva-welcome-final {
+          0%, 100% { opacity: 0; transform: translate(-50%, 14px) scale(.98); filter: blur(8px); }
+          18% { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+          100% { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0); }
         }
         @keyframes nuva-launch-exit {
           0% { opacity: 1; transform: scale(1); filter: blur(0); }
@@ -106,6 +117,7 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
           100% { opacity: 0; transform: scale(1.12); }
         }
         @media (prefers-reduced-motion: reduce) {
+          .nuva-launch__welcome { animation: none !important; opacity: 1; transform: translate(-50%, 0); filter: none; }
           .nuva-launch--exiting { animation-duration: 450ms !important; }
         }
       `}</style>
@@ -118,11 +130,6 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
       <div className="nuva-launch__ring nuva-launch__ring--inner" />
 
       <div className="nuva-launch__stage">
-        <div className="nuva-launch__welcome">
-          <div className="nuva-launch__welcome-title">Bienvenido a Nüva One</div>
-          <div className="nuva-launch__welcome-subtitle">Todo tu negocio. Una inteligencia.</div>
-        </div>
-
         <div className="nuva-launch__orbit" aria-hidden="true">
           {items.map(([label, Icon, angle], index) => (
             <div
@@ -156,6 +163,11 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
         <div className="nuva-launch__tagline">
           <Sparkles aria-hidden="true" />
           <span>Inteligencia para tu negocio</span>
+        </div>
+
+        <div className="nuva-launch__welcome" aria-live="polite">
+          <div className="nuva-launch__welcome-title">Bienvenido a Nüva One</div>
+          <div className="nuva-launch__welcome-subtitle">Todo tu negocio. Una inteligencia.</div>
         </div>
       </div>
 
