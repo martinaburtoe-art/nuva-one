@@ -23,10 +23,7 @@ async function createMercadoPagoPlan(input: {
 
   const response = await fetch(`${MP_API}/preapproval_plan`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({
       reason: `Nüva One ${input.name}`,
       external_reference: input.externalReference,
@@ -90,11 +87,19 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
         if (!providerPlanId || !checkoutUrl) return json({ error: "Mercado Pago no devolvió un checkout válido" }, 502);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: plan, error: planError } = await supabaseAdmin
+          .from("billing_plans")
+          .select("id")
+          .eq("code", "pro")
+          .eq("active", true)
+          .single();
+        if (planError || !plan) return json({ error: "Plan Pro no disponible" }, 500);
+
         const { data: local, error: insertError } = await supabaseAdmin
           .from("billing_subscriptions")
           .insert({
             business_id: businessId,
-            plan_id: (await supabaseAdmin.from("billing_plans").select("id").eq("code", "pro").single()).data?.id,
+            plan_id: plan.id,
             provider: "mercadopago",
             provider_plan_id: providerPlanId,
             status: "pending",
