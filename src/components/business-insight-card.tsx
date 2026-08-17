@@ -189,10 +189,18 @@ export function BusinessInsightCard({
           </div>
 
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">Datos del negocio</span>
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">Señal determinística</span>
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">Acción sugerida</span>
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">Siguiente decisión</span>
+            <span className="rounded-full border bg-background/60 px-2.5 py-1">
+              Datos del negocio
+            </span>
+            <span className="rounded-full border bg-background/60 px-2.5 py-1">
+              Señal determinística
+            </span>
+            <span className="rounded-full border bg-background/60 px-2.5 py-1">
+              Acción sugerida
+            </span>
+            <span className="rounded-full border bg-background/60 px-2.5 py-1">
+              Siguiente decisión
+            </span>
           </div>
         </div>
       </Card>
