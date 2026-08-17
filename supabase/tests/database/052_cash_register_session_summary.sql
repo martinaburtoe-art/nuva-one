@@ -1,0 +1,45 @@
+BEGIN;
+
+SELECT plan(8);
+
+SELECT has_function(
+  'public',
+  'get_cash_register_summary',
+  ARRAY['uuid'],
+  'cash register summary RPC exists'
+);
+
+SELECT function_privs_are(
+  'public',
+  'get_cash_register_summary',
+  ARRAY['authenticated'],
+  ARRAY['EXECUTE'],
+  'authenticated can execute cash register summary'
+);
+
+SELECT function_privs_are(
+  'public',
+  'get_cash_register_summary',
+  ARRAY['anon'],
+  ARRAY[]::text[],
+  'anonymous users cannot execute cash register summary'
+);
+
+SELECT has_table('public', 'cash_registers', 'cash registers table exists');
+SELECT has_table('public', 'cash_register_movements', 'cash movements table exists');
+
+SELECT col_is_pk('public', 'cash_registers', 'id', 'cash register id is primary key');
+SELECT col_is_pk('public', 'cash_register_movements', 'id', 'cash movement id is primary key');
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_indexes
+    WHERE schemaname = 'public'
+      AND indexname = 'uq_cash_register_one_open_per_business'
+  ),
+  'only one open cash register per business is enforced'
+);
+
+SELECT * FROM finish();
+ROLLBACK;
