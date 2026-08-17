@@ -6,6 +6,7 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const MP_API = "https://api.mercadopago.com";
+const CURRENT_STATUSES = ["trialing", "pending", "active", "paused", "past_due"];
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -126,9 +127,41 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!plan) return json({ error: "Plan not found" }, 404);
 
-      const providerPlanId = await ensureProviderPlan(service, plan, interval, env("NUVA_APP_URL").replace(/\/$/, ""));
-      const externalReference = `nuva:${businessId}:${plan.code}:${interval}`;
+      const { data: current } = await service
+        .from("billing_subscriptions")
+        .select("id,status,plan_id,billing_interval,provider_subscription_id,metadata")
+        .eq("business_id", businessId)
+        .in("status", CURRENT_STATUSES)
+        .maybeSingle();
+      if (current) {
+        const metadata = (current.metadata ?? {}) as Record<string, unknown>;
+        if (
+          current.plan_id === plan.id &&
+          current.billing_interval === interval &&
+          current.status === "pending" &&
+          typeof metadata.checkout_url === "string"
+        ) {
+          return json({
+            ok: true,
+            existing: true,
+            subscription_id: current.id,
+            provider_subscription_id: current.provider_subscription_id,
+            checkout_url: metadata.checkout_url,
+          });
+        }
+        return json(
+          {
+            error: "An active or pending subscription already exists for this business",
+            subscription_id: current.id,
+            status: current.status,
+          },
+          409,
+        );
+      }
+
       const appUrl = env("NUVA_APP_URL").replace(/\/$/, "");
+      const providerPlanId = await ensureProviderPlan(service, plan, interval, appUrl);
+      const externalReference = `nuva:${businessId}:${plan.code}:${interval}`;
 
       const providerSubscription = await mp("/preapproval", {
         method: "POST",
@@ -144,6 +177,10 @@ Deno.serve(async (req) => {
 
       const providerSubscriptionId = String(providerSubscription.id ?? "");
       if (!providerSubscriptionId) throw new Error("Mercado Pago did not return a subscription id");
+      const checkoutUrl = String(
+        providerSubscription.init_point ?? providerSubscription.sandbox_init_point ?? "",
+      );
+      if (!checkoutUrl) throw new Error("Mercado Pago did not return a checkout URL");
 
       const { data: subscription, error } = await service
         .from("billing_subscriptions")
@@ -159,6 +196,7 @@ Deno.serve(async (req) => {
           metadata: {
             external_reference: externalReference,
             payer_email: user.email,
+            checkout_url: checkoutUrl,
           },
         })
         .select("id")
@@ -170,7 +208,7 @@ Deno.serve(async (req) => {
         subscription_id: subscription.id,
         provider_plan_id: providerPlanId,
         provider_subscription_id: providerSubscriptionId,
-        checkout_url: providerSubscription.init_point ?? providerSubscription.sandbox_init_point ?? null,
+        checkout_url: checkoutUrl,
       });
     }
 
