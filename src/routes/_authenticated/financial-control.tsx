@@ -9,7 +9,7 @@ import { useBizList, fmtCLP } from "@/lib/biz-data";
 import {
   AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, BookOpenCheck,
   CalendarClock, CheckCircle2, ClipboardCheck, FileCheck2, Landmark,
-  ReceiptText, Scale, ShieldCheck, WalletCards,
+  ReceiptText, Scale, ShieldCheck, WalletCards, BookMarked,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/financial-control")({
@@ -29,6 +29,7 @@ function FinancialControl() {
   const { data: bank = [] } = useBizList<any>("bank_reconciliation_sessions", { order: "period_end", ascending: false });
   const { data: papers = [] } = useBizList<any>("tax_working_papers", { order: "tax_year", ascending: false });
   const { data: payments = [] } = useBizList<any>("tax_payments", { order: "due_date" });
+  const { data: journals = [] } = useBizList<any>("accounting_journals", { order: "entry_date", ascending: false });
 
   const latest = pnl[0];
   const previous = pnl[1];
@@ -44,6 +45,8 @@ function FinancialControl() {
   const closePct = latestClose?.total_items ? Math.round((Number(latestClose.passed_items || 0) / Number(latestClose.total_items)) * 100) : 0;
   const resultDelta = latest && previous ? Number(latest.net_result || 0) - Number(previous.net_result || 0) : 0;
   const readiness = Math.max(0, Math.min(100, 100 - critical * 20 - exceptions * 5 - overdueTaxes * 10));
+  const postedJournals = journals.filter((x: any) => ["posted", "published", "closed"].includes(String(x.status || "").toLowerCase())).length;
+  const draftJournals = journals.filter((x: any) => ["draft", "pending"].includes(String(x.status || "").toLowerCase())).length;
 
   return <ModuleGuard module="finance">
     <PageHeader title="Control Financiero Profesional" description={`Contabilidad, resultados, caja, conciliación, cierre y obligaciones tributarias${active ? ` · ${active.name}` : ""}`} />
@@ -59,22 +62,24 @@ function FinancialControl() {
         {([['overview','Resumen'],['results','Estado de resultados'],['cash','Flujo de caja'],['tax','F29 · PPM · Renta'],['close','Cierre · Auditoría']] as [Tab,string][]).map(([key,label]) => <button key={key} type="button" onClick={() => setTab(key)} className={`rounded-lg px-3 py-2 text-sm font-medium transition ${tab === key ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>{label}</button>)}
       </div>
 
-      {tab === "overview" && <Overview pnl={pnl} cash={cash30} recon={recon} payments={payments} close={close} readiness={readiness} />}
+      {tab === "overview" && <Overview pnl={pnl} cash={cash30} recon={recon} payments={payments} close={close} readiness={readiness} journals={journals} />}
       {tab === "results" && <Results pnl={pnl} />}
       {tab === "cash" && <CashFlow cash={cash} />}
       {tab === "tax" && <TaxControl papers={papers} payments={payments} pnl={pnl} />}
-      {tab === "close" && <CloseControl close={close} recon={recon} bank={bank} />}
+      {tab === "close" && <CloseControl close={close} recon={recon} bank={bank} journals={journals} />}
 
       <Card className="border-primary/20 bg-primary/5 p-5"><div className="flex gap-3"><CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" /><div><h2 className="font-semibold">Capa contable-auditora activa</h2><p className="mt-1 text-sm text-muted-foreground">Nüva separa dato operacional, evidencia, conciliación, ajuste, cierre y papeles tributarios. Los cálculos son preparación y control interno; la declaración o presentación oficial ante SII siempre requiere la validación y autenticación correspondiente.</p></div></div></Card>
     </div>
   </ModuleGuard>;
 }
 
-function Overview({ pnl, cash, recon, payments, close, readiness }: any) {
+function Overview({ pnl, cash, recon, payments, close, readiness, journals }: any) {
   const open = recon.filter((x: any) => !["resolved", "matched", "passed"].includes(x.status));
   const upcoming = payments.filter((x: any) => ["planned", "due", "partial", "overdue"].includes(x.status)).slice(0, 6);
+  const posted = journals.filter((x: any) => ["posted", "published", "closed"].includes(String(x.status || "").toLowerCase())).length;
+  const pending = journals.filter((x: any) => ["draft", "pending"].includes(String(x.status || "").toLowerCase())).length;
   return <div className="grid gap-4 lg:grid-cols-3">
-    <Card className="p-5 lg:col-span-2"><SectionTitle icon={<BookOpenCheck />} title="Panel de control del período" /><div className="mt-4 grid gap-3 sm:grid-cols-3"><Control label="Resultado" ok={Number(pnl[0]?.net_result || 0) >= 0} text={fmtCLP(Number(pnl[0]?.net_result || 0))} /><Control label="Caja" ok={cash.reduce((s:number,x:any)=>s+Number(x.net_flow||0),0) >= 0} text={fmtCLP(cash.reduce((s:number,x:any)=>s+Number(x.net_flow||0),0))} /><Control label="Conciliaciones" ok={open.length === 0} text={open.length ? `${open.length} abiertas` : "Conciliado"} /></div><div className="mt-5"><div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Readiness financiero</span><strong>{readiness}%</strong></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${readiness}%` }} /></div></div></Card>
+    <Card className="p-5 lg:col-span-2"><SectionTitle icon={<BookOpenCheck />} title="Panel de control del período" /><div className="mt-4 grid gap-3 sm:grid-cols-4"><Control label="Resultado" ok={Number(pnl[0]?.net_result || 0) >= 0} text={fmtCLP(Number(pnl[0]?.net_result || 0))} /><Control label="Caja" ok={cash.reduce((s:number,x:any)=>s+Number(x.net_flow||0),0) >= 0} text={fmtCLP(cash.reduce((s:number,x:any)=>s+Number(x.net_flow||0),0))} /><Control label="Conciliaciones" ok={open.length === 0} text={open.length ? `${open.length} abiertas` : "Conciliado"} /><Control label="Contabilidad" ok={pending === 0} text={`${posted} publicados · ${pending} pendientes`} /></div><div className="mt-5"><div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Readiness financiero</span><strong>{readiness}%</strong></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${readiness}%` }} /></div></div></Card>
     <Card className="p-5"><SectionTitle icon={<CalendarClock />} title="Obligaciones" /><div className="mt-4 space-y-2">{upcoming.map((x:any)=><Row key={x.id} label={`${x.tax_type || x.tax_name || "Impuesto"} · ${x.due_date || "sin fecha"}`} value={fmtCLP(Math.max(0,Number(x.amount||0)-Number(x.paid_amount||0)))} badge={x.status} />)}{!upcoming.length && <Empty text="No hay obligaciones registradas." />}</div></Card>
     <Card className="p-5 lg:col-span-2"><SectionTitle icon={<AlertTriangle />} title="Excepciones que requieren atención" /><div className="mt-4 space-y-2">{open.slice(0,8).map((x:any)=><Row key={x.id} label={x.description || x.concept || x.reference || "Diferencia por revisar"} value={fmtCLP(Number(x.amount_difference || x.difference || 0))} badge={x.status} />)}{!open.length && <Empty text="No existen excepciones abiertas en los registros disponibles." />}</div></Card>
     <Card className="p-5"><SectionTitle icon={<ClipboardCheck />} title="Cierre" /><div className="mt-4 space-y-3"><div className="text-3xl font-bold">{close[0]?.total_items ? `${Math.round(Number(close[0]?.passed_items||0)/Number(close[0]?.total_items)*100)}%` : "—"}</div><p className="text-sm text-muted-foreground">Controles superados del último período disponible.</p><Badge variant="outline">{close[0]?.close_state || "Sin cierre"}</Badge></div></Card>
@@ -97,8 +102,10 @@ function TaxControl({ papers, payments, pnl }: any) {
   return <div className="grid gap-4 lg:grid-cols-2"><Card className="p-5"><SectionTitle icon={<ReceiptText />} title="F29 · IVA · PPM" /><p className="mt-2 text-sm text-muted-foreground">Preparación mensual, respaldo de valores y diferencias antes de declarar.</p><div className="mt-4 space-y-2">{f29.slice(0,12).map((x:any)=><Row key={x.id} label={`${x.tax_year} · ${x.section||"IVA"} · ${x.concept||"Concepto"}`} value={fmtCLP(Number(x.taxable_amount||x.amount||0))} badge={x.status} />)}{!f29.length&&<Empty text="No hay papeles F29/IVA registrados todavía."/>}</div></Card><Card className="p-5"><SectionTitle icon={<FileCheck2 />} title="Renta · F22 · papeles de trabajo" /><p className="mt-2 text-sm text-muted-foreground">Puente entre resultado contable, ajustes tributarios, PPM y base de renta.</p><div className="mt-4 space-y-2">{renta.slice(0,12).map((x:any)=><Row key={x.id} label={`${x.tax_year} · ${x.concept||"Renta"}`} value={fmtCLP(Number(x.taxable_amount||x.amount||0))} badge={x.status} />)}{!renta.length&&<Empty text="No hay papeles F22 registrados todavía."/>}</div><div className="mt-4 rounded-lg border p-3 text-sm">Resultado contable disponible: <strong>{fmtCLP(Number(pnl[0]?.net_result||0))}</strong></div></Card><Card className="p-5 lg:col-span-2"><SectionTitle icon={<CalendarClock />} title="Calendario y pagos tributarios" /><div className="mt-4 space-y-2">{payments.slice(0,18).map((x:any)=><Row key={x.id} label={`${x.tax_type||x.tax_name||"Obligación"} · ${x.due_date||"—"}`} value={fmtCLP(Math.max(0,Number(x.amount||0)-Number(x.paid_amount||0)))} badge={x.status} />)}{!payments.length&&<Empty text="Registra obligaciones para activar el calendario tributario."/>}</div></Card></div>;
 }
 
-function CloseControl({ close, recon, bank }: any) {
-  return <div className="grid gap-4 lg:grid-cols-3"><Card className="p-5 lg:col-span-2"><SectionTitle icon={<ClipboardCheck />} title="Checklist de cierre contable" /><div className="mt-4 space-y-2">{close.slice(0,12).map((x:any)=><Row key={`${x.business_id}-${x.period_end}`} label={`Período ${x.period_end}`} value={`${x.passed_items||0}/${x.total_items||0} controles`} badge={x.close_state} />)}{!close.length&&<Empty text="No existe un cierre generado para este negocio."/>}</div></Card><Card className="p-5"><SectionTitle icon={<Landmark />} title="Conciliación bancaria" /><div className="mt-4 space-y-2">{bank.slice(0,8).map((x:any)=><Row key={x.id} label={`${x.account_name||"Cuenta"} · ${x.period_end}`} value={fmtCLP(Number(x.difference||0))} badge={x.status} />)}{!bank.length&&<Empty text="Sin sesiones bancarias registradas."/>}</div></Card><Card className="p-5 lg:col-span-3"><SectionTitle icon={<ShieldCheck />} title="Trazabilidad y auditoría" /><div className="mt-4 grid gap-3 sm:grid-cols-3"><Control label="Conciliaciones abiertas" ok={recon.filter((x:any)=>!['resolved','matched','passed'].includes(x.status)).length===0} text={String(recon.filter((x:any)=>!['resolved','matched','passed'].includes(x.status)).length)} /><Control label="Bloqueos críticos" ok={recon.filter((x:any)=>['blocked','exception'].includes(x.status)).length===0} text={String(recon.filter((x:any)=>['blocked','exception'].includes(x.status)).length)} /><Control label="Integridad" ok text="RLS por negocio" /></div></Card></div>;
+function CloseControl({ close, recon, bank, journals }: any) {
+  const posted = journals.filter((x:any)=>["posted","published","closed"].includes(String(x.status||"").toLowerCase())).length;
+  const pending = journals.filter((x:any)=>["draft","pending"].includes(String(x.status||"").toLowerCase())).length;
+  return <div className="grid gap-4 lg:grid-cols-3"><Card className="p-5 lg:col-span-2"><SectionTitle icon={<ClipboardCheck />} title="Checklist de cierre contable" /><div className="mt-4 space-y-2">{close.slice(0,12).map((x:any)=><Row key={`${x.business_id}-${x.period_end}`} label={`Período ${x.period_end}`} value={`${x.passed_items||0}/${x.total_items||0} controles`} badge={x.close_state} />)}{!close.length&&<Empty text="No existe un cierre generado para este negocio."/>}</div></Card><Card className="p-5"><SectionTitle icon={<Landmark />} title="Conciliación bancaria" /><div className="mt-4 space-y-2">{bank.slice(0,8).map((x:any)=><Row key={x.id} label={`${x.account_name||"Cuenta"} · ${x.period_end}`} value={fmtCLP(Number(x.difference||0))} badge={x.status} />)}{!bank.length&&<Empty text="Sin sesiones bancarias registradas."/>}</div></Card><Card className="p-5"><SectionTitle icon={<BookMarked />} title="Integridad contable" /><div className="mt-4 grid gap-3"><Control label="Asientos publicados" ok text={String(posted)} /><Control label="Asientos pendientes" ok={pending===0} text={String(pending)} /></div></Card><Card className="p-5 lg:col-span-2"><SectionTitle icon={<ShieldCheck />} title="Trazabilidad y auditoría" /><div className="mt-4 grid gap-3 sm:grid-cols-3"><Control label="Conciliaciones abiertas" ok={recon.filter((x:any)=>!['resolved','matched','passed'].includes(x.status)).length===0} text={String(recon.filter((x:any)=>!['resolved','matched','passed'].includes(x.status)).length)} /><Control label="Bloqueos críticos" ok={recon.filter((x:any)=>['blocked','exception'].includes(x.status)).length===0} text={String(recon.filter((x:any)=>['blocked','exception'].includes(x.status)).length)} /><Control label="Integridad" ok text="RLS por negocio" /></div></Card></div>;
 }
 
 function Kpi({ title, value, icon, good, detail }: any) { return <Card className="p-4"><div className="flex justify-between gap-3"><div><div className="text-xs text-muted-foreground">{title}</div><div className="mt-1 text-xl font-bold">{value}</div>{detail&&<div className="mt-1 text-[11px] text-muted-foreground">{detail}</div>}</div><div className={`h-fit rounded-xl p-2 ${good?"bg-success/10 text-success":"bg-destructive/10 text-destructive"}`}>{icon}</div></div></Card>; }
