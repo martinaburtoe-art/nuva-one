@@ -38,3 +38,5 @@ dist-ssr
 .vercel
 .vercel-redeploy-trigger
 coverage
+
+# 100-client readiness CI probe
