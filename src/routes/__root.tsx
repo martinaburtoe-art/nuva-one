@@ -49,8 +49,17 @@ function RouteEnhancements() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext(); const router = useRouter(); const location = useLocation();
   const isLanding = location.pathname === "/";
-  const [launchComplete, setLaunchComplete] = useState(!isLanding);
+  const [launchComplete, setLaunchComplete] = useState(true);
   const completeLaunch = useCallback(() => setLaunchComplete(true), []);
+
+  // Always replay the launch experience when the user enters the landing route,
+  // including client-side navigation back to "/". This avoids the previous
+  // behavior where the root component stayed mounted and the animation was
+  // skipped after navigating from another page.
+  useEffect(() => {
+    if (isLanding) setLaunchComplete(false);
+    else setLaunchComplete(true);
+  }, [isLanding]);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => { if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return; router.invalidate(); if (event !== "SIGNED_OUT") queryClient.invalidateQueries(); });
