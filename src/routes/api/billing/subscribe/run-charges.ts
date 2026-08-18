@@ -22,12 +22,15 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
         if (!creds || !Number.isSafeInteger(parsedPrice) || parsedPrice <= 0) {
           return new Response(JSON.stringify({ error: "Suscripciones no configuradas" }), {
             status: 500,
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
           });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const today = new Date().toISOString().slice(0, 10);
+        const staleBefore = new Date(
+          Date.now() - STALE_PROCESSING_MINUTES * 60_000,
+        ).toISOString();
 
         const { data: dueBusinesses, error } = await supabaseAdmin
           .from("businesses")
@@ -40,7 +43,7 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
           console.error("subscription_charge_query_failed", error);
           return new Response(JSON.stringify({ error: "No se pudieron cargar las suscripciones" }), {
             status: 500,
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
           });
         }
 
@@ -50,14 +53,11 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
           const customerId = biz.flow_customer_id as string | null;
           if (!customerId) continue;
 
-          // Deterministic order per business/day. This is also the provider-level
-          // idempotency key: concurrent/retried executions must never invent a
-          // new commerce order for the same billing date.
           const commerceOrder = `sub-${biz.id}-${today}`;
 
           const { data: existing } = await supabaseAdmin
             .from("subscription_charges")
-            .select("id,status,created_at")
+            .select("id,status,attempt_started_at")
             .eq("commerce_order", commerceOrder)
             .maybeSingle();
 
@@ -66,9 +66,6 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
             continue;
           }
 
-          // Atomically reserve the commerce order before contacting Flow. The
-          // unique commerce_order constraint prevents two cron invocations from
-          // charging the same subscription concurrently.
           if (!existing) {
             const { error: reserveError } = await supabaseAdmin
               .from("subscription_charges")
@@ -81,7 +78,6 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
               });
 
             if (reserveError) {
-              // Another invocation won the reservation race.
               if (reserveError.code === "23505") {
                 results.push({ businessId: biz.id, status: "already_processing" });
                 continue;
@@ -91,18 +87,27 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
               continue;
             }
           } else {
-            const startedAt = new Date(existing.created_at).getTime();
-            const stale = Date.now() - startedAt > STALE_PROCESSING_MINUTES * 60_000;
-            if (!stale) {
-              results.push({ businessId: biz.id, status: "already_processing" });
-              continue;
-            }
-
-            await supabaseAdmin
+            // Recovery must use attempt_started_at, not created_at. The latter
+            // never changes and would allow concurrent executions to reclaim a
+            // healthy in-flight charge after the row became old.
+            const { data: reclaimed, error: reclaimError } = await supabaseAdmin
               .from("subscription_charges")
               .update({ attempt_started_at: new Date().toISOString() })
               .eq("id", existing.id)
-              .eq("status", "processing");
+              .eq("status", "processing")
+              .lt("attempt_started_at", staleBefore)
+              .select("id")
+              .maybeSingle();
+
+            if (reclaimError) {
+              console.error("subscription_charge_reclaim_failed", reclaimError);
+              results.push({ businessId: biz.id, status: "reclaim_failed" });
+              continue;
+            }
+            if (!reclaimed) {
+              results.push({ businessId: biz.id, status: "already_processing" });
+              continue;
+            }
           }
 
           const charge = await chargeSubscription(creds, {
@@ -112,14 +117,24 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
             commerceOrder,
           });
 
-          await supabaseAdmin
+          const { error: finalizeError } = await supabaseAdmin
             .from("subscription_charges")
             .update({
               status: charge.status,
               flow_order: charge.flowOrder,
               attempt_started_at: null,
             })
-            .eq("commerce_order", commerceOrder);
+            .eq("commerce_order", commerceOrder)
+            .eq("status", "processing");
+
+          if (finalizeError) {
+            // Do not claim a successful DB transition in the response. A
+            // provider-side charge may already have happened, so this remains
+            // observable for reconciliation instead of blindly retrying here.
+            console.error("subscription_charge_finalize_failed", finalizeError);
+            results.push({ businessId: biz.id, status: "finalize_failed" });
+            continue;
+          }
 
           if (charge.status === "paid") {
             const next = new Date();
@@ -148,7 +163,7 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
                   : new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10),
               })
               .eq("id", biz.id)
-              .eq("plan", downgrade ? "pro" : "pro");
+              .eq("plan", "pro");
             results.push({
               businessId: biz.id,
               status: downgrade ? "downgraded" : "retry_scheduled",
