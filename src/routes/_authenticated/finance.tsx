@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,98 +7,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ModuleGuard } from "@/components/module-guard";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Plus,
-  Trash2,
-  CreditCard,
-  FileText,
-  Lock,
+  Activity,
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  CalendarDays,
   Download,
   FileDown,
-  Link2,
-  Unplug,
+  Landmark,
+  Plus,
+  Search,
+  ShieldAlert,
+  Sparkles,
+  Trash2,
   Wallet,
-  TrendingUp,
   TrendingDown,
-  AlertTriangle,
-  CalendarDays,
-  Activity,
+  TrendingUp,
 } from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, fmtCLP } from "@/lib/biz-data";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
 import { downloadCsv } from "@/lib/export";
 import { generateMonthlyReportPdf } from "@/lib/monthly-report";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/finance")({
   head: () => ({ meta: [{ title: "Caja — Nüva One" }] }),
   component: Finance,
 });
 
-const EXPENSE_CATEGORIES = [
-  "Insumos",
-  "Mercadería para reventa",
-  "Equipamiento",
-  "Arriendo",
-  "Servicios",
-  "Marketing",
-  "Otro",
-];
+const EXPENSE_CATEGORIES = ["Insumos", "Mercadería para reventa", "Equipamiento", "Arriendo", "Servicios", "Marketing", "Otro"];
 const INCOME_CATEGORIES = ["Ventas", "Servicios prestados", "Otros ingresos"];
+type Period = "7" | "30" | "90" | "365" | "all";
 
-type RangeKey = "month" | "last_month" | "quarter" | "year" | "all";
-const RANGE_LABEL: Record<RangeKey, string> = {
-  month: "Este mes",
-  last_month: "Mes pasado",
-  quarter: "Este trimestre",
-  year: "Este año",
-  all: "Todo",
-};
-
-function inRange(dateStr: string, range: RangeKey) {
-  if (range === "all") return true;
-  const d = new Date(dateStr);
-  const now = new Date();
-  if (range === "month") {
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-  }
-  if (range === "last_month") {
-    const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return d.getFullYear() === lm.getFullYear() && d.getMonth() === lm.getMonth();
-  }
-  if (range === "quarter") {
-    const q = Math.floor(now.getMonth() / 3);
-    const dq = Math.floor(d.getMonth() / 3);
-    return d.getFullYear() === now.getFullYear() && dq === q;
-  }
-  if (range === "year") return d.getFullYear() === now.getFullYear();
-  return true;
+function dateDaysAgo(days: number) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - days);
+  return d;
 }
 
 function Finance() {
@@ -111,411 +59,179 @@ function Finance() {
   const insert = useBizInsert("transactions");
   const del = useBizDelete("transactions");
   const [open, setOpen] = useState(false);
-  const [txType, setTxType] = useState<"income" | "expense">("expense");
-  const [txCategory, setTxCategory] = useState(EXPENSE_CATEGORIES[0]);
-  const [txCategoryOther, setTxCategoryOther] = useState("");
-  const [breakdownRange, setBreakdownRange] = useState<RangeKey>("month");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [type, setType] = useState<"income" | "expense">("expense");
+  const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
+  const [otherCategory, setOtherCategory] = useState("");
+  const [period, setPeriod] = useState<Period>("30");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
 
-  async function exportPdf() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const monthTx = (tx ?? []).filter((t) => {
+  const allTx = tx ?? [];
+  const totals = useMemo(() => {
+    const income = allTx.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const expense = allTx.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount || 0), 0);
+    return { income, expense, net: income - expense };
+  }, [allTx]);
+
+  const periodTx = useMemo(() => {
+    if (period === "all") return allTx;
+    const start = dateDaysAgo(Number(period) - 1);
+    return allTx.filter((t) => new Date(t.tx_date) >= start);
+  }, [allTx, period]);
+
+  const metrics = useMemo(() => {
+    const income = periodTx.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const expense = periodTx.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const net = income - expense;
+    const days = period === "all" ? Math.max(1, Math.ceil((Date.now() - new Date(periodTx.at(-1)?.tx_date ?? Date.now()).getTime()) / 86400000)) : Number(period);
+    const burn = expense / Math.max(days, 1);
+    const positiveBalance = Math.max(0, totals.net);
+    const runway = burn > 0 && positiveBalance > 0 ? Math.floor(positiveBalance / burn) : null;
+    const previousStart = dateDaysAgo((Number(period) || 30) * 2 - 1);
+    const previousEnd = dateDaysAgo(Number(period) || 30);
+    const previous = allTx.filter((t) => {
       const d = new Date(t.tx_date);
-      return d.getFullYear() === y && d.getMonth() === m;
+      return period !== "all" && d >= previousStart && d < previousEnd;
     });
-    if (monthTx.length === 0) {
-      toast.info("No hay movimientos este mes para reportar");
-      return;
-    }
-    const label = now.toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+    const previousNet = previous.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount || 0), 0) - previous.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const netTrend = previous.length ? ((net - previousNet) / Math.max(Math.abs(previousNet), 1)) * 100 : null;
+    return { income, expense, net, burn, runway, netTrend };
+  }, [periodTx, period, totals.net, allTx]);
+
+  const filteredTx = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return [...periodTx]
+      .filter((t) => filter === "all" || t.type === filter)
+      .filter((t) => !q || `${t.category ?? ""} ${t.description ?? ""}`.toLowerCase().includes(q))
+      .sort((a, b) => new Date(b.tx_date).getTime() - new Date(a.tx_date).getTime());
+  }, [periodTx, filter, search]);
+
+  const categoryBreakdown = useMemo(() => {
+    const map = new Map<string, number>();
+    periodTx.filter((t) => t.type === "expense").forEach((t) => map.set(t.category || "Otro", (map.get(t.category || "Otro") || 0) + Number(t.amount || 0)));
+    return [...map.entries()].sort((a, b) => b[1] - a[1]);
+  }, [periodTx]);
+
+  const receivables = useMemo(() => {
+    const credits = (sales ?? []).filter((s: any) => s.is_credit && s.status !== "cancelled");
+    const pending = credits.reduce((sum: number, s: any) => sum + Math.max(0, Number(s.total || 0) - Number(s.paid_amount || 0)), 0);
+    const overdue = credits.filter((s: any) => Number(s.paid_amount || 0) < Number(s.total || 0) && s.due_date && new Date(s.due_date) < new Date()).reduce((sum: number, s: any) => sum + Math.max(0, Number(s.total || 0) - Number(s.paid_amount || 0)), 0);
+    const billed = credits.reduce((sum: number, s: any) => sum + Number(s.total || 0), 0);
+    const collected = credits.reduce((sum: number, s: any) => sum + Number(s.paid_amount || 0), 0);
+    return { pending, overdue, rate: billed > 0 ? (collected / billed) * 100 : 0 };
+  }, [sales]);
+
+  const signal = metrics.net < 0 ? "Presión de caja" : metrics.runway !== null && metrics.runway < 30 ? "Vigilar caja" : "Caja saludable";
+  const signalClass = metrics.net < 0 ? "bg-destructive/10 text-destructive" : metrics.runway !== null && metrics.runway < 30 ? "bg-warning/10 text-warning" : "bg-success/10 text-success";
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const finalCategory = category === "Otro" ? otherCategory.trim() || "Otro" : category;
     try {
-      await generateMonthlyReportPdf(active?.name ?? "Negocio", monthTx, label);
+      await insert.mutateAsync({ type: fd.get("type"), category: finalCategory, amount: Number(fd.get("amount")), description: fd.get("description") });
+      setOpen(false);
+      setType("expense");
+      setCategory(EXPENSE_CATEGORIES[0]);
+      setOtherCategory("");
+      toast.success("Movimiento registrado");
     } catch {
-      toast.error("Error al generar el PDF");
+      toast.error("No fue posible registrar el movimiento");
     }
   }
 
-  const autoTxIds = new Set([
-    ...(sales ?? []).map((s: any) => s.transaction_id).filter(Boolean),
-    ...(purchases ?? []).map((p: any) => p.transaction_id).filter(Boolean),
-  ]);
-
-  function handleDelete(t: any) {
-    if (autoTxIds.has(t.id)) {
-      toast.error(
-        "Este movimiento se generó automáticamente desde una venta o compra. Cancela o elimina el registro original en Ventas/Compras en su lugar.",
-      );
+  function deleteTx(t: any) {
+    const auto = new Set([...(sales ?? []).map((s: any) => s.transaction_id).filter(Boolean), ...(purchases ?? []).map((p: any) => p.transaction_id).filter(Boolean)]);
+    if (auto.has(t.id)) {
+      toast.error("Este movimiento proviene de Ventas o Compras y no puede eliminarse desde Caja.");
       return;
     }
     del.mutate(t.id);
   }
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const category = txCategory === "Otro" ? txCategoryOther.trim() || "Otro" : txCategory;
-    await insert.mutateAsync({
-      type: fd.get("type"),
-      category,
-      amount: Number(fd.get("amount")),
-      description: fd.get("description"),
-    });
-    setOpen(false);
-    setTxType("expense");
-    setTxCategory(EXPENSE_CATEGORIES[0]);
-    setTxCategoryOther("");
+  async function exportPdf() {
+    const now = new Date();
+    const monthTx = allTx.filter((t) => { const d = new Date(t.tx_date); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); });
+    if (!monthTx.length) return toast.info("No hay movimientos este mes para reportar");
+    try { await generateMonthlyReportPdf(active?.name ?? "Negocio", monthTx, now.toLocaleDateString("es-CL", { month: "long", year: "numeric" })); }
+    catch { toast.error("Error al generar el PDF"); }
   }
-
-  const income = (tx ?? [])
-    .filter((t) => t.type === "income")
-    .reduce((s, t) => s + Number(t.amount), 0);
-  const expense = (tx ?? [])
-    .filter((t) => t.type === "expense")
-    .reduce((s, t) => s + Number(t.amount), 0);
-  const net = income - expense;
-
-  const now = new Date();
-  const last30Start = new Date(now);
-  last30Start.setDate(now.getDate() - 29);
-  const last30Tx = (tx ?? []).filter((t) => {
-    const d = new Date(t.tx_date);
-    return d >= last30Start && d <= now;
-  });
-  const last30Income = last30Tx
-    .filter((t) => t.type === "income")
-    .reduce((s, t) => s + Number(t.amount), 0);
-  const last30Expense = last30Tx
-    .filter((t) => t.type === "expense")
-    .reduce((s, t) => s + Number(t.amount), 0);
-  const last30Net = last30Income - last30Expense;
-  const dailyBurn = last30Expense / 30;
-  const coverageDays = dailyBurn > 0 && net > 0 ? Math.floor(net / dailyBurn) : null;
-  const collectionRate = sales && sales.length > 0
-    ? (() => {
-        const activeSales = sales.filter((s: any) => s.status !== "cancelled");
-        const billed = activeSales.reduce((sum: number, s: any) => sum + Number(s.total || 0), 0);
-        const collected = activeSales.reduce((sum: number, s: any) => sum + Number(s.paid_amount || 0), 0);
-        return billed > 0 ? (collected / billed) * 100 : 0;
-      })()
-    : 0;
-
-  const cashSignal = net < 0 ? "Presión de caja" : coverageDays !== null && coverageDays < 30 ? "Vigilar caja" : "Caja saludable";
-  const cashSignalClass = net < 0
-    ? "bg-destructive/10 text-destructive"
-    : coverageDays !== null && coverageDays < 30
-      ? "bg-warning/10 text-warning"
-      : "bg-success/10 text-success";
-
-  const breakdownTx = (tx ?? []).filter(
-    (t) => t.type === "expense" && inRange(t.tx_date, breakdownRange),
-  );
-  const expByCat: Record<string, number> = {};
-  breakdownTx.forEach((t) => {
-    expByCat[t.category ?? "Otro"] = (expByCat[t.category ?? "Otro"] ?? 0) + Number(t.amount);
-  });
-  const breakdownTotal = Object.values(expByCat).reduce((s, v) => s + v, 0);
-  const pieData = Object.entries(expByCat)
-    .map(([name, value]) => ({
-      name,
-      value,
-      pct: breakdownTotal ? (value / breakdownTotal) * 100 : 0,
-    }))
-    .sort((a, b) => b.value - a.value);
-
-  const creditSales = (sales ?? []).filter((s: any) => s.is_credit && s.status !== "cancelled");
-  const receivable = creditSales.reduce(
-    (sum: number, s: any) => sum + (Number(s.total) - Number(s.paid_amount)),
-    0,
-  );
-  const overdueSales = creditSales.filter(
-    (s: any) =>
-      Number(s.paid_amount) < Number(s.total) && s.due_date && new Date(s.due_date) < new Date(),
-  );
-  const overdueTotal = overdueSales.reduce(
-    (sum: number, s: any) => sum + (Number(s.total) - Number(s.paid_amount)),
-    0,
-  );
-
-  const COLORS = [
-    "oklch(0.55 0.22 268)",
-    "oklch(0.6 0.22 25)",
-    "oklch(0.75 0.17 70)",
-    "oklch(0.65 0.17 155)",
-    "oklch(0.5 0.15 320)",
-  ];
 
   return (
     <ModuleGuard module="finance">
       <>
         <PageHeader
           title="Caja"
-          description="Control operativo de ingresos, gastos, liquidez y cobros"
-          action={
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                disabled={!tx || tx.length === 0}
-                onClick={() =>
-                  downloadCsv(
-                    "movimientos.csv",
-                    (tx ?? []).map((t) => ({
-                      fecha: t.tx_date,
-                      tipo: t.type,
-                      categoria: t.category ?? "",
-                      monto: t.amount,
-                      descripcion: t.description ?? "",
-                    })),
-                  )
-                }
-              >
-                <Download className="mr-1.5 h-4 w-4" /> CSV
-              </Button>
-              <Button variant="outline" onClick={exportPdf} disabled={!tx || tx.length === 0}>
-                <FileDown className="mr-1.5 h-4 w-4" /> Reporte PDF
-              </Button>
-              {canWrite && (
-                <Dialog open={open} onOpenChange={setOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="mr-1.5 h-4 w-4" /> Nuevo movimiento
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Registrar movimiento</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={onSubmit} className="space-y-4">
-                      <div>
-                        <Label htmlFor="type">Tipo</Label>
-                        <select
-                          id="type"
-                          name="type"
-                          required
-                          value={txType}
-                          onChange={(e) => {
-                            const v = e.target.value as "income" | "expense";
-                            setTxType(v);
-                            setTxCategory(v === "income" ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]);
-                          }}
-                          className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="income">Ingreso</option>
-                          <option value="expense">Gasto</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label htmlFor="category">Categoría</Label>
-                        <select
-                          id="category"
-                          value={txCategory}
-                          onChange={(e) => setTxCategory(e.target.value)}
-                          className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm"
-                        >
-                          {(txType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                        {txCategory === "Otro" && (
-                          <Input className="mt-2" placeholder="Especifica la categoría" value={txCategoryOther} onChange={(e) => setTxCategoryOther(e.target.value)} />
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="amount">Monto (CLP)</Label>
-                        <Input id="amount" name="amount" type="number" min={0} required />
-                      </div>
-                      <div>
-                        <Label htmlFor="description">Descripción</Label>
-                        <Input id="description" name="description" />
-                      </div>
-                      <Button type="submit" className="w-full">Guardar</Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-          }
+          description="Centro de control de liquidez, ingresos, gastos y cobranza"
+          action={<div className="flex flex-wrap gap-2">
+            <Button variant="outline" disabled={!allTx.length} onClick={() => downloadCsv("movimientos.csv", allTx.map((t) => ({ fecha: t.tx_date, tipo: t.type, categoria: t.category ?? "", monto: t.amount, descripcion: t.description ?? "" })))}><Download className="mr-1.5 h-4 w-4" /> CSV</Button>
+            <Button variant="outline" disabled={!allTx.length} onClick={exportPdf}><FileDown className="mr-1.5 h-4 w-4" /> PDF</Button>
+            {canWrite && <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild><Button><Plus className="mr-1.5 h-4 w-4" /> Nuevo movimiento</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Registrar movimiento de caja</DialogTitle></DialogHeader>
+                <form onSubmit={onSubmit} className="space-y-4">
+                  <div><Label>Tipo</Label><select name="type" value={type} onChange={(e) => { const v = e.target.value as "income" | "expense"; setType(v); setCategory(v === "income" ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]); }} className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm"><option value="income">Ingreso</option><option value="expense">Gasto</option></select></div>
+                  <div><Label>Categoría</Label><select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm">{(type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((c) => <option key={c}>{c}</option>)}</select>{category === "Otro" && <Input className="mt-2" placeholder="Especifica la categoría" value={otherCategory} onChange={(e) => setOtherCategory(e.target.value)} />}</div>
+                  <div><Label>Monto (CLP)</Label><Input name="amount" type="number" min="1" required placeholder="0" /></div>
+                  <div><Label>Descripción</Label><Input name="description" placeholder="Ej. pago proveedor, venta, arriendo..." /></div>
+                  <Button type="submit" className="w-full" disabled={insert.isPending}>{insert.isPending ? "Guardando..." : "Registrar movimiento"}</Button>
+                </form>
+              </DialogContent>
+            </Dialog>}
+          </div>}
         />
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="p-5"><div className="text-xs text-muted-foreground">Ingresos totales</div><div className="mt-1 text-2xl font-bold text-success">{fmtCLP(income)}</div></Card>
-          <Card className="p-5"><div className="text-xs text-muted-foreground">Gastos totales</div><div className="mt-1 text-2xl font-bold text-destructive">{fmtCLP(expense)}</div></Card>
-          <Card className="p-5"><div className="text-xs text-muted-foreground">Flujo neto registrado</div><div className="mt-1 text-2xl font-bold text-primary">{fmtCLP(net)}</div></Card>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Metric icon={<Wallet className="h-5 w-5" />} label="Flujo neto" value={fmtCLP(metrics.net)} tone={metrics.net >= 0 ? "success" : "danger"} detail={metrics.netTrend !== null ? `${metrics.netTrend >= 0 ? "+" : ""}${metrics.netTrend.toFixed(0)}% vs período anterior` : "Sin período comparable"} />
+          <Metric icon={<ArrowUpRight className="h-5 w-5" />} label="Ingresos" value={fmtCLP(metrics.income)} tone="success" detail={`${period === "all" ? "Todo el historial" : `Últimos ${period} días`}`} />
+          <Metric icon={<ArrowDownRight className="h-5 w-5" />} label="Gastos" value={fmtCLP(metrics.expense)} tone="danger" detail={`Burn diario: ${fmtCLP(metrics.burn)}`} />
+          <Metric icon={<Activity className="h-5 w-5" />} label="Cobranza" value={`${receivables.rate.toFixed(0)}%`} tone={receivables.rate >= 80 ? "success" : "warning"} detail={`${fmtCLP(receivables.pending)} por cobrar`} />
         </div>
 
         <Card className="mt-4 overflow-hidden">
-          <div className="border-b p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-2.5"><Wallet className="h-5 w-5 text-primary" /></div>
-                <div>
-                  <h2 className="font-semibold">Centro de control de caja</h2>
-                  <p className="text-sm text-muted-foreground">Lectura operativa basada en los movimientos registrados.</p>
-                </div>
-              </div>
-              <Badge className={cashSignalClass}>{cashSignal}</Badge>
-            </div>
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b p-5">
+            <div className="flex items-center gap-3"><div className="rounded-xl bg-primary/10 p-2.5"><Landmark className="h-5 w-5 text-primary" /></div><div><h2 className="font-semibold">Nüva Cash Control</h2><p className="text-sm text-muted-foreground">Lectura ejecutiva para tomar decisiones antes de que falte liquidez.</p></div></div>
+            <Badge className={signalClass}>{signal}</Badge>
           </div>
-          <div className="grid gap-px bg-border md:grid-cols-2 lg:grid-cols-4">
-            <div className="bg-card p-5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Neto últimos 30 días</span><Activity className="h-4 w-4" /></div>
-              <div className={`mt-2 text-xl font-bold ${last30Net >= 0 ? "text-success" : "text-destructive"}`}>{fmtCLP(last30Net)}</div>
-              <div className="mt-1 text-xs text-muted-foreground">Ingresos {fmtCLP(last30Income)} · gastos {fmtCLP(last30Expense)}</div>
-            </div>
-            <div className="bg-card p-5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Gasto diario medio</span><TrendingDown className="h-4 w-4" /></div>
-              <div className="mt-2 text-xl font-bold">{fmtCLP(Math.round(dailyBurn))}</div>
-              <div className="mt-1 text-xs text-muted-foreground">Promedio móvil de 30 días</div>
-            </div>
-            <div className="bg-card p-5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Cobranza</span><TrendingUp className="h-4 w-4" /></div>
-              <div className="mt-2 text-xl font-bold">{collectionRate.toFixed(0)}%</div>
-              <div className="mt-1 text-xs text-muted-foreground">Cobrado sobre ventas no canceladas</div>
-            </div>
-            <div className="bg-card p-5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Cobertura estimada</span><CalendarDays className="h-4 w-4" /></div>
-              <div className="mt-2 text-xl font-bold">{coverageDays === null ? "—" : `${coverageDays} días`}</div>
-              <div className="mt-1 text-xs text-muted-foreground">Solo orientativa; requiere saldo inicial real para precisión bancaria.</div>
-            </div>
+          <div className="grid gap-4 p-5 md:grid-cols-2 lg:grid-cols-4">
+            <Insight icon={<ShieldAlert className="h-4 w-4" />} label="Cobertura estimada" value={metrics.runway !== null ? `${metrics.runway} días` : "No calculable"} text={metrics.runway !== null ? "Basada en flujo neto registrado y gasto diario." : "Registra ingresos y gastos para estimarla."} />
+            <Insight icon={<CalendarDays className="h-4 w-4" />} label="Últimos 30 días" value={fmtCLP(period === "30" ? metrics.net : allTx.filter((t) => new Date(t.tx_date) >= dateDaysAgo(29)).reduce((s, t) => s + (t.type === "income" ? Number(t.amount) : -Number(t.amount)), 0))} text="Flujo neto registrado en la ventana móvil." />
+            <Insight icon={<AlertTriangle className="h-4 w-4" />} label="Vencido por cobrar" value={fmtCLP(receivables.overdue)} text={receivables.overdue > 0 ? "Prioriza estas cuentas para proteger caja." : "No hay vencidos registrados."} />
+            <Insight icon={<Sparkles className="h-4 w-4" />} label="Señal Nüva" value={metrics.net < 0 ? "Reducir burn" : receivables.overdue > 0 ? "Acelerar cobranza" : "Mantener disciplina"} text="Recomendación heurística basada en datos registrados." />
           </div>
-          {net < 0 && (
-            <div className="flex items-start gap-3 border-t bg-destructive/5 p-4 text-sm">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <div><p className="font-medium text-destructive">La caja registrada está en déficit.</p><p className="text-muted-foreground">Revisa gastos recientes, cuentas por cobrar y próximos compromisos antes de asumir nuevos pagos.</p></div>
-            </div>
-          )}
         </Card>
 
-        {creditSales.length > 0 && (
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <Card className="p-5"><div className="text-xs text-muted-foreground">Por cobrar (fiado)</div><div className="mt-1 text-2xl font-bold text-warning">{fmtCLP(receivable)}</div></Card>
-            <Card className="p-5"><div className="text-xs text-muted-foreground">Vencido ({overdueSales.length} venta{overdueSales.length === 1 ? "" : "s"})</div><div className="mt-1 text-2xl font-bold text-destructive">{fmtCLP(overdueTotal)}</div></Card>
-          </div>
-        )}
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1.35fr_.65fr]">
+          <Card className="p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Movimientos</h2><p className="text-sm text-muted-foreground">Controla el detalle que alimenta tus indicadores.</p></div><div className="flex flex-wrap gap-2"><select value={period} onChange={(e) => setPeriod(e.target.value as Period)} className="rounded-md border bg-background px-3 py-2 text-sm"><option value="7">7 días</option><option value="30">30 días</option><option value="90">90 días</option><option value="365">365 días</option><option value="all">Todo</option></select><select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="rounded-md border bg-background px-3 py-2 text-sm"><option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Gastos</option></select></div></div>
+            <div className="relative mt-4"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar categoría o descripción..." value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+            <div className="mt-4 overflow-x-auto">
+              {isLoading ? <div className="space-y-3"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div> : !filteredTx.length ? <EmptyState title="Sin movimientos" description="No hay movimientos que coincidan con este filtro." /> : <table className="w-full text-sm"><thead><tr className="border-b text-left text-muted-foreground"><th className="pb-3 font-medium">Fecha</th><th className="pb-3 font-medium">Categoría</th><th className="pb-3 font-medium">Descripción</th><th className="pb-3 text-right font-medium">Monto</th><th className="pb-3" /></tr></thead><tbody>{filteredTx.slice(0, 100).map((t) => <tr key={t.id} className="border-b last:border-0"><td className="py-3 whitespace-nowrap">{new Date(t.tx_date).toLocaleDateString("es-CL")}</td><td className="py-3"><Badge variant="outline">{t.category || "Otro"}</Badge></td><td className="max-w-[240px] truncate py-3 text-muted-foreground">{t.description || "—"}</td><td className={`py-3 text-right font-semibold ${t.type === "income" ? "text-success" : "text-destructive"}`}>{t.type === "income" ? "+" : "−"}{fmtCLP(Number(t.amount))}</td><td className="py-3 text-right"><Button size="icon" variant="ghost" onClick={() => deleteTx(t)} disabled={!canWrite || del.isPending} aria-label="Eliminar movimiento"><Trash2 className="h-4 w-4" /></Button></td></tr>)}</tbody></table>}
+            </div>
+          </Card>
 
-        <Tabs defaultValue="ledger" className="mt-6">
-          <TabsList>
-            <TabsTrigger value="ledger">Movimientos</TabsTrigger>
-            <TabsTrigger value="breakdown">Gastos por categoría</TabsTrigger>
-            <TabsTrigger value="receivables">Por cobrar</TabsTrigger>
-            <TabsTrigger value="payments">Cobros online</TabsTrigger>
-            <TabsTrigger value="invoicing">Facturación</TabsTrigger>
-          </TabsList>
+          <Card className="p-5">
+            <div className="flex items-center justify-between"><div><h2 className="font-semibold">Dónde se está yendo el dinero</h2><p className="text-sm text-muted-foreground">Principales categorías del período.</p></div><TrendingDown className="h-5 w-5 text-muted-foreground" /></div>
+            <div className="mt-5 space-y-4">{categoryBreakdown.length ? categoryBreakdown.slice(0, 6).map(([name, value]) => { const pct = metrics.expense ? (value / metrics.expense) * 100 : 0; return <div key={name}><div className="mb-1 flex justify-between text-sm"><span>{name}</span><span className="font-medium">{fmtCLP(value)}</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, pct)}%` }} /></div><div className="mt-1 text-xs text-muted-foreground">{pct.toFixed(1)}% del gasto</div></div>; }) : <EmptyState title="Sin gastos" description="Todavía no hay gastos en el período seleccionado." />}</div>
+          </Card>
+        </div>
 
-          <TabsContent value="ledger">
-            <Card>
-              {isLoading ? (
-                <div className="space-y-3 p-6">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-              ) : !tx || tx.length === 0 ? (
-                <EmptyState icon={CreditCard} title="Sin movimientos" description="Registra tu primer ingreso o gasto." />
-              ) : (
-                <Table>
-                  <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Categoría</TableHead><TableHead>Descripción</TableHead><TableHead className="text-right">Monto</TableHead><TableHead /></TableRow></TableHeader>
-                  <TableBody>{tx.map((t) => <TableRow key={t.id}>
-                    <TableCell className="text-muted-foreground">{new Date(t.tx_date).toLocaleDateString("es-CL")}</TableCell>
-                    <TableCell><Badge className={t.type === "income" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}>{t.type === "income" ? "Ingreso" : "Gasto"}</Badge></TableCell>
-                    <TableCell>{t.category ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground"><span className="flex items-center gap-1.5">{autoTxIds.has(t.id) && <Lock className="h-3 w-3 shrink-0" />}{t.description ?? "—"}</span></TableCell>
-                    <TableCell className={`text-right font-medium ${t.type === "income" ? "text-success" : "text-destructive"}`}>{fmtCLP(Number(t.amount))}</TableCell>
-                    <TableCell>{canWrite && <Button variant="ghost" size="icon" onClick={() => handleDelete(t)}><Trash2 className="h-4 w-4" /></Button>}</TableCell>
-                  </TableRow>)}</TableBody>
-                </Table>
-              )}
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="breakdown">
-            <Card className="p-6">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-1.5">{(Object.keys(RANGE_LABEL) as RangeKey[]).map((r) => <button key={r} onClick={() => { setBreakdownRange(r); setSelectedCategory(null); }} className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${breakdownRange === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/70"}`}>{RANGE_LABEL[r]}</button>)}</div>
-                <div className="text-right"><div className="text-xs text-muted-foreground">Total gastos ({RANGE_LABEL[breakdownRange]})</div><div className="text-lg font-bold text-destructive">{fmtCLP(breakdownTotal)}</div></div>
-              </div>
-              {pieData.length === 0 ? <EmptyState title="Sin datos para mostrar" description="Registra gastos para ver la distribución en este período." /> : <div className="grid gap-6 md:grid-cols-2">
-                <ResponsiveContainer width="100%" height={300}><PieChart><Pie data={pieData} dataKey="value" nameKey="name" outerRadius={110} onClick={(d: any) => setSelectedCategory((prev) => prev === d.name ? null : d.name)}>{pieData.map((d, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} className="cursor-pointer" opacity={selectedCategory && selectedCategory !== d.name ? 0.35 : 1} />)}</Pie><Tooltip formatter={(v: number) => fmtCLP(v)} /></PieChart></ResponsiveContainer>
-                <div className="space-y-1.5">{pieData.map((d, i) => <button key={d.name} onClick={() => setSelectedCategory((prev) => prev === d.name ? null : d.name)} className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${selectedCategory === d.name ? "border-primary bg-primary/5" : "hover:bg-accent/50"}`}><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />{d.name}</span><span className="flex items-center gap-2 tabular-nums"><span className="text-xs text-muted-foreground">{d.pct.toFixed(1)}%</span><span className="font-semibold">{fmtCLP(d.value)}</span></span></button>)}</div>
-              </div>}
-              {selectedCategory && <div className="mt-6 border-t pt-4"><div className="mb-2 flex items-center justify-between"><h4 className="text-sm font-semibold">Movimientos en "{selectedCategory}"</h4><button className="text-xs text-muted-foreground underline" onClick={() => setSelectedCategory(null)}>Quitar filtro</button></div><Table><TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Descripción</TableHead><TableHead className="text-right">Monto</TableHead></TableRow></TableHeader><TableBody>{breakdownTx.filter((t) => (t.category ?? "Otro") === selectedCategory).map((t) => <TableRow key={t.id}><TableCell className="text-muted-foreground">{new Date(t.tx_date).toLocaleDateString("es-CL")}</TableCell><TableCell>{t.description ?? "—"}</TableCell><TableCell className="text-right font-medium text-destructive">{fmtCLP(Number(t.amount))}</TableCell></TableRow>)}</TableBody></Table></div>}
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="receivables">
-            <Card>{creditSales.length === 0 ? <EmptyState icon={CreditCard} title="Sin ventas a crédito" description="Marca una venta como 'fiado' en Ventas para hacerle seguimiento aquí." /> : <Table><TableHeader><TableRow><TableHead>Cliente</TableHead><TableHead>Vence</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Pendiente</TableHead><TableHead className="text-right" /></TableRow></TableHeader><TableBody>{creditSales.slice().sort((a: any, b: any) => new Date(a.due_date ?? 0).getTime() - new Date(b.due_date ?? 0).getTime()).map((s: any) => { const pending = Number(s.total) - Number(s.paid_amount); const isOverdue = pending > 0 && s.due_date && new Date(s.due_date) < new Date(); const isPaid = pending <= 0; return <TableRow key={s.id}><TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell><TableCell className="text-muted-foreground">{s.due_date ? new Date(s.due_date).toLocaleDateString("es-CL") : "—"}</TableCell><TableCell><Badge className={isPaid ? "bg-success/15 text-success" : isOverdue ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}>{isPaid ? "Pagada" : isOverdue ? "Vencida" : "Por cobrar"}</Badge></TableCell><TableCell className="text-right font-medium">{fmtCLP(pending)}</TableCell><TableCell className="text-right">{!isPaid && <ChargeOnlineButton saleId={s.id} amount={pending} subject={`Venta ${s.customer_name ?? ""}`} />}</TableCell></TableRow>; })}</TableBody></Table>}</Card>
-          </TabsContent>
-
-          <TabsContent value="payments"><PaymentsTabContent /></TabsContent>
-
-          <TabsContent value="invoicing"><Card className="p-8"><div className="flex items-center gap-3"><FileText className="h-6 w-6 text-primary" /><div className="flex-1"><h3 className="font-semibold">Facturación SII — modo asistido</h3><p className="text-sm text-muted-foreground">Emite boletas y facturas gratis en el Portal MiPyme del SII y genera el documento de declaración con tus ventas pendientes desde el módulo de Facturación.</p></div></div><Button asChild variant="outline" className="mt-6"><Link to="/billing">Ir a Facturación SII</Link></Button></Card></TabsContent>
-        </Tabs>
+        <Card className="mt-4 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Radar de liquidez</h2><p className="text-sm text-muted-foreground">Acciones prioritarias para proteger la caja.</p></div><TrendingUp className="h-5 w-5 text-primary" /></div><div className="mt-4 grid gap-3 md:grid-cols-3"><ActionCard title="Cobranza" value={fmtCLP(receivables.overdue)} description={receivables.overdue > 0 ? "Monto vencido que conviene gestionar primero." : "No hay cartera vencida registrada."} urgent={receivables.overdue > 0} /><ActionCard title="Gasto diario" value={fmtCLP(metrics.burn)} description="Promedio del período seleccionado para estimar presión de caja." urgent={metrics.burn > 0 && metrics.runway !== null && metrics.runway < 30} /><ActionCard title="Resultado" value={fmtCLP(metrics.net)} description={metrics.net >= 0 ? "El flujo del período está en terreno positivo." : "El período presenta salida neta: revisa gastos y cobranza."} urgent={metrics.net < 0} /></div></Card>
       </>
     </ModuleGuard>
   );
 }
 
-function ChargeOnlineButton({ saleId, amount, subject }: { saleId: string; amount: number; subject: string }) {
-  const { active } = useActiveBusiness();
-  const [loading, setLoading] = useState(false);
-  async function handleCharge() {
-    if (!active) return;
-    setLoading(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      const res = await fetch("/api/billing/payments/create", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ business_id: active.id, sale_id: saleId, amount, subject }) });
-      const json = await res.json();
-      if (!json.ok) { toast.error(json.error ?? "No se pudo generar el link de cobro"); return; }
-      await navigator.clipboard.writeText(json.payment_url).catch(() => {});
-      toast.success("Link de cobro copiado al portapapeles");
-      window.open(json.payment_url, "_blank");
-    } catch { toast.error("Error de conexión con la pasarela de pago"); } finally { setLoading(false); }
-  }
-  return <Button size="sm" variant="outline" onClick={handleCharge} disabled={loading}><Link2 className="mr-1.5 h-3.5 w-3.5" />{loading ? "Generando..." : "Cobrar online"}</Button>;
+function Metric({ icon, label, value, detail, tone }: { icon: React.ReactNode; label: string; value: string; detail: string; tone: "success" | "danger" | "warning" }) {
+  const cls = tone === "success" ? "bg-success/10 text-success" : tone === "danger" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning";
+  return <Card className="p-5"><div className="flex items-start justify-between"><div><div className="text-xs text-muted-foreground">{label}</div><div className="mt-1 text-2xl font-bold">{value}</div></div><div className={`rounded-xl p-2 ${cls}`}>{icon}</div></div><div className="mt-3 text-xs text-muted-foreground">{detail}</div></Card>;
 }
 
-function PaymentsTabContent() {
-  const { active } = useActiveBusiness();
-  const { data: myRole } = useMyRole();
-  const canManage = canWriteOperations(myRole);
-  const { data: integrations, refetch } = useBizList<any>("billing_integrations", { order: "created_at" });
-  const activePayment = (integrations ?? []).find((i: any) => i.type === "payment" && i.status === "connected");
-  const [provider, setProvider] = useState<"flow" | "vsb">("flow");
-  const [apiKey, setApiKey] = useState("");
-  const [secretKey, setSecretKey] = useState("");
-  const [apiUrl, setApiUrl] = useState("");
-  const [environment, setEnvironment] = useState<"dev" | "prod">("dev");
-  const [saving, setSaving] = useState(false);
+function Insight({ icon, label, value, text }: { icon: React.ReactNode; label: string; value: string; text: string }) {
+  return <div className="rounded-xl border bg-muted/20 p-4"><div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">{icon}{label}</div><div className="mt-2 text-lg font-bold">{value}</div><p className="mt-1 text-xs leading-5 text-muted-foreground">{text}</p></div>;
+}
 
-  async function connect() {
-    if (!active) return;
-    setSaving(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      const res = await fetch("/api/billing/payments/connect", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ business_id: active.id, provider, api_key: apiKey, secret_key: secretKey, api_url: apiUrl, environment }) });
-      const json = await res.json();
-      if (!json.ok) { toast.error(json.error ?? "No se pudo conectar la pasarela"); return; }
-      toast.success(`${provider === "flow" ? "Flow" : "VSB"} conectado`);
-      setApiKey(""); setSecretKey(""); setApiUrl(""); refetch();
-    } catch { toast.error("Error de conexión"); } finally { setSaving(false); }
-  }
-
-  async function disconnect() {
-    if (!active) return;
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    const res = await fetch("/api/billing/payments/disconnect", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ business_id: active.id }) });
-    const json = await res.json();
-    if (json.ok) { toast.success("Pasarela desconectada"); refetch(); } else toast.error(json.error ?? "No se pudo desconectar la pasarela");
-  }
-
-  return <Card className="p-8">
-    <div className="flex items-center gap-3"><Link2 className="h-6 w-6 text-primary" /><div className="flex-1"><h3 className="font-semibold">Cobros online</h3><p className="text-sm text-muted-foreground">Genera links de pago para tus ventas a crédito o pendientes. La confirmación se verifica directamente con el proveedor.</p></div></div>
-    {activePayment ? <div className="mt-6 flex items-center justify-between rounded-lg border p-4"><div><p className="text-sm font-medium">Conectado: {activePayment.provider === "flow" ? "Flow" : "VSB"} · <span className="text-muted-foreground">{activePayment.environment === "prod" ? "Producción" : "Pruebas (sandbox)"}</span></p><p className="text-xs text-muted-foreground">Usa "Cobrar online" en Por cobrar / Ventas para generar links.</p></div>{canManage && <Button variant="outline" size="sm" onClick={disconnect}><Unplug className="mr-1.5 h-3.5 w-3.5" />Desconectar</Button>}</div> : canManage ? <div className="mt-6 space-y-4">
-      <div><Label>Pasarela</Label><Select value={provider} onValueChange={(v) => setProvider(v as "flow" | "vsb")}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="flow">Flow</SelectItem><SelectItem value="vsb">VSB</SelectItem></SelectContent></Select></div>
-      <div><Label>API Key</Label><Input className="mt-1" value={apiKey} onChange={(e) => setApiKey(e.target.value)} /></div>
-      {provider === "flow" ? <div><Label>Secret Key</Label><Input className="mt-1" type="password" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} /></div> : <div><Label>URL base de VSB</Label><Input className="mt-1" placeholder="https://api.vsb.cl" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} /></div>}
-      <div><Label>Ambiente</Label><Select value={environment} onValueChange={(v) => setEnvironment(v as "dev" | "prod")}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="dev">Pruebas (sandbox)</SelectItem><SelectItem value="prod">Producción</SelectItem></SelectContent></Select></div>
-      <Button onClick={connect} disabled={saving || !apiKey}>{saving ? "Conectando..." : "Conectar pasarela"}</Button>
-    </div> : <p className="mt-6 text-sm text-muted-foreground">Solo el dueño o un administrador puede conectar una pasarela de pago.</p>}
-  </Card>;
+function ActionCard({ title, value, description, urgent }: { title: string; value: string; description: string; urgent: boolean }) {
+  return <div className={`rounded-xl border p-4 ${urgent ? "border-destructive/30 bg-destructive/5" : "bg-muted/20"}`}><div className="flex items-center justify-between"><span className="text-sm font-medium">{title}</span>{urgent && <AlertTriangle className="h-4 w-4 text-destructive" />}</div><div className="mt-2 text-xl font-bold">{value}</div><p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p></div>;
 }
