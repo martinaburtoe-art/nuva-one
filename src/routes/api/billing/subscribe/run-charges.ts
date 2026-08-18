@@ -4,20 +4,12 @@ import {
   getFlowSubscriptionCreds,
 } from "@/lib/fiscal/flow-subscriptions.server";
 
-// Se invoca una vez al día desde Vercel Cron (ver vercel.json). Cobra a
-// cada negocio Pro cuyo next_charge_date ya llegó. Tras 3 rechazos
-// consecutivos se degrada a Starter -- da margen para que el dueño
-// actualice la tarjeta sin perder el acceso de golpe al primer rechazo
-// (una tarjeta puede fallar por un solo mes sin fondos, por ejemplo).
 const MAX_FAILED_ATTEMPTS = 3;
+const STALE_PROCESSING_MINUTES = 30;
 
 export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
   server: {
     handlers: {
-      // Vercel Cron invoca por GET. Si CRON_SECRET está seteado en el
-      // proyecto, Vercel agrega automáticamente el header Authorization
-      // con ese valor -- por eso igual lo verificamos acá, para que nadie
-      // más pueda disparar cobros masivos golpeando esta URL a mano.
       GET: async ({ request }) => {
         const secret = process.env.CRON_SECRET;
         const authHeader = request.headers.get("authorization");
@@ -26,11 +18,13 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
         }
 
         const creds = getFlowSubscriptionCreds();
-        const priceCLP = Number(process.env.NUVA_PRO_PRICE_CLP ?? "29990");
-        if (!creds)
+        const parsedPrice = Number(process.env.NUVA_PRO_PRICE_CLP ?? "29990");
+        if (!creds || !Number.isSafeInteger(parsedPrice) || parsedPrice <= 0) {
           return new Response(JSON.stringify({ error: "Suscripciones no configuradas" }), {
             status: 500,
+            headers: { "Content-Type": "application/json" },
           });
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const today = new Date().toISOString().slice(0, 10);
@@ -42,29 +36,90 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
           .eq("flow_card_status", "active")
           .lte("next_charge_date", today);
 
-        if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        if (error) {
+          console.error("subscription_charge_query_failed", error);
+          return new Response(JSON.stringify({ error: "No se pudieron cargar las suscripciones" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
 
         const results: Array<{ businessId: string; status: string }> = [];
 
         for (const biz of dueBusinesses ?? []) {
-          const customerId = (biz as any).flow_customer_id as string | null;
+          const customerId = biz.flow_customer_id as string | null;
           if (!customerId) continue;
 
-          const commerceOrder = `sub-${biz.id}-${Date.now()}`;
+          // Deterministic order per business/day. This is also the provider-level
+          // idempotency key: concurrent/retried executions must never invent a
+          // new commerce order for the same billing date.
+          const commerceOrder = `sub-${biz.id}-${today}`;
+
+          const { data: existing } = await supabaseAdmin
+            .from("subscription_charges")
+            .select("id,status,created_at")
+            .eq("commerce_order", commerceOrder)
+            .maybeSingle();
+
+          if (existing?.status === "paid" || existing?.status === "rejected") {
+            results.push({ businessId: biz.id, status: `already_${existing.status}` });
+            continue;
+          }
+
+          // Atomically reserve the commerce order before contacting Flow. The
+          // unique commerce_order constraint prevents two cron invocations from
+          // charging the same subscription concurrently.
+          if (!existing) {
+            const { error: reserveError } = await supabaseAdmin
+              .from("subscription_charges")
+              .insert({
+                business_id: biz.id,
+                commerce_order: commerceOrder,
+                amount: parsedPrice,
+                status: "processing",
+                attempt_started_at: new Date().toISOString(),
+              });
+
+            if (reserveError) {
+              // Another invocation won the reservation race.
+              if (reserveError.code === "23505") {
+                results.push({ businessId: biz.id, status: "already_processing" });
+                continue;
+              }
+              console.error("subscription_charge_reservation_failed", reserveError);
+              results.push({ businessId: biz.id, status: "reservation_failed" });
+              continue;
+            }
+          } else {
+            const startedAt = new Date(existing.created_at).getTime();
+            const stale = Date.now() - startedAt > STALE_PROCESSING_MINUTES * 60_000;
+            if (!stale) {
+              results.push({ businessId: biz.id, status: "already_processing" });
+              continue;
+            }
+
+            await supabaseAdmin
+              .from("subscription_charges")
+              .update({ attempt_started_at: new Date().toISOString() })
+              .eq("id", existing.id)
+              .eq("status", "processing");
+          }
+
           const charge = await chargeSubscription(creds, {
             customerId,
-            amount: priceCLP,
+            amount: parsedPrice,
             subject: "Nüva One — Plan Pro (mensual)",
             commerceOrder,
           });
 
-          await supabaseAdmin.from("subscription_charges").insert({
-            business_id: biz.id,
-            commerce_order: commerceOrder,
-            amount: priceCLP,
-            status: charge.status,
-            flow_order: charge.flowOrder,
-          });
+          await supabaseAdmin
+            .from("subscription_charges")
+            .update({
+              status: charge.status,
+              flow_order: charge.flowOrder,
+              attempt_started_at: null,
+            })
+            .eq("commerce_order", commerceOrder);
 
           if (charge.status === "paid") {
             const next = new Date();
@@ -76,10 +131,11 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
                 billing_failed_attempts: 0,
                 next_charge_date: next.toISOString().slice(0, 10),
               })
-              .eq("id", biz.id);
+              .eq("id", biz.id)
+              .eq("plan", "pro");
             results.push({ businessId: biz.id, status: "paid" });
           } else {
-            const attempts = ((biz as any).billing_failed_attempts ?? 0) + 1;
+            const attempts = (biz.billing_failed_attempts ?? 0) + 1;
             const downgrade = attempts >= MAX_FAILED_ATTEMPTS;
             await supabaseAdmin
               .from("businesses")
@@ -87,12 +143,12 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
                 subscription_status: downgrade ? "canceled" : "past_due",
                 billing_failed_attempts: attempts,
                 plan: downgrade ? "starter" : "pro",
-                // Reintenta en 3 días si aún no se agotaron los intentos.
                 next_charge_date: downgrade
                   ? null
                   : new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10),
               })
-              .eq("id", biz.id);
+              .eq("id", biz.id)
+              .eq("plan", downgrade ? "pro" : "pro");
             results.push({
               businessId: biz.id,
               status: downgrade ? "downgraded" : "retry_scheduled",
@@ -101,7 +157,7 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
         }
 
         return new Response(JSON.stringify({ ok: true, processed: results.length, results }), {
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       },
     },
