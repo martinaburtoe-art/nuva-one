@@ -27,7 +27,16 @@ export function getChatModel() {
   if (provider === "groq") {
     const key = process.env.GROQ_API_KEY;
     if (!key) throw new Error("GROQ_API_KEY no configurado");
-    return createGroqProvider(key)(process.env.GROQ_MODEL ?? "llama-3.1-8b-instant");
+
+    // Groq retired llama-3.1-8b-instant on 2026-08-16. Keep the runtime
+    // resilient even if an old GROQ_MODEL value is still configured in Vercel.
+    const configuredModel = process.env.GROQ_MODEL;
+    const model =
+      configuredModel && configuredModel !== "llama-3.1-8b-instant"
+        ? configuredModel
+        : "openai/gpt-oss-20b";
+
+    return createGroqProvider(key)(model);
   }
 
   if (provider === "lovable") {
