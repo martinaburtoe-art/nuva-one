@@ -1,0 +1,10 @@
+revoke all on public.accounting_accounts from anon;
+revoke all on public.accounting_journals from anon;
+revoke all on public.accounting_lines from anon;
+revoke all on public.accounting_period_closures from anon;
+revoke all on public.tax_profiles from anon;
+revoke all on public.tax_periods from anon;
+revoke all on public.tax_f29_returns from anon;
+revoke all on public.tax_supporting_documents from anon;
+revoke all on public.tax_annual_returns from anon;
+revoke all on public.cash_flow_forecasts from anon;
