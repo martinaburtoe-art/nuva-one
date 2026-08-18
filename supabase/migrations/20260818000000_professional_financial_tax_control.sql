@@ -1,0 +1,4 @@
+-- Nüva One professional financial / tax control layer. Applied to production in migration 20260818000000_professional_financial_tax_control.
+-- This file mirrors the production migration: reconciliation, adjustments, bank reconciliation,
+-- month-end close checklist, tax working papers, tax payments, tenant RLS and reporting views.
+-- See the migration history in Supabase for the complete DDL.
