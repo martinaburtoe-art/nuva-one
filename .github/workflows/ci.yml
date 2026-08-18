@@ -1,17 +1,21 @@
 name: CI
 
-# Runs on every push and PR to main. This is the minimum safety net Nüva One
-# had zero of before: if this goes red, something is actually broken --
-# investigate before merging/deploying, don't just re-run it.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
-    name: Lint, typecheck, test, build
+    name: Lint, typecheck, test, audit, build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+
       - name: Lint
         run: npm run lint
 
@@ -35,13 +42,6 @@ jobs:
       - name: Unit tests
         run: npm run test
 
-      # NOTE: this is a *static* build check (does the app compile/bundle),
-      # not a runtime check. Vite happily builds even with the VITE_SUPABASE_*
-      # vars unset -- it just inlines `undefined`, which would break at
-      # runtime, not at build time. Catching that class of bug needs a real
-      # E2E test hitting a live/staging Supabase project, which is the next
-      # step up from this baseline (see FASE 5 del roadmap), not something to
-      # fake here with placeholder values that would hide real misconfiguration.
       - name: Build
         run: npm run build
 
@@ -57,27 +57,8 @@ jobs:
         with:
           version: latest
 
-      # `supabase test db` only connects to an already-running local stack
-      # (default: 127.0.0.1:54322) -- it does not start one itself. Without
-      # this step the job fails immediately with ECONNREFUSED before any
-      # pgTAP file even runs. `supabase start` spins up the local Docker
-      # stack (Postgres, GoTrue, PostgREST, Realtime, Storage, Kong) and
-      # applies every migration in supabase/migrations as part of startup.
       - name: Start Supabase local stack
         run: supabase start
 
-      # Spins up a throwaway local Postgres (via Docker, already available
-      # on this runner), applies every migration in supabase/migrations,
-      # then runs every *.sql file in supabase/tests/database with pgTAP.
-      # Nothing here touches the real project -- this is a brand new,
-      # disposable database created and destroyed within this job.
-      # supabase test db spins up ~10 Docker containers (Postgres, GoTrue,
-      # PostgREST, Realtime, Storage, Kong...) to run pgTAP against. That
-      # startup occasionally races/times out on shared CI runners -- a known
-      # class of flakiness with the Supabase CLI in GitHub Actions, unrelated
-      # to the tests themselves. Retrying once before failing the job is the
-      # standard, pragmatic mitigation (every test file here is verified
-      # correct against the live schema; a failure is far more likely to be
-      # container startup flake than a real regression).
-      - name: Run pgTAP tests (with one retry for CI-only Docker flakiness)
+      - name: Run pgTAP tests
         run: supabase test db || (echo "First attempt failed, retrying once..." && supabase test db)
