@@ -4,8 +4,19 @@ const indexPath = "src/routes/index.tsx";
 const workflowPath = ".github/workflows/integrate-home-showcase.yml";
 const text = readFileSync(indexPath, "utf8");
 
+// The homepage showcase is now maintained in source control. Never rewrite an
+// already-integrated homepage during production builds.
 if (text.includes("const SHOWCASE_MODULES =")) {
-  console.log("Homepage showcase already integrated");
+  console.log("Homepage showcase already integrated; build is source-of-truth");
+  process.exit(0);
+}
+
+// The legacy integration workflow is intentionally disabled. A production
+// build must never fail because that deprecated workflow no longer contains
+// the old replacement payload.
+const workflow = readFileSync(workflowPath, "utf8");
+if (workflow.includes("Legacy homepage showcase integration (manual only)") || workflow.includes("disabled workflow")) {
+  console.log("Legacy homepage integration is disabled; skipping source rewrite");
   process.exit(0);
 }
 
@@ -15,7 +26,6 @@ if (start < 0 || end < 0) {
   throw new Error("Could not locate the existing homepage showcase boundaries");
 }
 
-const workflow = readFileSync(workflowPath, "utf8");
 const marker = "replacement = r'''";
 const replacementStart = workflow.indexOf(marker);
 if (replacementStart < 0) {
