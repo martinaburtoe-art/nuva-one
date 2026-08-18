@@ -25,29 +25,24 @@ import { checkRateLimit } from "@/lib/rate-limit.server";
 
 const CHAT_RATE_LIMIT_PER_MINUTE = 8;
 
-// Pulls the plain text out of the last user message in a UIMessage[] array,
-// tolerating both the `parts` shape (current AI SDK) and a legacy `content`
-// string, in case older client messages are still floating in local state.
 function lastUserText(messages: UIMessage[]): string {
   const last = [...messages].reverse().find((m) => m.role === "user");
   if (!last) return "";
-  const anyLast = last as any;
-  if (typeof anyLast.content === "string") return anyLast.content;
-  if (Array.isArray(anyLast.parts)) {
-    return anyLast.parts
-      .filter((p: any) => p.type === "text")
-      .map((p: any) => p.text)
-      .join("\n");
-  }
-  return "";
+  if (typeof last.content === "string") return last.content;
+  return last.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n");
 }
 
-// Uses the user's own JWT (not the service role), so Postgres RLS enforces
-// that only data for businesses the user belongs to can ever be read here --
-// this endpoint cannot be used to read another business's data even if a
-// malicious x-business-id header is sent. The caller (the POST handler
-// below) has already verified this token belongs to a real, signed-in user
-// before this function is ever called.
+function getErrorStatusCode(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null || !("statusCode" in error)) {
+    return undefined;
+  }
+  const statusCode = error.statusCode;
+  return typeof statusCode === "number" ? statusCode : undefined;
+}
+
 async function buildAuthedBusinessContext(token: string, businessId: string) {
   const { url: SUPABASE_URL, anonKey: SUPABASE_PUBLISHABLE_KEY, ok } = getServerSupabaseEnv();
   if (!ok || !businessId) return null;
@@ -71,9 +66,6 @@ export const Route = createFileRoute("/api/chat")({
           });
         }
 
-        // Require a valid, signed-in user. Without this check, the endpoint
-        // would happily stream an AI response to anyone, authenticated or
-        // not, burning AI Gateway credits with no business context at all.
         const authHeader = request.headers.get("authorization") ?? "";
         const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
         if (!token) {
@@ -91,13 +83,6 @@ export const Route = createFileRoute("/api/chat")({
           });
         }
 
-        // Per-authenticated-user, not per-business: businessId is optional
-        // on this route (see contextBlock fallback below), so a bucket keyed
-        // only on business_id would leave the no-business-context path with
-        // zero rate limiting at all -- an authenticated user could otherwise
-        // stream unlimited AI responses just by omitting x-business-id.
-        // Identity comes from the verified JWT claim, never from anything
-        // the client could set directly.
         const withinChatRateLimit = await checkRateLimit(
           `chat:${claims.claims.sub}`,
           CHAT_RATE_LIMIT_PER_MINUTE,
@@ -105,8 +90,8 @@ export const Route = createFileRoute("/api/chat")({
         );
         if (!withinChatRateLimit) {
           return new Response(
-            JSON.stringify({ error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." }),
-            { status: 429 },
+            JSON.stringify({ error: "El servicio está temporalmente ocupado. Intenta nuevamente en un minuto." }),
+            { status: 429, headers: { "Retry-After": "60" } },
           );
         }
 
@@ -114,17 +99,6 @@ export const Route = createFileRoute("/api/chat")({
         const messages = body.messages ?? [];
         const businessId = request.headers.get("x-business-id") ?? "";
 
-        // Starter plan: capped at 30 AI messages/day per business (Pro is
-        // unlimited). Checked via the service role so it can't be spoofed by
-        // the client, and incremented atomically to survive concurrent requests.
-        //
-        // increment_ai_usage() runs as service role and bypasses RLS by
-        // design (it has to, to atomically increment a counter regardless of
-        // who's asking). That means THIS handler is the only thing standing
-        // between an authenticated user and incrementing -- or reading the
-        // exhaustion state of -- another business's daily AI quota just by
-        // sending a different x-business-id header. isBusinessMember() closes
-        // that gap: no membership, no RPC call, full stop.
         const STARTER_DAILY_AI_LIMIT = 30;
         if (businessId) {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -176,14 +150,11 @@ export const Route = createFileRoute("/api/chat")({
         let model;
         try {
           model = getChatModel();
-        } catch (err: any) {
+        } catch (err) {
           console.error("AI provider error", err);
           return new Response(JSON.stringify({ error: "AI no configurado" }), { status: 500 });
         }
 
-        // Server-owned memory: this business+user's conversation, shared
-        // conceptually with WhatsApp (same tables, different channel/ref).
-        // Sessions auto-expire after 7 days of inactivity (see ai-memory.server.ts).
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const conversation = businessId
           ? await getOrCreateConversation(supabaseAdmin, {
@@ -214,12 +185,6 @@ SEGURIDAD (no negociable):
 ${contextBlock}`;
 
         try {
-          // When there's a live conversation, the model sees server-owned
-          // memory (rolling summary + last 10 messages) instead of whatever
-          // the client happens to have in local state -- this is what makes
-          // memory consistent across devices/tabs and, conceptually, with
-          // WhatsApp. Falls back to the client-sent array only if there's no
-          // business context to hang a conversation off of.
           const modelMessages: ModelMessage[] = conversation
             ? ([
                 ...(await buildContextMessages(supabaseAdmin, conversation)),
@@ -247,15 +212,16 @@ ${contextBlock}`;
             },
           });
           return result.toUIMessageStreamResponse({ originalMessages: messages });
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("AI error", err);
+          const statusCode = getErrorStatusCode(err);
           const msg =
-            err?.statusCode === 429
+            statusCode === 429
               ? "Has alcanzado el límite de uso. Intenta más tarde."
-              : err?.statusCode === 402
+              : statusCode === 402
                 ? "Sin créditos de IA. Recarga tu plan."
                 : "Error en la IA. Intenta nuevamente.";
-          return new Response(JSON.stringify({ error: msg }), { status: err?.statusCode ?? 500 });
+          return new Response(JSON.stringify({ error: msg }), { status: statusCode ?? 500 });
         }
       },
     },
