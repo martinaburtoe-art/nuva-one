@@ -1,58 +1,15 @@
 name: Finalize public homepage integration
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
+# Deprecated: homepage composition is maintained directly by the application.
+# Manual-only placeholder retained for traceability; it never writes to main.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  finalize:
-    if: ${{ !contains(github.event.head_commit.message, 'integrate PYME Radar into homepage') }}
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Integrate PYME Radar into the public homepage
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          index = Path('src/routes/index.tsx')
-          text = index.read_text()
-
-          import_line = 'import { PymeNewsRadar } from "@/components/pyme-news-radar";'
-          if import_line not in text:
-              marker = 'import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";'
-              if marker not in text:
-                  raise SystemExit('Homepage import marker not found')
-              text = text.replace(marker, marker + '\n' + import_line, 1)
-
-          if '<PymeNewsRadar />' not in text:
-              marker = '<Hero/><ProductShowcase/>'
-              if marker not in text:
-                  raise SystemExit('Homepage composition marker not found')
-              replacement = '<Hero/><ProductShowcase/><section className="border-t bg-secondary/20 py-20"><div className="mx-auto max-w-7xl px-6"><PymeNewsRadar /></div></section>'
-              text = text.replace(marker, replacement, 1)
-
-          index.write_text(text)
-          PY
-
-      - name: Verify the exact change
-        run: |
-          grep -n 'pyme-news-radar' src/routes/index.tsx
-          grep -n 'PymeNewsRadar' src/routes/index.tsx
-
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/routes/index.tsx
-          git diff --cached --quiet && exit 0
-          git commit -m "feat: integrate PYME Radar into homepage"
-          git push
+      - run: echo "Legacy homepage finalization workflow is disabled; no changes applied."
