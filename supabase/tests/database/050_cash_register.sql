@@ -1,0 +1,16 @@
+begin;
+select plan(12);
+select ok(to_regclass('public.cash_registers') is not null, 'cash_registers table exists');
+select ok(to_regclass('public.cash_register_movements') is not null, 'cash_register_movements table exists');
+select ok(exists (select 1 from pg_indexes where indexname = 'uq_cash_register_one_open_per_business'), 'one-open-register partial unique index exists');
+select ok(exists (select 1 from pg_indexes where indexname = 'idx_cash_registers_business_created'), 'cash register business index exists');
+select ok(exists (select 1 from pg_indexes where indexname = 'idx_cash_movements_register_created'), 'cash movement register index exists');
+select ok(exists (select 1 from pg_trigger where tgname = 'trg_validate_cash_movement_business'), 'cash movement tenant consistency trigger exists');
+select ok(has_table_privilege('authenticated', 'public.cash_registers', 'SELECT'), 'authenticated can read cash registers');
+select ok(has_table_privilege('authenticated', 'public.cash_registers', 'INSERT'), 'authenticated can open a cash register');
+select ok(has_table_privilege('authenticated', 'public.cash_registers', 'UPDATE'), 'authenticated can close a cash register');
+select ok(has_table_privilege('authenticated', 'public.cash_register_movements', 'SELECT'), 'authenticated can read cash movements');
+select ok(has_table_privilege('authenticated', 'public.cash_register_movements', 'INSERT'), 'authenticated can record cash movements');
+select ok(not has_table_privilege('authenticated', 'public.cash_register_movements', 'DELETE'), 'authenticated cannot delete cash movements');
+select * from finish();
+rollback;
