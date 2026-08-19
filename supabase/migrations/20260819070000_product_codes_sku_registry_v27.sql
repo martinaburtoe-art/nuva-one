@@ -34,7 +34,6 @@ CREATE INDEX IF NOT EXISTS idx_product_codes_supplier ON public.product_codes (b
 CREATE INDEX IF NOT EXISTS idx_products_business_sku ON public.products (business_id, lower(btrim(sku))) WHERE sku IS NOT NULL AND btrim(sku) <> '';
 CREATE INDEX IF NOT EXISTS idx_products_business_barcode ON public.products (business_id, lower(btrim(barcode))) WHERE barcode IS NOT NULL AND btrim(barcode) <> '';
 
--- Preserve legacy barcode values while moving the registry to product_codes.
 INSERT INTO public.product_codes (business_id, product_id, code, code_type, is_primary, is_active)
 SELECT p.business_id, p.id, btrim(p.barcode), 'barcode', true, true
 FROM public.products p
@@ -47,14 +46,14 @@ ALTER TABLE public.product_codes ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Members access product_codes" ON public.product_codes;
 CREATE POLICY "Members read product_codes" ON public.product_codes FOR SELECT
-  USING (public.is_business_member(business_id, (select auth.uid())));
+  USING (private.is_business_member(business_id, (select auth.uid())));
 CREATE POLICY "Operators create product_codes" ON public.product_codes FOR INSERT
-  WITH CHECK (public.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]));
+  WITH CHECK (private.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]));
 CREATE POLICY "Operators update product_codes" ON public.product_codes FOR UPDATE
-  USING (public.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]))
-  WITH CHECK (public.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]));
+  USING (private.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]))
+  WITH CHECK (private.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]));
 CREATE POLICY "Operators delete product_codes" ON public.product_codes FOR DELETE
-  USING (public.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]));
+  USING (private.has_business_role(business_id, (select auth.uid()), ARRAY['owner','admin','staff']::public.member_role[]));
 
 CREATE OR REPLACE FUNCTION public.lookup_product_by_code(p_code TEXT)
 RETURNS TABLE(product_id UUID, business_id UUID, name TEXT, sku TEXT, barcode TEXT, code_type TEXT, stock INTEGER, price NUMERIC, cost NUMERIC)
@@ -67,7 +66,7 @@ LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $$
   LEFT JOIN public.product_codes pc
     ON pc.product_id = p.id AND pc.business_id = p.business_id
    AND pc.is_active AND lower(btrim(pc.code)) = lower(btrim(p_code))
-  WHERE public.is_business_member(p.business_id, (select auth.uid()))
+  WHERE private.is_business_member(p.business_id, (select auth.uid()))
     AND (pc.id IS NOT NULL OR lower(btrim(COALESCE(p.barcode, ''))) = lower(btrim(p_code)) OR lower(btrim(COALESCE(p.sku, ''))) = lower(btrim(p_code)))
   ORDER BY CASE WHEN lower(btrim(COALESCE(p.sku, ''))) = lower(btrim(p_code)) THEN 0 ELSE 1 END
   LIMIT 2;
