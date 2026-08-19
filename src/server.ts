@@ -23,7 +23,9 @@ function applySecurityHeaders(response: Response, request: Request): Response {
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("X-Frame-Options", "DENY");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  // The scanner requires camera access on the first-party Nüva origin.
+  // Keep microphone, geolocation and payment disabled.
+  headers.set("Permissions-Policy", "camera=(self), microphone=(), geolocation=(), payment=()");
 
   if (new URL(request.url).protocol === "https:") {
     headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
