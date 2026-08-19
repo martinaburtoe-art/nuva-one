@@ -1,7 +1,4 @@
-export type LiveScanResult = {
-  rawValue: string;
-  format?: string;
-};
+export type LiveScanResult = { rawValue: string; format?: string };
 
 export type LiveScannerOptions = {
   onDetect: (result: LiveScanResult) => void;
@@ -11,34 +8,29 @@ export type LiveScannerOptions = {
   duplicateCooldownMs?: number;
 };
 
-type BarcodeDetectorLike = new (options?: { formats?: string[] }) => {
-  detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string; format?: string }>>;
-};
-
+type BarcodeDetectorLike = new (options?: { formats?: string[] }) => { detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string; format?: string }>> };
 type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean };
 type TorchSettings = MediaTrackSettings & { torch?: boolean };
 type FallbackControls = { stop: () => void };
+type ZXingResult = { getText(): string; getBarcodeFormat(): { toString(): string } };
+type ZXingReader = { decodeFromConstraints: (constraints: MediaStreamConstraints, preview: HTMLVideoElement, callback: (result: ZXingResult | undefined, error?: unknown) => void) => Promise<FallbackControls> };
 
-type ZXingReader = {
-  decodeFromConstraints: (
-    constraints: MediaStreamConstraints,
-    preview: HTMLVideoElement,
-    callback: (result: { getText(): string; getBarcodeFormat(): { toString(): string } } | undefined, error?: unknown) => void,
-  ) => Promise<FallbackControls>;
-};
-
-const SUPPORTED_FORMATS = [
-  'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code',
-] as const;
-
+const SUPPORTED_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code'] as const;
 const isBrowser = () => typeof window !== 'undefined' && typeof navigator !== 'undefined';
 
-/**
- * Camera-first live barcode scanner.
- * Primary engine: native BarcodeDetector.
- * Fallback: ZXing Browser, also reading directly from the live video stream.
- * No frame is captured, uploaded or persisted by this abstraction.
- */
+function normalizeFormat(format?: string) {
+  if (!format) return undefined;
+  const value = format.toLowerCase().replace(/[-\s]/g, '_');
+  const aliases: Record<string, string> = {
+    ean13: 'ean_13', ean_13: 'ean_13', ean8: 'ean_8', ean_8: 'ean_8',
+    upca: 'upc_a', upc_a: 'upc_a', upce: 'upc_e', upc_e: 'upc_e',
+    code128: 'code_128', code_128: 'code_128', code39: 'code_39', code_39: 'code_39',
+    itf: 'itf', qr: 'qr_code', qr_code: 'qr_code', qrcode: 'qr_code',
+  };
+  return aliases[value] ?? value;
+}
+
+/** Camera-first scanner. Primary engine is BarcodeDetector; ZXing is the live-video fallback. */
 export class LiveScanner {
   private stream: MediaStream | null = null;
   private timer: number | null = null;
@@ -50,26 +42,12 @@ export class LiveScanner {
   private video: HTMLVideoElement | null = null;
   private options: Required<Pick<LiveScannerOptions, 'facingMode' | 'scanIntervalMs' | 'duplicateCooldownMs'>> & LiveScannerOptions;
 
-  constructor(options: LiveScannerOptions) {
-    this.options = { facingMode: 'environment', scanIntervalMs: 160, duplicateCooldownMs: 1200, ...options };
-  }
+  constructor(options: LiveScannerOptions) { this.options = { facingMode: 'environment', scanIntervalMs: 160, duplicateCooldownMs: 1200, ...options }; }
 
-  static hasCameraSupport() {
-    return isBrowser() && !!navigator.mediaDevices?.getUserMedia;
-  }
-
-  static hasNativeBarcodeDetector() {
-    return isBrowser() && 'BarcodeDetector' in window;
-  }
-
-  static isSupported() {
-    return this.hasCameraSupport();
-  }
-
-  static supportedFormats() {
-    return [...SUPPORTED_FORMATS];
-  }
-
+  static hasCameraSupport() { return isBrowser() && !!navigator.mediaDevices?.getUserMedia; }
+  static hasNativeBarcodeDetector() { return isBrowser() && 'BarcodeDetector' in window; }
+  static isSupported() { return this.hasCameraSupport(); }
+  static supportedFormats() { return [...SUPPORTED_FORMATS]; }
   getStream() { return this.stream; }
   getVideoTrack() { return this.stream?.getVideoTracks()[0] ?? null; }
 
@@ -88,36 +66,29 @@ export class LiveScanner {
     await track.applyConstraints({ advanced: [{ torch: enabled } as MediaTrackConstraintSet] });
   }
 
-  private emit(result: LiveScanResult) {
-    const value = result.rawValue.trim();
+  private emit(rawValue: string, format?: string) {
+    const value = rawValue.trim();
     if (!value) return;
     const now = Date.now();
     if (value === this.lastValue && now - this.lastDetectedAt < this.options.duplicateCooldownMs) return;
     this.lastValue = value;
     this.lastDetectedAt = now;
-    this.options.onDetect({ rawValue: value, format: result.format });
+    this.options.onDetect({ rawValue: value, format: normalizeFormat(format) });
   }
 
   private async startNative(video: HTMLVideoElement) {
     const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorLike }).BarcodeDetector;
     const detector = new Detector({ formats: [...SUPPORTED_FORMATS] });
-
     const scan = async () => {
       if (this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
       this.scanInFlight = true;
       try {
         const results = await detector.detect(video);
-        for (const result of results) {
-          this.emit({ rawValue: result.rawValue, format: result.format });
-          break;
-        }
+        if (results[0]) this.emit(results[0].rawValue, results[0].format);
       } catch (error) {
         if (!this.stopped) this.options.onError?.(error);
-      } finally {
-        this.scanInFlight = false;
-      }
+      } finally { this.scanInFlight = false; }
     };
-
     this.timer = window.setInterval(scan, this.options.scanIntervalMs);
     await scan();
   }
@@ -125,59 +96,34 @@ export class LiveScanner {
   private async startZXing(video: HTMLVideoElement) {
     const { BrowserMultiFormatReader } = await import('@zxing/browser');
     if (this.stopped) return;
-
-    const reader = new BrowserMultiFormatReader();
+    const reader = new BrowserMultiFormatReader() as unknown as ZXingReader;
     this.fallbackControls = await reader.decodeFromConstraints(
-      {
-        video: {
-          facingMode: { ideal: this.options.facingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      },
+      { video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
       video,
-      (result) => {
-        if (!result || this.stopped) return;
-        this.emit({
-          rawValue: result.getText(),
-          format: result.getBarcodeFormat().toString(),
-        });
-      },
+      (result) => { if (result && !this.stopped) this.emit(result.getText(), result.getBarcodeFormat().toString()); },
     );
-
     this.stream = video.srcObject instanceof MediaStream ? video.srcObject : null;
   }
 
   async start(video: HTMLVideoElement) {
     if (!LiveScanner.hasCameraSupport()) throw new Error('Este dispositivo no permite acceder a la cámara.');
-
     this.stop();
     this.stopped = false;
     this.video = video;
     video.setAttribute('playsinline', 'true');
     video.setAttribute('autoplay', 'true');
     video.muted = true;
-
     try {
       if (LiveScanner.hasNativeBarcodeDetector()) {
-        this.stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: this.options.facingMode },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-          audio: false,
-        });
+        this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
         if (this.stopped) { this.stop(); return; }
         video.srcObject = this.stream;
         await video.play();
         await this.startNative(video);
-        return;
+      } else {
+        await this.startZXing(video);
+        await video.play().catch(() => undefined);
       }
-
-      await this.startZXing(video);
-      await video.play().catch(() => undefined);
     } catch (error) {
       this.stop();
       this.options.onError?.(error);
