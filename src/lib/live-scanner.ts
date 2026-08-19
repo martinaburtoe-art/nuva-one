@@ -10,13 +10,16 @@ export type LiveScannerOptions = {
 
 type BarcodeDetectorLike = new (options?: { formats?: string[] }) => { detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string; format?: string }>> };
 type BarcodeDetectorConstructor = BarcodeDetectorLike & { getSupportedFormats?: () => Promise<string[]> };
-type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean };
-type TorchSettings = MediaTrackSettings & { torch?: boolean };
+type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean; zoom?: number; focusMode?: string[] };
+type TorchSettings = MediaTrackSettings & { torch?: boolean; zoom?: number; focusMode?: string };
 type FallbackControls = { stop: () => void };
 type ZXingResult = { getText(): string; getBarcodeFormat(): { toString(): string } };
 type ZXingReader = { decodeFromConstraints: (constraints: MediaStreamConstraints, preview: HTMLVideoElement, callback: (result: ZXingResult | undefined, error?: unknown) => void) => Promise<FallbackControls> };
 
-const SUPPORTED_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code'] as const;
+const SUPPORTED_FORMATS = [
+  'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code',
+  'data_matrix', 'aztec', 'pdf417',
+] as const;
 const isBrowser = () => typeof window !== 'undefined' && typeof navigator !== 'undefined';
 
 function normalizeFormat(format?: string) {
@@ -27,6 +30,8 @@ function normalizeFormat(format?: string) {
     upca: 'upc_a', upc_a: 'upc_a', upce: 'upc_e', upc_e: 'upc_e',
     code128: 'code_128', code_128: 'code_128', code39: 'code_39', code_39: 'code_39',
     itf: 'itf', qr: 'qr_code', qr_code: 'qr_code', qrcode: 'qr_code',
+    datamatrix: 'data_matrix', data_matrix: 'data_matrix',
+    aztec: 'aztec', pdf417: 'pdf417',
   };
   return aliases[value] ?? value;
 }
