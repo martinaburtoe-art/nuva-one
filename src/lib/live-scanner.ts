@@ -86,7 +86,7 @@ export class LiveScanner {
     }
     if (!formats.length) throw Object.assign(new Error('No hay formatos nativos compatibles.'), { name: 'NotSupportedError' });
 
-    let detector: InstanceType<BarcodeDetectorConstructor>;
+    let detector: ReturnType<BarcodeDetectorLike>;
     try {
       detector = new Detector({ formats });
     } catch (error) {
