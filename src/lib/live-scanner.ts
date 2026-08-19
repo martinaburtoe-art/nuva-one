@@ -9,6 +9,7 @@ export type LiveScannerOptions = {
 };
 
 type BarcodeDetectorLike = new (options?: { formats?: string[] }) => { detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string; format?: string }>> };
+type BarcodeDetectorConstructor = BarcodeDetectorLike & { getSupportedFormats?: () => Promise<string[]> };
 type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean };
 type TorchSettings = MediaTrackSettings & { torch?: boolean };
 type FallbackControls = { stop: () => void };
@@ -30,7 +31,7 @@ function normalizeFormat(format?: string) {
   return aliases[value] ?? value;
 }
 
-/** Camera-first scanner. Primary engine is BarcodeDetector; ZXing is the live-video fallback. */
+/** Camera-first scanner. Native BarcodeDetector is preferred; ZXing is the live-video fallback. */
 export class LiveScanner {
   private stream: MediaStream | null = null;
   private timer: number | null = null;
@@ -77,8 +78,15 @@ export class LiveScanner {
   }
 
   private async startNative(video: HTMLVideoElement) {
-    const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorLike }).BarcodeDetector;
-    const detector = new Detector({ formats: [...SUPPORTED_FORMATS] });
+    const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorConstructor }).BarcodeDetector;
+    let formats = [...SUPPORTED_FORMATS] as string[];
+    if (typeof Detector.getSupportedFormats === 'function') {
+      const supported = await Detector.getSupportedFormats();
+      formats = formats.filter((format) => supported.includes(format));
+    }
+    if (!formats.length) throw Object.assign(new Error('No hay formatos nativos compatibles.'), { name: 'NotSupportedError' });
+
+    const detector = new Detector({ formats });
     const scan = async () => {
       if (this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
       this.scanInFlight = true;
@@ -119,11 +127,23 @@ export class LiveScanner {
         if (this.stopped) { this.stop(); return; }
         video.srcObject = this.stream;
         await video.play();
-        await this.startNative(video);
-      } else {
-        await this.startZXing(video);
-        await video.play().catch(() => undefined);
+        try {
+          await this.startNative(video);
+          return;
+        } catch (nativeError) {
+          const fallbackAllowed = nativeError instanceof DOMException && ['NotSupportedError', 'TypeMismatchError', 'InvalidStateError'].includes(nativeError.name);
+          if (!fallbackAllowed) throw nativeError;
+          this.stop();
+          this.stopped = false;
+          this.video = video;
+          await this.startZXing(video);
+          await video.play().catch(() => undefined);
+          return;
+        }
       }
+
+      await this.startZXing(video);
+      await video.play().catch(() => undefined);
     } catch (error) {
       this.stop();
       this.options.onError?.(error);
