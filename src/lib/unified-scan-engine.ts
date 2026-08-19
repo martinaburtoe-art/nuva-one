@@ -1,23 +1,13 @@
 import { LiveScanner, type LiveScanResult, type LiveScannerOptions } from '@/lib/live-scanner';
 
 export type ScanInput = 'camera' | 'hid' | 'native';
-
-export type UnifiedScanResult = LiveScanResult & {
-  input: ScanInput;
-  timestamp: number;
-};
-
-export type UnifiedScanEngineOptions = Omit<LiveScannerOptions, 'onDetect'> & {
-  onDetect: (result: UnifiedScanResult) => void;
-  hidEnabled?: boolean;
-};
+export type UnifiedScanResult = LiveScanResult & { input: ScanInput; timestamp: number };
+export type UnifiedScanEngineOptions = Omit<LiveScannerOptions, 'onDetect'> & { onDetect: (result: UnifiedScanResult) => void; hidEnabled?: boolean };
 
 const HID_TERMINATORS = new Set(['Enter', 'Tab']);
+const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 
-/**
- * Unified input layer. Camera, native and keyboard/HID readers all emit the same
- * normalized scan event; product resolution remains the responsibility of the caller.
- */
+/** Unified scan input: camera, native bridge and keyboard-emulating HID readers. */
 export class UnifiedScanEngine {
   private readonly scanner: LiveScanner;
   private readonly options: UnifiedScanEngineOptions;
@@ -27,11 +17,8 @@ export class UnifiedScanEngine {
   private stopped = true;
 
   constructor(options: UnifiedScanEngineOptions) {
-    this.options = { hidEnabled: true, ...options };
-    this.scanner = new LiveScanner({
-      ...options,
-      onDetect: (result) => this.emit(result, 'camera'),
-    });
+    this.options = { hidEnabled: false, ...options };
+    this.scanner = new LiveScanner({ ...options, onDetect: (result) => this.emit(result, 'camera') });
   }
 
   private emit(result: LiveScanResult, input: ScanInput) {
@@ -42,6 +29,8 @@ export class UnifiedScanEngine {
 
   private handleKeydown = (event: KeyboardEvent) => {
     if (!this.options.hidEnabled || this.stopped) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.matches(EDITABLE_SELECTOR)) return;
     const now = Date.now();
     if (this.hidStartedAt && now - this.hidStartedAt > 120) {
       this.hidBuffer = '';
@@ -69,9 +58,7 @@ export class UnifiedScanEngine {
   }
 
   stopHid() {
-    if (typeof window !== 'undefined' && this.hidListener) {
-      window.removeEventListener('keydown', this.hidListener, { capture: true });
-    }
+    if (typeof window !== 'undefined' && this.hidListener) window.removeEventListener('keydown', this.hidListener, { capture: true });
     this.hidListener = null;
     this.hidBuffer = '';
     this.hidStartedAt = 0;
@@ -84,8 +71,7 @@ export class UnifiedScanEngine {
   }
 
   emitNative(rawValue: string, format?: string) {
-    if (this.stopped) return;
-    this.emit({ rawValue, format }, 'native');
+    if (!this.stopped) this.emit({ rawValue, format }, 'native');
   }
 
   getStream() { return this.scanner.getStream(); }
