@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Barcode, CheckCircle2, Plus, ScanBarcode, Search, Sparkles, Tag, X } from "lucide-react";
+import { Barcode, CheckCircle2, Plus, ScanBarcode, Search, Sparkles, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,19 +40,14 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
     if (!businessId) return;
     setLoadingCodes(true);
     try {
-      const { data, error } = await (supabase as any)
-        .from("product_codes")
+      const { data, error } = await (supabase as any).from("product_codes")
         .select("id,product_id,code,code_type,is_primary,is_active,created_at")
-        .eq("business_id", businessId)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+        .eq("business_id", businessId).eq("is_active", true).order("created_at", { ascending: false });
       if (error) throw error;
       setCodes((data ?? []) as ProductCode[]);
     } catch (error: any) {
       toast.error(error?.message ?? "No se pudieron cargar los códigos.");
-    } finally {
-      setLoadingCodes(false);
-    }
+    } finally { setLoadingCodes(false); }
   }, [businessId]);
 
   useEffect(() => { void loadCodes(); }, [loadCodes]);
@@ -87,16 +82,26 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
     if (!normalizedCode) return toast.error("Ingresa o escanea un código.");
     setLoading(true);
     try {
-      const { data: duplicate, error: duplicateError } = await (supabase as any)
-        .from("product_codes").select("id,product_id").eq("business_id", businessId).ilike("code", normalizedCode).maybeSingle();
-      if (duplicateError && duplicateError.code !== "PGRST116") throw duplicateError;
+      const { data: duplicate, error: duplicateError } = await (supabase as any).from("product_codes")
+        .select("id,product_id").eq("business_id", businessId).eq("code", normalizedCode).maybeSingle();
+      if (duplicateError) throw duplicateError;
       if (duplicate) return toast.error("Este código ya está registrado en este negocio.");
+
       const product = productById.get(productId);
       if (sku.trim() && sku.trim() !== product?.sku) {
         const { error: skuError } = await (supabase as any).from("products").update({ sku: sku.trim() }).eq("id", productId).eq("business_id", businessId);
         if (skuError) throw skuError;
       }
-      const { error } = await (supabase as any).from("product_codes").insert({ business_id: businessId, product_id: productId, code: normalizedCode, code_type: codeType, is_primary: codes.every((c) => c.product_id !== productId), created_by: (await supabase.auth.getUser()).data.user?.id ?? null });
+
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      const { error } = await (supabase as any).from("product_codes").insert({
+        business_id: businessId,
+        product_id: productId,
+        code: normalizedCode,
+        code_type: codeType,
+        is_primary: codes.every((c) => c.product_id !== productId),
+        created_by: userId,
+      });
       if (error) throw error;
       toast.success("Código asociado correctamente.");
       await loadCodes();
@@ -106,16 +111,33 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
   }
 
   async function deactivate(id: string) {
-    if (!canWrite) return;
+    if (!canWrite || !businessId) return;
     const { error } = await (supabase as any).from("product_codes").update({ is_active: false }).eq("id", id).eq("business_id", businessId);
     if (error) toast.error(error.message); else { toast.success("Código desactivado."); await loadCodes(); }
   }
 
-  function onDetected(result: { rawValue: string; format?: string }) {
-    setCode(normalize(result.rawValue));
+  async function onDetected(result: { rawValue: string; format?: string }) {
+    const normalized = normalize(result.rawValue);
+    setCode(normalized);
     if (result.format && CODE_TYPES.includes(result.format)) setCodeType(result.format);
     setScanOpen(false);
-    toast.success(`Código detectado: ${result.rawValue}`);
+
+    if (businessId) {
+      const { data } = await (supabase as any).from("product_codes")
+        .select("id,product_id,code,code_type,is_primary,is_active,created_at")
+        .eq("business_id", businessId).eq("code", normalized).eq("is_active", true).maybeSingle();
+      if (data?.product_id) {
+        setProductId(data.product_id);
+        const existingProduct = productById.get(data.product_id);
+        setSku(existingProduct?.sku ?? "");
+        toast.success(`Código ya registrado · ${existingProduct?.name ?? "Producto"}`);
+        setOpen(true);
+        return;
+      }
+    }
+
+    toast.success(`Código disponible: ${normalized}`);
+    setOpen(true);
   }
 
   return (
@@ -128,15 +150,12 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Administra SKU internos y códigos EAN/UPC/QR sin confundirlos. El mismo lector en vivo puede usarse en Caja e Inventario.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => { setCode(""); setScanOpen(true); }} disabled={!canWrite}><ScanBarcode className="mr-2 h-4 w-4" />Escanear código</Button>
+            <Button variant="outline" onClick={() => setScanOpen(true)} disabled={!canWrite}><ScanBarcode className="mr-2 h-4 w-4" />Escanear código</Button>
             <Button onClick={() => setOpen(true)} disabled={!canWrite}><Plus className="mr-2 h-4 w-4" />Nuevo código / SKU</Button>
           </div>
         </div>
 
-        <div className="mt-5 flex items-center gap-2">
-          <div className="relative flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por código, SKU o producto…" className="pl-9" /></div>
-          <Badge variant="secondary">{filtered.length} códigos</Badge>
-        </div>
+        <div className="mt-5 flex items-center gap-2"><div className="relative flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por código, SKU o producto…" className="pl-9" /></div><Badge variant="secondary">{filtered.length} códigos</Badge></div>
 
         <div className="mt-4 overflow-x-auto rounded-xl border">
           {loadingCodes ? <div className="p-6 text-sm text-muted-foreground">Cargando códigos…</div> : !filtered.length ? <div className="p-8 text-center text-sm text-muted-foreground"><Tag className="mx-auto mb-2 h-7 w-7" />Aún no hay códigos externos registrados. Puedes escanear uno en vivo y asociarlo a un producto.</div> : (
@@ -147,7 +166,7 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
         </div>
       </div>
 
-      <Dialog open={scanOpen} onOpenChange={setScanOpen}><DialogContent className="max-w-2xl overflow-hidden p-0"><DialogHeader className="px-5 pt-5"><DialogTitle>Escáner en vivo</DialogTitle></DialogHeader><div className="p-5 pt-2"><LiveScannerView onDetected={onDetected} onClose={() => setScanOpen(false)} /></div></DialogContent></Dialog>
+      {scanOpen && <LiveScannerView open={scanOpen} title="Escanear código" onDetect={(result) => void onDetected(result)} onClose={() => setScanOpen(false)} onError={(error) => { console.error("Live scanner error", error); }} />}
 
       <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Nuevo código / SKU</DialogTitle></DialogHeader><div className="space-y-4">
         <div><Label>Producto</Label><Select value={productId} onValueChange={setProductId}><SelectTrigger><SelectValue placeholder="Selecciona un producto" /></SelectTrigger><SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name ?? "Producto"}{p.sku ? ` · ${p.sku}` : ""}</SelectItem>)}</SelectContent></Select></div>
