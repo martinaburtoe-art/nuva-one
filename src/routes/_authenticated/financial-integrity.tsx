@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, FileCheck2, LockKeyhole, ReceiptText, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +53,7 @@ function FinancialIntegrity() {
   </ModuleGuard>;
 }
 
-function Metric({ title, value, bad, icon }: { title: string; value: string | number; bad: boolean; icon: React.ReactNode }) {
+function Metric({ title, value, bad, icon }: { title: string; value: string | number; bad: boolean; icon: ReactNode }) {
   return <Card className="p-4"><div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">{title}</span><span className={bad ? "text-destructive" : "text-primary"}>{icon}</span></div><div className="mt-2 text-2xl font-bold">{value}</div><div className="mt-1 text-xs text-muted-foreground">{bad ? "Requiere atención" : "Sin excepción detectada"}</div></Card>;
 }
 
