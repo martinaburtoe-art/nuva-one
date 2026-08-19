@@ -1,0 +1,79 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { PageHeader, EmptyState } from "@/components/page-utils";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { ModuleGuard } from "@/components/module-guard";
+import { useBizList, fmtCLP } from "@/lib/biz-data";
+import { useActiveBusiness } from "@/lib/use-business";
+import { Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, BookOpenCheck, Receipt, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/finance-professional")({
+  head: () => ({ meta: [{ title: "Centro Financiero Profesional — Nüva One" }] }),
+  component: FinanceProfessional,
+});
+
+type Tab = "results" | "cash" | "tax" | "audit";
+
+function FinanceProfessional() {
+  const { active } = useActiveBusiness();
+  const [tab, setTab] = useState<Tab>("results");
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const { data: pnl = [] } = useBizList<any>("v_financial_pnl_monthly", { order: "month", ascending: false });
+  const { data: cash = [] } = useBizList<any>("v_financial_cash_flow_daily", { order: "flow_date", ascending: false });
+  const { data: tax = [] } = useBizList<any>("v_financial_tax_control", { order: "period_year", ascending: false });
+  const { data: close = [] } = useBizList<any>("v_financial_close_health");
+  const { data: reconciliation = [] } = useBizList<any>("v_financial_source_reconciliation");
+  const { data: journals = [] } = useBizList<any>("accounting_journals", { order: "entry_date", ascending: false });
+
+  const selectedPnl = useMemo(() => pnl.filter((r: any) => {
+    const d = new Date(r.month);
+    return d.getFullYear() === year && d.getMonth() + 1 === month;
+  })[0], [pnl, year, month]);
+  const cashSummary = useMemo(() => {
+    const rows = cash.slice(0, 365);
+    return rows.reduce((a: any, r: any) => ({ inflow: a.inflow + Number(r.cash_in || 0), outflow: a.outflow + Number(r.cash_out || 0), net: a.net + Number(r.net_cash || 0) }), { inflow: 0, outflow: 0, net: 0 });
+  }, [cash]);
+  const selectedTax = tax.find((r: any) => Number(r.period_year) === year && Number(r.period_month) === month);
+  const closeHealth = close[0];
+  const openReconciliation = reconciliation.filter((r: any) => r.status !== "reconciled" && r.status !== "posted").length;
+
+  return <ModuleGuard module="finance"><div className="space-y-5">
+    <PageHeader title="Centro Financiero Profesional" description="Reporting financiero centralizado, tesorería, impuestos y controles de cierre.">
+      <div className="flex gap-2"><Input className="w-24" type="number" value={year} onChange={e => setYear(Number(e.target.value))} /><select value={month} onChange={e => setMonth(Number(e.target.value))} className="rounded-md border bg-background px-3 py-2 text-sm">{Array.from({length:12},(_,i)=><option key={i} value={i+1}>{new Date(2020,i,1).toLocaleDateString("es-CL",{month:"long"})}</option>)}</select></div>
+    </PageHeader>
+    <div className="grid gap-3 md:grid-cols-4">
+      <Metric icon={<TrendingUp/>} label="Resultado del período" value={fmtCLP(Number(selectedPnl?.net_result || 0))} tone={Number(selectedPnl?.net_result || 0)>=0?"good":"bad"}/>
+      <Metric icon={<Wallet/>} label="Caja neta registrada" value={fmtCLP(cashSummary.net)} tone={cashSummary.net>=0?"good":"bad"}/>
+      <Metric icon={<Receipt/>} label="IVA/F29" value={fmtCLP(Number(selectedTax?.total_to_pay || 0))} tone="neutral"/>
+      <Metric icon={<ShieldCheck/>} label="Conciliaciones abiertas" value={String(openReconciliation)} tone={openReconciliation?"bad":"good"}/>
+    </div>
+    <div className="flex gap-2 overflow-x-auto border-b pb-2">{([['results','Estado de Resultados',TrendingUp],['cash','Flujo de Caja',Wallet],['tax','IVA · F29 · PPM',Receipt],['audit','Cierre · Auditoría',ShieldCheck]] as const).map(([k,label,I])=><button key={k} onClick={()=>setTab(k)} className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${tab===k?'bg-primary text-primary-foreground':'bg-muted text-muted-foreground'}`}><I className="h-4 w-4"/>{label}</button>)}</div>
+    {tab==='results' && <Results rows={pnl} selected={selectedPnl} year={year}/>} 
+    {tab==='cash' && <Cash rows={cash} summary={cashSummary}/>} 
+    {tab==='tax' && <Tax row={selectedTax} tax={tax}/>} 
+    {tab==='audit' && <Audit close={closeHealth} reconciliation={openReconciliation} journals={journals}/>} 
+  </div></ModuleGuard>;
+}
+
+function Results({rows,selected,year}:{rows:any[];selected:any;year:number}) {
+  return <div className="space-y-4"><Card className="p-5"><div className="flex items-center gap-3"><TrendingUp className="h-5 w-5 text-primary"/><div><h2 className="font-semibold">Estado de Resultados</h2><p className="text-sm text-muted-foreground">Fuente única: asientos contables publicados.</p></div></div><div className="mt-5 space-y-2"><Line label="Ingresos" value={selected?.revenue}/><Line label="Costo de ventas" value={selected?.cost_of_sales} negative/><Line label="Utilidad bruta" value={Number(selected?.revenue||0)-Number(selected?.cost_of_sales||0)} strong/><Line label="Gastos operacionales" value={selected?.operating_expenses} negative/><Line label="Otros ingresos" value={selected?.other_income}/><Line label="Otros gastos" value={selected?.other_expenses} negative/><div className="border-t pt-3"><Line label="Resultado neto" value={selected?.net_result} strong/></div></div></Card><Card className="p-5"><h2 className="font-semibold">Serie mensual {year}</h2><div className="mt-4 grid gap-2 md:grid-cols-3">{rows.filter(r=>new Date(r.month).getFullYear()===year).slice(0,12).map((r:any)=><div key={r.month} className="rounded-lg border p-3"><div className="text-xs text-muted-foreground">{new Date(r.month).toLocaleDateString('es-CL',{month:'long'})}</div><div className="mt-1 font-semibold">{fmtCLP(Number(r.net_result||0))}</div><div className="text-xs text-muted-foreground">Margen: {Number(r.revenue||0)?((Number(r.net_result||0)/Number(r.revenue||1))*100).toFixed(1):'0.0'}%</div></div>)}</div></Card></div>;
+}
+
+function Cash({rows,summary}:{rows:any[];summary:any}) {
+  return <div className="space-y-4"><div className="grid gap-4 md:grid-cols-3"><Metric icon={<ArrowUpRight/>} label="Entradas" value={fmtCLP(summary.inflow)} tone="good"/><Metric icon={<ArrowDownRight/>} label="Salidas" value={fmtCLP(summary.outflow)} tone="bad"/><Metric icon={<Wallet/>} label="Neto" value={fmtCLP(summary.net)} tone={summary.net>=0?'good':'bad'}/></div><Card className="p-5"><h2 className="font-semibold">Flujo de Caja histórico</h2><p className="text-sm text-muted-foreground">Incluye movimientos manuales, ventas cobradas, cobranzas y pagos de compras.</p><div className="mt-4 space-y-2">{rows.slice(0,30).map((r:any)=><div key={r.flow_date} className="grid grid-cols-4 gap-2 rounded-lg border p-3 text-sm"><span>{new Date(r.flow_date).toLocaleDateString('es-CL')}</span><span className="text-right">+{fmtCLP(Number(r.cash_in||0))}</span><span className="text-right">−{fmtCLP(Number(r.cash_out||0))}</span><strong className="text-right">{fmtCLP(Number(r.net_cash||0))}</strong></div>)}{!rows.length&&<EmptyState title="Sin flujo registrado" description="Los eventos de caja aparecerán al registrar ventas, cobranzas, compras y movimientos."/>}</div></Card></div>;
+}
+
+function Tax({row,tax}:{row:any;tax:any[]}) {
+  return <div className="space-y-4"><Card className="p-5"><div className="flex items-center gap-3"><Receipt className="h-5 w-5 text-primary"/><div><h2 className="font-semibold">Papel de trabajo F29</h2><p className="text-sm text-muted-foreground">Cálculo interno; la presentación oficial ante SII requiere evidencia externa.</p></div></div>{row?<div className="mt-5 grid gap-3 md:grid-cols-4"><Metric icon={<Activity/>} label="IVA débito" value={fmtCLP(Number(row.debit_iva||0))} tone="neutral"/><Metric icon={<Activity/>} label="IVA crédito" value={fmtCLP(Number(row.credit_iva||0))} tone="neutral"/><Metric icon={<Activity/>} label="IVA a pagar" value={fmtCLP(Number(row.iva_to_pay||0))} tone={Number(row.iva_to_pay||0)>0?'bad':'good'}/><Metric icon={<Activity/>} label="PPM" value={fmtCLP(Number(row.ppm_amount||0))} tone="neutral"/></div>:<EmptyState title="Sin F29 para este período" description="Prepara el período desde Finanzas para generar el papel de trabajo."/>}</Card><Card className="p-5"><h2 className="font-semibold">Control de períodos</h2><div className="mt-4 space-y-2">{tax.slice(0,24).map((r:any)=><div key={r.tax_period_id} className="flex items-center justify-between rounded-lg border p-3 text-sm"><span>{r.period_year}-{String(r.period_month).padStart(2,'0')}</span><Badge variant="outline">{r.control_status || r.period_status}</Badge><strong>{fmtCLP(Number(r.total_to_pay||0))}</strong></div>)}</div></Card></div>;
+}
+
+function Audit({close,reconciliation,journals}:{close:any;reconciliation:number;journals:any[]}) {
+  const readiness=close?.close_readiness || 'unknown';
+  return <div className="grid gap-4 lg:grid-cols-2"><Card className="p-5"><div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-primary"/><div><h2 className="font-semibold">Preparación de cierre</h2><p className="text-sm text-muted-foreground">Los controles críticos deben resolverse antes del cierre.</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><Metric icon={<ShieldCheck/>} label="Estado" value={readiness} tone={readiness==='ready'?'good':'bad'}/><Metric icon={<AlertTriangle/>} label="Bloqueantes" value={String(close?.blocking_controls ?? 0)} tone={Number(close?.blocking_controls||0)?'bad':'good'}/><Metric icon={<Activity/>} label="Abiertos" value={String(close?.open_controls ?? 0)} tone={Number(close?.open_controls||0)?'bad':'neutral'}/><Metric icon={<BookOpenCheck/>} label="Pasados" value={String(close?.passed_controls ?? 0)} tone="good"/></div></Card><Card className="p-5"><h2 className="font-semibold">Trazabilidad y excepciones</h2><div className="mt-4 space-y-3"><div className="rounded-lg border p-3 text-sm"><strong>{reconciliation}</strong><span className="ml-2 text-muted-foreground">fuentes pendientes de reconciliación</span></div><div className="rounded-lg border p-3 text-sm"><strong>{journals.length}</strong><span className="ml-2 text-muted-foreground">asientos recientes visibles</span></div><p className="text-xs text-muted-foreground">La trazabilidad definitiva se conserva en el diario, origen de cada asiento, controles de cierre y auditoría.</p></div></Card></div>;
+}
+
+function Metric({icon,label,value,tone}:{icon:React.ReactNode;label:string;value:string;tone:'good'|'bad'|'neutral'}) { return <Card className="p-4"><div className="flex items-center gap-2 text-muted-foreground">{icon}<span className="text-xs font-medium uppercase tracking-wide">{label}</span></div><div className={`mt-2 text-lg font-bold ${tone==='good'?'text-success':tone==='bad'?'text-destructive':''}`}>{value}</div></Card>; }
+function Line({label,value,negative=false,strong=false}:{label:string;value:any;negative?:boolean;strong?:boolean}) { const n=Number(value||0); return <div className={`flex justify-between gap-4 ${strong?'font-semibold':''}`}><span>{label}</span><span className={negative?'text-destructive':''}>{negative&&n>0?'−':''}{fmtCLP(Math.abs(n))}</span></div>; }
