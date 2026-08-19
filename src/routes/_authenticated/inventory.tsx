@@ -16,6 +16,7 @@ import { downloadCsv } from "@/lib/export";
 import { canWriteOperations, useActiveBusinessId, useMyRole } from "@/lib/use-business";
 import { toast } from "sonner";
 import { NuvaInventoryIntelligence } from "@/components/nuva-inventory-intelligence";
+import { InventoryActionCenter } from "@/components/inventory-action-center";
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({ meta: [{ title: "Inventario — Nüva One" }] }),
@@ -136,6 +137,7 @@ function Inventory() {
         </div>
 
         <NuvaInventoryIntelligence products={products} />
+        <InventoryActionCenter products={products} canWrite={canWrite} />
 
         <Card>
           <div className="p-6">
