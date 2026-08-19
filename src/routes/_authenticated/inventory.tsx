@@ -30,9 +30,20 @@ function Inventory() {
   function startCreate(){setEditing(null);setOpen(true)} function startEdit(p:Product){setEditing(p);setOpen(true)} function startAdjust(p:Product){setAdjustProduct(p);setAdjustOpen(true)}
   async function saveProduct(event: React.FormEvent<HTMLFormElement>){
     event.preventDefault(); if(!canWrite||!activeBusinessId)return; const form=new FormData(event.currentTarget);
+    const initialStock=Math.max(0,Number(form.get("stock")||0));
     const payload={name:String(form.get("name")||"").trim(),sku:String(form.get("sku")||"").trim()||null,low_stock_threshold:Math.max(0,Number(form.get("low_stock_threshold")||0)),cost:Math.max(0,Number(form.get("cost")||0)),price:Math.max(0,Number(form.get("price")||0)),reorder_point:Math.max(0,Number(form.get("reorder_point")||0)),max_stock:Math.max(0,Number(form.get("max_stock")||0))};
     if(!payload.name)return toast.error("Ingresa el nombre del producto.");
-    try{if(editing){await update.mutateAsync({id:editing.id,...payload});const requestedStock=Number(form.get("stock")||editing.stock||0);const delta=requestedStock-Number(editing.stock||0);if(delta!==0){const {error}=await (supabase as any).rpc("adjust_product_stock",{p_product_id:editing.id,p_delta:delta,p_reason:"Ajuste desde ficha de producto",p_source_type:"product_edit",p_source_id:editing.id});if(error)throw error}}else{await insert.mutateAsync({business_id:activeBusinessId,...payload,stock:Math.max(0,Number(form.get("stock")||0))})}toast.success(editing?"Producto actualizado":"Producto creado");setOpen(false)}catch(error:any){toast.error(error?.message||"No se pudo guardar el producto.")}}
+    try{
+      if(editing){
+        await update.mutateAsync({id:editing.id,...payload});
+        const requestedStock=initialStock; const delta=requestedStock-Number(editing.stock||0);
+        if(delta!==0){const {error}=await (supabase as any).rpc("adjust_product_stock",{p_product_id:editing.id,p_delta:delta,p_reason:"Ajuste desde ficha de producto",p_source_type:"product_edit",p_source_id:editing.id});if(error)throw error}
+      } else {
+        const created=await insert.mutateAsync({business_id:activeBusinessId,...payload,stock:0});
+        if(initialStock>0){const createdProduct=created as {id:string};const {error}=await (supabase as any).rpc("adjust_product_stock",{p_product_id:createdProduct.id,p_delta:initialStock,p_reason:"Stock inicial al crear producto",p_source_type:"product_initial_stock",p_source_id:createdProduct.id});if(error)throw error}
+      }
+      toast.success(editing?"Producto actualizado":"Producto creado");setOpen(false)
+    }catch(error:any){toast.error(error?.message||"No se pudo guardar el producto.")}}
   async function adjustStock(event:React.FormEvent<HTMLFormElement>){event.preventDefault();if(!adjustProduct||!canWrite)return;const form=new FormData(event.currentTarget);const delta=Number(form.get("delta"));const reason=String(form.get("reason")||"").trim();if(!Number.isInteger(delta)||delta===0)return toast.error("El ajuste debe ser un número entero distinto de cero.");if(!reason)return toast.error("Indica el motivo del ajuste.");try{const {error}=await (supabase as any).rpc("adjust_product_stock",{p_product_id:adjustProduct.id,p_delta:delta,p_reason:reason,p_source_type:"manual_adjustment"});if(error)throw error;toast.success("Stock ajustado y trazado correctamente");setAdjustOpen(false)}catch(error:any){toast.error(error?.message||"No se pudo ajustar el stock.")}}
   async function deleteProduct(p:Product){if(!canWrite||!window.confirm(`¿Eliminar ${p.name||"este producto"}?`))return;try{await remove.mutateAsync(p.id);toast.success("Producto eliminado")}catch{toast.error("No se pudo eliminar el producto")}}
   function exportInventory(){downloadCsv("nuva-inventario.csv",products.map(p=>({SKU:p.sku||"",Producto:p.name||"",Stock:Number(p.stock??0),Reservado:Number(p.reserved_stock??0),EnTransito:Number(p.in_transit_stock??0),Bloqueado:Number(p.blocked_stock??0),Minimo:Number(p.low_stock_threshold??0),PuntoReposicion:Number(p.reorder_point??0),Costo:Number(p.cost??0),Precio:Number(p.price??0),ValorCosto:Number(p.stock??0)*Number(p.cost??0)})))}
