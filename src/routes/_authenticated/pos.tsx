@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-utils";
@@ -24,6 +24,8 @@ import {
   Receipt,
   Link2,
   Copy,
+  ScanBarcode,
+  Camera,
 } from "lucide-react";
 import { useBizList, useBizInsert, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
@@ -76,6 +78,11 @@ function POS() {
   const [showReceipt, setShowReceipt] = useState<ReceiptData | null>(null);
   const [onlinePayment, setOnlinePayment] = useState<{ url: string; saleId: string } | null>(null);
   const [creatingLink, setCreatingLink] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerValue, setScannerValue] = useState("");
+  const [cameraBusy, setCameraBusy] = useState(false);
+  const scannerInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const { data: receiptDoc } = useQuery({
     queryKey: ["sale-billing-doc", showReceipt?.saleId],
@@ -93,8 +100,6 @@ function POS() {
     enabled: !!showReceipt?.saleId,
   });
 
-  // Vincular la venta a un cliente por RUT: si existe en el CRM se adjunta
-  // solo; si no existe, se puede registrar sin salir de la caja.
   const [rutInput, setRutInput] = useState("");
   const [matchedCustomer, setMatchedCustomer] = useState<any | null>(null);
   const [newCustomerName, setNewCustomerName] = useState("");
@@ -165,6 +170,7 @@ function POS() {
       (p: any) =>
         p.name?.toLowerCase().includes(q) ||
         p.sku?.toLowerCase?.().includes(q) ||
+        p.barcode?.toLowerCase?.().includes(q) ||
         p.category?.toLowerCase?.().includes(q),
     );
   }, [list, query]);
@@ -189,6 +195,58 @@ function POS() {
         { product_id: p.id, name: p.name, qty: 1, price: Number(p.price), stock: Number(p.stock) },
       ];
     });
+  }
+
+  function scanProductCode(rawValue: string) {
+    const code = rawValue.trim();
+    if (!code) return;
+    const normalized = code.toLowerCase();
+    const product = list.find(
+      (p: any) =>
+        String(p.barcode ?? "").trim().toLowerCase() === normalized ||
+        String(p.sku ?? "").trim().toLowerCase() === normalized,
+    );
+    if (!product) {
+      toast.error(`No existe un producto con el código ${code}`);
+      setQuery(code);
+      return;
+    }
+    addToCart(product);
+    setScannerValue("");
+    setQuery("");
+    toast.success(`${product.name} agregado a la venta`);
+  }
+
+  async function scanCameraImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCameraBusy(true);
+    try {
+      if (!("BarcodeDetector" in window)) {
+        toast.error("Este navegador no tiene BarcodeDetector. Usa Chrome actualizado o la pistola USB/Bluetooth.");
+        return;
+      }
+      const Detector = (window as any).BarcodeDetector;
+      const detector = new Detector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf", "codabar"] });
+      const bitmap = await createImageBitmap(file);
+      const codes = await detector.detect(bitmap);
+      bitmap.close();
+      if (!codes.length) {
+        toast.error("No se detectó un código. Acerca la cámara y vuelve a intentar.");
+        return;
+      }
+      scanProductCode(String(codes[0].rawValue ?? ""));
+    } catch {
+      toast.error("No se pudo leer el código con la cámara.");
+    } finally {
+      setCameraBusy(false);
+      e.target.value = "";
+    }
+  }
+
+  function openScanner() {
+    setScannerOpen(true);
+    window.setTimeout(() => scannerInputRef.current?.focus(), 50);
   }
 
   function updateQty(pid: string, qty: number) {
@@ -230,9 +288,6 @@ function POS() {
       .filter(Boolean)
       .join(" — ");
 
-    // Cobro online: la venta queda "pendiente" hasta que el webhook del
-    // proveedor confirme el pago -- nunca se marca "paid" solo por generar
-    // el link (misma regla que en Finanzas > Cobros online).
     if (method === "online") {
       setCreatingLink(true);
       try {
@@ -241,19 +296,11 @@ function POS() {
           customer_id: matchedCustomer?.id ?? null,
           channel: "tienda",
           status: "pending",
-          // is_credit=true evita que el trigger default_paid_amount marque
-          // la venta como pagada de inmediato: debe quedar en 0 hasta que
-          // el webhook del proveedor confirme el pago real.
           is_credit: true,
           total,
           sale_date: today,
           payment_method: method,
-          items: cart.map((i) => ({
-            product_id: i.product_id,
-            name: i.name,
-            qty: i.qty,
-            price: i.price,
-          })) as any,
+          items: cart.map((i) => ({ product_id: i.product_id, name: i.name, qty: i.qty, price: i.price })) as any,
           notes,
         });
         const { data: sessionData } = await supabase.auth.getSession();
@@ -261,12 +308,7 @@ function POS() {
         const res = await fetch("/api/billing/payments/create", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            business_id: active?.id,
-            sale_id: saved?.id,
-            amount: total,
-            subject: `Venta ${matchedCustomer?.name ?? "mostrador"}`,
-          }),
+          body: JSON.stringify({ business_id: active?.id, sale_id: saved?.id, amount: total, subject: `Venta ${matchedCustomer?.name ?? "mostrador"}` }),
         });
         const json = await res.json();
         if (!json.ok) {
@@ -295,24 +337,10 @@ function POS() {
         total,
         sale_date: today,
         payment_method: method,
-        items: cart.map((i) => ({
-          product_id: i.product_id,
-          name: i.name,
-          qty: i.qty,
-          price: i.price,
-        })) as any,
+        items: cart.map((i) => ({ product_id: i.product_id, name: i.name, qty: i.qty, price: i.price })) as any,
         notes,
       });
-      setShowReceipt({
-        saleId: saved?.id,
-        items: cart,
-        total,
-        method,
-        received,
-        change,
-        at: new Date(),
-        customerName: matchedCustomer?.name,
-      });
+      setShowReceipt({ saleId: saved?.id, items: cart, total, method, received, change, at: new Date(), customerName: matchedCustomer?.name });
       setCart([]);
       setReceived(0);
       setMethod("efectivo");
@@ -346,13 +374,33 @@ function POS() {
           title="Caja"
           description="Punto de venta rápido para mostrador — tap, cobra, imprime"
           action={
-            <div className="rounded-xl border bg-card px-4 py-2 text-right">
-              <div className="text-xs text-muted-foreground">Hoy</div>
-              <div className="text-lg font-bold">{fmtCLP(todayTotal)}</div>
-              <div className="text-[10px] text-muted-foreground">{todaySales.length} venta(s)</div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={openScanner} disabled={!canWrite}>
+                <ScanBarcode className="mr-2 h-4 w-4" /> Escanear
+              </Button>
+              <label className="inline-flex">
+                <input ref={cameraInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={scanCameraImage} />
+                <Button type="button" variant="outline" disabled={!canWrite || cameraBusy} onClick={() => cameraInputRef.current?.click()}>
+                  <Camera className="mr-2 h-4 w-4" /> {cameraBusy ? "Leyendo…" : "Cámara"}
+                </Button>
+              </label>
+              <div className="rounded-xl border bg-card px-4 py-2 text-right">
+                <div className="text-xs text-muted-foreground">Hoy</div>
+                <div className="text-lg font-bold">{fmtCLP(todayTotal)}</div>
+                <div className="text-[10px] text-muted-foreground">{todaySales.length} venta(s)</div>
+              </div>
             </div>
           }
         />
+
+        <Card className="mb-4 border-primary/20 bg-primary/5 p-3">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <ScanBarcode className="h-4 w-4 text-primary" />
+            <span className="font-medium">Escaneo rápido:</span>
+            <span className="text-muted-foreground">pistola USB/Bluetooth HID, código de barras por cámara o búsqueda por SKU.</span>
+            <Button variant="link" className="h-auto p-0" onClick={openScanner}>Abrir lector</Button>
+          </div>
+        </Card>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
           <div className="space-y-4">
@@ -361,7 +409,7 @@ function POS() {
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar por nombre, SKU o categoría…"
+                placeholder="Buscar por nombre, SKU, código de barras o categoría…"
                 className="h-12 pl-10 text-base"
                 autoFocus
               />
@@ -374,11 +422,7 @@ function POS() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                   {favorites.map((p: any) => (
-                    <button
-                      key={p.id}
-                      onClick={() => addToCart(p)}
-                      className="flex flex-col items-start rounded-lg border bg-primary/5 p-3 text-left transition hover:bg-primary/10"
-                    >
+                    <button key={p.id} onClick={() => addToCart(p)} className="flex flex-col items-start rounded-lg border bg-primary/5 p-3 text-left transition hover:bg-primary/10">
                       <span className="text-sm font-medium leading-tight">{p.name}</span>
                       <span className="mt-1 text-sm font-bold">{fmtCLP(Number(p.price))}</span>
                       <span className="text-[10px] text-muted-foreground">Stock: {p.stock}</span>
@@ -390,14 +434,10 @@ function POS() {
 
             {isLoading ? (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="h-28 w-full" />
-                ))}
+                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
               </div>
             ) : filtered.length === 0 ? (
-              <Card className="p-10 text-center text-sm text-muted-foreground">
-                Sin productos que coincidan.
-              </Card>
+              <Card className="p-10 text-center text-sm text-muted-foreground">Sin productos que coincidan.</Card>
             ) : (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 {filtered.map((p: any) => {
@@ -408,56 +448,18 @@ function POS() {
                   const willDeplete = inCart > 0 && remaining <= 0;
                   return (
                     <div key={p.id} className="relative">
-                      <button
-                        onClick={() => addToCart(p)}
-                        disabled={stock <= 0}
-                        className={cn(
-                          "flex h-full w-full flex-col items-start gap-1 rounded-xl border bg-card p-3 text-left transition active:scale-[0.98]",
-                          stock <= 0 ? "opacity-50" : "hover:border-primary hover:shadow-elegant",
-                        )}
-                      >
+                      <button onClick={() => addToCart(p)} disabled={stock <= 0} className={cn("flex h-full w-full flex-col items-start gap-1 rounded-xl border bg-card p-3 text-left transition active:scale-[0.98]", stock <= 0 ? "opacity-50" : "hover:border-primary hover:shadow-elegant")}>
                         <div className="flex w-full items-start justify-between gap-1">
-                          <span className="line-clamp-2 text-sm font-medium leading-tight">
-                            {p.name}
-                          </span>
-                          {(low || willDeplete) && (
-                            <AlertTriangle
-                              className={cn(
-                                "h-3.5 w-3.5 shrink-0",
-                                willDeplete ? "text-destructive" : "text-warning",
-                              )}
-                            />
-                          )}
+                          <span className="line-clamp-2 text-sm font-medium leading-tight">{p.name}</span>
+                          {(low || willDeplete) && <AlertTriangle className={cn("h-3.5 w-3.5 shrink-0", willDeplete ? "text-destructive" : "text-warning")} />}
                         </div>
                         <div className="mt-auto flex w-full items-end justify-between">
                           <span className="text-base font-bold">{fmtCLP(Number(p.price))}</span>
-                          <span
-                            className={cn(
-                              "text-[10px]",
-                              stock <= 0
-                                ? "text-destructive"
-                                : low
-                                  ? "text-warning"
-                                  : "text-muted-foreground",
-                            )}
-                          >
-                            {stock <= 0 ? "Sin stock" : `${remaining} disp.`}
-                          </span>
+                          <span className={cn("text-[10px]", stock <= 0 ? "text-destructive" : low ? "text-warning" : "text-muted-foreground")}>{stock <= 0 ? "Sin stock" : `${remaining} disp.`}</span>
                         </div>
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFav(p.id);
-                        }}
-                        className="absolute right-1 top-1 rounded-md p-1 text-muted-foreground hover:bg-accent"
-                        aria-label="Favorito"
-                      >
-                        {favs.includes(p.id) ? (
-                          <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                        ) : (
-                          <StarOff className="h-3.5 w-3.5" />
-                        )}
+                      <button onClick={(e) => { e.stopPropagation(); toggleFav(p.id); }} className="absolute right-1 top-1 rounded-md p-1 text-muted-foreground hover:bg-accent" aria-label="Favorito">
+                        {favs.includes(p.id) ? <Star className="h-3.5 w-3.5 fill-warning text-warning" /> : <StarOff className="h-3.5 w-3.5" />}
                       </button>
                     </div>
                   );
@@ -467,24 +469,11 @@ function POS() {
 
             {todaySales.length > 0 && (
               <Card className="p-3">
-                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
-                  <Receipt className="h-3.5 w-3.5" /> Últimas ventas de hoy
-                </div>
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><Receipt className="h-3.5 w-3.5" /> Últimas ventas de hoy</div>
                 <div className="max-h-48 space-y-1 overflow-y-auto">
                   {todaySales.slice(0, 8).map((s: any) => (
-                    <button
-                      key={s.id}
-                      onClick={() => reopenReceipt(s)}
-                      className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent/60"
-                    >
-                      <span className="text-muted-foreground">
-                        {new Date(s.created_at).toLocaleTimeString("es-CL", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                        {" · "}
-                        {Array.isArray(s.items) ? s.items.length : 0} ítem(s)
-                      </span>
+                    <button key={s.id} onClick={() => reopenReceipt(s)} className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent/60">
+                      <span className="text-muted-foreground">{new Date(s.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}{" · "}{Array.isArray(s.items) ? s.items.length : 0} ítem(s)</span>
                       <span className="font-semibold">{fmtCLP(Number(s.total))}</span>
                     </button>
                   ))}
@@ -495,378 +484,85 @@ function POS() {
 
           <Card className="sticky top-16 flex h-fit max-h-[calc(100vh-6rem)] flex-col p-4">
             <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 font-semibold">
-                <ShoppingCart className="h-4 w-4" /> Carrito
-                {cart.length > 0 && <Badge variant="secondary">{cart.length}</Badge>}
-              </div>
-              {cart.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => setCart([])}>
-                  Vaciar
-                </Button>
-              )}
+              <div className="flex items-center gap-2 font-semibold"><ShoppingCart className="h-4 w-4" /> Carrito{cart.length > 0 && <Badge variant="secondary">{cart.length}</Badge>}</div>
+              {cart.length > 0 && <Button variant="ghost" size="sm" onClick={() => setCart([])}>Vaciar</Button>}
             </div>
-
             <div className="flex-1 space-y-2 overflow-y-auto">
-              {cart.length === 0 ? (
-                <div className="py-10 text-center text-sm text-muted-foreground">
-                  Toca un producto para agregarlo
-                </div>
-              ) : (
-                cart.map((i) => (
-                  <div key={i.product_id} className="rounded-lg border p-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium">{i.name}</span>
-                      <button
-                        onClick={() => removeFromCart(i.product_id)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-8 w-8"
-                          onClick={() => updateQty(i.product_id, i.qty - 1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={i.stock}
-                          value={i.qty}
-                          onChange={(e) => updateQty(i.product_id, Number(e.target.value))}
-                          className="h-8 w-14 text-center"
-                        />
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-8 w-8"
-                          onClick={() => updateQty(i.product_id, i.qty + 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <span className="text-sm font-semibold">{fmtCLP(i.qty * i.price)}</span>
-                    </div>
-                    {i.qty >= i.stock && (
-                      <div className="mt-1 text-[10px] text-warning">Stock máximo alcanzado</div>
-                    )}
+              {cart.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">Toca un producto o escanéalo para agregarlo</div> : cart.map((i) => (
+                <div key={i.product_id} className="rounded-lg border p-2.5">
+                  <div className="flex items-start justify-between gap-2"><span className="text-sm font-medium">{i.name}</span><button onClick={() => removeFromCart(i.product_id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button></div>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1"><Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQty(i.product_id, i.qty - 1)}><Minus className="h-3 w-3" /></Button><Input type="number" min={1} max={i.stock} value={i.qty} onChange={(e) => updateQty(i.product_id, Number(e.target.value))} className="h-8 w-14 text-center" /><Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQty(i.product_id, i.qty + 1)}><Plus className="h-3 w-3" /></Button></div>
+                    <span className="text-sm font-semibold">{fmtCLP(i.qty * i.price)}</span>
                   </div>
-                ))
-              )}
+                  {i.qty >= i.stock && <div className="mt-1 text-[10px] text-warning">Stock máximo alcanzado</div>}
+                </div>
+              ))}
             </div>
-
             <div className="mt-3 space-y-3 border-t pt-3">
               <div>
                 <Label className="mb-1.5 block text-xs">RUT del cliente (opcional)</Label>
-                {matchedCustomer ? (
-                  <div className="flex items-center justify-between rounded-lg border bg-success/10 px-3 py-2">
-                    <div>
-                      <p className="text-sm font-medium">{matchedCustomer.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatRut(matchedCustomer.tax_id || rutInput)}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={clearCustomer}>
-                      Quitar
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <Input
-                      value={rutInput}
-                      onChange={(e) => setRutInput(formatRut(e.target.value))}
-                      placeholder="12.345.678-9"
-                      className="h-10"
-                      maxLength={12}
-                    />
-                    {rutLooksValid && !foundByRut && (
-                      <div className="mt-2 space-y-2 rounded-lg border border-dashed p-2.5">
-                        <p className="text-xs text-muted-foreground">
-                          No hay un cliente con ese RUT. Regístralo para llevar su historial:
-                        </p>
-                        <div className="flex gap-2">
-                          <Input
-                            value={newCustomerName}
-                            onChange={(e) => setNewCustomerName(e.target.value)}
-                            placeholder="Nombre del cliente"
-                            className="h-9 flex-1"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={registerCustomerFromPos}
-                            disabled={registering}
-                          >
-                            {registering ? "..." : "Registrar"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                {matchedCustomer ? <div className="flex items-center justify-between rounded-lg border bg-success/10 px-3 py-2"><div><p className="text-sm font-medium">{matchedCustomer.name}</p><p className="text-xs text-muted-foreground">{formatRut(matchedCustomer.tax_id || rutInput)}</p></div><Button variant="ghost" size="sm" onClick={clearCustomer}>Quitar</Button></div> : <>
+                  <Input value={rutInput} onChange={(e) => setRutInput(formatRut(e.target.value))} placeholder="12.345.678-9" className="h-10" maxLength={12} />
+                  {rutLooksValid && !foundByRut && <div className="mt-2 space-y-2 rounded-lg border border-dashed p-2.5"><p className="text-xs text-muted-foreground">No hay un cliente con ese RUT. Regístralo para llevar su historial:</p><div className="flex gap-2"><Input value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Nombre del cliente" className="h-9 flex-1" /><Button size="sm" onClick={registerCustomerFromPos} disabled={registering}>{registering ? "..." : "Registrar"}</Button></div></div>}
+                </>}
               </div>
-
-              <div>
-                <Label className="mb-1.5 block text-xs">Método de pago</Label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(["efectivo", "tarjeta", "transferencia", "online"] as PayMethod[]).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => (m !== "online" || hasPaymentGateway) && setMethod(m)}
-                      disabled={m === "online" && !hasPaymentGateway}
-                      title={
-                        m === "online" && !hasPaymentGateway
-                          ? "Conecta Flow o VSB en Finanzas > Cobros online"
-                          : undefined
-                      }
-                      className={cn(
-                        "rounded-lg border px-2 py-2 text-xs font-medium capitalize transition",
-                        method === m
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : m === "online" && !hasPaymentGateway
-                            ? "cursor-not-allowed opacity-40"
-                            : "hover:bg-accent",
-                      )}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {method === "efectivo" && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">Recibido</Label>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      value={received ? fmtCLP(received) : ""}
-                      onChange={(e) => {
-                        const digits = e.target.value.replace(/\D/g, "");
-                        setReceived(digits ? Number(digits) : 0);
-                      }}
-                      placeholder="$0"
-                      className="h-10 text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Vuelto</Label>
-                    <div className="flex h-10 items-center justify-end rounded-md border bg-muted/40 px-3 text-sm font-semibold">
-                      {fmtCLP(change)}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between rounded-lg bg-secondary/50 p-3">
-                <span className="text-sm font-medium">Total</span>
-                <span className="text-2xl font-bold">{fmtCLP(total)}</span>
-              </div>
-
-              <Button
-                className="h-12 w-full text-base shadow-elegant"
-                onClick={checkout}
-                disabled={!canPay || insert.isPending || creatingLink || !canWrite}
-              >
-                {!canWrite
-                  ? "Solo lectura — no puedes cobrar"
-                  : insert.isPending || creatingLink
-                    ? "Procesando…"
-                    : method === "online"
-                      ? `Generar link de pago · ${fmtCLP(total)}`
-                      : `Cobrar ${fmtCLP(total)}`}
-              </Button>
+              <div><Label className="mb-1.5 block text-xs">Método de pago</Label><div className="grid grid-cols-4 gap-1.5">{(["efectivo", "tarjeta", "transferencia", "online"] as PayMethod[]).map((m) => <button key={m} onClick={() => (m !== "online" || hasPaymentGateway) && setMethod(m)} disabled={m === "online" && !hasPaymentGateway} title={m === "online" && !hasPaymentGateway ? "Conecta Flow o VSB en Finanzas > Cobros online" : undefined} className={cn("rounded-lg border px-2 py-2 text-xs font-medium capitalize transition", method === m ? "border-primary bg-primary text-primary-foreground" : m === "online" && !hasPaymentGateway ? "cursor-not-allowed opacity-40" : "hover:bg-accent")}>{m}</button>)}</div></div>
+              {method === "efectivo" && <div className="grid grid-cols-2 gap-2"><div><Label className="text-xs">Recibido</Label><Input type="text" inputMode="numeric" value={received ? fmtCLP(received) : ""} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ""); setReceived(digits ? Number(digits) : 0); }} placeholder="$0" className="h-10 text-right" /></div><div><Label className="text-xs">Vuelto</Label><div className="flex h-10 items-center justify-end rounded-md border bg-muted/40 px-3 text-sm font-semibold">{fmtCLP(change)}</div></div></div>}
+              <div className="flex items-center justify-between rounded-lg bg-secondary/50 p-3"><span className="text-sm font-medium">Total</span><span className="text-2xl font-bold">{fmtCLP(total)}</span></div>
+              <Button className="h-12 w-full text-base shadow-elegant" onClick={checkout} disabled={!canPay || insert.isPending || creatingLink || !canWrite}>{!canWrite ? "Solo lectura — no puedes cobrar" : insert.isPending || creatingLink ? "Procesando…" : method === "online" ? `Generar link de pago · ${fmtCLP(total)}` : `Cobrar ${fmtCLP(total)}`}</Button>
             </div>
           </Card>
         </div>
 
+        <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle className="flex items-center gap-2"><ScanBarcode className="h-5 w-5" /> Lector de códigos</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-muted/40 p-3 text-sm">Conecta una pistola USB o Bluetooth en modo <b>HID / teclado</b>. Haz clic en el campo y escanea: el lector enviará el código y normalmente terminará con Enter.</div>
+              <div><Label>Código de barras / SKU</Label><Input ref={scannerInputRef} autoFocus value={scannerValue} onChange={(e) => setScannerValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); scanProductCode(scannerValue); } }} placeholder="Escanea aquí…" className="h-12 text-lg" /></div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={() => cameraInputRef.current?.click()} disabled={cameraBusy}><Camera className="mr-2 h-4 w-4" /> Cámara</Button>
+                <Button onClick={() => scanProductCode(scannerValue)} disabled={!scannerValue.trim()}>Agregar</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Compatibilidad HID: USB y Bluetooth que funcionen como teclado. No requiere driver especial en Nüva One.</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={!!showReceipt} onOpenChange={(v) => !v && setShowReceipt(null)}>
           <DialogContent className="max-w-sm print:max-w-full print:shadow-none">
-            <DialogHeader>
-              <DialogTitle>
-                {receiptDoc?.folio
-                  ? `Boleta Electrónica N° ${receiptDoc.folio}`
-                  : "Comprobante de venta"}
-              </DialogTitle>
-            </DialogHeader>
-            {showReceipt &&
-              (() => {
-                const neto = Math.round(showReceipt.total / 1.19);
-                const iva = showReceipt.total - neto;
-                return (
-                  <div className="space-y-3 font-mono text-sm">
-                    <div className="space-y-0.5 text-center">
-                      {active?.logo_url && (
-                        <img
-                          src={active.logo_url}
-                          alt=""
-                          className="mx-auto mb-1 h-10 w-10 rounded object-contain"
-                        />
-                      )}
-                      <div className="text-base font-bold uppercase tracking-wide">
-                        {active?.name}
-                      </div>
-                      {active?.giro && (
-                        <div className="text-[11px] text-muted-foreground">{active.giro}</div>
-                      )}
-                      {active?.tax_id && (
-                        <div className="text-[11px]">RUT: {formatRut(active.tax_id)}</div>
-                      )}
-                      {(active?.address || active?.comuna) && (
-                        <div className="text-[11px] text-muted-foreground">
-                          {[active?.address, active?.comuna].filter(Boolean).join(", ")}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="border-t-2 border-dashed" />
-
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-semibold">
-                        {receiptDoc?.folio
-                          ? `BOLETA ELECTRÓNICA N° ${receiptDoc.folio}`
-                          : "COMPROBANTE DE VENTA"}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {showReceipt.at.toLocaleString("es-CL")}
-                      </span>
-                    </div>
-                    {showReceipt.customerName && (
-                      <div className="text-[11px] text-muted-foreground">
-                        Cliente: {showReceipt.customerName}
-                      </div>
-                    )}
-
-                    <div className="border-t border-dashed" />
-
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-[10px] uppercase text-muted-foreground">
-                        <span>Detalle</span>
-                        <span>Importe</span>
-                      </div>
-                      {showReceipt.items.map((i: CartItem) => (
-                        <div key={i.product_id} className="flex justify-between gap-2">
-                          <span className="flex-1">
-                            {i.name}
-                            <span className="block text-[11px] text-muted-foreground">
-                              {i.qty} × {fmtCLP(i.price)}
-                            </span>
-                          </span>
-                          <span className="font-medium">{fmtCLP(i.qty * i.price)}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t border-dashed" />
-
-                    <div className="space-y-0.5 text-[11px] text-muted-foreground">
-                      <div className="flex justify-between">
-                        <span>Subtotal neto</span>
-                        <span>{fmtCLP(neto)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>IVA (19%)</span>
-                        <span>{fmtCLP(iva)}</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between border-t pt-1.5 text-base font-bold">
-                      <span>TOTAL</span>
-                      <span>{fmtCLP(showReceipt.total)}</span>
-                    </div>
-
-                    <div className="text-[11px] text-muted-foreground capitalize">
-                      Forma de pago: {showReceipt.method}
-                    </div>
-                    {showReceipt.method === "efectivo" && showReceipt.received != null && (
-                      <>
-                        <div className="flex justify-between text-[11px]">
-                          <span>Recibido</span>
-                          <span>{fmtCLP(showReceipt.received)}</span>
-                        </div>
-                        <div className="flex justify-between text-[11px]">
-                          <span>Vuelto</span>
-                          <span>{fmtCLP(showReceipt.change ?? 0)}</span>
-                        </div>
-                      </>
-                    )}
-
-                    <div className="border-t border-dashed" />
-
-                    {receiptDoc?.folio ? (
-                      <p className="text-center text-[10px] text-muted-foreground">
-                        Documento tributario registrado ante el SII.
-                      </p>
-                    ) : (
-                      <div className="rounded-md bg-warning/10 p-2 text-center text-[10px] text-warning print:hidden">
-                        Aún no es una Boleta Electrónica ante el SII.{" "}
-                        <button
-                          className="font-semibold underline"
-                          onClick={() => {
-                            setShowReceipt(null);
-                            navigate({ to: "/billing" });
-                          }}
-                        >
-                          Regístrala en Facturación SII →
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="pt-1 text-center text-[10px] text-muted-foreground">
-                      ¡Gracias por su compra!
-                    </div>
-                  </div>
-                );
-              })()}
-            <div className="flex gap-2 print:hidden">
-              <Button variant="outline" className="flex-1" onClick={() => setShowReceipt(null)}>
-                Cerrar
-              </Button>
-              <Button className="flex-1" onClick={() => window.print()}>
-                <Printer className="mr-1.5 h-4 w-4" /> Imprimir
-              </Button>
-            </div>
+            <DialogHeader><DialogTitle>{receiptDoc?.folio ? `Boleta Electrónica N° ${receiptDoc.folio}` : "Comprobante de venta"}</DialogTitle></DialogHeader>
+            {showReceipt && (() => {
+              const neto = Math.round(showReceipt.total / 1.19);
+              const iva = showReceipt.total - neto;
+              return <div className="space-y-3 font-mono text-sm">
+                <div className="space-y-0.5 text-center">{active?.logo_url && <img src={active.logo_url} alt="" className="mx-auto mb-1 h-10 w-10 rounded object-contain" />}<div className="text-base font-bold uppercase tracking-wide">{active?.name}</div>{active?.giro && <div className="text-[11px] text-muted-foreground">{active.giro}</div>}{active?.tax_id && <div className="text-[11px]">RUT: {formatRut(active.tax_id)}</div>}{(active?.address || active?.comuna) && <div className="text-[11px] text-muted-foreground">{[active?.address, active?.comuna].filter(Boolean).join(", ")}</div>}</div>
+                <div className="border-t-2 border-dashed" />
+                <div className="flex items-center justify-between text-[11px]"><span className="font-semibold">{receiptDoc?.folio ? `BOLETA ELECTRÓNICA N° ${receiptDoc.folio}` : "COMPROBANTE DE VENTA"}</span><span className="text-muted-foreground">{showReceipt.at.toLocaleString("es-CL")}</span></div>
+                {showReceipt.customerName && <div className="text-[11px] text-muted-foreground">Cliente: {showReceipt.customerName}</div>}
+                <div className="border-t border-dashed" />
+                <div className="space-y-1.5"><div className="flex justify-between text-[10px] uppercase text-muted-foreground"><span>Detalle</span><span>Importe</span></div>{showReceipt.items.map((i: CartItem) => <div key={i.product_id} className="flex justify-between gap-2"><span className="flex-1">{i.name}<span className="block text-[11px] text-muted-foreground">{i.qty} × {fmtCLP(i.price)}</span></span><span className="font-medium">{fmtCLP(i.qty * i.price)}</span></div>)}</div>
+                <div className="border-t border-dashed" />
+                <div className="space-y-0.5 text-[11px] text-muted-foreground"><div className="flex justify-between"><span>Subtotal neto</span><span>{fmtCLP(neto)}</span></div><div className="flex justify-between"><span>IVA (19%)</span><span>{fmtCLP(iva)}</span></div></div>
+                <div className="flex justify-between border-t pt-1.5 text-base font-bold"><span>TOTAL</span><span>{fmtCLP(showReceipt.total)}</span></div>
+                <div className="text-[11px] text-muted-foreground capitalize">Forma de pago: {showReceipt.method}</div>
+                {showReceipt.method === "efectivo" && showReceipt.received != null && <><div className="flex justify-between text-[11px]"><span>Recibido</span><span>{fmtCLP(showReceipt.received)}</span></div><div className="flex justify-between text-[11px]"><span>Vuelto</span><span>{fmtCLP(showReceipt.change ?? 0)}</span></div></>}
+                <div className="border-t border-dashed" />
+                {receiptDoc?.folio ? <p className="text-center text-[10px] text-muted-foreground">Documento tributario registrado ante el SII.</p> : <div className="rounded-md bg-warning/10 p-2 text-center text-[10px] text-warning print:hidden">Aún no es una Boleta Electrónica ante el SII.{" "}<button className="font-semibold underline" onClick={() => { setShowReceipt(null); navigate({ to: "/billing" }); }}>Regístrala en Facturación SII →</button></div>}
+                <div className="pt-1 text-center text-[10px] text-muted-foreground">¡Gracias por su compra!</div>
+              </div>;
+            })()}
+            <div className="flex gap-2 print:hidden"><Button variant="outline" className="flex-1" onClick={() => setShowReceipt(null)}>Cerrar</Button><Button className="flex-1" onClick={() => window.print()}><Printer className="mr-1.5 h-4 w-4" /> Imprimir</Button></div>
           </DialogContent>
         </Dialog>
 
         <Dialog open={!!onlinePayment} onOpenChange={(v) => !v && setOnlinePayment(null)}>
           <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Link2 className="h-5 w-5 text-primary" /> Link de pago generado
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground">
-              Envía este link al cliente para que pague. La venta quedará marcada como pagada
-              automáticamente apenas el proveedor confirme el pago — puedes verla en Finanzas &gt;
-              Por cobrar mientras tanto.
-            </p>
-            <div className="break-all rounded-lg border bg-muted/40 p-3 text-xs">
-              {onlinePayment?.url}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={async () => {
-                  if (onlinePayment)
-                    await navigator.clipboard.writeText(onlinePayment.url).catch(() => {});
-                  toast.success("Link copiado");
-                }}
-              >
-                <Copy className="mr-1.5 h-4 w-4" /> Copiar
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => onlinePayment && window.open(onlinePayment.url, "_blank")}
-              >
-                Abrir link
-              </Button>
-            </div>
+            <DialogHeader><DialogTitle className="flex items-center gap-2"><Link2 className="h-5 w-5 text-primary" /> Link de pago generado</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Envía este link al cliente para que pague. La venta quedará marcada como pagada automáticamente apenas el proveedor confirme el pago — puedes verla en Finanzas &gt; Por cobrar mientras tanto.</p>
+            <div className="break-all rounded-lg border bg-muted/40 p-3 text-xs">{onlinePayment?.url}</div>
+            <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={async () => { if (onlinePayment) await navigator.clipboard.writeText(onlinePayment.url).catch(() => {}); toast.success("Link copiado"); }}><Copy className="mr-1.5 h-4 w-4" /> Copiar</Button><Button className="flex-1" onClick={() => onlinePayment && window.open(onlinePayment.url, "_blank")}>Abrir link</Button></div>
           </DialogContent>
         </Dialog>
       </>
