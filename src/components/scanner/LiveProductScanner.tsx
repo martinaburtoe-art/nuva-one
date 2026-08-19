@@ -3,7 +3,7 @@ import { Camera, CameraOff, Check, Loader2, RotateCcw, ScanBarcode, X, Zap, ZapO
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LiveScanner, type LiveScanResult } from "@/lib/live-scanner";
+import { UnifiedScanEngine, type UnifiedScanResult } from "@/lib/unified-scan-engine";
 import { resolveProductCode, type ProductResolution } from "@/lib/product-resolver";
 import { toast } from "sonner";
 
@@ -13,17 +13,17 @@ export type LiveProductScannerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onResolved?: (resolution: ProductResolution) => void;
-  onProductFound?: (product: NonNullable<ProductResolution["product"]>, result: LiveScanResult) => void;
+  onProductFound?: (product: NonNullable<ProductResolution["product"]>, result: UnifiedScanResult) => void;
   title?: string;
 };
 
 export function LiveProductScanner({ open, onOpenChange, onResolved, onProductFound, title = "Nüva Live" }: LiveProductScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const scannerRef = useRef<LiveScanner | null>(null);
+  const scannerRef = useRef<UnifiedScanEngine | null>(null);
   const lastHandledRef = useRef("");
   const [state, setState] = useState<ScannerState>("idle");
-  const [lastCode, setLastCode] = useState<string>("");
-  const [lastFormat, setLastFormat] = useState<string>("");
+  const [lastCode, setLastCode] = useState("");
+  const [lastFormat, setLastFormat] = useState("");
   const [torch, setTorch] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
 
@@ -35,14 +35,14 @@ export function LiveProductScanner({ open, onOpenChange, onResolved, onProductFo
     setState("stopped");
   }, []);
 
-  const handleDetection = useCallback(async (result: LiveScanResult) => {
+  const handleDetection = useCallback(async (result: UnifiedScanResult) => {
     const code = result.rawValue.trim();
     if (!code || code === lastHandledRef.current) return;
     lastHandledRef.current = code;
     setLastCode(code);
-    setLastFormat(result.format ?? "código");
+    setLastFormat(result.format ?? result.input);
     setState("detected");
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(35);
+    if (typeof navigator !== "undefined") navigator.vibrate?.(35);
     setState("resolving");
     try {
       const resolution = await resolveProductCode(code);
@@ -76,12 +76,16 @@ export function LiveProductScanner({ open, onOpenChange, onResolved, onProductFo
     if (!open || !videoRef.current) return;
     let cancelled = false;
     const start = async () => {
-      if (!LiveScanner.isSupported()) {
+      if (!UnifiedScanEngine || typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
         setState("unsupported");
         return;
       }
       setState("requesting_permission");
-      const scanner = new LiveScanner({ onDetect: handleDetection, onError: () => { if (!cancelled) setState("camera_error"); } });
+      const scanner = new UnifiedScanEngine({
+        onDetect: handleDetection,
+        onError: () => { if (!cancelled) setState("camera_error"); },
+        hidEnabled: true,
+      });
       scannerRef.current = scanner;
       setState("camera_starting");
       try {
@@ -117,32 +121,17 @@ export function LiveProductScanner({ open, onOpenChange, onResolved, onProductFo
         <div className="space-y-3 px-4 pb-4">
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-black">
             <video ref={videoRef} className="h-full w-full object-cover" muted autoPlay playsInline />
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="relative h-32 w-[78%] max-w-sm rounded-2xl border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,.35)]">
-                <div className="absolute left-0 right-0 top-1/2 h-0.5 animate-pulse bg-primary" />
-              </div>
-            </div>
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><div className="relative h-32 w-[78%] max-w-sm rounded-2xl border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,.35)]"><div className="absolute left-0 right-0 top-1/2 h-0.5 animate-pulse bg-primary" /></div></div>
             <div className="absolute left-3 top-3"><Badge variant="secondary" className="gap-1 bg-black/55 text-white"><span className="h-2 w-2 animate-pulse rounded-full bg-primary" />{statusText}</Badge></div>
             {state === "resolving" && <div className="absolute inset-x-0 bottom-3 mx-auto flex w-fit items-center gap-2 rounded-full bg-black/65 px-3 py-2 text-xs text-white"><Loader2 className="h-4 w-4 animate-spin" />Consultando producto</div>}
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1"><div className="text-xs text-muted-foreground">Código</div><div className="truncate font-mono text-sm font-semibold">{lastCode || "—"}</div>{lastFormat && <div className="text-[11px] text-muted-foreground">{lastFormat}</div>}</div>
-            <div className="flex gap-2">
-              <Button size="icon" variant="outline" disabled={!torchSupported} onClick={toggleTorch} aria-label="Linterna">{torch ? <ZapOff className="h-4 w-4" /> : <Zap className="h-4 w-4" />}</Button>
-              <Button size="icon" variant="outline" onClick={() => { stop(); onOpenChange(false); }} aria-label="Cerrar"><X className="h-4 w-4" /></Button>
-            </div>
+            <div className="flex gap-2"><Button size="icon" variant="outline" disabled={!torchSupported} onClick={toggleTorch} aria-label="Linterna">{torch ? <ZapOff className="h-4 w-4" /> : <Zap className="h-4 w-4" />}</Button><Button size="icon" variant="outline" onClick={() => { stop(); onOpenChange(false); }} aria-label="Cerrar"><X className="h-4 w-4" /></Button></div>
           </div>
-          {(state === "not_found" || state === "duplicate" || state === "camera_error" || state === "permission_denied" || state === "unsupported") && (
-            <div className="rounded-xl border bg-muted/40 p-3 text-sm">
-              <div className="font-medium">{statusText}</div>
-              {state === "not_found" && <div className="mt-1 text-xs text-muted-foreground">Puedes usar este código para crear o asociar un producto desde Códigos y SKU.</div>}
-              {state === "permission_denied" && <div className="mt-1 text-xs text-muted-foreground">Permite la cámara en el navegador y vuelve a intentarlo.</div>}
-              {state === "unsupported" && <div className="mt-1 text-xs text-muted-foreground">Prueba Chrome actualizado en Android o la aplicación nativa cuando esté instalada.</div>}
-              <Button variant="outline" className="mt-3" onClick={() => { stop(); setLastCode(""); setState("idle"); window.setTimeout(() => { if (open) window.location.reload(); }, 0); }}><RotateCcw className="mr-2 h-4 w-4" />Reintentar</Button>
-            </div>
-          )}
+          {(state === "not_found" || state === "duplicate" || state === "camera_error" || state === "permission_denied" || state === "unsupported") && <div className="rounded-xl border bg-muted/40 p-3 text-sm"><div className="font-medium">{statusText}</div>{state === "not_found" && <div className="mt-1 text-xs text-muted-foreground">Puedes crear o asociar este código desde Códigos y SKU.</div>}{state === "permission_denied" && <div className="mt-1 text-xs text-muted-foreground">Permite la cámara en el navegador y vuelve a intentarlo.</div>}{state === "unsupported" && <div className="mt-1 text-xs text-muted-foreground">Prueba Chrome actualizado en Android o la aplicación nativa cuando esté instalada.</div>}<Button variant="outline" className="mt-3" onClick={() => { stop(); setLastCode(""); setState("idle"); onOpenChange(false); window.setTimeout(() => onOpenChange(true), 0); }}><RotateCcw className="mr-2 h-4 w-4" />Reintentar</Button></div>}
           {state === "found" && <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm"><Check className="h-4 w-4 text-primary" /><span>Producto identificado. La acción del módulo puede continuar.</span></div>}
-          {state === "scanning" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Camera className="h-4 w-4" />Cámara en vivo · no se guardan fotografías</div>}
+          {state === "scanning" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Camera className="h-4 w-4" />Cámara en vivo · también acepta lectores HID</div>}
           {state === "stopped" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><CameraOff className="h-4 w-4" />Cámara detenida</div>}
         </div>
       </DialogContent>
