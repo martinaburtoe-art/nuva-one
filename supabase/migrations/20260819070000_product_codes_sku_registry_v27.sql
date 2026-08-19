@@ -1,6 +1,7 @@
 -- Nüva One: normalized product-code registry.
 -- SKU remains an internal product identifier; product_codes stores external/alternate codes.
--- Create the referenced composite key BEFORE the product_codes foreign key.
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS barcode TEXT;
+
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_business_id_id_unique') THEN
@@ -31,6 +32,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_product_codes_primary_product ON public.pro
 CREATE INDEX IF NOT EXISTS idx_product_codes_product ON public.product_codes (business_id, product_id);
 CREATE INDEX IF NOT EXISTS idx_product_codes_supplier ON public.product_codes (business_id, supplier_id) WHERE supplier_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_products_business_sku ON public.products (business_id, lower(btrim(sku))) WHERE sku IS NOT NULL AND btrim(sku) <> '';
+CREATE INDEX IF NOT EXISTS idx_products_business_barcode ON public.products (business_id, lower(btrim(barcode))) WHERE barcode IS NOT NULL AND btrim(barcode) <> '';
+
+-- Preserve legacy barcode values while moving the registry to product_codes.
+INSERT INTO public.product_codes (business_id, product_id, code, code_type, is_primary, is_active)
+SELECT p.business_id, p.id, btrim(p.barcode), 'barcode', true, true
+FROM public.products p
+WHERE p.barcode IS NOT NULL AND btrim(p.barcode) <> ''
+ON CONFLICT DO NOTHING;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.product_codes TO authenticated;
 GRANT ALL ON public.product_codes TO service_role;
@@ -63,32 +72,21 @@ LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $$
   ORDER BY CASE WHEN lower(btrim(COALESCE(p.sku, ''))) = lower(btrim(p_code)) THEN 0 ELSE 1 END
   LIMIT 2;
 $$;
-
 REVOKE ALL ON FUNCTION public.lookup_product_by_code(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.lookup_product_by_code(TEXT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.generate_product_sku(p_prefix TEXT DEFAULT 'NVA-PRD')
-RETURNS TEXT
-LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
-DECLARE
-  v_business UUID;
-  v_candidate TEXT;
-  v_seq BIGINT;
+RETURNS TEXT LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+DECLARE v_business UUID; v_candidate TEXT; v_seq BIGINT;
 BEGIN
-  SELECT business_id INTO v_business
-  FROM public.business_members
-  WHERE user_id = (select auth.uid())
-  ORDER BY created_at
-  LIMIT 1;
+  SELECT business_id INTO v_business FROM public.business_members WHERE user_id = (select auth.uid()) ORDER BY created_at LIMIT 1;
   IF v_business IS NULL THEN RAISE EXCEPTION 'No existe un negocio activo para el usuario' USING ERRCODE='42501'; END IF;
-  SELECT COALESCE(MAX(NULLIF(regexp_replace(sku, '[^0-9]', '', 'g'), '')::BIGINT), 0) + 1
-    INTO v_seq FROM public.products
-   WHERE business_id = v_business AND sku LIKE btrim(p_prefix) || '-%';
+  SELECT COALESCE(MAX(NULLIF(regexp_replace(sku, '[^0-9]', '', 'g'), '')::BIGINT), 0) + 1 INTO v_seq
+    FROM public.products WHERE business_id = v_business AND sku LIKE btrim(p_prefix) || '-%';
   v_candidate := btrim(p_prefix) || '-' || lpad(v_seq::TEXT, 6, '0');
   RETURN v_candidate;
 END;
 $$;
-
 REVOKE ALL ON FUNCTION public.generate_product_sku(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.generate_product_sku(TEXT) TO authenticated;
 
