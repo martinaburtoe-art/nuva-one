@@ -1,6 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
+  "redirects": [
+    {
+      "source": "/finance",
+      "destination": "/finance-professional",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
