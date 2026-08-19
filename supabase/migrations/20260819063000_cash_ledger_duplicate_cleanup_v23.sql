@@ -1,0 +1,1 @@
+DELETE FROM public.financial_cash_ledger l WHERE l.source_type='transaction' AND (EXISTS (SELECT 1 FROM public.sales s WHERE s.business_id=l.business_id AND s.transaction_id=l.source_id) OR EXISTS (SELECT 1 FROM public.purchases p WHERE p.business_id=l.business_id AND p.transaction_id=l.source_id));
