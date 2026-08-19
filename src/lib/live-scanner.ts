@@ -17,6 +17,15 @@ type BarcodeDetectorLike = new (options?: { formats?: string[] }) => {
 
 type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean };
 type TorchSettings = MediaTrackSettings & { torch?: boolean };
+type FallbackControls = { stop: () => void };
+
+type ZXingReader = {
+  decodeFromConstraints: (
+    constraints: MediaStreamConstraints,
+    preview: HTMLVideoElement,
+    callback: (result: { getText(): string; getBarcodeFormat(): { toString(): string } } | undefined, error?: unknown) => void,
+  ) => Promise<FallbackControls>;
+};
 
 const SUPPORTED_FORMATS = [
   'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code',
@@ -25,12 +34,15 @@ const SUPPORTED_FORMATS = [
 const isBrowser = () => typeof window !== 'undefined' && typeof navigator !== 'undefined';
 
 /**
- * Camera-first live barcode scanner. It never captures, uploads or persists
- * camera frames. BarcodeDetector reads directly from the active video stream.
+ * Camera-first live barcode scanner.
+ * Primary engine: native BarcodeDetector.
+ * Fallback: ZXing Browser, also reading directly from the live video stream.
+ * No frame is captured, uploaded or persisted by this abstraction.
  */
 export class LiveScanner {
   private stream: MediaStream | null = null;
   private timer: number | null = null;
+  private fallbackControls: FallbackControls | null = null;
   private scanInFlight = false;
   private stopped = true;
   private lastValue = '';
@@ -51,7 +63,7 @@ export class LiveScanner {
   }
 
   static isSupported() {
-    return this.hasCameraSupport() && this.hasNativeBarcodeDetector();
+    return this.hasCameraSupport();
   }
 
   static supportedFormats() {
@@ -76,61 +88,96 @@ export class LiveScanner {
     await track.applyConstraints({ advanced: [{ torch: enabled } as MediaTrackConstraintSet] });
   }
 
-  async start(video: HTMLVideoElement) {
-    if (!LiveScanner.hasCameraSupport()) throw new Error('Este dispositivo no permite acceder a la cámara.');
-    if (!LiveScanner.hasNativeBarcodeDetector()) {
-      throw new Error('Este navegador no admite lectura nativa en vivo.');
-    }
+  private emit(result: LiveScanResult) {
+    const value = result.rawValue.trim();
+    if (!value) return;
+    const now = Date.now();
+    if (value === this.lastValue && now - this.lastDetectedAt < this.options.duplicateCooldownMs) return;
+    this.lastValue = value;
+    this.lastDetectedAt = now;
+    this.options.onDetect({ rawValue: value, format: result.format });
+  }
 
-    this.stop();
-    this.stopped = false;
-    this.video = video;
+  private async startNative(video: HTMLVideoElement) {
+    const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorLike }).BarcodeDetector;
+    const detector = new Detector({ formats: [...SUPPORTED_FORMATS] });
 
-    try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
+    const scan = async () => {
+      if (this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+      this.scanInFlight = true;
+      try {
+        const results = await detector.detect(video);
+        for (const result of results) {
+          this.emit({ rawValue: result.rawValue, format: result.format });
+          break;
+        }
+      } catch (error) {
+        if (!this.stopped) this.options.onError?.(error);
+      } finally {
+        this.scanInFlight = false;
+      }
+    };
+
+    this.timer = window.setInterval(scan, this.options.scanIntervalMs);
+    await scan();
+  }
+
+  private async startZXing(video: HTMLVideoElement) {
+    const { BrowserMultiFormatReader } = await import('@zxing/browser');
+    if (this.stopped) return;
+
+    const reader = new BrowserMultiFormatReader();
+    this.fallbackControls = await reader.decodeFromConstraints(
+      {
         video: {
           facingMode: { ideal: this.options.facingMode },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
         audio: false,
-      });
+      },
+      video,
+      (result) => {
+        if (!result || this.stopped) return;
+        this.emit({
+          rawValue: result.getText(),
+          format: result.getBarcodeFormat().toString(),
+        });
+      },
+    );
 
-      if (this.stopped) { this.stop(); return; }
+    this.stream = video.srcObject instanceof MediaStream ? video.srcObject : null;
+  }
 
-      video.srcObject = this.stream;
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('autoplay', 'true');
-      video.muted = true;
-      await video.play();
+  async start(video: HTMLVideoElement) {
+    if (!LiveScanner.hasCameraSupport()) throw new Error('Este dispositivo no permite acceder a la cámara.');
 
-      const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorLike }).BarcodeDetector;
-      const detector = new Detector({ formats: [...SUPPORTED_FORMATS] });
+    this.stop();
+    this.stopped = false;
+    this.video = video;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('autoplay', 'true');
+    video.muted = true;
 
-      const scan = async () => {
-        if (this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
-        this.scanInFlight = true;
-        try {
-          const results = await detector.detect(video);
-          const now = Date.now();
-          for (const result of results) {
-            const value = result.rawValue?.trim();
-            if (!value) continue;
-            if (value === this.lastValue && now - this.lastDetectedAt < this.options.duplicateCooldownMs) continue;
-            this.lastValue = value;
-            this.lastDetectedAt = now;
-            this.options.onDetect({ rawValue: value, format: result.format });
-            break;
-          }
-        } catch (error) {
-          if (!this.stopped) this.options.onError?.(error);
-        } finally {
-          this.scanInFlight = false;
-        }
-      };
+    try {
+      if (LiveScanner.hasNativeBarcodeDetector()) {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: this.options.facingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+        if (this.stopped) { this.stop(); return; }
+        video.srcObject = this.stream;
+        await video.play();
+        await this.startNative(video);
+        return;
+      }
 
-      this.timer = window.setInterval(scan, this.options.scanIntervalMs);
-      await scan();
+      await this.startZXing(video);
+      await video.play().catch(() => undefined);
     } catch (error) {
       this.stop();
       this.options.onError?.(error);
@@ -142,6 +189,8 @@ export class LiveScanner {
     this.stopped = true;
     if (this.timer !== null && isBrowser()) window.clearInterval(this.timer);
     this.timer = null;
+    try { this.fallbackControls?.stop(); } catch { /* already stopped */ }
+    this.fallbackControls = null;
     this.scanInFlight = false;
     this.stream?.getTracks().forEach((track) => { try { track.stop(); } catch { /* already stopped */ } });
     this.stream = null;
