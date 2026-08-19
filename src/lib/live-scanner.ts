@@ -86,7 +86,13 @@ export class LiveScanner {
     }
     if (!formats.length) throw Object.assign(new Error('No hay formatos nativos compatibles.'), { name: 'NotSupportedError' });
 
-    const detector = new Detector({ formats });
+    let detector: InstanceType<BarcodeDetectorConstructor>;
+    try {
+      detector = new Detector({ formats });
+    } catch (error) {
+      throw Object.assign(error instanceof Error ? error : new Error('BarcodeDetector no disponible.'), { name: 'NotSupportedError' });
+    }
+
     const scan = async () => {
       if (this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
       this.scanInFlight = true;
@@ -131,7 +137,7 @@ export class LiveScanner {
           await this.startNative(video);
           return;
         } catch (nativeError) {
-          const fallbackAllowed = nativeError instanceof DOMException && ['NotSupportedError', 'TypeMismatchError', 'InvalidStateError'].includes(nativeError.name);
+          const fallbackAllowed = nativeError instanceof Error && ['NotSupportedError', 'TypeMismatchError', 'InvalidStateError'].includes(nativeError.name);
           if (!fallbackAllowed) throw nativeError;
           this.stop();
           this.stopped = false;
