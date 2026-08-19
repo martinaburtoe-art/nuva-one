@@ -1,4 +1,4 @@
-import { Camera, CameraOff, CheckCircle2, Flashlight, FlashlightOff, RotateCcw, ShieldCheck, X } from 'lucide-react';
+import { Camera, CameraOff, CheckCircle2, Flashlight, FlashlightOff, RotateCcw, ShieldCheck, SwitchCamera, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { LiveScanner, type LiveScanResult } from '@/lib/live-scanner';
 
@@ -23,6 +23,7 @@ export function LiveScannerView({ open, title = 'Escanear producto', onClose, on
   const [torch, setTorch] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
   const [cameraKey, setCameraKey] = useState(0);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
   useEffect(() => { detectRef.current = onDetect; }, [onDetect]);
   useEffect(() => { errorRef.current = onError; }, [onError]);
@@ -45,7 +46,7 @@ export function LiveScannerView({ open, title = 'Escanear producto', onClose, on
         setStatus(LiveScanner.hasCameraSupport() ? 'error' : 'unsupported');
         errorRef.current?.(error);
       },
-      facingMode: 'environment',
+      facingMode,
       scanIntervalMs: 160,
       duplicateCooldownMs: 1200,
     });
@@ -55,7 +56,10 @@ export function LiveScannerView({ open, title = 'Escanear producto', onClose, on
     if (!video) return;
 
     setStatus('starting');
+    setTorchSupported(false);
+    setTorch(false);
     scanner.start(video).then(() => {
+      if (scannerRef.current !== scanner) return;
       const torchState = scanner.getTorchState();
       setTorchSupported(torchState.supported);
       setTorch(torchState.enabled);
@@ -68,7 +72,7 @@ export function LiveScannerView({ open, title = 'Escanear producto', onClose, on
       scanner.stop();
       if (scannerRef.current === scanner) scannerRef.current = null;
     };
-  }, [open, cameraKey]);
+  }, [open, cameraKey, facingMode]);
 
   if (!open) return null;
 
@@ -85,6 +89,11 @@ export function LiveScannerView({ open, title = 'Escanear producto', onClose, on
   };
 
   const restart = () => setCameraKey((value) => value + 1);
+  const switchCamera = () => {
+    setFacingMode((value) => value === 'environment' ? 'user' : 'environment');
+    setCameraKey((value) => value + 1);
+  };
+
   const statusText = {
     starting: 'Activando cámara segura…',
     scanning: 'Apunta al código · lectura en vivo',
@@ -130,6 +139,7 @@ export function LiveScannerView({ open, title = 'Escanear producto', onClose, on
 
           <div className="mx-auto flex max-w-[520px] items-center justify-between gap-3">
             <button type="button" onClick={toggleTorch} disabled={!torchSupported} className="grid size-12 place-items-center rounded-full bg-black/45 backdrop-blur disabled:cursor-not-allowed disabled:opacity-35" aria-label={torch ? 'Apagar linterna' : 'Encender linterna'} title={torchSupported ? undefined : 'Linterna no disponible'}>{torch ? <FlashlightOff className="size-5" /> : <Flashlight className="size-5" />}</button>
+            <button type="button" onClick={switchCamera} disabled={status === 'starting'} className="grid size-12 place-items-center rounded-full bg-black/45 backdrop-blur disabled:opacity-35" aria-label="Cambiar cámara" title="Cambiar cámara"><SwitchCamera className="size-5" /></button>
             <button type="button" onClick={() => onCloseRef.current()} className="h-12 flex-1 rounded-2xl bg-white font-semibold text-black">Listo</button>
           </div>
         </footer>
