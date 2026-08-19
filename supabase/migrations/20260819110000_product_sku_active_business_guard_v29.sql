@@ -17,7 +17,7 @@ BEGIN
     RAISE EXCEPTION 'Negocio requerido' USING ERRCODE = '22023';
   END IF;
 
-  IF NOT public.is_business_member(p_business_id, (select auth.uid())) THEN
+  IF NOT private.is_business_member(p_business_id, (select auth.uid())) THEN
     RAISE EXCEPTION 'No autorizado para este negocio' USING ERRCODE = '42501';
   END IF;
 
@@ -42,7 +42,4 @@ $$;
 REVOKE ALL ON FUNCTION public.generate_product_sku(UUID, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.generate_product_sku(UUID, TEXT) TO authenticated;
 
--- The previous one-argument helper selected the first membership, which is
--- ambiguous for users who belong to multiple businesses. Keep it for
--- compatibility but make it unavailable to authenticated clients.
 REVOKE ALL ON FUNCTION public.generate_product_sku(TEXT) FROM PUBLIC, authenticated;
