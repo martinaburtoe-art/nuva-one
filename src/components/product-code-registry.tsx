@@ -66,9 +66,9 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
   }
 
   async function generateSku() {
-    if (!businessId) return;
+    if (!businessId || !canWrite) return;
     try {
-      const { data, error } = await (supabase as any).rpc('generate_product_sku', { p_prefix: 'NVA-PRD' });
+      const { data, error } = await (supabase as any).rpc('generate_product_sku', { p_business_id: businessId, p_prefix: 'NVA-PRD' });
       if (error) throw error;
       setSku(String(data ?? ''));
       toast.success('SKU generado.');
@@ -165,7 +165,7 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
       {scanOpen && <LiveScannerView open={scanOpen} title="Escanear código" onDetect={(result) => void onDetected(result)} onClose={() => setScanOpen(false)} onError={(error) => console.error('Live scanner error', error)} />}
       <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Nuevo código / SKU</DialogTitle></DialogHeader><div className="space-y-4">
         <div><Label>Producto</Label><Select value={productId} onValueChange={setProductId}><SelectTrigger><SelectValue placeholder="Selecciona un producto" /></SelectTrigger><SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name ?? 'Producto'}{p.sku ? ` · ${p.sku}` : ''}</SelectItem>)}</SelectContent></Select></div>
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><div><Label>SKU interno</Label><Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="NVA-PRD-000001" /></div><Button type="button" variant="outline" className="self-end" onClick={() => void generateSku()}><Sparkles className="mr-2 h-4 w-4" />Generar</Button></div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><div><Label>SKU interno</Label><Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="NVA-PRD-000001" /></div><Button type="button" variant="outline" className="self-end" onClick={() => void generateSku()} disabled={!canWrite || !businessId}><Sparkles className="mr-2 h-4 w-4" />Generar</Button></div>
         <div><Label>Código</Label><div className="flex gap-2"><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Escanea o escribe el código" className="font-mono" /><Button type="button" variant="outline" onClick={() => setScanOpen(true)}><ScanBarcode className="mr-2 h-4 w-4" />Escanear</Button></div></div>
         <div><Label>Tipo de código</Label><Select value={codeType} onValueChange={setCodeType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CODE_TYPES.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select></div>
         <div className="flex justify-end gap-2"><Button variant="outline" onClick={reset}>Cancelar</Button><Button disabled={loading || !canWrite} onClick={() => void save()}>{loading ? 'Guardando…' : 'Guardar'}</Button></div>
