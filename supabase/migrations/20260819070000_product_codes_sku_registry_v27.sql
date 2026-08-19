@@ -1,5 +1,13 @@
 -- Nüva One: normalized product-code registry.
 -- SKU remains an internal product identifier; product_codes stores external/alternate codes.
+-- Create the referenced composite key BEFORE the product_codes foreign key.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_business_id_id_unique') THEN
+    ALTER TABLE public.products ADD CONSTRAINT products_business_id_id_unique UNIQUE (business_id, id);
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.product_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id UUID NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
@@ -22,8 +30,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_product_codes_business_code ON public.produ
 CREATE UNIQUE INDEX IF NOT EXISTS ux_product_codes_primary_product ON public.product_codes (business_id, product_id) WHERE is_primary AND is_active;
 CREATE INDEX IF NOT EXISTS idx_product_codes_product ON public.product_codes (business_id, product_id);
 CREATE INDEX IF NOT EXISTS idx_product_codes_supplier ON public.product_codes (business_id, supplier_id) WHERE supplier_id IS NOT NULL;
-
-ALTER TABLE public.products ADD CONSTRAINT products_business_id_id_unique UNIQUE (business_id, id);
 CREATE INDEX IF NOT EXISTS idx_products_business_sku ON public.products (business_id, lower(btrim(sku))) WHERE sku IS NOT NULL AND btrim(sku) <> '';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.product_codes TO authenticated;
@@ -53,11 +59,7 @@ LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $$
     ON pc.product_id = p.id AND pc.business_id = p.business_id
    AND pc.is_active AND lower(btrim(pc.code)) = lower(btrim(p_code))
   WHERE public.is_business_member(p.business_id, (select auth.uid()))
-    AND (
-      (pc.id IS NOT NULL)
-      OR lower(btrim(COALESCE(p.barcode, ''))) = lower(btrim(p_code))
-      OR lower(btrim(COALESCE(p.sku, ''))) = lower(btrim(p_code))
-    )
+    AND (pc.id IS NOT NULL OR lower(btrim(COALESCE(p.barcode, ''))) = lower(btrim(p_code)) OR lower(btrim(COALESCE(p.sku, ''))) = lower(btrim(p_code)))
   ORDER BY CASE WHEN lower(btrim(COALESCE(p.sku, ''))) = lower(btrim(p_code)) THEN 0 ELSE 1 END
   LIMIT 2;
 $$;
