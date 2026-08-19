@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.idx_financial_cash_ledger_business_date;
