@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Barcode, CheckCircle2, Plus, ScanBarcode, Search, Sparkles, Tag } from 'lucide-react';
+import { Barcode, CheckCircle2, Copy, Plus, ScanBarcode, Search, Sparkles, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,12 +12,19 @@ import { LiveScannerView } from '@/components/scanner/LiveScannerView';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveBusinessId, useMyRole, canWriteOperations } from '@/lib/use-business';
 import { normalizeProductCode, resolveProductCode } from '@/lib/product-resolver';
+import { validateScannedCode } from '@/lib/scanner-code-validation';
 import { toast } from 'sonner';
 
 type Product = { id: string; name: string | null; sku: string | null; stock: number | null; price?: number | null };
 type ProductCode = { id: string; product_id: string; code: string; code_type: string; is_primary: boolean; is_active: boolean; created_at: string };
 
 const CODE_TYPES = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'codabar', 'qr_code', 'supplier', 'alternate', 'barcode'];
+
+function codeTypeFromFormat(format?: string) {
+  if (!format) return undefined;
+  const normalized = format.toLowerCase().replace(/[-\s]/g, '_');
+  return CODE_TYPES.includes(normalized) ? normalized : undefined;
+}
 
 export function ProductCodeRegistry({ products }: { products: Product[] }) {
   const [businessId] = useActiveBusinessId();
@@ -35,6 +42,8 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
   const [loadingCodes, setLoadingCodes] = useState(false);
 
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const activeCount = codes.length;
+  const primaryCount = useMemo(() => codes.filter((c) => c.is_primary).length, [codes]);
 
   const loadCodes = useCallback(async () => {
     if (!businessId) return;
@@ -80,6 +89,8 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
     const normalizedCode = normalizeProductCode(code);
     if (!productId) return toast.error('Selecciona un producto.');
     if (!normalizedCode) return toast.error('Ingresa o escanea un código.');
+    const validation = validateScannedCode(normalizedCode);
+    if (validation.kind === 'invalid') return toast.error(validation.message);
     setLoading(true);
     try {
       const resolution = await resolveProductCode(normalizedCode);
@@ -88,8 +99,9 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
       if (resolution.status === 'UNAUTHORIZED') return toast.error('No autorizado.');
 
       const product = productById.get(productId);
-      if (sku.trim() && sku.trim() !== product?.sku) {
-        const { error: skuError } = await (supabase as any).from('products').update({ sku: sku.trim() }).eq('id', productId).eq('business_id', businessId);
+      const nextSku = sku.trim().toUpperCase();
+      if (nextSku && nextSku !== product?.sku?.toUpperCase()) {
+        const { error: skuError } = await (supabase as any).from('products').update({ sku: nextSku }).eq('id', productId).eq('business_id', businessId);
         if (skuError) throw skuError;
       }
 
@@ -116,10 +128,18 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
     if (error) toast.error(error.message); else { toast.success('Código desactivado.'); await loadCodes(); }
   }
 
+  async function copyCode(value: string) {
+    try { await navigator.clipboard.writeText(value); toast.success('Código copiado.'); }
+    catch { toast.error('No se pudo copiar el código.'); }
+  }
+
   async function onDetected(result: { rawValue: string; format?: string }) {
     const normalized = normalizeProductCode(result.rawValue);
+    const validation = validateScannedCode(normalized);
+    if (validation.kind === 'invalid') { toast.error(validation.message); return; }
     setCode(normalized);
-    if (result.format && CODE_TYPES.includes(result.format)) setCodeType(result.format);
+    const detectedType = codeTypeFromFormat(result.format);
+    if (detectedType) setCodeType(detectedType);
     setScanOpen(false);
 
     try {
@@ -153,11 +173,11 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
             <Button onClick={() => setOpen(true)} disabled={!canWrite}><Plus className="mr-2 h-4 w-4" />Nuevo código / SKU</Button>
           </div>
         </div>
-        <div className="mt-5 flex items-center gap-2"><div className="relative flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por código, SKU o producto…" className="pl-9" /></div><Badge variant="secondary">{filtered.length} códigos</Badge></div>
+        <div className="mt-5 flex flex-wrap items-center gap-2"><div className="relative min-w-[220px] flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por código, SKU o producto…" className="pl-9" /></div><Badge variant="secondary">{filtered.length} visibles</Badge><Badge variant="outline">{activeCount} activos</Badge><Badge variant="outline">{primaryCount} principales</Badge></div>
         <div className="mt-4 overflow-x-auto rounded-xl border">
           {loadingCodes ? <div className="p-6 text-sm text-muted-foreground">Cargando códigos…</div> : !filtered.length ? <div className="p-8 text-center text-sm text-muted-foreground"><Tag className="mx-auto mb-2 h-7 w-7" />Aún no hay códigos externos registrados.</div> : (
             <Table><TableHeader><TableRow><TableHead>Producto</TableHead><TableHead>SKU</TableHead><TableHead>Código</TableHead><TableHead>Tipo</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Acción</TableHead></TableRow></TableHeader><TableBody>
-              {filtered.slice(0, 50).map((c) => { const p = productById.get(c.product_id); return <TableRow key={c.id}><TableCell className="font-medium">{p?.name ?? 'Producto'}</TableCell><TableCell>{p?.sku ?? '—'}</TableCell><TableCell className="font-mono text-xs">{c.code}</TableCell><TableCell><Badge variant="outline">{c.code_type}</Badge></TableCell><TableCell>{c.is_primary ? <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Principal</Badge> : <Badge variant="secondary">Activo</Badge>}</TableCell><TableCell className="text-right"><Button variant="ghost" size="sm" disabled={!canWrite} onClick={() => void deactivate(c.id)}>Desactivar</Button></TableCell></TableRow>; })}
+              {filtered.slice(0, 50).map((c) => { const p = productById.get(c.product_id); return <TableRow key={c.id}><TableCell className="font-medium">{p?.name ?? 'Producto'}</TableCell><TableCell>{p?.sku ?? '—'}</TableCell><TableCell className="font-mono text-xs"><button type="button" className="inline-flex items-center gap-1 hover:underline" onClick={() => void copyCode(c.code)}>{c.code}<Copy className="h-3 w-3"/></button></TableCell><TableCell><Badge variant="outline">{c.code_type}</Badge></TableCell><TableCell>{c.is_primary ? <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Principal</Badge> : <Badge variant="secondary">Activo</Badge>}</TableCell><TableCell className="text-right"><Button variant="ghost" size="sm" disabled={!canWrite} onClick={() => void deactivate(c.id)}>Desactivar</Button></TableCell></TableRow>; })}
             </TableBody></Table>
           )}
         </div>
