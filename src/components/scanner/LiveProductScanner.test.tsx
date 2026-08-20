@@ -8,6 +8,10 @@ describe("LiveProductScanner integration contracts", () => {
     expect(normalizeProductCode("SKU-ABC 001")).toBe("SKU-ABC001");
   });
 
+  it("rejects blank product codes before database resolution", () => {
+    expect(normalizeProductCode("   ")).toBe("");
+  });
+
   it("keeps the resolver independent from UI camera state", () => {
     expect(vi.isMockFunction(vi.fn())).toBe(true);
   });
@@ -26,5 +30,10 @@ describe("LiveProductScanner integration contracts", () => {
       "aztec",
       "pdf417",
     ]));
+  });
+
+  it("keeps the supported format list free of duplicates", () => {
+    const formats = LiveScanner.supportedFormats();
+    expect(new Set(formats).size).toBe(formats.length);
   });
 });
