@@ -1,0 +1,52 @@
+name: Finance period hardening
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  harden-finance-period:
+    if: ${{ !contains(github.event.head_commit.message, 'fix(finance): scope F29 documents to selected period') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Scope F29 documents to selected period
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/routes/_authenticated/finance.tsx')
+          s = p.read_text()
+          old_import = 'import { generateMonthlyReportPdf } from "@/lib/monthly-report";'
+          new_import = old_import + '\nimport { filterTaxDocumentsForPeriod, isPurchaseTaxDocument, isSalesTaxDocument } from "@/lib/finance-period";'
+          if new_import not in s:
+              if old_import not in s:
+                  raise SystemExit('finance import anchor not found')
+              s = s.replace(old_import, new_import, 1)
+          old_calc = '''  const taxTotals = useMemo(() => {\n    const salesDocs = taxDocs.filter((d: any) => ["dte_sale", "credit_note", "debit_note"].includes(d.document_type));\n    const purchaseDocs = taxDocs.filter((d: any) => d.document_type === "dte_purchase");'''
+          new_calc = '''  const taxTotals = useMemo(() => {\n    const periodDocs = filterTaxDocumentsForPeriod(taxDocs, year, month);\n    const salesDocs = periodDocs.filter((d: any) => isSalesTaxDocument(d.document_type));\n    const purchaseDocs = periodDocs.filter((d: any) => isPurchaseTaxDocument(d.document_type));'''
+          if old_calc not in s:
+              raise SystemExit('taxTotals anchor not found')
+          s = s.replace(old_calc, new_calc, 1)
+          s = s.replace('''      outputIva, inputIva, ivaToPay: Math.max(0, outputIva - inputIva),\n    };\n  }, [taxDocs]);''', '''      outputIva, inputIva, ivaToPay: Math.max(0, outputIva - inputIva),\n      documentCount: salesDocs.length + purchaseDocs.length,\n    };\n  }, [taxDocs, year, month]);''', 1)
+          s = s.replace('total_documents: taxDocs.length,', 'total_documents: taxTotals.documentCount,', 1)
+          p.write_text(s)
+          PY
+
+      - name: Commit hardening change
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/_authenticated/finance.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(finance): scope F29 documents to selected period"
+          git push origin main
