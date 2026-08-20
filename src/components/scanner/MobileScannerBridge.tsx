@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link2, ScanBarcode, ShieldCheck, Smartphone, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,14 +11,16 @@ export function MobileScannerBridge({ businessId, onScan }: { businessId: string
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState<MobileScannerSession | null>(null);
   const [busy, setBusy] = useState(false);
+  const onScanRef = useRef(onScan);
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
 
   useEffect(() => {
     if (!session) return;
     return subscribeToMobileScanner(session.sessionId, (event) => {
-      onScan(event.code);
+      onScanRef.current(event.code);
       if (typeof navigator !== 'undefined') navigator.vibrate?.(20);
     });
-  }, [session, onScan]);
+  }, [session]);
 
   async function start() {
     setBusy(true);
@@ -49,7 +51,7 @@ export function MobileScannerBridge({ businessId, onScan }: { businessId: string
           <Card className="border-primary/20 bg-primary/5 p-4"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 text-primary" /><div><div className="font-semibold">Vinculación segura</div><p className="mt-1 text-sm text-muted-foreground">Abre <strong>Nüva Scanner Móvil</strong> en el celular e ingresa este código. Ambos dispositivos deben usar una cuenta autorizada para este negocio.</p></div></div></Card>
           <div className="rounded-2xl border bg-muted/30 p-5 text-center"><div className="text-xs uppercase tracking-wider text-muted-foreground">Código de vinculación</div><div className="mt-2 font-mono text-5xl font-bold tracking-[0.25em]">{session?.pairCode}</div><div className="mt-2 flex items-center justify-center gap-2 text-xs text-muted-foreground"><Wifi className="h-3.5 w-3.5" />Esperando lecturas del celular</div></div>
           <div className="rounded-lg border p-3 text-xs text-muted-foreground"><div className="flex items-center gap-2 font-medium text-foreground"><Link2 className="h-3.5 w-3.5" />Dirección del lector</div><div className="mt-1 break-all font-mono">{mobileUrl}</div></div>
-          <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => void close()}>Desconectar</Button><Button className="flex-1" onClick={() => { setOpen(false); }}>Mantener conectado</Button></div>
+          <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => void close()}>Desconectar</Button><Button className="flex-1" onClick={() => setOpen(false)}>Mantener conectado</Button></div>
           <Badge variant="secondary" className="w-full justify-center">Cada código recibido se agrega al carrito de Caja</Badge>
         </div>
       </DialogContent>
