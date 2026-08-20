@@ -13,6 +13,8 @@ type Product = {
   sku: string | null;
   stock: number | null;
   low_stock_threshold: number | null;
+  max_stock?: number | null;
+  reorder_point?: number | null;
   cost: number | null;
   price?: number | null;
 };
@@ -29,12 +31,20 @@ type Activity = {
 
 type Props = { products: Product[]; canWrite?: boolean };
 
-function priority(product: Product) {
+function replenishment(product: Product) {
   const stock = Math.max(0, Number(product.stock ?? 0));
   const minimum = Math.max(0, Number(product.low_stock_threshold ?? 0));
-  const gap = Math.max(0, minimum - stock);
-  if (stock === 0) return { label: "Crítica", className: "bg-destructive/10 text-destructive", action: "Reponer ahora" };
-  if (stock <= minimum) return { label: "Alta", className: "bg-warning/15 text-warning", action: `Programar reposición de ${gap} unidad${gap === 1 ? "" : "es"}` };
+  const reorderPoint = Math.max(minimum, Number(product.reorder_point ?? minimum));
+  const target = Math.max(reorderPoint, Number(product.max_stock ?? 0));
+  const quantity = target > stock ? Math.max(1, Math.ceil(target - stock)) : Math.max(1, minimum - stock);
+  return { stock, minimum, reorderPoint, target, quantity };
+}
+
+function priority(product: Product) {
+  const { stock, minimum, quantity } = replenishment(product);
+  if (stock === 0) return { label: "Crítica", className: "bg-destructive/10 text-destructive", action: `Reponer ${quantity} unidad${quantity === 1 ? "" : "es"}` };
+  if (stock <= minimum) return { label: "Alta", className: "bg-warning/15 text-warning", action: `Programar reposición de ${quantity} unidad${quantity === 1 ? "" : "es"}` };
+  if (stock <= Math.max(minimum, Number(product.reorder_point ?? minimum))) return { label: "Media", className: "bg-primary/10 text-primary", action: `Preparar reposición de ${quantity} unidad${quantity === 1 ? "" : "es"}` };
   return { label: "Normal", className: "bg-muted text-muted-foreground", action: "Vigilar stock" };
 }
 
@@ -44,8 +54,15 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
   const insertActivity = useBizInsert("customer_activities");
 
   const candidates = products
-    .filter((p) => Number(p.stock ?? 0) <= Number(p.low_stock_threshold ?? 0))
-    .sort((a, b) => Number(a.stock ?? 0) - Number(b.stock ?? 0));
+    .filter((p) => {
+      const { stock, minimum, reorderPoint } = replenishment(p);
+      return stock <= Math.max(minimum, reorderPoint);
+    })
+    .sort((a, b) => {
+      const aData = replenishment(a);
+      const bData = replenishment(b);
+      return (aData.stock - aData.minimum) - (bData.stock - bData.minimum);
+    });
 
   const openByProduct = new Map<string, Activity>();
   for (const activity of activities) {
@@ -60,24 +77,23 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
       return;
     }
     const p = priority(product);
-    const stock = Math.max(0, Number(product.stock ?? 0));
-    const minimum = Math.max(0, Number(product.low_stock_threshold ?? 0));
-    const gap = Math.max(0, minimum - stock);
+    const data = replenishment(product);
     try {
       await insertActivity.mutateAsync({
         product_id: product.id,
         type: "task",
-        content: `[Inventory Intelligence] ${p.action}: ${product.name || "Producto"}${product.sku ? ` · SKU ${product.sku}` : ""}. Stock ${stock}, mínimo ${minimum}, brecha ${gap}.`,
-        due_date: new Date(Date.now() + (stock === 0 ? 86400000 : 2 * 86400000)).toISOString(),
+        content: `[Inventory Intelligence] ${p.action}: ${product.name || "Producto"}${product.sku ? ` · SKU ${product.sku}` : ""}. Stock ${data.stock}, mínimo ${data.minimum}, punto de reposición ${data.reorderPoint}, objetivo ${data.target}, cantidad sugerida ${data.quantity}.`,
+        due_date: new Date(Date.now() + (data.stock === 0 ? 86400000 : 2 * 86400000)).toISOString(),
         completed: false,
       });
-      toast.success(`Acción creada para ${product.name || "producto"}`);
+      toast.success(`Acción creada: reponer ${data.quantity} unidad${data.quantity === 1 ? "" : "es"}`);
     } catch {
       toast.error("No se pudo crear la acción de inventario.");
     }
   }
 
   const openCount = openByProduct.size;
+  const criticalCount = candidates.filter((p) => replenishment(p).stock === 0).length;
 
   return (
     <div className="space-y-6">
@@ -87,10 +103,11 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
             <div>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary"><Sparkles className="h-4 w-4" /> Nüva Action Center</div>
               <h2 className="mt-2 text-xl font-semibold">Convierte inventario crítico en trabajo operativo</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">Las señales de Inventory Intelligence pueden convertirse en tareas trazables usando el modelo de actividades existente.</p>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">Las señales de inventario se convierten en tareas trazables con una cantidad de reposición calculada a partir del mínimo, punto de reposición y stock objetivo disponible.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="gap-1"><Package className="h-3.5 w-3.5" /> {openCount} abiertas</Badge>
+              {criticalCount > 0 && <Badge variant="destructive">{criticalCount} críticas</Badge>}
               <Button size="sm" variant="outline" onClick={() => navigate({ to: "/inventario-conteo" })}>
                 <ScanBarcode className="mr-2 h-4 w-4" />
                 Escanear / registrar
@@ -106,9 +123,10 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
 
           <div className="mt-5 space-y-3">
             {candidates.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-5 text-sm text-muted-foreground">No hay productos bajo mínimo. Inventory Intelligence no genera acciones artificiales.</div>
-            ) : candidates.slice(0, 6).map((product) => {
+              <div className="rounded-xl border border-dashed p-5 text-sm text-muted-foreground">No hay productos en zona de reposición. Inventory Intelligence no genera acciones artificiales.</div>
+            ) : candidates.slice(0, 8).map((product) => {
               const p = priority(product);
+              const data = replenishment(product);
               const existing = openByProduct.get(product.id);
               return (
                 <div key={product.id} className="rounded-xl border bg-background/75 p-4">
@@ -119,8 +137,8 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
                         <Badge className={p.className}>{p.label}</Badge>
                         {product.sku && <Badge variant="outline">SKU {product.sku}</Badge>}
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">Stock {Number(product.stock ?? 0)} · mínimo {Number(product.low_stock_threshold ?? 0)} · brecha {Math.max(0, Number(product.low_stock_threshold ?? 0) - Number(product.stock ?? 0))}</p>
-                      <p className="mt-2 text-xs font-medium text-primary">Origen: Inventory Intelligence · acción: {p.action}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Stock {data.stock} · mínimo {data.minimum} · punto reposición {data.reorderPoint} · objetivo {data.target || "no definido"}</p>
+                      <p className="mt-2 text-xs font-medium text-primary">Recomendación: {p.action} · no es un pronóstico de demanda; usa parámetros configurados.</p>
                     </div>
                     <Button size="sm" className="shrink-0" disabled={!canWrite || !!existing || insertActivity.isPending} onClick={() => createAction(product)}>
                       {existing ? "Acción abierta" : insertActivity.isPending ? "Guardando…" : "Crear acción"}
@@ -131,7 +149,7 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
               );
             })}
           </div>
-          <p className="mt-4 text-xs leading-5 text-muted-foreground">Las acciones usan stock y umbral configurados. No representan predicción de demanda ni asignan responsable cuando el modelo actual no dispone de uno.</p>
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">Nüva no modifica stock desde este panel. Las acciones quedan preparadas para el próximo flujo transaccional de recepción/entrada y conservan la separación entre recomendación y movimiento real.</p>
         </div>
       </Card>
 
