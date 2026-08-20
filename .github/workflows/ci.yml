@@ -17,6 +17,7 @@ jobs:
   build-and-test:
     name: Lint, typecheck, test, audit, build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,9 +27,6 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-
-      - name: Reconcile npm lockfile
-        run: npm install --package-lock-only --ignore-scripts
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -51,6 +49,7 @@ jobs:
   database-tests:
     name: pgTAP database tests
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,3 +64,7 @@ jobs:
 
       - name: Run pgTAP tests
         run: supabase test db || (echo "First attempt failed, retrying once..." && supabase test db)
+
+      - name: Stop Supabase local stack
+        if: always()
+        run: supabase stop --no-backup
