@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(12);
 
 -- Scanner and stock/cash RPCs are SECURITY DEFINER only where the server-side
 -- authorization boundary is enforced. Keep these invariants in CI so a future
@@ -59,10 +59,10 @@ select ok(
   exists (
     select 1
       from pg_proc p
-      join pg_namespace n on n.oid = p.pronamespace
-     where n.nspname = 'public'
-       and p.proname = 'pair_mobile_scanner'
-       and pg_get_function_identity_arguments(p.oid) = 'p_pair_code text'
+      join pg_namespace n on n.oid=p.pronamespace
+     where n.nspname='public'
+       and p.proname='pair_mobile_scanner'
+       and pg_get_function_identity_arguments(p.oid)='p_pair_code text'
        and exists (
          select 1
            from unnest(coalesce(p.proconfig, '{}'::text[])) cfg
@@ -70,6 +70,22 @@ select ok(
        )
   ),
   'pair_mobile_scanner pins an explicit search_path'
+);
+
+select ok(
+  (select c.relrowsecurity
+     from pg_class c
+     join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and c.relname='product_codes'),
+  'product_codes keeps row-level security enabled'
+);
+
+select ok(
+  (select c.relrowsecurity
+     from pg_class c
+     join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and c.relname='products'),
+  'products keeps row-level security enabled'
 );
 
 select * from finish();
