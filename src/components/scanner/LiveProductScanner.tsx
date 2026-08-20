@@ -6,19 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UnifiedScanEngine, type UnifiedScanResult } from "@/lib/unified-scan-engine";
 import { resolveProductCode, type ProductResolution } from "@/lib/product-resolver";
+import { executeScannerInventoryAction, type ScannerInventoryAction } from "@/lib/scanner-inventory-actions";
+import { validateScannerInventoryAction } from "@/lib/scanner-inventory-action-state";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type ScannerState = "idle" | "requesting_permission" | "camera_starting" | "scanning" | "detected" | "resolving" | "found" | "not_found" | "duplicate" | "inactive" | "permission_denied" | "camera_error" | "unsupported" | "stopped";
 export type ScannerAction = "entry" | "exit" | "count" | "new_product" | "add_code" | "view_product";
+
+type ScannerProduct = NonNullable<ProductResolution["product"]> & { id: string; stock?: number | null };
 
 export type LiveProductScannerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onScan?: (result: UnifiedScanResult) => void;
   onResolved?: (resolution: ProductResolution) => void;
-  onProductFound?: (product: NonNullable<ProductResolution["product"]>, result: UnifiedScanResult) => void;
+  onProductFound?: (product: ScannerProduct, result: UnifiedScanResult) => void;
   onCodeNotFound?: (code: string, result: UnifiedScanResult) => void;
-  onAction?: (action: ScannerAction, context: { code: string; product?: NonNullable<ProductResolution["product"]>; result?: UnifiedScanResult }) => void;
+  onAction?: (action: ScannerAction, context: { code: string; product?: ScannerProduct; result?: UnifiedScanResult }) => void;
   title?: string;
   continuous?: boolean;
 };
@@ -35,6 +40,11 @@ export function LiveProductScanner({ open, onOpenChange, onScan, onResolved, onP
   const [manualCode, setManualCode] = useState("");
   const [torch, setTorch] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  const [operation, setOperation] = useState<ScannerInventoryAction | null>(null);
+  const [operationProduct, setOperationProduct] = useState<ScannerProduct | null>(null);
+  const [quantity, setQuantity] = useState("1");
+  const [reason, setReason] = useState("");
+  const [savingOperation, setSavingOperation] = useState(false);
 
   useEffect(() => { onScanRef.current = onScan; }, [onScan]);
   useEffect(() => { continuousRef.current = continuous; }, [continuous]);
@@ -44,11 +54,19 @@ export function LiveProductScanner({ open, onOpenChange, onScan, onResolved, onP
     scannerRef.current = null;
     setTorch(false);
     setTorchSupported(false);
+    setOperation(null);
+    setOperationProduct(null);
     setState("stopped");
   }, []);
 
-  const emitAction = useCallback((action: ScannerAction, product?: NonNullable<ProductResolution["product"]>) => {
+  const emitAction = useCallback((action: ScannerAction, product?: ScannerProduct) => {
     onAction?.({ action, context: { code: lastCode, product } });
+    if ((action === "entry" || action === "exit" || action === "count") && product?.id) {
+      setOperation(action);
+      setOperationProduct(product);
+      setQuantity("1");
+      setReason(action === "entry" ? "Entrada desde escáner" : action === "exit" ? "Salida desde escáner" : "Conteo físico desde escáner");
+    }
   }, [lastCode, onAction]);
 
   const handleDetection = useCallback(async (result: UnifiedScanResult) => {
@@ -67,7 +85,7 @@ export function LiveProductScanner({ open, onOpenChange, onScan, onResolved, onP
       onResolved?.(resolution);
       if (resolution.status === "FOUND" && resolution.product) {
         setState("found");
-        onProductFound?.(resolution.product, result);
+        onProductFound?.(resolution.product as ScannerProduct, result);
         toast.success(`${resolution.product.name ?? "Producto"} encontrado`);
       } else if (resolution.status === "DUPLICATE") {
         setState("duplicate");
@@ -89,10 +107,10 @@ export function LiveProductScanner({ open, onOpenChange, onScan, onResolved, onP
     } finally {
       window.setTimeout(() => {
         lastHandledRef.current = "";
-        if (continuousRef.current && scannerRef.current) setState("scanning");
+        if (continuousRef.current && scannerRef.current && !operation) setState("scanning");
       }, 900);
     }
-  }, [onCodeNotFound, onProductFound, onResolved]);
+  }, [onCodeNotFound, onProductFound, onResolved, operation]);
 
   useEffect(() => {
     if (!open || !videoRef.current) return;
@@ -128,6 +146,35 @@ export function LiveProductScanner({ open, onOpenChange, onScan, onResolved, onP
     await handleDetection({ rawValue: code, format: "manual" } as UnifiedScanResult);
   };
 
+  const submitOperation = async () => {
+    if (!operation || !operationProduct) return;
+    const parsedQuantity = Number(quantity);
+    try {
+      const validated = validateScannerInventoryAction({ operation, quantity: parsedQuantity, reason, currentStock: Number(operationProduct.stock ?? 0) });
+      setSavingOperation(true);
+      const result = await executeScannerInventoryAction({
+        client: supabase,
+        productId: operationProduct.id,
+        operation: validated.operation,
+        quantity: validated.quantity,
+        currentStock: validated.currentStock,
+        reason: validated.reason,
+        scanCode: lastCode,
+      });
+      const resultWithStock = result as { stock_before?: number; stock_after?: number; delta?: number };
+      toast.success(`Movimiento registrado · stock ${resultWithStock.stock_before ?? validated.currentStock} → ${resultWithStock.stock_after ?? "actualizado"}`);
+      setOperation(null);
+      setOperationProduct(null);
+      setQuantity("1");
+      setReason("");
+      if (continuousRef.current && scannerRef.current) setState("scanning");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo registrar el movimiento");
+    } finally {
+      setSavingOperation(false);
+    }
+  };
+
   const toggleTorch = async () => {
     const scanner = scannerRef.current;
     if (!scanner || !torchSupported) return;
@@ -150,7 +197,8 @@ export function LiveProductScanner({ open, onOpenChange, onScan, onResolved, onP
         </div>
         <div className="flex gap-2"><Input value={manualCode} onChange={(e) => setManualCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void submitManualCode(); }} placeholder="Ingresar SKU / EAN manualmente" className="font-mono" /><Button size="icon" variant="outline" onClick={() => void submitManualCode()} disabled={!manualCode.trim()} aria-label="Buscar código"><Search className="h-4 w-4" /></Button></div>
         <div className="flex items-center justify-between gap-2"><div className="min-w-0 flex-1"><div className="text-xs text-muted-foreground">Último código</div><div className="truncate font-mono text-sm font-semibold">{lastCode || "—"}</div>{lastFormat && <div className="text-[11px] text-muted-foreground">{lastFormat}</div>}</div><div className="flex gap-2"><Button size="icon" variant="outline" disabled={!torchSupported} onClick={toggleTorch} aria-label="Linterna">{torch ? <ZapOff className="h-4 w-4" /> : <Zap className="h-4 w-4" />}</Button><Button size="icon" variant="outline" onClick={() => { stop(); onOpenChange(false); }} aria-label="Cerrar"><X className="h-4 w-4" /></Button></div></div>
-        {state === "found" && <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3"><div className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-primary" /><span>Producto identificado. Selecciona una operación.</span></div><div className="grid grid-cols-2 gap-2 sm:grid-cols-3"><Button size="sm" variant="outline" onClick={() => emitAction("entry")}><PackagePlus className="mr-1.5 h-4 w-4" />Entrada</Button><Button size="sm" variant="outline" onClick={() => emitAction("exit")}><PackagePlus className="mr-1.5 h-4 w-4" />Salida</Button><Button size="sm" variant="outline" onClick={() => emitAction("count")}><ClipboardList className="mr-1.5 h-4 w-4" />Contar</Button><Button size="sm" variant="outline" onClick={() => emitAction("add_code")}><Plus className="mr-1.5 h-4 w-4" />Agregar código</Button><Button size="sm" variant="outline" onClick={() => emitAction("view_product")}><Search className="mr-1.5 h-4 w-4" />Ver producto</Button></div></div>}
+        {state === "found" && !operation && <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3"><div className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-primary" /><span>Producto identificado. Selecciona una operación.</span></div><div className="grid grid-cols-2 gap-2 sm:grid-cols-3"><Button size="sm" variant="outline" onClick={() => emitAction("entry", operationProduct ?? undefined)}><PackagePlus className="mr-1.5 h-4 w-4" />Entrada</Button><Button size="sm" variant="outline" onClick={() => emitAction("exit", operationProduct ?? undefined)}><PackagePlus className="mr-1.5 h-4 w-4" />Salida</Button><Button size="sm" variant="outline" onClick={() => emitAction("count", operationProduct ?? undefined)}><ClipboardList className="mr-1.5 h-4 w-4" />Contar</Button><Button size="sm" variant="outline" onClick={() => emitAction("add_code", operationProduct ?? undefined)}><Plus className="mr-1.5 h-4 w-4" />Agregar código</Button><Button size="sm" variant="outline" onClick={() => emitAction("view_product", operationProduct ?? undefined)}><Search className="mr-1.5 h-4 w-4" />Ver producto</Button></div></div>}
+        {state === "found" && operation && operationProduct && <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-3"><div><div className="text-sm font-semibold">{operation === "entry" ? "Entrada de inventario" : operation === "exit" ? "Salida de inventario" : "Conteo físico"}</div><div className="text-xs text-muted-foreground">{operationProduct.name ?? "Producto"} · Stock actual: {Number(operationProduct.stock ?? 0)}</div></div><div className="grid gap-2"><Input type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Cantidad" inputMode="numeric"/><Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo del movimiento"/><div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => { setOperation(null); setOperationProduct(null); }} disabled={savingOperation}>Cancelar</Button><Button onClick={() => void submitOperation()} disabled={savingOperation}>{savingOperation ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Registrando…</> : "Confirmar movimiento"}</Button></div></div></div>}
         {state === "not_found" && <div className="rounded-xl border bg-muted/40 p-3 text-sm"><div className="font-medium">Código no registrado</div><div className="mt-1 text-xs text-muted-foreground">Puedes crear un producto nuevo o asociar este código a un producto existente.</div><div className="mt-3 flex gap-2"><Button size="sm" onClick={() => emitAction("new_product")}><Plus className="mr-1.5 h-4 w-4" />Crear producto</Button><Button size="sm" variant="outline" onClick={() => emitAction("add_code")}><Plus className="mr-1.5 h-4 w-4" />Asociar código</Button></div></div>}
         {(state === "duplicate" || state === "camera_error" || state === "permission_denied" || state === "unsupported") && <div className="rounded-xl border bg-muted/40 p-3 text-sm"><div className="font-medium">{statusText[state]}</div>{state === "duplicate" && <div className="mt-1 text-xs text-muted-foreground">Revisa las asociaciones y conserva un único código primario por producto.</div>}{state === "permission_denied" && <div className="mt-1 text-xs text-muted-foreground">Permite la cámara en el navegador y vuelve a intentarlo.</div>}{state === "unsupported" && <div className="mt-1 text-xs text-muted-foreground">Prueba Chrome actualizado en Android o la aplicación nativa.</div>}<Button variant="outline" className="mt-3" onClick={() => { stop(); setLastCode(""); setManualCode(""); setState("idle"); onOpenChange(false); window.setTimeout(() => onOpenChange(true), 0); }}><RotateCcw className="mr-2 h-4 w-4" />Reintentar</Button></div>}
         {state === "scanning" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Camera className="h-4 w-4" />Cámara en vivo · lector HID · búsqueda manual</div>}
