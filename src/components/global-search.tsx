@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   CommandDialog,
@@ -18,12 +18,15 @@ import {
   BarChart3,
   Sparkles,
   FileText,
-  Workflow,
   Settings,
   Calculator,
   CalendarClock,
   Users,
   Receipt,
+  ScanBarcode,
+  Plus,
+  ArrowDownToLine,
+  ArrowUpFromLine,
 } from "lucide-react";
 
 const navItems = [
@@ -37,20 +40,21 @@ const navItems = [
   { to: "/finance", label: "Finanzas", icon: CreditCard },
   { to: "/analytics", label: "Indicadores", icon: BarChart3 },
   { to: "/quotes", label: "Cotizaciones", icon: FileText },
-  // Oculto del buscador junto con el ítem del menú lateral (ver dashboard-shell.tsx).
-  // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow },
   { to: "/ai", label: "Asistente IA", icon: Sparkles },
   { to: "/shifts", label: "Turnos", icon: CalendarClock },
   { to: "/settings", label: "Configuración", icon: Settings },
 ] as const;
 
-export function GlobalSearch({
-  visibleNav,
-}: {
-  // Optional: pass the shell's already-role-filtered nav so hidden items
-  // (e.g. Turnos for non-admins) don't leak into search results.
-  visibleNav?: readonly { to: string }[];
-}) {
+const quickActions = [
+  { to: "/sales", label: "Nueva venta", keywords: "venta vender POS", icon: ShoppingCart },
+  { to: "/inventory", label: "Nuevo producto / SKU", keywords: "producto sku código inventario", icon: Plus },
+  { to: "/inventory", label: "Abrir scanner", keywords: "escanear scanner código barra barcode", icon: ScanBarcode },
+  { to: "/inventory", label: "Registrar entrada", keywords: "entrada stock recepción inventario", icon: ArrowDownToLine },
+  { to: "/inventory", label: "Registrar salida", keywords: "salida stock inventario", icon: ArrowUpFromLine },
+  { to: "/finance", label: "Registrar gasto", keywords: "gasto egreso finanzas", icon: CreditCard },
+] as const;
+
+export function GlobalSearch({ visibleNav }: { visibleNav?: readonly { to: string }[] }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -58,39 +62,59 @@ export function GlobalSearch({
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((o) => !o);
+        setOpen((current) => !current);
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const allowedPaths = visibleNav ? new Set(visibleNav.map((n) => n.to)) : null;
-  const items = allowedPaths ? navItems.filter((n) => allowedPaths.has(n.to)) : navItems;
+  const allowedPaths = useMemo(
+    () => (visibleNav ? new Set(visibleNav.map((item) => item.to)) : null),
+    [visibleNav],
+  );
+  const items = useMemo(
+    () => (allowedPaths ? navItems.filter((item) => allowedPaths.has(item.to)) : navItems),
+    [allowedPaths],
+  );
+  const actions = useMemo(
+    () => (allowedPaths ? quickActions.filter((item) => allowedPaths.has(item.to)) : quickActions),
+    [allowedPaths],
+  );
 
   function go(to: string) {
     setOpen(false);
-    navigate({ to: to as any });
+    navigate({ to: to as never });
   }
 
   return (
     <>
       <button
         type="button"
+        aria-label="Abrir búsqueda y acciones rápidas"
         onClick={() => setOpen(true)}
-        className="relative hidden max-w-md flex-1 items-center rounded-md border border-input bg-background px-3 py-2 text-left text-sm text-muted-foreground shadow-sm transition-colors hover:bg-accent md:flex"
+        className="relative flex min-w-0 flex-1 items-center rounded-md border border-input bg-background px-3 py-2 text-left text-sm text-muted-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:max-w-md"
       >
-        <span className="flex-1">Buscar...</span>
-        <CommandShortcut className="ml-2">⌘K</CommandShortcut>
+        <span className="flex-1 truncate">Buscar o ejecutar una acción...</span>
+        <CommandShortcut className="ml-2 hidden md:inline-flex">⌘K</CommandShortcut>
+        <ScanBarcode className="ml-2 h-4 w-4 shrink-0 md:hidden" aria-hidden="true" />
       </button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Buscar módulos o acciones rápidas..." />
+        <CommandInput placeholder="Buscar módulos o acciones..." />
         <CommandList>
           <CommandEmpty>Sin resultados.</CommandEmpty>
-          <CommandGroup heading="Navegar">
+          <CommandGroup heading="Acciones rápidas">
+            {actions.map((item) => (
+              <CommandItem key={`action:${item.label}`} value={`${item.label} ${item.keywords}`} onSelect={() => go(item.to)}>
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+          <CommandGroup heading="Módulos">
             {items.map((item) => (
-              <CommandItem key={item.to} value={item.label} onSelect={() => go(item.to)}>
+              <CommandItem key={`module:${item.to}`} value={item.label} onSelect={() => go(item.to)}>
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.label}
               </CommandItem>
