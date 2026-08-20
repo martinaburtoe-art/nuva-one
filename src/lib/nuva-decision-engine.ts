@@ -16,6 +16,9 @@ const weight: Record<IntelligenceSeverity, number> = { critical: 4, warning: 3, 
 export function buildNuvaDecision(input: Parameters<typeof buildNuvaIntelligence>[0], actionLimit = 5): NuvaDecision {
   const signals = buildNuvaIntelligence(input);
   const topSignal = signals[0];
+  if (!topSignal) {
+    throw new Error("Nüva Decision Engine requires at least one intelligence signal");
+  }
   const critical = signals.filter((s) => s.severity === "critical").length;
   const warning = signals.filter((s) => s.severity === "warning").length;
   const opportunity = signals.filter((s) => s.severity === "opportunity").length;
