@@ -7,6 +7,7 @@ export type NuvaAction = {
   reason: string;
   action: string;
   impact: number;
+  destination: "inventory" | "crm" | "purchases" | "finance" | "customers" | "dashboard";
 };
 
 type Signal = {
@@ -14,6 +15,7 @@ type Signal = {
   severity?: "critical" | "warning" | "opportunity" | "info";
   title: string;
   description: string;
+  action?: string;
   recommendation?: string;
 };
 
@@ -24,17 +26,33 @@ const priorityMap: Record<NonNullable<Signal["severity"]>, ActionPriority> = {
   info: "medium",
 };
 
-/** Converts analytical signals into a short, ranked action list for the owner. */
+const destinationMap: Record<string, NuvaAction["destination"]> = {
+  "low-stock": "inventory",
+  "receivables-overdue": "crm",
+  "purchase-pressure": "purchases",
+  "cash-burn": "finance",
+  "growth-opportunity": "customers",
+};
+
+const impactMap: Record<NonNullable<Signal["severity"]>, number> = {
+  critical: 100,
+  warning: 75,
+  opportunity: 65,
+  info: 40,
+};
+
+/** Converts analytical signals into a short, ranked, executable action list. */
 export function buildNuvaActionCenter(signals: Signal[], limit = 5): NuvaAction[] {
   return signals
-    .filter((signal) => signal && signal.title)
+    .filter((signal) => Boolean(signal?.title))
     .map((signal, index) => ({
       id: signal.id || `signal-${index}`,
       priority: priorityMap[signal.severity ?? "info"],
       title: signal.title,
       reason: signal.description,
-      action: signal.recommendation || "Revisar este indicador y definir una acción.",
-      impact: signal.severity === "critical" ? 100 : signal.severity === "warning" ? 75 : signal.severity === "opportunity" ? 65 : 40,
+      action: signal.action || signal.recommendation || "Revisar este indicador y definir una acción.",
+      impact: impactMap[signal.severity ?? "info"],
+      destination: destinationMap[signal.id] ?? "dashboard",
     }))
     .sort((a, b) => b.impact - a.impact)
     .slice(0, Math.max(1, limit));
