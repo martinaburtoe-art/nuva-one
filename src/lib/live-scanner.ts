@@ -42,10 +42,12 @@ export class LiveScanner {
   private fallbackControls: FallbackControls | null = null;
   private scanInFlight = false;
   private stopped = true;
+  private pausedByVisibility = false;
   private lastValue = '';
   private lastDetectedAt = 0;
   private video: HTMLVideoElement | null = null;
   private startToken = 0;
+  private visibilityHandler: (() => void) | null = null;
   private options: Required<Pick<LiveScannerOptions, 'facingMode' | 'scanIntervalMs' | 'duplicateCooldownMs'>> & LiveScannerOptions;
 
   constructor(options: LiveScannerOptions) {
@@ -84,6 +86,25 @@ export class LiveScanner {
     this.options.onDetect({ rawValue: value, format: normalizeFormat(format) });
   }
 
+  private installVisibilityHandler() {
+    if (!isBrowser()) return;
+    this.removeVisibilityHandler();
+    this.visibilityHandler = () => {
+      this.pausedByVisibility = document.visibilityState === 'hidden';
+      if (!this.pausedByVisibility && this.video && !this.stopped) {
+        void this.video.play().catch(() => undefined);
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+    this.pausedByVisibility = document.visibilityState === 'hidden';
+  }
+
+  private removeVisibilityHandler() {
+    if (!isBrowser() || !this.visibilityHandler) return;
+    document.removeEventListener('visibilitychange', this.visibilityHandler);
+    this.visibilityHandler = null;
+  }
+
   private async startNative(video: HTMLVideoElement, token: number) {
     const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorConstructor }).BarcodeDetector;
     let formats = [...SUPPORTED_FORMATS] as string[];
@@ -98,13 +119,13 @@ export class LiveScanner {
     catch (error) { throw Object.assign(error instanceof Error ? error : new Error('BarcodeDetector no disponible.'), { name: 'NotSupportedError' }); }
 
     const scan = async () => {
-      if (token !== this.startToken || this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+      if (token !== this.startToken || this.stopped || this.pausedByVisibility || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
       this.scanInFlight = true;
       try {
         const results = await detector.detect(video);
-        if (results[0] && token === this.startToken && !this.stopped) this.emit(results[0].rawValue, results[0].format);
+        if (results[0] && token === this.startToken && !this.stopped && !this.pausedByVisibility) this.emit(results[0].rawValue, results[0].format);
       } catch (error) {
-        if (!this.stopped && token === this.startToken) this.options.onError?.(error);
+        if (!this.stopped && token === this.startToken && !this.pausedByVisibility) this.options.onError?.(error);
       } finally { this.scanInFlight = false; }
     };
     this.timer = window.setInterval(scan, this.options.scanIntervalMs);
@@ -118,7 +139,9 @@ export class LiveScanner {
     this.fallbackControls = await reader.decodeFromConstraints(
       { video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 } }, audio: false },
       video,
-      (result) => { if (result && !this.stopped && token === this.startToken) this.emit(result.getText(), result.getBarcodeFormat().toString()); },
+      (result) => {
+        if (result && !this.stopped && !this.pausedByVisibility && token === this.startToken) this.emit(result.getText(), result.getBarcodeFormat().toString());
+      },
     );
     if (token !== this.startToken || this.stopped) this.fallbackControls?.stop();
     this.stream = video.srcObject instanceof MediaStream ? video.srcObject : null;
@@ -129,10 +152,12 @@ export class LiveScanner {
     this.stop();
     const token = ++this.startToken;
     this.stopped = false;
+    this.pausedByVisibility = false;
     this.video = video;
     video.setAttribute('playsinline', 'true');
     video.setAttribute('autoplay', 'true');
     video.muted = true;
+    this.installVisibilityHandler();
     try {
       const constraints: MediaStreamConstraints = {
         video: {
@@ -156,7 +181,9 @@ export class LiveScanner {
           this.stop();
           const fallbackToken = ++this.startToken;
           this.stopped = false;
+          this.pausedByVisibility = false;
           this.video = video;
+          this.installVisibilityHandler();
           await this.startZXing(video, fallbackToken);
           if (!this.stopped && fallbackToken === this.startToken) await video.play().catch(() => undefined);
           return;
@@ -175,6 +202,8 @@ export class LiveScanner {
   stop() {
     this.stopped = true;
     this.startToken += 1;
+    this.removeVisibilityHandler();
+    this.pausedByVisibility = false;
     if (this.timer !== null && isBrowser()) window.clearInterval(this.timer);
     this.timer = null;
     try { this.fallbackControls?.stop(); } catch { /* already stopped */ }
