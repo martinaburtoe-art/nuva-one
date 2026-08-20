@@ -1,17 +1,21 @@
 import { type ReactNode } from "react";
 import { Inbox } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { LucideIcon } from "lucide-react";
 import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
 
 export function PageHeader({
   title,
   description,
   action,
+  actions,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  actions?: ReactNode;
 }) {
+  const resolvedAction = actions ?? action;
+
   return (
     <>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -19,7 +23,7 @@ export function PageHeader({
           <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
           {description && <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>}
         </div>
-        {action}
+        {resolvedAction}
       </div>
       {title === "Clientes" && <NuvaOperatingPulse />}
     </>
@@ -35,12 +39,12 @@ export function EmptyState({
   title: string;
   description?: string;
   action?: ReactNode;
-  icon?: any;
+  icon?: LucideIcon;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 px-6 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center" role="status">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-foreground">
-        <Icon className="h-7 w-7" />
+        <Icon className="h-7 w-7" aria-hidden="true" />
       </div>
       <h3 className="mt-4 text-lg font-semibold">{title}</h3>
       {description && <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>}
