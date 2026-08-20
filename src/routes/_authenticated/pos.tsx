@@ -18,6 +18,7 @@ import { formatRut, normalizeRut } from "@/lib/rut";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { LiveScannerView } from "@/components/scanner/LiveScannerView";
+import { MobileScannerBridge } from "@/components/scanner/MobileScannerBridge";
 import { resolveProductCode, normalizeProductCode, type ResolvedProduct } from "@/lib/product-resolver";
 
 export const Route = createFileRoute("/_authenticated/pos")({
@@ -189,8 +190,8 @@ function POS() {
   return (
     <ModuleGuard module="pos">
       <>
-        <PageHeader title="Caja" description="Punto de venta rápido — escanea, agrega y cobra" action={<div className="flex items-center gap-2"><Button variant="outline" onClick={() => openLiveScanner("cart")} disabled={!canWrite}><ScanBarcode className="mr-2 h-4 w-4" />Escanear en vivo</Button><div className="rounded-xl border bg-card px-4 py-2 text-right"><div className="text-xs text-muted-foreground">Hoy</div><div className="text-lg font-bold">{fmtCLP(todayTotal)}</div><div className="text-[10px] text-muted-foreground">{todaySales.length} venta(s)</div></div></div>} />
-        <Card className="mb-4 border-primary/20 bg-primary/5 p-3"><div className="flex flex-wrap items-center gap-2 text-sm"><ScanBarcode className="h-4 w-4 text-primary" /><span className="font-medium">Nüva Live:</span><span className="text-muted-foreground">cámara en vivo + resolución segura. No se toman fotografías.</span><Button variant="link" className="h-auto p-0" onClick={() => openLiveScanner("cart")}>Abrir lector</Button></div></Card>
+        <PageHeader title="Caja" description="Punto de venta rápido — escanea, agrega y cobra" action={<div className="flex items-center gap-2"><Button variant="outline" onClick={() => openLiveScanner("cart")} disabled={!canWrite}><ScanBarcode className="mr-2 h-4 w-4" />Escanear en vivo</Button>{active?.id && <MobileScannerBridge businessId={active.id} onScan={(code) => void handleLiveDetected({ rawValue: code, format: "mobile-camera" })} />}<div className="rounded-xl border bg-card px-4 py-2 text-right"><div className="text-xs text-muted-foreground">Hoy</div><div className="text-lg font-bold">{fmtCLP(todayTotal)}</div><div className="text-[10px] text-muted-foreground">{todaySales.length} venta(s)</div></div></div>} />
+        <Card className="mb-4 border-primary/20 bg-primary/5 p-3"><div className="flex flex-wrap items-center gap-2 text-sm"><ScanBarcode className="h-4 w-4 text-primary" /><span className="font-medium">Nüva Live:</span><span className="text-muted-foreground">cámara en vivo + celular como lector + resolución segura. No se toman fotografías.</span><Button variant="link" className="h-auto p-0" onClick={() => openLiveScanner("cart")}>Abrir lector</Button></div></Card>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
           <div className="space-y-4">
             <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre, SKU, código de barras o categoría…" className="h-12 pl-10 text-base" autoFocus /></div>
