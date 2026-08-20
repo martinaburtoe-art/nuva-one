@@ -24,4 +24,22 @@ describe("buildNuvaActionCenter", () => {
     expect(actions[0].priority).toBe("opportunity");
     expect(actions[0].action.length).toBeGreaterThan(0);
   });
+
+  it("maps operational signals to explicit destinations and CTAs", () => {
+    const actions = buildNuvaActionCenter([
+      { id: "low-stock", severity: "critical", title: "Stock bajo", description: "2 SKU" },
+      { id: "receivables-overdue", severity: "warning", title: "Cobranza", description: "$100.000" },
+      { id: "purchase-pressure", severity: "warning", title: "Compras", description: "Alta" },
+      { id: "cash-burn", severity: "critical", title: "Caja", description: "Negativa" },
+    ]);
+    expect(actions.map((a) => a.destination)).toEqual(["inventory", "finance", "crm", "purchases"]);
+    expect(actions.find((a) => a.destination === "inventory")?.cta).toBe("Revisar inventario");
+    expect(actions.find((a) => a.destination === "finance")?.cta).toBe("Revisar finanzas");
+  });
+
+  it("falls back safely for unknown signals", () => {
+    const [action] = buildNuvaActionCenter([{ id: "unknown", title: "Nuevo", description: "x" }]);
+    expect(action.destination).toBe("dashboard");
+    expect(action.cta).toBe("Revisar indicador");
+  });
 });
