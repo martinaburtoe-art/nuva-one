@@ -93,25 +93,27 @@ export function GlobalSearch({ visibleNav }: { visibleNav?: readonly { to: strin
         type="button"
         aria-label="Abrir búsqueda y acciones rápidas"
         onClick={() => setOpen(true)}
-        className="relative flex min-w-0 flex-1 items-center rounded-md border border-input bg-background px-3 py-2 text-left text-sm text-muted-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:max-w-md"
+        className="relative flex h-9 min-w-0 flex-1 items-center justify-center rounded-md border border-input bg-background px-2 text-sm text-muted-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-auto md:max-w-md md:justify-start md:px-3 md:py-2 md:text-left"
       >
-        <span className="flex-1 truncate">Buscar o ejecutar una acción...</span>
+        <ScanBarcode className="h-4 w-4 shrink-0 md:mr-2" aria-hidden="true" />
+        <span className="hidden flex-1 truncate md:block">Buscar o ejecutar una acción...</span>
         <CommandShortcut className="ml-2 hidden md:inline-flex">⌘K</CommandShortcut>
-        <ScanBarcode className="ml-2 h-4 w-4 shrink-0 md:hidden" aria-hidden="true" />
       </button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Buscar módulos o acciones..." />
+        <CommandInput placeholder="Buscar módulos, SKU, scanner o acciones..." />
         <CommandList>
           <CommandEmpty>Sin resultados.</CommandEmpty>
-          <CommandGroup heading="Acciones rápidas">
-            {actions.map((item) => (
-              <CommandItem key={`action:${item.label}`} value={`${item.label} ${item.keywords}`} onSelect={() => go(item.to)}>
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          {actions.length > 0 && (
+            <CommandGroup heading="Acciones rápidas">
+              {actions.map((item) => (
+                <CommandItem key={`action:${item.label}`} value={`${item.label} ${item.keywords}`} onSelect={() => go(item.to)}>
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
           <CommandGroup heading="Módulos">
             {items.map((item) => (
               <CommandItem key={`module:${item.to}`} value={item.label} onSelect={() => go(item.to)}>
