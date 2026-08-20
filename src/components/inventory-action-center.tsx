@@ -1,10 +1,11 @@
-import { ArrowRight, CheckCircle2, Clock3, Package, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock3, Package, ScanBarcode, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useBizInsert, useBizList } from "@/lib/biz-data";
 import { ProductCodeRegistry } from "@/components/product-code-registry";
 import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
 
 type Product = {
   id: string;
@@ -38,6 +39,7 @@ function priority(product: Product) {
 }
 
 export function InventoryActionCenter({ products, canWrite = true }: Props) {
+  const navigate = useNavigate();
   const { data: activities = [] } = useBizList<Activity>("customer_activities", { order: "created_at" });
   const insertActivity = useBizInsert("customer_activities");
 
@@ -87,7 +89,13 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
               <h2 className="mt-2 text-xl font-semibold">Convierte inventario crítico en trabajo operativo</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">Las señales de Inventory Intelligence pueden convertirse en tareas trazables usando el modelo de actividades existente.</p>
             </div>
-            <Badge variant="secondary" className="gap-1"><Package className="h-3.5 w-3.5" /> {openCount} abiertas</Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="gap-1"><Package className="h-3.5 w-3.5" /> {openCount} abiertas</Badge>
+              <Button size="sm" variant="outline" onClick={() => navigate({ to: "/inventario-conteo" })}>
+                <ScanBarcode className="mr-2 h-4 w-4" />
+                Escanear / registrar
+              </Button>
+            </div>
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
