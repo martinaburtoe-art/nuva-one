@@ -45,10 +45,11 @@ export class LiveScanner {
   private lastValue = '';
   private lastDetectedAt = 0;
   private video: HTMLVideoElement | null = null;
+  private startToken = 0;
   private options: Required<Pick<LiveScannerOptions, 'facingMode' | 'scanIntervalMs' | 'duplicateCooldownMs'>> & LiveScannerOptions;
 
   constructor(options: LiveScannerOptions) {
-    this.options = { facingMode: 'environment', scanIntervalMs: 160, duplicateCooldownMs: 1200, ...options };
+    this.options = { facingMode: 'environment', scanIntervalMs: 200, duplicateCooldownMs: 1200, ...options };
   }
 
   static hasCameraSupport() { return isBrowser() && !!navigator.mediaDevices?.getUserMedia; }
@@ -83,7 +84,7 @@ export class LiveScanner {
     this.options.onDetect({ rawValue: value, format: normalizeFormat(format) });
   }
 
-  private async startNative(video: HTMLVideoElement) {
+  private async startNative(video: HTMLVideoElement, token: number) {
     const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorConstructor }).BarcodeDetector;
     let formats = [...SUPPORTED_FORMATS] as string[];
     if (typeof Detector.getSupportedFormats === 'function') {
@@ -97,34 +98,36 @@ export class LiveScanner {
     catch (error) { throw Object.assign(error instanceof Error ? error : new Error('BarcodeDetector no disponible.'), { name: 'NotSupportedError' }); }
 
     const scan = async () => {
-      if (this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+      if (token !== this.startToken || this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
       this.scanInFlight = true;
       try {
         const results = await detector.detect(video);
-        if (results[0]) this.emit(results[0].rawValue, results[0].format);
+        if (results[0] && token === this.startToken && !this.stopped) this.emit(results[0].rawValue, results[0].format);
       } catch (error) {
-        if (!this.stopped) this.options.onError?.(error);
+        if (!this.stopped && token === this.startToken) this.options.onError?.(error);
       } finally { this.scanInFlight = false; }
     };
     this.timer = window.setInterval(scan, this.options.scanIntervalMs);
     await scan();
   }
 
-  private async startZXing(video: HTMLVideoElement) {
+  private async startZXing(video: HTMLVideoElement, token: number) {
     const { BrowserMultiFormatReader } = await import('@zxing/browser');
-    if (this.stopped) return;
+    if (this.stopped || token !== this.startToken) return;
     const reader = new BrowserMultiFormatReader() as unknown as ZXingReader;
     this.fallbackControls = await reader.decodeFromConstraints(
-      { video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+      { video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 } }, audio: false },
       video,
-      (result) => { if (result && !this.stopped) this.emit(result.getText(), result.getBarcodeFormat().toString()); },
+      (result) => { if (result && !this.stopped && token === this.startToken) this.emit(result.getText(), result.getBarcodeFormat().toString()); },
     );
+    if (token !== this.startToken || this.stopped) this.fallbackControls?.stop();
     this.stream = video.srcObject instanceof MediaStream ? video.srcObject : null;
   }
 
   async start(video: HTMLVideoElement) {
     if (!LiveScanner.hasCameraSupport()) throw new Error('Este dispositivo no permite acceder a la cámara.');
     this.stop();
+    const token = ++this.startToken;
     this.stopped = false;
     this.video = video;
     video.setAttribute('playsinline', 'true');
@@ -134,35 +137,36 @@ export class LiveScanner {
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: { ideal: this.options.facingMode },
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 },
+          width: { ideal: 1280, max: 1280, min: 640 },
+          height: { ideal: 720, max: 720, min: 480 },
         },
         audio: false,
       };
       if (LiveScanner.hasNativeBarcodeDetector()) {
         this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-        if (this.stopped) { this.stop(); return; }
+        if (this.stopped || token !== this.startToken) { this.stop(); return; }
         video.srcObject = this.stream;
         await video.play();
         try {
-          await this.startNative(video);
+          await this.startNative(video, token);
           return;
         } catch (nativeError) {
           const fallbackAllowed = nativeError instanceof Error && ['NotSupportedError', 'TypeMismatchError', 'InvalidStateError'].includes(nativeError.name);
-          if (!fallbackAllowed) throw nativeError;
+          if (!fallbackAllowed || this.stopped || token !== this.startToken) throw nativeError;
           this.stop();
+          const fallbackToken = ++this.startToken;
           this.stopped = false;
           this.video = video;
-          await this.startZXing(video);
-          await video.play().catch(() => undefined);
+          await this.startZXing(video, fallbackToken);
+          if (!this.stopped && fallbackToken === this.startToken) await video.play().catch(() => undefined);
           return;
         }
       }
 
-      await this.startZXing(video);
-      await video.play().catch(() => undefined);
+      await this.startZXing(video, token);
+      if (!this.stopped && token === this.startToken) await video.play().catch(() => undefined);
     } catch (error) {
-      this.stop();
+      if (token === this.startToken) this.stop();
       this.options.onError?.(error);
       throw error;
     }
@@ -170,6 +174,7 @@ export class LiveScanner {
 
   stop() {
     this.stopped = true;
+    this.startToken += 1;
     if (this.timer !== null && isBrowser()) window.clearInterval(this.timer);
     this.timer = null;
     try { this.fallbackControls?.stop(); } catch { /* already stopped */ }
