@@ -36,7 +36,6 @@ function normalizeFormat(format?: string) {
   return aliases[value] ?? value;
 }
 
-/** Camera-first scanner. Native BarcodeDetector is preferred; ZXing is the live-video fallback. */
 export class LiveScanner {
   private stream: MediaStream | null = null;
   private timer: number | null = null;
@@ -48,7 +47,9 @@ export class LiveScanner {
   private video: HTMLVideoElement | null = null;
   private options: Required<Pick<LiveScannerOptions, 'facingMode' | 'scanIntervalMs' | 'duplicateCooldownMs'>> & LiveScannerOptions;
 
-  constructor(options: LiveScannerOptions) { this.options = { facingMode: 'environment', scanIntervalMs: 160, duplicateCooldownMs: 1200, ...options }; }
+  constructor(options: LiveScannerOptions) {
+    this.options = { facingMode: 'environment', scanIntervalMs: 160, duplicateCooldownMs: 1200, ...options };
+  }
 
   static hasCameraSupport() { return isBrowser() && !!navigator.mediaDevices?.getUserMedia; }
   static hasNativeBarcodeDetector() { return isBrowser() && 'BarcodeDetector' in window; }
@@ -92,11 +93,8 @@ export class LiveScanner {
     if (!formats.length) throw Object.assign(new Error('No hay formatos nativos compatibles.'), { name: 'NotSupportedError' });
 
     let detector: ReturnType<BarcodeDetectorLike>;
-    try {
-      detector = new Detector({ formats });
-    } catch (error) {
-      throw Object.assign(error instanceof Error ? error : new Error('BarcodeDetector no disponible.'), { name: 'NotSupportedError' });
-    }
+    try { detector = new Detector({ formats }); }
+    catch (error) { throw Object.assign(error instanceof Error ? error : new Error('BarcodeDetector no disponible.'), { name: 'NotSupportedError' }); }
 
     const scan = async () => {
       if (this.stopped || !this.video || !this.stream?.active || this.scanInFlight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
@@ -133,8 +131,16 @@ export class LiveScanner {
     video.setAttribute('autoplay', 'true');
     video.muted = true;
     try {
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: this.options.facingMode },
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 },
+        },
+        audio: false,
+      };
       if (LiveScanner.hasNativeBarcodeDetector()) {
-        this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+        this.stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (this.stopped) { this.stop(); return; }
         video.srcObject = this.stream;
         await video.play();
