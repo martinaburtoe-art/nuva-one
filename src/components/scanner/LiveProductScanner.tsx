@@ -15,6 +15,8 @@ type ScannerState = "idle" | "requesting_permission" | "camera_starting" | "scan
 export type ScannerAction = "entry" | "exit" | "count" | "new_product" | "add_code" | "view_product";
 type ScannerProduct = NonNullable<ProductResolution["product"]> & { id: string; stock?: number | null };
 
+type InventoryActionResult = { stock_before?: number | null; stock_after?: number | null } | Array<{ stock_before?: number | null; stock_after?: number | null }>;
+
 export type LiveProductScannerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -164,10 +166,14 @@ export function LiveProductScanner({ open, onOpenChange, onScan, onResolved, onP
       const validated = validateScannerInventoryAction({ operation, quantity: parsedQuantity, reason, currentStock: Number(operationProduct.stock ?? 0) });
       setSavingOperation(true);
       const result = await executeScannerInventoryAction({ client: supabase, productId: operationProduct.id, operation: validated.operation, quantity: validated.quantity, currentStock: validated.currentStock, reason: validated.reason, scanCode: lastCode });
-      const resultWithStock = result as { stock_before?: number; stock_after?: number };
-      toast.success(`Movimiento registrado · stock ${resultWithStock.stock_before ?? validated.currentStock} → ${resultWithStock.stock_after ?? "actualizado"}`);
+      const payload = Array.isArray(result) ? result[0] : result;
+      const stockBefore = typeof payload?.stock_before === "number" ? payload.stock_before : validated.currentStock;
+      const stockAfter = typeof payload?.stock_after === "number" ? payload.stock_after : null;
+      if (typeof stockAfter === "number") {
+        setOperationProduct((current) => current ? { ...current, stock: stockAfter } : current);
+      }
+      toast.success(`Movimiento registrado · stock ${stockBefore} → ${stockAfter ?? "actualizado"}`);
       setOperation(null);
-      setOperationProduct(null);
       setQuantity("1");
       setReason("");
       if (continuousRef.current && scannerRef.current) setState("scanning");
