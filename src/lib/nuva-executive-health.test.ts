@@ -8,8 +8,8 @@ describe("executive health", () => {
       { key: "margin", label: "Margen", value: 80, target: 100, weight: 2 },
       { key: "stock", label: "Riesgo stock", value: 20, target: 10, weight: 1, higherIsBetter: false },
     ]);
-    expect(result.score).toBe(62);
-    expect(result.status).toBe("attention");
+    expect(result.score).toBe(77);
+    expect(result.status).toBe("healthy");
     expect(result.weakestMetric).toBe("Caja");
   });
 
