@@ -6,6 +6,10 @@ export type NormalizedScannerCode = {
   validChecksum: boolean;
 };
 
+export type ScannerCodeValidation =
+  | { kind: "valid"; value: string; codeKind: Exclude<ScannerCodeKind, "UNKNOWN"> }
+  | { kind: "invalid"; value: string; message: string };
+
 export function normalizeScannerCode(raw: string): string {
   return raw.trim().replace(/\s+/g, "").toUpperCase();
 }
@@ -31,7 +35,13 @@ export function classifyScannerCode(raw: string): NormalizedScannerCode {
   return { value, kind: "UNKNOWN", validChecksum: false };
 }
 
-export function isValidProductCode(raw: string): boolean {
+export function validateScannedCode(raw: string): ScannerCodeValidation {
   const code = classifyScannerCode(raw);
-  return code.kind === "SKU" || ((code.kind === "EAN-13" || code.kind === "EAN-8" || code.kind === "UPC-A") && code.validChecksum);
+  if (code.kind === "UNKNOWN") return { kind: "invalid", value: code.value, message: "El código escaneado no tiene un formato compatible." };
+  if (!code.validChecksum) return { kind: "invalid", value: code.value, message: `El ${code.kind} tiene un dígito verificador inválido.` };
+  return { kind: "valid", value: code.value, codeKind: code.kind };
+}
+
+export function isValidProductCode(raw: string): boolean {
+  return validateScannedCode(raw).kind === "valid";
 }
