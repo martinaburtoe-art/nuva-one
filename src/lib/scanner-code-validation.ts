@@ -15,9 +15,9 @@ function hasValidChecksum(value: string): boolean {
   const digits = value.split("").map(Number);
   const check = digits.pop()!;
   let sum = 0;
-  const weight = digits.length % 2 === 0 ? 3 : 1;
+  const leftmostWeight = digits.length % 2 === 1 ? 3 : 1;
   digits.forEach((digit, index) => {
-    sum += digit * (index % 2 === 0 ? weight : 4 - weight);
+    sum += digit * (index % 2 === 0 ? leftmostWeight : 4 - leftmostWeight);
   });
   return (10 - (sum % 10)) % 10 === check;
 }
