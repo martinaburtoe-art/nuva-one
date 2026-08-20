@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { ModuleGuard } from "@/components/module-guard";
 import { LiveProductScanner } from "@/components/scanner/LiveProductScanner";
-import { FileDown, PackagePlus, ScanBarcode, ClipboardCheck, Plus, Minus, Search } from "lucide-react";
+import { FileDown, PackagePlus, ScanBarcode, ClipboardCheck, Plus, Minus, Search, Tag, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
@@ -34,8 +34,11 @@ function InventoryCount() {
   const [stocktakeId, setStocktakeId] = useState<string | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanActionsOpen, setScanActionsOpen] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
+  const [newSkuOpen, setNewSkuOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: "", sku: "", barcode: "", category: "", cost: "0", price: "0", stock: "0" });
+  const [newSku, setNewSku] = useState({ productId: "", sku: "" });
   const inputRef = useRef<HTMLInputElement>(null);
 
   const matched = useMemo(() => products.find((p: any) => String(p.barcode ?? "").trim().toLowerCase() === barcode.trim().toLowerCase() || String(p.sku ?? "").trim().toLowerCase() === barcode.trim().toLowerCase()), [products, barcode]);
@@ -62,6 +65,7 @@ function InventoryCount() {
         if (resolution.status === "DUPLICATE") return toast.error("El código está asociado a más de un producto");
         if (resolution.status !== "FOUND" || !resolution.product) {
           setNewProduct((v) => ({ ...v, barcode: code }));
+          setScanActionsOpen(false);
           setNewProductOpen(true);
           return;
         }
@@ -120,15 +124,54 @@ function InventoryCount() {
     toast.success(`Conteo finalizado. ${Number(result?.adjusted_products ?? 0)} productos ajustados.`);
   }
 
+  function openNewProduct(prefilledCode = "") {
+    setScanActionsOpen(false);
+    setNewProduct((v) => ({ ...v, barcode: prefilledCode || v.barcode }));
+    setNewProductOpen(true);
+  }
+
+  async function generateSku() {
+    if (!active || !canWrite) return;
+    try {
+      const { data, error } = await (supabase as any).rpc("generate_product_sku", { p_business_id: active.id, p_prefix: "NVA-PRD" });
+      if (error) throw error;
+      setNewSku((v) => ({ ...v, sku: String(data ?? "") }));
+      setNewProduct((v) => ({ ...v, sku: String(data ?? "") }));
+      toast.success("SKU generado correctamente");
+    } catch (error: any) {
+      toast.error(error?.message ?? "No se pudo generar el SKU");
+    }
+  }
+
+  async function registerSku() {
+    if (!active || !canWrite) return;
+    const product = products.find((p: any) => p.id === newSku.productId);
+    const sku = newSku.sku.trim();
+    if (!product) return toast.error("Selecciona un producto existente");
+    if (!sku) return toast.error("Ingresa o genera un SKU");
+    try {
+      const { error } = await (supabase as any).from("products").update({ sku }).eq("id", product.id).eq("business_id", active.id);
+      if (error) throw error;
+      setNewSkuOpen(false);
+      setNewSku({ productId: "", sku: "" });
+      await refetch();
+      toast.success(`SKU ${sku} registrado para ${product.name ?? "el producto"}`);
+    } catch (error: any) {
+      toast.error(error?.message ?? "No se pudo registrar el SKU");
+    }
+  }
+
   async function createProduct() {
-    if (!active || !newProduct.name.trim() || !newProduct.barcode.trim()) return toast.error("Nombre y código de barras son obligatorios");
-    const { data, error } = await supabase.from("products" as any).insert({ business_id: active.id, name: newProduct.name.trim(), sku: newProduct.sku.trim() || null, barcode: newProduct.barcode.trim(), category: newProduct.category.trim() || null, cost: Number(newProduct.cost) || 0, price: Number(newProduct.price) || 0, stock: 0 }).select("id,name,barcode,stock,sku").single();
-    if (error) return toast.error(error.message.includes("barcode") ? "Ese código ya existe para este negocio" : error.message);
+    if (!active || !newProduct.name.trim()) return toast.error("El nombre del producto es obligatorio");
+    if (!newProduct.barcode.trim() && !newProduct.sku.trim()) return toast.error("Ingresa un código o SKU para identificar el producto");
+    const { data, error } = await supabase.from("products" as any).insert({ business_id: active.id, name: newProduct.name.trim(), sku: newProduct.sku.trim() || null, barcode: newProduct.barcode.trim() || null, category: newProduct.category.trim() || null, cost: Number(newProduct.cost) || 0, price: Number(newProduct.price) || 0, stock: 0 }).select("id,name,barcode,stock,sku").single();
+    if (error) return toast.error(error.message.includes("barcode") ? "Ese código ya existe para este negocio" : error.message.includes("sku") ? "Ese SKU ya existe para este negocio" : error.message);
     setNewProductOpen(false);
     setBarcode("");
     await refetch();
-    if (data) await scanValue(String(data.barcode), { product_id: data.id, name: data.name, barcode: data.barcode, sku: data.sku, stock: Number(data.stock ?? 0) });
-    toast.success("Producto agregado al inventario");
+    if (data) await scanValue(String(data.barcode ?? data.sku), { product_id: data.id, name: data.name, barcode: data.barcode, sku: data.sku, stock: Number(data.stock ?? 0) });
+    setNewProduct({ name: "", sku: "", barcode: "", category: "", cost: "0", price: "0", stock: "0" });
+    toast.success("Producto creado y agregado al conteo");
   }
 
   async function generatePdf() {
@@ -146,13 +189,15 @@ function InventoryCount() {
   const differences = lines.filter((x) => x.counted_qty !== x.system_qty).length;
   return <ModuleGuard module="inventory"><div className="space-y-6"><PageHeader title="Conteo físico de inventario" description="Escanea con cámara o pistola, compara contra el stock digital y aplica las diferencias de forma atómica al finalizar." action={<Badge variant={stocktakeId ? "default" : "secondary"}>{stocktakeId ? "Conteo en curso" : "Sin conteo"}</Badge>} />
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-      <Card className="p-5 space-y-4"><div className="flex flex-wrap gap-2"><Button disabled={!canWrite || !!stocktakeId} onClick={startCount}><ClipboardCheck className="mr-2 h-4 w-4"/>Nuevo conteo</Button><Button variant="outline" onClick={() => setScannerOpen(true)} disabled={!canWrite}><ScanBarcode className="mr-2 h-4 w-4"/>Escáner móvil</Button></div>
+      <Card className="p-5 space-y-4"><div className="flex flex-wrap gap-2"><Button disabled={!canWrite || !!stocktakeId} onClick={startCount}><ClipboardCheck className="mr-2 h-4 w-4"/>Nuevo conteo</Button><Button variant="outline" onClick={() => setScanActionsOpen(true)} disabled={!canWrite}><ScanBarcode className="mr-2 h-4 w-4"/>Escanear / registrar</Button></div>
       <div className="flex gap-2"><Input ref={inputRef} autoFocus value={barcode} onChange={(e)=>setBarcode(e.target.value)} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();void scanValue(barcode)}}} placeholder="Pistola USB/Bluetooth HID: escanea y presiona Enter…"/><Button onClick={()=>void scanValue(barcode)}><Search className="h-4 w-4"/></Button></div>
       {matched && <div className="rounded-lg border p-3 text-sm"><b>{matched.name}</b> · Código {matched.barcode ?? matched.sku} · Stock digital {matched.stock}</div>}
       <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Producto</th><th className="p-2">Código</th><th className="p-2">Sistema</th><th className="p-2">Físico</th><th className="p-2">Dif.</th></tr></thead><tbody>{lines.map((x)=> <tr key={x.id} className="border-b"><td className="p-2">{x.product_name}</td><td className="p-2">{x.barcode ?? "—"}</td><td className="p-2">{x.system_qty}</td><td className="p-2"><div className="flex items-center gap-1"><Button size="icon" variant="outline" onClick={()=>setLines(v=>v.map(y=>y.id===x.id?{...y,counted_qty:Math.max(0,y.counted_qty-1)}:y))}><Minus className="h-3 w-3"/></Button><span className="w-8 text-center">{x.counted_qty}</span><Button size="icon" variant="outline" onClick={()=>setLines(v=>v.map(y=>y.id===x.id?{...y,counted_qty:y.counted_qty+1}:y))}><Plus className="h-3 w-3"/></Button></div></td><td className={x.counted_qty===x.system_qty?"p-2 text-emerald-600":"p-2 font-semibold text-destructive"}>{x.counted_qty-x.system_qty}</td></tr>)}</tbody></table>{!lines.length&&<p className="py-10 text-center text-sm text-muted-foreground">Escanea el primer producto para comenzar.</p>}</div></Card>
       <Card className="p-5 space-y-4"><h2 className="font-semibold">Resultado del conteo</h2><div className="grid grid-cols-2 gap-3"><Metric label="Productos contados" value={String(lines.length)}/><Metric label="Con diferencias" value={String(differences)}/><Metric label="Stock digital" value={String(lines.reduce((s,x)=>s+x.system_qty,0))}/><Metric label="Stock físico" value={String(lines.reduce((s,x)=>s+x.counted_qty,0))}/></div><Button className="w-full" variant="outline" disabled={!lines.length} onClick={()=>void generatePdf()}><FileDown className="mr-2 h-4 w-4"/>Generar documento comparativo</Button><Button className="w-full" disabled={!stocktakeId || !lines.length || !canWrite} onClick={()=>void finishCount()}><ClipboardCheck className="mr-2 h-4 w-4"/>Guardar, finalizar y auditar</Button><p className="text-xs text-muted-foreground">Si el guardado falla, el conteo no se completa. La finalización aplica los ajustes y crea los movimientos de auditoría dentro de una transacción.</p></Card></div>
+    <Dialog open={scanActionsOpen} onOpenChange={setScanActionsOpen}><DialogContent><DialogHeader><DialogTitle>Agregar al inventario</DialogTitle></DialogHeader><div className="grid gap-3"><Button size="lg" onClick={()=>{setScanActionsOpen(false);setScannerOpen(true);}}><ScanBarcode className="mr-2 h-5 w-5"/>Escanear código</Button><Button size="lg" variant="outline" onClick={()=>{setScanActionsOpen(false);setNewSkuOpen(true);}}><Tag className="mr-2 h-5 w-5"/>Registrar nuevo SKU</Button><Button size="lg" variant="outline" onClick={()=>openNewProduct()}><PackagePlus className="mr-2 h-5 w-5"/>Registrar nuevo producto</Button><p className="text-center text-xs text-muted-foreground">Puedes escanear con la cámara del celular o asociar una nueva identificación a un producto existente.</p></div></DialogContent></Dialog>
     <LiveProductScanner open={scannerOpen} onOpenChange={setScannerOpen} title="Nüva Scan · Conteo" onProductFound={(product) => { void scanValue(product.sku ?? product.barcode ?? "", { product_id: product.product_id, name: product.name, barcode: product.barcode, sku: product.sku, stock: product.stock }); }} />
-    <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}><DialogContent><DialogHeader><DialogTitle>Producto no registrado</DialogTitle></DialogHeader><div className="space-y-3"><p className="text-sm text-muted-foreground">El código {newProduct.barcode} no existe. Puedes crear el producto directamente desde el escaneo.</p>{Object.entries({name:"Nombre",sku:"SKU",category:"Categoría",cost:"Costo",price:"Precio",stock:"Stock inicial"}).map(([key,label])=><div key={key}><Label>{label}</Label><Input type={key==='cost'||key==='price'||key==='stock'?'number':'text'} value={(newProduct as any)[key]} onChange={(e)=>setNewProduct(v=>({...v,[key]:e.target.value}))}/></div>)}<Button className="w-full" onClick={()=>void createProduct()}><PackagePlus className="mr-2 h-4 w-4"/>Crear producto y agregar al conteo</Button></div></DialogContent></Dialog>
+    <Dialog open={newSkuOpen} onOpenChange={setNewSkuOpen}><DialogContent><DialogHeader><DialogTitle>Registrar nuevo SKU</DialogTitle></DialogHeader><div className="space-y-4"><p className="text-sm text-muted-foreground">Asocia un SKU interno a un producto existente. El SKU queda protegido por el negocio.</p><div><Label>Producto</Label><select className="mt-1 flex h-10 w-full rounded-md border bg-background px-3 text-sm" value={newSku.productId} onChange={(e)=>setNewSku(v=>({...v,productId:e.target.value}))}><option value="">Selecciona un producto</option>{products.map((p:any)=><option key={p.id} value={p.id}>{p.name ?? "Producto"}{p.sku ? ` · ${p.sku}` : ""}</option>)}</select></div><div><Label>SKU</Label><div className="flex gap-2"><Input value={newSku.sku} onChange={(e)=>setNewSku(v=>({...v,sku:e.target.value}))} placeholder="NVA-PRD-000001"/><Button type="button" variant="outline" onClick={()=>void generateSku()}><Sparkles className="mr-2 h-4 w-4"/>Generar</Button></div></div><div className="flex justify-end gap-2"><Button variant="outline" onClick={()=>setNewSkuOpen(false)}>Cancelar</Button><Button onClick={()=>void registerSku()} disabled={!canWrite}>Registrar SKU</Button></div></div></DialogContent></Dialog>
+    <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}><DialogContent><DialogHeader><DialogTitle>Registrar nuevo producto</DialogTitle></DialogHeader><div className="space-y-3"><p className="text-sm text-muted-foreground">Crea el producto directamente desde el flujo de inventario. Puedes ingresar el código que acabas de escanear o generar un SKU.</p><div><Label>Nombre</Label><Input value={newProduct.name} onChange={(e)=>setNewProduct(v=>({...v,name:e.target.value}))} required/></div><div className="grid gap-3 sm:grid-cols-2"><div><Label>SKU</Label><div className="flex gap-2"><Input value={newProduct.sku} onChange={(e)=>setNewProduct(v=>({...v,sku:e.target.value}))} placeholder="Opcional"/><Button type="button" size="icon" variant="outline" title="Generar SKU" onClick={()=>void generateSku()}><Sparkles className="h-4 w-4"/></Button></div></div><div><Label>Código</Label><Input value={newProduct.barcode} onChange={(e)=>setNewProduct(v=>({...v,barcode:e.target.value}))} placeholder="EAN, UPC, QR…"/></div></div><div><Label>Categoría</Label><Input value={newProduct.category} onChange={(e)=>setNewProduct(v=>({...v,category:e.target.value}))}/></div><div className="grid grid-cols-2 gap-3"><div><Label>Costo</Label><Input type="number" min="0" value={newProduct.cost} onChange={(e)=>setNewProduct(v=>({...v,cost:e.target.value}))}/></div><div><Label>Precio</Label><Input type="number" min="0" value={newProduct.price} onChange={(e)=>setNewProduct(v=>({...v,price:e.target.value}))}/></div></div><div className="flex justify-end gap-2"><Button variant="outline" onClick={()=>setNewProductOpen(false)}>Cancelar</Button><Button onClick={()=>void createProduct()} disabled={!canWrite}><PackagePlus className="mr-2 h-4 w-4"/>Crear y agregar</Button></div></div></DialogContent></Dialog>
   </div></ModuleGuard>;
 }
 function Metric({label,value}:{label:string;value:string}){return <div className="rounded-lg border p-3"><div className="text-xs text-muted-foreground">{label}</div><div className="mt-1 text-xl font-bold">{value}</div></div>}
