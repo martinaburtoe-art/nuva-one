@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildBusinessBrain } from "./nuva-business-brain";
 
 describe("Nüva Business Brain", () => {
-  it("prioritizes critical liquidity risk", () => {
+  it("prioritizes critical liquidity risk and requires approval", () => {
     const result = buildBusinessBrain({
       financialHealthScore: 80,
       projectedCash30d: -500000,
@@ -12,6 +12,8 @@ describe("Nüva Business Brain", () => {
       complianceReadiness: 85,
     });
     expect(result.topPriorities[0].id).toBe("cash-risk");
+    expect(result.topPriorities[0].requiresApproval).toBe(true);
+    expect(result.requiresApprovalCount).toBeGreaterThan(0);
     expect(result.status).toBe("stable");
   });
 
