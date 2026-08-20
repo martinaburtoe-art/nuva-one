@@ -1,10 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export type InventoryOperation = "entry" | "exit" | "count" | "receipt" | "adjustment" | "correction" | "transfer";
+
 export type InventoryAdjustmentInput = {
   productId: string;
   delta: number;
   reason: string;
   sourceType: string;
+  sourceId?: string;
+};
+
+export type InventoryOperationInput = {
+  productId: string;
+  operation: InventoryOperation;
+  quantity: number;
+  currentStock?: number;
+  reason: string;
   sourceId?: string;
 };
 
@@ -32,6 +43,49 @@ export function validateInventoryAdjustment(input: InventoryAdjustmentInput) {
   };
 }
 
+/** Converts a scanner operation into the atomic stock delta consumed by the DB RPC. */
+export function buildInventoryAdjustment(input: InventoryOperationInput): InventoryAdjustmentInput {
+  const quantity = input.quantity;
+  if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+    throw new Error("La cantidad debe ser un entero mayor que cero.");
+  }
+
+  const currentStock = input.currentStock ?? 0;
+  if (!Number.isSafeInteger(currentStock) || currentStock < 0) {
+    throw new Error("El stock actual no es válido.");
+  }
+
+  let delta: number;
+  switch (input.operation) {
+    case "entry":
+    case "receipt":
+      delta = quantity;
+      break;
+    case "exit":
+      if (quantity > currentStock) throw new Error("Stock insuficiente para realizar la salida.");
+      delta = -quantity;
+      break;
+    case "count":
+      delta = quantity - currentStock;
+      if (delta === 0) throw new Error("El conteo coincide con el stock actual; no hay ajuste que registrar.");
+      break;
+    case "adjustment":
+    case "correction":
+    case "transfer":
+      throw new Error("Esta operación requiere una variación explícita y no una cantidad absoluta.");
+    default:
+      throw new Error("Operación de inventario no soportada.");
+  }
+
+  return {
+    productId: input.productId,
+    delta,
+    reason: input.reason,
+    sourceType: `scanner_${input.operation}`,
+    sourceId: input.sourceId,
+  };
+}
+
 /**
  * Single entry point for operational stock changes.
  * The database RPC remains responsible for the atomic stock update,
@@ -52,4 +106,11 @@ export async function adjustInventoryStock(
 
   if (error) throw error;
   return data;
+}
+
+export async function executeInventoryOperation(
+  client: SupabaseClient,
+  input: InventoryOperationInput,
+) {
+  return adjustInventoryStock(client, buildInventoryAdjustment(input));
 }
