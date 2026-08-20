@@ -21,14 +21,23 @@ export type MorningBrief = {
   status: "critical" | "attention" | "stable" | "excellent";
   priorities: MorningBriefSignal[];
   metrics: Array<{ id: string; label: string; value: string }>;
+  nextBestAction?: MorningBriefSignal;
+  summary: string;
 };
 
 const statusFor = (score: number): MorningBrief["status"] =>
   score < 35 ? "critical" : score < 55 ? "attention" : score < 80 ? "stable" : "excellent";
 
+const severityWeight: Record<MorningBriefSignal["severity"], number> = {
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
 export function buildMorningBrief(input: MorningBriefInput): MorningBrief {
   const priorities = [...input.priorities]
-    .sort((a, b) => ({ critical: 4, high: 3, medium: 2, low: 1 }[b.severity] - ({ critical: 4, high: 3, medium: 2, low: 1 }[a.severity])))
+    .sort((a, b) => severityWeight[b.severity] - severityWeight[a.severity])
     .slice(0, 3);
   const status = statusFor(input.businessScore);
   const headline = status === "critical"
@@ -47,5 +56,10 @@ export function buildMorningBrief(input: MorningBriefInput): MorningBrief {
     ...(input.complianceReadiness !== undefined ? [{ id: "compliance", label: "Compliance", value: `${input.complianceReadiness}/100` }] : []),
   ];
 
-  return { score: input.businessScore, headline, status, priorities, metrics };
+  const nextBestAction = priorities[0];
+  const summary = nextBestAction
+    ? `Prioridad principal: ${nextBestAction.title}. ${nextBestAction.action}`
+    : "No se detectaron prioridades con los datos disponibles.";
+
+  return { score: input.businessScore, headline, status, priorities, metrics, nextBestAction, summary };
 }
