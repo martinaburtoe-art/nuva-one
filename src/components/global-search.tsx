@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import {
   CommandDialog,
@@ -56,9 +57,11 @@ const quickActions = [
 
 export function GlobalSearch({ visibleNav }: { visibleNav?: readonly { to: string }[] }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    setMounted(true);
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -87,8 +90,24 @@ export function GlobalSearch({ visibleNav }: { visibleNav?: readonly { to: strin
     navigate({ to: to as never });
   }
 
+  const mobileTrigger = mounted
+    ? createPortal(
+        <button
+          type="button"
+          aria-label="Abrir búsqueda y acciones rápidas"
+          onClick={() => setOpen(true)}
+          className="fixed bottom-[4.5rem] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-background shadow-lg ring-1 ring-black/5 md:hidden"
+        >
+          <ScanBarcode className="h-5 w-5 text-primary" aria-hidden="true" />
+          <span className="sr-only">Buscar, abrir scanner o ejecutar una acción</span>
+        </button>,
+        document.body,
+      )
+    : null;
+
   return (
     <>
+      {mobileTrigger}
       <button
         type="button"
         aria-label="Abrir búsqueda y acciones rápidas"
