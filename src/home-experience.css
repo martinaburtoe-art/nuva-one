@@ -143,71 +143,141 @@ body:has(section#experience) a[href*="mode=signup"] button:hover {
   transition: opacity 320ms ease, visibility 0s linear 320ms;
 }
 
-/* Animated scanner showcase: the scan line sweeps through the product view continuously. */
+/* --------------------------------------------------------------------------
+   NÜVA SCANNER — PRODUCT SHOWCASE MOTION
+   This is intentionally CSS-only: no camera access, no external assets and
+   no changes to the operational scanner. The Home demonstrates the workflow.
+   -------------------------------------------------------------------------- */
 body:has(section#experience) .relative.w-\[250px\] .aspect-square,
 body:has(section#experience) .relative.w-\[290px\] .aspect-square {
   isolation: isolate;
-  box-shadow: inset 0 0 32px oklch(.55 .22 268 / .08);
+  overflow: hidden;
+  box-shadow: inset 0 0 32px oklch(.55 .22 268 / .08), 0 18px 50px -30px oklch(.35 .18 270 / .32);
 }
 
+/* Scanner viewfinder */
 body:has(section#experience) .relative.w-\[250px\] .aspect-square::before,
 body:has(section#experience) .relative.w-\[290px\] .aspect-square::before {
   content: "";
   position: absolute;
-  inset: 14%;
+  inset: 13%;
   border: 1px solid oklch(.55 .22 268 / .18);
   border-radius: 1rem;
   pointer-events: none;
+  z-index: 2;
   animation: nuva-scanner-frame 2.8s ease-in-out infinite;
 }
 
+/* Soft scanner light sweep */
+body:has(section#experience) .relative.w-\[250px\] .aspect-square::after,
+body:has(section#experience) .relative.w-\[290px\] .aspect-square::after {
+  content: "";
+  position: absolute;
+  left: 13%;
+  right: 13%;
+  top: 18%;
+  height: 28%;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(to bottom, transparent, oklch(.62 .24 268 / .08), transparent);
+  filter: blur(10px);
+  animation: nuva-scanner-light 2.4s cubic-bezier(.45,0,.35,1) infinite;
+}
+
+/* Actual scan line supplied by the existing Home markup */
 body:has(section#experience) .relative.w-\[250px\] .aspect-square > .absolute.inset-x-5,
 body:has(section#experience) .relative.w-\[290px\] .aspect-square > .absolute.inset-x-5 {
   top: 18%;
   height: 2px;
   opacity: .95;
   z-index: 3;
-  box-shadow: 0 0 10px oklch(.65 .24 268 / .65), 0 0 28px oklch(.55 .22 268 / .38);
+  border-radius: 999px;
+  box-shadow: 0 0 10px oklch(.65 .24 268 / .75), 0 0 28px oklch(.55 .22 268 / .45), 0 0 50px oklch(.55 .22 268 / .18);
   animation: nuva-scanner-sweep 2.4s cubic-bezier(.45,0,.35,1) infinite;
 }
 
+/* Barcode/product payload gets a subtle detection pulse */
 body:has(section#experience) .relative.w-\[250px\] .aspect-square > .rounded-2xl,
 body:has(section#experience) .relative.w-\[290px\] .aspect-square > .rounded-2xl {
+  transform-origin: center;
   animation: nuva-scanner-lock 2.4s ease-in-out infinite;
 }
 
+/* The surrounding scanner card breathes very subtly to signal live activity. */
+body:has(section#experience) .relative.w-\[250px\],
+body:has(section#experience) .relative.w-\[290px\] {
+  transform: translateZ(0);
+  animation: nuva-scanner-device 5.5s ease-in-out infinite;
+}
+
+/* If the markup exposes an inventory/status badge, make its confirmation feel
+   like a real transaction rather than a static label. */
+body:has(section#experience) [data-scanner-status],
+body:has(section#experience) [data-scanner-result] {
+  animation: nuva-scanner-status 2.4s ease-in-out infinite;
+}
+
 @keyframes nuva-scanner-sweep {
-  0%, 12% { top: 18%; opacity: .25; }
-  45% { top: 50%; opacity: 1; }
-  82% { top: 82%; opacity: .9; }
-  100% { top: 18%; opacity: .25; }
+  0%, 10% { top: 18%; opacity: .2; }
+  43% { top: 50%; opacity: 1; }
+  80% { top: 82%; opacity: .9; }
+  92%, 100% { top: 18%; opacity: .2; }
+}
+
+@keyframes nuva-scanner-light {
+  0%, 10% { transform: translateY(-8%); opacity: 0; }
+  35% { opacity: .35; }
+  80% { transform: translateY(235%); opacity: .12; }
+  100% { transform: translateY(235%); opacity: 0; }
 }
 
 @keyframes nuva-scanner-frame {
-  0%, 100% { transform: scale(.96); opacity: .35; }
-  50% { transform: scale(1); opacity: .8; }
+  0%, 100% { transform: scale(.96); opacity: .3; }
+  48% { transform: scale(1); opacity: .78; }
+  58% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes nuva-scanner-lock {
-  0%, 38%, 100% { transform: scale(1); opacity: .72; }
-  50% { transform: scale(1.035); opacity: 1; }
-  58% { transform: scale(1); opacity: .72; }
+  0%, 36%, 100% { transform: scale(1); opacity: .72; filter: brightness(1); }
+  48% { transform: scale(1.035); opacity: 1; filter: brightness(1.16); }
+  58% { transform: scale(1); opacity: .78; filter: brightness(1); }
+}
+
+@keyframes nuva-scanner-device {
+  0%, 100% { transform: translate3d(0, 0, 0) rotateZ(0deg); }
+  50% { transform: translate3d(0, -4px, 0) rotateZ(.15deg); }
+}
+
+@keyframes nuva-scanner-status {
+  0%, 34% { opacity: .72; transform: translateY(2px); }
+  45%, 62% { opacity: 1; transform: translateY(0); }
+  74%, 100% { opacity: .72; transform: translateY(2px); }
 }
 
 @media (max-width: 767px) {
   body:has(section#experience) .relative.w-\[250px\] .aspect-square,
   body:has(section#experience) .relative.w-\[290px\] .aspect-square {
-    box-shadow: inset 0 0 24px oklch(.55 .22 268 / .06);
+    box-shadow: inset 0 0 24px oklch(.55 .22 268 / .06), 0 14px 36px -28px oklch(.35 .18 270 / .28);
+  }
+
+  body:has(section#experience) .relative.w-\[250px\],
+  body:has(section#experience) .relative.w-\[290px\] {
+    animation-duration: 6.5s;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body:has(section#experience) .relative.w-\[250px\] .aspect-square::before,
+  body:has(section#experience) .relative.w-\[250px\],
   body:has(section#experience) .relative.w-\[290px\] .aspect-square::before,
+  body:has(section#experience) .relative.w-\[290px\] .aspect-square::after,
+  body:has(section#experience) .relative.w-\[250px\] .aspect-square::before,
+  body:has(section#experience) .relative.w-\[250px\] .aspect-square::after,
   body:has(section#experience) .relative.w-\[250px\] .aspect-square > .absolute.inset-x-5,
   body:has(section#experience) .relative.w-\[290px\] .aspect-square > .absolute.inset-x-5,
   body:has(section#experience) .relative.w-\[250px\] .aspect-square > .rounded-2xl,
-  body:has(section#experience) .relative.w-\[290px\] .aspect-square > .rounded-2xl {
+  body:has(section#experience) .relative.w-\[290px\] .aspect-square > .rounded-2xl,
+  body:has(section#experience) [data-scanner-status],
+  body:has(section#experience) [data-scanner-result] {
     animation: none !important;
   }
 }
