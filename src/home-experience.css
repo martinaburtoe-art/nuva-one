@@ -5,6 +5,7 @@
 /* Global landing-page rhythm */
 body:has(section#experience) {
   overflow-x: hidden;
+  text-rendering: optimizeLegibility;
 }
 
 body:has(section#experience) section {
@@ -92,6 +93,18 @@ body:has(section#experience) a[href*="mode=signup"] button:hover {
   body:has(section#experience) .shadow-xl:hover {
     transform: none;
   }
+
+  /* Avoid accidental horizontal scroll from animated product surfaces. */
+  body:has(section#experience) section,
+  body:has(section#experience) [data-demo] {
+    max-width: 100%;
+  }
+
+  /* Keep tap targets comfortable without making the interface feel oversized. */
+  body:has(section#experience) button,
+  body:has(section#experience) a {
+    touch-action: manipulation;
+  }
 }
 
 /* Accessibility + performance: respect reduced motion everywhere on the Home */
@@ -110,6 +123,7 @@ body:has(section#experience) a[href*="mode=signup"] button:hover {
 .nuva-launch {
   contain: layout paint style;
   backface-visibility: hidden;
+  overflow: clip;
 }
 
 .nuva-launch__module,
