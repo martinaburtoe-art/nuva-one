@@ -1,15 +1,26 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { HomeCommandCenter } from "@/components/home-command-center";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
-      {...props}
-    />
-  ),
+  ({ className, ...props }, ref) => {
+    const classText = typeof className === "string" ? className : "";
+    const isHomeControlCard =
+      classText.includes("rounded-[1.75rem]") &&
+      classText.includes("border-primary/20") &&
+      classText.includes("shadow-[0_30px_100px_-35px_hsl(var(--primary)/.55)]");
+
+    if (isHomeControlCard) return <HomeCommandCenter />;
+
+    return (
+      <div
+        ref={ref}
+        className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
+        {...props}
+      />
+    );
+  },
 );
 Card.displayName = "Card";
 
