@@ -93,5 +93,5 @@ function RootComponent() {
     function onUnhandledRejection(event: PromiseRejectionEvent) { const reason = event?.reason; const err = reason instanceof Error ? reason : new Error(String(reason)); if (isStaleChunkError(err)) { const key = "nuva_stale_chunk_reload_at"; const lastReload = Number(sessionStorage.getItem(key) ?? 0); if (Date.now() - lastReload > 10_000) { sessionStorage.setItem(key, String(Date.now())); window.location.reload(); } } }
     window.addEventListener("unhandledrejection", onUnhandledRejection); return () => { sub.subscription.unsubscribe(); window.removeEventListener("unhandledrejection", onUnhandledRejection); };
   }, [router, queryClient]);
-  return <QueryClientProvider client={queryClient}><OfflineBanner />{isLanding && !launchComplete ? <NuvaLaunchExperience onComplete={completeLaunch} /> : null}{(!isLanding || launchComplete) && <><RouteEnhancements /><Outlet /></>}<Toaster position="top-right" richColors closeButton /></QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}><OfflineBanner />{isLanding && !launchComplete ? <NuvaLaunchExperience onComplete={completeLaunch} /> : null}<RouteEnhancements /><Outlet /><Toaster position="top-right" richColors closeButton /></QueryClientProvider>;
 }
