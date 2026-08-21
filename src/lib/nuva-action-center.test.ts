@@ -13,12 +13,7 @@ describe("buildNuvaActionCenter", () => {
   });
 
   it("limits the list and keeps opportunities actionable", () => {
-    const signals = Array.from({ length: 8 }, (_, i) => ({
-      id: `s-${i}`,
-      severity: "opportunity" as const,
-      title: `Opportunity ${i}`,
-      description: "Potential improvement",
-    }));
+    const signals = Array.from({ length: 8 }, (_, i) => ({ id: `s-${i}`, severity: "opportunity" as const, title: `Opportunity ${i}`, description: "Potential improvement" }));
     const actions = buildNuvaActionCenter(signals, 3);
     expect(actions).toHaveLength(3);
     expect(actions[0].priority).toBe("opportunity");
@@ -35,6 +30,18 @@ describe("buildNuvaActionCenter", () => {
     expect(actions.map((a) => a.destination)).toEqual(["inventory", "finance", "crm", "purchases"]);
     expect(actions.find((a) => a.destination === "inventory")?.cta).toBe("Revisar inventario");
     expect(actions.find((a) => a.destination === "finance")?.cta).toBe("Revisar finanzas");
+  });
+
+  it("routes tax, DTE, RCV and F29 signals to finance", () => {
+    const actions = buildNuvaActionCenter([
+      { id: "tax", severity: "critical", title: "Obligación tributaria", description: "Revisar" },
+      { id: "compliance", severity: "warning", title: "Compliance", description: "Revisar" },
+      { id: "dte", severity: "warning", title: "DTE", description: "Revisar" },
+      { id: "rcv", severity: "warning", title: "RCV", description: "Revisar" },
+      { id: "f29", severity: "critical", title: "F29", description: "Revisar" },
+    ]);
+    expect(actions).toHaveLength(5);
+    expect(actions.every((action) => action.destination === "finance")).toBe(true);
   });
 
   it("falls back safely for unknown signals", () => {
