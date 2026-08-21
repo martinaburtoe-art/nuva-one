@@ -8,9 +8,9 @@ import { buildBusinessContext as buildBusinessContextShared, capContext } from "
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
+import { getNuvaPlan } from "@/lib/plan-config";
 
 const CHAT_RATE_LIMIT_PER_MINUTE = 8;
-const PLAN_AI_MONTHLY_LIMITS: Record<string, number> = { starter: 100, pro: 500 };
 
 function lastUserText(messages: UIMessage[]): string {
   const last = [...messages].reverse().find((m) => m.role === "user");
@@ -63,8 +63,8 @@ export const Route = createFileRoute("/api/chat")({
           const isMember = await isBusinessMember(authedSupabase, businessId, claims.claims.sub);
           if (!isMember) return new Response(JSON.stringify({ error: "No tienes acceso a este negocio" }), { status: 403 });
           const { data: bizPlan } = await supabaseAdmin.from("businesses").select("plan").eq("id", businessId).maybeSingle();
-          const plan = bizPlan?.plan === "pro" ? "pro" : "starter";
-          monthlyAiLimit = PLAN_AI_MONTHLY_LIMITS[plan];
+          const plan = getNuvaPlan(bizPlan?.plan);
+          monthlyAiLimit = plan.aiMessagesMonthly;
           const { data: allowed, error: usageError } = await supabaseAdmin.rpc("increment_ai_usage_monthly" as any, {
             p_business_id: businessId,
             p_monthly_limit: monthlyAiLimit,
@@ -94,7 +94,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const system = `Eres el asistente de Nüva One, una plataforma de gestión para PYMEs en Chile y Latinoamérica. Respondes en español neutro de LatAm, en tono profesional pero cercano. Eres breve y accionable.
 
-Tienes acceso a los datos REALES del negocio del usuario dentro del bloque <business_data>...</business_data> más abajo (incluye plan activo, días de prueba restantes, ventas, inventario, finanzas, cotizaciones y clientes). Básate ÚNICAMENTE en esos datos para responder. Si no tienen lo que el usuario pide, dilo explícitamente en vez de inventar cifras. Nunca inventes cifras del negocio.
+Tienes acceso a los datos REALES del negocio del usuario dentro del bloque <business_data>...</business_data> más abajo (incluye plan activo, días de prueba restantes, ventas, inventario, finanzas, cotizaciones y clientes). Basa tus respuestas ÚNICAMENTE en esos datos para responder. Si no tienen lo que el usuario pide, dilo explícitamente en vez de inventar cifras. Nunca inventes cifras del negocio.
 
 El campo "today" dentro de <business_data> es la fecha de HOY (zona horaria de Chile, formato AAAA-MM-DD). Es tu ÚNICA fuente de verdad sobre qué día es hoy -- nunca la asumas ni la calcules de memoria. Para responder preguntas como "hoy", "ayer" o "esta semana", compara ese valor contra el campo de fecha de cada registro (sale_date, tx_date, purchase_date, created_at) en vez de adivinar. Si un registro no coincide exactamente con "today", no digas que es de hoy.
 
