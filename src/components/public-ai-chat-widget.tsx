@@ -3,7 +3,7 @@ import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
 import { Link } from "@tanstack/react-router";
-import { Sparkles, X, Send, Loader2, LogIn, Building2 } from "lucide-react";
+import { Sparkles, X, Send, Loader2, LogIn, Building2, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useActiveBusinessId } from "@/lib/use-business";
@@ -12,12 +12,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { extractChatErrorMessage } from "@/lib/chat-error";
 
-// Same assistant as the in-app AiChatBubble (same /api/chat endpoint, same
-// shared ai_conversations/ai_messages memory), but mountable on the public
-// marketing site so an existing customer can ask a quick question without
-// clicking through into the full dashboard. Gates itself through three
-// states first: signed out -> prompt to log in; signed in with no business
-// -> prompt to finish onboarding; otherwise -> the actual chat.
+// Public marketing-site assistant. It shares the authenticated /api/chat
+// context with the in-app assistant, while keeping anonymous visitors in a
+// lightweight explanatory state instead of firing business queries.
 export function PublicAiChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -25,9 +22,6 @@ export function PublicAiChatWidget() {
   const [authChecked, setAuthChecked] = useState(false);
   const [activeId] = useActiveBusinessId();
 
-  // Mirrors ai-chat-bubble.tsx: refs feed a per-request fetch so the
-  // Authorization header is never frozen at the pre-login `null` state.
-  // `token`/`activeId` state stays for gating the UI (signed_out/no_business/ready).
   const tokenRef = useRef<string | null>(null);
   const businessIdRef = useRef<string>("");
 
@@ -44,9 +38,6 @@ export function PublicAiChatWidget() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Gated on `token` so anonymous landing-page visitors never fire this
-  // query -- RLS would return nothing for them anyway, but there's no
-  // reason to spend a request on every marketing-page pageview.
   const { data: businesses, isLoading: businessesLoading } = useQuery({
     queryKey: ["businesses", "public-widget"],
     enabled: !!token,
@@ -61,6 +52,7 @@ export function PublicAiChatWidget() {
   });
 
   const active = businesses?.find((b) => b.id === activeId) ?? businesses?.[0] ?? null;
+
   useEffect(() => {
     businessIdRef.current = active?.id ?? "";
   }, [active?.id]);
@@ -103,116 +95,90 @@ export function PublicAiChatWidget() {
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-elegant transition-all hover:scale-105 hover:shadow-glow"
-        aria-label="Asistente IA"
+        className={cn(
+          "fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-elegant transition-[transform,box-shadow] duration-300 hover:scale-105 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:bottom-6 sm:right-6",
+          open && "rotate-90",
+        )}
+        aria-label={open ? "Cerrar asistente Nüva" : "Abrir asistente Nüva"}
+        aria-expanded={open}
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
       </button>
 
+      {!open && (
+        <div className="fixed bottom-[4.6rem] right-5 z-40 hidden max-w-[210px] animate-fade-in-up sm:block">
+          <div className="rounded-2xl border border-primary/15 bg-card/95 px-3 py-2.5 text-xs shadow-elegant backdrop-blur-xl">
+            <div className="flex items-center gap-2 font-semibold"><MessageCircle className="h-3.5 w-3.5 text-primary" /> ¿Quieres conocer Nüva?</div>
+            <p className="mt-1 leading-relaxed text-muted-foreground">Pregúntale al asistente o explora la demo.</p>
+          </div>
+        </div>
+      )}
+
       <div
         className={cn(
-          "fixed bottom-24 right-6 z-50 w-[360px] origin-bottom-right transition-all duration-200",
+          "fixed bottom-[4.75rem] right-3 z-50 w-[calc(100vw-1.5rem)] max-w-[390px] origin-bottom-right transition-[transform,opacity] duration-300 sm:bottom-24 sm:right-6",
           open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
         )}
       >
-        <div className="rounded-2xl border bg-card shadow-elegant">
-          <div className="flex items-center gap-2 border-b px-4 py-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+        <div className="overflow-hidden rounded-3xl border border-primary/15 bg-card/95 shadow-[0_25px_80px_-25px_hsl(var(--primary)/.35)] backdrop-blur-xl">
+          <div className="flex items-center justify-between border-b bg-gradient-to-r from-primary/10 via-background to-background px-4 py-3.5 sm:px-5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>
+              <div>
+                <div className="text-sm font-semibold">Asistente Nüva One</div>
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> Tu negocio, en contexto</div>
+              </div>
             </div>
-            <div>
-              <div className="text-sm font-semibold">Asistente Nüva One</div>
-              <div className="text-xs text-muted-foreground">Pregunta sobre tu negocio</div>
-            </div>
+            <Link to="/demo" className="hidden items-center gap-1 text-[11px] font-semibold text-primary sm:inline-flex">Ver demo <ArrowRight className="h-3 w-3" /></Link>
           </div>
 
           {state === "loading" && (
-            <div className="flex h-56 items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
+            <div className="flex h-56 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           )}
 
           {state === "signed_out" && (
-            <div className="flex h-56 flex-col items-center justify-center gap-3 p-6 text-center">
-              <LogIn className="h-6 w-6 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Inicia sesión para preguntarle al asistente sobre tu negocio.
-              </p>
-              <Button asChild size="sm">
-                <Link to="/auth">Iniciar sesión</Link>
-              </Button>
+            <div className="flex min-h-56 flex-col items-center justify-center gap-3 p-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10"><LogIn className="h-6 w-6 text-primary" /></div>
+              <div><p className="text-sm font-semibold">Conoce el asistente de Nüva</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Inicia sesión para hacer preguntas sobre tu negocio y trabajar con el contexto de tus datos.</p></div>
+              <Button asChild size="sm" className="mt-1"><Link to="/auth">Iniciar sesión <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link></Button>
+              <Link to="/demo" className="text-xs font-semibold text-primary hover:underline">Prefiero ver la demo primero</Link>
             </div>
           )}
 
           {state === "no_business" && (
-            <div className="flex h-56 flex-col items-center justify-center gap-3 p-6 text-center">
-              <Building2 className="h-6 w-6 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Crea tu negocio para que el asistente tenga datos que mostrarte.
-              </p>
-              <Button asChild size="sm">
-                <Link to="/onboarding">Crear negocio</Link>
-              </Button>
+            <div className="flex min-h-56 flex-col items-center justify-center gap-3 p-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10"><Building2 className="h-6 w-6 text-primary" /></div>
+              <div><p className="text-sm font-semibold">Primero conecta tu negocio</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Crea tu empresa para que Nüva pueda utilizar su contexto y ayudarte con preguntas concretas.</p></div>
+              <Button asChild size="sm"><Link to="/onboarding">Crear negocio <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link></Button>
             </div>
           )}
 
           {state === "ready" && (
             <>
-              <div className="h-80 space-y-3 overflow-y-auto p-4">
+              <div className="h-72 space-y-3 overflow-y-auto p-4 sm:h-80 sm:p-5">
                 {messages.length === 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Prueba con:</p>
-                    {[
-                      "¿Cómo va mi flujo de caja?",
-                      "¿Cuáles son mis productos top?",
-                      "Sugiéreme una acción para hoy",
-                    ].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setInput(s)}
-                        className="block w-full rounded-lg border border-border/60 bg-secondary/40 p-2 text-left text-xs transition-colors hover:bg-accent"
-                      >
-                        {s}
-                      </button>
-                    ))}
+                  <div className="space-y-3">
+                    <div className="rounded-2xl bg-secondary/45 p-3.5"><p className="text-sm font-semibold">¿Qué quieres saber?</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Prueba una pregunta sobre tus finanzas, productos o próximos pasos.</p></div>
+                    <div className="space-y-2">
+                      {["¿Cómo va mi flujo de caja?", "¿Cuáles son mis productos top?", "Sugiéreme una acción para hoy"].map((s) => (
+                        <button key={s} onClick={() => setInput(s)} className="block w-full rounded-xl border border-border/60 bg-background/70 p-2.5 text-left text-xs transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5">{s}</button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
-                  >
-                    <div
-                      className={cn(
-                        "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
-                        m.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-foreground",
-                      )}
-                    >
-                      {m.parts.map((p, i) =>
-                        p.type === "text" ? <span key={i}>{p.text}</span> : null,
-                      )}
+                  <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+                    <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm", m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground")}>
+                      {m.parts.map((p, i) => p.type === "text" ? <span key={i}>{p.text}</span> : null)}
                     </div>
                   </div>
                 ))}
-                {isLoading && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Pensando...
-                  </div>
-                )}
+                {isLoading && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Pensando...</div>}
               </div>
 
-              <form onSubmit={handleSend} className="flex gap-2 border-t p-3">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Escribe tu pregunta..."
-                  disabled={isLoading}
-                />
-                <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
+              <form onSubmit={handleSend} className="flex gap-2 border-t bg-background/60 p-3">
+                <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Pregúntale algo a Nüva..." disabled={isLoading} className="rounded-xl" />
+                <Button type="submit" size="icon" className="shrink-0 rounded-xl" disabled={isLoading || !input.trim()} aria-label="Enviar pregunta"><Send className="h-4 w-4" /></Button>
               </form>
             </>
           )}
