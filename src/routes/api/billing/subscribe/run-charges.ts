@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  chargeSubscription,
-  getFlowSubscriptionCreds,
-} from "@/lib/fiscal/flow-subscriptions.server";
+import { chargeSubscription, getFlowSubscriptionCreds } from "@/lib/fiscal/flow-subscriptions.server";
+import { NUVA_PLANS } from "@/lib/plan-config";
 
 const MAX_FAILED_ATTEMPTS = 3;
 const STALE_PROCESSING_MINUTES = 30;
@@ -18,8 +16,7 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
         }
 
         const creds = getFlowSubscriptionCreds();
-        const parsedPrice = Number(process.env.NUVA_PRO_PRICE_CLP ?? "29990");
-        if (!creds || !Number.isSafeInteger(parsedPrice) || parsedPrice <= 0) {
+        if (!creds) {
           return new Response(JSON.stringify({ error: "Suscripciones no configuradas" }), {
             status: 500,
             headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
@@ -28,16 +25,19 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const today = new Date().toISOString().slice(0, 10);
-        const staleBefore = new Date(
-          Date.now() - STALE_PROCESSING_MINUTES * 60_000,
-        ).toISOString();
+        const period = today.slice(0, 7);
+        const staleBefore = new Date(Date.now() - STALE_PROCESSING_MINUTES * 60_000).toISOString();
+        const parsedPrice = NUVA_PLANS.pro.monthlyPriceClp;
 
+        // Pending subscriptions are card-registered but not yet paid. Active Pro
+        // subscriptions are recurring charges. Both must enter the same idempotent
+        // charge pipeline; only a paid result provisions/retains Pro.
         const { data: dueBusinesses, error } = await supabaseAdmin
           .from("businesses")
-          .select("id, name, flow_customer_id, billing_failed_attempts")
-          .eq("plan", "pro")
+          .select("id, name, flow_customer_id, billing_failed_attempts, plan, subscription_status")
           .eq("flow_card_status", "active")
-          .lte("next_charge_date", today);
+          .lte("next_charge_date", today)
+          .or("subscription_status.eq.pending,and(subscription_status.eq.active,plan.eq.pro)");
 
         if (error) {
           console.error("subscription_charge_query_failed", error);
@@ -53,7 +53,9 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
           const customerId = biz.flow_customer_id as string | null;
           if (!customerId) continue;
 
-          const commerceOrder = `sub-${biz.id}-${today}`;
+          // One charge per business/month. Keeping the same commerce order in the
+          // callback and worker makes reconciliation deterministic and idempotent.
+          const commerceOrder = `sub-${biz.id}-${period}`;
 
           const { data: existing } = await supabaseAdmin
             .from("subscription_charges")
@@ -87,9 +89,6 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
               continue;
             }
           } else {
-            // Recovery must use attempt_started_at, not created_at. The latter
-            // never changes and would allow concurrent executions to reclaim a
-            // healthy in-flight charge after the row became old.
             const { data: reclaimed, error: reclaimError } = await supabaseAdmin
               .from("subscription_charges")
               .update({ attempt_started_at: new Date().toISOString() })
@@ -128,9 +127,6 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
             .eq("status", "processing");
 
           if (finalizeError) {
-            // Do not claim a successful DB transition in the response. A
-            // provider-side charge may already have happened, so this remains
-            // observable for reconciliation instead of blindly retrying here.
             console.error("subscription_charge_finalize_failed", finalizeError);
             results.push({ businessId: biz.id, status: "finalize_failed" });
             continue;
@@ -142,12 +138,13 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
             await supabaseAdmin
               .from("businesses")
               .update({
+                plan: NUVA_PLANS.pro.id,
                 subscription_status: "active",
                 billing_failed_attempts: 0,
                 next_charge_date: next.toISOString().slice(0, 10),
               })
               .eq("id", biz.id)
-              .eq("plan", "pro");
+              .eq("flow_card_status", "active");
             results.push({ businessId: biz.id, status: "paid" });
           } else {
             const attempts = (biz.billing_failed_attempts ?? 0) + 1;
@@ -157,13 +154,13 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
               .update({
                 subscription_status: downgrade ? "canceled" : "past_due",
                 billing_failed_attempts: attempts,
-                plan: downgrade ? "starter" : "pro",
+                plan: downgrade ? "starter" : biz.plan,
                 next_charge_date: downgrade
                   ? null
                   : new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10),
               })
               .eq("id", biz.id)
-              .eq("plan", "pro");
+              .eq("flow_card_status", "active");
             results.push({
               businessId: biz.id,
               status: downgrade ? "downgraded" : "retry_scheduled",
