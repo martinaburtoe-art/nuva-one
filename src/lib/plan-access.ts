@@ -1,6 +1,7 @@
 import { getNuvaPlan, type NuvaPlan } from "./plan-config";
 
 export type PlanLimitKey = "users" | "products" | "aiMessagesMonthly" | "storageMb";
+export type PlanFeatureKey = keyof ReturnType<typeof getNuvaPlan>["features"];
 
 export function resolvePlan(plan: string | null | undefined): NuvaPlan {
   return plan === "pro" ? "pro" : "starter";
@@ -22,10 +23,9 @@ export function getPlanLimit(plan: string | null | undefined, key: PlanLimitKey)
 
 export function hasPlanFeature(
   plan: string | null | undefined,
-  feature: keyof typeof getNuvaPlan extends never ? never : keyof ReturnType<typeof getNuvaPlan>["features"],
+  feature: PlanFeatureKey,
 ) {
-  const value = getNuvaPlan(plan).features[feature];
-  return value !== false;
+  return getNuvaPlan(plan).features[feature] !== false;
 }
 
 export function canUseQuantity(
