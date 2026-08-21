@@ -3,7 +3,7 @@ import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
 import { Link } from "@tanstack/react-router";
-import { Sparkles, X, Send, Loader2, LogIn, Building2, ArrowRight, MessageCircle } from "lucide-react";
+import { Sparkles, X, Send, Loader2, LogIn, Building2, ArrowRight, MessageCircle, Gauge, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useActiveBusinessId } from "@/lib/use-business";
@@ -106,10 +106,10 @@ export function PublicAiChatWidget() {
       </button>
 
       {!open && (
-        <div className="fixed bottom-[4.6rem] right-5 z-40 hidden max-w-[210px] animate-fade-in-up sm:block">
+        <div className="fixed bottom-[4.6rem] right-5 z-40 hidden max-w-[230px] animate-fade-in-up sm:block">
           <div className="rounded-2xl border border-primary/15 bg-card/95 px-3 py-2.5 text-xs shadow-elegant backdrop-blur-xl">
-            <div className="flex items-center gap-2 font-semibold"><MessageCircle className="h-3.5 w-3.5 text-primary" /> ¿Quieres conocer Nüva?</div>
-            <p className="mt-1 leading-relaxed text-muted-foreground">Pregúntale al asistente o explora la demo.</p>
+            <div className="flex items-center gap-2 font-semibold"><MessageCircle className="h-3.5 w-3.5 text-primary" /> Conoce la inteligencia de Nüva</div>
+            <p className="mt-1 leading-relaxed text-muted-foreground">Pregúntale sobre tu negocio o mira cómo funciona en la demo.</p>
           </div>
         </div>
       )}
@@ -123,17 +123,27 @@ export function PublicAiChatWidget() {
         <div className="overflow-hidden rounded-3xl border border-primary/15 bg-card/95 shadow-[0_25px_80px_-25px_hsl(var(--primary)/.35)] backdrop-blur-xl">
           <div className="flex items-center justify-between border-b bg-gradient-to-r from-primary/10 via-background to-background px-4 py-3.5 sm:px-5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>
+              <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-4 w-4 text-primary-foreground" /><span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card" /></div>
               <div>
                 <div className="text-sm font-semibold">Asistente Nüva One</div>
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> Tu negocio, en contexto</div>
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" /> Tu negocio, en contexto</div>
               </div>
             </div>
             <Link to="/demo" className="hidden items-center gap-1 text-[11px] font-semibold text-primary sm:inline-flex">Ver demo <ArrowRight className="h-3 w-3" /></Link>
           </div>
 
           {state === "loading" && (
-            <div className="flex h-56 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            <div className="min-h-56 space-y-4 p-5">
+              <div className="rounded-2xl border bg-secondary/30 p-4">
+                <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /><p className="text-sm font-semibold">Nüva está preparando tu experiencia</p></div>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Mientras conectamos tu sesión, descubre qué puedes preguntarle a Nüva.</p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="rounded-xl border bg-background/70 p-3"><Gauge className="h-4 w-4 text-primary" /><p className="mt-2 text-xs font-semibold">Nüva Score</p><p className="mt-1 text-[11px] text-muted-foreground">Entiende la salud de tu negocio.</p></div>
+                <div className="rounded-xl border bg-background/70 p-3"><Target className="h-4 w-4 text-primary" /><p className="mt-2 text-xs font-semibold">Nüva Radar</p><p className="mt-1 text-[11px] text-muted-foreground">Detecta señales y oportunidades.</p></div>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Conectando...</div>
+            </div>
           )}
 
           {state === "signed_out" && (
@@ -158,7 +168,7 @@ export function PublicAiChatWidget() {
               <div className="h-72 space-y-3 overflow-y-auto p-4 sm:h-80 sm:p-5">
                 {messages.length === 0 && (
                   <div className="space-y-3">
-                    <div className="rounded-2xl bg-secondary/45 p-3.5"><p className="text-sm font-semibold">¿Qué quieres saber?</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Prueba una pregunta sobre tus finanzas, productos o próximos pasos.</p></div>
+                    <div className="rounded-2xl bg-secondary/45 p-3.5"><p className="text-sm font-semibold">Tu negocio. Tus preguntas. Nüva.</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Empieza con una pregunta y convierte tus datos en una decisión.</p></div>
                     <div className="space-y-2">
                       {["¿Cómo va mi flujo de caja?", "¿Cuáles son mis productos top?", "Sugiéreme una acción para hoy"].map((s) => (
                         <button key={s} onClick={() => setInput(s)} className="block w-full rounded-xl border border-border/60 bg-background/70 p-2.5 text-left text-xs transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5">{s}</button>
