@@ -7,9 +7,9 @@ import { buildBusinessContext, capContext } from "@/lib/business-context.server"
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
+import { getNuvaPlan } from "@/lib/plan-config";
 
 const EXPLAIN_RATE_LIMIT_PER_MINUTE = 3;
-const PLAN_AI_MONTHLY_LIMITS: Record<string, number> = { starter: 100, pro: 500 };
 
 type Insight = { signal: "critico" | "alerta" | "positivo" | "info"; title: string; detail: string };
 const SIGNAL_VALUES = new Set(["critico", "alerta", "positivo", "info"]);
@@ -45,8 +45,8 @@ export const Route = createFileRoute("/api/business/explain")({
         if (!withinExplainRateLimit) return new Response(JSON.stringify({ error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." }), { status: 429 });
 
         const { data: bizPlan } = await supabaseAdmin.from("businesses").select("plan").eq("id", businessId).maybeSingle();
-        const plan = bizPlan?.plan === "pro" ? "pro" : "starter";
-        const monthlyAiLimit = PLAN_AI_MONTHLY_LIMITS[plan];
+        const plan = getNuvaPlan(bizPlan?.plan);
+        const monthlyAiLimit = plan.aiMessagesMonthly;
         const { data: allowed, error: usageError } = await supabaseAdmin.rpc("increment_ai_usage_monthly" as any, { p_business_id: businessId, p_monthly_limit: monthlyAiLimit, p_user_id: claims.claims.sub, p_units: 1 });
         if (usageError || allowed === false) return new Response(JSON.stringify({ error: `Alcanzaste el límite de ${monthlyAiLimit} usos de IA de tu plan este mes. Actualiza tu plan para continuar.` }), { status: 429 });
 
