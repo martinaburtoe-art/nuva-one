@@ -14,7 +14,13 @@ type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean; zoom?: numb
 type TorchSettings = MediaTrackSettings & { torch?: boolean; zoom?: number; focusMode?: string };
 type FallbackControls = { stop: () => void };
 type ZXingResult = { getText(): string; getBarcodeFormat(): { toString(): string } };
-type ZXingReader = { decodeFromConstraints: (constraints: MediaStreamConstraints, preview: HTMLVideoElement, callback: (result: ZXingResult | undefined, error?: unknown) => void) => Promise<FallbackControls> };
+type ZXingReader = {
+  decodeFromStream: (
+    stream: MediaStream,
+    preview: HTMLVideoElement,
+    callback: (result: ZXingResult | undefined, error?: unknown) => void,
+  ) => Promise<FallbackControls>;
+};
 
 const SUPPORTED_FORMATS = [
   'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code',
@@ -105,8 +111,10 @@ export class LiveScanner {
 
   private async ensureVideoPlaying(video: HTMLVideoElement) {
     video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
     video.setAttribute('autoplay', 'true');
     video.muted = true;
+    video.defaultMuted = true;
     if (video.srcObject !== this.stream && this.stream) video.srcObject = this.stream;
     if (video.readyState < HTMLMediaElement.HAVE_METADATA) {
       await new Promise<void>((resolve) => {
@@ -120,13 +128,42 @@ export class LiveScanner {
         };
         video.addEventListener('loadedmetadata', finish, { once: true });
         video.addEventListener('canplay', finish, { once: true });
-        window.setTimeout(finish, 1200);
+        window.setTimeout(finish, 1800);
       });
     }
-    await video.play();
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-      await new Promise((resolve) => window.setTimeout(resolve, 250));
+    try {
       await video.play();
+    } catch (error) {
+      video.load();
+      await video.play();
+    }
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+      await video.play();
+    }
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      throw new Error('La cámara entregó video sin dimensiones. Reinicia la cámara para continuar.');
+    }
+  }
+
+  private async acquireCamera() {
+    const preferred: MediaStreamConstraints = {
+      video: {
+        facingMode: { ideal: this.options.facingMode },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    };
+    try {
+      return await navigator.mediaDevices.getUserMedia(preferred);
+    } catch (error) {
+      const fallback = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      if (!fallback.getVideoTracks().length) {
+        fallback.getTracks().forEach((track) => track.stop());
+        throw error;
+      }
+      return fallback;
     }
   }
 
@@ -159,18 +196,16 @@ export class LiveScanner {
 
   private async startZXing(video: HTMLVideoElement, token: number) {
     const { BrowserMultiFormatReader } = await import('@zxing/browser');
-    if (this.stopped || token !== this.startToken) return;
+    if (this.stopped || token !== this.startToken || !this.stream?.active) return;
     const reader = new BrowserMultiFormatReader() as unknown as ZXingReader;
-    this.fallbackControls = await reader.decodeFromConstraints(
-      { video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+    this.fallbackControls = await reader.decodeFromStream(
+      this.stream,
       video,
       (result) => {
         if (result && !this.stopped && !this.pausedByVisibility && token === this.startToken) this.emit(result.getText(), result.getBarcodeFormat().toString());
       },
     );
     if (token !== this.startToken || this.stopped) this.fallbackControls?.stop();
-    this.stream = video.srcObject instanceof MediaStream ? video.srcObject : this.stream;
-    if (this.stream) await this.ensureVideoPlaying(video);
   }
 
   async start(video: HTMLVideoElement) {
@@ -183,15 +218,7 @@ export class LiveScanner {
     this.video = video;
     this.installVisibilityHandler();
     try {
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: this.options.facingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      };
-      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this.stream = await this.acquireCamera();
       if (this.stopped || token !== this.startToken) { this.stop(); return; }
       const track = this.getVideoTrack();
       if (!track) throw new Error('La cámara no entregó una pista de video.');
