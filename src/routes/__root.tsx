@@ -86,7 +86,9 @@ function RouteEnhancements() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext(); const router = useRouter(); const location = useLocation();
   const isLanding = location.pathname === "/";
-  const [launchComplete, setLaunchComplete] = useState(true);
+  // Start the launch overlay during the very first render on the landing route.
+  // This prevents SSR/hydration from briefly exposing the Home before the intro.
+  const [launchComplete, setLaunchComplete] = useState(() => !isLanding);
   const completeLaunch = useCallback(() => setLaunchComplete(true), []);
   useEffect(() => { if (isLanding) setLaunchComplete(false); else setLaunchComplete(true); }, [isLanding]);
   useEffect(() => {
