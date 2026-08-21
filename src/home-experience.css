@@ -1,0 +1,130 @@
+/* Nüva One — Home Experience Layer
+ * Visual polish only: no business logic, no external assets, mobile-first.
+ */
+
+/* Global landing-page rhythm */
+body:has(section#experience) {
+  overflow-x: hidden;
+}
+
+body:has(section#experience) section {
+  scroll-margin-top: 84px;
+}
+
+/* Hero: add depth without adding network weight */
+body:has(section#experience) section:first-of-type::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  width: min(72vw, 900px);
+  height: 180px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(ellipse, oklch(.55 .22 268 / .12), transparent 68%);
+  filter: blur(30px);
+  opacity: .8;
+}
+
+/* Product surfaces feel like a real product, not flat cards */
+body:has(section#experience) .shadow-2xl,
+body:has(section#experience) .shadow-xl {
+  transition: transform .45s cubic-bezier(.16,1,.3,1), box-shadow .45s ease, border-color .35s ease;
+}
+
+body:has(section#experience) .shadow-2xl:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 34px 90px -42px oklch(.35 .18 270 / .42);
+}
+
+/* Interactive cards: tactile feedback */
+body:has(section#experience) button[class*="rounded-3xl"],
+body:has(section#experience) a[class*="rounded-3xl"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body:has(section#experience) button[class*="rounded-3xl"]:active {
+  transform: scale(.985);
+}
+
+/* Ambient grid used only on larger screens to avoid visual noise on phones */
+@media (min-width: 768px) {
+  body:has(section#experience) section#experience::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .28;
+    background-image: linear-gradient(oklch(.35 .18 270 / .035) 1px, transparent 1px), linear-gradient(90deg, oklch(.35 .18 270 / .035) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+  }
+}
+
+/* Smooth product-story state changes */
+body:has(section#experience) section#experience [class*="animate-fade-in-up"] {
+  will-change: transform, opacity;
+}
+
+/* Make the primary CTAs feel intentional */
+body:has(section#experience) a[href="/auth"] button,
+body:has(section#experience) a[href*="mode=signup"] button {
+  transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease, filter .25s ease;
+}
+
+body:has(section#experience) a[href="/auth"] button:hover,
+body:has(section#experience) a[href*="mode=signup"] button:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.08);
+  box-shadow: 0 14px 34px -16px oklch(.35 .18 270 / .55);
+}
+
+/* Mobile: preserve touch ergonomics and prevent decorative effects from overwhelming content */
+@media (max-width: 767px) {
+  body:has(section#experience) section:first-of-type::after {
+    width: 110vw;
+    height: 130px;
+    bottom: 3%;
+    filter: blur(24px);
+  }
+
+  body:has(section#experience) .shadow-2xl:hover,
+  body:has(section#experience) .shadow-xl:hover {
+    transform: none;
+  }
+}
+
+/* Accessibility + performance: respect reduced motion everywhere on the Home */
+@media (prefers-reduced-motion: reduce) {
+  body:has(section#experience) *,
+  body:has(section#experience) *::before,
+  body:has(section#experience) *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Prevent launch overlay from creating a painted layer that lingers after completion. */
+.nuva-launch {
+  contain: layout paint style;
+  backface-visibility: hidden;
+}
+
+.nuva-launch__module,
+.nuva-launch__core,
+.nuva-launch__logo,
+.nuva-launch__ring,
+.nuva-launch__ambient {
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+}
+
+/* Final fade: when the component is marked complete, remove visual residue immediately. */
+.nuva-launch[data-complete="true"] {
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+}
