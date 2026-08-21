@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Toaster, toast } from "sonner";
 
 import appCss from "../styles.css?url";
+import "../home-experience.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
