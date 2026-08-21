@@ -20,7 +20,7 @@ describe("plan presentation", () => {
     expect(plan.productsLabel).toContain("5.000");
     expect(plan.aiLabel).toContain("500");
     expect(plan.storageLabel).toBe("10 GB");
-    expect(plan.highlights).toContain("Nüva Copilot y Nüva Radar");
+    expect(plan.highlights).toContain("Nüva Radar y Nüva Copilot");
   });
 
   it("calculates annual savings from the configured prices", () => {
