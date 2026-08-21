@@ -1,283 +1,172 @@
 /* Nüva One — Home Experience Layer
  * Visual polish only: no business logic, no external assets, mobile-first.
  */
+body:has(section#experience) { overflow-x: hidden; text-rendering: optimizeLegibility; }
+body:has(section#experience) section { scroll-margin-top: 84px; }
+body:has(section#experience) section:first-of-type::after { content:""; position:absolute; left:50%; bottom:5%; width:min(72vw,900px); height:180px; transform:translateX(-50%); pointer-events:none; background:radial-gradient(ellipse,oklch(.55 .22 268 / .12),transparent 68%); filter:blur(30px); opacity:.8; }
+body:has(section#experience) .shadow-2xl,body:has(section#experience) .shadow-xl { transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .45s ease,border-color .35s ease; }
+body:has(section#experience) .shadow-2xl:hover { transform:translateY(-3px); box-shadow:0 34px 90px -42px oklch(.35 .18 270 / .42); }
+body:has(section#experience) button[class*="rounded-3xl"],body:has(section#experience) a[class*="rounded-3xl"] { -webkit-tap-highlight-color:transparent; }
+body:has(section#experience) button[class*="rounded-3xl"]:active { transform:scale(.985); }
+@media (min-width:768px) { body:has(section#experience) section#experience::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.28; background-image:linear-gradient(oklch(.35 .18 270 / .035) 1px,transparent 1px),linear-gradient(90deg,oklch(.35 .18 270 / .035) 1px,transparent 1px); background-size:52px 52px; mask-image:linear-gradient(to bottom,transparent,black 18%,black 82%,transparent); } }
+body:has(section#experience) section#experience [class*="animate-fade-in-up"] { will-change:transform,opacity; }
+body:has(section#experience) a[href="/auth"] button,body:has(section#experience) a[href*="mode=signup"] button { transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s ease,filter .25s ease; }
+body:has(section#experience) a[href="/auth"] button:hover,body:has(section#experience) a[href*="mode=signup"] button:hover { transform:translateY(-2px); filter:saturate(1.08); box-shadow:0 14px 34px -16px oklch(.35 .18 270 / .55); }
+@media (max-width:767px) { body:has(section#experience) section:first-of-type::after { width:110vw;height:130px;bottom:3%;filter:blur(24px); } body:has(section#experience) .shadow-2xl:hover,body:has(section#experience) .shadow-xl:hover { transform:none; } body:has(section#experience) section,body:has(section#experience) [data-demo] { max-width:100%; } body:has(section#experience) button,body:has(section#experience) a { touch-action:manipulation; } }
+@media (prefers-reduced-motion:reduce) { body:has(section#experience) *,body:has(section#experience) *::before,body:has(section#experience) *::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; } }
+.nuva-launch { contain:layout paint style; backface-visibility:hidden; overflow:clip; }
+.nuva-launch__module,.nuva-launch__core,.nuva-launch__logo,.nuva-launch__ring,.nuva-launch__ambient { will-change:transform,opacity,filter; backface-visibility:hidden; }
+.nuva-launch[data-complete="true"] { pointer-events:none; opacity:0; visibility:hidden; transition:opacity 320ms ease,visibility 0s linear 320ms; }
 
-/* Global landing-page rhythm */
-body:has(section#experience) {
-  overflow-x: hidden;
-  text-rendering: optimizeLegibility;
+/* Scanner showcase */
+body:has(section#experience) .relative.w-\[250px\] .aspect-square,body:has(section#experience) .relative.w-\[290px\] .aspect-square { isolation:isolate; overflow:hidden; box-shadow:inset 0 0 32px oklch(.55 .22 268 / .08),0 18px 50px -30px oklch(.35 .18 270 / .32); }
+body:has(section#experience) .relative.w-\[250px\] .aspect-square::before,body:has(section#experience) .relative.w-\[290px\] .aspect-square::before { content:""; position:absolute; inset:13%; border:1px solid oklch(.55 .22 268 / .18); border-radius:1rem; pointer-events:none; z-index:2; animation:nuva-scanner-frame 2.8s ease-in-out infinite; }
+body:has(section#experience) .relative.w-\[250px\] .aspect-square::after,body:has(section#experience) .relative.w-\[290px\] .aspect-square::after { content:""; position:absolute; left:13%;right:13%;top:18%;height:28%;pointer-events:none;z-index:1;background:linear-gradient(to bottom,transparent,oklch(.62 .24 268 / .08),transparent);filter:blur(10px);animation:nuva-scanner-light 2.4s cubic-bezier(.45,0,.35,1) infinite; }
+body:has(section#experience) .relative.w-\[250px\] .aspect-square > .absolute.inset-x-5,body:has(section#experience) .relative.w-\[290px\] .aspect-square > .absolute.inset-x-5 { top:18%;height:2px;opacity:.95;z-index:3;border-radius:999px;box-shadow:0 0 10px oklch(.65 .24 268 / .75),0 0 28px oklch(.55 .22 268 / .45),0 0 50px oklch(.55 .22 268 / .18);animation:nuva-scanner-sweep 2.4s cubic-bezier(.45,0,.35,1) infinite; }
+body:has(section#experience) .relative.w-\[250px\] .aspect-square > .rounded-2xl,body:has(section#experience) .relative.w-\[290px\] .aspect-square > .rounded-2xl { transform-origin:center; animation:nuva-scanner-lock 2.4s ease-in-out infinite; }
+body:has(section#experience) .relative.w-\[250px\],body:has(section#experience) .relative.w-\[290px\] { transform:translateZ(0);animation:nuva-scanner-device 5.5s ease-in-out infinite; }
+body:has(section#experience) [data-scanner-status],body:has(section#experience) [data-scanner-result] { animation:nuva-scanner-status 2.4s ease-in-out infinite; }
+@keyframes nuva-scanner-sweep { 0%,10%{top:18%;opacity:.2}43%{top:50%;opacity:1}80%{top:82%;opacity:.9}92%,100%{top:18%;opacity:.2} }
+@keyframes nuva-scanner-light { 0%,10%{transform:translateY(-8%);opacity:0}35%{opacity:.35}80%{transform:translateY(235%);opacity:.12}100%{transform:translateY(235%);opacity:0} }
+@keyframes nuva-scanner-frame { 0%,100%{transform:scale(.96);opacity:.3}48%{transform:scale(1);opacity:.78}58%{transform:scale(1);opacity:1} }
+@keyframes nuva-scanner-lock { 0%,36%,100%{transform:scale(1);opacity:.72;filter:brightness(1)}48%{transform:scale(1.035);opacity:1;filter:brightness(1.16)}58%{transform:scale(1);opacity:.78;filter:brightness(1)} }
+@keyframes nuva-scanner-device { 0%,100%{transform:translate3d(0,0,0) rotateZ(0)}50%{transform:translate3d(0,-4px,0) rotateZ(.15deg)} }
+@keyframes nuva-scanner-status { 0%,34%{opacity:.72;transform:translateY(2px)}45%,62%{opacity:1;transform:translateY(0)}74%,100%{opacity:.72;transform:translateY(2px)} }
+@media (max-width:767px) { body:has(section#experience) .relative.w-\[250px\] .aspect-square,body:has(section#experience) .relative.w-\[290px\] .aspect-square { box-shadow:inset 0 0 24px oklch(.55 .22 268 / .06),0 14px 36px -28px oklch(.35 .18 270 / .28); } body:has(section#experience) .relative.w-\[250px\],body:has(section#experience) .relative.w-\[290px\] { animation-duration:6.5s; } }
+@media (prefers-reduced-motion:reduce) { body:has(section#experience) .relative.w-\[250px\],body:has(section#experience) .relative.w-\[290px\] .aspect-square::before,body:has(section#experience) .relative.w-\[290px\] .aspect-square::after,body:has(section#experience) .relative.w-\[250px\] .aspect-square::before,body:has(section#experience) .relative.w-\[250px\] .aspect-square::after,body:has(section#experience) .relative.w-\[250px\] .aspect-square > .absolute.inset-x-5,body:has(section#experience) .relative.w-\[290px\] .aspect-square > .absolute.inset-x-5,body:has(section#experience) .relative.w-\[250px\] .aspect-square > .rounded-2xl,body:has(section#experience) .relative.w-\[290px\] .aspect-square > .rounded-2xl,body:has(section#experience) [data-scanner-status],body:has(section#experience) [data-scanner-result] { animation:none!important; } }
+
+/* ================================================================
+   BUSINESS COMMAND CENTER — FIRST IMPRESSION LAYER
+   The existing Hero markup stays intact; this layer transforms it into
+   a living product demonstration without changing business logic.
+   ================================================================ */
+body:has(section#experience) section:first-of-type > div:last-child > div:last-child > div > .overflow-hidden.rounded-\[1\.75rem\],
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] {
+  position:relative;
+  isolation:isolate;
+  border-color:oklch(.55 .22 268 / .28);
+  background:linear-gradient(135deg,oklch(.99 .005 270 / .94),oklch(.96 .012 270 / .9));
+  box-shadow:0 40px 120px -50px oklch(.38 .20 268 / .58),0 0 0 1px oklch(.55 .22 268 / .08),inset 0 1px 0 oklch(1 0 0 / .65);
 }
-
-body:has(section#experience) section {
-  scroll-margin-top: 84px;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\]::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:radial-gradient(circle at 78% 12%,oklch(.62 .24 268 / .15),transparent 30%),radial-gradient(circle at 12% 100%,oklch(.62 .24 268 / .08),transparent 36%);
 }
-
-/* Hero: add depth without adding network weight */
-body:has(section#experience) section:first-of-type::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 5%;
-  width: min(72vw, 900px);
-  height: 180px;
-  transform: translateX(-50%);
-  pointer-events: none;
-  background: radial-gradient(ellipse, oklch(.55 .22 268 / .12), transparent 68%);
-  filter: blur(30px);
-  opacity: .8;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\]::after {
+  content:"NÜVA INTELLIGENCE  •  ANALIZANDO TU NEGOCIO";
+  position:absolute;
+  top:11px;
+  right:16px;
+  z-index:20;
+  padding:5px 9px;
+  border:1px solid oklch(.55 .22 268 / .18);
+  border-radius:999px;
+  background:oklch(1 0 0 / .72);
+  color:oklch(.42 .15 268);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.08em;
+  box-shadow:0 8px 24px -14px oklch(.35 .18 270 / .5);
+  animation:nuva-command-status 3.8s ease-in-out infinite;
 }
-
-/* Product surfaces feel like a real product, not flat cards */
-body:has(section#experience) .shadow-2xl,
-body:has(section#experience) .shadow-xl {
-  transition: transform .45s cubic-bezier(.16,1,.3,1), box-shadow .45s ease, border-color .35s ease;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] > div:first-child {
+  background:linear-gradient(90deg,oklch(.98 .01 270 / .96),oklch(.94 .02 270 / .8));
+  box-shadow:inset 0 -1px 0 oklch(.55 .22 268 / .08);
 }
-
-body:has(section#experience) .shadow-2xl:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 34px 90px -42px oklch(.35 .18 270 / .42);
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] > div:first-child .h-2\.5 {
+  animation:nuva-live-dot 1.8s ease-in-out infinite;
+  box-shadow:0 0 0 4px oklch(.55 .22 268 / .08),0 0 18px oklch(.55 .22 268 / .45);
 }
-
-/* Interactive cards: tactile feedback */
-body:has(section#experience) button[class*="rounded-3xl"],
-body:has(section#experience) a[class*="rounded-3xl"] {
-  -webkit-tap-highlight-color: transparent;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-background\/60 {
+  position:relative;
+  overflow:hidden;
+  transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .35s ease,box-shadow .35s ease;
 }
-
-body:has(section#experience) button[class*="rounded-3xl"]:active {
-  transform: scale(.985);
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-background\/60::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(115deg,transparent 20%,oklch(.55 .22 268 / .07) 48%,transparent 76%);
+  transform:translateX(-110%);
+  animation:nuva-data-sweep 5.5s ease-in-out infinite;
 }
-
-/* Ambient grid used only on larger screens to avoid visual noise on phones */
-@media (min-width: 768px) {
-  body:has(section#experience) section#experience::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: .28;
-    background-image: linear-gradient(oklch(.35 .18 270 / .035) 1px, transparent 1px), linear-gradient(90deg, oklch(.35 .18 270 / .035) 1px, transparent 1px);
-    background-size: 52px 52px;
-    mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
-  }
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-background\/60:hover {
+  transform:translateY(-2px);
+  border-color:oklch(.55 .22 268 / .28);
+  box-shadow:0 18px 40px -28px oklch(.35 .18 270 / .4);
 }
-
-/* Smooth product-story state changes */
-body:has(section#experience) section#experience [class*="animate-fade-in-up"] {
-  will-change: transform, opacity;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .border-t.bg-secondary\/20 {
+  position:relative;
+  background:linear-gradient(180deg,oklch(.96 .012 270 / .72),oklch(.93 .02 270 / .82));
 }
-
-/* Make the primary CTAs feel intentional */
-body:has(section#experience) a[href="/auth"] button,
-body:has(section#experience) a[href*="mode=signup"] button {
-  transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease, filter .25s ease;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .border-t.bg-secondary\/20::before {
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,oklch(.55 .22 268 / .75),transparent);
+  animation:nuva-scan-bar 3.2s ease-in-out infinite;
 }
-
-body:has(section#experience) a[href="/auth"] button:hover,
-body:has(section#experience) a[href*="mode=signup"] button:hover {
-  transform: translateY(-2px);
-  filter: saturate(1.08);
-  box-shadow: 0 14px 34px -16px oklch(.35 .18 270 / .55);
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .flex.h-20.w-20 {
+  position:relative;
+  border-color:oklch(.55 .22 268 / .24);
+  box-shadow:0 0 0 8px oklch(.55 .22 268 / .035),0 16px 42px -24px oklch(.55 .22 268 / .48),inset 0 0 18px oklch(.55 .22 268 / .06);
+  animation:nuva-score-pulse 3.6s ease-in-out infinite;
 }
-
-/* Mobile: preserve touch ergonomics and prevent decorative effects from overwhelming content */
-@media (max-width: 767px) {
-  body:has(section#experience) section:first-of-type::after {
-    width: 110vw;
-    height: 130px;
-    bottom: 3%;
-    filter: blur(24px);
-  }
-
-  body:has(section#experience) .shadow-2xl:hover,
-  body:has(section#experience) .shadow-xl:hover {
-    transform: none;
-  }
-
-  /* Avoid accidental horizontal scroll from animated product surfaces. */
-  body:has(section#experience) section,
-  body:has(section#experience) [data-demo] {
-    max-width: 100%;
-  }
-
-  /* Keep tap targets comfortable without making the interface feel oversized. */
-  body:has(section#experience) button,
-  body:has(section#experience) a {
-    touch-action: manipulation;
-  }
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .flex.h-20.w-20::after {
+  content:"SALUD";
+  position:absolute;
+  left:50%;
+  bottom:-20px;
+  transform:translateX(-50%);
+  color:oklch(.48 .16 268);
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.14em;
 }
-
-/* Accessibility + performance: respect reduced motion everywhere on the Home */
-@media (prefers-reduced-motion: reduce) {
-  body:has(section#experience) *,
-  body:has(section#experience) *::before,
-  body:has(section#experience) *::after {
-    scroll-behavior: auto !important;
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-  }
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-card {
+  border-color:oklch(.55 .22 268 / .18);
+  box-shadow:0 18px 45px -32px oklch(.35 .18 270 / .45),inset 0 1px 0 oklch(1 0 0 / .55);
 }
-
-/* Prevent launch overlay from creating a painted layer that lingers after completion. */
-.nuva-launch {
-  contain: layout paint style;
-  backface-visibility: hidden;
-  overflow: clip;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-card::before {
+  content:"●";
+  float:right;
+  margin-top:1px;
+  color:oklch(.58 .20 145);
+  font-size:9px;
+  animation:nuva-live-dot 1.8s ease-in-out infinite;
 }
-
-.nuva-launch__module,
-.nuva-launch__core,
-.nuva-launch__logo,
-.nuva-launch__ring,
-.nuva-launch__ambient {
-  will-change: transform, opacity, filter;
-  backface-visibility: hidden;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-t-md.bg-gradient-primary\/80 {
+  transform-origin:bottom;
+  animation:nuva-chart-rise .9s cubic-bezier(.16,1,.3,1) both;
 }
-
-/* Final fade: when the component is marked complete, remove visual residue immediately. */
-.nuva-launch[data-complete="true"] {
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 320ms ease, visibility 0s linear 320ms;
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-t-md.bg-gradient-primary\/80:nth-child(2n) { animation-delay:.08s; }
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-t-md.bg-gradient-primary\/80:nth-child(3n) { animation-delay:.16s; }
+body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-t-md.bg-gradient-primary\/80:nth-child(4n) { animation-delay:.24s; }
+@keyframes nuva-command-status { 0%,100%{opacity:.72;transform:translateY(0)}50%{opacity:1;transform:translateY(-1px)} }
+@keyframes nuva-live-dot { 0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)} }
+@keyframes nuva-data-sweep { 0%,42%{transform:translateX(-110%);opacity:0}52%{opacity:1}72%,100%{transform:translateX(110%);opacity:0} }
+@keyframes nuva-scan-bar { 0%,100%{transform:scaleX(.18);opacity:.25}50%{transform:scaleX(1);opacity:1} }
+@keyframes nuva-score-pulse { 0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.035);filter:brightness(1.08)} }
+@keyframes nuva-chart-rise { from{transform:scaleY(.18);opacity:.15} to{transform:scaleY(1);opacity:1} }
+@media (max-width:767px) {
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\]::after { top:8px;right:9px;max-width:calc(100% - 18px);font-size:7px;letter-spacing:.06em; }
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .flex.h-20.w-20 { box-shadow:0 0 0 6px oklch(.55 .22 268 / .035),0 12px 32px -22px oklch(.55 .22 268 / .4); }
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-background\/60:hover { transform:none; }
 }
-
-/* --------------------------------------------------------------------------
-   NÜVA SCANNER — PRODUCT SHOWCASE MOTION
-   This is intentionally CSS-only: no camera access, no external assets and
-   no changes to the operational scanner. The Home demonstrates the workflow.
-   -------------------------------------------------------------------------- */
-body:has(section#experience) .relative.w-\[250px\] .aspect-square,
-body:has(section#experience) .relative.w-\[290px\] .aspect-square {
-  isolation: isolate;
-  overflow: hidden;
-  box-shadow: inset 0 0 32px oklch(.55 .22 268 / .08), 0 18px 50px -30px oklch(.35 .18 270 / .32);
-}
-
-/* Scanner viewfinder */
-body:has(section#experience) .relative.w-\[250px\] .aspect-square::before,
-body:has(section#experience) .relative.w-\[290px\] .aspect-square::before {
-  content: "";
-  position: absolute;
-  inset: 13%;
-  border: 1px solid oklch(.55 .22 268 / .18);
-  border-radius: 1rem;
-  pointer-events: none;
-  z-index: 2;
-  animation: nuva-scanner-frame 2.8s ease-in-out infinite;
-}
-
-/* Soft scanner light sweep */
-body:has(section#experience) .relative.w-\[250px\] .aspect-square::after,
-body:has(section#experience) .relative.w-\[290px\] .aspect-square::after {
-  content: "";
-  position: absolute;
-  left: 13%;
-  right: 13%;
-  top: 18%;
-  height: 28%;
-  pointer-events: none;
-  z-index: 1;
-  background: linear-gradient(to bottom, transparent, oklch(.62 .24 268 / .08), transparent);
-  filter: blur(10px);
-  animation: nuva-scanner-light 2.4s cubic-bezier(.45,0,.35,1) infinite;
-}
-
-/* Actual scan line supplied by the existing Home markup */
-body:has(section#experience) .relative.w-\[250px\] .aspect-square > .absolute.inset-x-5,
-body:has(section#experience) .relative.w-\[290px\] .aspect-square > .absolute.inset-x-5 {
-  top: 18%;
-  height: 2px;
-  opacity: .95;
-  z-index: 3;
-  border-radius: 999px;
-  box-shadow: 0 0 10px oklch(.65 .24 268 / .75), 0 0 28px oklch(.55 .22 268 / .45), 0 0 50px oklch(.55 .22 268 / .18);
-  animation: nuva-scanner-sweep 2.4s cubic-bezier(.45,0,.35,1) infinite;
-}
-
-/* Barcode/product payload gets a subtle detection pulse */
-body:has(section#experience) .relative.w-\[250px\] .aspect-square > .rounded-2xl,
-body:has(section#experience) .relative.w-\[290px\] .aspect-square > .rounded-2xl {
-  transform-origin: center;
-  animation: nuva-scanner-lock 2.4s ease-in-out infinite;
-}
-
-/* The surrounding scanner card breathes very subtly to signal live activity. */
-body:has(section#experience) .relative.w-\[250px\],
-body:has(section#experience) .relative.w-\[290px\] {
-  transform: translateZ(0);
-  animation: nuva-scanner-device 5.5s ease-in-out infinite;
-}
-
-/* If the markup exposes an inventory/status badge, make its confirmation feel
-   like a real transaction rather than a static label. */
-body:has(section#experience) [data-scanner-status],
-body:has(section#experience) [data-scanner-result] {
-  animation: nuva-scanner-status 2.4s ease-in-out infinite;
-}
-
-@keyframes nuva-scanner-sweep {
-  0%, 10% { top: 18%; opacity: .2; }
-  43% { top: 50%; opacity: 1; }
-  80% { top: 82%; opacity: .9; }
-  92%, 100% { top: 18%; opacity: .2; }
-}
-
-@keyframes nuva-scanner-light {
-  0%, 10% { transform: translateY(-8%); opacity: 0; }
-  35% { opacity: .35; }
-  80% { transform: translateY(235%); opacity: .12; }
-  100% { transform: translateY(235%); opacity: 0; }
-}
-
-@keyframes nuva-scanner-frame {
-  0%, 100% { transform: scale(.96); opacity: .3; }
-  48% { transform: scale(1); opacity: .78; }
-  58% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes nuva-scanner-lock {
-  0%, 36%, 100% { transform: scale(1); opacity: .72; filter: brightness(1); }
-  48% { transform: scale(1.035); opacity: 1; filter: brightness(1.16); }
-  58% { transform: scale(1); opacity: .78; filter: brightness(1); }
-}
-
-@keyframes nuva-scanner-device {
-  0%, 100% { transform: translate3d(0, 0, 0) rotateZ(0deg); }
-  50% { transform: translate3d(0, -4px, 0) rotateZ(.15deg); }
-}
-
-@keyframes nuva-scanner-status {
-  0%, 34% { opacity: .72; transform: translateY(2px); }
-  45%, 62% { opacity: 1; transform: translateY(0); }
-  74%, 100% { opacity: .72; transform: translateY(2px); }
-}
-
-@media (max-width: 767px) {
-  body:has(section#experience) .relative.w-\[250px\] .aspect-square,
-  body:has(section#experience) .relative.w-\[290px\] .aspect-square {
-    box-shadow: inset 0 0 24px oklch(.55 .22 268 / .06), 0 14px 36px -28px oklch(.35 .18 270 / .28);
-  }
-
-  body:has(section#experience) .relative.w-\[250px\],
-  body:has(section#experience) .relative.w-\[290px\] {
-    animation-duration: 6.5s;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body:has(section#experience) .relative.w-\[250px\],
-  body:has(section#experience) .relative.w-\[290px\] .aspect-square::before,
-  body:has(section#experience) .relative.w-\[290px\] .aspect-square::after,
-  body:has(section#experience) .relative.w-\[250px\] .aspect-square::before,
-  body:has(section#experience) .relative.w-\[250px\] .aspect-square::after,
-  body:has(section#experience) .relative.w-\[250px\] .aspect-square > .absolute.inset-x-5,
-  body:has(section#experience) .relative.w-\[290px\] .aspect-square > .absolute.inset-x-5,
-  body:has(section#experience) .relative.w-\[250px\] .aspect-square > .rounded-2xl,
-  body:has(section#experience) .relative.w-\[290px\] .aspect-square > .rounded-2xl,
-  body:has(section#experience) [data-scanner-status],
-  body:has(section#experience) [data-scanner-result] {
-    animation: none !important;
-  }
+@media (prefers-reduced-motion:reduce) {
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\]::after,
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .h-2\.5,
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-background\/60::after,
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .border-t.bg-secondary\/20::before,
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .flex.h-20.w-20,
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-t-md.bg-gradient-primary\/80,
+  body:has(section#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] .rounded-2xl.border.bg-card::before { animation:none!important; }
 }
