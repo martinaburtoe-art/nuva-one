@@ -24,7 +24,18 @@ type Signal = {
 };
 
 const priorityMap: Record<NonNullable<Signal["severity"]>, ActionPriority> = { critical: "critical", warning: "high", opportunity: "opportunity", info: "medium" };
-const destinationMap: Record<string, ActionDestination> = { "low-stock": "inventory", "receivables-overdue": "crm", "purchase-pressure": "purchases", "cash-burn": "finance", "growth-opportunity": "customers" };
+const destinationMap: Record<string, ActionDestination> = {
+  "low-stock": "inventory",
+  "receivables-overdue": "crm",
+  "purchase-pressure": "purchases",
+  "cash-burn": "finance",
+  "growth-opportunity": "customers",
+  tax: "finance",
+  compliance: "finance",
+  f29: "finance",
+  dte: "finance",
+  rcv: "finance",
+};
 const impactMap: Record<NonNullable<Signal["severity"]>, number> = { critical: 100, warning: 75, opportunity: 65, info: 40 };
 const ctaMap: Record<ActionDestination, string> = { inventory: "Revisar inventario", crm: "Gestionar cobranza", purchases: "Preparar compra", finance: "Revisar finanzas", customers: "Ver clientes", dashboard: "Revisar indicador" };
 const modeMap: Record<ActionDestination, ActionMode> = { inventory: "review", crm: "prepare", purchases: "prepare", finance: "review", customers: "prepare", dashboard: "review" };
