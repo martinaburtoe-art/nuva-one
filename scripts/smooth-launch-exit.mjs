@@ -12,6 +12,21 @@ if (source.includes(hiddenState)) {
   source = source.replace(hiddenState, visibleState);
 }
 
+// Make the launch layer opaque and viewport-fixed from the first paint so the
+// Home can never flash through before hydration/CSS transitions settle.
+const baseMarker = "/* NÜVA FIRST-PAINT COVER */";
+if (!source.includes(baseMarker)) {
+  const css = `
+          ${baseMarker}
+          .nuva-launch{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:2147483647!important;display:block!important;overflow:hidden!important;background:#050509!important;isolation:isolate!important;opacity:1!important;visibility:visible!important}
+          .nuva-launch--exit{pointer-events:none!important}
+          @media (prefers-reduced-motion:reduce){.nuva-launch{transition:none!important}}
+`;
+  const needle = "`}</style>";
+  if (!source.includes(needle)) throw new Error("Launch inline style anchor not found");
+  source = source.replace(needle, `${css}\n\`}</style>`);
+}
+
 // Keep the premium exit override idempotent.
 const marker = "/* NÜVA SMOOTH EXIT OVERRIDE */";
 if (!source.includes(marker)) {
