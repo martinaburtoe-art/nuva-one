@@ -91,9 +91,7 @@ export class LiveScanner {
     this.removeVisibilityHandler();
     this.visibilityHandler = () => {
       this.pausedByVisibility = document.visibilityState === 'hidden';
-      if (!this.pausedByVisibility && this.video && !this.stopped) {
-        void this.video.play().catch(() => undefined);
-      }
+      if (!this.pausedByVisibility && this.video && !this.stopped) void this.ensureVideoPlaying(this.video).catch(() => undefined);
     };
     document.addEventListener('visibilitychange', this.visibilityHandler);
     this.pausedByVisibility = document.visibilityState === 'hidden';
@@ -103,6 +101,33 @@ export class LiveScanner {
     if (!isBrowser() || !this.visibilityHandler) return;
     document.removeEventListener('visibilitychange', this.visibilityHandler);
     this.visibilityHandler = null;
+  }
+
+  private async ensureVideoPlaying(video: HTMLVideoElement) {
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('autoplay', 'true');
+    video.muted = true;
+    if (video.srcObject !== this.stream && this.stream) video.srcObject = this.stream;
+    if (video.readyState < HTMLMediaElement.HAVE_METADATA) {
+      await new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          video.removeEventListener('loadedmetadata', finish);
+          video.removeEventListener('canplay', finish);
+          resolve();
+        };
+        video.addEventListener('loadedmetadata', finish, { once: true });
+        video.addEventListener('canplay', finish, { once: true });
+        window.setTimeout(finish, 1200);
+      });
+    }
+    await video.play();
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+      await video.play();
+    }
   }
 
   private async startNative(video: HTMLVideoElement, token: number) {
@@ -137,61 +162,58 @@ export class LiveScanner {
     if (this.stopped || token !== this.startToken) return;
     const reader = new BrowserMultiFormatReader() as unknown as ZXingReader;
     this.fallbackControls = await reader.decodeFromConstraints(
-      { video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 } }, audio: false },
+      { video: { facingMode: { ideal: this.options.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
       video,
       (result) => {
         if (result && !this.stopped && !this.pausedByVisibility && token === this.startToken) this.emit(result.getText(), result.getBarcodeFormat().toString());
       },
     );
     if (token !== this.startToken || this.stopped) this.fallbackControls?.stop();
-    this.stream = video.srcObject instanceof MediaStream ? video.srcObject : null;
+    this.stream = video.srcObject instanceof MediaStream ? video.srcObject : this.stream;
+    if (this.stream) await this.ensureVideoPlaying(video);
   }
 
   async start(video: HTMLVideoElement) {
     if (!LiveScanner.hasCameraSupport()) throw new Error('Este dispositivo no permite acceder a la cámara.');
+    if (!isBrowser() || !window.isSecureContext) throw new Error('La cámara requiere una conexión segura (HTTPS).');
     this.stop();
     const token = ++this.startToken;
     this.stopped = false;
     this.pausedByVisibility = false;
     this.video = video;
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('autoplay', 'true');
-    video.muted = true;
     this.installVisibilityHandler();
     try {
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: { ideal: this.options.facingMode },
-          width: { ideal: 1280, max: 1280, min: 640 },
-          height: { ideal: 720, max: 720, min: 480 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
         audio: false,
       };
+      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (this.stopped || token !== this.startToken) { this.stop(); return; }
+      const track = this.getVideoTrack();
+      if (!track) throw new Error('La cámara no entregó una pista de video.');
+      video.srcObject = this.stream;
+      await this.ensureVideoPlaying(video);
+
       if (LiveScanner.hasNativeBarcodeDetector()) {
-        this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-        if (this.stopped || token !== this.startToken) { this.stop(); return; }
-        video.srcObject = this.stream;
-        await video.play();
         try {
           await this.startNative(video, token);
           return;
         } catch (nativeError) {
           const fallbackAllowed = nativeError instanceof Error && ['NotSupportedError', 'TypeMismatchError', 'InvalidStateError'].includes(nativeError.name);
           if (!fallbackAllowed || this.stopped || token !== this.startToken) throw nativeError;
-          this.stop();
-          const fallbackToken = ++this.startToken;
-          this.stopped = false;
-          this.pausedByVisibility = false;
-          this.video = video;
-          this.installVisibilityHandler();
-          await this.startZXing(video, fallbackToken);
-          if (!this.stopped && fallbackToken === this.startToken) await video.play().catch(() => undefined);
+          if (this.timer !== null) window.clearInterval(this.timer);
+          this.timer = null;
+          await this.ensureVideoPlaying(video);
+          await this.startZXing(video, token);
           return;
         }
       }
 
       await this.startZXing(video, token);
-      if (!this.stopped && token === this.startToken) await video.play().catch(() => undefined);
     } catch (error) {
       if (token === this.startToken) this.stop();
       this.options.onError?.(error);
