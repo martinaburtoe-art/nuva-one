@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Nüva One — Cinematic Scroll Master</title>
+<style>
+:root{--ink:#0b0b0b;--paper:#f1eee7;--paper2:#e6e1d7;--orange:#ff6b2c;--muted:#8d8a84;--line:rgba(241,238,231,.16);--darkline:rgba(11,11,11,.14)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--ink);color:var(--paper);font-family:Arial,Helvetica,sans-serif}body{overflow-x:hidden}button{font:inherit}
+#stage{position:fixed;inset:0;overflow:hidden;background:var(--ink)}
+#world{position:absolute;inset:0;will-change:transform}
+.grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(12,1fr);pointer-events:none;opacity:.7}.grid i{border-left:1px solid var(--line)}
+.nav{position:absolute;top:0;left:0;right:0;height:74px;display:flex;align-items:center;justify-content:space-between;padding:0 4vw;z-index:20;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.brand{font-weight:800;font-size:16px;letter-spacing:-.04em}.brand b{color:var(--orange)}.nav a{color:inherit;text-decoration:none;margin-left:28px}.pill{border:1px solid rgba(241,238,231,.32);border-radius:999px;padding:11px 16px}
+.hero{position:absolute;inset:0;background:radial-gradient(80% 80% at 52% 48%,#24211e 0,#10100f 44%,#070707 100%);overflow:hidden}.hero-art{position:absolute;inset:10% 7% 8%;background:linear-gradient(135deg,rgba(255,107,44,.15),transparent 35%),radial-gradient(circle at 65% 45%,rgba(255,107,44,.28),transparent 20%),linear-gradient(115deg,#171615 0,#2b2926 42%,#111 70%);clip-path:polygon(0 8%,86% 0,100% 15%,94% 100%,7% 94%);transform:scale(1.08);filter:saturate(.7)}.hero-art:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 8px,rgba(241,238,231,.07) 8px 10px);mix-blend-mode:screen}
+.kicker{position:absolute;top:22%;left:8%;font-size:11px;letter-spacing:.22em;text-transform:uppercase}.hero h1{position:absolute;left:5vw;right:4vw;bottom:22%;margin:0;font-size:clamp(68px,18vw,250px);line-height:.78;letter-spacing:-.075em;font-weight:800;white-space:nowrap;z-index:4}.hero h1 span{display:inline-block}.hero-sub{position:absolute;left:8%;bottom:9%;font-size:10px;line-height:1.5;letter-spacing:.13em;text-transform:uppercase;max-width:180px}.hero-score{position:absolute;right:7%;bottom:9%;font-size:10px;text-align:right;letter-spacing:.12em;text-transform:uppercase}.hero-score strong{display:block;font-size:54px;letter-spacing:-.08em;color:var(--orange);line-height:.9}
+.section{position:absolute;inset:0;overflow:hidden}.dark{background:var(--ink);color:var(--paper)}.light{background:var(--paper);color:var(--ink)}
+.section .eyebrow{position:absolute;top:18%;left:8%;font-size:10px;letter-spacing:.2em;text-transform:uppercase}.section h2{position:absolute;left:7%;right:6%;top:30%;font-size:clamp(52px,13vw,180px);line-height:.82;letter-spacing:-.075em;margin:0;font-weight:800}.section p{position:absolute;left:8%;bottom:12%;width:min(390px,50vw);font-size:13px;line-height:1.5}.number{position:absolute;right:8%;bottom:10%;font-size:clamp(80px,18vw,240px);font-weight:800;letter-spacing:-.08em;color:var(--orange)}
+.split{display:grid;grid-template-columns:1fr 1fr}.split .copy{position:absolute;left:8%;top:23%;width:39%;z-index:2}.split h2{position:static;font-size:clamp(52px,10vw,150px)}.split .visual{position:absolute;right:0;top:0;width:58%;height:100%;background:linear-gradient(140deg,#29251f,#b6ab99 45%,#161616);clip-path:polygon(9% 0,100% 0,100% 100%,0 100%);}.split .visual:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 14px,rgba(255,255,255,.11) 14px 16px)}
+.cards{position:absolute;left:8%;right:8%;bottom:10%;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}.card{height:150px;border:1px solid var(--darkline);padding:20px;display:flex;flex-direction:column;justify-content:space-between}.card b{font-size:30px;letter-spacing:-.06em}.card small{font-size:9px;letter-spacing:.14em;text-transform:uppercase}.radar{position:absolute;right:8%;top:20%;width:min(42vw,430px);aspect-ratio:1;border:1px solid var(--darkline);border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 28px,rgba(11,11,11,.1) 29px 30px)}.radar:before,.radar:after{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px solid var(--darkline);transform-origin:center}.radar:after{transform:rotate(90deg)}.radar i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--orange);box-shadow:0 0 25px var(--orange)}.r1{left:29%;top:33%}.r2{left:67%;top:61%}.r3{left:57%;top:20%}
+.gallery{position:absolute;inset:15% 7% 9%;display:grid;grid-template-columns:1.25fr .75fr;grid-template-rows:1fr .8fr;gap:12px}.tile{overflow:hidden;position:relative;background:linear-gradient(145deg,#201f1d,#827d74 50%,#161616)}.tile:nth-child(2){background:linear-gradient(145deg,#d6d0c4,#5b554c)}.tile:nth-child(3){background:linear-gradient(145deg,#5b554c,#151515)}.tile:nth-child(4){background:linear-gradient(145deg,#ff6b2c,#221a15)}.tile:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 11px,rgba(255,255,255,.08) 11px 13px)}
+.ask{position:absolute;left:8%;right:8%;top:25%;display:flex;justify-content:space-between;align-items:flex-end}.ask .letters{font-size:clamp(90px,24vw,310px);font-weight:800;line-height:.72;letter-spacing:-.09em}.ask .answer{width:30%;font-size:14px;line-height:1.5}.footerMark{position:absolute;left:7%;bottom:8%;font-size:clamp(45px,10vw,130px);font-weight:800;letter-spacing:-.08em}.footerMark b{color:var(--orange)}
+.lines{position:absolute;inset:0;z-index:30;pointer-events:none;display:grid;grid-template-columns:repeat(32,1fr);mix-blend-mode:screen}.lines i{border-left:1px solid rgba(241,238,231,.11);transform:scaleY(var(--sy,1));transform-origin:center}.cursor{position:fixed;z-index:100;width:26px;height:26px;border:1px solid rgba(241,238,231,.7);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:width .2s,height .2s}.progress{position:fixed;z-index:80;left:0;bottom:0;height:2px;width:100%;background:rgba(241,238,231,.12)}.progress i{display:block;height:100%;width:0;background:var(--orange);transform-origin:left}.hint{position:fixed;z-index:80;left:50%;bottom:24px;transform:translateX(-50%);font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:.65;transition:opacity .5s}.hint.hide{opacity:0}.sectionLabel{position:fixed;right:4vw;top:92px;z-index:80;font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.6}
+@media(max-width:700px){.nav{height:62px;padding:0 18px}.nav a{display:none}.hero-art{inset:13% 4% 16%}.hero h1{bottom:25%;font-size:23vw}.kicker{top:18%;left:6%}.hero-sub{left:6%;bottom:9%}.hero-score{right:6%;bottom:9%}.hero-score strong{font-size:42px}.section h2{left:6%;right:5%;top:30%;font-size:20vw}.section p{left:6%;bottom:11%;width:55%;font-size:11px}.number{right:6%;bottom:11%;font-size:23vw}.split .copy{left:6%;top:22%;width:76%}.split .visual{top:50%;width:100%;height:50%;clip-path:none}.cards{left:6%;right:6%;bottom:8%;grid-template-columns:1fr;gap:5px}.card{height:82px;padding:12px}.card b{font-size:22px}.radar{right:8%;top:47%;width:62vw}.gallery{inset:27% 6% 9%;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.ask{left:6%;right:6%;top:27%;display:block}.ask .letters{font-size:27vw}.ask .answer{width:75%;margin-top:55px}.footerMark{left:6%;bottom:10%;font-size:18vw}.cursor{display:none}.hint{bottom:18px}.sectionLabel{top:76px;right:18px}}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div id="world">
+  <div class="grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <nav class="nav"><div class="brand">NÜVA<span>·</span>ONE</div><div><a href="#">INTELLIGENCE</a><a href="#">ECOSYSTEM</a><a class="pill" href="#">ENTRAR</a></div></nav>
+  <section class="hero section dark" data-name="Nüva One">
+   <div class="hero-art"></div><div class="kicker">BUSINESS OPERATING SYSTEM</div>
+   <h1><span>NÜVA</span></h1><div class="hero-sub">Todo tu negocio.<br>Una sola inteligencia.</div><div class="hero-score">NÜVA SCORE<strong>82</strong></div>
+  </section>
+  <section class="section dark split" data-name="Intelligence">
+   <div class="copy"><div class="eyebrow">01 / PROLOGUE</div><h2>ENTIENDE<br>TU NEGOCIO.</h2><p>Nüva conecta ventas, clientes, inventario, caja y finanzas para convertir datos dispersos en una visión inmediata.</p></div><div class="visual"></div>
+  </section>
+  <section class="section light" data-name="Radar">
+   <div class="eyebrow">02 / NÜVA RADAR</div><h2>DETECTA LO<br>QUE VIENE.</h2><div class="radar"><i class="r1"></i><i class="r2"></i><i class="r3"></i></div><p>Riesgos, alertas y oportunidades aparecen antes de convertirse en problemas.</p>
+  </section>
+  <section class="section light" data-name="Score">
+   <div class="eyebrow">03 / NÜVA SCORE</div><h2>UNA LECTURA<br>EN UN NÚMERO.</h2><div class="number">82</div><p>Una puntuación viva que resume la salud de tu negocio y cambia con cada nueva señal.</p>
+   <div class="cards"><div class="card"><small>Finanzas</small><b>86</b></div><div class="card"><small>Ventas</small><b>91</b></div><div class="card"><small>Inventario</small><b>74</b></div></div>
+  </section>
+  <section class="section dark" data-name="Ecosystem">
+   <div class="eyebrow">04 / ECOSYSTEM</div><h2>TODO<br>CONECTADO.</h2><div class="gallery"><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div></div>
+  </section>
+  <section class="section dark" data-name="Ask Nüva">
+   <div class="eyebrow">05 / INTELLIGENCE</div><div class="ask"><div class="letters">NÜVA<br>AI</div><div class="answer"><b>EXPLÍCAME MI NEGOCIO.</b><br><br>Tu negocio pregunta. Nüva analiza, explica y propone la siguiente acción.</div></div>
+  </section>
+  <section class="section light" data-name="Final">
+   <div class="eyebrow">06 / THE CORE</div><h2>NO ES OTRO<br>SOFTWARE.</h2><div class="footerMark">NÜVA<span>·</span><b>ONE</b></div><p>El centro de control de tu empresa.</p>
+  </section>
+ </div>
+ <div class="lines" id="lines"></div><div class="cursor" id="cursor"></div>
+ <div class="sectionLabel" id="label">Nüva One</div><div class="hint" id="hint">Desliza para explorar</div><div class="progress"><i id="bar"></i></div>
+</div>
+<script>
+const world=document.getElementById('world'),sections=[...document.querySelectorAll('.section')],bar=document.getElementById('bar'),label=document.getElementById('label'),hint=document.getElementById('hint'),lines=document.getElementById('lines'),cursor=document.getElementById('cursor');
+for(let i=0;i<32;i++) lines.appendChild(document.createElement('i'));
+let target=0,current=0,last=0,started=false;
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+function resize(){document.documentElement.style.setProperty('--vh',innerHeight+'px')}addEventListener('resize',resize);resize();
+function wheel(e){target=clamp(target+e.deltaY/innerHeight*.82,0,sections.length-1);started=true;hint.classList.add('hide');e.preventDefault()}
+addEventListener('wheel',wheel,{passive:false});
+let touchY=0;addEventListener('touchstart',e=>touchY=e.touches[0].clientY,{passive:true});addEventListener('touchmove',e=>{const y=e.touches[0].clientY;target=clamp(target+(touchY-y)/innerHeight*.92,0,sections.length-1);touchY=y;started=true;hint.classList.add('hide')},{passive:true});
+function pointer(e){cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px'}addEventListener('pointermove',pointer);
+function render(t){current+=(target-current)*.075;const max=sections.length-1;const index=Math.floor(current),p=current-index;sections.forEach((s,i)=>{let d=i-current;let near=clamp(1-Math.abs(d),0,1);s.style.transform=`translate3d(0,${d*100}%,0) scale(${.94+near*.06})`;s.style.opacity=clamp(1-Math.max(0,Math.abs(d)-.88)*7,0,1);s.style.zIndex=10-i});
+// reference-like vertical reveal: the next section is exposed by a dense vertical mask while scroll is between sections
+const reveal=Math.sin(Math.PI*p);document.documentElement.style.setProperty('--sy',String(1+reveal*2.4));lines.style.opacity=clamp(.15+reveal*1.8,0,.95);lines.style.transform=`translateX(${(p-.5)*14}px) scaleX(${1+reveal*.03})`;bar.style.width=(current/max*100)+'%';label.textContent=sections[Math.round(current)]?.dataset.name||'Nüva One';
+if(Math.abs(target-current)<.001) current=target;requestAnimationFrame(render)}requestAnimationFrame(render);
+// keyboard navigation
+addEventListener('keydown',e=>{if(['ArrowDown','PageDown',' '].includes(e.key)){target=clamp(target+1,0,sections.length-1);e.preventDefault()}if(['ArrowUp','PageUp'].includes(e.key)){target=clamp(target-1,0,sections.length-1);e.preventDefault()}if(e.key==='Home')target=0;if(e.key==='End')target=sections.length-1;hint.classList.add('hide')});
+</script>
+</body></html>
