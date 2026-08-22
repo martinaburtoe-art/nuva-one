@@ -3,36 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Nüva One — Reference Motion Master</title>
+<title>Nüva One — Reference Master</title>
 <style>
-:root{color-scheme:dark}
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;background:#050505;overflow:hidden}
-body{display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif}
-video{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#050505}
-.ui{position:fixed;inset:auto 14px 14px 14px;z-index:5;display:flex;align-items:center;gap:10px;pointer-events:none}
-button{pointer-events:auto;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.62);color:white;border-radius:999px;padding:10px 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;backdrop-filter:blur(12px)}
-.badge{margin-left:auto;padding:8px 11px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.45);border-radius:999px;color:rgba(255,255,255,.72);font-size:9px;letter-spacing:.13em;text-transform:uppercase}
-.note{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 12px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.62);font-size:9px;letter-spacing:.1em;text-transform:uppercase;backdrop-filter:blur(12px);opacity:.9}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#050505;overflow:hidden}body{font-family:Arial,sans-serif}.poster{position:fixed;inset:0;background:#050505 url('https://vumbnail.com/1179321779.jpg') center/contain no-repeat}.veil{position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.12),transparent 35%,rgba(0,0,0,.25));pointer-events:none}.player{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2;opacity:0;transition:opacity .35s ease}.player.ready{opacity:1}.start{position:fixed;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:72px;height:72px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.45);backdrop-filter:blur(12px);color:#fff;font-size:25px;cursor:pointer}.label{position:fixed;z-index:5;top:15px;left:50%;transform:translateX(-50%);padding:8px 12px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(0,0,0,.45);color:rgba(255,255,255,.75);font-size:9px;letter-spacing:.12em;text-transform:uppercase}.hint{position:fixed;z-index:5;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.65);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
 </style>
 </head>
 <body>
-<video id="ref" playsinline muted loop preload="auto" autoplay>
-<source src="data:video/mp4;base64,PLACEHOLDER" type="video/mp4">
-</video>
-<div class="note">REFERENCE MASTER · 1:1 MOTION PLAYBACK</div>
-<div class="ui">
-<button id="play">Pausar</button>
-<button id="restart">Reiniciar</button>
-<div class="badge">Nüva One · Experimental</div>
-</div>
+<div class="poster"></div><div class="veil"></div>
+<iframe id="player" class="player" src="https://player.vimeo.com/video/1179321779?autoplay=0&muted=1&loop=1&title=0&byline=0&portrait=0&controls=1" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+<div class="label">REFERENCE MASTER · ORIGINAL MOTION</div>
+<button class="start" id="start" aria-label="Reproducir">▶</button>
+<div class="hint">Toca para reproducir · referencia visual</div>
 <script>
-const v=document.getElementById('ref'),p=document.getElementById('play'),r=document.getElementById('restart');
-const sync=()=>p.textContent=v.paused?'Reproducir':'Pausar';
-p.onclick=()=>{v.paused?v.play():v.pause();sync()};
-r.onclick=()=>{v.currentTime=0;v.play();sync()};
-v.addEventListener('play',sync);v.addEventListener('pause',sync);
-v.play().catch(()=>sync());
+const frame=document.getElementById('player'),start=document.getElementById('start');
+start.addEventListener('click',()=>{frame.classList.add('ready');start.style.display='none'});
 </script>
 </body>
 </html>
