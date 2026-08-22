@@ -1,16 +1,38 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Reference Master — Exact Motion Study</title>
+<title>Nüva One — Reference Motion Master</title>
 <style>
-html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}body{display:grid;place-items:center}iframe{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#000}.badge{position:fixed;z-index:10;left:14px;bottom:14px;padding:7px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(0,0,0,.35);backdrop-filter:blur(10px);color:rgba(255,255,255,.7);font:10px/1 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;pointer-events:none}.fallback{position:fixed;inset:0;display:grid;place-items:center;color:#fff;font:12px Arial,sans-serif;text-align:center;opacity:.7}.fallback p{max-width:280px;line-height:1.5}iframe{z-index:2}.fallback{z-index:1}
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:#050505;overflow:hidden}
+body{display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif}
+video{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#050505}
+.ui{position:fixed;inset:auto 14px 14px 14px;z-index:5;display:flex;align-items:center;gap:10px;pointer-events:none}
+button{pointer-events:auto;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.62);color:white;border-radius:999px;padding:10px 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;backdrop-filter:blur(12px)}
+.badge{margin-left:auto;padding:8px 11px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.45);border-radius:999px;color:rgba(255,255,255,.72);font-size:9px;letter-spacing:.13em;text-transform:uppercase}
+.note{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 12px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.62);font-size:9px;letter-spacing:.1em;text-transform:uppercase;backdrop-filter:blur(12px);opacity:.9}
 </style>
 </head>
 <body>
-<div class="fallback"><p>Loading the exact visual reference…</p></div>
-<iframe src="https://player.vimeo.com/video/1179321779?background=1&autoplay=1&muted=1&loop=1&title=0&byline=0&portrait=0&controls=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-<div class="badge">REFERENCE MASTER · EXACT MOTION</div>
+<video id="ref" playsinline muted loop preload="auto" autoplay>
+<source src="data:video/mp4;base64,PLACEHOLDER" type="video/mp4">
+</video>
+<div class="note">REFERENCE MASTER · 1:1 MOTION PLAYBACK</div>
+<div class="ui">
+<button id="play">Pausar</button>
+<button id="restart">Reiniciar</button>
+<div class="badge">Nüva One · Experimental</div>
+</div>
+<script>
+const v=document.getElementById('ref'),p=document.getElementById('play'),r=document.getElementById('restart');
+const sync=()=>p.textContent=v.paused?'Reproducir':'Pausar';
+p.onclick=()=>{v.paused?v.play():v.pause();sync()};
+r.onclick=()=>{v.currentTime=0;v.play();sync()};
+v.addEventListener('play',sync);v.addEventListener('pause',sync);
+v.play().catch(()=>sync());
+</script>
 </body>
 </html>
