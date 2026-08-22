@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reference Master — Exact Motion Study</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#08080b;color:#fff;font-family:Arial,sans-serif;overflow:hidden}body{display:grid;place-items:center}.wrap{position:fixed;inset:0;background:#08080b;display:grid;place-items:center}video{width:100vw;height:100vh;object-fit:contain;background:#08080b;display:block}.hud{position:fixed;left:16px;right:16px;bottom:14px;display:flex;gap:8px;align-items:center;z-index:5;opacity:0;transition:opacity .25s}.wrap:hover .hud,.wrap:focus-within .hud{opacity:1}button{background:rgba(0,0,0,.65);color:#fff;border:1px solid rgba(255,255,255,.35);padding:8px 11px;font-size:10px;text-transform:uppercase;letter-spacing:.08em}input{flex:1}.badge{position:fixed;top:14px;left:16px;z-index:5;font-size:9px;letter-spacing:.12em;text-transform:uppercase;background:rgba(0,0,0,.5);padding:7px 9px;border:1px solid rgba(255,255,255,.15)}@media(max-width:720px){.hud{opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+<div class="badge">REFERENCE MASTER · EXACT MOTION SOURCE</div>
+<video id="v" playsinline muted preload="auto" autoplay>
+<source src="data:video/mp4;base64,PLACEHOLDER" type="video/mp4">
+</video>
+<div class="hud"><button id="play">Pause</button><button id="restart">Restart</button><input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="timeline"><button id="fs">Fullscreen</button></div>
+</div>
+<script>
+const v=document.getElementById('v'),play=document.getElementById('play'),restart=document.getElementById('restart'),seek=document.getElementById('seek'),fs=document.getElementById('fs');
+function sync(){seek.value=v.duration?Math.round(v.currentTime/v.duration*1000):0;play.textContent=v.paused?'Play':'Pause'}
+play.onclick=()=>v.paused?v.play():v.pause();restart.onclick=()=>{v.currentTime=0;v.play()};seek.oninput=()=>{if(v.duration)v.currentTime=seek.value/1000*v.duration};fs.onclick=()=>document.documentElement.requestFullscreen?.();v.addEventListener('timeupdate',sync);v.addEventListener('play',sync);v.addEventListener('pause',sync);v.addEventListener('ended',()=>{v.currentTime=0;v.play()});document.getElementById('wrap').addEventListener('click',e=>{if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT')return;v.paused?v.play():v.pause()});
+</script>
+</body>
+</html>
