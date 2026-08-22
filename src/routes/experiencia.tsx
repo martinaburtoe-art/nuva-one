@@ -1,12 +1,22 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 /**
- * The public product experience was consolidated into the main landing page.
- * Keep this legacy route as a compatibility redirect so old links/bookmarks
- * do not create a second, competing landing page.
+ * Isolated cinematic laboratory. The production landing remains untouched.
+ * This route exposes the complete scroll-driven home choreography for review.
  */
 export const Route = createFileRoute("/experiencia")({
-  beforeLoad: () => {
-    throw redirect({ to: "/" });
-  },
+  component: CinematicExperience,
 });
+
+function CinematicExperience() {
+  return (
+    <main className="fixed inset-0 overflow-hidden bg-black">
+      <iframe
+        title="Nüva One — Cinematic Home v3"
+        src="/nuva-cinematic-v3.html"
+        className="h-full w-full border-0"
+        allow="fullscreen"
+      />
+    </main>
+  );
+}
