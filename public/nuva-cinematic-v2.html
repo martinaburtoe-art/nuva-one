@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<title>Nüva One — Reference Motion V2</title>
+<style>
+:root{--bg:#07080c;--paper:#efede6;--ink:#101116;--orange:#ff6b35;--ease:cubic-bezier(.16,1,.3,1)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07080c}body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff}
+#stage{position:fixed;inset:0;overflow:hidden;background:#07080c}
+.scene{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}
+.hero{background:radial-gradient(circle at 50% 43%,rgba(255,107,53,.11),transparent 28%),linear-gradient(145deg,#08090d,#0c0d12 52%,#050609)}
+.hero:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(90deg,transparent 0 4px,rgba(255,255,255,.035) 4px 5px);opacity:.35;transform:skewX(-8deg)}
+.brand{position:absolute;top:22px;left:24px;display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.05em;z-index:3}.mark{width:23px;height:23px;border:1px solid rgba(255,255,255,.7);border-radius:50%;position:relative}.mark:after{content:"";position:absolute;width:6px;height:6px;left:8px;top:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 18px rgba(255,107,53,.7)}
+.hero-copy{text-align:center;position:relative;z-index:2;padding:30px}.eyebrow{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.43)}h1{font-size:clamp(70px,18vw,190px);line-height:.78;letter-spacing:-.095em;margin:18px 0 0;font-weight:760}.hero-copy p{max-width:450px;margin:24px auto 0;color:rgba(255,255,255,.5);font-size:13px;line-height:1.55}.pill{margin-top:24px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.055);color:white;border-radius:999px;padding:11px 16px;font-size:11px}
+.next{background:var(--paper);color:var(--ink);padding:9vw}.next-grid{width:min(1050px,90vw);display:grid;grid-template-columns:1.1fr .9fr;gap:8vw;align-items:center}.next h2{font-family:Georgia,serif;font-size:clamp(60px,10vw,130px);font-weight:400;line-height:.82;letter-spacing:-.075em;margin:0}.next p{max-width:410px;color:rgba(16,17,22,.58);font-size:13px;line-height:1.6}.score-card{background:#111218;color:#fff;border-radius:2px;padding:32px;min-height:340px;box-shadow:0 35px 100px rgba(0,0,0,.15)}.score-card small{color:rgba(255,255,255,.45);letter-spacing:.2em;text-transform:uppercase;font-size:9px}.score{font-size:100px;letter-spacing:-.09em;font-weight:750;margin-top:55px}.score-card span{color:rgba(255,255,255,.5);font-size:12px}
+#fx{position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+.controls{position:absolute;z-index:20;right:20px;top:18px;display:flex;gap:7px}.controls button{border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.2);backdrop-filter:blur(14px);color:#fff;border-radius:999px;padding:8px 11px;font-size:11px}.hint{position:absolute;z-index:20;bottom:20px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,.38);white-space:nowrap}
+@media(max-width:700px){.next-grid{grid-template-columns:1fr;gap:35px}.score-card{min-height:260px}.score{font-size:80px}.hint{bottom:15px}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <section class="scene hero" id="hero">
+    <div class="brand"><span class="mark"></span>Nüva One</div>
+    <div class="hero-copy"><div class="eyebrow">Business Intelligence</div><h1>NÜVA</h1><p>Todo tu negocio. Una sola inteligencia.</p><button class="pill" id="playHero">Ver experiencia</button></div>
+  </section>
+  <section class="scene next" id="next">
+    <div class="next-grid"><div><div style="font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.5">Nüva Intelligence</div><h2>Entiende<br>tu negocio.</h2><p>Nüva convierte ventas, clientes, inventario y finanzas en una lectura inmediata de lo que está pasando.</p></div><div class="score-card"><small>Nüva Score</small><div class="score">82</div><span>Salud general del negocio · +4,8% esta semana</span></div></div>
+  </section>
+  <canvas id="fx"></canvas>
+  <div class="controls"><button id="replay">Reproducir</button><button id="mode">1:1 motion</button></div>
+  <div class="hint">La transición está calibrada a la cadencia de la referencia · 30 fps</div>
+</div>
+<script>
+const canvas=document.getElementById('fx'),gl=canvas.getContext('webgl',{alpha:true,antialias:false,premultipliedAlpha:false});
+const V=`attribute vec2 p;varying vec2 uv;void main(){uv=p*.5+.5;gl_Position=vec4(p,0.,1.);}`;
+const F=`precision highp float;varying vec2 uv;uniform sampler2D oldTex;uniform sampler2D newTex;uniform float t;uniform vec2 res;uniform float seed;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);} 
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);} 
+float fbm(vec2 p){float v=0.;float a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+13.17;a*=.5;}return v;}
+void main(){vec2 q=uv;float aspect=res.x/res.y;vec2 np=vec2(q.x*aspect,q.y);float n=fbm(np*3.25+vec2(seed*2.7,seed*.8));float n2=fbm(np*8.0-vec2(seed*3.0,seed*1.7));
+// Dense vertical texture visible during the reference wipe.
+float scan=sin((q.x*res.x)*1.62)*.5+.5;float scan2=sin((q.x*res.x)*.41+n*5.)*.5+.5;
+float edgeNoise=mix(n,n2,.32);float progress=smoothstep(.06,.96,t);float threshold=progress*1.18-.12;
+// A fast white/paper flash, followed by the irregular ink/erosion edge.
+float paper=smoothstep(.08,.30,t);float reveal=smoothstep(threshold-.16,threshold+.16,edgeNoise + .07*scan2);
+float displacement=(1.-t)*(.055+.025*n2);vec2 d=vec2((n-.5)*displacement,(n2-.5)*displacement*.72);
+vec2 oq=clamp(q+d,0.,1.);vec2 nq=clamp(q-d*1.7,0.,1.);
+vec4 a=texture2D(oldTex,oq);vec4 b=texture2D(newTex,nq);
+// Early phase is intentionally almost entirely the old scene; then a bright irregular field tears through it.
+float early=smoothstep(.00,.20,t);float late=smoothstep(.68,1.,t);float r=mix(reveal,1.,late);
+vec3 col=mix(a.rgb,b.rgb,r);float flash=(1.-smoothstep(.16,.50,t))*.30;col=mix(col,vec3(.94,.93,.89),flash*(.35+.65*scan));
+float line=0.92+0.08*sin(q.x*res.x*2.2);col*=line;float alpha=max(a.a,b.a);gl_FragColor=vec4(col,alpha);
+}`;
+function shader(type,src){let s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(s);return s}
+const pr=gl.createProgram();gl.attachShader(pr,shader(gl.VERTEX_SHADER,V));gl.attachShader(pr,shader(gl.FRAGMENT_SHADER,F));gl.linkProgram(pr);gl.useProgram(pr);
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+function textureFrom(el){let c=document.createElement('canvas');c.width=1;c.height=1;let x=c.getContext('2d');x.fillStyle=getComputedStyle(el).backgroundColor||'#000';x.fillRect(0,0,1,1);return c}
+// For DOM fidelity, render the two scenes into offscreen canvases at the current viewport.
+function snapshot(el){let c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;let x=c.getContext('2d');let bg=getComputedStyle(el).backgroundColor;let grad=getComputedStyle(el).backgroundImage;x.fillStyle=bg||'#000';x.fillRect(0,0,c.width,c.height);if(el===document.getElementById('hero')){let g=x.createLinearGradient(0,0,c.width,c.height);g.addColorStop(0,'#08090d');g.addColorStop(.52,'#0c0d12');g.addColorStop(1,'#050609');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);x.fillStyle='rgba(255,107,53,.12)';x.beginPath();x.arc(c.width*.5,c.height*.43,Math.min(c.width,c.height)*.28,0,Math.PI*2);x.fill();}else{x.fillStyle='#efede6';x.fillRect(0,0,c.width,c.height);x.fillStyle='#101116';x.font=`${Math.round(Math.min(c.width,c.height)*.13)}px Georgia`;x.fillText('Entiende',c.width*.09,c.height*.42);x.fillText('tu negocio.',c.width*.09,c.height*.52);x.fillStyle='#111218';x.fillRect(c.width*.62,c.height*.27,c.width*.29,c.height*.42);x.fillStyle='#fff';x.font=`bold ${Math.round(Math.min(c.width,c.height)*.12)}px Inter,Arial`;x.fillText('82',c.width*.68,c.height*.53);}return c}
+let texA=gl.createTexture(),texB=gl.createTexture();function setupTex(tex,c){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c)}
+function resize(){let d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';gl.viewport(0,0,canvas.width,canvas.height);texA&&setupTex(texA,snapshot(document.getElementById('hero')));texB&&setupTex(texB,snapshot(document.getElementById('next')))}
+const ut=gl.getUniformLocation(pr,'t'),ur=gl.getUniformLocation(pr,'res'),us=gl.getUniformLocation(pr,'seed'),ua=gl.getUniformLocation(pr,'oldTex'),ub=gl.getUniformLocation(pr,'newTex');
+let start=performance.now(),running=true,seed=Math.random()*20;
+function draw(now){if(!running)return;let t=Math.max(0,Math.min(1,(now-start)/650));gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texA);gl.uniform1i(ua,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,texB);gl.uniform1i(ub,1);gl.uniform1f(ut,t);gl.uniform2f(ur,canvas.width,canvas.height);gl.uniform1f(us,seed);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);if(t<1)requestAnimationFrame(draw);else{canvas.style.opacity='0';document.getElementById('hero').style.visibility='hidden';document.getElementById('next').style.visibility='visible'}}
+function play(){canvas.style.opacity='1';document.getElementById('hero').style.visibility='visible';document.getElementById('next').style.visibility='visible';start=performance.now();seed=Math.random()*20;running=true;resize();requestAnimationFrame(draw)}
+addEventListener('resize',resize);document.getElementById('replay').onclick=play;document.getElementById('playHero').onclick=play;resize();setTimeout(play,900);
+</script>
+</body>
+</html>
