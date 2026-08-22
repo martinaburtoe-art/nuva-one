@@ -1,22 +1,59 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { HomeProductPreview } from "@/components/home-product-preview";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ArrowRight, BarChart3, Boxes, Check, Gauge, ScanLine, Shield, Sparkles, Target, Users, Workflow, Zap } from "lucide-react";
 
-/**
- * Isolated cinematic laboratory. The production landing remains untouched.
- * This route exposes the complete scroll-driven home choreography for review.
- */
-export const Route = createFileRoute("/experiencia")({
-  component: CinematicExperience,
-});
+const modules = [
+  ["Centro de control", "Una vista viva de ventas, margen, caja e inventario.", Sparkles],
+  ["Nüva Score", "La salud del negocio resumida en un indicador accionable.", Gauge],
+  ["Nüva Radar", "Riesgos, oportunidades y tendencias detectadas automáticamente.", Target],
+  ["Inventario + Scanner", "SKU, stock, movimientos y escaneo desde el celular.", ScanLine],
+  ["Finanzas", "Ingresos, egresos, caja, margen e indicadores financieros.", BarChart3],
+  ["Clientes / CRM", "Clientes, recurrencia, historial y relaciones comerciales.", Users],
+  ["Nüva Copilot", "Pregunta por tu negocio y recibe respuestas con contexto.", Sparkles],
+];
+
+const faqs = [
+  ["¿Mis datos están seguros?", "Sí. Nüva utiliza cifrado, aislamiento por negocio y Row-Level Security para proteger la información."],
+  ["¿Necesito tarjeta para comenzar?", "No. La experiencia de prueba se plantea sin tarjeta."],
+  ["¿Funciona para cualquier rubro?", "Sí: retail, servicios, manufactura, gastronomía, construcción, salud y otros."],
+  ["¿Puedo conectar Meta?", "Sí. Nüva contempla conexión con Meta Business para trabajar con tus canales."],
+  ["¿Puedo cancelar?", "Sí, sin contratos de permanencia."],
+];
+
+export const Route = createFileRoute("/experiencia")({ component: CinematicExperience });
+
+function Reveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`motion-safe:animate-fade-in-up ${className}`}>{children}</div>;
+}
 
 function CinematicExperience() {
-  return (
-    <main className="fixed inset-0 overflow-hidden bg-black">
-      <iframe
-        title="Nüva One — Cinematic Home v3"
-        src="/nuva-cinematic-v3.html"
-        className="h-full w-full border-0"
-        allow="fullscreen"
-      />
-    </main>
-  );
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => { const onScroll = () => setScrolled(window.scrollY > 20); window.addEventListener("scroll", onScroll, { passive: true }); return () => window.removeEventListener("scroll", onScroll); }, []);
+  return <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
+    <header className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all duration-500 ${scrolled ? "border-border/80 bg-background/90 shadow-soft" : "border-transparent bg-background/60"}`}>
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6"><Link to="/" className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-5 w-5 text-primary-foreground" /></span><b className="tracking-tight">Nüva One</b></Link><nav className="hidden gap-6 text-sm text-muted-foreground md:flex"><a href="#producto">Producto</a><a href="#inteligencia">Inteligencia</a><a href="#operacion">Operación</a><a href="#confianza">Confianza</a><a href="#faq">FAQ</a></nav><Link to="/auth" search={{ mode: "signup" }}><Button size="sm">Empezar gratis <ArrowRight className="ml-1 h-4 w-4" /></Button></Link></div>
+    </header>
+
+    <section className="relative isolate overflow-hidden bg-gradient-hero"><div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" /><div className="pointer-events-none absolute -right-32 top-24 h-[28rem] w-[28rem] rounded-full bg-primary/10 blur-3xl" /><div className="mx-auto max-w-7xl px-4 pb-10 pt-20 text-center sm:px-6 sm:pt-28"><Reveal><Badge className="rounded-full border border-primary/20 bg-primary/5 text-primary shadow-none"><Sparkles className="mr-1 h-3 w-3" /> Inteligencia para las PYMEs de hoy</Badge><h1 className="mx-auto mt-7 max-w-5xl text-balance text-5xl font-bold tracking-[-0.055em] sm:text-6xl lg:text-8xl">Tu negocio genera datos.<br /><span className="bg-gradient-primary bg-clip-text text-transparent">Nüva los convierte en decisiones.</span></h1><p className="mx-auto mt-6 max-w-2xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">Gestiona inventario, ventas, clientes y finanzas. Entiende qué está pasando con Nüva Score y detecta riesgos y oportunidades con Nüva Radar.</p><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/auth" search={{ mode: "signup" }}><Button size="lg" className="shadow-elegant">Empezar gratis <ArrowRight className="ml-1 h-4 w-4" /></Button></Link><Link to="/demo"><Button size="lg" variant="outline">Ver Nüva en acción <Sparkles className="ml-1 h-4 w-4" /></Button></Link></div><div className="mt-6 flex flex-wrap justify-center gap-5 text-xs text-muted-foreground"><span><Check className="mr-1 inline h-3.5 w-3.5 text-success" />15 días gratis</span><span><Check className="mr-1 inline h-3.5 w-3.5 text-success" />Sin tarjeta</span><span><Shield className="mr-1 inline h-3.5 w-3.5 text-success" />Datos protegidos</span></div></Reveal><div id="producto" className="mt-14"><HomeProductPreview /></div></div></section>
+
+    <section className="border-y bg-secondary/20 py-20 sm:py-28"><div className="mx-auto max-w-7xl px-4 sm:px-6"><Reveal><Badge variant="secondary" className="rounded-full border border-primary/20 bg-primary/5 text-primary">El ecosistema Nüva</Badge><h2 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight sm:text-6xl">No son módulos aislados.<br /><span className="text-primary">Es una sola visión del negocio.</span></h2><p className="mt-5 max-w-2xl text-muted-foreground">La página inicial original ya contiene el producto real. Esta experiencia ahora lo presenta como una secuencia visual continua, sin reemplazar sus gráficos ni módulos.</p></Reveal><div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{modules.map(([title,desc,Icon],i) => <Reveal key={title as string} className="h-full"><div className="group h-full rounded-3xl border bg-background/80 p-6 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:border-primary/30 hover:shadow-glow"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-500 group-hover:scale-110"><Icon className="h-5 w-5" /></div><p className="mt-5 font-semibold">{title as string}</p><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc as string}</p><div className="mt-5 h-1 origin-left rounded-full bg-primary/10"><div className="h-full w-1/2 rounded-full bg-primary transition-all duration-700 group-hover:w-full" /></div></div></Reveal>)}</div></div></section>
+
+    <section id="inteligencia" className="relative overflow-hidden py-24 sm:py-32"><div className="absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" /><div className="relative mx-auto max-w-7xl px-4 sm:px-6"><Reveal><p className="text-xs font-semibold uppercase tracking-[.22em] text-primary">Detecta → entiende → decide</p><h2 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight sm:text-6xl">La inteligencia de Nüva aparece dentro del producto.</h2></Reveal><div className="mt-14 grid gap-6 lg:grid-cols-3">{[[Gauge,"Nüva Score","86","Salud del negocio"],[Target,"Nüva Radar","3","Señales que requieren atención"],[Zap,"Nüva Copilot","IA","Respuestas con contexto"]].map(([Icon,title,value,desc],i)=><Reveal key={title as string}><div className="relative overflow-hidden rounded-[2rem] border bg-card p-7 shadow-xl transition-all duration-700 hover:-translate-y-2"><div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/10 blur-2xl" /><Icon className="h-6 w-6 text-primary" /><p className="mt-8 text-sm font-semibold text-muted-foreground">{title as string}</p><p className="mt-2 text-5xl font-bold tracking-tight">{value as string}</p><p className="mt-2 text-sm text-muted-foreground">{desc as string}</p><div className="mt-7 h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full w-[78%] origin-left rounded-full bg-gradient-primary animate-pulse" /></div></div></Reveal>)}</div></div></section>
+
+    <section id="operacion" className="border-y bg-secondary/20 py-24 sm:py-32"><div className="mx-auto max-w-7xl px-4 sm:px-6"><Reveal><p className="text-xs font-semibold uppercase tracking-[.22em] text-primary">Operación conectada</p><h2 className="mt-4 text-4xl font-bold tracking-tight sm:text-6xl">Del SKU al cliente. Del dato a la acción.</h2></Reveal><div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">{[[Boxes,"Inventario","SKU, stock, movimientos y compras"],[ScanLine,"Scanner","Escanea desde tu celular y actualiza"],[BarChart3,"Finanzas","Caja, margen, ingresos y egresos"],[Workflow,"Automatización","Procesos conectados y repetibles"]].map(([Icon,title,desc])=><Reveal key={title as string}><div className="rounded-3xl border bg-background p-6 transition-all duration-500 hover:-translate-y-1 hover:border-primary/30"><Icon className="h-6 w-6 text-primary" /><p className="mt-5 font-semibold">{title as string}</p><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc as string}</p><ArrowRight className="mt-7 h-4 w-4 text-primary transition-transform duration-500 group-hover:translate-x-1" /></div></Reveal>)}</div></div></section>
+
+    <section className="py-24 sm:py-32"><div className="mx-auto max-w-6xl px-4 sm:px-6"><Reveal><div className="rounded-[2.5rem] border bg-gradient-mesh p-7 shadow-2xl sm:p-12"><div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><Badge className="rounded-full">Explícame mi negocio</Badge><h2 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">Habla con tus datos como si hablaras con alguien de tu equipo.</h2><p className="mt-5 leading-relaxed text-muted-foreground">Nüva Copilot utiliza el contexto de tu negocio para responder preguntas, explicar indicadores y ayudarte a decidir qué revisar primero.</p><Button className="mt-7">Probar la experiencia <ArrowRight className="ml-1 h-4 w-4" /></Button></div><div className="rounded-3xl border bg-background/90 p-5 shadow-xl sm:p-7"><div className="ml-auto max-w-[82%] rounded-2xl rounded-br-md bg-primary p-4 text-sm text-primary-foreground">¿Por qué bajó mi margen esta semana?</div><div className="mt-4 max-w-[90%] rounded-2xl rounded-bl-md border bg-secondary/50 p-4 text-sm leading-relaxed"><b>Nüva:</b> detecté una desviación en la categoría con mayor volumen. Puedo cruzarla con ventas, inventario y costos para encontrar el origen.</div><div className="mt-6 flex gap-2"><div className="h-9 flex-1 rounded-xl border bg-background" /><Button size="sm">Enviar</Button></div></div></div></div></Reveal></div></section>
+
+    <section id="confianza" className="border-y bg-secondary/15 py-20"><div className="mx-auto max-w-6xl px-4 sm:px-6"><div className="grid gap-4 md:grid-cols-3">{[[Shield,"Protección","Cifrado y aislamiento por negocio"],[Sparkles,"Meta","Conexiones guiadas con tus canales"],[Boxes,"Todo en uno","Operación e inteligencia en un solo lugar"]].map(([Icon,title,desc])=><Reveal key={title as string}><div className="rounded-3xl border bg-background p-6"><Icon className="h-5 w-5 text-primary" /><p className="mt-4 font-semibold">{title as string}</p><p className="mt-2 text-sm text-muted-foreground">{desc as string}</p></div></Reveal>)}</div></div></section>
+
+    <section id="faq" className="py-24 sm:py-32"><div className="mx-auto max-w-4xl px-4 sm:px-6"><Reveal><p className="text-xs font-semibold uppercase tracking-[.22em] text-primary">Preguntas frecuentes</p><h2 className="mt-4 text-4xl font-bold tracking-tight sm:text-6xl">Antes de empezar.</h2></Reveal><Accordion type="single" collapsible className="mt-10">{faqs.map(([q,a],i)=><AccordionItem value={`faq-${i}`} key={q}><AccordionTrigger className="text-left">{q}</AccordionTrigger><AccordionContent className="leading-relaxed text-muted-foreground">{a}</AccordionContent></AccordionItem>)}</Accordion></div></section>
+
+    <section className="relative overflow-hidden bg-gradient-primary py-24 text-primary-foreground sm:py-32"><div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.12)_1px,transparent_1px)] [background-size:42px_42px]" /><div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6"><Sparkles className="mx-auto h-8 w-8" /><h2 className="mt-6 text-4xl font-bold tracking-tight sm:text-6xl">Tu negocio merece otra visión.</h2><p className="mx-auto mt-5 max-w-xl text-primary-foreground/75">Gestiona. Entiende. Anticípate. Decide.</p><Link to="/auth" search={{ mode: "signup" }}><Button size="lg" variant="secondary" className="mt-8">Empezar gratis <ArrowRight className="ml-1 h-4 w-4" /></Button></Link></div></section>
+
+    <footer className="border-t bg-background py-8"><div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6"><span>© {new Date().getFullYear()} Nüva One</span><span>La inteligencia de tu negocio, en un solo lugar.</span></div></footer>
+  </main>;
 }
