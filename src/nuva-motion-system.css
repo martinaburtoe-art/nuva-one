@@ -14,62 +14,16 @@ html { scroll-behavior: smooth; }
 body { text-rendering: optimizeLegibility; }
 #root, main, [role="main"] { isolation: isolate; }
 
-main .rounded-xl,
-main .rounded-2xl,
-main .rounded-3xl,
-main .rounded-\[1\.75rem\],
-main [class*="shadow-lg"],
-main [class*="shadow-xl"],
-main [class*="shadow-2xl"] {
-  transition: transform var(--nuva-normal) var(--nuva-ease), box-shadow var(--nuva-normal) var(--nuva-ease), border-color var(--nuva-normal) ease, background-color var(--nuva-normal) ease, opacity var(--nuva-normal) ease;
-  backface-visibility: hidden;
-}
-
-@media (hover:hover) and (pointer:fine) {
-  main .rounded-xl:hover,
-  main .rounded-2xl:hover,
-  main .rounded-3xl:hover,
-  main .rounded-\[1\.75rem\]:hover { transform: translateY(-2px); }
-  main .rounded-xl:has(button:hover),
-  main .rounded-2xl:has(button:hover),
-  main .rounded-3xl:has(button:hover) {
-    border-color: oklch(.55 .22 268 / .22);
-    box-shadow: 0 20px 50px -34px oklch(.35 .18 270 / .35);
-  }
-}
-
-main button,
-main a[role="button"],
-main a[href] { -webkit-tap-highlight-color: transparent; }
-main button:not([disabled]),
-main a[role="button"],
-main a[href] {
-  transition: transform var(--nuva-fast) var(--nuva-ease), filter var(--nuva-fast) ease, box-shadow var(--nuva-normal) var(--nuva-ease), color var(--nuva-fast) ease, background-color var(--nuva-fast) ease, border-color var(--nuva-fast) ease;
-}
-@media (hover:hover) and (pointer:fine) {
-  main button:not([disabled]):hover,
-  main a[role="button"]:hover { transform: translateY(-1px); }
-}
-main button:not([disabled]):active,
-main a[role="button"]:active { transform: translateY(0) scale(.985); transition-duration: 90ms; }
-
-main input,
-main textarea,
-main select,
-main [role="combobox"] {
-  transition: border-color var(--nuva-fast) ease, box-shadow var(--nuva-normal) var(--nuva-ease), background-color var(--nuva-fast) ease, transform var(--nuva-fast) var(--nuva-ease);
-}
-main input:focus,
-main textarea:focus,
-main select:focus,
-main [role="combobox"]:focus-visible { transform: translateY(-1px); }
-
+main .rounded-xl, main .rounded-2xl, main .rounded-3xl, main .rounded-\[1\.75rem\], main [class*="shadow-lg"], main [class*="shadow-xl"], main [class*="shadow-2xl"] { transition: transform var(--nuva-normal) var(--nuva-ease), box-shadow var(--nuva-normal) var(--nuva-ease), border-color var(--nuva-normal) ease, background-color var(--nuva-normal) ease, opacity var(--nuva-normal) ease; backface-visibility: hidden; }
+@media (hover:hover) and (pointer:fine) { main .rounded-xl:hover, main .rounded-2xl:hover, main .rounded-3xl:hover, main .rounded-\[1\.75rem\]:hover { transform: translateY(-2px); } main .rounded-xl:has(button:hover), main .rounded-2xl:has(button:hover), main .rounded-3xl:has(button:hover) { border-color: oklch(.55 .22 268 / .22); box-shadow: 0 20px 50px -34px oklch(.35 .18 270 / .35); } }
+main button, main a[role="button"], main a[href] { -webkit-tap-highlight-color: transparent; }
+main button:not([disabled]), main a[role="button"], main a[href] { transition: transform var(--nuva-fast) var(--nuva-ease), filter var(--nuva-fast) ease, box-shadow var(--nuva-normal) var(--nuva-ease), color var(--nuva-fast) ease, background-color var(--nuva-fast) ease, border-color var(--nuva-fast) ease; }
+@media (hover:hover) and (pointer:fine) { main button:not([disabled]):hover, main a[role="button"]:hover { transform: translateY(-1px); } }
+main button:not([disabled]):active, main a[role="button"]:active { transform: translateY(0) scale(.985); transition-duration: 90ms; }
+main input, main textarea, main select, main [role="combobox"] { transition: border-color var(--nuva-fast) ease, box-shadow var(--nuva-normal) var(--nuva-ease), background-color var(--nuva-fast) ease, transform var(--nuva-fast) var(--nuva-ease); }
+main input:focus, main textarea:focus, main select:focus, main [role="combobox"]:focus-visible { transform: translateY(-1px); }
 .nuva-motion-sweep { position: relative; overflow: hidden; isolation: isolate; }
-.nuva-motion-sweep::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  background: linear-gradient(110deg, transparent 25%, oklch(.55 .22 268 / .055) 50%, transparent 75%);
-  transform: translateX(-120%); animation: nuva-surface-sweep 5.8s var(--nuva-ease-soft) infinite;
-}
+.nuva-motion-sweep::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2; background: linear-gradient(110deg, transparent 25%, oklch(.55 .22 268 / .055) 50%, transparent 75%); transform: translateX(-120%); animation: nuva-surface-sweep 5.8s var(--nuva-ease-soft) infinite; }
 .nuva-motion-enter { animation: nuva-enter var(--nuva-slow) var(--nuva-ease-soft) both; }
 .nuva-motion-enter-soft { animation: nuva-enter-soft 480ms var(--nuva-ease-soft) both; }
 .nuva-motion-pop { animation: nuva-pop 520ms var(--nuva-ease) both; }
@@ -77,44 +31,38 @@ main [role="combobox"]:focus-visible { transform: translateY(-1px); }
 @keyframes nuva-enter-soft { from { opacity: 0; transform: translate3d(0,10px,0); } to { opacity: 1; transform: translate3d(0,0,0); } }
 @keyframes nuva-pop { 0% { opacity: 0; transform: scale(.94); filter: blur(3px); } 65% { opacity: 1; transform: scale(1.012); filter: blur(0); } 100% { transform: scale(1); } }
 @keyframes nuva-surface-sweep { 0%,58% { transform: translateX(-120%); opacity: 0; } 68% { opacity: 1; } 86%,100% { transform: translateX(120%); opacity: 0; } }
+main table tr, main [data-state="open"], main [data-state="closed"] { transition: background-color var(--nuva-fast) ease, opacity var(--nuva-fast) ease, transform var(--nuva-fast) var(--nuva-ease); }
+@media (max-width: 767px) { main .rounded-xl:hover, main .rounded-2xl:hover, main .rounded-3xl:hover, main .rounded-\[1\.75rem\]:hover { transform: none; } main button, main a[role="button"] { touch-action: manipulation; } .nuva-motion-enter { animation-duration: 500ms; } }
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) { section#experience .rounded-xl:hover, section#experience .rounded-2xl:hover, section#experience .rounded-3xl:hover, section#experience .rounded-\[1\.75rem\]:hover, section#experience .shadow-xl:hover, section#experience .shadow-2xl:hover { transform: none !important; } section#experience .rounded-xl:has(button:hover), section#experience .rounded-2xl:has(button:hover), section#experience .rounded-3xl:has(button:hover) { border-color: inherit; box-shadow: inherit; } section#experience button:not([disabled]):hover, section#experience a[role="button"]:hover { transform: none !important; } section#experience a[href="/auth"] button:hover, section#experience a[href*="mode=signup"] button:hover { transform: translateY(-2px) !important; } section#experience [class*="animate-fade-in-up"] { will-change: auto; } section#experience .nuva-launch__module, section#experience .nuva-launch__core, section#experience .nuva-launch__logo, section#experience .nuva-launch__ring, section#experience .nuva-launch__ambient { will-change: transform, opacity; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
 
-main table tr,
-main [data-state="open"],
-main [data-state="closed"] { transition: background-color var(--nuva-fast) ease, opacity var(--nuva-fast) ease, transform var(--nuva-fast) var(--nuva-ease); }
+/* Launch choreography: the icons settle around Nüva before converging. This intentionally overrides the legacy flight animation. */
+.nuva-launch--intro .nuva-launch__module { animation: nuva-module-intro 1500ms var(--nuva-ease) var(--nuva-delay) both !important; }
+.nuva-launch--orbit .nuva-launch__module { animation: none !important; opacity: 1 !important; filter: blur(0) !important; transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1) !important; }
+.nuva-launch--converge .nuva-launch__module { animation: nuva-module-converge 1050ms var(--nuva-ease-soft) var(--nuva-delay) both !important; }
+.nuva-launch--welcome .nuva-launch__module, .nuva-launch--exit .nuva-launch__module { opacity: 0 !important; filter: blur(7px) !important; transform: translate(-50%,-50%) scale(.22) !important; transition: opacity 650ms ease, filter 650ms ease, transform 850ms var(--nuva-ease); }
+.nuva-launch--intro .nuva-launch__welcome, .nuva-launch--orbit .nuva-launch__welcome, .nuva-launch--converge .nuva-launch__welcome { opacity: 0 !important; visibility: hidden !important; }
+.nuva-launch--welcome .nuva-launch__welcome { opacity: 1 !important; visibility: visible !important; animation: nuva-welcome-final 850ms var(--nuva-ease) both !important; }
+.nuva-launch--exit .nuva-launch__welcome { opacity: 0 !important; visibility: visible !important; animation: nuva-welcome-exit 1100ms var(--nuva-ease-soft) both !important; }
+.nuva-launch--exit { animation: nuva-launch-exit 1200ms var(--nuva-ease-soft) both !important; }
+.nuva-launch--exit .nuva-launch__ambient { animation: nuva-ambient-exit 1200ms var(--nuva-ease-soft) both !important; }
+.nuva-launch--exit .nuva-launch__ring, .nuva-launch--exit .nuva-launch__core, .nuva-launch--exit .nuva-launch__tagline { opacity: .08; filter: blur(5px); transition: opacity 900ms ease, filter 1000ms ease, transform 1000ms var(--nuva-ease-soft); }
 
-@media (max-width: 767px) {
-  main .rounded-xl:hover,
-  main .rounded-2xl:hover,
-  main .rounded-3xl:hover,
-  main .rounded-\[1\.75rem\]:hover { transform: none; }
-  main button,
-  main a[role="button"] { touch-action: manipulation; }
-  .nuva-motion-enter { animation-duration: 500ms; }
+@keyframes nuva-module-intro {
+  0% { opacity: 0; filter: blur(14px); transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1 * var(--nuva-angle))) scale(.18); }
+  55% { opacity: 1; filter: blur(2px); transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-radius) * .88)) rotate(calc(-1 * var(--nuva-angle))) scale(1.04); }
+  78%,100% { opacity: 1; filter: blur(0); transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1); }
 }
-
-@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  section#experience .rounded-xl:hover,
-  section#experience .rounded-2xl:hover,
-  section#experience .rounded-3xl:hover,
-  section#experience .rounded-\[1\.75rem\]:hover,
-  section#experience .shadow-xl:hover,
-  section#experience .shadow-2xl:hover { transform: none !important; }
-  section#experience .rounded-xl:has(button:hover),
-  section#experience .rounded-2xl:has(button:hover),
-  section#experience .rounded-3xl:has(button:hover) { border-color: inherit; box-shadow: inherit; }
-  section#experience button:not([disabled]):hover,
-  section#experience a[role="button"]:hover { transform: none !important; }
-  section#experience a[href="/auth"] button:hover,
-  section#experience a[href*="mode=signup"] button:hover { transform: translateY(-2px) !important; }
-  section#experience [class*="animate-fade-in-up"] { will-change: auto; }
-  section#experience .nuva-launch__module,
-  section#experience .nuva-launch__core,
-  section#experience .nuva-launch__logo,
-  section#experience .nuva-launch__ring,
-  section#experience .nuva-launch__ambient { will-change: transform, opacity; }
+@keyframes nuva-module-converge {
+  0% { opacity: 1; filter: blur(0); transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1); }
+  55% { opacity: .8; filter: blur(1px); transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(-80px) rotate(calc(-1 * var(--nuva-angle))) scale(.55); }
+  100% { opacity: 0; filter: blur(8px); transform: translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1 * var(--nuva-angle))) scale(.08); }
 }
+@keyframes nuva-welcome-final { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.82); filter: blur(16px); } 65% { opacity: 1; transform: translate(-50%,-50%) scale(1.025); filter: blur(0); } 100% { opacity: 1; transform: translate(-50%,-50%) scale(1); filter: blur(0); } }
+@keyframes nuva-welcome-exit { from { opacity: 1; transform: translate(-50%,-50%) scale(1); filter: blur(0); } to { opacity: 0; transform: translate(-50%,-50%) scale(1.035); filter: blur(10px); } }
+@keyframes nuva-launch-exit { from { opacity: 1; transform: scale(1); filter: blur(0); } to { opacity: 0; transform: scale(1.025); filter: blur(7px); } }
+@keyframes nuva-ambient-exit { from { opacity: 1; transform: scale(1); filter: blur(0); } to { opacity: 0; transform: scale(1.12); filter: blur(12px); } }
 
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+@media (max-width: 640px) {
+  .nuva-launch__module { --nuva-radius: 39vw; }
 }
