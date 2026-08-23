@@ -1,49 +1,80 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import { Bot, Boxes, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, ClipboardList, Handshake, Package, ReceiptText, ShoppingCart, Sparkles, Users, X } from "lucide-react";
+import { useEffect } from "react";
+import { X } from "lucide-react";
 
-const items = [["IA",Bot,-90],["Clientes",Users,-57],["Ventas",ShoppingCart,-24],["Finanzas",CircleDollarSign,9],["Caja",ReceiptText,42],["Compras",ClipboardList,75],["Inventario",Package,108],["CRM",Handshake,141],["Gestión",BriefcaseBusiness,174],["Datos",Boxes,207],["Insights",ChartNoAxesCombined,240]] as const;
-const INTRO=2400, ORBIT=4400, CONVERGE=1800, WELCOME=2500, EXIT=2300, TOTAL=INTRO+ORBIT+CONVERGE+WELCOME+EXIT;
-type Phase="intro"|"orbit"|"converge"|"welcome"|"exit";
+const LAUNCH_DURATION = 6500;
 
-export function NuvaLaunchExperience({onComplete}:{onComplete:()=>void}){
- const [visible,setVisible]=useState(false),[reduced,setReduced]=useState(false),[phase,setPhase]=useState<Phase>("intro");
- useEffect(()=>{
-  // A previous first-paint safeguard could remain in cached HTML from an older
-  // deployment. The launch experience itself is the authoritative cover now.
-  document.getElementById("nuva-first-paint-cover")?.remove();
-  const media=window.matchMedia("(prefers-reduced-motion: reduce)"),r=media.matches;setReduced(r);setVisible(true);
-  if(r){const t=window.setTimeout(()=>{setVisible(false);onComplete()},1400);return()=>window.clearTimeout(t)}
-  const ts=[window.setTimeout(()=>setPhase("orbit"),INTRO),window.setTimeout(()=>setPhase("converge"),INTRO+ORBIT),window.setTimeout(()=>setPhase("welcome"),INTRO+ORBIT+CONVERGE),window.setTimeout(()=>setPhase("exit"),INTRO+ORBIT+CONVERGE+WELCOME),window.setTimeout(()=>{setVisible(false);onComplete()},TOTAL)];
-  return()=>ts.forEach(window.clearTimeout)
- },[onComplete]);
- const finish=()=>{setPhase("exit");window.setTimeout(()=>{setVisible(false);onComplete()},EXIT)};
- if(!visible)return null;
- return <div aria-label="Bienvenido a Nüva One" aria-live="polite" className={`nuva-launch ${reduced?"nuva-launch--reduced":""} nuva-launch--${phase}`}>
- <style>{`
- #nuva-first-paint-cover{display:none!important}
- .nuva-launch{--nuva-radius:clamp(155px,18vmin,270px);--nuva-stage-size:min(82vmin,760px);--nuva-core-size:clamp(150px,20vmin,230px);--nuva-module-scale:1;will-change:opacity,transform,filter;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(0);background:radial-gradient(circle at 50% 48%,#fff 0%,#fbfaff 42%,#eef0ff 100%)!important;color:#09090b!important;color-scheme:light;forced-color-adjust:none}
- .nuva-launch .nuva-launch__stage{width:var(--nuva-stage-size);height:var(--nuva-stage-size);max-width:100vw;max-height:100vh;position:relative;display:grid;place-items:center}
- .nuva-launch .nuva-launch__module{animation:none!important;will-change:transform,opacity,filter}.nuva-launch__orbit{transform-origin:center;will-change:transform;width:100%;height:100%;position:absolute;inset:0}
- .nuva-launch--intro .nuva-launch__module{opacity:0;filter:blur(14px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1*var(--nuva-angle))) scale(.18);transition:opacity .9s,filter 1.1s,transform 1.3s cubic-bezier(.16,1,.3,1);transition-delay:var(--nuva-delay)}
- .nuva-launch--orbit .nuva-launch__orbit{animation:nuva-orbit-spin ${ORBIT}ms cubic-bezier(.37,0,.63,1) both}
- .nuva-launch--orbit .nuva-launch__module{opacity:1;filter:blur(0);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1*var(--nuva-radius))) rotate(calc(-1*var(--nuva-angle))) scale(var(--nuva-module-scale));transition:opacity .9s,filter 1s,transform 1.3s cubic-bezier(.16,1,.3,1);transition-delay:var(--nuva-delay);animation:nuva-module-counterspin ${ORBIT}ms linear both}
- .nuva-launch--converge .nuva-launch__orbit{animation:none}.nuva-launch--converge .nuva-launch__module{opacity:.04;filter:blur(7px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1*var(--nuva-angle))) scale(.2);animation:none;transition:transform ${CONVERGE}ms cubic-bezier(.65,0,.25,1),opacity ${CONVERGE}ms ease,filter ${CONVERGE}ms ease;transition-delay:calc(var(--nuva-delay)*.08)}
- .nuva-launch--intro .nuva-launch__core{transform:translate(-50%,-50%) scale(.8);opacity:.65}.nuva-launch--orbit .nuva-launch__core{transform:translate(-50%,-50%) scale(1);opacity:1;transition:1s cubic-bezier(.16,1,.3,1)}.nuva-launch--converge .nuva-launch__core{transform:translate(-50%,-50%) scale(1.12);opacity:1;transition:${CONVERGE}ms cubic-bezier(.16,1,.3,1)}.nuva-launch--welcome .nuva-launch__core{transform:translate(-50%,-50%) scale(.62);opacity:.08;transition:.9s cubic-bezier(.22,1,.36,1)}
- .nuva-launch__core{width:var(--nuva-core-size);height:var(--nuva-core-size);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);transform-origin:center}
- .nuva-launch--intro .nuva-launch__welcome,.nuva-launch--orbit .nuva-launch__welcome,.nuva-launch--converge .nuva-launch__welcome{opacity:0;visibility:hidden}.nuva-launch--welcome .nuva-launch__welcome{opacity:1;visibility:visible;animation:nuva-welcome-in .95s cubic-bezier(.16,1,.3,1) both}.nuva-launch--exit .nuva-launch__welcome{opacity:1;visibility:visible;animation:nuva-welcome-out ${EXIT}ms cubic-bezier(.22,1,.36,1) forwards}
- .nuva-launch--exit{animation:nuva-scene-out ${EXIT}ms cubic-bezier(.22,1,.36,1) forwards}.nuva-launch--exit .nuva-launch__ambient{animation:nuva-ambient-out ${EXIT}ms cubic-bezier(.22,1,.36,1) forwards}.nuva-launch--exit .nuva-launch__grid,.nuva-launch--exit .nuva-launch__light-beam,.nuva-launch--exit .nuva-launch__ring,.nuva-launch--exit .nuva-launch__orbit,.nuva-launch--exit .nuva-launch__core,.nuva-launch--exit .nuva-launch__tagline{opacity:.08;filter:blur(4px);transition:${EXIT}ms cubic-bezier(.22,1,.36,1)}
- .nuva-launch__welcome{position:absolute!important;top:50%!important;left:50%!important;z-index:30!important;width:min(92vw,1000px);transform:translate(-50%,-50%);text-align:center;pointer-events:none}.nuva-launch__welcome-title{font-size:clamp(2.1rem,3.1vw,3.1rem)!important;font-weight:800!important;line-height:1.04;letter-spacing:-.045em;color:#080812!important;text-shadow:0 1px 0 rgba(255,255,255,.95),0 8px 28px rgba(111,92,246,.14)}.nuva-launch__welcome-subtitle{font-size:clamp(.9rem,1.25vw,1.15rem)!important;margin-top:.65rem;color:#171725!important;font-weight:600;letter-spacing:.01em}
- @keyframes nuva-orbit-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
- @keyframes nuva-module-counterspin{0%{transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1*var(--nuva-radius))) rotate(calc(-1*var(--nuva-angle))) rotate(0deg)}100%{transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1*var(--nuva-radius))) rotate(calc(-1*var(--nuva-angle))) rotate(-360deg)}}
- @keyframes nuva-welcome-in{0%{opacity:0;transform:translate(-50%,-50%) scale(.84);filter:blur(18px)}55%{opacity:1;transform:translate(-50%,-50%) scale(1.015);filter:blur(0)}100%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}}@keyframes nuva-welcome-out{0%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}40%{opacity:.76;transform:translate(-50%,-50%) scale(1.01);filter:blur(1px)}72%{opacity:.32;transform:translate(-50%,-50%) scale(1.025);filter:blur(4px)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.045);filter:blur(10px)}}@keyframes nuva-scene-out{0%{opacity:1;transform:translateZ(0) scale(1);filter:blur(0)}35%{opacity:.94;transform:translateZ(0) scale(1.004);filter:blur(.3px)}68%{opacity:.38;transform:translateZ(0) scale(1.018);filter:blur(2px)}100%{opacity:0;transform:translateZ(0) scale(1.035);filter:blur(7px)}}@keyframes nuva-ambient-out{0%{opacity:1;transform:scale(1);filter:blur(0)}55%{opacity:.45;transform:scale(1.06);filter:blur(5px)}100%{opacity:0;transform:scale(1.12);filter:blur(12px)}}
- .nuva-launch--reduced{animation:none!important}.nuva-launch--reduced .nuva-launch__welcome{opacity:1!important;visibility:visible!important;animation:none!important}
- @media(min-width:901px){.nuva-launch{--nuva-radius:min(26vmin,205px);--nuva-stage-size:min(74vmin,640px);--nuva-core-size:clamp(155px,17vmin,205px);--nuva-module-scale:.92}.nuva-launch__welcome{width:min(88vw,980px)}.nuva-launch__welcome-title{font-size:clamp(2.1rem,3.1vw,3.1rem)!important}.nuva-launch__welcome-subtitle{font-size:clamp(.9rem,1.25vw,1.15rem)!important}}
- @media(max-width:900px){.nuva-launch{--nuva-radius:min(27vmin,205px);--nuva-stage-size:min(92vmin,620px);--nuva-core-size:clamp(145px,24vmin,200px);--nuva-module-scale:.94}}
- @media(max-width:640px){.nuva-launch{--nuva-radius:min(35vw,165px);--nuva-stage-size:min(100vw,100svh);--nuva-core-size:155px;--nuva-module-scale:1}.nuva-launch__stage{max-height:100svh}.nuva-launch__module{min-width:58px;gap:5px}.nuva-launch__module-icon{width:42px;height:42px;border-radius:13px}.nuva-launch__module-icon svg{width:19px;height:19px}.nuva-launch__module span{font-size:8px}.nuva-launch__welcome-title{font-size:clamp(2.6rem,12vw,4.6rem)!important}}
- @media(min-width:1600px){.nuva-launch{--nuva-radius:clamp(200px,15vmin,255px);--nuva-stage-size:min(72vmin,720px);--nuva-core-size:clamp(180px,18vmin,225px);--nuva-module-scale:.96}.nuva-launch__welcome-title{font-size:clamp(2.4rem,2.7vw,3.2rem)!important}}
- @media(orientation:landscape) and (max-height:700px) and (min-width:901px){.nuva-launch{--nuva-radius:min(25vmin,185px);--nuva-stage-size:min(82vmin,620px);--nuva-core-size:clamp(140px,21vmin,190px)}}
- `}</style>
- <div className="nuva-launch__ambient"/><div className="nuva-launch__grid"/><div className="nuva-launch__light-beam nuva-launch__light-beam--one"/><div className="nuva-launch__light-beam nuva-launch__light-beam--two"/><div className="nuva-launch__ring nuva-launch__ring--outer"/><div className="nuva-launch__ring nuva-launch__ring--inner"/>
- <div className="nuva-launch__stage"><div className="nuva-launch__orbit" aria-hidden="true">{items.map(([label,Icon,angle],index)=><div key={label} className="nuva-launch__module" style={{"--nuva-angle":`${angle}deg`,"--nuva-delay":`${index*95}ms`} as CSSProperties}><div className="nuva-launch__module-icon"><Icon/></div><span>{label}</span></div>)}</div><div className="nuva-launch__core"><div className="nuva-launch__core-halo"/><div className="nuva-launch__core-ring"/><div className="nuva-launch__core-pulse"/><div className="nuva-launch__logo"><span>Nüva</span><small>ONE</small></div><div className="nuva-launch__spark nuva-launch__spark--one"/><div className="nuva-launch__spark nuva-launch__spark--two"/></div><div className="nuva-launch__tagline"><Sparkles aria-hidden="true"/><span>Inteligencia para tu negocio</span></div><div className="nuva-launch__welcome"><div className="nuva-launch__welcome-title">Bienvenido a Nüva One</div><div className="nuva-launch__welcome-subtitle">Todo tu negocio. Una inteligencia.</div></div></div>
- <button type="button" aria-label="Omitir animación" onClick={finish} className="nuva-launch__skip"><X aria-hidden="true"/><span>Omitir</span></button></div>;
+export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (media.matches) {
+      const timer = window.setTimeout(onComplete, 900);
+      return () => window.clearTimeout(timer);
+    }
+
+    const timer = window.setTimeout(onComplete, LAUNCH_DURATION);
+    return () => window.clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <div aria-label="Bienvenido a Nüva One" aria-live="polite" className="nuva-launch">
+      <div className="nuva-launch__ambient" />
+      <div className="nuva-launch__grid" />
+      <div className="nuva-launch__light-beam nuva-launch__light-beam--one" />
+      <div className="nuva-launch__light-beam nuva-launch__light-beam--two" />
+      <div className="nuva-launch__ring nuva-launch__ring--outer" />
+      <div className="nuva-launch__ring nuva-launch__ring--inner" />
+
+      <div className="nuva-launch__stage">
+        <div className="nuva-launch__orbit" aria-hidden="true">
+          {[
+            ["IA", "Bot", -90], ["Clientes", "Users", -57], ["Ventas", "ShoppingCart", -24],
+            ["Finanzas", "CircleDollarSign", 9], ["Caja", "ReceiptText", 42], ["Compras", "ClipboardList", 75],
+            ["Inventario", "Package", 108], ["CRM", "Handshake", 141], ["Gestión", "BriefcaseBusiness", 174],
+            ["Datos", "Boxes", 207], ["Insights", "ChartNoAxesCombined", 240],
+          ].map(([label, icon, angle], index) => {
+            const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+              Bot: require("lucide-react").Bot,
+              Users: require("lucide-react").Users,
+              ShoppingCart: require("lucide-react").ShoppingCart,
+              CircleDollarSign: require("lucide-react").CircleDollarSign,
+              ReceiptText: require("lucide-react").ReceiptText,
+              ClipboardList: require("lucide-react").ClipboardList,
+              Package: require("lucide-react").Package,
+              Handshake: require("lucide-react").Handshake,
+              BriefcaseBusiness: require("lucide-react").BriefcaseBusiness,
+              Boxes: require("lucide-react").Boxes,
+              ChartNoAxesCombined: require("lucide-react").ChartNoAxesCombined,
+            };
+            const Icon = icons[icon];
+            return (
+              <div key={label} className="nuva-launch__module" style={{ "--nuva-angle": `${angle}deg`, "--nuva-delay": `${index * 95}ms` } as React.CSSProperties}>
+                <div className="nuva-launch__module-icon"><Icon /></div>
+                <span>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="nuva-launch__core">
+          <div className="nuva-launch__core-halo" />
+          <div className="nuva-launch__core-ring" />
+          <div className="nuva-launch__core-pulse" />
+          <div className="nuva-launch__logo"><span>Nüva</span><small>ONE</small></div>
+          <div className="nuva-launch__spark nuva-launch__spark--one" />
+          <div className="nuva-launch__spark nuva-launch__spark--two" />
+        </div>
+
+        <div className="nuva-launch__tagline"><span>✦</span><span>Inteligencia para tu negocio</span></div>
+        <div className="nuva-launch__welcome">
+          <div className="nuva-launch__welcome-title">Bienvenido a Nüva One</div>
+          <div className="nuva-launch__welcome-subtitle">Todo tu negocio. Una inteligencia.</div>
+        </div>
+      </div>
+
+      <button type="button" aria-label="Omitir animación" onClick={onComplete} className="nuva-launch__skip">
+        <X aria-hidden="true" />
+        <span>Omitir</span>
+      </button>
+    </div>
+  );
 }
