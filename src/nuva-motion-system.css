@@ -114,41 +114,6 @@ main [data-state="closed"] { transition: background-color var(--nuva-fast) ease,
   section#experience .nuva-launch__ambient { will-change: transform, opacity; }
 }
 
-/* ================================================================
-   LAUNCH PARITY — MOBILE IS THE REFERENCE
-   The mobile launch is the approved Nüva One motion. Desktop must not
-   invent a second choreography or palette. Geometry, scale and rhythm are
-   intentionally identical; only the viewport changes the available space.
-   ================================================================ */
-.nuva-launch {
-  --nuva-radius: min(35vw,165px) !important;
-  --nuva-stage-size: min(100vw,100svh) !important;
-  --nuva-core-size: 155px !important;
-  --nuva-module-scale: 1 !important;
-  background:
-    radial-gradient(circle at 50% 46%, oklch(.985 .035 268) 0%, oklch(.965 .055 275) 43%, oklch(.925 .075 280) 100%) !important;
-  color: oklch(.24 .09 270) !important;
-  color-scheme: light;
-  forced-color-adjust: none;
-}
-.nuva-launch .nuva-launch__welcome-title { color: oklch(.30 .16 270) !important; }
-.nuva-launch .nuva-launch__welcome-subtitle { color: oklch(.40 .10 270) !important; }
-.nuva-launch .nuva-launch__module-icon {
-  border-color: oklch(.55 .22 268 / .26) !important;
-  background: oklch(.99 .025 275 / .78) !important;
-  color: oklch(.48 .22 268) !important;
-  box-shadow: 0 10px 30px -20px oklch(.40 .22 268 / .65), inset 0 1px 0 oklch(1 0 0 / .8) !important;
-}
-.nuva-launch .nuva-launch__module span { color: oklch(.36 .13 270) !important; }
-.nuva-launch .nuva-launch__tagline { color: oklch(.43 .17 268) !important; }
-.nuva-launch .nuva-launch__ring { border-color: oklch(.55 .22 268 / .18) !important; }
-.nuva-launch .nuva-launch__core-halo { background: radial-gradient(circle, oklch(.62 .24 268 / .28), oklch(.62 .24 268 / .08) 52%, transparent 72%) !important; }
-.nuva-launch .nuva-launch__core-ring { border-color: oklch(.55 .22 268 / .52) !important; box-shadow: 0 0 45px oklch(.55 .22 268 / .22) !important; }
-.nuva-launch .nuva-launch__core-pulse { background: oklch(.62 .24 268 / .18) !important; }
-.nuva-launch .nuva-launch__logo { color: oklch(.35 .20 268) !important; }
-.nuva-launch .nuva-launch__logo small { color: oklch(.47 .16 275) !important; }
-.nuva-launch .nuva-launch__spark { background: oklch(.68 .22 268) !important; box-shadow: 0 0 18px oklch(.62 .24 268 / .65) !important; }
-
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
