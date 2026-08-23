@@ -12,12 +12,8 @@
 
 html { scroll-behavior: smooth; }
 body { text-rendering: optimizeLegibility; }
-
-/* Route-level visual continuity. TanStack keeps the DOM alive, so we animate
-   the active content instead of forcing a hard page refresh. */
 #root, main, [role="main"] { isolation: isolate; }
 
-/* Common Nüva surfaces: lift + depth, never a mechanical jump. */
 main .rounded-xl,
 main .rounded-2xl,
 main .rounded-3xl,
@@ -25,24 +21,15 @@ main .rounded-\[1\.75rem\],
 main [class*="shadow-lg"],
 main [class*="shadow-xl"],
 main [class*="shadow-2xl"] {
-  transition:
-    transform var(--nuva-normal) var(--nuva-ease),
-    box-shadow var(--nuva-normal) var(--nuva-ease),
-    border-color var(--nuva-normal) ease,
-    background-color var(--nuva-normal) ease,
-    opacity var(--nuva-normal) ease;
+  transition: transform var(--nuva-normal) var(--nuva-ease), box-shadow var(--nuva-normal) var(--nuva-ease), border-color var(--nuva-normal) ease, background-color var(--nuva-normal) ease, opacity var(--nuva-normal) ease;
   backface-visibility: hidden;
 }
 
-/* Cards respond as a single physical object. */
 @media (hover:hover) and (pointer:fine) {
   main .rounded-xl:hover,
   main .rounded-2xl:hover,
   main .rounded-3xl:hover,
-  main .rounded-\[1\.75rem\]:hover {
-    transform: translateY(-2px);
-  }
-
+  main .rounded-\[1\.75rem\]:hover { transform: translateY(-2px); }
   main .rounded-xl:has(button:hover),
   main .rounded-2xl:has(button:hover),
   main .rounded-3xl:has(button:hover) {
@@ -51,179 +38,118 @@ main [class*="shadow-2xl"] {
   }
 }
 
-/* Buttons and navigation: the same tactile language as the landing CTA. */
 main button,
 main a[role="button"],
-main a[href] {
-  -webkit-tap-highlight-color: transparent;
-}
-
+main a[href] { -webkit-tap-highlight-color: transparent; }
 main button:not([disabled]),
 main a[role="button"],
 main a[href] {
-  transition:
-    transform var(--nuva-fast) var(--nuva-ease),
-    filter var(--nuva-fast) ease,
-    box-shadow var(--nuva-normal) var(--nuva-ease),
-    color var(--nuva-fast) ease,
-    background-color var(--nuva-fast) ease,
-    border-color var(--nuva-fast) ease;
+  transition: transform var(--nuva-fast) var(--nuva-ease), filter var(--nuva-fast) ease, box-shadow var(--nuva-normal) var(--nuva-ease), color var(--nuva-fast) ease, background-color var(--nuva-fast) ease, border-color var(--nuva-fast) ease;
 }
-
 @media (hover:hover) and (pointer:fine) {
   main button:not([disabled]):hover,
-  main a[role="button"]:hover {
-    transform: translateY(-1px);
-  }
+  main a[role="button"]:hover { transform: translateY(-1px); }
 }
-
 main button:not([disabled]):active,
-main a[role="button"]:active {
-  transform: translateY(0) scale(.985);
-  transition-duration: 90ms;
-}
+main a[role="button"]:active { transform: translateY(0) scale(.985); transition-duration: 90ms; }
 
-/* Inputs feel connected to the same surface rather than snapping state. */
 main input,
 main textarea,
 main select,
 main [role="combobox"] {
-  transition:
-    border-color var(--nuva-fast) ease,
-    box-shadow var(--nuva-normal) var(--nuva-ease),
-    background-color var(--nuva-fast) ease,
-    transform var(--nuva-fast) var(--nuva-ease);
+  transition: border-color var(--nuva-fast) ease, box-shadow var(--nuva-normal) var(--nuva-ease), background-color var(--nuva-fast) ease, transform var(--nuva-fast) var(--nuva-ease);
 }
-
 main input:focus,
 main textarea:focus,
 main select:focus,
-main [role="combobox"]:focus-visible {
-  transform: translateY(-1px);
-}
+main [role="combobox"]:focus-visible { transform: translateY(-1px); }
 
-/* Subtle live-data sweep available to existing dashboards/cards. */
-.nuva-motion-sweep {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
+.nuva-motion-sweep { position: relative; overflow: hidden; isolation: isolate; }
 .nuva-motion-sweep::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
   background: linear-gradient(110deg, transparent 25%, oklch(.55 .22 268 / .055) 50%, transparent 75%);
-  transform: translateX(-120%);
-  animation: nuva-surface-sweep 5.8s var(--nuva-ease-soft) infinite;
+  transform: translateX(-120%); animation: nuva-surface-sweep 5.8s var(--nuva-ease-soft) infinite;
 }
+.nuva-motion-enter { animation: nuva-enter var(--nuva-slow) var(--nuva-ease-soft) both; }
+.nuva-motion-enter-soft { animation: nuva-enter-soft 480ms var(--nuva-ease-soft) both; }
+.nuva-motion-pop { animation: nuva-pop 520ms var(--nuva-ease) both; }
+@keyframes nuva-enter { from { opacity: 0; transform: translate3d(0,18px,0) scale(.985); filter: blur(4px); } to { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); } }
+@keyframes nuva-enter-soft { from { opacity: 0; transform: translate3d(0,10px,0); } to { opacity: 1; transform: translate3d(0,0,0); } }
+@keyframes nuva-pop { 0% { opacity: 0; transform: scale(.94); filter: blur(3px); } 65% { opacity: 1; transform: scale(1.012); filter: blur(0); } 100% { transform: scale(1); } }
+@keyframes nuva-surface-sweep { 0%,58% { transform: translateX(-120%); opacity: 0; } 68% { opacity: 1; } 86%,100% { transform: translateX(120%); opacity: 0; } }
 
-/* Standard entrance primitives. Components can opt in without JS. */
-.nuva-motion-enter {
-  animation: nuva-enter var(--nuva-slow) var(--nuva-ease-soft) both;
-}
-.nuva-motion-enter-soft {
-  animation: nuva-enter-soft 480ms var(--nuva-ease-soft) both;
-}
-.nuva-motion-pop {
-  animation: nuva-pop 520ms var(--nuva-ease) both;
-}
-
-@keyframes nuva-enter {
-  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(.985); filter: blur(4px); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
-}
-@keyframes nuva-enter-soft {
-  from { opacity: 0; transform: translate3d(0, 10px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-@keyframes nuva-pop {
-  0% { opacity: 0; transform: scale(.94); filter: blur(3px); }
-  65% { opacity: 1; transform: scale(1.012); filter: blur(0); }
-  100% { transform: scale(1); }
-}
-@keyframes nuva-surface-sweep {
-  0%, 58% { transform: translateX(-120%); opacity: 0; }
-  68% { opacity: 1; }
-  86%, 100% { transform: translateX(120%); opacity: 0; }
-}
-
-/* Prevent accidental motion overload on dense business screens. */
 main table tr,
 main [data-state="open"],
-main [data-state="closed"] {
-  transition: background-color var(--nuva-fast) ease, opacity var(--nuva-fast) ease, transform var(--nuva-fast) var(--nuva-ease);
-}
+main [data-state="closed"] { transition: background-color var(--nuva-fast) ease, opacity var(--nuva-fast) ease, transform var(--nuva-fast) var(--nuva-ease); }
 
-/* Mobile: preserve the same feeling without hover-dependent movement. */
 @media (max-width: 767px) {
   main .rounded-xl:hover,
   main .rounded-2xl:hover,
   main .rounded-3xl:hover,
   main .rounded-\[1\.75rem\]:hover { transform: none; }
-
   main button,
   main a[role="button"] { touch-action: manipulation; }
-
   .nuva-motion-enter { animation-duration: 500ms; }
 }
 
-/* Desktop landing parity.
-   The landing already has its own cinematic animation choreography in
-   home-experience.css. Generic product-wide hover physics were unintentionally
-   being layered on top of it with a mouse, making the desktop version jump,
-   shimmer and feel disconnected from the mobile experience. Keep the landing
-   choreography, but remove cursor-driven movement from that surface. */
 @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
   section#experience .rounded-xl:hover,
   section#experience .rounded-2xl:hover,
   section#experience .rounded-3xl:hover,
   section#experience .rounded-\[1\.75rem\]:hover,
   section#experience .shadow-xl:hover,
-  section#experience .shadow-2xl:hover {
-    transform: none !important;
-  }
-
+  section#experience .shadow-2xl:hover { transform: none !important; }
   section#experience .rounded-xl:has(button:hover),
   section#experience .rounded-2xl:has(button:hover),
-  section#experience .rounded-3xl:has(button:hover) {
-    border-color: inherit;
-    box-shadow: inherit;
-  }
-
+  section#experience .rounded-3xl:has(button:hover) { border-color: inherit; box-shadow: inherit; }
   section#experience button:not([disabled]):hover,
-  section#experience a[role="button"]:hover {
-    transform: none !important;
-  }
-
-  /* Preserve the intentional CTA interaction from home-experience.css. */
+  section#experience a[role="button"]:hover { transform: none !important; }
   section#experience a[href="/auth"] button:hover,
-  section#experience a[href*="mode=signup"] button:hover {
-    transform: translateY(-2px) !important;
-  }
-
-  /* Avoid unnecessary layout/paint promotion of every card on desktop. */
-  section#experience [class*="animate-fade-in-up"] {
-    will-change: auto;
-  }
-
+  section#experience a[href*="mode=signup"] button:hover { transform: translateY(-2px) !important; }
+  section#experience [class*="animate-fade-in-up"] { will-change: auto; }
   section#experience .nuva-launch__module,
   section#experience .nuva-launch__core,
   section#experience .nuva-launch__logo,
   section#experience .nuva-launch__ring,
-  section#experience .nuva-launch__ambient {
-    will-change: transform, opacity;
-  }
+  section#experience .nuva-launch__ambient { will-change: transform, opacity; }
 }
 
-/* Accessibility: honor the OS/user motion preference everywhere. */
+/* ================================================================
+   LAUNCH PARITY — MOBILE IS THE REFERENCE
+   The mobile launch is the approved Nüva One motion. Desktop must not
+   invent a second choreography or palette. Geometry, scale and rhythm are
+   intentionally identical; only the viewport changes the available space.
+   ================================================================ */
+.nuva-launch {
+  --nuva-radius: min(35vw,165px) !important;
+  --nuva-stage-size: min(100vw,100svh) !important;
+  --nuva-core-size: 155px !important;
+  --nuva-module-scale: 1 !important;
+  background:
+    radial-gradient(circle at 50% 46%, oklch(.985 .035 268) 0%, oklch(.965 .055 275) 43%, oklch(.925 .075 280) 100%) !important;
+  color: oklch(.24 .09 270) !important;
+  color-scheme: light;
+  forced-color-adjust: none;
+}
+.nuva-launch .nuva-launch__welcome-title { color: oklch(.30 .16 270) !important; }
+.nuva-launch .nuva-launch__welcome-subtitle { color: oklch(.40 .10 270) !important; }
+.nuva-launch .nuva-launch__module-icon {
+  border-color: oklch(.55 .22 268 / .26) !important;
+  background: oklch(.99 .025 275 / .78) !important;
+  color: oklch(.48 .22 268) !important;
+  box-shadow: 0 10px 30px -20px oklch(.40 .22 268 / .65), inset 0 1px 0 oklch(1 0 0 / .8) !important;
+}
+.nuva-launch .nuva-launch__module span { color: oklch(.36 .13 270) !important; }
+.nuva-launch .nuva-launch__tagline { color: oklch(.43 .17 268) !important; }
+.nuva-launch .nuva-launch__ring { border-color: oklch(.55 .22 268 / .18) !important; }
+.nuva-launch .nuva-launch__core-halo { background: radial-gradient(circle, oklch(.62 .24 268 / .28), oklch(.62 .24 268 / .08) 52%, transparent 72%) !important; }
+.nuva-launch .nuva-launch__core-ring { border-color: oklch(.55 .22 268 / .52) !important; box-shadow: 0 0 45px oklch(.55 .22 268 / .22) !important; }
+.nuva-launch .nuva-launch__core-pulse { background: oklch(.62 .24 268 / .18) !important; }
+.nuva-launch .nuva-launch__logo { color: oklch(.35 .20 268) !important; }
+.nuva-launch .nuva-launch__logo small { color: oklch(.47 .16 275) !important; }
+.nuva-launch .nuva-launch__spark { background: oklch(.68 .22 268) !important; box-shadow: 0 0 18px oklch(.62 .24 268 / .65) !important; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-    scroll-behavior: auto !important;
-  }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
