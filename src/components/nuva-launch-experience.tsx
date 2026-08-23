@@ -1,12 +1,9 @@
 import { useEffect, useState, type CSSProperties, type ComponentType } from "react";
 import { Bot, Boxes, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, ClipboardList, Handshake, Package, ReceiptText, ShoppingCart, Sparkles, Users, X } from "lucide-react";
 
-const INTRO = 1900 + 650;
-const ORBIT = 3200;
-const CONVERGE = 1500 + 650;
-const WELCOME = 2000;
-const EXIT = 1400;
-const TOTAL = INTRO + ORBIT + CONVERGE + WELCOME + EXIT;
+// One continuous timeline. CSS owns the choreography; React only controls completion/skip.
+const DURATION = 9000;
+const EXIT = 1200;
 
 const ITEMS: Array<[string, ComponentType]> = [
   ["IA", Bot], ["Clientes", Users], ["Ventas", ShoppingCart], ["Finanzas", CircleDollarSign],
@@ -15,37 +12,33 @@ const ITEMS: Array<[string, ComponentType]> = [
 ];
 
 export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState<"intro" | "orbit" | "converge" | "welcome" | "exit">("intro");
-  const [reduced, setReduced] = useState(false);
+  const [skipping, setSkipping] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(media.matches);
     if (media.matches) {
-      const timer = window.setTimeout(onComplete, 900);
+      const timer = window.setTimeout(onComplete, 700);
       return () => window.clearTimeout(timer);
     }
-    const timers = [
-      window.setTimeout(() => setPhase("orbit"), INTRO),
-      window.setTimeout(() => setPhase("converge"), INTRO + ORBIT),
-      window.setTimeout(() => setPhase("welcome"), INTRO + ORBIT + CONVERGE),
-      window.setTimeout(() => setPhase("exit"), INTRO + ORBIT + CONVERGE + WELCOME),
-      window.setTimeout(onComplete, TOTAL),
-    ];
-    return () => timers.forEach(window.clearTimeout);
+    const timer = window.setTimeout(onComplete, DURATION);
+    return () => window.clearTimeout(timer);
   }, [onComplete]);
 
-  const skip = () => { setPhase("exit"); window.setTimeout(onComplete, EXIT); };
+  const skip = () => {
+    if (skipping) return;
+    setSkipping(true);
+    window.setTimeout(onComplete, EXIT);
+  };
 
   return (
-    <div aria-label="Bienvenido a Nüva One" aria-live="polite" className={`nuva-launch nuva-launch--${phase} ${reduced ? "nuva-launch--reduced" : ""}`}>
+    <div aria-label="Bienvenido a Nüva One" aria-live="polite" className={`nuva-launch ${skipping ? "nuva-launch--exit" : ""}`}>
       <div className="nuva-launch__ambient" /><div className="nuva-launch__grid" />
       <div className="nuva-launch__light-beam nuva-launch__light-beam--one" /><div className="nuva-launch__light-beam nuva-launch__light-beam--two" />
       <div className="nuva-launch__ring nuva-launch__ring--outer" /><div className="nuva-launch__ring nuva-launch__ring--inner" />
       <div className="nuva-launch__stage">
         <div className="nuva-launch__orbit" aria-hidden="true">
           {ITEMS.map(([label, Icon], index) => (
-            <div key={label} className="nuva-launch__module" style={{ "--nuva-angle": `${-90 + index * (360 / ITEMS.length)}deg`, "--nuva-delay": `${index * 65}ms` } as CSSProperties}>
+            <div key={label} className="nuva-launch__module" style={{ "--nuva-angle": `${-90 + index * (360 / ITEMS.length)}deg`, "--nuva-delay": `${index * 55}ms` } as CSSProperties}>
               <div className="nuva-launch__module-icon"><Icon /></div><span>{label}</span>
             </div>
           ))}
