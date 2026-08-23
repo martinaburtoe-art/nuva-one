@@ -8,18 +8,40 @@ main button,main a[role="button"],main a[href]{-webkit-tap-highlight-color:trans
 @keyframes nuva-enter{from{opacity:0;transform:translate3d(0,18px,0) scale(.985);filter:blur(4px)}to{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}}@keyframes nuva-enter-soft{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:translate3d(0,0,0)}}@keyframes nuva-pop{0%{opacity:0;transform:scale(.94);filter:blur(3px)}65%{opacity:1;transform:scale(1.012);filter:blur(0)}100%{transform:scale(1)}}@keyframes nuva-surface-sweep{0%,58%{transform:translateX(-120%);opacity:0}68%{opacity:1}86%,100%{transform:translateX(120%);opacity:0}}
 main table tr,main [data-state="open"],main [data-state="closed"]{transition:background-color var(--nuva-fast) ease,opacity var(--nuva-fast) ease,transform var(--nuva-fast) var(--nuva-ease)}
 
-/* Launch: one choreography for every viewport. Responsive CSS only changes scale. */
-.nuva-launch{--nuva-launch-radius:min(31vw,245px);--nuva-launch-stage:min(78vw,720px);--nuva-launch-core:min(19vw,205px);color:#111027}
-.nuva-launch__module{animation-fill-mode:both;transform-origin:center;will-change:transform,opacity,filter}
-.nuva-launch--intro .nuva-launch__module{animation:nuva-module-intro 1900ms var(--nuva-ease) var(--nuva-delay) both}
-.nuva-launch--orbit .nuva-launch__module{opacity:1;filter:blur(0);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1);animation:nuva-module-breathe 2200ms ease-in-out infinite}
-.nuva-launch--converge .nuva-launch__module{animation:nuva-module-converge 1500ms var(--nuva-ease-soft) var(--nuva-delay) both}
-.nuva-launch--welcome .nuva-launch__module,.nuva-launch--exit .nuva-launch__module{opacity:0;filter:blur(7px);transform:translate(-50%,-50%) scale(.12);transition:opacity 500ms ease,filter 650ms ease,transform 900ms var(--nuva-ease)}
-.nuva-launch--intro .nuva-launch__welcome,.nuva-launch--orbit .nuva-launch__welcome,.nuva-launch--converge .nuva-launch__welcome{opacity:0;visibility:hidden}.nuva-launch--welcome .nuva-launch__welcome{opacity:1;visibility:visible;animation:nuva-welcome-final 900ms var(--nuva-ease) both}.nuva-launch--exit .nuva-launch__welcome{opacity:0;visibility:visible;animation:nuva-welcome-exit 1200ms var(--nuva-ease-soft) both}.nuva-launch--exit{animation:nuva-launch-exit 1400ms var(--nuva-ease-soft) both}.nuva-launch--exit .nuva-launch__ambient{animation:nuva-ambient-exit 1400ms var(--nuva-ease-soft) both}.nuva-launch--exit .nuva-launch__ring,.nuva-launch--exit .nuva-launch__core,.nuva-launch--exit .nuva-launch__tagline{opacity:.08;filter:blur(5px);transition:opacity 900ms ease,filter 1000ms ease,transform 1000ms var(--nuva-ease-soft)}
-@keyframes nuva-module-intro{0%{opacity:0;filter:blur(14px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1 * var(--nuva-angle))) scale(.15)}55%{opacity:1;filter:blur(2px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius) * .92)) rotate(calc(-1 * var(--nuva-angle))) scale(1.06)}100%{opacity:1;filter:blur(0);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1)}}
-@keyframes nuva-module-breathe{0%,100%{margin-top:0;filter:blur(0);opacity:1}50%{margin-top:-4px;filter:blur(.15px);opacity:.94}}
-@keyframes nuva-module-converge{0%{opacity:1;filter:blur(0);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1)}58%{opacity:.82;filter:blur(1px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(-74px) rotate(calc(-1 * var(--nuva-angle))) scale(.52)}100%{opacity:0;filter:blur(8px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1 * var(--nuva-angle))) scale(.06)}}
-@keyframes nuva-welcome-final{0%{opacity:0;transform:translate(-50%,-50%) scale(.82);filter:blur(16px)}65%{opacity:1;transform:translate(-50%,-50%) scale(1.025);filter:blur(0)}100%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}}@keyframes nuva-welcome-exit{from{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}to{opacity:0;transform:translate(-50%,-50%) scale(1.035);filter:blur(10px)}}@keyframes nuva-launch-exit{from{opacity:1;transform:scale(1);filter:blur(0)}to{opacity:0;transform:scale(1.025);filter:blur(7px)}}@keyframes nuva-ambient-exit{from{opacity:1;transform:scale(1);filter:blur(0)}to{opacity:0;transform:scale(1.12);filter:blur(12px)}}
+/* Launch: ONE continuous timeline. React never swaps animation states mid-scene. */
+.nuva-launch{--nuva-launch-radius:min(31vw,245px);--nuva-launch-stage:min(78vw,720px);--nuva-launch-core:min(19vw,205px);--nuva-launch-duration:9000ms;color:#111027;isolation:isolate;overflow:hidden}
+.nuva-launch__module{opacity:0;transform-origin:center;will-change:transform,opacity,filter;animation:nuva-module-timeline var(--nuva-launch-duration) var(--nuva-ease-soft) var(--nuva-delay) both}
+.nuva-launch__welcome{opacity:0;visibility:hidden;will-change:transform,opacity,filter;animation:nuva-welcome-timeline var(--nuva-launch-duration) linear both}
+.nuva-launch__ambient,.nuva-launch__grid,.nuva-launch__light-beam,.nuva-launch__ring,.nuva-launch__core,.nuva-launch__tagline{will-change:transform,opacity,filter}
+.nuva-launch__ambient{animation:nuva-ambient-timeline var(--nuva-launch-duration) linear both}.nuva-launch__ring,.nuva-launch__core,.nuva-launch__tagline{animation:nuva-scene-timeline var(--nuva-launch-duration) linear both}
+.nuva-launch--exit{animation:nuva-skip-exit 1200ms var(--nuva-ease-soft) both}.nuva-launch--exit .nuva-launch__module,.nuva-launch--exit .nuva-launch__welcome,.nuva-launch--exit .nuva-launch__ambient,.nuva-launch--exit .nuva-launch__ring,.nuva-launch--exit .nuva-launch__core,.nuva-launch--exit .nuva-launch__tagline{animation:none;opacity:0;filter:blur(8px);transition:opacity 900ms ease,filter 1100ms ease,transform 1100ms var(--nuva-ease-soft)}
+@keyframes nuva-module-timeline{
+  0%{opacity:0;filter:blur(14px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1 * var(--nuva-angle))) scale(.14)}
+  14%{opacity:1;filter:blur(2px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius) * .92)) rotate(calc(-1 * var(--nuva-angle))) scale(1.06)}
+  23%{opacity:1;filter:blur(0);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1)}
+  44%{opacity:1;filter:blur(0);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius))) rotate(calc(-1 * var(--nuva-angle))) scale(1)}
+  48%{opacity:1;filter:blur(.2px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(calc(-1 * var(--nuva-launch-radius) + 2px)) rotate(calc(-1 * var(--nuva-angle))) scale(1.015)}
+  63%{opacity:.72;filter:blur(1px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(-70px) rotate(calc(-1 * var(--nuva-angle))) scale(.52)}
+  70%{opacity:0;filter:blur(8px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1 * var(--nuva-angle))) scale(.06)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(.06)}
+}
+@keyframes nuva-welcome-timeline{
+  0%,61%{opacity:0;visibility:hidden;transform:translate(-50%,-50%) scale(.84);filter:blur(14px)}
+  68%{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1.025);filter:blur(0)}
+  87%{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1);filter:blur(0)}
+  94%{opacity:.92;visibility:visible;transform:translate(-50%,-50%) scale(1.012);filter:blur(2px)}
+  100%{opacity:0;visibility:visible;transform:translate(-50%,-50%) scale(1.035);filter:blur(10px)}
+}
+@keyframes nuva-scene-timeline{
+  0%{opacity:.3;transform:scale(.96);filter:blur(2px)}
+  18%{opacity:1;transform:scale(1);filter:blur(0)}
+  48%{opacity:1;transform:scale(1);filter:blur(0)}
+  70%{opacity:.85;transform:scale(1.015);filter:blur(0)}
+  90%{opacity:.3;transform:scale(1.04);filter:blur(4px)}
+  100%{opacity:0;transform:scale(1.08);filter:blur(10px)}
+}
+@keyframes nuva-ambient-timeline{0%{opacity:.25;transform:scale(.96);filter:blur(3px)}18%{opacity:1;transform:scale(1);filter:blur(0)}55%{opacity:1;transform:scale(1);filter:blur(0)}100%{opacity:0;transform:scale(1.08);filter:blur(12px)}}
+@keyframes nuva-skip-exit{from{opacity:1;transform:scale(1);filter:blur(0)}to{opacity:0;transform:scale(1.025);filter:blur(8px)}}
 @media (max-width:900px){.nuva-launch{--nuva-launch-radius:min(34vw,210px);--nuva-launch-stage:min(94vw,650px);--nuva-launch-core:min(25vw,185px)}}
 @media (max-width:640px){.nuva-launch{--nuva-launch-radius:39vw;--nuva-launch-stage:min(100vw,100svh);--nuva-launch-core:155px}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
