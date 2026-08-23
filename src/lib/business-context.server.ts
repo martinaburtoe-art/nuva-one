@@ -14,20 +14,12 @@ import type { Database } from "@/integrations/supabase/types";
 
 const TRIAL_DAYS = 15;
 
-// Mirrors the trial math in dashboard-shell.tsx so the assistant's own
-// picture of "days left" never drifts from what the user sees in the UI.
 export function trialDaysLeft(createdAt: string | null): number {
   if (!createdAt) return TRIAL_DAYS;
   const elapsedDays = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000);
   return Math.max(0, TRIAL_DAYS - elapsedDays);
 }
 
-// Fecha de "hoy" en horario de Chile, formato YYYY-MM-DD -- mismo formato en
-// que Postgres devuelve las columnas DATE (sale_date, purchase_date, etc.),
-// así el modelo puede comparar strings directamente en vez de adivinar qué
-// día es "hoy" (sin esto, el asistente no tiene ninguna ancla temporal real
-// y termina alucinando fechas al responder preguntas relativas como "hoy",
-// "esta semana" o "ayer").
 function todayInChile(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date());
 }
@@ -35,55 +27,56 @@ function todayInChile(): string {
 export async function buildBusinessContext(supabase: SupabaseClient<Database>, businessId: string) {
   if (!businessId) return null;
 
-  const [business, products, sales, transactions, quotes, purchases, customers] = await Promise.all(
-    [
-      supabase
-        .from("businesses")
-        .select("name, industry, size, plan, created_at")
-        .eq("id", businessId)
-        .maybeSingle(),
-      supabase
-        .from("products")
-        .select("name, sku, stock, low_stock_threshold, price, cost")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false })
-        .limit(50),
-      supabase
-        .from("sales")
-        .select("customer_name, channel, status, total, sale_date")
-        .eq("business_id", businessId)
-        .order("sale_date", { ascending: false })
-        .limit(30),
-      supabase
-        .from("transactions")
-        .select("type, category, amount, tx_date")
-        .eq("business_id", businessId)
-        .order("tx_date", { ascending: false })
-        .limit(50),
-      supabase
-        .from("quotes")
-        .select("customer_name, status, total, created_at")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false })
-        .limit(20),
-      supabase
-        .from("purchases")
-        .select("supplier_name, status, total, purchase_date")
-        .eq("business_id", businessId)
-        .order("purchase_date", { ascending: false })
-        .limit(20),
-      supabase
-        .from("customers")
-        .select("name, phone, status, tags, notes")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false })
-        .limit(30),
-    ],
-  );
+  const [business, products, sales, transactions, quotes, purchases, customers] = await Promise.all([
+    supabase
+      .from("businesses")
+      .select("name, industry, size, plan, owner_granted_access, owner_grant_expires_at, created_at")
+      .eq("id", businessId)
+      .maybeSingle(),
+    supabase
+      .from("products")
+      .select("name, sku, stock, low_stock_threshold, price, cost")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("sales")
+      .select("customer_name, channel, status, total, sale_date")
+      .eq("business_id", businessId)
+      .order("sale_date", { ascending: false })
+      .limit(30),
+    supabase
+      .from("transactions")
+      .select("type, category, amount, tx_date")
+      .eq("business_id", businessId)
+      .order("tx_date", { ascending: false })
+      .limit(50),
+    supabase
+      .from("quotes")
+      .select("customer_name, status, total, created_at")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("purchases")
+      .select("supplier_name, status, total, purchase_date")
+      .eq("business_id", businessId)
+      .order("purchase_date", { ascending: false })
+      .limit(20),
+    supabase
+      .from("customers")
+      .select("name, phone, status, tags, notes")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false })
+      .limit(30),
+  ]);
 
-  // If RLS (web caller) or the explicit business_id filter (admin caller)
-  // turned up nothing, treat as "no context" rather than erroring loudly.
   if (!business.data) return null;
+
+  const ownerGrantActive =
+    business.data.owner_granted_access === true &&
+    (!business.data.owner_grant_expires_at || new Date(business.data.owner_grant_expires_at).getTime() > Date.now());
+  const effectivePlan = ownerGrantActive ? "pro" : business.data.plan;
 
   const lowStock = (products.data ?? []).filter((p) => p.stock <= p.low_stock_threshold);
   const totalStockUnits = (products.data ?? []).reduce((s, p) => s + (p.stock ?? 0), 0);
@@ -95,33 +88,22 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
     .reduce((s, t) => s + Number(t.amount), 0);
 
   return {
-    business: business.data,
+    business: {
+      ...business.data,
+      plan: effectivePlan,
+    },
     summary: {
       today: todayInChile(),
-      plan: business.data.plan,
-      trial_days_left:
-        business.data.plan === "pro" ? null : trialDaysLeft(business.data.created_at),
+      plan: effectivePlan,
+      access: ownerGrantActive ? "owner_granted_full_access" : "subscription_or_trial",
+      trial_days_left: effectivePlan === "pro" ? null : trialDaysLeft(business.data.created_at),
       net_cash_flow: income - expense,
       total_income: income,
       total_expense: expense,
       product_count: products.data?.length ?? 0,
-      // Antes solo mandábamos el conteo y los productos con stock bajo, así
-      // que el asistente no podía responder preguntas de stock normales
-      // ("¿cuántas unidades tengo de X?", "¿cuánto stock total tengo?").
-      // Ahora va el total de unidades y el detalle por producto (nota: los
-      // 50 más recientes, ver query de arriba; capContext puede recortar
-      // más si el negocio tiene demasiados).
       total_stock_units: totalStockUnits,
-      products: (products.data ?? []).map((p) => ({
-        name: p.name,
-        sku: p.sku,
-        stock: p.stock,
-      })),
-      low_stock_products: lowStock.map((p) => ({
-        name: p.name,
-        stock: p.stock,
-        threshold: p.low_stock_threshold,
-      })),
+      products: (products.data ?? []).map((p) => ({ name: p.name, sku: p.sku, stock: p.stock })),
+      low_stock_products: lowStock.map((p) => ({ name: p.name, stock: p.stock, threshold: p.low_stock_threshold })),
       recent_sales: sales.data ?? [],
       recent_transactions: transactions.data ?? [],
       recent_quotes: quotes.data ?? [],
@@ -131,11 +113,7 @@ export async function buildBusinessContext(supabase: SupabaseClient<Database>, b
   };
 }
 
-// Rough safety net against context bloat: ~4 chars/token, so this caps the
-// business_data block at roughly 2000 tokens. If it's ever exceeded (e.g. a
-// business with unusually long product/customer names), older recent_*
-// entries are dropped rather than truncating mid-JSON.
-const MAX_CONTEXT_CHARS = 8000;
+const MAX_CONTEXT_CHARS = 12000;
 
 export function capContext(summary: Record<string, any>): Record<string, any> {
   const trimmable = [
@@ -153,8 +131,7 @@ export function capContext(summary: Record<string, any>): Record<string, any> {
     const arr = out[key];
     if (Array.isArray(arr) && arr.length > 5) {
       out[key] = arr.slice(0, 5);
-      out[`${key}_note`] =
-        `Mostrando solo los 5 más recientes de ${arr.length} (recortado por tamaño).`;
+      out[`${key}_note`] = `Mostrando solo los 5 más recientes de ${arr.length} (recortado por tamaño).`;
       json = JSON.stringify(out);
     }
   }
