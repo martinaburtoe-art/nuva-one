@@ -1,8 +1,8 @@
 import { useEffect, useState, type CSSProperties, type ComponentType } from "react";
 import { Bot, Boxes, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, ClipboardList, Handshake, Package, ReceiptText, ShoppingCart, Sparkles, Users, X } from "lucide-react";
 
-// One continuous timeline. CSS owns the choreography; React only controls completion/skip.
-const DURATION = 9000;
+// CSS owns the complete 12s visual choreography. React only handles completion and skip.
+const DURATION = 12000;
 const EXIT = 1200;
 
 const ITEMS: Array<[string, ComponentType]> = [
@@ -38,7 +38,7 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
       <div className="nuva-launch__stage">
         <div className="nuva-launch__orbit" aria-hidden="true">
           {ITEMS.map(([label, Icon], index) => (
-            <div key={label} className="nuva-launch__module" style={{ "--nuva-angle": `${-90 + index * (360 / ITEMS.length)}deg`, "--nuva-delay": `${index * 55}ms` } as CSSProperties}>
+            <div key={label} className="nuva-launch__module" style={{ "--nuva-angle": `${-90 + index * (360 / ITEMS.length)}deg`, "--nuva-delay": `${index * 45}ms` } as CSSProperties}>
               <div className="nuva-launch__module-icon"><Icon /></div><span>{label}</span>
             </div>
           ))}
