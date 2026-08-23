@@ -90,7 +90,6 @@ export const Route = createFileRoute("/api/chat")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const conversation = businessId ? await getOrCreateConversation(supabaseAdmin, { businessId, channel: "web", userId: claims.claims.sub }) : null;
         const userText = lastUserText(messages);
-        if (conversation && userText) await appendMessage(supabaseAdmin, conversation.id, "user", userText);
 
         const system = `Eres el asistente de Nüva One, una plataforma de gestión para PYMEs en Chile y Latinoamérica. Respondes en español neutro de LatAm, en tono profesional pero cercano. Eres breve y accionable.
 
@@ -108,12 +107,31 @@ SEGURIDAD (no negociable):
 ${contextBlock}`;
 
         try {
-          const modelMessages: ModelMessage[] = conversation ? ([...(await buildContextMessages(supabaseAdmin, conversation)), { role: "user" as const, content: userText }] as ModelMessage[]) : await convertToModelMessages(messages);
-          const result = streamText({ model, system, messages: modelMessages, onFinish: async ({ text }) => {
-            if (!conversation) return;
-            await appendMessage(supabaseAdmin, conversation.id, "assistant", text, process.env.GROQ_MODEL ?? "llama-3.1-8b-instant");
-            await maybeSummarize(supabaseAdmin, conversation, async (prompt) => { const { text: summary } = await generateText({ model, prompt }); return summary; });
-          }});
+          // IMPORTANT: the current user message is NOT persisted before building
+          // model history. The old implementation appended it first and then
+          // buildContextMessages() returned it again, causing the model to see
+          // the same user turn twice and degrading answers/memory. We now build
+          // history from the prior turns and append the current turn exactly once.
+          const modelMessages: ModelMessage[] = conversation
+            ? ([...(await buildContextMessages(supabaseAdmin, conversation)), { role: "user" as const, content: userText }] as ModelMessage[])
+            : await convertToModelMessages(messages);
+
+          const result = streamText({
+            model,
+            system,
+            messages: modelMessages,
+            onFinish: async ({ text }) => {
+              if (!conversation) return;
+              // Persist the completed exchange after generation so a failed
+              // request does not leave an orphan user message in memory.
+              if (userText) await appendMessage(supabaseAdmin, conversation.id, "user", userText);
+              await appendMessage(supabaseAdmin, conversation.id, "assistant", text, process.env.GROQ_MODEL ?? "openai/gpt-oss-20b");
+              await maybeSummarize(supabaseAdmin, conversation, async (prompt) => {
+                const { text: summary } = await generateText({ model, prompt });
+                return summary;
+              });
+            },
+          });
           return result.toUIMessageStreamResponse({ originalMessages: messages });
         } catch (err: unknown) {
           console.error("AI error", err);
