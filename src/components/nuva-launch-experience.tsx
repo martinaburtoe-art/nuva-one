@@ -7,12 +7,21 @@ type Phase="intro"|"orbit"|"converge"|"welcome"|"exit";
 
 export function NuvaLaunchExperience({onComplete}:{onComplete:()=>void}){
  const [visible,setVisible]=useState(false),[reduced,setReduced]=useState(false),[phase,setPhase]=useState<Phase>("intro");
- useEffect(()=>{const media=window.matchMedia("(prefers-reduced-motion: reduce)"),r=media.matches;setReduced(r);setVisible(true);if(r){const t=window.setTimeout(()=>{setVisible(false);onComplete()},1400);return()=>window.clearTimeout(t)}const ts=[window.setTimeout(()=>setPhase("orbit"),INTRO),window.setTimeout(()=>setPhase("converge"),INTRO+ORBIT),window.setTimeout(()=>setPhase("welcome"),INTRO+ORBIT+CONVERGE),window.setTimeout(()=>setPhase("exit"),INTRO+ORBIT+CONVERGE+WELCOME),window.setTimeout(()=>{setVisible(false);onComplete()},TOTAL)];return()=>ts.forEach(window.clearTimeout)},[onComplete]);
+ useEffect(()=>{
+  // A previous first-paint safeguard could remain in cached HTML from an older
+  // deployment. The launch experience itself is the authoritative cover now.
+  document.getElementById("nuva-first-paint-cover")?.remove();
+  const media=window.matchMedia("(prefers-reduced-motion: reduce)"),r=media.matches;setReduced(r);setVisible(true);
+  if(r){const t=window.setTimeout(()=>{setVisible(false);onComplete()},1400);return()=>window.clearTimeout(t)}
+  const ts=[window.setTimeout(()=>setPhase("orbit"),INTRO),window.setTimeout(()=>setPhase("converge"),INTRO+ORBIT),window.setTimeout(()=>setPhase("welcome"),INTRO+ORBIT+CONVERGE),window.setTimeout(()=>setPhase("exit"),INTRO+ORBIT+CONVERGE+WELCOME),window.setTimeout(()=>{setVisible(false);onComplete()},TOTAL)];
+  return()=>ts.forEach(window.clearTimeout)
+ },[onComplete]);
  const finish=()=>{setPhase("exit");window.setTimeout(()=>{setVisible(false);onComplete()},EXIT)};
  if(!visible)return null;
  return <div aria-label="Bienvenido a Nüva One" aria-live="polite" className={`nuva-launch ${reduced?"nuva-launch--reduced":""} nuva-launch--${phase}`}>
  <style>{`
- .nuva-launch{--nuva-radius:clamp(155px,18vmin,270px);--nuva-stage-size:min(82vmin,760px);--nuva-core-size:clamp(150px,20vmin,230px);--nuva-module-scale:1;will-change:opacity,transform,filter;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(0);background:radial-gradient(circle at 50% 48%,#fff 0%,#fbfaff 42%,#eef0ff 100%)!important;color:#09090b!important}
+ #nuva-first-paint-cover{display:none!important}
+ .nuva-launch{--nuva-radius:clamp(155px,18vmin,270px);--nuva-stage-size:min(82vmin,760px);--nuva-core-size:clamp(150px,20vmin,230px);--nuva-module-scale:1;will-change:opacity,transform,filter;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(0);background:radial-gradient(circle at 50% 48%,#fff 0%,#fbfaff 42%,#eef0ff 100%)!important;color:#09090b!important;color-scheme:light;forced-color-adjust:none}
  .nuva-launch .nuva-launch__stage{width:var(--nuva-stage-size);height:var(--nuva-stage-size);max-width:100vw;max-height:100vh;position:relative;display:grid;place-items:center}
  .nuva-launch .nuva-launch__module{animation:none!important;will-change:transform,opacity,filter}.nuva-launch__orbit{transform-origin:center;will-change:transform;width:100%;height:100%;position:absolute;inset:0}
  .nuva-launch--intro .nuva-launch__module{opacity:0;filter:blur(14px);transform:translate(-50%,-50%) rotate(var(--nuva-angle)) translateY(0) rotate(calc(-1*var(--nuva-angle))) scale(.18);transition:opacity .9s,filter 1.1s,transform 1.3s cubic-bezier(.16,1,.3,1);transition-delay:var(--nuva-delay)}
