@@ -1,23 +1,24 @@
 import { useEffect, useState, type CSSProperties, type ComponentType } from "react";
 import { Bot, Boxes, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, ClipboardList, Handshake, Package, ReceiptText, ShoppingCart, Sparkles, Users, X } from "lucide-react";
 
-const INTRO = 1700;
-const ORBIT = 3000;
-const CONVERGE = 1100;
-const WELCOME = 1800;
-const EXIT = 1200;
+// Timing is deliberately aligned with the CSS animation durations + the longest
+// stagger delay. The previous values advanced the React phase before the last
+// desktop icon had finished its entrance/convergence animation, causing jumps.
+const INTRO = 2300;
+const ORBIT = 3200;
+const CONVERGE = 1800;
+const WELCOME = 2000;
+const EXIT = 1400;
 const TOTAL = INTRO + ORBIT + CONVERGE + WELCOME + EXIT;
 
-type Phase = "intro" | "orbit" | "converge" | "welcome" | "exit";
-const ITEMS: Array<[string, ComponentType<{ className?: string }>, number]> = [
-  ["IA", Bot, -90], ["Clientes", Users, -57], ["Ventas", ShoppingCart, -24],
-  ["Finanzas", CircleDollarSign, 9], ["Caja", ReceiptText, 42], ["Compras", ClipboardList, 75],
-  ["Inventario", Package, 108], ["CRM", Handshake, 141], ["Gestión", BriefcaseBusiness, 174],
-  ["Datos", Boxes, 207], ["Insights", ChartNoAxesCombined, 240],
+const ITEMS: Array<[string, ComponentType]> = [
+  ["IA", Bot], ["Clientes", Users], ["Ventas", ShoppingCart], ["Finanzas", CircleDollarSign],
+  ["Caja", ReceiptText], ["Compras", ClipboardList], ["Inventario", Package], ["CRM", Handshake],
+  ["Gestión", BriefcaseBusiness], ["Datos", Boxes], ["Insights", ChartNoAxesCombined],
 ];
 
 export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState<Phase>("intro");
+  const [phase, setPhase] = useState<"intro" | "orbit" | "converge" | "welcome" | "exit">("intro");
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
 
   const skip = () => {
     setPhase("exit");
-    window.setTimeout(onComplete, 700);
+    window.setTimeout(onComplete, EXIT);
   };
 
   return (
@@ -53,11 +54,11 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
       <div className="nuva-launch__ring nuva-launch__ring--inner" />
       <div className="nuva-launch__stage">
         <div className="nuva-launch__orbit" aria-hidden="true">
-          {ITEMS.map(([label, Icon, angle], index) => (
+          {ITEMS.map(([label, Icon], index) => (
             <div
               key={label}
               className="nuva-launch__module"
-              style={{ "--nuva-angle": `${angle}deg`, "--nuva-delay": `${index * 65}ms` } as CSSProperties}
+              style={{ "--nuva-angle": `${-90 + index * 33}deg`, "--nuva-delay": `${index * 65}ms` } as CSSProperties}
             >
               <div className="nuva-launch__module-icon"><Icon /></div>
               <span>{label}</span>
