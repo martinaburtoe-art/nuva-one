@@ -17,7 +17,7 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s);
+    const q = <T extends HTMLElement,>(s: string) => root.querySelector<T>(s);
     const modules = Array.from(root.querySelectorAll<HTMLElement>("[data-nuva-v2-module]"));
     const core = q("[data-nuva-v2-core]"), halo = q("[data-nuva-v2-halo]"), ring = q("[data-nuva-v2-ring]"), pulse = q("[data-nuva-v2-pulse]"), logo = q("[data-nuva-v2-logo]"), welcome = q("[data-nuva-v2-welcome]"), tagline = q("[data-nuva-v2-tagline]"), outer = q("[data-nuva-v2-outer]"), inner = q("[data-nuva-v2-inner]"), ambient = q("[data-nuva-v2-ambient]"), beam1 = q("[data-nuva-v2-beam='1']"), beam2 = q("[data-nuva-v2-beam='2']");
     const start = performance.now();
