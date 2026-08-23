@@ -169,6 +169,54 @@ main [data-state="closed"] {
   .nuva-motion-enter { animation-duration: 500ms; }
 }
 
+/* Desktop landing parity.
+   The landing already has its own cinematic animation choreography in
+   home-experience.css. Generic product-wide hover physics were unintentionally
+   being layered on top of it with a mouse, making the desktop version jump,
+   shimmer and feel disconnected from the mobile experience. Keep the landing
+   choreography, but remove cursor-driven movement from that surface. */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  section#experience .rounded-xl:hover,
+  section#experience .rounded-2xl:hover,
+  section#experience .rounded-3xl:hover,
+  section#experience .rounded-\[1\.75rem\]:hover,
+  section#experience .shadow-xl:hover,
+  section#experience .shadow-2xl:hover {
+    transform: none !important;
+  }
+
+  section#experience .rounded-xl:has(button:hover),
+  section#experience .rounded-2xl:has(button:hover),
+  section#experience .rounded-3xl:has(button:hover) {
+    border-color: inherit;
+    box-shadow: inherit;
+  }
+
+  section#experience button:not([disabled]):hover,
+  section#experience a[role="button"]:hover {
+    transform: none !important;
+  }
+
+  /* Preserve the intentional CTA interaction from home-experience.css. */
+  section#experience a[href="/auth"] button:hover,
+  section#experience a[href*="mode=signup"] button:hover {
+    transform: translateY(-2px) !important;
+  }
+
+  /* Avoid unnecessary layout/paint promotion of every card on desktop. */
+  section#experience [class*="animate-fade-in-up"] {
+    will-change: auto;
+  }
+
+  section#experience .nuva-launch__module,
+  section#experience .nuva-launch__core,
+  section#experience .nuva-launch__logo,
+  section#experience .nuva-launch__ring,
+  section#experience .nuva-launch__ambient {
+    will-change: transform, opacity;
+  }
+}
+
 /* Accessibility: honor the OS/user motion preference everywhere. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
