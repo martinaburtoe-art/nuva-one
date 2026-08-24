@@ -5,6 +5,8 @@ type Business = { name?: string | null; tax_id?: string | null };
 type PackFile = { name: string; data: Uint8Array };
 type TaxAwareSale = PendingSaleForDeclaration & { tax_treatment?: SiiTaxTreatment | null; tipo_dte?: number | null };
 
+type XlsxCell = string | number | null;
+
 const encoder = new TextEncoder();
 
 function crc32(data: Uint8Array) {
@@ -18,6 +20,8 @@ function crc32(data: Uint8Array) {
 function u16(n: number) { return new Uint8Array([n & 255, (n >>> 8) & 255]); }
 function u32(n: number) { return new Uint8Array([n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]); }
 function concat(parts: Uint8Array[]) { const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; }
+
+/** ZIP writer using stored entries (no compression). Kept dependency-free so the browser can generate the pack reliably. */
 function zip(files: PackFile[]) {
   const locals: Uint8Array[] = [], centrals: Uint8Array[] = [];
   let offset = 0;
@@ -25,7 +29,6 @@ function zip(files: PackFile[]) {
     const name = encoder.encode(file.name), crc = crc32(file.data);
     const local = concat([u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(file.data.length), u32(file.data.length), u16(name.length), u16(0), name, file.data]);
     locals.push(local);
-    // Central directory header: signature, versions, flags/method, time/date, CRC, sizes, name/extra/comment lengths, disk/attrs, local offset.
     const central = concat([u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(file.data.length), u32(file.data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset), name]);
     centrals.push(central);
     offset += local.length;
@@ -33,45 +36,122 @@ function zip(files: PackFile[]) {
   const centralStart = offset, centralData = concat(centrals), body = concat([...locals, centralData]);
   return concat([body, u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length), u32(centralData.length), u32(centralStart), u16(0)]);
 }
+
 function download(bytes: Uint8Array, filename: string, mime = "application/zip") {
-  const url = URL.createObjectURL(new Blob([bytes], { type: mime })); const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-function csv(rows: string[][]) { return "\ufeff" + rows.map((r) => r.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(";")).join("\n"); }
+
+function xmlEscape(value: unknown) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
+}
+
+function excelColumn(n: number) {
+  let value = n + 1, result = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    value = Math.floor((value - 1) / 26);
+  }
+  return result;
+}
+
+function excelCell(value: XlsxCell, row: number, col: number, style = 0) {
+  const ref = `${excelColumn(col)}${row}`;
+  if (value === null || value === "") return `<c r="${ref}" s="${style}"/>`;
+  if (typeof value === "number" && Number.isFinite(value)) return `<c r="${ref}" s="${style}"><v>${value}</v></c>`;
+  return `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
+}
+
+function sheetXml(rows: XlsxCell[][], styles: number[][], widths: number[], freezeRows = 4) {
+  const rowXml = rows.map((row, rowIndex) => {
+    const cells = row.map((value, colIndex) => excelCell(value, rowIndex + 1, colIndex, styles[rowIndex]?.[colIndex] ?? 0)).join("");
+    return `<row r="${rowIndex + 1}" ht="${rowIndex === 0 ? 28 : rowIndex === 1 ? 21 : 20}" customHeight="1">${cells}</row>`;
+  }).join("");
+  const cols = widths.map((width, i) => `<col min="${i + 1}" max="${i + 1}" width="${width}" customWidth="1"/>`).join("");
+  const filterEnd = `${excelColumn(Math.max(0, widths.length - 1))}${rows.length}`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="${freezeRows}" topLeftCell="A${freezeRows + 1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="20"/><cols>${cols}</cols><sheetData>${rowXml}</sheetData><autoFilter ref="A${freezeRows + 1}:${filterEnd}"/><pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.2" footer="0.2"/></worksheet>`;
+}
+
+function stylesXml() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="2"><numFmt numFmtId="164" formatCode="[$$-es-CL]#,##0;[RED]-[$$-es-CL]#,##0"/><numFmt numFmtId="165" formatCode="dd-mm-yyyy"/></numFmts><fonts count="3"><font><sz val="10"/><name val="Aptos"/></font><font><b/><sz val="18"/><color rgb="FFFFFFFF"/><name val="Aptos Display"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Aptos"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF172033"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2E6BFF"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border/><border><left style="thin"><color rgb="FFD9DEE8"/></left><right style="thin"><color rgb="FFD9DEE8"/></right><top style="thin"><color rgb="FFD9DEE8"/></top><bottom style="thin"><color rgb="FFD9DEE8"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="2" borderId="0" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="0" applyAlignment="1"><alignment vertical="center" horizontal="center"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="1" applyNumberFormat="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="1" applyNumberFormat="1"/><xf numFmtId="164" fontId="2" fillId="3" borderId="1" applyNumberFormat="1"/></cellXfs></styleSheet>`;
+}
+
+function xlsx(files: { name: string; rows: XlsxCell[][]; styles: number[][]; widths: number[]; freezeRows?: number }[]) {
+  const workbookSheets = files.map((file, i) => `<sheet name="${xmlEscape(file.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("");
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets>${workbookSheets}</sheets></workbook>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${files.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("")}<Relationship Id="rId${files.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${files.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`;
+  const entries: PackFile[] = [
+    { name: "[Content_Types].xml", data: encoder.encode(contentTypes) },
+    { name: "_rels/.rels", data: encoder.encode(rels) },
+    { name: "xl/workbook.xml", data: encoder.encode(workbook) },
+    { name: "xl/_rels/workbook.xml.rels", data: encoder.encode(workbookRels) },
+    { name: "xl/styles.xml", data: encoder.encode(stylesXml()) },
+    ...files.map((file, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: encoder.encode(sheetXml(file.rows, file.styles, file.widths, file.freezeRows ?? 4)) })),
+  ];
+  return zip(entries);
+}
+
 function taxOf(s: TaxAwareSale) { return splitSiiTotal(Number(s.total) || 0, s.tax_treatment === "exento" ? "exento" : "gravado_19"); }
-function salesCsv(sales: TaxAwareSale[]) {
-  return csv([["fecha", "id_venta", "cliente", "tratamiento", "neto", "iva", "total"], ...sales.map((s) => { const t = taxOf(s); return [new Date(s.sale_date).toLocaleDateString("es-CL"), s.id, s.customer_name || "Consumidor final", siiTreatmentLabel(s.tax_treatment === "exento" ? "exento" : "gravado_19"), String(t.net), String(t.iva), String(t.total)]; })]);
+
+function salesWorkbook(sales: TaxAwareSale[], business: Business, date: string) {
+  const rows: XlsxCell[][] = [
+    [`NÜVA ONE · SII READY · DETALLE DE OPERACIONES`, null, null, null, null, null, null],
+    [`${business.name || "Empresa"} · RUT ${business.tax_id || "Pendiente"} · Generado ${date}`, null, null, null, null, null, null],
+    ["Documento de preparación para revisión humana. No corresponde a un DTE validado por el SII.", null, null, null, null, null, null],
+    ["Fecha", "ID venta", "Cliente / receptor", "Tratamiento tributario", "Neto (CLP)", "IVA (CLP)", "Total (CLP)"],
+  ];
+  const styles: number[][] = [[1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2], [0, 0, 0, 0, 0, 0, 0], [3, 3, 3, 3, 3, 3, 3]];
+  sales.forEach((s, index) => {
+    const t = taxOf(s);
+    rows.push([new Date(s.sale_date).toLocaleDateString("es-CL"), s.id, s.customer_name || "Consumidor final", siiTreatmentLabel(s.tax_treatment === "exento" ? "exento" : "gravado_19"), t.net, t.iva, t.total]);
+    styles.push([5, 0, 0, 0, 4, 4, 4]);
+    if (index === sales.length - 1) {
+      rows.push(["TOTAL", null, null, null, sales.reduce((sum, sale) => sum + taxOf(sale).net, 0), sales.reduce((sum, sale) => sum + taxOf(sale).iva, 0), sales.reduce((sum, sale) => sum + taxOf(sale).total, 0)]);
+      styles.push([3, 3, 3, 3, 6, 6, 6]);
+    }
+  });
+  return { name: "Operaciones", rows, styles, widths: [14, 28, 34, 24, 18, 18, 18], freezeRows: 4 };
 }
-function taxSummaryCsv(sales: TaxAwareSale[]) {
+
+function summaryWorkbook(sales: TaxAwareSale[], business: Business, date: string) {
   const totals = sales.reduce((a, s) => { const t = taxOf(s); a.net += t.net; a.iva += t.iva; a.total += t.total; if (s.tax_treatment === "exento") a.exento += t.net; return a; }, { net: 0, iva: 0, total: 0, exento: 0 });
-  return csv([["indicador", "valor_clp"], ["operaciones", String(sales.length)], ["neto_total", String(totals.net)], ["exento", String(totals.exento)], ["iva_19_estimado", String(totals.iva)], ["total", String(totals.total)]]);
+  const rows: XlsxCell[][] = [
+    [`NÜVA ONE · SII READY · RESUMEN TRIBUTARIO`, null, null],
+    [`${business.name || "Empresa"} · RUT ${business.tax_id || "Pendiente"} · Generado ${date}`, null, null],
+    ["Estimación preparada para revisión. Los montos no acreditan declaración ni recepción del SII.", null, null],
+    ["Indicador", "Valor", "Observación"],
+    ["Operaciones incluidas", sales.length, "Cantidad de operaciones del expediente"],
+    ["Neto total", totals.net, "Base imponible estimada"],
+    ["Monto exento", totals.exento, "Operaciones identificadas como exentas"],
+    ["IVA 19% estimado", totals.iva, "IVA calculado sobre operaciones gravadas"],
+    ["Total", totals.total, "Neto + IVA / tratamiento correspondiente"],
+  ];
+  const styles: number[][] = [[1, 1, 1], [2, 2, 2], [0, 0, 0], [3, 3, 3], [0, 0, 0], [0, 4, 0], [0, 4, 0], [0, 4, 0], [3, 6, 3]];
+  return { name: "Resumen", rows, styles, widths: [26, 22, 52], freezeRows: 4 };
 }
-function validationReport(business: Business, sales: TaxAwareSale[]) {
-  const missingBusinessRut = !business.tax_id, missingBusinessName = !business.name, missingCustomer = sales.filter((s) => !s.customer_name).length;
-  const hasExempt = sales.some((s) => s.tax_treatment === "exento");
-  const lines = ["NÜVA ONE · SII READY · CONTROL DE CALIDAD", "", `Generado: ${new Date().toLocaleString("es-CL")}`, `Empresa: ${business.name || "Pendiente"}`, `RUT empresa: ${business.tax_id || "Pendiente"}`, `Operaciones: ${sales.length}`, "", "VALIDACIONES PREVIAS", `[${missingBusinessName ? "!" : "OK"}] Razón social empresa informada`, `[${missingBusinessRut ? "!" : "OK"}] RUT empresa informado`, `[${missingCustomer ? "!" : "OK"}] Cliente/receptor informado en todas las operaciones`, `[${hasExempt ? "OK" : "INFO"}] Tratamientos tributarios identificados; revisar tipo de DTE antes de emitir.`, "[INFO] No se valida folio, timbre, firma electrónica ni recepción SII desde Nüva.", "", "RESULTADO", missingBusinessName || missingBusinessRut ? "REQUIERE COMPLETAR DATOS DE EMPRESA" : missingCustomer ? "REQUIERE REVISAR RECEPTORES" : "LISTO PARA REVISIÓN HUMANA"];
-  return lines.join("\n") + "\n";
-}
-function checklist(business: Business, sales: TaxAwareSale[]) {
-  return `# Nüva One · SII Ready\n\n## Expediente de preparación\n\n- Empresa: ${business.name || "Pendiente"}\n- RUT: ${business.tax_id || "Pendiente"}\n- Fecha: ${new Date().toLocaleDateString("es-CL")}\n- Operaciones incluidas: ${sales.length}\n\n## Checklist antes de emitir\n\n- [ ] Revisar razón social y RUT de la empresa.\n- [ ] Revisar cada operación y su receptor.\n- [ ] Confirmar tipo de DTE correspondiente.\n- [ ] Confirmar tratamiento tributario: gravado 19% o exento.\n- [ ] Confirmar neto, exento, IVA y total.\n- [ ] Emitir el documento en el canal oficial del SII.\n- [ ] Registrar en Nüva el folio oficial después de emitir.\n- [ ] Adjuntar el PDF oficial cuando esté disponible.\n- [ ] Guardar este expediente junto con el respaldo oficial.\n\n> Este archivo es material de preparación y control. No es un DTE emitido, no contiene timbre electrónico ni acredita recepción o validación del SII.\n`;
-}
-function manifest(business: Business, sales: TaxAwareSale[], date: string) {
-  const total = sales.reduce((sum, s) => sum + taxOf(s).total, 0);
-  return JSON.stringify({ product: "Nüva One", pack: "SII Ready", version: "2.1", generated_at: new Date().toISOString(), business: { name: business.name ?? null, tax_id: business.tax_id ?? null }, scope: { operations: sales.length, total_clp: total }, status: "prepared_for_human_review", official_sii_validation: false, tax_treatments: { gravado_19: sales.filter((s) => s.tax_treatment !== "exento").length, exento: sales.filter((s) => s.tax_treatment === "exento").length }, files: ["01_EXPEDIENTE/expediente-sii-ready.pdf", "02_DATOS/ventas-sii-ready.csv", "02_DATOS/resumen-tributario-estimado.csv", "03_CONTROL/checklist-sii-ready.md", "03_CONTROL/validacion-previa.txt", "04_CONTROL/MANIFEST.json", "04_CONTROL/README.txt"], generated_date: date }, null, 2) + "\n";
-}
+
 export async function downloadSiiReadyPack(sales: PendingSaleForDeclaration[], business: Business) {
   if (!sales.length) throw new Error("No hay operaciones pendientes para preparar el expediente");
   const taxAware = sales as TaxAwareSale[];
-  const pdfBase64 = await generateSiiDeclarationPdf(sales, business), binary = atob(pdfBase64), pdf = new Uint8Array(binary.length);
+  const pdfBase64 = await generateSiiDeclarationPdf(sales, business);
+  const binary = atob(pdfBase64), pdf = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) pdf[i] = binary.charCodeAt(i);
   const date = new Date().toISOString().slice(0, 10);
+  const operationsXlsx = xlsx([salesWorkbook(taxAware, business, date)]);
+  const summaryXlsx = xlsx([summaryWorkbook(taxAware, business, date)]);
+
+  // Client-facing pack: only the useful deliverables. Internal control/checklist folders are intentionally excluded.
   const files: PackFile[] = [
-    { name: "01_EXPEDIENTE/expediente-sii-ready.pdf", data: pdf },
-    { name: "02_DATOS/ventas-sii-ready.csv", data: encoder.encode(salesCsv(taxAware)) },
-    { name: "02_DATOS/resumen-tributario-estimado.csv", data: encoder.encode(taxSummaryCsv(taxAware)) },
-    { name: "03_CONTROL/checklist-sii-ready.md", data: encoder.encode(checklist(business, taxAware)) },
-    { name: "03_CONTROL/validacion-previa.txt", data: encoder.encode(validationReport(business, taxAware)) },
-    { name: "04_CONTROL/MANIFEST.json", data: encoder.encode(manifest(business, taxAware, date)) },
-    { name: "04_CONTROL/README.txt", data: encoder.encode("Nüva One · SII Ready v2.1\n\nPaquete de preparación y control para revisión humana y posterior emisión en el canal oficial del SII.\nIncluye expediente PDF, datos tabulares, resumen tributario, checklist, control de calidad y manifiesto.\nNo contiene DTE emitidos, timbre electrónico, firma digital ni validación oficial del SII.\n\nAntes de emitir: revisar tratamiento tributario, receptor, tipo de documento y montos.\nDespués de emitir: registrar el folio real y conservar el respaldo oficial junto con este expediente.\n") },
+    { name: "01_DOCUMENTO/expediente-sii-ready.pdf", data: pdf },
+    { name: "02_DATOS/operaciones-sii-ready.xlsx", data: operationsXlsx },
+    { name: "02_DATOS/resumen-tributario-sii-ready.xlsx", data: summaryXlsx },
   ];
   download(zip(files), `nuva-sii-ready-${date}.zip`);
 }
