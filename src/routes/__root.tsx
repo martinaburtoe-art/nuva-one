@@ -33,6 +33,32 @@ function FloatingActions() {
   return <FloatingActionPillar onAiClick={handleAi} onInfoClick={handleInfo} />;
 }
 
+/** Remove only legacy fixed AI launchers; the new pillar is the single persistent IA trigger. */
+function LegacyFloatingAiCleanup() {
+  useEffect(() => {
+    const isLegacyAiButton = (element: Element) => {
+      if (!(element instanceof HTMLButtonElement)) return false;
+      if (element.closest('[aria-label="Acciones flotantes de Nüva"]')) return false;
+      const text = `${element.getAttribute("aria-label") ?? ""} ${element.getAttribute("title") ?? ""} ${element.textContent ?? ""}`.toLowerCase();
+      if (!/(nüva\s*ia|nuva\s*ia|nüva\s*intelligence|nuva\s*intelligence|abrir\s*ia|asistente\s*ia)/i.test(text)) return false;
+      return element.classList.contains("fixed") || element.closest("[class*='fixed']") !== null;
+    };
+
+    const removeLegacy = () => {
+      document.querySelectorAll("button").forEach((button) => {
+        if (isLegacyAiButton(button)) button.remove();
+      });
+    };
+
+    removeLegacy();
+    const observer = new MutationObserver(removeLegacy);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext(); const router = useRouter(); const location = useLocation();
   const isLanding = location.pathname === "/";
@@ -41,5 +67,5 @@ function RootComponent() {
   useEffect(() => { if (isLanding) setLaunchComplete(false); else setLaunchComplete(true); }, [isLanding]);
   useEffect(() => { const { data: sub } = supabase.auth.onAuthStateChange((event) => { if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return; router.invalidate(); if (event !== "SIGNED_OUT") queryClient.invalidateQueries(); }); function onUnhandledRejection(event: PromiseRejectionEvent) { const reason = event?.reason; const err = reason instanceof Error ? reason : new Error(String(reason)); if (isStaleChunkError(err)) { const key = "nuva_stale_chunk_reload_at"; const lastReload = Number(sessionStorage.getItem(key) ?? 0); if (Date.now() - lastReload > 10_000) { sessionStorage.setItem(key, String(Date.now())); window.location.reload(); } } } window.addEventListener("unhandledrejection", onUnhandledRejection); return () => { sub.subscription.unsubscribe(); window.removeEventListener("unhandledrejection", onUnhandledRejection); }; }, [router, queryClient]);
   const showLanding = !isLanding || launchComplete;
-  return <QueryClientProvider client={queryClient}><OfflineBanner />{isLanding && !launchComplete ? <NuvaLaunchExperience onComplete={completeLaunch} /> : null}{showLanding ? <RouteEnhancements /> : null}{showLanding ? <Outlet /> : null}{showLanding ? <NuvaInfoCenter hideTrigger /> : null}{showLanding ? <FloatingActions /> : null}<Toaster position="top-right" richColors closeButton /></QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}><OfflineBanner /><LegacyFloatingAiCleanup />{isLanding && !launchComplete ? <NuvaLaunchExperience onComplete={completeLaunch} /> : null}{showLanding ? <RouteEnhancements /> : null}{showLanding ? <Outlet /> : null}{showLanding ? <NuvaInfoCenter hideTrigger /> : null}{showLanding ? <FloatingActions /> : null}<Toaster position="top-right" richColors closeButton /></QueryClientProvider>;
 }
