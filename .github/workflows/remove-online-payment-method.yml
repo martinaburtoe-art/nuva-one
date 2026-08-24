@@ -3,8 +3,8 @@ name: Remove online payment method from Caja
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - .github/workflows/remove-online-payment-method.yml
+    paths:
+      - .github/trigger-remove-online-payment.txt
 
 permissions:
   contents: write
@@ -79,11 +79,12 @@ jobs:
         run: |
           ! grep -n '"online"\|onlinePayment\|creatingLink\|billing/payments/create\|hasPaymentGateway' src/routes/_authenticated/pos.tsx
 
-      - name: Commit and push
+      - name: Remove trigger marker and commit
         run: |
+          rm -f .github/trigger-remove-online-payment.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/routes/_authenticated/pos.tsx
+          git add src/routes/_authenticated/pos.tsx .github/trigger-remove-online-payment.txt
           git diff --cached --check
           git commit -m "fix: remove online payment method from Caja [skip ci]"
           git push
