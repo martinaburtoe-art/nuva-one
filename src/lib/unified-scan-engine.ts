@@ -6,6 +6,8 @@ export type UnifiedScanEngineOptions = Omit<LiveScannerOptions, 'onDetect'> & { 
 
 const HID_TERMINATORS = new Set(['Enter', 'Tab']);
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
+const HID_GAP_MS = 180;
+const DUPLICATE_WINDOW_MS = 900;
 
 /** Unified scan input: camera, native bridge and keyboard-emulating HID readers. */
 export class UnifiedScanEngine {
@@ -15,6 +17,8 @@ export class UnifiedScanEngine {
   private hidStartedAt = 0;
   private hidListener: ((event: KeyboardEvent) => void) | null = null;
   private stopped = true;
+  private lastEmittedCode = '';
+  private lastEmittedAt = 0;
 
   constructor(options: UnifiedScanEngineOptions) {
     this.options = { hidEnabled: false, ...options };
@@ -24,7 +28,11 @@ export class UnifiedScanEngine {
   private emit(result: LiveScanResult, input: ScanInput) {
     const rawValue = result.rawValue.trim();
     if (!rawValue) return;
-    this.options.onDetect({ ...result, rawValue, input, timestamp: Date.now() });
+    const now = Date.now();
+    if (rawValue === this.lastEmittedCode && now - this.lastEmittedAt < DUPLICATE_WINDOW_MS) return;
+    this.lastEmittedCode = rawValue;
+    this.lastEmittedAt = now;
+    this.options.onDetect({ ...result, rawValue, input, timestamp: now });
   }
 
   private handleKeydown = (event: KeyboardEvent) => {
@@ -32,7 +40,7 @@ export class UnifiedScanEngine {
     const target = event.target instanceof Element ? event.target : null;
     if (target?.matches(EDITABLE_SELECTOR)) return;
     const now = Date.now();
-    if (this.hidStartedAt && now - this.hidStartedAt > 120) {
+    if (this.hidStartedAt && now - this.hidStartedAt > HID_GAP_MS) {
       this.hidBuffer = '';
       this.hidStartedAt = 0;
     }
@@ -66,6 +74,8 @@ export class UnifiedScanEngine {
 
   async start(video: HTMLVideoElement) {
     this.stopped = false;
+    this.lastEmittedCode = '';
+    this.lastEmittedAt = 0;
     this.startHid();
     await this.scanner.start(video);
   }
