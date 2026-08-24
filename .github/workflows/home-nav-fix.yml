@@ -1,0 +1,37 @@
+name: One-time homepage auth spacing fix
+
+on:
+  push:
+    paths:
+      - .github/workflows/home-nav-fix.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch homepage navigation
+        run: |
+          python - <<'PY2'
+          from pathlib import Path
+          p = Path("src/routes/index.tsx")
+          s = p.read_text()
+          start = s.index("function Nav() {")
+          end = s.index("\n\nfunction Hero()", start)
+          new = r'''function Nav() { return <header className="sticky top-0 z-50 border-b border-border/40 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4"><Link to="/" className="flex min-w-0 shrink-0 items-center gap-2"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-5 w-5 text-primary-foreground" /></div><span className="truncate text-lg font-semibold tracking-tight">Nüva One</span></Link><nav className="hidden items-center gap-6 lg:flex"><a href="#what-is-nuva" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Información</a><a href="#ecosystem" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Plataforma</a><a href="#intelligence" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Inteligencia</a><a href="#how" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Cómo funciona</a><Link to="/pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Precios</Link><a href="#faq" className="text-sm text-muted-foreground transition-colors hover:text-foreground">FAQ</a></nav><div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 lg:mr-[190px] xl:mr-[205px]"><a href="#what-is-nuva" className="inline-flex shrink-0 items-center rounded-lg border border-border/70 bg-background/70 px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:hidden">Información</a><Link to="/auth" className="shrink-0"><Button variant="outline" size="sm" className="whitespace-nowrap bg-background/95 px-3 shadow-sm">Iniciar sesión</Button></Link><Link to="/auth" search={{ mode: "signup" }} className="shrink-0"><Button size="sm" className="whitespace-nowrap shadow-elegant">Entrar / Empezar gratis</Button></Link></div></div></header>; }
+'''
+          s = s[:start] + new.rstrip("\n") + s[end:]
+          p.write_text(s)
+          PY2
+      - name: Commit homepage fix and remove one-time workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/index.tsx
+          git rm .github/workflows/home-nav-fix.yml
+          git commit -m "fix: reserve header space for module info button"
+          git push
