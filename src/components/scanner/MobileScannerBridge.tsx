@@ -3,17 +3,15 @@ import { resolveProductCode, normalizeProductCode } from '@/lib/product-resolver
 import { toast } from 'sonner';
 
 /**
- * Scanner bridge for Caja.
- *
+ * Invisible hardware-scanner bridge for Caja.
  * USB/Bluetooth barcode readers normally behave as keyboard wedges: they type
- * the barcode very quickly and finish with Enter. We listen globally so a
- * reader connected to the POS device can identify the product without a
- * dedicated input or extra button. The visible camera scanner remains the
- * single scanner control in Caja.
+ * a barcode rapidly and finish with Enter. The camera scanner remains the
+ * single visible scanner control in the POS.
  */
 export function MobileScannerBridge({ onScan }: { businessId: string; onScan: (code: string) => void }) {
   const onScanRef = useRef(onScan);
   const bufferRef = useRef('');
+  const firstKeyAtRef = useRef(0);
   const lastKeyAtRef = useRef(0);
 
   useEffect(() => {
@@ -28,16 +26,20 @@ export function MobileScannerBridge({ onScan }: { businessId: string; onScan: (c
       const isEditable = !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
       const now = performance.now();
 
-      // Scanner guns send characters in a very short burst. If the user is
-      // typing normally, never steal their input. A burst is considered a
-      // scanner candidate after at least 4 characters arrive within 120ms.
-      if (now - lastKeyAtRef.current > 120) bufferRef.current = '';
+      if (now - lastKeyAtRef.current > 120) {
+        bufferRef.current = '';
+        firstKeyAtRef.current = now;
+      }
       lastKeyAtRef.current = now;
 
       if (event.key === 'Enter') {
         const code = normalizeProductCode(bufferRef.current);
+        const burstDuration = firstKeyAtRef.current ? now - firstKeyAtRef.current : Infinity;
+        const looksLikeScanner = code.length >= 4 && bufferRef.current.length >= 4 && burstDuration <= 220;
         bufferRef.current = '';
-        if (!code || code.length < 4) return;
+        firstKeyAtRef.current = 0;
+        if (!looksLikeScanner) return;
+
         try {
           const resolution = await resolveProductCode(code);
           if (disposed) return;
@@ -52,8 +54,7 @@ export function MobileScannerBridge({ onScan }: { businessId: string; onScan: (c
             toast.error(`Código ${code} no registrado`);
           }
         } catch {
-          // The camera scanner handles its own errors; hardware-reader
-          // failures are intentionally silent here to avoid disrupting POS.
+          // Do not interrupt the POS when a reader sends an invalid/unknown code.
         }
         return;
       }
@@ -61,8 +62,8 @@ export function MobileScannerBridge({ onScan }: { businessId: string; onScan: (c
       if (event.key.length !== 1) return;
       if (isEditable && !/^[0-9A-Za-z]$/.test(event.key)) return;
 
+      if (!bufferRef.current) firstKeyAtRef.current = now;
       bufferRef.current += event.key;
-      // Keep the buffer bounded so accidental keyboard use can never grow it.
       if (bufferRef.current.length > 64) bufferRef.current = bufferRef.current.slice(-64);
     };
 
@@ -73,6 +74,5 @@ export function MobileScannerBridge({ onScan }: { businessId: string; onScan: (c
     };
   }, []);
 
-  // Intentionally no visible UI: Caja now has one scanner control only.
   return null;
 }
