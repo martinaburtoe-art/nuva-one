@@ -25,7 +25,9 @@ function zip(files: PackFile[]) {
     const name = encoder.encode(file.name), crc = crc32(file.data);
     const local = concat([u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(file.data.length), u32(file.data.length), u16(name.length), u16(0), name, file.data]);
     locals.push(local);
-    centrals.push(concat([u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(0), u32(crc), u32(file.data.length), u32(file.data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(offset), name]));
+    // Central directory header: signature, versions, flags/method, time/date, CRC, sizes, name/extra/comment lengths, disk/attrs, local offset.
+    const central = concat([u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(file.data.length), u32(file.data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset), name]);
+    centrals.push(central);
     offset += local.length;
   }
   const centralStart = offset, centralData = concat(centrals), body = concat([...locals, centralData]);
