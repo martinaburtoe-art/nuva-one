@@ -1,0 +1,59 @@
+name: Apply Nüva home UI fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-home:
+    if: "!contains(github.event.head_commit.message, '[home-ui-fix]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Patch homepage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/routes/index.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          new_nav = '''function Nav() { return <header className="sticky top-0 z-50 border-b border-border/40 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4"><Link to="/" className="flex min-w-0 shrink-0 items-center gap-2"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-5 w-5 text-primary-foreground" /></div><span className="truncate text-lg font-semibold tracking-tight">Nüva One</span></Link><nav className="hidden items-center gap-6 lg:flex"><a href="#what-is-nuva" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Información</a><a href="#ecosystem" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Plataforma</a><a href="#intelligence" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Inteligencia</a><a href="#how" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Cómo funciona</a><Link to="/pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Precios</Link><a href="#faq" className="text-sm text-muted-foreground transition-colors hover:text-foreground">FAQ</a></nav><div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3"><a href="#what-is-nuva" className="inline-flex shrink-0 items-center rounded-lg border border-border/70 bg-background/70 px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:hidden">Información</a><Link to="/auth" className="shrink-0"><Button variant="ghost" size="sm" className="whitespace-nowrap">Iniciar sesión</Button></Link><Link to="/auth" search={{ mode: "signup" }} className="shrink-0"><Button size="sm" className="whitespace-nowrap shadow-elegant">Empezar gratis</Button></Link></div></div></header>; }'''
+
+          text, count = re.subn(r'function Nav\(\) \{ return <header[\s\S]*?</header>; \}', new_nav, text, count=1)
+          if count != 1:
+              raise SystemExit('No se pudo localizar Nav() para actualizarlo')
+
+          intro = '''function HomeIntroduction() { return <section id="what-is-nuva" className="border-y bg-secondary/20 py-16 sm:py-20"><div className="mx-auto max-w-6xl px-4 sm:px-6"><div className="grid gap-8 lg:grid-cols-[1.05fr_.95fr] lg:items-center"><div><Badge variant="secondary" className="rounded-full border border-primary/20 bg-primary/5"><Sparkles className="mr-1.5 h-3 w-3 text-primary" /> ¿Qué es Nüva One?</Badge><h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">La plataforma que reúne la operación y la inteligencia de tu negocio.</h2><p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">Nüva One es una plataforma todo-en-uno para PYMEs. Conecta inventario, ventas, clientes, cotizaciones, finanzas, scanner y automatización en un mismo ecosistema para que dejes de trabajar con información dispersa.</p><p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">Y va un paso más allá: Nüva Score resume la salud de tu empresa, Nüva Radar detecta riesgos y oportunidades, y Nüva Copilot te ayuda a entender qué significan tus datos y qué podrías hacer a continuación.</p><Link to="/demo" className="mt-7 inline-flex"><Button size="lg" className="h-12 px-6 shadow-elegant">Ver cómo funciona <ArrowRight className="ml-2 h-4 w-4" /></Button></Link></div><Card className="rounded-3xl p-6 shadow-xl sm:p-8"><p className="text-sm font-semibold text-primary">¿Qué ganas con Nüva One?</p><div className="mt-5 space-y-4">{[[Zap,"Más tiempo","Reduce tareas manuales y evita revisar información en muchos lugares."] ,[Gauge,"Más claridad","Entiende el estado de tu negocio con indicadores que tienen contexto."] ,[Target,"Más anticipación","Detecta señales, riesgos y oportunidades antes de que pasen desapercibidos."] ,[Sparkles,"Mejores decisiones","Usa la inteligencia de Nüva para pasar de datos a acciones concretas."]].map(([Icon,title,desc])=><div key={title as string} className="flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div><div><p className="text-sm font-semibold">{title as string}</p><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{desc as string}</p></div></div>)}</div></Card></div></div></section>; }\n\n'''
+
+          marker = 'function ProductStory() {'
+          if 'function HomeIntroduction() {' not in text:
+              if marker not in text:
+                  raise SystemExit('No se encontró ProductStory() para insertar la nueva sección')
+              text = text.replace(marker, intro + marker, 1)
+
+          old_mount = '<Nav /><Hero />'
+          new_mount = '<Nav /><Hero /><HomeIntroduction />'
+          if old_mount not in text:
+              raise SystemExit('No se encontró el montaje de Nav/Hero para insertar la información')
+          text = text.replace(old_mount, new_mount, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/index.tsx
+          git diff --cached --check
+          git diff --cached --quiet || git commit -m "fix: improve homepage auth buttons and explain Nüva One [home-ui-fix]"
+          git push
