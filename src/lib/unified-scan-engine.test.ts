@@ -11,6 +11,15 @@ describe('UnifiedScanEngine', () => {
     engine.stop();
   });
 
+  it('suppresses the same code when two scanner sources report it immediately', () => {
+    const onDetect = vi.fn();
+    const engine = new UnifiedScanEngine({ onDetect });
+    engine.emitNative('7801234567890', 'EAN_13');
+    engine.emitNative('7801234567890', 'EAN_13');
+    expect(onDetect).toHaveBeenCalledTimes(1);
+    engine.stop();
+  });
+
   it('ignores empty native values', () => {
     const onDetect = vi.fn();
     const engine = new UnifiedScanEngine({ onDetect });
