@@ -43,6 +43,13 @@ pos = pos.replace(
   "Receipt, ScanBarcode"
 );
 
+// Some older variants of Caja may have the legacy declarations split across
+// lines. Remove only those exact legacy declarations as a final normalization.
+pos = pos
+  .split("\n")
+  .filter((line) => !line.includes("creatingLink") && !line.includes("hasPaymentGateway"))
+  .join("\n");
+
 const forbidden = [
   'method === "online"',
   "onlinePayment",
