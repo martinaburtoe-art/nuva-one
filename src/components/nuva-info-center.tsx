@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Info, X } from "lucide-react";
 import { useLocation } from "@tanstack/react-router";
 
@@ -26,25 +26,104 @@ const FALLBACK = { title: "Nüva One", description: "Aquí encontrarás informac
 export function NuvaInfoCenter() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const info = useMemo(() => INFO[location.pathname] ?? FALLBACK, [location.pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!open) triggerRef.current?.focus();
+  }, [open]);
 
   return (
     <>
-      <button type="button" aria-label="Información sobre esta sección" title="¿Qué es esto?" onClick={() => setOpen(true)} className="fixed bottom-5 right-5 z-[80] flex h-11 w-11 items-center justify-center rounded-full border border-primary/20 bg-background/95 text-primary shadow-lg backdrop-blur transition-all hover:scale-105 hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
-        <Info className="h-5 w-5" />
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label={`Información sobre ${info.title}`}
+        title={`¿Qué es ${info.title}?`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+        className="fixed bottom-5 right-5 z-[80] flex h-11 w-11 items-center justify-center rounded-full border border-primary/20 bg-background/95 text-primary shadow-lg backdrop-blur transition-all hover:scale-105 hover:bg-primary hover:text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+      >
+        <Info className="h-5 w-5" aria-hidden="true" />
       </button>
+
       {open && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/30 p-4 backdrop-blur-[2px] sm:items-center" role="dialog" aria-modal="true" aria-label={`Información: ${info.title}`}>
-          <button aria-label="Cerrar información" className="absolute inset-0 cursor-default" onClick={() => setOpen(false)} />
-          <section className="relative w-full max-w-md rounded-2xl border bg-background p-5 shadow-2xl">
-            <button type="button" aria-label="Cerrar" onClick={() => setOpen(false)} className="absolute right-3 top-3 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>
+        <div
+          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/30 p-4 backdrop-blur-[2px] sm:items-center"
+          role="presentation"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar información"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="nuva-info-title"
+            aria-describedby="nuva-info-description"
+            className="relative w-full max-w-md rounded-2xl border bg-background p-5 shadow-2xl"
+          >
+            <button
+              ref={closeRef}
+              type="button"
+              aria-label="Cerrar información"
+              title="Cerrar"
+              onClick={() => setOpen(false)}
+              className="absolute right-3 top-3 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
             <div className="mb-4 flex items-start gap-3 pr-8">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Info className="h-5 w-5" /></div>
-              <div><p className="text-xs font-medium uppercase tracking-wider text-primary">Información Nüva</p><h2 className="text-lg font-semibold">{info.title}</h2></div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-primary">Información Nüva</p>
+                <h2 id="nuva-info-title" className="text-lg font-semibold">{info.title}</h2>
+              </div>
             </div>
-            <p className="text-sm leading-6 text-muted-foreground">{info.description}</p>
-            <div className="mt-4 rounded-xl bg-muted/50 p-3"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground">Cómo aprovecharlo</p><ul className="space-y-2 text-sm text-muted-foreground">{info.tips.map((tip) => <li key={tip} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />{tip}</li>)}</ul></div>
-            <button type="button" onClick={() => setOpen(false)} className="mt-5 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90">Entendido</button>
+            <p id="nuva-info-description" className="text-sm leading-6 text-muted-foreground">{info.description}</p>
+            <div className="mt-4 rounded-xl bg-muted/50 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground">Cómo aprovecharlo</p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {info.tips.map((tip) => (
+                  <li key={tip} className="flex gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="mt-5 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              Entendido
+            </button>
           </section>
         </div>
       )}
