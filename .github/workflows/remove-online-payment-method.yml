@@ -1,0 +1,89 @@
+name: Remove online payment method from Caja
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - .github/workflows/remove-online-payment-method.yml
+
+permissions:
+  contents: write
+
+jobs:
+  remove-online:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove online payment option from Caja
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/routes/_authenticated/pos.tsx')
+          text = path.read_text()
+          original = text
+
+          replacements = [
+              ('type PayMethod = "efectivo" | "tarjeta" | "transferencia" | "online";',
+               'type PayMethod = "efectivo" | "tarjeta" | "transferencia";'),
+              ('  const { data: paymentIntegrations } = useBizList<any>("billing_integrations", { order: "created_at" });\n'
+               '  const hasPaymentGateway = (paymentIntegrations ?? []).some((i: any) => i.type === "payment" && i.status === "connected");\n',
+               ''),
+              ('  const [onlinePayment, setOnlinePayment] = useState<{ url: string; saleId: string } | null>(null);\n'
+               '  const [creatingLink, setCreatingLink] = useState(false);\n',
+               ''),
+              ('  const canPay = cart.length > 0 && total > 0 && (method !== "efectivo" || received >= total) && !(method === "online" && !hasPaymentGateway);',
+               '  const canPay = cart.length > 0 && total > 0 && (method !== "efectivo" || received >= total);'),
+          ]
+
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'Expected block not found: {old[:100]!r}')
+              text = text.replace(old, new, 1)
+
+          online_start = '    if (method === "online") {\n'
+          online_end = '    try {\n'
+          start = text.find(online_start)
+          if start == -1:
+              raise SystemExit('Online checkout branch not found')
+          end = text.find(online_end, start)
+          if end == -1:
+              raise SystemExit('End of online checkout branch not found')
+          text = text[:start] + text[end:]
+
+          old_methods = '{(["efectivo", "tarjeta", "transferencia", "online"] as PayMethod[]).map((m) => <button key={m} onClick={() => (m !== "online" || hasPaymentGateway) && setMethod(m)} disabled={m === "online" && !hasPaymentGateway} className={cn("rounded-lg border px-2 py-2 text-xs font-medium capitalize transition", method === m ? "border-primary bg-primary text-primary-foreground" : m === "online" && !hasPaymentGateway ? "cursor-not-allowed opacity-40" : "hover:bg-accent")}>{m}</button>)}'
+          new_methods = '{(["efectivo", "tarjeta", "transferencia"] as PayMethod[]).map((m) => <button key={m} onClick={() => setMethod(m)} className={cn("rounded-lg border px-2 py-2 text-xs font-medium capitalize transition", method === m ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent")}>{m}</button>)}'
+          if old_methods not in text:
+              raise SystemExit('Online payment method UI block not found')
+          text = text.replace(old_methods, new_methods, 1)
+          text = text.replace('grid grid-cols-4 gap-1.5', 'grid grid-cols-3 gap-1.5', 1)
+          text = text.replace('method === "online" ? `Generar link de pago · ${fmtCLP(total)}` : `Cobrar ${fmtCLP(total)}`', '`Cobrar ${fmtCLP(total)}`', 1)
+
+          old_dialog = '        <Dialog open={!!onlinePayment} onOpenChange={(v) => !v && setOnlinePayment(null)}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle className="flex items-center gap-2"><Link2 className="h-5 w-5 text-primary" />Link de pago generado</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Envía este link al cliente para que pague.</p><div className="break-all rounded-lg border bg-muted/40 p-3 text-xs">{onlinePayment?.url}</div><div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={async () => { if (onlinePayment) await navigator.clipboard.writeText(onlinePayment.url).catch(() => {}); toast.success("Link copiado"); }}><Copy className="mr-1.5 h-4 w-4" />Copiar</Button><Button className="flex-1" onClick={() => onlinePayment && window.open(onlinePayment.url, "_blank")}>Abrir link</Button></div></DialogContent></Dialog>\n'
+          if old_dialog not in text:
+              raise SystemExit('Online payment dialog not found')
+          text = text.replace(old_dialog, '', 1)
+
+          if text == original:
+              raise SystemExit('No changes made')
+          path.write_text(text)
+          print('Updated Caja: online payment method removed completely.')
+          PY
+
+      - name: Verify online payment is absent from Caja
+        run: |
+          ! grep -n '"online"\|onlinePayment\|creatingLink\|billing/payments/create\|hasPaymentGateway' src/routes/_authenticated/pos.tsx
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/_authenticated/pos.tsx
+          git diff --cached --check
+          git commit -m "fix: remove online payment method from Caja [skip ci]"
+          git push
