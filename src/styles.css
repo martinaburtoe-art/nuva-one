@@ -21,3 +21,12 @@
 
 /* Launch is intentionally not styled here. NuvaLaunchExperience owns it locally. */
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto !important; } }
+
+/* Homepage header: reserve the fixed top-right Info Module control area so auth actions stay visible and clickable. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  header.sticky > div > div:last-child { margin-right: 145px !important; }
+  header.sticky > div > nav { gap: 1rem !important; }
+}
+@media (min-width: 1280px) {
+  header.sticky > div > div:last-child { margin-right: 195px !important; }
+}
