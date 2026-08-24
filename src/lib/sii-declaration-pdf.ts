@@ -1,3 +1,4 @@
+import jsPDF from "jspdf";
 import { fmtCLP } from "@/lib/biz-data";
 
 export type PendingSaleForDeclaration = {
@@ -27,13 +28,11 @@ const SUCCESS: [number, number, number] = [36, 110, 78];
  * Importante: este archivo NO es un DTE, NO tiene timbre electrónico ni firma
  * digital del SII y NO acredita emisión. Es un documento de apoyo y control.
  */
-export async function generateSiiDeclarationPdf(
+export function generateSiiDeclarationPdf(
   sales: PendingSaleForDeclaration[],
   business: Business,
 ) {
-  const mod: any = await import(/* @vite-ignore */ "jspdf");
-  const JsPDFCtor = mod.default ?? mod.jsPDF ?? mod;
-  const doc = new JsPDFCtor({ unit: "pt", format: "a4" });
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 46;
@@ -84,6 +83,7 @@ export async function generateSiiDeclarationPdf(
     doc.setTextColor(0, 0, 0);
   }
 
+  let y = 112;
   function sectionTitle(title: string, subtitle?: string) {
     doc.setFillColor(...NAVY);
     doc.roundedRect(marginX, y, contentW, 30, 5, 5, "F");
@@ -104,9 +104,7 @@ export async function generateSiiDeclarationPdf(
   }
 
   header();
-  let y = 112;
 
-  // Executive summary
   doc.setFillColor(...LIGHT);
   doc.roundedRect(marginX, y, contentW, 74, 8, 8, "F");
   doc.setFont("helvetica", "bold");
