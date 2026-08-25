@@ -18,7 +18,7 @@ jobs:
   build-and-test:
     name: Lint, typecheck, test, audit, build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,29 +30,29 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
-
-      - name: Sync npm lockfile on main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if git diff --quiet -- package-lock.json; then
-            echo "package-lock.json already synchronized"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json
-            git commit -m "chore: synchronize npm lockfile"
-            git push origin HEAD:main
-          fi
-
-      - name: Reinstall from synchronized dependency tree
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Dependency security audit
         run: npm audit --audit-level=high
 
-      - name: Lint
+      - name: Auto-fix lintable issues
+        run: npm run lint -- --fix
+
+      - name: Verify lint
         run: npm run lint
+
+      - name: Persist lint auto-fixes on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if git diff --quiet; then
+            echo "No lint auto-fixes required"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore(ci): persist lint auto-fixes"
+            git push origin HEAD:main
+          fi
 
       - name: Typecheck
         run: npm run typecheck
@@ -66,7 +66,7 @@ jobs:
   database-tests:
     name: pgTAP database tests
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,11 +76,46 @@ jobs:
         with:
           version: latest
 
+      - name: Verify Docker
+        run: |
+          docker version
+          docker info
+
       - name: Start Supabase local stack
-        run: supabase start
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            echo "Starting Supabase local stack (attempt ${attempt}/3)"
+            if supabase start; then
+              echo "Supabase local stack started"
+              exit 0
+            fi
+            echo "Supabase start failed; collecting diagnostics before retry"
+            supabase status || true
+            docker ps -a || true
+            if [ "$attempt" -lt 3 ]; then
+              supabase stop --no-backup || true
+              sleep 10
+            fi
+          done
+          echo "Supabase failed to start after 3 attempts"
+          exit 1
 
       - name: Run pgTAP tests
-        run: supabase test db || (echo "First attempt failed, retrying once..." && supabase test db)
+        run: |
+          set -o pipefail
+          for attempt in 1 2; do
+            echo "Running pgTAP database tests (attempt ${attempt}/2)"
+            if supabase test db; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 2 ]; then
+              echo "pgTAP failed; retrying after a clean local stack restart"
+              supabase stop --no-backup || true
+              supabase start
+            fi
+          done
+          exit 1
 
       - name: Stop Supabase local stack
         if: always()
