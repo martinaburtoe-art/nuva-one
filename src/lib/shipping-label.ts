@@ -41,19 +41,18 @@ function wrap(doc: jsPDF, text: string, width: number, fontSize = 9) {
   return doc.splitTextToSize(text || "—", width) as string[];
 }
 
-function label(doc: jsPDF, text: string, x: number, y: number, width: number, height: number, size = 9) {
+function field(doc: jsPDF, title: string, value: string, x: number, y: number, width: number, height: number, size = 9) {
   doc.setDrawColor(220, 224, 230);
   doc.setFillColor(248, 249, 251);
   doc.roundedRect(x, y, width, height, 2.5, 2.5, "FD");
   doc.setTextColor(105, 112, 122);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
-  doc.text(text.toUpperCase(), x + 4, y + 5);
+  doc.text(title.toUpperCase(), x + 4, y + 5);
   doc.setTextColor(25, 29, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(size);
-  const lines = wrap(doc, text === "" ? "—" : text, width - 8, size);
-  doc.text(lines.slice(0, 3), x + 4, y + 12, { lineHeightFactor: 1.15 });
+  doc.text(wrap(doc, value || "—", width - 8, size).slice(0, 3), x + 4, y + 12, { lineHeightFactor: 1.15 });
 }
 
 export function generateShippingLabelPdf(data: ShippingLabelData) {
@@ -82,8 +81,7 @@ export function generateShippingLabelPdf(data: ShippingLabelData) {
   doc.setFontSize(18);
   doc.text("DESTINO", M, 39);
   doc.setFontSize(12);
-  const recipient = wrap(doc, clean(data.recipientName) || "Destinatario pendiente", inner - 42, 12);
-  doc.text(recipient.slice(0, 2), M, 47, { lineHeightFactor: 1.05 });
+  doc.text(wrap(doc, clean(data.recipientName) || "Destinatario pendiente", inner - 42, 12).slice(0, 2), M, 47, { lineHeightFactor: 1.05 });
 
   const payment = clean(data.paymentType) === "collect" ? "POR PAGAR" : "PAGADO";
   doc.setFillColor(18, 22, 28);
@@ -93,22 +91,12 @@ export function generateShippingLabelPdf(data: ShippingLabelData) {
   doc.text(payment, 87.5, 36, { align: "center" });
   doc.setTextColor(25, 29, 35);
 
-  const address = [data.destinationAddress, data.destinationComuna, data.destinationCity, data.destinationRegion, data.destinationPostalCode && `CP ${data.destinationPostalCode}`]
-    .filter(Boolean)
-    .join(", ");
-  label(doc, "Dirección de entrega", M, 55, inner, 25, 10);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text(wrap(doc, address || "Dirección pendiente", inner - 8, 10).slice(0, 3), M + 4, 67, { lineHeightFactor: 1.12 });
+  const address = [data.destinationAddress, data.destinationComuna, data.destinationCity, data.destinationRegion, data.destinationPostalCode && `CP ${data.destinationPostalCode}`].filter(Boolean).join(", ");
+  field(doc, "Dirección de entrega", address, M, 55, inner, 25, 10);
 
-  label(doc, "Teléfono", M, 84, 30, 17, 9);
-  label(doc, "RUT", M + 33, 84, 30, 17, 9);
-  label(doc, "Comuna", M + 66, 84, 33, 17, 9);
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.text(clean(data.recipientPhone) || "—", M + 4, 96);
-  doc.text(clean(data.recipientRut) || "—", M + 37, 96);
-  doc.text(clean(data.destinationComuna) || "—", M + 70, 96);
+  field(doc, "Teléfono", clean(data.recipientPhone), M, 84, 30, 17, 9);
+  field(doc, "RUT", clean(data.recipientRut), M + 33, 84, 30, 17, 9);
+  field(doc, "Comuna", clean(data.destinationComuna), M + 66, 84, 33, 17, 9);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
@@ -130,11 +118,7 @@ export function generateShippingLabelPdf(data: ShippingLabelData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(105, 112, 122);
-  const footer = [
-    data.contentDescription && `Contenido: ${data.contentDescription}`,
-    data.declaredValue != null && `Valor declarado: ${money(data.declaredValue)}`,
-    data.notes && `Obs.: ${data.notes}`,
-  ].filter(Boolean).join(" · ");
+  const footer = [data.contentDescription && `Contenido: ${data.contentDescription}`, data.declaredValue != null && `Valor declarado: ${money(data.declaredValue)}`, data.notes && `Obs.: ${data.notes}`].filter(Boolean).join(" · ");
   doc.text(wrap(doc, footer || "Etiqueta de identificación logística", inner, 6.5).slice(0, 2), M, 123, { lineHeightFactor: 1.1 });
   doc.setFontSize(5.5);
   doc.text("Etiqueta auxiliar Nüva One. La OT/etiqueta oficial del transportista prevalece cuando corresponda.", M, 142);
