@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ModuleGuard } from "@/components/module-guard";
-import { FinanceAccountingWorkspace } from "@/components/finance-accounting-workspace";
+import { FinanceAccountingWorkspaceV2 } from "@/components/finance-accounting-workspace-v2";
 
 export const Route = createFileRoute("/_authenticated/finance")({
   head: () => ({ meta: [{ title: "Finanzas · Contabilidad · Tributación — Nüva One" }] }),
@@ -8,5 +8,5 @@ export const Route = createFileRoute("/_authenticated/finance")({
 });
 
 function Finance() {
-  return <ModuleGuard module="finance"><FinanceAccountingWorkspace /></ModuleGuard>;
+  return <ModuleGuard module="finance"><FinanceAccountingWorkspaceV2 /></ModuleGuard>;
 }
