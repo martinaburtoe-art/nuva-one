@@ -62,9 +62,9 @@ function AiPage() {
         const headers = new Headers(init?.headers);
         headers.set("x-business-id", businessIdRef.current);
         if (tokenRef.current) headers.set("Authorization", `Bearer ${tokenRef.current}`);
-        return fetch(input, { ...init, headers, body: init?.body });
+        return fetch(input, { ...init, headers });
       },
-      body: () => ({ specialist }),
+      prepareSendMessagesRequest: ({ messages }) => ({ body: { messages, specialist } }),
     }),
     onError: (err) => {
       let msg = err.message || "Error al conectar con Nüva Agent. Intenta nuevamente.";
@@ -102,64 +102,26 @@ function AiPage() {
         <PageHeader title="Nüva Agent" description="Un agente especializado que entiende tu negocio y conecta sus áreas." />
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <Card className="p-3 lg:h-[calc(100dvh-13rem)] lg:overflow-y-auto">
-            <div className="mb-3 px-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Especialistas</p>
-              <p className="mt-1 text-xs text-muted-foreground">Selecciona un enfoque o deja que Nüva decida.</p>
-            </div>
+            <div className="mb-3 px-2"><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Especialistas</p><p className="mt-1 text-xs text-muted-foreground">Selecciona un enfoque o deja que Nüva decida.</p></div>
             <div className="space-y-1">
               {specialists.map((item) => {
                 const Icon = item.icon;
                 const selected = specialist === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSpecialist(item.id)}
-                    className={cn("flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all", selected ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent")}
-                  >
-                    <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", selected ? "bg-primary-foreground/15" : "bg-secondary")}><Icon className="h-4 w-4" /></span>
-                    <span className="min-w-0"><span className="block text-sm font-semibold">{item.label}</span><span className={cn("block truncate text-[11px]", selected ? "text-primary-foreground/75" : "text-muted-foreground")}>{item.description}</span></span>
-                  </button>
-                );
+                return <button key={item.id} type="button" onClick={() => setSpecialist(item.id)} className={cn("flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all", selected ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent")}><span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", selected ? "bg-primary-foreground/15" : "bg-secondary")}><Icon className="h-4 w-4" /></span><span className="min-w-0"><span className="block text-sm font-semibold">{item.label}</span><span className={cn("block truncate text-[11px]", selected ? "text-primary-foreground/75" : "text-muted-foreground")}>{item.description}</span></span></button>;
               })}
             </div>
-            <div className="mt-4 rounded-xl border bg-secondary/30 p-3 text-xs text-muted-foreground">
-              <p className="font-semibold text-foreground">Contexto empresarial</p>
-              <p className="mt-1">Nüva Agent utiliza los datos del negocio activo y su memoria de conversación. Cada negocio permanece aislado.</p>
-            </div>
+            <div className="mt-4 rounded-xl border bg-secondary/30 p-3 text-xs text-muted-foreground"><p className="font-semibold text-foreground">Contexto empresarial</p><p className="mt-1">Nüva Agent utiliza los datos del negocio activo y su memoria de conversación. Cada negocio permanece aislado.</p></div>
           </Card>
 
           <Card className="flex h-[calc(100dvh-13rem)] flex-col overflow-hidden p-0 md:h-[calc(100vh-12rem)]">
-            <div className="flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-5 w-5 text-primary-foreground" /></div>
-              <div><p className="text-sm font-semibold">{activeSpecialist.label}</p><p className="text-xs text-muted-foreground">{active?.name ?? "Sin negocio seleccionado"}</p></div>
-            </div>
+            <div className="flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-glow"><Sparkles className="h-5 w-5 text-primary-foreground" /></div><div><p className="text-sm font-semibold">{activeSpecialist.label}</p><p className="text-xs text-muted-foreground">{active?.name ?? "Sin negocio seleccionado"}</p></div></div>
             <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
-              {messages.length === 0 && (
-                <div className="mx-auto max-w-3xl pt-6 md:pt-10">
-                  <div className="text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow"><BrainCircuit className="h-7 w-7 text-primary-foreground" /></div>
-                    <h2 className="mt-5 text-2xl font-bold">Tu agente empresarial</h2>
-                    <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Pregunta, analiza y entiende lo que está pasando en tu negocio. Nüva selecciona el enfoque adecuado o puedes elegir un especialista.</p>
-                  </div>
-                  <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                    {suggestions[specialist].map((s) => <button key={s} onClick={() => setInput(s)} className="rounded-xl border border-border/60 bg-secondary/30 p-4 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-accent">{s}</button>)}
-                  </div>
-                </div>
-              )}
-              {messages.map((m) => (
-                <div key={m.id} className={cn("flex gap-3", m.role === "user" ? "justify-end" : "justify-start")}>
-                  {m.role !== "user" && <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>}
-                  <div className={cn("max-w-2xl whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed", m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary")}>{m.parts.map((p, i) => p.type === "text" ? <span key={i}>{p.text}</span> : null)}</div>
-                </div>
-              ))}
+              {messages.length === 0 && <div className="mx-auto max-w-3xl pt-6 md:pt-10"><div className="text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow"><BrainCircuit className="h-7 w-7 text-primary-foreground" /></div><h2 className="mt-5 text-2xl font-bold">Tu agente empresarial</h2><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Pregunta, analiza y entiende lo que está pasando en tu negocio. Nüva selecciona el enfoque adecuado o puedes elegir un especialista.</p></div><div className="mt-7 grid gap-3 sm:grid-cols-2">{suggestions[specialist].map((s) => <button key={s} onClick={() => setInput(s)} className="rounded-xl border border-border/60 bg-secondary/30 p-4 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-accent">{s}</button>)}</div></div>}
+              {messages.map((m) => <div key={m.id} className={cn("flex gap-3", m.role === "user" ? "justify-end" : "justify-start")}>{m.role !== "user" && <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>}<div className={cn("max-w-2xl whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed", m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary")}>{m.parts.map((p, i) => p.type === "text" ? <span key={i}>{p.text}</span> : null)}</div></div>)}
               {loading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Nüva Agent está analizando...</div>}
             </div>
             {limitReached && <div className="mx-4 mb-2 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-accent/40 px-4 py-3 text-sm"><span>Alcanzaste el límite de IA de tu plan este mes.</span><Link to="/settings" className="shrink-0 rounded-lg bg-gradient-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">Actualizar plan</Link></div>}
-            <form onSubmit={handleSend} className="flex gap-2 border-t bg-background/60 p-3 md:p-4">
-              <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder={sessionReady ? `Pregunta a ${activeSpecialist.label}...` : "Cargando sesión..."} disabled={loading || !sessionReady || limitReached} className="h-11" />
-              <Button type="submit" size="lg" disabled={loading || !sessionReady || !input.trim() || limitReached} className="shadow-elegant"><Send className="h-4 w-4" /></Button>
-            </form>
+            <form onSubmit={handleSend} className="flex gap-2 border-t bg-background/60 p-3 md:p-4"><Input value={input} onChange={(e) => setInput(e.target.value)} placeholder={sessionReady ? `Pregunta a ${activeSpecialist.label}...` : "Cargando sesión..."} disabled={loading || !sessionReady || limitReached} className="h-11" /><Button type="submit" size="lg" disabled={loading || !sessionReady || !input.trim() || limitReached} className="shadow-elegant"><Send className="h-4 w-4" /></Button></form>
           </Card>
         </div>
       </>
