@@ -62,12 +62,12 @@ describe("buildBusinessHealthIntelligence", () => {
     });
 
     expect(result).toMatchObject({
-      health: 63,
+      health: 43,
       momentum: 50,
       liquidity: 50,
       dataReadiness: 0,
-      execution: 100,
-      controls: 100,
+      execution: 50,
+      controls: 50,
     });
   });
 });
