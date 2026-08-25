@@ -115,10 +115,10 @@ export function buildBusinessHealthIntelligence({
     const due = timestampOrNull(task.due_date);
     return !task.completed && due !== null && due < now;
   }).length;
-  const execution = openTasks === 0 ? 100 : boundedScore(100 - (overdueTasks / Math.max(openTasks, 1)) * 100);
+  const execution = tasks.length === 0 ? 50 : boundedScore(100 - (overdueTasks / Math.max(openTasks, 1)) * 100);
 
   const reconciliationOpen = reconciliation.filter((row) => !["reconciled", "posted"].includes((row.status ?? "").toLowerCase())).length;
-  const controls = Math.max(0, 100 - Math.min(70, reconciliationOpen * 10));
+  const controls = reconciliation.length === 0 ? 50 : Math.max(0, 100 - Math.min(70, reconciliationOpen * 10));
 
   const health = boundedScore(
     momentum * 0.25 +
