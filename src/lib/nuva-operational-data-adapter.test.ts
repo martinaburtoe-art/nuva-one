@@ -42,6 +42,8 @@ describe("operational data adapter", () => {
 
     expect(result.dataQuality).toBe("low");
     expect(result.brainInput.projectedCash30d).toBe(0);
-    expect(result.signals.every((signal) => signal.confidence >= 0 && signal.confidence <= 100)).toBe(true);
+    expect(
+      result.signals.every((signal) => signal.confidence >= 0 && signal.confidence <= 100),
+    ).toBe(true);
   });
 });

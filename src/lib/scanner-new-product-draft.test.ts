@@ -36,7 +36,11 @@ describe("buildNewProductDraft", () => {
   });
 
   it("rejects negative financial or stock values", () => {
-    expect(() => buildNewProductDraft({ rawCode: "036000291452", name: "Demo", cost: -1 })).toThrow();
-    expect(() => buildNewProductDraft({ rawCode: "036000291452", name: "Demo", initialStock: -1 })).toThrow();
+    expect(() =>
+      buildNewProductDraft({ rawCode: "036000291452", name: "Demo", cost: -1 }),
+    ).toThrow();
+    expect(() =>
+      buildNewProductDraft({ rawCode: "036000291452", name: "Demo", initialStock: -1 }),
+    ).toThrow();
   });
 });

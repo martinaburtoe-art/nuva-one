@@ -15,7 +15,10 @@ export default {
       return Response.json({ error: "Unable to load owner metrics" }, { status: 500 });
     }
 
-    const { data: telemetry, error: telemetryError } = await ctx.supabaseAdmin.rpc("platform_metrics", {});
+    const { data: telemetry, error: telemetryError } = await ctx.supabaseAdmin.rpc(
+      "platform_metrics",
+      {},
+    );
 
     return Response.json(
       {

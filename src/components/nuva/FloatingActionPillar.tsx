@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export type FloatingActionPillarProps = {
   onAiClick: () => void;
@@ -14,8 +14,8 @@ export type FloatingActionPillarProps = {
 export function FloatingActionPillar({
   onAiClick,
   onInfoClick,
-  aiLabel = 'Nüva IA',
-  infoLabel = 'Información Módulo',
+  aiLabel = "Nüva IA",
+  infoLabel = "Información Módulo",
 }: FloatingActionPillarProps) {
   return (
     <aside
@@ -29,7 +29,9 @@ export function FloatingActionPillar({
         onClick={onAiClick}
         className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary shadow-sm transition-all duration-200 hover:scale-105 hover:bg-primary/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95"
       >
-        <span aria-hidden="true" className="text-lg leading-none">✦</span>
+        <span aria-hidden="true" className="text-lg leading-none">
+          ✦
+        </span>
       </button>
 
       <button

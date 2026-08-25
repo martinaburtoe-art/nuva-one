@@ -10,9 +10,17 @@ export type TaxAdjustmentRequest = {
   state: AdjustmentState;
 };
 
-export type TaxAdjustmentResult = { allowed: boolean; nextState: AdjustmentState; blockers: string[] };
+export type TaxAdjustmentResult = {
+  allowed: boolean;
+  nextState: AdjustmentState;
+  blockers: string[];
+};
 
-export function transitionTaxAdjustment(input: TaxAdjustmentRequest, target: AdjustmentState, actor?: string): TaxAdjustmentResult {
+export function transitionTaxAdjustment(
+  input: TaxAdjustmentRequest,
+  target: AdjustmentState,
+  actor?: string,
+): TaxAdjustmentResult {
   const blockers: string[] = [];
   if (!actor) blockers.push("Se requiere un actor autorizado.");
   if (!input.reason.trim()) blockers.push("La corrección debe tener un motivo.");
@@ -26,6 +34,9 @@ export function transitionTaxAdjustment(input: TaxAdjustmentRequest, target: Adj
     revalidated: [],
   };
 
-  if (!allowedTransitions[input.state].includes(target)) blockers.push(`Transición inválida: ${input.state} → ${target}.`);
-  return blockers.length ? { allowed: false, nextState: input.state, blockers } : { allowed: true, nextState: target, blockers: [] };
+  if (!allowedTransitions[input.state].includes(target))
+    blockers.push(`Transición inválida: ${input.state} → ${target}.`);
+  return blockers.length
+    ? { allowed: false, nextState: input.state, blockers }
+    : { allowed: true, nextState: target, blockers: [] };
 }

@@ -14,8 +14,12 @@ const homepageShowcasePlugin = {
     const start = code.indexOf("const SHOWCASE_TABS =");
     const end = code.indexOf("function DemoAndComparison");
     if (start === -1 || end === -1) return null;
-    const importLine = 'import { HomeProductShowcase } from "@/components/home-product-showcase";\n';
-    const transformed = code.slice(0, start) + "function ProductShowcase() { return <HomeProductShowcase />; }\n\n" + code.slice(end);
+    const importLine =
+      'import { HomeProductShowcase } from "@/components/home-product-showcase";\n';
+    const transformed =
+      code.slice(0, start) +
+      "function ProductShowcase() { return <HomeProductShowcase />; }\n\n" +
+      code.slice(end);
     return { code: importLine + transformed, map: null };
   },
 };

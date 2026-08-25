@@ -16,10 +16,25 @@ describe("Nüva regulatory actions", () => {
 
   it("returns no action for a fully implemented rule", () => {
     const actions = buildRegulatoryActions([
-      "dte", "xml", "folios", "certification", "audit-trail",
-      "boleta", "credit-note", "daily-summary", "folio-control", "delivery",
-      "attendance", "schedule-rules", "alerts",
-      "privacy-center", "consent", "purpose-management", "data-export", "deletion", "retention",
+      "dte",
+      "xml",
+      "folios",
+      "certification",
+      "audit-trail",
+      "boleta",
+      "credit-note",
+      "daily-summary",
+      "folio-control",
+      "delivery",
+      "attendance",
+      "schedule-rules",
+      "alerts",
+      "privacy-center",
+      "consent",
+      "purpose-management",
+      "data-export",
+      "deletion",
+      "retention",
     ]);
     expect(actions).toHaveLength(0);
   });

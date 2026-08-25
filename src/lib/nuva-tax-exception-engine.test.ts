@@ -12,8 +12,24 @@ describe("tax exception engine", () => {
 
   it("detects duplicates and keeps period mismatches out of current totals", () => {
     const result = evaluateTaxExceptions("2026-08", [
-      { id: "F-1", type: "debit_note", originalDocumentId: "F-0", net: 1000, iva: 190, total: 1190, period: "2026-08" },
-      { id: "F-1", type: "debit_note", originalDocumentId: "F-0", net: 1000, iva: 190, total: 1190, period: "2026-08" },
+      {
+        id: "F-1",
+        type: "debit_note",
+        originalDocumentId: "F-0",
+        net: 1000,
+        iva: 190,
+        total: 1190,
+        period: "2026-08",
+      },
+      {
+        id: "F-1",
+        type: "debit_note",
+        originalDocumentId: "F-0",
+        net: 1000,
+        iva: 190,
+        total: 1190,
+        period: "2026-08",
+      },
       { id: "F-2", type: "exempt", net: 500, iva: 0, total: 500, period: "2026-07" },
     ]);
     expect(result.blockers.some((b) => b.includes("duplicado"))).toBe(true);

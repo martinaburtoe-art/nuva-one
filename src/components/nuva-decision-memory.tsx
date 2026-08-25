@@ -1,19 +1,133 @@
 import { BrainCircuit, CheckCircle2, Clock3, History } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-type Activity = { id?: string; completed?: boolean | null; created_at?: string | null; due_date?: string | null; type?: string | null; title?: string | null; description?: string | null };
+type Activity = {
+  id?: string;
+  completed?: boolean | null;
+  created_at?: string | null;
+  due_date?: string | null;
+  type?: string | null;
+  title?: string | null;
+  description?: string | null;
+};
 type Props = { activities?: Activity[] };
 
-const ageDays = (value?: string | null) => value ? (Date.now() - new Date(value).getTime()) / 86400000 : Infinity;
+const ageDays = (value?: string | null) =>
+  value ? (Date.now() - new Date(value).getTime()) / 86400000 : Infinity;
 
 export function NuvaDecisionMemory({ activities = [] }: Props) {
-  const decisions = activities.filter((a) => a.type === "task" && a.created_at).sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
+  const decisions = activities
+    .filter((a) => a.type === "task" && a.created_at)
+    .sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
   const recent = decisions.filter((a) => ageDays(a.created_at) <= 30);
   const completed = recent.filter((a) => a.completed).length;
-  const overdue = recent.filter((a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now()).length;
+  const overdue = recent.filter(
+    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+  ).length;
   const rate = recent.length ? Math.round((completed / recent.length) * 100) : 0;
   const latest = recent.slice(0, 4);
 
-  return <Card className="border-primary/15"><div className="p-6 md:p-7"><div className="flex items-start gap-3"><div className="rounded-xl bg-primary/10 p-2 text-primary"><BrainCircuit className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Nüva Decision Memory</p><h3 className="mt-1 text-xl font-semibold">Memoria operativa de decisiones</h3><p className="mt-1 text-sm text-muted-foreground">Historial observable de acciones registradas, su ejecución y estado. No inventa decisiones ni atribuye resultados sin evidencia.</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><Metric icon={<History className="h-4 w-4" />} label="Decisiones registradas" value={String(recent.length)} detail="últimos 30 días" /><Metric icon={<CheckCircle2 className="h-4 w-4" />} label="Ejecutadas" value={`${rate}%`} detail={`${completed}/${recent.length} acciones`} /><Metric icon={<Clock3 className="h-4 w-4" />} label="Pendientes críticas" value={String(overdue)} detail="vencidas recientes" /></div><div className="mt-5 space-y-2">{latest.length ? latest.map((item, index) => <div key={item.id ?? `${item.created_at}-${index}`} className="flex items-start justify-between gap-4 rounded-xl border bg-muted/20 p-3"><div><p className="text-sm font-semibold">{item.title || item.description || "Acción operativa"}</p><p className="mt-0.5 text-xs text-muted-foreground">{item.completed ? "Ejecutada" : item.due_date && new Date(item.due_date).getTime() < Date.now() ? "Vencida" : "Pendiente"}</p></div><span className="text-xs text-muted-foreground">{new Date(item.created_at!).toLocaleDateString("es-CL")}</span></div>) : <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">Aún no hay suficientes decisiones registradas para construir memoria operativa.</div>}</div><div className="mt-4 rounded-xl border bg-muted/30 p-4"><p className="text-sm font-semibold">Lectura Nüva</p><p className="mt-1 text-sm leading-6 text-muted-foreground">{overdue > 0 ? `Hay ${overdue} acción${overdue === 1 ? "" : "es"} vencida${overdue === 1 ? "" : "s"} dentro de la memoria reciente. Conviene cerrar ese ciclo antes de generar nuevas prioridades.` : recent.length ? `Nüva registra ${recent.length} decisiones recientes y una ejecución del ${rate}%. Este historial puede servir como contexto para futuras prioridades.` : "La memoria todavía está construyéndose a partir de acciones reales del negocio."}</p></div></div></Card>;
+  return (
+    <Card className="border-primary/15">
+      <div className="p-6 md:p-7">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-primary/10 p-2 text-primary">
+            <BrainCircuit className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              Nüva Decision Memory
+            </p>
+            <h3 className="mt-1 text-xl font-semibold">Memoria operativa de decisiones</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Historial observable de acciones registradas, su ejecución y estado. No inventa
+              decisiones ni atribuye resultados sin evidencia.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <Metric
+            icon={<History className="h-4 w-4" />}
+            label="Decisiones registradas"
+            value={String(recent.length)}
+            detail="últimos 30 días"
+          />
+          <Metric
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            label="Ejecutadas"
+            value={`${rate}%`}
+            detail={`${completed}/${recent.length} acciones`}
+          />
+          <Metric
+            icon={<Clock3 className="h-4 w-4" />}
+            label="Pendientes críticas"
+            value={String(overdue)}
+            detail="vencidas recientes"
+          />
+        </div>
+        <div className="mt-5 space-y-2">
+          {latest.length ? (
+            latest.map((item, index) => (
+              <div
+                key={item.id ?? `${item.created_at}-${index}`}
+                className="flex items-start justify-between gap-4 rounded-xl border bg-muted/20 p-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold">
+                    {item.title || item.description || "Acción operativa"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {item.completed
+                      ? "Ejecutada"
+                      : item.due_date && new Date(item.due_date).getTime() < Date.now()
+                        ? "Vencida"
+                        : "Pendiente"}
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(item.created_at!).toLocaleDateString("es-CL")}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+              Aún no hay suficientes decisiones registradas para construir memoria operativa.
+            </div>
+          )}
+        </div>
+        <div className="mt-4 rounded-xl border bg-muted/30 p-4">
+          <p className="text-sm font-semibold">Lectura Nüva</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {overdue > 0
+              ? `Hay ${overdue} acción${overdue === 1 ? "" : "es"} vencida${overdue === 1 ? "" : "s"} dentro de la memoria reciente. Conviene cerrar ese ciclo antes de generar nuevas prioridades.`
+              : recent.length
+                ? `Nüva registra ${recent.length} decisiones recientes y una ejecución del ${rate}%. Este historial puede servir como contexto para futuras prioridades.`
+                : "La memoria todavía está construyéndose a partir de acciones reales del negocio."}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
 }
-function Metric({ icon, label, value, detail }: { icon: React.ReactNode; label: string; value: string; detail: string }) { return <div className="rounded-xl border bg-background/70 p-4"><div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div><p className="mt-1 text-xl font-bold tabular-nums">{value}</p><p className="text-xs text-muted-foreground">{detail}</p></div>; }
+function Metric({
+  icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-background/70 p-4">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <p className="mt-1 text-xl font-bold tabular-nums">{value}</p>
+      <p className="text-xs text-muted-foreground">{detail}</p>
+    </div>
+  );
+}

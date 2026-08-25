@@ -12,7 +12,10 @@ export const Route = createFileRoute("/_authenticated/customers-intelligence")({
 function CustomersIntelligence() {
   const { data: customers = [] } = useBizList<any>("customers", { order: "name", ascending: true });
   const { data: sales = [] } = useBizList<any>("sales", { order: "sale_date", ascending: false });
-  const { data: quotes = [] } = useBizList<any>("quotes", { order: "created_at", ascending: false });
+  const { data: quotes = [] } = useBizList<any>("quotes", {
+    order: "created_at",
+    ascending: false,
+  });
 
   return (
     <ModuleGuard module="customers">
@@ -26,8 +29,12 @@ function CustomersIntelligence() {
             customers={customers}
             sales={sales}
             quotes={quotes}
-            onViewCustomers={() => { window.location.href = "/customers"; }}
-            onAskAI={() => { window.location.href = "/chat"; }}
+            onViewCustomers={() => {
+              window.location.href = "/customers";
+            }}
+            onAskAI={() => {
+              window.location.href = "/chat";
+            }}
           />
         </div>
       </div>

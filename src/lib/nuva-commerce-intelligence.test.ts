@@ -10,7 +10,11 @@ describe("commerce intelligence", () => {
       stockoutRisk: 90,
       grossMargin: 10,
     });
-    expect(result.signals.map((signal) => signal.id)).toEqual(["cash-negative", "stockout-risk", "margin-low"]);
+    expect(result.signals.map((signal) => signal.id)).toEqual([
+      "cash-negative",
+      "stockout-risk",
+      "margin-low",
+    ]);
     expect(result.warnings).toHaveLength(1);
   });
 

@@ -26,16 +26,39 @@ export function buildCommerceIntelligence(snapshot: CommerceSnapshot): CommerceI
   const warnings: string[] = [];
 
   if (snapshot.cashAvailable < 0) {
-    signals.push({ id: "cash-negative", module: "cashflow", title: "Caja negativa", impact: Math.abs(snapshot.cashAvailable), priority: "critical", action: "Revisar obligaciones y flujo de caja inmediato" });
+    signals.push({
+      id: "cash-negative",
+      module: "cashflow",
+      title: "Caja negativa",
+      impact: Math.abs(snapshot.cashAvailable),
+      priority: "critical",
+      action: "Revisar obligaciones y flujo de caja inmediato",
+    });
   }
   if (snapshot.stockoutRisk >= 80) {
-    signals.push({ id: "stockout-risk", module: "inventory", title: "Riesgo alto de quiebre de stock", impact: snapshot.stockoutRisk, priority: "high", action: "Priorizar reposición de SKU críticos" });
+    signals.push({
+      id: "stockout-risk",
+      module: "inventory",
+      title: "Riesgo alto de quiebre de stock",
+      impact: snapshot.stockoutRisk,
+      priority: "high",
+      action: "Priorizar reposición de SKU críticos",
+    });
   }
   if (snapshot.grossMargin !== null && snapshot.grossMargin < 15) {
-    signals.push({ id: "margin-low", module: "sales", title: "Margen bruto bajo", impact: 15 - snapshot.grossMargin, priority: "high", action: "Revisar precios, costos y mix de productos" });
+    signals.push({
+      id: "margin-low",
+      module: "sales",
+      title: "Margen bruto bajo",
+      impact: 15 - snapshot.grossMargin,
+      priority: "high",
+      action: "Revisar precios, costos y mix de productos",
+    });
   }
   if (snapshot.inventoryValue > snapshot.revenue && snapshot.revenue > 0) {
-    warnings.push("El valor de inventario supera las ventas del período; revisar rotación y capital inmovilizado.");
+    warnings.push(
+      "El valor de inventario supera las ventas del período; revisar rotación y capital inmovilizado.",
+    );
   }
 
   return { snapshot, signals, warnings };

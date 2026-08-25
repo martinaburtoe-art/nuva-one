@@ -18,7 +18,12 @@ export function buildEarlyWarnings(signals: WarningSignal[]): EarlyWarning[] {
     .filter((signal) => Number.isFinite(signal.confidence) && signal.confidence >= 60)
     .map((signal) => ({
       ...signal,
-      horizon: signal.severity === "critical" ? "immediate" : signal.severity === "high" ? "short_term" : "medium_term",
+      horizon:
+        signal.severity === "critical"
+          ? "immediate"
+          : signal.severity === "high"
+            ? "short_term"
+            : "medium_term",
       status: signal.severity === "critical" || signal.severity === "high" ? "act" : "watch",
     }));
 }

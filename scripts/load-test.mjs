@@ -100,14 +100,10 @@ async function runVirtualUser() {
 
 console.log(`Nüva One load test: ${vus} VUs × ${iterations} iterations`);
 const started = performance.now();
-const users = await Promise.allSettled(
-  Array.from({ length: vus }, () => runVirtualUser()),
-);
+const users = await Promise.allSettled(Array.from({ length: vus }, () => runVirtualUser()));
 const elapsed = performance.now() - started;
 
-const results = users.flatMap((user) =>
-  user.status === "fulfilled" ? user.value : [],
-);
+const results = users.flatMap((user) => (user.status === "fulfilled" ? user.value : []));
 const userFailures = users.filter((user) => user.status === "rejected").length;
 const requestFailures = results.filter((result) => !result.ok).length;
 const latencies = results.map((result) => result.elapsed).sort((a, b) => a - b);

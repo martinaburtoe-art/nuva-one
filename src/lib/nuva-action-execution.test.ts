@@ -15,22 +15,50 @@ const action = {
 
 describe("action execution policy", () => {
   it("blocks missing tenant context", () => {
-    expect(planActionExecution({ action, businessId: "", actorUserId: "u1", approved: true, idempotencyKey: "abcdefghijkl" }).status).toBe("blocked");
+    expect(
+      planActionExecution({
+        action,
+        businessId: "",
+        actorUserId: "u1",
+        approved: true,
+        idempotencyKey: "abcdefghijkl",
+      }).status,
+    ).toBe("blocked");
   });
 
   it("blocks weak idempotency keys", () => {
-    expect(planActionExecution({ action, businessId: "b1", actorUserId: "u1", approved: true, idempotencyKey: "short" }).status).toBe("blocked");
+    expect(
+      planActionExecution({
+        action,
+        businessId: "b1",
+        actorUserId: "u1",
+        approved: true,
+        idempotencyKey: "short",
+      }).status,
+    ).toBe("blocked");
   });
 
   it("waits for explicit approval on critical actions", () => {
-    const result = planActionExecution({ action, businessId: "b1", actorUserId: "u1", approved: false, idempotencyKey: "abcdefghijkl" });
+    const result = planActionExecution({
+      action,
+      businessId: "b1",
+      actorUserId: "u1",
+      approved: false,
+      idempotencyKey: "abcdefghijkl",
+    });
     expect(result.status).toBe("ready");
     expect(result.requiresExplicitApproval).toBe(true);
     expect(result.auditRequired).toBe(true);
   });
 
   it("never executes a mutation; it only returns an approved plan", () => {
-    const result = planActionExecution({ action, businessId: "b1", actorUserId: "u1", approved: true, idempotencyKey: "abcdefghijkl" });
+    const result = planActionExecution({
+      action,
+      businessId: "b1",
+      actorUserId: "u1",
+      approved: true,
+      idempotencyKey: "abcdefghijkl",
+    });
     expect(result.status).toBe("approved");
     expect(result.auditRequired).toBe(true);
   });

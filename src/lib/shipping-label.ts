@@ -34,14 +34,27 @@ const clean = (value?: string | number | null) => String(value ?? "").trim();
 const money = (value?: number | null) =>
   value == null || Number.isNaN(Number(value))
     ? ""
-    : new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(Number(value));
+    : new Intl.NumberFormat("es-CL", {
+        style: "currency",
+        currency: "CLP",
+        maximumFractionDigits: 0,
+      }).format(Number(value));
 
 function wrap(doc: jsPDF, text: string, width: number, fontSize = 9) {
   doc.setFontSize(fontSize);
   return doc.splitTextToSize(text || "—", width) as string[];
 }
 
-function field(doc: jsPDF, title: string, value: string, x: number, y: number, width: number, height: number, size = 9) {
+function field(
+  doc: jsPDF,
+  title: string,
+  value: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  size = 9,
+) {
   doc.setDrawColor(220, 224, 230);
   doc.setFillColor(248, 249, 251);
   doc.roundedRect(x, y, width, height, 2.5, 2.5, "FD");
@@ -52,7 +65,9 @@ function field(doc: jsPDF, title: string, value: string, x: number, y: number, w
   doc.setTextColor(25, 29, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(size);
-  doc.text(wrap(doc, value || "—", width - 8, size).slice(0, 3), x + 4, y + 12, { lineHeightFactor: 1.15 });
+  doc.text(wrap(doc, value || "—", width - 8, size).slice(0, 3), x + 4, y + 12, {
+    lineHeightFactor: 1.15,
+  });
 }
 
 export function generateShippingLabelPdf(data: ShippingLabelData) {
@@ -71,7 +86,13 @@ export function generateShippingLabelPdf(data: ShippingLabelData) {
   doc.text(clean(data.businessName) || "Empresa", M, 15);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
-  const meta = [data.businessTaxId && `RUT ${data.businessTaxId}`, data.businessComuna, data.businessPhone].filter(Boolean).join(" · ");
+  const meta = [
+    data.businessTaxId && `RUT ${data.businessTaxId}`,
+    data.businessComuna,
+    data.businessPhone,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   doc.text(meta.slice(0, 88), M, 20);
 
   doc.setTextColor(25, 29, 35);
@@ -81,7 +102,12 @@ export function generateShippingLabelPdf(data: ShippingLabelData) {
   doc.setFontSize(18);
   doc.text("DESTINO", M, 39);
   doc.setFontSize(12);
-  doc.text(wrap(doc, clean(data.recipientName) || "Destinatario pendiente", inner - 42, 12).slice(0, 2), M, 47, { lineHeightFactor: 1.05 });
+  doc.text(
+    wrap(doc, clean(data.recipientName) || "Destinatario pendiente", inner - 42, 12).slice(0, 2),
+    M,
+    47,
+    { lineHeightFactor: 1.05 },
+  );
 
   const payment = clean(data.paymentType) === "collect" ? "POR PAGAR" : "PAGADO";
   doc.setFillColor(18, 22, 28);
@@ -91,7 +117,15 @@ export function generateShippingLabelPdf(data: ShippingLabelData) {
   doc.text(payment, 87.5, 36, { align: "center" });
   doc.setTextColor(25, 29, 35);
 
-  const address = [data.destinationAddress, data.destinationComuna, data.destinationCity, data.destinationRegion, data.destinationPostalCode && `CP ${data.destinationPostalCode}`].filter(Boolean).join(", ");
+  const address = [
+    data.destinationAddress,
+    data.destinationComuna,
+    data.destinationCity,
+    data.destinationRegion,
+    data.destinationPostalCode && `CP ${data.destinationPostalCode}`,
+  ]
+    .filter(Boolean)
+    .join(", ");
   field(doc, "Dirección de entrega", address, M, 55, inner, 25, 10);
 
   field(doc, "Teléfono", clean(data.recipientPhone), M, 84, 30, 17, 9);
@@ -118,11 +152,30 @@ export function generateShippingLabelPdf(data: ShippingLabelData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(105, 112, 122);
-  const footer = [data.contentDescription && `Contenido: ${data.contentDescription}`, data.declaredValue != null && `Valor declarado: ${money(data.declaredValue)}`, data.notes && `Obs.: ${data.notes}`].filter(Boolean).join(" · ");
-  doc.text(wrap(doc, footer || "Etiqueta de identificación logística", inner, 6.5).slice(0, 2), M, 123, { lineHeightFactor: 1.1 });
+  const footer = [
+    data.contentDescription && `Contenido: ${data.contentDescription}`,
+    data.declaredValue != null && `Valor declarado: ${money(data.declaredValue)}`,
+    data.notes && `Obs.: ${data.notes}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  doc.text(
+    wrap(doc, footer || "Etiqueta de identificación logística", inner, 6.5).slice(0, 2),
+    M,
+    123,
+    { lineHeightFactor: 1.1 },
+  );
   doc.setFontSize(5.5);
-  doc.text("Etiqueta auxiliar Nüva One. La OT/etiqueta oficial del transportista prevalece cuando corresponda.", M, 142);
+  doc.text(
+    "Etiqueta auxiliar Nüva One. La OT/etiqueta oficial del transportista prevalece cuando corresponda.",
+    M,
+    142,
+  );
 
-  const fileBase = (clean(data.recipientName) || "destinatario").replace(/[^a-z0-9áéíóúñü -]/gi, "").trim().replace(/\s+/g, "-").toLowerCase();
+  const fileBase = (clean(data.recipientName) || "destinatario")
+    .replace(/[^a-z0-9áéíóúñü -]/gi, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .toLowerCase();
   doc.save(`nuva-one-etiqueta-${fileBase || "envio"}.pdf`);
 }

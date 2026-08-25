@@ -34,7 +34,8 @@ function scoreLabel(total: number): string {
 
 function actionFor(key: string): { href: string; label: string } {
   if (key === "inventario") return { href: "/inventory", label: "Ver inventario" };
-  if (key === "margen" || key === "liquidez") return { href: "/finance", label: "Analizar finanzas" };
+  if (key === "margen" || key === "liquidez")
+    return { href: "/finance", label: "Analizar finanzas" };
   if (key === "cobranza") return { href: "/crm", label: "Revisar cobranza" };
   if (key === "crecimiento") return { href: "/sales", label: "Ver ventas" };
   return { href: "/dashboard", label: "Ver dashboard" };
@@ -83,7 +84,14 @@ export function NuvaScoreCard() {
         </div>
         <div className="relative h-24 w-24 shrink-0">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-            <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(0.92 0.008 270)" strokeWidth="8" />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="none"
+              stroke="oklch(0.92 0.008 270)"
+              strokeWidth="8"
+            />
             <circle
               cx="50"
               cy="50"
@@ -126,8 +134,12 @@ export function NuvaScoreCard() {
         <div className="mt-5 rounded-2xl border bg-muted/30 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Principal oportunidad</p>
-              <p className="mt-1 text-sm font-semibold">{weakest.label} está en {weakest.points}/20</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Principal oportunidad
+              </p>
+              <p className="mt-1 text-sm font-semibold">
+                {weakest.label} está en {weakest.points}/20
+              </p>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">{weakest.detail}</p>
             </div>
             <Link to={action.href}>

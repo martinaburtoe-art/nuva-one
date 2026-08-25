@@ -1,4 +1,8 @@
-import { buildBusinessBrain, type BusinessBrainInput, type BusinessBrainResult } from "./nuva-business-brain";
+import {
+  buildBusinessBrain,
+  type BusinessBrainInput,
+  type BusinessBrainResult,
+} from "./nuva-business-brain";
 import { normalizeSignals, type BusinessSignal } from "./nuva-data-contract";
 
 export type OperationalSnapshot = {
@@ -23,7 +27,8 @@ export type OperationalIntelligence = {
   dataQuality: "high" | "medium" | "low";
 };
 
-const finiteOr = (value: number | null | undefined, fallback: number) => Number.isFinite(value) ? Number(value) : fallback;
+const finiteOr = (value: number | null | undefined, fallback: number) =>
+  Number.isFinite(value) ? Number(value) : fallback;
 
 function quality(snapshot: OperationalSnapshot): "high" | "medium" | "low" {
   const available = snapshot.dataSources.filter(Boolean).length;
@@ -32,7 +37,9 @@ function quality(snapshot: OperationalSnapshot): "high" | "medium" | "low" {
   return "low";
 }
 
-export function buildOperationalIntelligence(snapshot: OperationalSnapshot): OperationalIntelligence {
+export function buildOperationalIntelligence(
+  snapshot: OperationalSnapshot,
+): OperationalIntelligence {
   const brainInput: BusinessBrainInput = {
     financialHealthScore: Math.max(0, Math.min(100, finiteOr(snapshot.financialHealthScore, 0))),
     projectedCash30d: finiteOr(snapshot.projectedCash30d, finiteOr(snapshot.cashAvailable, 0)),
@@ -43,15 +50,24 @@ export function buildOperationalIntelligence(snapshot: OperationalSnapshot): Ope
   };
 
   const brain = buildBusinessBrain(brainInput);
-  const signals = normalizeSignals(brain.signals.map((signal) => ({
-    id: signal.id,
-    module: signal.module === "cashflow" || signal.module === "inventory" || signal.module === "crm" || signal.module === "sales" || signal.module === "purchases" ? signal.module : "crm",
-    title: signal.title,
-    severity: signal.severity,
-    confidence: signal.confidence,
-    impact: signal.impact,
-    action: signal.action,
-  })));
+  const signals = normalizeSignals(
+    brain.signals.map((signal) => ({
+      id: signal.id,
+      module:
+        signal.module === "cashflow" ||
+        signal.module === "inventory" ||
+        signal.module === "crm" ||
+        signal.module === "sales" ||
+        signal.module === "purchases"
+          ? signal.module
+          : "crm",
+      title: signal.title,
+      severity: signal.severity,
+      confidence: signal.confidence,
+      impact: signal.impact,
+      action: signal.action,
+    })),
+  );
 
   return { brainInput, brain, signals, dataQuality: quality(snapshot) };
 }

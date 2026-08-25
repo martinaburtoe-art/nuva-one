@@ -10,8 +10,16 @@ describe("buildCashflowActions", () => {
       discretionaryPayables: 400000,
     });
 
-    expect(actions[0]).toMatchObject({ id: "liquidity-deficit", priority: "critical", mode: "prepare" });
-    expect(actions.map((a) => a.id)).toEqual(["liquidity-deficit", "collections", "discretionary-spend"]);
+    expect(actions[0]).toMatchObject({
+      id: "liquidity-deficit",
+      priority: "critical",
+      mode: "prepare",
+    });
+    expect(actions.map((a) => a.id)).toEqual([
+      "liquidity-deficit",
+      "collections",
+      "discretionary-spend",
+    ]);
   });
 
   it("does not create deficit actions when projected cash remains positive", () => {

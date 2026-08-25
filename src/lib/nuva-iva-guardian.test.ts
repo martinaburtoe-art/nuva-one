@@ -23,8 +23,12 @@ describe("Nüva IVA Guardian", () => {
 
   it("flags internal/SII mismatches before a tax period is prepared", () => {
     const result = buildIvaGuardian({
-      internal: [{ id: "F1", kind: "sale", net: 100000, vat: 19000, gross: 119000, issuedAt: "2026-08-01" }],
-      sii: [{ id: "F2", kind: "sale", net: 100000, vat: 19000, gross: 119000, issuedAt: "2026-08-01" }],
+      internal: [
+        { id: "F1", kind: "sale", net: 100000, vat: 19000, gross: 119000, issuedAt: "2026-08-01" },
+      ],
+      sii: [
+        { id: "F2", kind: "sale", net: 100000, vat: 19000, gross: 119000, issuedAt: "2026-08-01" },
+      ],
     });
 
     expect(result.unmatchedInternal).toEqual(["F1"]);
@@ -37,7 +41,14 @@ describe("Nüva IVA Guardian", () => {
     const result = buildIvaGuardian({
       internal: [
         { id: "F1", kind: "sale", net: 100000, vat: 19000, gross: 119000, issuedAt: "2026-08-01" },
-        { id: "NC1", kind: "credit_note", net: 10000, vat: 1900, gross: 11900, issuedAt: "2026-08-03" },
+        {
+          id: "NC1",
+          kind: "credit_note",
+          net: 10000,
+          vat: 1900,
+          gross: 11900,
+          issuedAt: "2026-08-03",
+        },
         { id: "ND1", kind: "debit_note", net: 5000, vat: 950, gross: 5950, issuedAt: "2026-08-04" },
       ],
       sii: [],

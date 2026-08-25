@@ -54,13 +54,23 @@ export function reconcileTaxPeriod(input: TaxReconciliationInput): TaxReconcilia
   if (pending.length) blockers.push(`${pending.length} DTE en estado pendiente.`);
   if (rejected.length) blockers.push(`${rejected.length} DTE rechazados requieren revisión.`);
   if (missing.length) blockers.push(`${missing.length} documentos marcados como faltantes.`);
-  if (!equal(totals.salesNet, input.rcvSalesNet) || !equal(totals.salesIva, input.rcvSalesIva)) blockers.push("Las ventas aceptadas no cuadran con el RCV informado.");
-  if (!equal(totals.purchasesNet, input.rcvPurchasesNet) || !equal(totals.purchasesIva, input.rcvPurchasesIva)) blockers.push("Las compras aceptadas no cuadran con el RCV informado.");
-  if (!equal(input.f29OutputIva, input.rcvSalesIva)) blockers.push("El débito IVA informado para F29 no coincide con el RCV de ventas.");
-  if (!equal(input.f29InputIva, input.rcvPurchasesIva)) blockers.push("El crédito IVA informado para F29 no coincide con el RCV de compras.");
+  if (!equal(totals.salesNet, input.rcvSalesNet) || !equal(totals.salesIva, input.rcvSalesIva))
+    blockers.push("Las ventas aceptadas no cuadran con el RCV informado.");
+  if (
+    !equal(totals.purchasesNet, input.rcvPurchasesNet) ||
+    !equal(totals.purchasesIva, input.rcvPurchasesIva)
+  )
+    blockers.push("Las compras aceptadas no cuadran con el RCV informado.");
+  if (!equal(input.f29OutputIva, input.rcvSalesIva))
+    blockers.push("El débito IVA informado para F29 no coincide con el RCV de ventas.");
+  if (!equal(input.f29InputIva, input.rcvPurchasesIva))
+    blockers.push("El crédito IVA informado para F29 no coincide con el RCV de compras.");
   if (input.f29Errors.length) blockers.push(...input.f29Errors.map((error) => `F29: ${error}`));
   if (docs.length === 0) blockers.push("No existen documentos del período para conciliar.");
-  if (docs.some((d) => d.total !== round(d.net + d.iva))) warnings.push("Existen documentos cuyo total no coincide con neto + IVA; revisar impuestos y exentos.");
+  if (docs.some((d) => d.total !== round(d.net + d.iva)))
+    warnings.push(
+      "Existen documentos cuyo total no coincide con neto + IVA; revisar impuestos y exentos.",
+    );
 
   const status = blockers.length ? "blocked" : warnings.length ? "review" : "ready_for_review";
   const score = Math.max(0, Math.min(100, 100 - blockers.length * 20 - warnings.length * 5));

@@ -11,7 +11,9 @@ describe("buildNuvaIntelligence", () => {
   });
 
   it("flags low stock", () => {
-    const signals = buildNuvaIntelligence({ stock: [{ sku: "ABC", name: "Producto", quantity: 2, reorder_point: 5 }] });
+    const signals = buildNuvaIntelligence({
+      stock: [{ sku: "ABC", name: "Producto", quantity: 2, reorder_point: 5 }],
+    });
     expect(signals.some((signal) => signal.id === "low-stock")).toBe(true);
   });
 

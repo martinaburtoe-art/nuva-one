@@ -14,12 +14,22 @@ export type IntelligenceAction = IntelligenceSignal & {
   rationale: string;
 };
 
-export function buildIntelligenceActions(signals: IntelligenceSignal[], limit = 5): IntelligenceAction[] {
+export function buildIntelligenceActions(
+  signals: IntelligenceSignal[],
+  limit = 5,
+): IntelligenceAction[] {
   return [...signals]
-    .filter((signal) => Number.isFinite(signal.confidence) && signal.confidence >= 0 && signal.confidence <= 100)
+    .filter(
+      (signal) =>
+        Number.isFinite(signal.confidence) && signal.confidence >= 0 && signal.confidence <= 100,
+    )
     .sort((a, b) => {
       const severity = { critical: 4, high: 3, medium: 2, low: 1 };
-      return severity[b.severity] - severity[a.severity] || b.confidence - a.confidence || b.impact - a.impact;
+      return (
+        severity[b.severity] - severity[a.severity] ||
+        b.confidence - a.confidence ||
+        b.impact - a.impact
+      );
     })
     .slice(0, limit)
     .map((signal, index) => ({

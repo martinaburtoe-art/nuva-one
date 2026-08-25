@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { getAvailableStock, getInventoryMetrics, getInventoryStatus, getProjectedStock, getSuggestedReplenishment } from "./inventory-metrics";
+import {
+  getAvailableStock,
+  getInventoryMetrics,
+  getInventoryStatus,
+  getProjectedStock,
+  getSuggestedReplenishment,
+} from "./inventory-metrics";
 
 describe("inventory metrics", () => {
   it("subtracts reserved and blocked stock from availability", () => {
@@ -17,8 +23,12 @@ describe("inventory metrics", () => {
   });
 
   it("classifies stock using operational availability", () => {
-    expect(getInventoryStatus({ stock: 10, reserved_stock: 10, low_stock_threshold: 2 })).toBe("out_of_stock");
-    expect(getInventoryStatus({ stock: 5, reserved_stock: 3, low_stock_threshold: 2 })).toBe("critical");
+    expect(getInventoryStatus({ stock: 10, reserved_stock: 10, low_stock_threshold: 2 })).toBe(
+      "out_of_stock",
+    );
+    expect(getInventoryStatus({ stock: 5, reserved_stock: 3, low_stock_threshold: 2 })).toBe(
+      "critical",
+    );
     expect(getInventoryStatus({ stock: 8, reorder_point: 8 })).toBe("reorder");
     expect(getInventoryStatus({ stock: 10, reorder_point: 5 })).toBe("healthy");
   });

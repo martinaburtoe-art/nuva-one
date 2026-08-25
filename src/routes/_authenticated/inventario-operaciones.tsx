@@ -9,5 +9,15 @@ export const Route = createFileRoute("/_authenticated/inventario-operaciones")({
 });
 
 function InventoryOperations() {
-  return <ModuleGuard module="inventory"><div className="space-y-6"><PageHeader title="Operaciones de inventario" description="Usa el Scanner para registrar entradas y salidas de stock con trazabilidad y actualización atómica." /><InventoryScannerOperations /></div></ModuleGuard>;
+  return (
+    <ModuleGuard module="inventory">
+      <div className="space-y-6">
+        <PageHeader
+          title="Operaciones de inventario"
+          description="Usa el Scanner para registrar entradas y salidas de stock con trazabilidad y actualización atómica."
+        />
+        <InventoryScannerOperations />
+      </div>
+    </ModuleGuard>
+  );
 }

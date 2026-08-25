@@ -26,7 +26,8 @@ export type NewProductDraft = {
 function parseNonNegative(value: number | string | undefined, field: string) {
   if (value === undefined || value === "") return 0;
   const parsed = typeof value === "number" ? value : Number(value.replace(",", "."));
-  if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${field} debe ser un número mayor o igual a cero.`);
+  if (!Number.isFinite(parsed) || parsed < 0)
+    throw new Error(`${field} debe ser un número mayor o igual a cero.`);
   return parsed;
 }
 

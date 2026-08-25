@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { chargeSubscription, getFlowSubscriptionCreds } from "@/lib/fiscal/flow-subscriptions.server";
+import {
+  chargeSubscription,
+  getFlowSubscriptionCreds,
+} from "@/lib/fiscal/flow-subscriptions.server";
 import { NUVA_PLANS } from "@/lib/plan-config";
 
 const MAX_FAILED_ATTEMPTS = 3;
@@ -41,10 +44,13 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
 
         if (error) {
           console.error("subscription_charge_query_failed", error);
-          return new Response(JSON.stringify({ error: "No se pudieron cargar las suscripciones" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-          });
+          return new Response(
+            JSON.stringify({ error: "No se pudieron cargar las suscripciones" }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+            },
+          );
         }
 
         const results: Array<{ businessId: string; status: string }> = [];

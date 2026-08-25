@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type InventoryOperation = "entry" | "exit" | "count" | "receipt" | "adjustment" | "correction" | "transfer";
+export type InventoryOperation =
+  | "entry"
+  | "exit"
+  | "count"
+  | "receipt"
+  | "adjustment"
+  | "correction"
+  | "transfer";
 
 export type InventoryAdjustmentInput = {
   productId: string;
@@ -67,12 +74,15 @@ export function buildInventoryAdjustment(input: InventoryOperationInput): Invent
       break;
     case "count":
       delta = quantity - currentStock;
-      if (delta === 0) throw new Error("El conteo coincide con el stock actual; no hay ajuste que registrar.");
+      if (delta === 0)
+        throw new Error("El conteo coincide con el stock actual; no hay ajuste que registrar.");
       break;
     case "adjustment":
     case "correction":
     case "transfer":
-      throw new Error("Esta operación requiere una variación explícita y no una cantidad absoluta.");
+      throw new Error(
+        "Esta operación requiere una variación explícita y no una cantidad absoluta.",
+      );
     default:
       throw new Error("Operación de inventario no soportada.");
   }

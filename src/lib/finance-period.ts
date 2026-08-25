@@ -12,7 +12,11 @@ export function getMonthBounds(year: number, monthIndex: number) {
   };
 }
 
-export function isInTaxPeriod(documentDate: string | Date | null | undefined, year: number, monthIndex: number) {
+export function isInTaxPeriod(
+  documentDate: string | Date | null | undefined,
+  year: number,
+  monthIndex: number,
+) {
   if (!documentDate) return false;
   const date = new Date(documentDate);
   if (Number.isNaN(date.getTime())) return false;

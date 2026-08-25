@@ -12,7 +12,12 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
   const { data: membership, isLoading, isError, refetch } = useMyMembership();
 
   if (isLoading) {
-    return <LoadingState title="Verificando permisos" description="Comprobando el acceso a este módulo…" />;
+    return (
+      <LoadingState
+        title="Verificando permisos"
+        description="Comprobando el acceso a este módulo…"
+      />
+    );
   }
 
   if (isError) {
@@ -28,11 +33,18 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
   const allowed = hasModulePermission(membership?.role ?? null, membership?.permissions, module);
   if (!allowed) {
     return (
-      <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-12 text-center" role="region" aria-labelledby={`module-access-${module}`}>
+      <div
+        className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-12 text-center"
+        role="region"
+        aria-labelledby={`module-access-${module}`}
+      >
         <ShieldAlert className="h-10 w-10 text-muted-foreground" aria-hidden="true" />
-        <h2 id={`module-access-${module}`} className="font-medium text-foreground">No tienes acceso a esta sección</h2>
+        <h2 id={`module-access-${module}`} className="font-medium text-foreground">
+          No tienes acceso a esta sección
+        </h2>
         <p className="max-w-sm text-sm text-muted-foreground">
-          El dueño o un administrador del negocio puede habilitarte este módulo desde Configuración → Equipo.
+          El dueño o un administrador del negocio puede habilitarte este módulo desde Configuración
+          → Equipo.
         </p>
       </div>
     );

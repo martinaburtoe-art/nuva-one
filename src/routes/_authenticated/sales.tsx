@@ -192,7 +192,8 @@ function Sales() {
                         />
                         {!selectedCustomerPhone && (
                           <p className="mt-1 text-xs text-warning">
-                            Este cliente no tiene teléfono registrado — no podremos enviarle recordatorios por WhatsApp.
+                            Este cliente no tiene teléfono registrado — no podremos enviarle
+                            recordatorios por WhatsApp.
                           </p>
                         )}
                       </div>
@@ -202,7 +203,9 @@ function Sales() {
                       <div>
                         <Label>Canal</Label>
                         <Select value={channel} onValueChange={setChannel}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="tienda">Tienda</SelectItem>
                             <SelectItem value="online">Online</SelectItem>
@@ -214,7 +217,9 @@ function Sales() {
                       <div>
                         <Label>Método de pago</Label>
                         <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="efectivo">Efectivo</SelectItem>
                             <SelectItem value="tarjeta">Tarjeta</SelectItem>
@@ -228,7 +233,9 @@ function Sales() {
                     <div>
                       <Label>Estado</Label>
                       <Select value={status} onValueChange={setStatus}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">Pendiente</SelectItem>
                           <SelectItem value="paid">Pagada</SelectItem>
@@ -245,7 +252,9 @@ function Sales() {
                           type="button"
                           size="sm"
                           variant="outline"
-                          onClick={() => setItems([...items, { product_id: null, name: "", qty: 1, price: 0 }])}
+                          onClick={() =>
+                            setItems([...items, { product_id: null, name: "", qty: 1, price: 0 }])
+                          }
                         >
                           <Plus className="mr-1 h-3 w-3" /> Agregar línea
                         </Button>
@@ -256,13 +265,19 @@ function Sales() {
                             <div className="col-span-5">
                               <Select
                                 value={it.product_id ?? "__free__"}
-                                onValueChange={(v) => v === "__free__" ? null : pickProduct(idx, v)}
+                                onValueChange={(v) =>
+                                  v === "__free__" ? null : pickProduct(idx, v)
+                                }
                               >
-                                <SelectTrigger><SelectValue placeholder="Producto del catálogo o texto libre" /></SelectTrigger>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Producto del catálogo o texto libre" />
+                                </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="__free__">— Texto libre —</SelectItem>
                                   {(products ?? []).map((p: any) => (
-                                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.stock} en stock)</SelectItem>
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.name} ({p.stock} en stock)
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -284,7 +299,9 @@ function Sales() {
                               type="number"
                               min={1}
                               value={it.qty}
-                              max={it.product_id ? (stockHint(it.product_id) ?? undefined) : undefined}
+                              max={
+                                it.product_id ? (stockHint(it.product_id) ?? undefined) : undefined
+                              }
                               onChange={(e) => {
                                 const c = [...items];
                                 c[idx].qty = Number(e.target.value);
@@ -323,7 +340,9 @@ function Sales() {
                     </div>
 
                     <div className="flex items-center gap-3 rounded-lg bg-secondary/40 p-4">
-                      <Label htmlFor="total" className="shrink-0">Total (CLP)</Label>
+                      <Label htmlFor="total" className="shrink-0">
+                        Total (CLP)
+                      </Label>
                       <Input
                         id="total"
                         type="number"
@@ -333,8 +352,13 @@ function Sales() {
                         className="text-right text-base font-semibold"
                       />
                     </div>
-                    <div><Label htmlFor="notes">Notas</Label><Input id="notes" name="notes" /></div>
-                    <Button type="submit" className="w-full" disabled={insert.isPending}>Guardar venta</Button>
+                    <div>
+                      <Label htmlFor="notes">Notas</Label>
+                      <Input id="notes" name="notes" />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={insert.isPending}>
+                      Guardar venta
+                    </Button>
                   </form>
                 </DialogContent>
               </Dialog>
@@ -347,14 +371,21 @@ function Sales() {
         <Card>
           {isLoading ? (
             <div className="space-y-3 p-6">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
             </div>
           ) : !sales || sales.length === 0 ? (
             <EmptyState
               icon={ShoppingCart}
               title="Sin ventas todavía"
               description="Empieza registrando tu primera venta."
-              action={<Button onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" />Nueva venta</Button>}
+              action={
+                <Button onClick={() => setOpen(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Nueva venta
+                </Button>
+              }
             />
           ) : (
             <Table>
@@ -374,15 +405,25 @@ function Sales() {
                 {sales.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(s.sale_date).toLocaleDateString("es-CL")}</TableCell>
-                    <TableCell><Badge variant="outline" className="capitalize">{s.channel}</Badge></TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(s.sale_date).toLocaleDateString("es-CL")}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {s.channel}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {Array.isArray(s.items) && s.items.length > 0 ? `${s.items.length} producto(s)` : "—"}
+                      {Array.isArray(s.items) && s.items.length > 0
+                        ? `${s.items.length} producto(s)`
+                        : "—"}
                     </TableCell>
                     <TableCell>
                       <select
                         value={s.status}
-                        onChange={(e) => upd.mutate({ id: s.id, patch: { status: e.target.value } })}
+                        onChange={(e) =>
+                          upd.mutate({ id: s.id, patch: { status: e.target.value } })
+                        }
                         className="rounded-md border bg-background px-2 py-1 text-xs"
                       >
                         <option value="pending">Pendiente</option>
@@ -397,7 +438,10 @@ function Sales() {
                       ) : Number(s.paid_amount) >= Number(s.total) ? (
                         <Badge className="bg-success/15 text-success">Pagada</Badge>
                       ) : s.due_date && new Date(s.due_date) < new Date() ? (
-                        <Badge className="bg-destructive/15 text-destructive"><Clock className="mr-1 h-3 w-3" />Vencida</Badge>
+                        <Badge className="bg-destructive/15 text-destructive">
+                          <Clock className="mr-1 h-3 w-3" />
+                          Vencida
+                        </Badge>
                       ) : (
                         <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>
                       )}
@@ -405,11 +449,15 @@ function Sales() {
                     <TableCell className="text-right font-medium">
                       {fmtCLP(Number(s.total))}
                       {s.is_credit && Number(s.paid_amount) < Number(s.total) && (
-                        <p className="text-xs font-normal text-muted-foreground">Pagado: {fmtCLP(Number(s.paid_amount))}</p>
+                        <p className="text-xs font-normal text-muted-foreground">
+                          Pagado: {fmtCLP(Number(s.paid_amount))}
+                        </p>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

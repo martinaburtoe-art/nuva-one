@@ -13,7 +13,12 @@ export type InventoryStatus = "out_of_stock" | "critical" | "reorder" | "healthy
 const nonNegative = (value: number | null | undefined) => Math.max(0, Number(value ?? 0));
 
 export function getAvailableStock(product: InventoryMetricInput) {
-  return Math.max(0, nonNegative(product.stock) - nonNegative(product.reserved_stock) - nonNegative(product.blocked_stock));
+  return Math.max(
+    0,
+    nonNegative(product.stock) -
+      nonNegative(product.reserved_stock) -
+      nonNegative(product.blocked_stock),
+  );
 }
 
 export function getProjectedStock(product: InventoryMetricInput) {
@@ -32,7 +37,10 @@ export function getInventoryStatus(product: InventoryMetricInput): InventoryStat
 }
 
 export function getSuggestedReplenishment(product: InventoryMetricInput) {
-  const target = nonNegative(product.max_stock) || nonNegative(product.reorder_point) || nonNegative(product.low_stock_threshold);
+  const target =
+    nonNegative(product.max_stock) ||
+    nonNegative(product.reorder_point) ||
+    nonNegative(product.low_stock_threshold);
   return Math.max(0, target - getProjectedStock(product));
 }
 

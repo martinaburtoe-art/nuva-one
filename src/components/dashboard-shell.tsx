@@ -119,7 +119,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
-            {!collapsed && <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">Nüva One</span>}
+            {!collapsed && (
+              <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
+                Nüva One
+              </span>
+            )}
           </Link>
         </div>
 
@@ -132,7 +136,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                     <Building2 className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-sidebar-foreground">{active?.name ?? "Sin negocio"}</div>
+                    <div className="truncate text-sm font-medium text-sidebar-foreground">
+                      {active?.name ?? "Sin negocio"}
+                    </div>
                     <div className="truncate text-xs text-muted-foreground">{active?.industry}</div>
                   </div>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -149,7 +155,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
                   <Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate({ to: "/select-business" })}>Ver todos</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate({ to: "/select-business" })}>
+                  Ver todos
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -181,7 +189,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 to="/owner"
                 className={cn(
                   "group flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm transition-all",
-                  pathname === "/owner" ? "text-primary" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                  pathname === "/owner"
+                    ? "text-primary"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                 )}
               >
                 <ShieldCheck className="h-4 w-4 shrink-0" />
@@ -192,8 +202,18 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="border-t border-sidebar-border p-2">
-          <button onClick={() => setCollapsed((c) => !c)} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground">
-            {collapsed ? <ChevronsRight className="h-4 w-4" /> : <><ChevronsLeft className="h-4 w-4" /><span>Colapsar</span></>}
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            {collapsed ? (
+              <ChevronsRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronsLeft className="h-4 w-4" />
+                <span>Colapsar</span>
+              </>
+            )}
           </button>
         </div>
       </aside>
@@ -201,20 +221,42 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur md:gap-3 md:px-6">
           <Link to="/dashboard" className="flex shrink-0 items-center gap-2 md:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
+            </div>
           </Link>
-          <div className="hidden max-w-md flex-1 md:block"><GlobalSearch visibleNav={visibleNav} /></div>
-          <div className="min-w-0 flex-1 truncate text-sm font-medium md:hidden">{active?.name ?? "Nüva One"}</div>
-          <Button variant="ghost" size="icon" onClick={() => toast.info("No tienes notificaciones nuevas")}><Bell className="h-4 w-4" /></Button>
+          <div className="hidden max-w-md flex-1 md:block">
+            <GlobalSearch visibleNav={visibleNav} />
+          </div>
+          <div className="min-w-0 flex-1 truncate text-sm font-medium md:hidden">
+            {active?.name ?? "Nüva One"}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => toast.info("No tienes notificaciones nuevas")}
+          >
+            <Bell className="h-4 w-4" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">U</button>
+              <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">
+                U
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}><Settings className="mr-2 h-4 w-4" /> Configuración</DropdownMenuItem>
-              {myRole === "owner" && <DropdownMenuItem onClick={() => navigate({ to: "/owner" })}><ShieldCheck className="mr-2 h-4 w-4" /> Command Center</DropdownMenuItem>}
+              <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+                <Settings className="mr-2 h-4 w-4" /> Configuración
+              </DropdownMenuItem>
+              {myRole === "owner" && (
+                <DropdownMenuItem onClick={() => navigate({ to: "/owner" })}>
+                  <ShieldCheck className="mr-2 h-4 w-4" /> Command Center
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}><LogOut className="mr-2 h-4 w-4" /> Cerrar sesión</DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
@@ -227,34 +269,103 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center border-t bg-background/95 backdrop-blur md:hidden">
         {mobilePrimaryNav.map((item) => {
           const isActive = pathname === item.to;
-          return <Link key={item.to} to={item.to} className={cn("flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]", isActive ? "text-primary" : "text-muted-foreground")}><item.icon className="h-5 w-5" />{item.label}</Link>;
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]",
+                isActive ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </Link>
+          );
         })}
         <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetTrigger asChild><button className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground"><Menu className="h-5 w-5" />Más</button></SheetTrigger>
+          <SheetTrigger asChild>
+            <button className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground">
+              <Menu className="h-5 w-5" />
+              Más
+            </button>
+          </SheetTrigger>
           <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-2xl">
             <div className="mb-2 mt-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex w-full items-center gap-2 rounded-lg border p-3 text-left"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-primary text-primary-foreground"><Building2 className="h-4 w-4" /></div><div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{active?.name ?? "Sin negocio"}</div><div className="truncate text-xs text-muted-foreground">{active?.industry}</div></div><ChevronDown className="h-4 w-4 text-muted-foreground" /></button>
+                  <button className="flex w-full items-center gap-2 rounded-lg border p-3 text-left">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-primary text-primary-foreground">
+                      <Building2 className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">
+                        {active?.name ?? "Sin negocio"}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {active?.industry}
+                      </div>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuLabel>Tus negocios</DropdownMenuLabel>
-                  {businesses.map((b) => <DropdownMenuItem key={b.id} onClick={() => setActiveId(b.id)}><Building2 className="mr-2 h-4 w-4" /> {b.name}</DropdownMenuItem>)}
+                  {businesses.map((b) => (
+                    <DropdownMenuItem key={b.id} onClick={() => setActiveId(b.id)}>
+                      <Building2 className="mr-2 h-4 w-4" /> {b.name}
+                    </DropdownMenuItem>
+                  ))}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}><Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
+                    <Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
             <div className="grid grid-cols-3 gap-2 py-2">
-              {mobileMoreNav.map((item) => <Link key={item.to} to={item.to} onClick={() => setMoreOpen(false)} className={cn("flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs", pathname === item.to ? "border-primary text-primary" : "text-muted-foreground")}><item.icon className="h-5 w-5" /><span className="text-center leading-tight">{item.label}</span></Link>)}
-              {myRole === "owner" && <Link to="/owner" onClick={() => setMoreOpen(false)} className={cn("flex flex-col items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs", pathname === "/owner" ? "border-primary text-primary" : "text-muted-foreground")}><ShieldCheck className="h-5 w-5" /><span className="text-center leading-tight">Owner</span></Link>}
-              <button onClick={logout} className="flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs text-destructive"><LogOut className="h-5 w-5" />Cerrar sesión</button>
+              {mobileMoreNav.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMoreOpen(false)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs",
+                    pathname === item.to ? "border-primary text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-center leading-tight">{item.label}</span>
+                </Link>
+              ))}
+              {myRole === "owner" && (
+                <Link
+                  to="/owner"
+                  onClick={() => setMoreOpen(false)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs",
+                    pathname === "/owner" ? "border-primary text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  <ShieldCheck className="h-5 w-5" />
+                  <span className="text-center leading-tight">Owner</span>
+                </Link>
+              )}
+              <button
+                onClick={logout}
+                className="flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs text-destructive"
+              >
+                <LogOut className="h-5 w-5" />
+                Cerrar sesión
+              </button>
             </div>
           </SheetContent>
         </Sheet>
       </nav>
 
-      <div className="hidden md:block"><AiChatBubble /></div>
+      <div className="hidden md:block">
+        <AiChatBubble />
+      </div>
     </div>
   );
 }
@@ -262,10 +373,17 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 function TrialExpiredScreen({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent"><Lock className="h-6 w-6 text-primary" /></div>
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent">
+        <Lock className="h-6 w-6 text-primary" />
+      </div>
       <h2 className="text-xl font-bold">Tu prueba gratuita de 15 días terminó</h2>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">Actualiza a Pro para seguir usando Nüva One sin interrupciones — mantienes todos tus datos tal como los dejaste.</p>
-      <Button className="mt-5" onClick={() => navigate({ to: "/settings" })}>Actualizar a Pro — $29.990/mes</Button>
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+        Actualiza a Pro para seguir usando Nüva One sin interrupciones — mantienes todos tus datos
+        tal como los dejaste.
+      </p>
+      <Button className="mt-5" onClick={() => navigate({ to: "/settings" })}>
+        Actualizar a Pro — $29.990/mes
+      </Button>
     </div>
   );
 }

@@ -5,7 +5,13 @@ describe("buildNuvaActionCenter", () => {
   it("prioritizes critical signals", () => {
     const actions = buildNuvaActionCenter([
       { id: "info", severity: "info", title: "Info", description: "x" },
-      { id: "critical", severity: "critical", title: "Critical", description: "x", recommendation: "Actuar" },
+      {
+        id: "critical",
+        severity: "critical",
+        title: "Critical",
+        description: "x",
+        recommendation: "Actuar",
+      },
       { id: "warning", severity: "warning", title: "Warning", description: "x" },
     ]);
     expect(actions[0].id).toBe("critical");
@@ -13,7 +19,12 @@ describe("buildNuvaActionCenter", () => {
   });
 
   it("limits the list and keeps opportunities actionable", () => {
-    const signals = Array.from({ length: 8 }, (_, i) => ({ id: `s-${i}`, severity: "opportunity" as const, title: `Opportunity ${i}`, description: "Potential improvement" }));
+    const signals = Array.from({ length: 8 }, (_, i) => ({
+      id: `s-${i}`,
+      severity: "opportunity" as const,
+      title: `Opportunity ${i}`,
+      description: "Potential improvement",
+    }));
     const actions = buildNuvaActionCenter(signals, 3);
     expect(actions).toHaveLength(3);
     expect(actions[0].priority).toBe("opportunity");
@@ -23,7 +34,12 @@ describe("buildNuvaActionCenter", () => {
   it("maps operational signals to explicit destinations and CTAs", () => {
     const actions = buildNuvaActionCenter([
       { id: "low-stock", severity: "critical", title: "Stock bajo", description: "2 SKU" },
-      { id: "receivables-overdue", severity: "warning", title: "Cobranza", description: "$100.000" },
+      {
+        id: "receivables-overdue",
+        severity: "warning",
+        title: "Cobranza",
+        description: "$100.000",
+      },
       { id: "purchase-pressure", severity: "warning", title: "Compras", description: "Alta" },
       { id: "cash-burn", severity: "critical", title: "Caja", description: "Negativa" },
     ]);

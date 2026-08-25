@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CHILE_COMPLIANCE_REGISTRY, getChileComplianceRadar, getUpcomingChileCompliance } from "./nuva-compliance";
+import {
+  CHILE_COMPLIANCE_REGISTRY,
+  getChileComplianceRadar,
+  getUpcomingChileCompliance,
+} from "./nuva-compliance";
 
 describe("Nüva Chile compliance radar", () => {
   it("contains the critical SII certification control", () => {

@@ -1,4 +1,8 @@
-import { calculateRegulatoryReadiness, getRegulatoryRules, type RegulatorySeverity } from "./nuva-regulatory-radar";
+import {
+  calculateRegulatoryReadiness,
+  getRegulatoryRules,
+  type RegulatorySeverity,
+} from "./nuva-regulatory-radar";
 
 export type RegulatoryAction = {
   id: string;
@@ -28,8 +32,14 @@ const impact: Record<RegulatorySeverity, number> = {
 };
 
 /** Converts regulatory gaps into explicit, user-confirmed work items. It never executes regulated operations. */
-export function buildRegulatoryActions(implementedCapabilities: Iterable<string>, now = new Date()): RegulatoryAction[] {
-  const { results } = calculateRegulatoryReadiness(implementedCapabilities, getRegulatoryRules(now));
+export function buildRegulatoryActions(
+  implementedCapabilities: Iterable<string>,
+  now = new Date(),
+): RegulatoryAction[] {
+  const { results } = calculateRegulatoryReadiness(
+    implementedCapabilities,
+    getRegulatoryRules(now),
+  );
   return results
     .filter(({ missing }) => missing.length > 0)
     .map(({ rule, readiness, missing }) => ({

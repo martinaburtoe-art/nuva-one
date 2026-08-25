@@ -31,7 +31,8 @@ export function buildCFOInsights(input: CFOInput): CFOInsight[] {
   const overdueRate = input.receivables > 0 ? input.overdueReceivables / input.receivables : 0;
   const grossMargin = input.revenue > 0 ? input.grossProfit / input.revenue : 0;
   const operatingResult = input.grossProfit - input.operatingExpenses;
-  const inventoryMonths = input.monthlyInventoryCost > 0 ? input.inventoryValue / input.monthlyInventoryCost : 0;
+  const inventoryMonths =
+    input.monthlyInventoryCost > 0 ? input.inventoryValue / input.monthlyInventoryCost : 0;
 
   if (input.projectedCash30d < 0) {
     insights.push({
@@ -41,7 +42,8 @@ export function buildCFOInsights(input: CFOInput): CFOInsight[] {
       finding: `La caja proyectada a 30 días es ${Math.round(input.projectedCash30d).toLocaleString("es-CL")} CLP.`,
       metric: Math.round(input.projectedCash30d),
       unit: "CLP",
-      action: "Priorizar cobranza, revisar egresos no críticos y simular escenarios antes de comprometer nueva inversión.",
+      action:
+        "Priorizar cobranza, revisar egresos no críticos y simular escenarios antes de comprometer nueva inversión.",
     });
   }
 

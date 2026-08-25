@@ -35,7 +35,12 @@ export const Route = createFileRoute("/api/billing/subscribe/callback")({
         if (!business?.flow_customer_id) return redirect("error", "Suscripción no válida");
 
         const status = await getCardRegisterStatus(creds, token);
-        if (!status.ok || !status.active || !status.customerId || status.customerId !== business.flow_customer_id) {
+        if (
+          !status.ok ||
+          !status.active ||
+          !status.customerId ||
+          status.customerId !== business.flow_customer_id
+        ) {
           await supabaseAdmin
             .from("businesses")
             .update({ flow_card_status: "failed" })
@@ -91,7 +96,10 @@ export const Route = createFileRoute("/api/billing/subscribe/callback")({
           .eq("id", businessId)
           .eq("flow_customer_id", status.customerId);
 
-        return redirect("success", `Tarjeta registrada. Plan Pro: ${NUVA_PLANS.pro.monthlyPriceClp} CLP/mes.`);
+        return redirect(
+          "success",
+          `Tarjeta registrada. Plan Pro: ${NUVA_PLANS.pro.monthlyPriceClp} CLP/mes.`,
+        );
       },
     },
   },

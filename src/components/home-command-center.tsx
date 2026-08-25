@@ -1,29 +1,343 @@
 import { useEffect, useState } from "react";
-import { Activity, BarChart3, Boxes, CircleDollarSign, Gauge, MessageCircle, ScanLine, Target, TrendingUp, Users, Zap } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  Boxes,
+  CircleDollarSign,
+  Gauge,
+  MessageCircle,
+  ScanLine,
+  Target,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
 
 const modules = [
-  { id: "score", label: "Nüva Score", eyebrow: "ENTIENDE", icon: Gauge, title: "La salud de tu negocio, de un vistazo.", copy: "Convierte tus principales indicadores en una lectura simple para saber cómo está tu negocio.", stat: "86", statLabel: "Salud del negocio", trend: "+6,4%", visual: "score" },
-  { id: "radar", label: "Nüva Radar", eyebrow: "DETECTA", icon: Target, title: "Nüva encuentra lo que merece tu atención.", copy: "Visualiza señales, oportunidades y puntos de atención antes de que se pierdan entre los datos.", stat: "3", statLabel: "Señales detectadas", trend: "En análisis", visual: "radar" },
-  { id: "inventory", label: "Inventario + Scanner", eyebrow: "GESTIONA", icon: ScanLine, title: "Escanea. Actualiza. Controla.", copy: "Convierte tu celular en una herramienta de inventario y sigue tus productos desde un solo lugar.", stat: "24 → 25", statLabel: "Stock actualizado", trend: "SKU-1048", visual: "scanner" },
-  { id: "finance", label: "Finanzas", eyebrow: "CONTROLA", icon: CircleDollarSign, title: "Entiende tus números sin perderte en ellos.", copy: "Visualiza ventas, margen y caja para comprender cómo se mueve tu negocio.", stat: "$3,24 M", statLabel: "Ventas demo", trend: "+12,4%", visual: "finance" },
-  { id: "crm", label: "Clientes", eyebrow: "CONOCE", icon: Users, title: "Tus clientes también cuentan una historia.", copy: "Comprende tus clientes y convierte información comercial en mejores decisiones.", stat: "87", statLabel: "Clientes demo", trend: "+14%", visual: "crm" },
-  { id: "copilot", label: "Nüva Copilot", eyebrow: "DECIDE", icon: MessageCircle, title: "Pregúntale a Nüva qué está pasando.", copy: "Lleva los datos a una conversación y obtén contexto para decidir qué hacer después.", stat: "IA", statLabel: "Lista para ayudarte", trend: "● Activa", visual: "copilot" },
+  {
+    id: "score",
+    label: "Nüva Score",
+    eyebrow: "ENTIENDE",
+    icon: Gauge,
+    title: "La salud de tu negocio, de un vistazo.",
+    copy: "Convierte tus principales indicadores en una lectura simple para saber cómo está tu negocio.",
+    stat: "86",
+    statLabel: "Salud del negocio",
+    trend: "+6,4%",
+    visual: "score",
+  },
+  {
+    id: "radar",
+    label: "Nüva Radar",
+    eyebrow: "DETECTA",
+    icon: Target,
+    title: "Nüva encuentra lo que merece tu atención.",
+    copy: "Visualiza señales, oportunidades y puntos de atención antes de que se pierdan entre los datos.",
+    stat: "3",
+    statLabel: "Señales detectadas",
+    trend: "En análisis",
+    visual: "radar",
+  },
+  {
+    id: "inventory",
+    label: "Inventario + Scanner",
+    eyebrow: "GESTIONA",
+    icon: ScanLine,
+    title: "Escanea. Actualiza. Controla.",
+    copy: "Convierte tu celular en una herramienta de inventario y sigue tus productos desde un solo lugar.",
+    stat: "24 → 25",
+    statLabel: "Stock actualizado",
+    trend: "SKU-1048",
+    visual: "scanner",
+  },
+  {
+    id: "finance",
+    label: "Finanzas",
+    eyebrow: "CONTROLA",
+    icon: CircleDollarSign,
+    title: "Entiende tus números sin perderte en ellos.",
+    copy: "Visualiza ventas, margen y caja para comprender cómo se mueve tu negocio.",
+    stat: "$3,24 M",
+    statLabel: "Ventas demo",
+    trend: "+12,4%",
+    visual: "finance",
+  },
+  {
+    id: "crm",
+    label: "Clientes",
+    eyebrow: "CONOCE",
+    icon: Users,
+    title: "Tus clientes también cuentan una historia.",
+    copy: "Comprende tus clientes y convierte información comercial en mejores decisiones.",
+    stat: "87",
+    statLabel: "Clientes demo",
+    trend: "+14%",
+    visual: "crm",
+  },
+  {
+    id: "copilot",
+    label: "Nüva Copilot",
+    eyebrow: "DECIDE",
+    icon: MessageCircle,
+    title: "Pregúntale a Nüva qué está pasando.",
+    copy: "Lleva los datos a una conversación y obtén contexto para decidir qué hacer después.",
+    stat: "IA",
+    statLabel: "Lista para ayudarte",
+    trend: "● Activa",
+    visual: "copilot",
+  },
 ] as const;
 
 function Visual({ type }: { type: string }) {
-  if (type === "score") return <div className="relative mx-auto flex h-48 w-48 items-center justify-center rounded-full border-[14px] border-primary/10 border-t-primary border-r-primary/50 shadow-[0_0_60px_hsl(var(--primary)/.18)]"><div className="text-center"><div className="text-5xl font-black tracking-tight">86</div><div className="mt-1 text-xs font-semibold text-primary">SALUDABLE</div></div></div>;
-  if (type === "radar") return <div className="relative mx-auto h-52 w-52 rounded-full border border-primary/30 bg-primary/[.025] shadow-[0_0_70px_hsl(var(--primary)/.12)]"><div className="absolute inset-[16%] rounded-full border border-primary/20" /><div className="absolute inset-[32%] rounded-full border border-primary/20" /><div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary/15" /><div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-primary/15" /><div className="absolute left-[68%] top-[30%] h-3 w-3 animate-pulse rounded-full bg-primary shadow-glow" /><div className="absolute left-[31%] top-[62%] h-2.5 w-2.5 animate-pulse rounded-full bg-primary/70" /><div className="absolute left-[55%] top-[72%] h-2 w-2 animate-pulse rounded-full bg-primary/50" /><div className="absolute inset-0 animate-spin rounded-full border-t border-primary/70" style={{ animationDuration: "4s" }} /></div>;
-  if (type === "scanner") return <div className="mx-auto w-52 rounded-[2rem] border-4 border-foreground/10 bg-background p-3 shadow-2xl"><div className="relative aspect-[9/15] overflow-hidden rounded-[1.4rem] bg-secondary/60"><div className="absolute inset-4 rounded-2xl border border-primary/40" /><div className="absolute left-4 right-4 top-1/2 h-0.5 animate-pulse bg-primary shadow-[0_0_18px_hsl(var(--primary)/.8)]" /><div className="absolute bottom-5 left-4 right-4 rounded-xl border bg-background/90 p-3 backdrop-blur"><div className="flex items-center gap-2 text-xs font-semibold"><span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> Código detectado</div><div className="mt-2 text-sm font-bold">SKU-1048</div><div className="text-[11px] text-muted-foreground">Stock 24 → 25 · ✓ actualizado</div></div></div></div>;
-  if (type === "finance") return <div className="mx-auto w-full max-w-md rounded-3xl border bg-background/80 p-5 shadow-xl"><div className="flex items-end justify-between"><div><div className="text-xs text-muted-foreground">Ventas</div><div className="mt-1 text-3xl font-black">$3,24 M</div></div><div className="text-sm font-bold text-primary">+12,4%</div></div><div className="mt-7 flex h-36 items-end gap-2">{[34,42,39,58,52,68,63,78,74,91,84,100].map((v, i) => <div key={i} className="flex-1 rounded-t-lg bg-gradient-primary/80 transition-all" style={{ height: `${v}%`, opacity: .35 + i / 20 }} />)}</div><div className="mt-4 grid grid-cols-2 gap-2"><div className="rounded-2xl border p-3"><div className="text-[11px] text-muted-foreground">Margen</div><div className="mt-1 font-bold">31,8%</div></div><div className="rounded-2xl border p-3"><div className="text-[11px] text-muted-foreground">Caja</div><div className="mt-1 font-bold">$1,24 M</div></div></div></div>;
-  if (type === "crm") return <div className="mx-auto w-full max-w-md space-y-3"><div className="grid grid-cols-3 gap-3"><div className="rounded-2xl border bg-background p-4 text-center"><Users className="mx-auto h-5 w-5 text-primary" /><div className="mt-2 text-2xl font-black">87</div><div className="text-[11px] text-muted-foreground">Clientes</div></div><div className="rounded-2xl border bg-background p-4 text-center"><TrendingUp className="mx-auto h-5 w-5 text-primary" /><div className="mt-2 text-2xl font-black">+14%</div><div className="text-[11px] text-muted-foreground">Tendencia</div></div><div className="rounded-2xl border bg-background p-4 text-center"><Activity className="mx-auto h-5 w-5 text-primary" /><div className="mt-2 text-2xl font-black">12</div><div className="text-[11px] text-muted-foreground">Recurrentes</div></div></div><div className="rounded-3xl border bg-background p-5"><div className="flex items-center gap-2 text-sm font-bold"><Users className="h-4 w-4 text-primary" /> Actividad de clientes</div><div className="mt-5 space-y-3">{["Cliente recurrente", "Nueva compra", "Cliente frecuente"].map((x, i) => <div key={x} className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-primary" /><span className="text-sm">{x}</span><span className="ml-auto text-xs text-muted-foreground">Hace {i + 1}h</span></div>)}</div></div></div>;
-  return <div className="mx-auto w-full max-w-md rounded-3xl border bg-background p-5 shadow-xl"><div className="flex items-center gap-2 text-xs font-semibold"><span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> Nüva Copilot · analizando</div><div className="mt-5 space-y-3"><div className="ml-auto max-w-[82%] rounded-2xl rounded-br-md bg-primary px-4 py-3 text-sm text-primary-foreground">¿Por qué bajó mi margen?</div><div className="max-w-[88%] rounded-2xl rounded-bl-md border bg-secondary/50 px-4 py-3 text-sm leading-relaxed">Nüva detectó que el margen de algunos productos disminuyó. Puedo ayudarte a identificar cuáles están afectando el resultado.</div><div className="flex gap-2"><span className="rounded-full border px-3 py-1.5 text-[11px]">Ver productos</span><span className="rounded-full border px-3 py-1.5 text-[11px]">Analizar margen</span></div></div></div>;
+  if (type === "score")
+    return (
+      <div className="relative mx-auto flex h-48 w-48 items-center justify-center rounded-full border-[14px] border-primary/10 border-t-primary border-r-primary/50 shadow-[0_0_60px_hsl(var(--primary)/.18)]">
+        <div className="text-center">
+          <div className="text-5xl font-black tracking-tight">86</div>
+          <div className="mt-1 text-xs font-semibold text-primary">SALUDABLE</div>
+        </div>
+      </div>
+    );
+  if (type === "radar")
+    return (
+      <div className="relative mx-auto h-52 w-52 rounded-full border border-primary/30 bg-primary/[.025] shadow-[0_0_70px_hsl(var(--primary)/.12)]">
+        <div className="absolute inset-[16%] rounded-full border border-primary/20" />
+        <div className="absolute inset-[32%] rounded-full border border-primary/20" />
+        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary/15" />
+        <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-primary/15" />
+        <div className="absolute left-[68%] top-[30%] h-3 w-3 animate-pulse rounded-full bg-primary shadow-glow" />
+        <div className="absolute left-[31%] top-[62%] h-2.5 w-2.5 animate-pulse rounded-full bg-primary/70" />
+        <div className="absolute left-[55%] top-[72%] h-2 w-2 animate-pulse rounded-full bg-primary/50" />
+        <div
+          className="absolute inset-0 animate-spin rounded-full border-t border-primary/70"
+          style={{ animationDuration: "4s" }}
+        />
+      </div>
+    );
+  if (type === "scanner")
+    return (
+      <div className="mx-auto w-52 rounded-[2rem] border-4 border-foreground/10 bg-background p-3 shadow-2xl">
+        <div className="relative aspect-[9/15] overflow-hidden rounded-[1.4rem] bg-secondary/60">
+          <div className="absolute inset-4 rounded-2xl border border-primary/40" />
+          <div className="absolute left-4 right-4 top-1/2 h-0.5 animate-pulse bg-primary shadow-[0_0_18px_hsl(var(--primary)/.8)]" />
+          <div className="absolute bottom-5 left-4 right-4 rounded-xl border bg-background/90 p-3 backdrop-blur">
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> Código detectado
+            </div>
+            <div className="mt-2 text-sm font-bold">SKU-1048</div>
+            <div className="text-[11px] text-muted-foreground">Stock 24 → 25 · ✓ actualizado</div>
+          </div>
+        </div>
+      </div>
+    );
+  if (type === "finance")
+    return (
+      <div className="mx-auto w-full max-w-md rounded-3xl border bg-background/80 p-5 shadow-xl">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-xs text-muted-foreground">Ventas</div>
+            <div className="mt-1 text-3xl font-black">$3,24 M</div>
+          </div>
+          <div className="text-sm font-bold text-primary">+12,4%</div>
+        </div>
+        <div className="mt-7 flex h-36 items-end gap-2">
+          {[34, 42, 39, 58, 52, 68, 63, 78, 74, 91, 84, 100].map((v, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-t-lg bg-gradient-primary/80 transition-all"
+              style={{ height: `${v}%`, opacity: 0.35 + i / 20 }}
+            />
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="rounded-2xl border p-3">
+            <div className="text-[11px] text-muted-foreground">Margen</div>
+            <div className="mt-1 font-bold">31,8%</div>
+          </div>
+          <div className="rounded-2xl border p-3">
+            <div className="text-[11px] text-muted-foreground">Caja</div>
+            <div className="mt-1 font-bold">$1,24 M</div>
+          </div>
+        </div>
+      </div>
+    );
+  if (type === "crm")
+    return (
+      <div className="mx-auto w-full max-w-md space-y-3">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl border bg-background p-4 text-center">
+            <Users className="mx-auto h-5 w-5 text-primary" />
+            <div className="mt-2 text-2xl font-black">87</div>
+            <div className="text-[11px] text-muted-foreground">Clientes</div>
+          </div>
+          <div className="rounded-2xl border bg-background p-4 text-center">
+            <TrendingUp className="mx-auto h-5 w-5 text-primary" />
+            <div className="mt-2 text-2xl font-black">+14%</div>
+            <div className="text-[11px] text-muted-foreground">Tendencia</div>
+          </div>
+          <div className="rounded-2xl border bg-background p-4 text-center">
+            <Activity className="mx-auto h-5 w-5 text-primary" />
+            <div className="mt-2 text-2xl font-black">12</div>
+            <div className="text-[11px] text-muted-foreground">Recurrentes</div>
+          </div>
+        </div>
+        <div className="rounded-3xl border bg-background p-5">
+          <div className="flex items-center gap-2 text-sm font-bold">
+            <Users className="h-4 w-4 text-primary" /> Actividad de clientes
+          </div>
+          <div className="mt-5 space-y-3">
+            {["Cliente recurrente", "Nueva compra", "Cliente frecuente"].map((x, i) => (
+              <div key={x} className="flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-primary" />
+                <span className="text-sm">{x}</span>
+                <span className="ml-auto text-xs text-muted-foreground">Hace {i + 1}h</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  return (
+    <div className="mx-auto w-full max-w-md rounded-3xl border bg-background p-5 shadow-xl">
+      <div className="flex items-center gap-2 text-xs font-semibold">
+        <span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> Nüva Copilot · analizando
+      </div>
+      <div className="mt-5 space-y-3">
+        <div className="ml-auto max-w-[82%] rounded-2xl rounded-br-md bg-primary px-4 py-3 text-sm text-primary-foreground">
+          ¿Por qué bajó mi margen?
+        </div>
+        <div className="max-w-[88%] rounded-2xl rounded-bl-md border bg-secondary/50 px-4 py-3 text-sm leading-relaxed">
+          Nüva detectó que el margen de algunos productos disminuyó. Puedo ayudarte a identificar
+          cuáles están afectando el resultado.
+        </div>
+        <div className="flex gap-2">
+          <span className="rounded-full border px-3 py-1.5 text-[11px]">Ver productos</span>
+          <span className="rounded-full border px-3 py-1.5 text-[11px]">Analizar margen</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function HomeCommandCenter() {
   const [active, setActive] = useState(0);
   const [auto, setAuto] = useState(true);
-  useEffect(() => { if (!auto) return; const id = window.setInterval(() => setActive((v) => (v + 1) % modules.length), 4800); return () => window.clearInterval(id); }, [auto]);
+  useEffect(() => {
+    if (!auto) return;
+    const id = window.setInterval(() => setActive((v) => (v + 1) % modules.length), 4800);
+    return () => window.clearInterval(id);
+  }, [auto]);
   const item = modules[active];
   const Icon = item.icon;
-  return <section id="ecosystem" className="relative overflow-hidden border-y bg-secondary/10 py-20 sm:py-28"><div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/.12),transparent_45%)]" /><div className="relative mx-auto max-w-7xl px-4 sm:px-6"><div className="mx-auto max-w-3xl text-center"><div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary"><Zap className="h-3.5 w-3.5" /> NÜVA ONE · PRODUCT EXPERIENCE</div><h2 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">Todo tu negocio.<br /><span className="bg-gradient-primary bg-clip-text text-transparent">Una sola experiencia.</span></h2><p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">Explora una pequeña muestra de lo que Nüva One reúne para gestionar, entender y hacer crecer tu negocio.</p></div><div className="mt-10 flex snap-x gap-2 overflow-x-auto pb-3 scrollbar-none sm:flex-wrap sm:justify-center sm:overflow-visible">{modules.map((m, i) => { const M = m.icon; return <button key={m.id} onClick={() => { setActive(i); setAuto(false); }} className={`flex shrink-0 snap-start items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-all duration-300 ${active === i ? "border-primary/40 bg-primary text-primary-foreground shadow-glow" : "bg-background/70 text-muted-foreground hover:border-primary/30 hover:text-foreground"}`} aria-pressed={active === i}><M className="h-3.5 w-3.5" />{m.label}</button>; })}</div><div className="mt-6 grid overflow-hidden rounded-[2rem] border bg-card/80 shadow-[0_35px_120px_-45px_hsl(var(--primary)/.5)] backdrop-blur-xl lg:grid-cols-[.72fr_1.28fr]"><div className="border-b p-6 sm:p-9 lg:border-b-0 lg:border-r"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm"><Icon className="h-6 w-6" /></div><div><div className="text-[11px] font-bold tracking-wider text-primary">{item.eyebrow}</div><div className="text-sm font-bold">{item.label}</div></div></div><h3 className="mt-7 text-2xl font-black tracking-tight sm:text-3xl">{item.title}</h3><p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">{item.copy}</p><div className="mt-7 flex items-end gap-8"><div><div className="text-3xl font-black">{item.stat}</div><div className="mt-1 text-xs text-muted-foreground">{item.statLabel}</div></div><div className="pb-1 text-xs font-bold text-primary">{item.trend}</div></div><div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground"><span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> Demostración visual · datos de ejemplo</div></div><div className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-secondary/20 p-6 sm:p-10"><div key={item.id} className="w-full animate-fade-in-up"><Visual type={item.visual} /></div></div></div><div className="mt-6 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl border bg-background/70 p-4"><div className="text-xs font-bold text-primary">GESTIONA</div><div className="mt-1 text-sm font-semibold">Tus operaciones.</div></div><div className="rounded-2xl border bg-background/70 p-4"><div className="text-xs font-bold text-primary">ENTIENDE</div><div className="mt-1 text-sm font-semibold">Lo que está pasando.</div></div><div className="rounded-2xl border bg-background/70 p-4"><div className="text-xs font-bold text-primary">DECIDE</div><div className="mt-1 text-sm font-semibold">Qué hacer después.</div></div></div><div className="mx-auto mt-9 max-w-2xl text-center"><p className="text-sm text-muted-foreground">Y esto es solo una parte de Nüva One.</p><div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row"><a href="/auth?mode=signup" className="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-elegant transition-transform hover:-translate-y-0.5">Probar Nüva One gratis</a><a href="#experience" className="rounded-xl border bg-background px-6 py-3 text-sm font-bold transition-colors hover:bg-secondary">Explorar cómo funciona</a></div></div></div></section>;
+  return (
+    <section
+      id="ecosystem"
+      className="relative overflow-hidden border-y bg-secondary/10 py-20 sm:py-28"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/.12),transparent_45%)]" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary">
+            <Zap className="h-3.5 w-3.5" /> NÜVA ONE · PRODUCT EXPERIENCE
+          </div>
+          <h2 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
+            Todo tu negocio.
+            <br />
+            <span className="bg-gradient-primary bg-clip-text text-transparent">
+              Una sola experiencia.
+            </span>
+          </h2>
+          <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Explora una pequeña muestra de lo que Nüva One reúne para gestionar, entender y hacer
+            crecer tu negocio.
+          </p>
+        </div>
+        <div className="mt-10 flex snap-x gap-2 overflow-x-auto pb-3 scrollbar-none sm:flex-wrap sm:justify-center sm:overflow-visible">
+          {modules.map((m, i) => {
+            const M = m.icon;
+            return (
+              <button
+                key={m.id}
+                onClick={() => {
+                  setActive(i);
+                  setAuto(false);
+                }}
+                className={`flex shrink-0 snap-start items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-all duration-300 ${active === i ? "border-primary/40 bg-primary text-primary-foreground shadow-glow" : "bg-background/70 text-muted-foreground hover:border-primary/30 hover:text-foreground"}`}
+                aria-pressed={active === i}
+              >
+                <M className="h-3.5 w-3.5" />
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-6 grid overflow-hidden rounded-[2rem] border bg-card/80 shadow-[0_35px_120px_-45px_hsl(var(--primary)/.5)] backdrop-blur-xl lg:grid-cols-[.72fr_1.28fr]">
+          <div className="border-b p-6 sm:p-9 lg:border-b-0 lg:border-r">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+                <Icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold tracking-wider text-primary">
+                  {item.eyebrow}
+                </div>
+                <div className="text-sm font-bold">{item.label}</div>
+              </div>
+            </div>
+            <h3 className="mt-7 text-2xl font-black tracking-tight sm:text-3xl">{item.title}</h3>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {item.copy}
+            </p>
+            <div className="mt-7 flex items-end gap-8">
+              <div>
+                <div className="text-3xl font-black">{item.stat}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{item.statLabel}</div>
+              </div>
+              <div className="pb-1 text-xs font-bold text-primary">{item.trend}</div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> Demostración visual
+              · datos de ejemplo
+            </div>
+          </div>
+          <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-secondary/20 p-6 sm:p-10">
+            <div key={item.id} className="w-full animate-fade-in-up">
+              <Visual type={item.visual} />
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border bg-background/70 p-4">
+            <div className="text-xs font-bold text-primary">GESTIONA</div>
+            <div className="mt-1 text-sm font-semibold">Tus operaciones.</div>
+          </div>
+          <div className="rounded-2xl border bg-background/70 p-4">
+            <div className="text-xs font-bold text-primary">ENTIENDE</div>
+            <div className="mt-1 text-sm font-semibold">Lo que está pasando.</div>
+          </div>
+          <div className="rounded-2xl border bg-background/70 p-4">
+            <div className="text-xs font-bold text-primary">DECIDE</div>
+            <div className="mt-1 text-sm font-semibold">Qué hacer después.</div>
+          </div>
+        </div>
+        <div className="mx-auto mt-9 max-w-2xl text-center">
+          <p className="text-sm text-muted-foreground">Y esto es solo una parte de Nüva One.</p>
+          <div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row">
+            <a
+              href="/auth?mode=signup"
+              className="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-elegant transition-transform hover:-translate-y-0.5"
+            >
+              Probar Nüva One gratis
+            </a>
+            <a
+              href="#experience"
+              className="rounded-xl border bg-background px-6 py-3 text-sm font-bold transition-colors hover:bg-secondary"
+            >
+              Explorar cómo funciona
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }

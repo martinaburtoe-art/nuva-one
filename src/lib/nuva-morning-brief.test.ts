@@ -7,7 +7,13 @@ describe("Nüva Morning Brief", () => {
       businessScore: 48,
       priorities: [
         { id: "a", severity: "medium", title: "A", summary: "A", action: "A" },
-        { id: "b", severity: "critical", title: "Liquidez", summary: "Caja en riesgo", action: "Revisar caja" },
+        {
+          id: "b",
+          severity: "critical",
+          title: "Liquidez",
+          summary: "Caja en riesgo",
+          action: "Revisar caja",
+        },
         { id: "c", severity: "high", title: "C", summary: "C", action: "C" },
         { id: "d", severity: "low", title: "D", summary: "D", action: "D" },
       ],

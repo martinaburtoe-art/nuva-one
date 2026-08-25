@@ -17,19 +17,21 @@ describe("LiveProductScanner integration contracts", () => {
   });
 
   it("advertises the barcode formats supported by the unified scan engine", () => {
-    expect(LiveScanner.supportedFormats()).toEqual(expect.arrayContaining([
-      "ean_13",
-      "ean_8",
-      "upc_a",
-      "upc_e",
-      "code_128",
-      "code_39",
-      "itf",
-      "qr_code",
-      "data_matrix",
-      "aztec",
-      "pdf417",
-    ]));
+    expect(LiveScanner.supportedFormats()).toEqual(
+      expect.arrayContaining([
+        "ean_13",
+        "ean_8",
+        "upc_a",
+        "upc_e",
+        "code_128",
+        "code_39",
+        "itf",
+        "qr_code",
+        "data_matrix",
+        "aztec",
+        "pdf417",
+      ]),
+    );
   });
 
   it("keeps the supported format list free of duplicates", () => {

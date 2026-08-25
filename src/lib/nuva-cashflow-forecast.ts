@@ -1,4 +1,9 @@
-export type CashflowItem = { amount: number; dueDate: string; kind: "inflow" | "outflow"; status?: "open" | "paid" };
+export type CashflowItem = {
+  amount: number;
+  dueDate: string;
+  kind: "inflow" | "outflow";
+  status?: "open" | "paid";
+};
 
 export type CashflowForecast = {
   currentBalance: number;
@@ -38,7 +43,12 @@ export function buildCashflowForecast(input: {
   }
 
   const projected = balance;
-  const risk = projected < 0 || minimum < 0 ? "high" : projected < input.currentBalance * 0.25 ? "medium" : "low";
+  const risk =
+    projected < 0 || minimum < 0
+      ? "high"
+      : projected < input.currentBalance * 0.25
+        ? "medium"
+        : "low";
 
   if (risk === "high") {
     actions.push("Priorizar cobranza de cuentas por cobrar vencidas");

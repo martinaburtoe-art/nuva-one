@@ -4,7 +4,15 @@ import { createProductFromScanner } from "./scanner-product-onboarding";
 describe("createProductFromScanner", () => {
   it("maps the onboarding payload to the atomic RPC", async () => {
     const rpc = vi.fn().mockResolvedValue({
-      data: [{ product_id: "p1", sku: "NVA-PRD-0001", code: "036000291452", stock_before: 0, stock_after: 4 }],
+      data: [
+        {
+          product_id: "p1",
+          sku: "NVA-PRD-0001",
+          code: "036000291452",
+          stock_before: 0,
+          stock_after: 4,
+        },
+      ],
       error: null,
     });
     const client = { rpc } as never;
@@ -39,12 +47,28 @@ describe("createProductFromScanner", () => {
   });
 
   it("surfaces RPC failures", async () => {
-    const client = { rpc: vi.fn().mockResolvedValue({ data: null, error: new Error("RPC failed") }) } as never;
-    await expect(createProductFromScanner(client, { businessId: "b1", name: "Demo", code: "036000291452", codeType: "upc_a" })).rejects.toThrow("RPC failed");
+    const client = {
+      rpc: vi.fn().mockResolvedValue({ data: null, error: new Error("RPC failed") }),
+    } as never;
+    await expect(
+      createProductFromScanner(client, {
+        businessId: "b1",
+        name: "Demo",
+        code: "036000291452",
+        codeType: "upc_a",
+      }),
+    ).rejects.toThrow("RPC failed");
   });
 
   it("rejects an empty RPC result", async () => {
     const client = { rpc: vi.fn().mockResolvedValue({ data: [], error: null }) } as never;
-    await expect(createProductFromScanner(client, { businessId: "b1", name: "Demo", code: "036000291452", codeType: "upc_a" })).rejects.toThrow("producto válido");
+    await expect(
+      createProductFromScanner(client, {
+        businessId: "b1",
+        name: "Demo",
+        code: "036000291452",
+        codeType: "upc_a",
+      }),
+    ).rejects.toThrow("producto válido");
   });
 });

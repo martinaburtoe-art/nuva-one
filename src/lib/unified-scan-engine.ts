@@ -1,10 +1,13 @@
-import { LiveScanner, type LiveScanResult, type LiveScannerOptions } from '@/lib/live-scanner';
+import { LiveScanner, type LiveScanResult, type LiveScannerOptions } from "@/lib/live-scanner";
 
-export type ScanInput = 'camera' | 'hid' | 'native';
+export type ScanInput = "camera" | "hid" | "native";
 export type UnifiedScanResult = LiveScanResult & { input: ScanInput; timestamp: number };
-export type UnifiedScanEngineOptions = Omit<LiveScannerOptions, 'onDetect'> & { onDetect: (result: UnifiedScanResult) => void; hidEnabled?: boolean };
+export type UnifiedScanEngineOptions = Omit<LiveScannerOptions, "onDetect"> & {
+  onDetect: (result: UnifiedScanResult) => void;
+  hidEnabled?: boolean;
+};
 
-const HID_TERMINATORS = new Set(['Enter', 'Tab']);
+const HID_TERMINATORS = new Set(["Enter", "Tab"]);
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 const HID_GAP_MS = 180;
 const DUPLICATE_WINDOW_MS = 900;
@@ -14,16 +17,19 @@ const VIDEO_READY_TIMEOUT_MS = 2500;
 export class UnifiedScanEngine {
   private readonly scanner: LiveScanner;
   private readonly options: UnifiedScanEngineOptions;
-  private hidBuffer = '';
+  private hidBuffer = "";
   private hidStartedAt = 0;
   private hidListener: ((event: KeyboardEvent) => void) | null = null;
   private stopped = true;
-  private lastEmittedCode = '';
+  private lastEmittedCode = "";
   private lastEmittedAt = 0;
 
   constructor(options: UnifiedScanEngineOptions) {
     this.options = { hidEnabled: false, ...options };
-    this.scanner = new LiveScanner({ ...options, onDetect: (result) => this.emit(result, 'camera') });
+    this.scanner = new LiveScanner({
+      ...options,
+      onDetect: (result) => this.emit(result, "camera"),
+    });
   }
 
   private emit(result: LiveScanResult, input: ScanInput) {
@@ -42,16 +48,16 @@ export class UnifiedScanEngine {
     if (target?.matches(EDITABLE_SELECTOR)) return;
     const now = Date.now();
     if (this.hidStartedAt && now - this.hidStartedAt > HID_GAP_MS) {
-      this.hidBuffer = '';
+      this.hidBuffer = "";
       this.hidStartedAt = 0;
     }
     if (HID_TERMINATORS.has(event.key)) {
       const value = this.hidBuffer.trim();
-      this.hidBuffer = '';
+      this.hidBuffer = "";
       this.hidStartedAt = 0;
       if (value.length >= 3) {
         event.preventDefault();
-        this.emit({ rawValue: value }, 'hid');
+        this.emit({ rawValue: value }, "hid");
       }
       return;
     }
@@ -61,15 +67,16 @@ export class UnifiedScanEngine {
   };
 
   startHid() {
-    if (!this.options.hidEnabled || typeof window === 'undefined' || this.hidListener) return;
+    if (!this.options.hidEnabled || typeof window === "undefined" || this.hidListener) return;
     this.hidListener = this.handleKeydown;
-    window.addEventListener('keydown', this.hidListener, { capture: true });
+    window.addEventListener("keydown", this.hidListener, { capture: true });
   }
 
   stopHid() {
-    if (typeof window !== 'undefined' && this.hidListener) window.removeEventListener('keydown', this.hidListener, { capture: true });
+    if (typeof window !== "undefined" && this.hidListener)
+      window.removeEventListener("keydown", this.hidListener, { capture: true });
     this.hidListener = null;
-    this.hidBuffer = '';
+    this.hidBuffer = "";
     this.hidStartedAt = 0;
   }
 
@@ -77,8 +84,8 @@ export class UnifiedScanEngine {
     video.muted = true;
     video.autoplay = true;
     video.playsInline = true;
-    video.setAttribute('playsinline', '');
-    video.setAttribute('webkit-playsinline', '');
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
 
     const deadline = Date.now() + VIDEO_READY_TIMEOUT_MS;
     const hasLayout = () => {
@@ -95,12 +102,14 @@ export class UnifiedScanEngine {
 
     // Radix Dialog renders through a portal; give the browser two paint cycles
     // to attach the element and settle its layout before getUserMedia/play().
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
   }
 
   async start(video: HTMLVideoElement) {
     this.stopped = false;
-    this.lastEmittedCode = '';
+    this.lastEmittedCode = "";
     this.lastEmittedAt = 0;
     await this.waitForVideoReady(video);
     if (this.stopped) return;
@@ -123,13 +132,21 @@ export class UnifiedScanEngine {
   }
 
   emitNative(rawValue: string, format?: string) {
-    if (!this.stopped) this.emit({ rawValue, format }, 'native');
+    if (!this.stopped) this.emit({ rawValue, format }, "native");
   }
 
-  getStream() { return this.scanner.getStream(); }
-  getVideoTrack() { return this.scanner.getVideoTrack(); }
-  getTorchState() { return this.scanner.getTorchState(); }
-  setTorch(enabled: boolean) { return this.scanner.setTorch(enabled); }
+  getStream() {
+    return this.scanner.getStream();
+  }
+  getVideoTrack() {
+    return this.scanner.getVideoTrack();
+  }
+  getTorchState() {
+    return this.scanner.getTorchState();
+  }
+  setTorch(enabled: boolean) {
+    return this.scanner.setTorch(enabled);
+  }
   stop() {
     this.stopped = true;
     this.stopHid();

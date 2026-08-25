@@ -21,7 +21,10 @@ export type ScannerProductOnboardingResult = {
   stock_after: number;
 };
 
-export async function createProductFromScanner(client: SupabaseClient, input: ScannerProductOnboardingInput) {
+export async function createProductFromScanner(
+  client: SupabaseClient,
+  input: ScannerProductOnboardingInput,
+) {
   const { data, error } = await client.rpc("create_product_from_scanner", {
     p_business_id: input.businessId,
     p_name: input.name.trim(),

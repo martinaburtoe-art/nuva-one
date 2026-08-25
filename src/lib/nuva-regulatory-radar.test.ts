@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calculateRegulatoryReadiness, getRegulatoryStatus, NUVA_CHILE_REGULATORY_RULES } from "./nuva-regulatory-radar";
+import {
+  calculateRegulatoryReadiness,
+  getRegulatoryStatus,
+  NUVA_CHILE_REGULATORY_RULES,
+} from "./nuva-regulatory-radar";
 
 describe("Nüva Chile Regulatory Radar", () => {
   it("marks the 2026 privacy regime as upcoming before its effective date", () => {

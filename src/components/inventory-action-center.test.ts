@@ -18,7 +18,9 @@ const product = (overrides = {}) => ({
 
 describe("getInventoryMetrics", () => {
   it("calculates available stock after reservations and blocks", () => {
-    const metrics = getInventoryMetrics(product({ stock: 10, reserved_stock: 3, blocked_stock: 4 }));
+    const metrics = getInventoryMetrics(
+      product({ stock: 10, reserved_stock: 3, blocked_stock: 4 }),
+    );
     expect(metrics.available).toBe(3);
     expect(metrics.health).toBe("critical");
   });
@@ -39,7 +41,9 @@ describe("getInventoryMetrics", () => {
   });
 
   it("does not invent a purchase quantity when no target is configured", () => {
-    const metrics = getInventoryMetrics(product({ stock: 0, low_stock_threshold: 0, reorder_point: 0, max_stock: 0 }));
+    const metrics = getInventoryMetrics(
+      product({ stock: 0, low_stock_threshold: 0, reorder_point: 0, max_stock: 0 }),
+    );
     expect(metrics.target).toBe(0);
     expect(metrics.suggestedOrder).toBe(0);
     expect(metrics.health).toBe("out_of_stock");

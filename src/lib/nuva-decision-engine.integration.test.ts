@@ -12,12 +12,20 @@ describe("Nüva decision contract", () => {
   it("keeps the executive state and action list derived from the same signals", () => {
     const decision = buildNuvaDecision(input);
     expect(decision.topSignal.id).toBe(decision.signals[0].id);
-    expect(decision.actions.every((action) => decision.signals.some((signal) => signal.id === action.id))).toBe(true);
-    expect(decision.actions.every((action) => action.impact >= 0 && action.impact <= 100)).toBe(true);
+    expect(
+      decision.actions.every((action) =>
+        decision.signals.some((signal) => signal.id === action.id),
+      ),
+    ).toBe(true);
+    expect(decision.actions.every((action) => action.impact >= 0 && action.impact <= 100)).toBe(
+      true,
+    );
   });
 
   it("never exposes an action without an explicit review or preparation mode", () => {
     const decision = buildNuvaDecision(input);
-    expect(decision.actions.every((action) => action.mode === "review" || action.mode === "prepare")).toBe(true);
+    expect(
+      decision.actions.every((action) => action.mode === "review" || action.mode === "prepare"),
+    ).toBe(true);
   });
 });

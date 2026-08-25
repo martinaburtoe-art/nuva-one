@@ -8,5 +8,9 @@ export const Route = createFileRoute("/_authenticated/finance")({
 });
 
 function Finance() {
-  return <ModuleGuard module="finance"><FinanceAccountingWorkspaceV2 /></ModuleGuard>;
+  return (
+    <ModuleGuard module="finance">
+      <FinanceAccountingWorkspaceV2 />
+    </ModuleGuard>
+  );
 }

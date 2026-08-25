@@ -1,4 +1,11 @@
-import { AlertTriangle, ArrowRight, CheckCircle2, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fmtCLP } from "@/lib/biz-data";
@@ -45,7 +52,8 @@ export function FinanceIntelligenceCard({
       title: "Nüva todavía está aprendiendo de tus finanzas",
       icon: Sparkles,
       tone: "text-primary",
-      message: "Registra movimientos para que Nüva pueda detectar señales financieras con mayor precisión.",
+      message:
+        "Registra movimientos para que Nüva pueda detectar señales financieras con mayor precisión.",
     },
     attention: {
       label: "Atención",
@@ -78,7 +86,8 @@ export function FinanceIntelligenceCard({
       title: "Tus finanzas muestran una posición positiva",
       icon: TrendingUp,
       tone: "text-success",
-      message: "Tu flujo neto es positivo. Nüva recomienda identificar qué está impulsando el resultado y proteger ese desempeño.",
+      message:
+        "Tu flujo neto es positivo. Nüva recomienda identificar qué está impulsando el resultado y proteger ese desempeño.",
     },
   }[status];
 
@@ -93,7 +102,9 @@ export function FinanceIntelligenceCard({
               <Sparkles className="h-4 w-4" />
               Nüva Intelligence · Finanzas
             </div>
-            <h3 className="text-xl font-semibold tracking-tight">Nüva encontró algo que deberías saber</h3>
+            <h3 className="text-xl font-semibold tracking-tight">
+              Nüva encontró algo que deberías saber
+            </h3>
             <p className={`mt-3 text-lg font-semibold ${config.tone}`}>{config.title}</p>
           </div>
           <div className="flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1.5 text-xs font-medium">
@@ -105,24 +116,35 @@ export function FinanceIntelligenceCard({
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label="Ingresos" value={fmtCLP(income)} />
           <Metric label="Gastos" value={fmtCLP(expense)} />
-          <Metric label="Flujo neto" value={fmtCLP(net)} emphasis={net < 0 ? "negative" : "positive"} />
+          <Metric
+            label="Flujo neto"
+            value={fmtCLP(net)}
+            emphasis={net < 0 ? "negative" : "positive"}
+          />
           <Metric label="Margen" value={margin === null ? "—" : `${margin.toFixed(1)}%`} />
         </div>
 
         <div className="mt-5 rounded-xl border bg-background/70 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Por qué importa</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Por qué importa
+          </p>
           <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{config.message}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             {expenseRatio !== null && (
-              <span className="rounded-full bg-secondary px-2.5 py-1">Gastos: {expenseRatio.toFixed(1)}% de ingresos</span>
+              <span className="rounded-full bg-secondary px-2.5 py-1">
+                Gastos: {expenseRatio.toFixed(1)}% de ingresos
+              </span>
             )}
             {receivable > 0 && (
               <span className="rounded-full bg-secondary px-2.5 py-1">
-                Por cobrar: {fmtCLP(receivable)}{receivableRatio !== null ? ` · ${receivableRatio.toFixed(1)}% de ingresos` : ""}
+                Por cobrar: {fmtCLP(receivable)}
+                {receivableRatio !== null ? ` · ${receivableRatio.toFixed(1)}% de ingresos` : ""}
               </span>
             )}
             {overdueTotal > 0 && (
-              <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-destructive">Vencido: {fmtCLP(overdueTotal)}</span>
+              <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-destructive">
+                Vencido: {fmtCLP(overdueTotal)}
+              </span>
             )}
           </div>
         </div>
@@ -164,11 +186,21 @@ export function FinanceIntelligenceCard({
   );
 }
 
-function Metric({ label, value, emphasis }: { label: string; value: string; emphasis?: "negative" | "positive" }) {
+function Metric({
+  label,
+  value,
+  emphasis,
+}: {
+  label: string;
+  value: string;
+  emphasis?: "negative" | "positive";
+}) {
   return (
     <div className="rounded-xl border bg-background/70 p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-lg font-bold tabular-nums ${emphasis === "negative" ? "text-destructive" : emphasis === "positive" ? "text-success" : ""}`}>
+      <p
+        className={`mt-1 text-lg font-bold tabular-nums ${emphasis === "negative" ? "text-destructive" : emphasis === "positive" ? "text-success" : ""}`}
+      >
         {value}
       </p>
     </div>

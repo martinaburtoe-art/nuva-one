@@ -32,9 +32,11 @@ export function buildCfoInsights(s: CfoSnapshot): CfoInsight[] {
       id: "liquidity-risk",
       severity: "critical",
       title: "Riesgo de déficit de caja",
-      explanation: "La proyección de caja a 30 días queda bajo cero con los compromisos y entradas actualmente registrados.",
+      explanation:
+        "La proyección de caja a 30 días queda bajo cero con los compromisos y entradas actualmente registrados.",
       metric: s.projectedCash30d,
-      recommendedAction: "Priorizar cobranza, revisar egresos y simular escenarios antes de asumir nuevos compromisos.",
+      recommendedAction:
+        "Priorizar cobranza, revisar egresos y simular escenarios antes de asumir nuevos compromisos.",
     });
   } else if (s.projectedCash30d < s.cash * 0.25) {
     insights.push({
@@ -54,7 +56,8 @@ export function buildCfoInsights(s: CfoSnapshot): CfoInsight[] {
       title: "Cobranza deteriorada",
       explanation: `${pct(overdueRate)}% de las cuentas por cobrar están vencidas. Esto puede transformar ventas en presión de caja.`,
       metric: pct(overdueRate),
-      recommendedAction: "Crear una campaña de cobranza priorizada por monto, antigüedad y probabilidad de pago.",
+      recommendedAction:
+        "Crear una campaña de cobranza priorizada por monto, antigüedad y probabilidad de pago.",
     });
   }
 
@@ -65,7 +68,8 @@ export function buildCfoInsights(s: CfoSnapshot): CfoInsight[] {
       title: "Margen bruto bajo",
       explanation: `El margen bruto actual es de ${pct(grossMargin)}%, dejando poco espacio para absorber gastos operacionales.`,
       metric: pct(grossMargin),
-      recommendedAction: "Revisar precios, costos unitarios y productos con contribución insuficiente.",
+      recommendedAction:
+        "Revisar precios, costos unitarios y productos con contribución insuficiente.",
     });
   } else if (grossMargin >= 0.4) {
     insights.push({
@@ -74,7 +78,8 @@ export function buildCfoInsights(s: CfoSnapshot): CfoInsight[] {
       title: "Margen bruto saludable",
       explanation: `El margen bruto alcanza ${pct(grossMargin)}%, proporcionando una base favorable para cubrir gastos y crecer.`,
       metric: pct(grossMargin),
-      recommendedAction: "Proteger los productos de mayor contribución y evaluar oportunidades de crecimiento rentable.",
+      recommendedAction:
+        "Proteger los productos de mayor contribución y evaluar oportunidades de crecimiento rentable.",
     });
   }
 
@@ -83,9 +88,11 @@ export function buildCfoInsights(s: CfoSnapshot): CfoInsight[] {
       id: "opex-pressure",
       severity: "warning",
       title: "Alta presión de gastos",
-      explanation: "Los gastos operacionales consumen una proporción elevada del margen bruto disponible.",
+      explanation:
+        "Los gastos operacionales consumen una proporción elevada del margen bruto disponible.",
       metric: pct(operatingCoverage),
-      recommendedAction: "Separar gastos esenciales de discrecionales y evaluar medidas de eficiencia.",
+      recommendedAction:
+        "Separar gastos esenciales de discrecionales y evaluar medidas de eficiencia.",
     });
   }
 
@@ -96,7 +103,8 @@ export function buildCfoInsights(s: CfoSnapshot): CfoInsight[] {
       title: "Capital relevante inmovilizado en inventario",
       explanation: "El valor del inventario supera el 75% de las ventas mensuales registradas.",
       metric: s.inventoryValue,
-      recommendedAction: "Revisar rotación, stock lento y compras futuras antes de aumentar existencias.",
+      recommendedAction:
+        "Revisar rotación, stock lento y compras futuras antes de aumentar existencias.",
     });
   }
 

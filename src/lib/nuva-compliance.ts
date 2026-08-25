@@ -23,8 +23,10 @@ export const CHILE_COMPLIANCE_REGISTRY: ComplianceItem[] = [
     authority: "SII",
     severity: "critical",
     status: "required",
-    description: "La emisión de DTE mediante un sistema de mercado requiere completar el proceso de certificación correspondiente del SII antes de operar como solución certificada.",
-    action: "Preparar ambiente de certificación, casos de prueba, firma, folios, XML, recepción y trazabilidad.",
+    description:
+      "La emisión de DTE mediante un sistema de mercado requiere completar el proceso de certificación correspondiente del SII antes de operar como solución certificada.",
+    action:
+      "Preparar ambiente de certificación, casos de prueba, firma, folios, XML, recepción y trazabilidad.",
     sourceKey: "sii-market-certification",
   },
   {
@@ -33,8 +35,10 @@ export const CHILE_COMPLIANCE_REGISTRY: ComplianceItem[] = [
     authority: "SII",
     severity: "critical",
     status: "configuration",
-    description: "Nüva debe tratar factura, boleta, notas y guías como documentos con estados y trazabilidad tributaria, no como simples PDFs.",
-    action: "Implementar motor DTE con XML, folios, firma, envío, respuesta SII, reintentos, almacenamiento y auditoría.",
+    description:
+      "Nüva debe tratar factura, boleta, notas y guías como documentos con estados y trazabilidad tributaria, no como simples PDFs.",
+    action:
+      "Implementar motor DTE con XML, folios, firma, envío, respuesta SII, reintentos, almacenamiento y auditoría.",
     sourceKey: "sii-dte",
   },
   {
@@ -44,8 +48,10 @@ export const CHILE_COMPLIANCE_REGISTRY: ComplianceItem[] = [
     effectiveDate: "2026-12-01",
     severity: "warning",
     status: "prepare",
-    description: "La nueva regulación de protección de datos personales entra en vigor el 1 de diciembre de 2026.",
-    action: "Implementar Privacy Center, gestión de derechos, trazabilidad, retención, minimización y controles específicos para IA.",
+    description:
+      "La nueva regulación de protección de datos personales entra en vigor el 1 de diciembre de 2026.",
+    action:
+      "Implementar Privacy Center, gestión de derechos, trazabilidad, retención, minimización y controles específicos para IA.",
     sourceKey: "ley-21719",
   },
   {
@@ -55,8 +61,10 @@ export const CHILE_COMPLIANCE_REGISTRY: ComplianceItem[] = [
     effectiveDate: "2026-04-26",
     severity: "info",
     status: "required",
-    description: "La jornada ordinaria máxima semanal se encuentra en 42 horas desde el 26 de abril de 2026, dentro de la implementación gradual hacia 40 horas.",
-    action: "Configurar reglas de asistencia y jornada según la fecha efectiva y el régimen aplicable a cada empresa.",
+    description:
+      "La jornada ordinaria máxima semanal se encuentra en 42 horas desde el 26 de abril de 2026, dentro de la implementación gradual hacia 40 horas.",
+    action:
+      "Configurar reglas de asistencia y jornada según la fecha efectiva y el régimen aplicable a cada empresa.",
     sourceKey: "ley-21561",
   },
   {
@@ -66,8 +74,10 @@ export const CHILE_COMPLIANCE_REGISTRY: ComplianceItem[] = [
     effectiveDate: "2028-04-26",
     severity: "upcoming",
     status: "prepare",
-    description: "La reducción gradual contempla llegar a 40 horas semanales el 26 de abril de 2028.",
-    action: "Mantener el motor laboral versionado por fecha para que el cambio no requiera una actualización de emergencia.",
+    description:
+      "La reducción gradual contempla llegar a 40 horas semanales el 26 de abril de 2028.",
+    action:
+      "Mantener el motor laboral versionado por fecha para que el cambio no requiera una actualización de emergencia.",
     sourceKey: "ley-21561",
   },
 ];
@@ -76,14 +86,25 @@ const toDate = (value: string) => new Date(`${value}T00:00:00`);
 
 export function getChileComplianceRadar(now = new Date()): ComplianceItem[] {
   return [...CHILE_COMPLIANCE_REGISTRY].sort((a, b) => {
-    const severity: Record<ComplianceSeverity, number> = { critical: 4, warning: 3, upcoming: 2, info: 1 };
+    const severity: Record<ComplianceSeverity, number> = {
+      critical: 4,
+      warning: 3,
+      upcoming: 2,
+      info: 1,
+    };
     const bySeverity = severity[b.severity] - severity[a.severity];
     if (bySeverity) return bySeverity;
-    return (a.effectiveDate ? toDate(a.effectiveDate).getTime() : Number.MAX_SAFE_INTEGER) - (b.effectiveDate ? toDate(b.effectiveDate).getTime() : Number.MAX_SAFE_INTEGER);
+    return (
+      (a.effectiveDate ? toDate(a.effectiveDate).getTime() : Number.MAX_SAFE_INTEGER) -
+      (b.effectiveDate ? toDate(b.effectiveDate).getTime() : Number.MAX_SAFE_INTEGER)
+    );
   });
 }
 
 export function getUpcomingChileCompliance(now = new Date(), days = 180): ComplianceItem[] {
   const end = new Date(now.getTime() + days * 86_400_000);
-  return CHILE_COMPLIANCE_REGISTRY.filter((item) => item.effectiveDate && toDate(item.effectiveDate) >= now && toDate(item.effectiveDate) <= end);
+  return CHILE_COMPLIANCE_REGISTRY.filter(
+    (item) =>
+      item.effectiveDate && toDate(item.effectiveDate) >= now && toDate(item.effectiveDate) <= end,
+  );
 }

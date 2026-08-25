@@ -15,20 +15,42 @@ export type ScenarioChange = {
 };
 
 export type ScenarioResult = {
-  baseline: { revenue: number; grossProfit: number; operatingResult: number; cash: number; inventory: number };
-  simulated: { revenue: number; grossProfit: number; operatingResult: number; cash: number; inventory: number };
-  deltas: { revenue: number; grossProfit: number; operatingResult: number; cash: number; inventory: number };
+  baseline: {
+    revenue: number;
+    grossProfit: number;
+    operatingResult: number;
+    cash: number;
+    inventory: number;
+  };
+  simulated: {
+    revenue: number;
+    grossProfit: number;
+    operatingResult: number;
+    cash: number;
+    inventory: number;
+  };
+  deltas: {
+    revenue: number;
+    grossProfit: number;
+    operatingResult: number;
+    cash: number;
+    inventory: number;
+  };
   risk: "critical" | "high" | "medium" | "low";
 };
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
-export function simulateBusinessScenario(input: ScenarioInput, change: ScenarioChange): ScenarioResult {
+export function simulateBusinessScenario(
+  input: ScenarioInput,
+  change: ScenarioChange,
+): ScenarioResult {
   const baselineGrossProfit = input.revenue * input.grossMargin;
   const baselineOperatingResult = baselineGrossProfit - input.operatingExpenses;
   const revenue = input.revenue * (1 + (change.revenuePct ?? 0) / 100);
   const grossMargin = Math.max(0, Math.min(1, input.grossMargin + (change.marginPct ?? 0) / 100));
-  const operatingExpenses = input.operatingExpenses * (1 + (change.operatingExpensesPct ?? 0) / 100);
+  const operatingExpenses =
+    input.operatingExpenses * (1 + (change.operatingExpensesPct ?? 0) / 100);
   const simulated = {
     revenue: round(revenue),
     grossProfit: round(revenue * grossMargin),
@@ -50,6 +72,13 @@ export function simulateBusinessScenario(input: ScenarioInput, change: ScenarioC
     cash: round(simulated.cash - baseline.cash),
     inventory: round(simulated.inventory - baseline.inventory),
   };
-  const risk = simulated.cash < 0 || simulated.operatingResult < 0 ? "critical" : simulated.cash < input.cash * 0.5 ? "high" : deltas.operatingResult < 0 ? "medium" : "low";
+  const risk =
+    simulated.cash < 0 || simulated.operatingResult < 0
+      ? "critical"
+      : simulated.cash < input.cash * 0.5
+        ? "high"
+        : deltas.operatingResult < 0
+          ? "medium"
+          : "low";
   return { baseline, simulated, deltas, risk };
 }

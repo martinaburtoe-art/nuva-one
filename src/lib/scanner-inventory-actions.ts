@@ -1,8 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  type InventoryOperation,
-  executeInventoryOperation,
-} from "./inventory-transactions";
+import { type InventoryOperation, executeInventoryOperation } from "./inventory-transactions";
 
 export type ScannerInventoryAction = Extract<
   InventoryOperation,
@@ -23,9 +20,7 @@ export type ScannerInventoryActionInput = {
  * Single adapter for scanner-originated stock operations.
  * UI components should call this instead of the stock RPC directly.
  */
-export async function executeScannerInventoryAction(
-  input: ScannerInventoryActionInput,
-) {
+export async function executeScannerInventoryAction(input: ScannerInventoryActionInput) {
   const scanCode = input.scanCode?.trim();
 
   return executeInventoryOperation(input.client, {

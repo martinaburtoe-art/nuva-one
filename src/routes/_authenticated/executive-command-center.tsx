@@ -23,11 +23,17 @@ export const Route = createFileRoute("/_authenticated/executive-command-center")
 function ExecutiveCommandCenter() {
   const { data: customers, isLoading: a } = useBizList<any>("customers", { order: "name" });
   const { data: sales, isLoading: b } = useBizList<any>("sales", { order: "sale_date" });
-  const { data: activities, isLoading: c } = useBizList<any>("customer_activities", { order: "created_at" });
+  const { data: activities, isLoading: c } = useBizList<any>("customer_activities", {
+    order: "created_at",
+  });
   const { data: quotes, isLoading: d } = useBizList<any>("quotes", { order: "created_at" });
   const { data: products, isLoading: e } = useBizList<any>("products", { order: "name" });
-  const { data: purchases, isLoading: f } = useBizList<any>("purchases", { order: "purchase_date" });
-  const { data: transactions, isLoading: g } = useBizList<any>("transactions", { order: "tx_date" });
+  const { data: purchases, isLoading: f } = useBizList<any>("purchases", {
+    order: "purchase_date",
+  });
+  const { data: transactions, isLoading: g } = useBizList<any>("transactions", {
+    order: "tx_date",
+  });
   const loading = a || b || c || d || e || f || g;
   const tasks = (activities ?? []).filter((x: any) => x.type === "task");
   const completed = tasks.filter((x: any) => x.completed).length;
@@ -42,10 +48,90 @@ function ExecutiveCommandCenter() {
     });
   }, [loading, sales, purchases, transactions, products]);
 
-  return <ModuleGuard module="customers"><div className="p-4 md:p-6"><PageHeader title="Executive Intelligence" description="La vista ejecutiva de Nüva: qué está pasando, qué importa y qué hacer ahora." />{loading ? <div className="space-y-4"><Skeleton className="h-56 w-full" /><Skeleton className="h-40 w-full" /></div> : <div className="space-y-5">
-    {decision && <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Nüva Decision Engine</p><h2 className="mt-1 text-xl font-bold">{decision.headline}</h2><p className="mt-1 text-sm text-muted-foreground">Prioridad ejecutiva: <strong className="text-foreground">{decision.score}/100</strong> · Estado: <strong className="text-foreground">{decision.status}</strong></p></div><div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold"><DecisionIcon status={decision.status} /> {decision.topSignal.title}</div></div><div className="mt-4 grid gap-3 md:grid-cols-2">{decision.actions.slice(0, 4).map((item) => <Link key={item.id} to={`/${item.destination}`} className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{item.title}</p><p className="mt-1 text-xs text-muted-foreground">Impacto {item.impact}/100 · {item.mode === "prepare" ? "Preparar" : "Revisar"}</p></div><span className="text-xs font-medium text-primary">{item.cta} →</span></div></Link>)}</div></Card>}
-    <NuvaExecutiveCommandCenter customers={customers ?? []} sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} products={products ?? []} executionScore={executionScore} /><NuvaDecisionTimeline activities={activities ?? []} /><NuvaPredictiveSignals sales={sales ?? []} quotes={quotes ?? []} activities={activities ?? []} /><NuvaTrendIntelligence sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} /><NuvaDecisionOutcomes activities={activities ?? []} /><NuvaDecisionMemory activities={activities ?? []} /><NuvaExecutionScore activities={activities ?? []} priorities={(customers ?? []).length} />
-  </div>}</div></ModuleGuard>;
+  return (
+    <ModuleGuard module="customers">
+      <div className="p-4 md:p-6">
+        <PageHeader
+          title="Executive Intelligence"
+          description="La vista ejecutiva de Nüva: qué está pasando, qué importa y qué hacer ahora."
+        />
+        {loading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-56 w-full" />
+            <Skeleton className="h-40 w-full" />
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {decision && (
+              <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                      Nüva Decision Engine
+                    </p>
+                    <h2 className="mt-1 text-xl font-bold">{decision.headline}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Prioridad ejecutiva:{" "}
+                      <strong className="text-foreground">{decision.score}/100</strong> · Estado:{" "}
+                      <strong className="text-foreground">{decision.status}</strong>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold">
+                    <DecisionIcon status={decision.status} /> {decision.topSignal.title}
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {decision.actions.slice(0, 4).map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/${item.destination}`}
+                      className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{item.title}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Impacto {item.impact}/100 ·{" "}
+                            {item.mode === "prepare" ? "Preparar" : "Revisar"}
+                          </p>
+                        </div>
+                        <span className="text-xs font-medium text-primary">{item.cta} →</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </Card>
+            )}
+            <NuvaExecutiveCommandCenter
+              customers={customers ?? []}
+              sales={sales ?? []}
+              activities={activities ?? []}
+              quotes={quotes ?? []}
+              products={products ?? []}
+              executionScore={executionScore}
+            />
+            <NuvaDecisionTimeline activities={activities ?? []} />
+            <NuvaPredictiveSignals
+              sales={sales ?? []}
+              quotes={quotes ?? []}
+              activities={activities ?? []}
+            />
+            <NuvaTrendIntelligence
+              sales={sales ?? []}
+              activities={activities ?? []}
+              quotes={quotes ?? []}
+            />
+            <NuvaDecisionOutcomes activities={activities ?? []} />
+            <NuvaDecisionMemory activities={activities ?? []} />
+            <NuvaExecutionScore
+              activities={activities ?? []}
+              priorities={(customers ?? []).length}
+            />
+          </div>
+        )}
+      </div>
+    </ModuleGuard>
+  );
 }
 
 function DecisionIcon({ status }: { status: "critical" | "attention" | "opportunity" | "stable" }) {

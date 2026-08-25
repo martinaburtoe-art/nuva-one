@@ -28,10 +28,7 @@ const SUCCESS: [number, number, number] = [36, 110, 78];
  * Importante: este archivo NO es un DTE, NO tiene timbre electrónico ni firma
  * digital del SII y NO acredita emisión. Es un documento de apoyo y control.
  */
-export function generateSiiDeclarationPdf(
-  sales: PendingSaleForDeclaration[],
-  business: Business,
-) {
+export function generateSiiDeclarationPdf(sales: PendingSaleForDeclaration[], business: Business) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -78,7 +75,11 @@ export function generateSiiDeclarationPdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
-    doc.text("Nüva One · Documento de apoyo para preparación y control. No reemplaza un DTE emitido por el SII.", marginX, pageH - 34);
+    doc.text(
+      "Nüva One · Documento de apoyo para preparación y control. No reemplaza un DTE emitido por el SII.",
+      marginX,
+      pageH - 34,
+    );
     doc.text(`Página ${pageNum} / ${pageCount}`, pageW - marginX, pageH - 34, { align: "right" });
     doc.setTextColor(0, 0, 0);
   }
@@ -114,7 +115,11 @@ export function generateSiiDeclarationPdf(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...MUTED);
-  doc.text("Información organizada para revisar y transcribir en el Portal MiPyme del SII.", marginX + 16, y + 37);
+  doc.text(
+    "Información organizada para revisar y transcribir en el Portal MiPyme del SII.",
+    marginX + 16,
+    y + 37,
+  );
   doc.setTextColor(...SUCCESS);
   doc.setFont("helvetica", "bold");
   doc.text("ESTADO · LISTO PARA REVISIÓN", marginX + 16, y + 56);
@@ -154,21 +159,36 @@ export function generateSiiDeclarationPdf(
   y += Math.ceil(info.length / 2) * 32 + 18;
 
   sectionTitle("Detalle de ventas", "Base organizada por operación · montos expresados en CLP");
-  const cols = [marginX, marginX + 66, marginX + 184, marginX + contentW - 190, marginX + contentW - 120, marginX + contentW - 54];
+  const cols = [
+    marginX,
+    marginX + 66,
+    marginX + 184,
+    marginX + contentW - 190,
+    marginX + contentW - 120,
+    marginX + contentW - 54,
+  ];
   doc.setFillColor(...NAVY);
   doc.rect(marginX, y, contentW, 25, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
-  ["FECHA", "ID VENTA", "CLIENTE", "NETO", "IVA 19%", "TOTAL"].forEach((t, i) => doc.text(t, cols[i] + 8, y + 16));
+  ["FECHA", "ID VENTA", "CLIENTE", "NETO", "IVA 19%", "TOTAL"].forEach((t, i) =>
+    doc.text(t, cols[i] + 8, y + 16),
+  );
   y += 25;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   sales.forEach((s, idx) => {
     if (y + 25 > pageH - 80) {
-      doc.addPage(); header(); y = 112; sectionTitle("Detalle de ventas · continuación");
+      doc.addPage();
+      header();
+      y = 112;
+      sectionTitle("Detalle de ventas · continuación");
     }
-    if (idx % 2 === 0) { doc.setFillColor(...LIGHT); doc.rect(marginX, y, contentW, 25, "F"); }
+    if (idx % 2 === 0) {
+      doc.setFillColor(...LIGHT);
+      doc.rect(marginX, y, contentW, 25, "F");
+    }
     doc.setTextColor(...NAVY);
     doc.text(new Date(s.sale_date).toLocaleDateString("es-CL"), cols[0] + 8, y + 16);
     doc.text(String(s.id).slice(0, 16), cols[1] + 8, y + 16);
@@ -181,17 +201,29 @@ export function generateSiiDeclarationPdf(
     y += 25;
   });
 
-  if (y + 118 > pageH - 80) { doc.addPage(); header(); y = 112; }
+  if (y + 118 > pageH - 80) {
+    doc.addPage();
+    header();
+    y = 112;
+  }
   y += 16;
   const summaryX = marginX + contentW - 230;
   doc.setFillColor(...LIGHT);
   doc.roundedRect(summaryX, y, 230, 96, 6, 6, "F");
-  const summaryRows = [["Neto", totalNet], ["IVA 19%", totalIva], ["Total", totalGross]];
+  const summaryRows = [
+    ["Neto", totalNet],
+    ["IVA 19%", totalIva],
+    ["Total", totalGross],
+  ];
   summaryRows.forEach(([label, value], i) => {
     const yy = y + 22 + i * 24;
     doc.setFont("helvetica", i === 2 ? "bold" : "normal");
     doc.setFontSize(i === 2 ? 10.5 : 8.5);
-    doc.setTextColor(i === 2 ? NAVY[0] : MUTED[0], i === 2 ? NAVY[1] : MUTED[1], i === 2 ? NAVY[2] : MUTED[2]);
+    doc.setTextColor(
+      i === 2 ? NAVY[0] : MUTED[0],
+      i === 2 ? NAVY[1] : MUTED[1],
+      i === 2 ? NAVY[2] : MUTED[2],
+    );
     doc.text(String(label), summaryX + 12, yy);
     doc.setTextColor(...NAVY);
     doc.text(fmtCLP(Number(value)), summaryX + 218, yy, { align: "right" });
@@ -199,8 +231,15 @@ export function generateSiiDeclarationPdf(
   doc.setTextColor(0, 0, 0);
   y += 114;
 
-  if (y + 105 > pageH - 80) { doc.addPage(); header(); y = 112; }
-  sectionTitle("Checklist de revisión", "Completa estas verificaciones antes de registrar el lote como declarado");
+  if (y + 105 > pageH - 80) {
+    doc.addPage();
+    header();
+    y = 112;
+  }
+  sectionTitle(
+    "Checklist de revisión",
+    "Completa estas verificaciones antes de registrar el lote como declarado",
+  );
   const checks = [
     "Datos de la empresa revisados (razón social y RUT).",
     "Cada venta fue revisada y corresponde a una operación real.",
@@ -228,10 +267,21 @@ export function generateSiiDeclarationPdf(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...MUTED);
-  doc.text("Este expediente es una herramienta de preparación y control. No contiene timbre electrónico,", marginX + 12, y + 31);
-  doc.text("firma digital ni validación de recepción del SII. La emisión oficial debe realizarse en el canal autorizado.", marginX + 12, y + 43);
+  doc.text(
+    "Este expediente es una herramienta de preparación y control. No contiene timbre electrónico,",
+    marginX + 12,
+    y + 31,
+  );
+  doc.text(
+    "firma digital ni validación de recepción del SII. La emisión oficial debe realizarse en el canal autorizado.",
+    marginX + 12,
+    y + 43,
+  );
 
   const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) { doc.setPage(i); footer(i, pageCount); }
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    footer(i, pageCount);
+  }
   return doc.output("datauristring").split(",")[1] as string;
 }

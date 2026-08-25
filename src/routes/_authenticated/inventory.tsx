@@ -1,6 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { AlertTriangle, Boxes, Download, Pencil, Plus, ShoppingCart, Trash2, ScanBarcode, SlidersHorizontal } from "lucide-react";
+import {
+  AlertTriangle,
+  Boxes,
+  Download,
+  Pencil,
+  Plus,
+  ShoppingCart,
+  Trash2,
+  ScanBarcode,
+  SlidersHorizontal,
+} from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { Card } from "@/components/ui/card";
@@ -9,7 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fmtCLP, useBizDelete, useBizInsert, useBizList, useBizUpdate } from "@/lib/biz-data";
 import { downloadCsv } from "@/lib/export";
@@ -21,39 +38,442 @@ import { InventoryActionCenter } from "@/components/inventory-action-center";
 import { getInventoryMetrics } from "@/lib/inventory-metrics";
 import { adjustInventoryStock } from "@/lib/inventory-transactions";
 
-export const Route = createFileRoute("/_authenticated/inventory")({ head: () => ({ meta: [{ title: "Inventario — Nüva One" }] }), component: Inventory });
-type Product = { id: string; name: string | null; sku: string | null; stock: number | null; low_stock_threshold: number | null; cost: number | null; price: number | null; reserved_stock?: number | null; in_transit_stock?: number | null; blocked_stock?: number | null; reorder_point?: number | null; max_stock?: number | null };
+export const Route = createFileRoute("/_authenticated/inventory")({
+  head: () => ({ meta: [{ title: "Inventario — Nüva One" }] }),
+  component: Inventory,
+});
+type Product = {
+  id: string;
+  name: string | null;
+  sku: string | null;
+  stock: number | null;
+  low_stock_threshold: number | null;
+  cost: number | null;
+  price: number | null;
+  reserved_stock?: number | null;
+  in_transit_stock?: number | null;
+  blocked_stock?: number | null;
+  reorder_point?: number | null;
+  max_stock?: number | null;
+};
 function Inventory() {
-  const navigate = useNavigate(); const { data: myRole } = useMyRole(); const canWrite = canWriteOperations(myRole); const [activeBusinessId] = useActiveBusinessId();
-  const { data, isLoading } = useBizList<Product>("products", { order: "created_at" }); const insert = useBizInsert("products"); const update = useBizUpdate("products"); const remove = useBizDelete("products");
-  const [open, setOpen] = useState(false); const [editing, setEditing] = useState<Product | null>(null); const [adjustOpen, setAdjustOpen] = useState(false); const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
+  const navigate = useNavigate();
+  const { data: myRole } = useMyRole();
+  const canWrite = canWriteOperations(myRole);
+  const [activeBusinessId] = useActiveBusinessId();
+  const { data, isLoading } = useBizList<Product>("products", { order: "created_at" });
+  const insert = useBizInsert("products");
+  const update = useBizUpdate("products");
+  const remove = useBizDelete("products");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
   const products = data ?? [];
-  const lowStock = products.filter((p) => { const m = getInventoryMetrics(p); return m.status === "out_of_stock" || m.status === "critical"; });
-  const totalValue = products.reduce((sum, p) => sum + Number(p.stock ?? 0) * Number(p.cost ?? 0), 0);
-  function startCreate(){setEditing(null);setOpen(true)} function startEdit(p:Product){setEditing(p);setOpen(true)} function startAdjust(p:Product){setAdjustProduct(p);setAdjustOpen(true)}
-  async function saveProduct(event: React.FormEvent<HTMLFormElement>){
-    event.preventDefault(); if(!canWrite||!activeBusinessId)return; const form=new FormData(event.currentTarget);
-    const initialStock=Math.max(0,Number(form.get("stock")||0));
-    const payload={name:String(form.get("name")||"").trim(),sku:String(form.get("sku")||"").trim()||null,low_stock_threshold:Math.max(0,Number(form.get("low_stock_threshold")||0)),cost:Math.max(0,Number(form.get("cost")||0)),price:Math.max(0,Number(form.get("price")||0)),reorder_point:Math.max(0,Number(form.get("reorder_point")||0)),max_stock:Math.max(0,Number(form.get("max_stock")||0))};
-    if(!payload.name)return toast.error("Ingresa el nombre del producto.");
-    try{
-      if(editing){
-        await update.mutateAsync({id:editing.id,patch:payload});
-        const delta=initialStock-Number(editing.stock||0);
-        if(delta!==0) await adjustInventoryStock(supabase, { productId: editing.id, delta, reason: "Ajuste desde ficha de producto", sourceType: "product_edit", sourceId: editing.id });
+  const lowStock = products.filter((p) => {
+    const m = getInventoryMetrics(p);
+    return m.status === "out_of_stock" || m.status === "critical";
+  });
+  const totalValue = products.reduce(
+    (sum, p) => sum + Number(p.stock ?? 0) * Number(p.cost ?? 0),
+    0,
+  );
+  function startCreate() {
+    setEditing(null);
+    setOpen(true);
+  }
+  function startEdit(p: Product) {
+    setEditing(p);
+    setOpen(true);
+  }
+  function startAdjust(p: Product) {
+    setAdjustProduct(p);
+    setAdjustOpen(true);
+  }
+  async function saveProduct(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canWrite || !activeBusinessId) return;
+    const form = new FormData(event.currentTarget);
+    const initialStock = Math.max(0, Number(form.get("stock") || 0));
+    const payload = {
+      name: String(form.get("name") || "").trim(),
+      sku: String(form.get("sku") || "").trim() || null,
+      low_stock_threshold: Math.max(0, Number(form.get("low_stock_threshold") || 0)),
+      cost: Math.max(0, Number(form.get("cost") || 0)),
+      price: Math.max(0, Number(form.get("price") || 0)),
+      reorder_point: Math.max(0, Number(form.get("reorder_point") || 0)),
+      max_stock: Math.max(0, Number(form.get("max_stock") || 0)),
+    };
+    if (!payload.name) return toast.error("Ingresa el nombre del producto.");
+    try {
+      if (editing) {
+        await update.mutateAsync({ id: editing.id, patch: payload });
+        const delta = initialStock - Number(editing.stock || 0);
+        if (delta !== 0)
+          await adjustInventoryStock(supabase, {
+            productId: editing.id,
+            delta,
+            reason: "Ajuste desde ficha de producto",
+            sourceType: "product_edit",
+            sourceId: editing.id,
+          });
       } else {
-        const created=await insert.mutateAsync({business_id:activeBusinessId,...payload,stock:0});
-        if(initialStock>0){const createdProduct=created as {id:string};await adjustInventoryStock(supabase, { productId: createdProduct.id, delta: initialStock, reason: "Stock inicial al crear producto", sourceType: "product_initial_stock", sourceId: createdProduct.id });}
+        const created = await insert.mutateAsync({
+          business_id: activeBusinessId,
+          ...payload,
+          stock: 0,
+        });
+        if (initialStock > 0) {
+          const createdProduct = created as { id: string };
+          await adjustInventoryStock(supabase, {
+            productId: createdProduct.id,
+            delta: initialStock,
+            reason: "Stock inicial al crear producto",
+            sourceType: "product_initial_stock",
+            sourceId: createdProduct.id,
+          });
+        }
       }
-      toast.success(editing?"Producto actualizado":"Producto creado");setOpen(false)
-    }catch(error:any){toast.error(error?.message||"No se pudo guardar el producto.")}}
-  async function adjustStock(event:React.FormEvent<HTMLFormElement>){event.preventDefault();if(!adjustProduct||!canWrite)return;const form=new FormData(event.currentTarget);const delta=Number(form.get("delta"));const reason=String(form.get("reason")||"").trim();if(!Number.isInteger(delta)||delta===0)return toast.error("El ajuste debe ser un número entero distinto de cero.");if(!reason)return toast.error("Indica el motivo del ajuste.");try{await adjustInventoryStock(supabase, { productId: adjustProduct.id, delta, reason, sourceType: "manual_adjustment" });toast.success("Stock ajustado y trazado correctamente");setAdjustOpen(false)}catch(error:any){toast.error(error?.message||"No se pudo ajustar el stock.")}}
-  async function deleteProduct(p:Product){if(!canWrite||!window.confirm(`¿Eliminar ${p.name||"este producto"}?`))return;try{await remove.mutateAsync(p.id);toast.success("Producto eliminado")}catch{toast.error("No se pudo eliminar el producto")}}
-  function exportInventory(){downloadCsv("nuva-inventario.csv",products.map(p=>{const m=getInventoryMetrics(p);return {SKU:p.sku||"",Producto:p.name||"",Stock:Number(p.stock??0),Disponible:m.available,Proyectado:m.projected,Reservado:Number(p.reserved_stock??0),EnTransito:Number(p.in_transit_stock??0),Bloqueado:Number(p.blocked_stock??0),Minimo:Number(p.low_stock_threshold??0),PuntoReposicion:Number(p.reorder_point??0),ReposicionSugerida:m.suggestedReplenishment,Costo:Number(p.cost??0),Precio:Number(p.price??0),ValorCosto:Number(p.stock??0)*Number(p.cost??0)}}))}
-  return <ModuleGuard module="inventory"><div className="space-y-6"><PageHeader title="Inventario" description="Controla stock, disponibilidad real, valor inmovilizado y prioridades de reposición desde una sola vista." actions={<div className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>navigate({to:"/inventario-conteo"})}><ScanBarcode className="mr-2 h-4 w-4"/>Conteo físico con escáner</Button><Button variant="outline" onClick={exportInventory} disabled={!products.length}><Download className="mr-2 h-4 w-4"/>Exportar</Button>{canWrite&&<Button onClick={startCreate}><Plus className="mr-2 h-4 w-4"/>Nuevo producto</Button>}</div>}/>
-    <div className="grid gap-4 md:grid-cols-3"><Card className="p-5"><div className="flex items-center gap-3"><Boxes className="h-5 w-5 text-primary"/><div><p className="text-xs text-muted-foreground">Productos</p><p className="text-2xl font-bold">{products.length}</p></div></div></Card><Card className="p-5"><div className="flex items-center gap-3"><AlertTriangle className="h-5 w-5 text-warning"/><div><p className="text-xs text-muted-foreground">Críticos</p><p className="text-2xl font-bold">{lowStock.length}</p></div></div></Card><Card className="p-5"><div className="flex items-center gap-3"><ShoppingCart className="h-5 w-5 text-primary"/><div><p className="text-xs text-muted-foreground">Valor a costo</p><p className="text-2xl font-bold">{fmtCLP(totalValue)}</p></div></div></Card></div>
-    <NuvaInventoryIntelligence products={products}/><InventoryActionCenter products={products} canWrite={canWrite}/><Card><div className="p-6"><div className="mb-4"><h2 className="text-lg font-semibold">Catálogo de productos</h2><p className="text-sm text-muted-foreground">Gestiona existencias y parámetros de reposición. La disponibilidad descuenta reservado y bloqueado; el stock en tránsito se considera para la proyección.</p></div>{isLoading?<div className="space-y-3">{[1,2,3].map(i=><Skeleton key={i} className="h-12 w-full"/>)}</div>:!products.length?<EmptyState title="Sin productos" description="Agrega tu primer producto para activar la inteligencia de inventario."/>:<div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Producto</TableHead><TableHead>SKU</TableHead><TableHead>Stock</TableHead><TableHead>Disponible</TableHead><TableHead>Mínimo</TableHead><TableHead>Costo</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Acciones</TableHead></TableRow></TableHeader><TableBody>{products.map(p=>{const m=getInventoryMetrics(p);return <TableRow key={p.id}><TableCell className="font-medium">{p.name||"Sin nombre"}</TableCell><TableCell>{p.sku||"—"}</TableCell><TableCell className="font-semibold">{Number(p.stock??0)}</TableCell><TableCell className="font-semibold">{m.available}</TableCell><TableCell>{Number(p.low_stock_threshold??0)}</TableCell><TableCell>{fmtCLP(Number(p.cost??0))}</TableCell><TableCell><Badge variant={m.status==="out_of_stock"?"destructive":m.status==="critical"?"secondary":m.status==="reorder"?"outline":"outline"}>{m.status==="out_of_stock"?"Sin disponible":m.status==="critical"?"Crítico":m.status==="reorder"?"Reponer":"Saludable"}</Badge></TableCell><TableCell><div className="flex justify-end gap-1">{canWrite&&<><Button size="icon" variant="ghost" onClick={()=>startAdjust(p)} title="Ajustar stock"><SlidersHorizontal className="h-4 w-4"/></Button><Button size="icon" variant="ghost" onClick={()=>startEdit(p)}><Pencil className="h-4 w-4"/></Button><Button size="icon" variant="ghost" onClick={()=>deleteProduct(p)}><Trash2 className="h-4 w-4"/></Button></>}</div></TableCell></TableRow>})}</TableBody></Table></div>}</div></Card>
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>{editing?"Editar producto":"Nuevo producto"}</DialogTitle></DialogHeader><form onSubmit={saveProduct} className="space-y-4"><div><Label htmlFor="name">Producto</Label><Input id="name" name="name" defaultValue={editing?.name??""} required/></div><div className="grid grid-cols-2 gap-3"><div><Label htmlFor="sku">SKU</Label><Input id="sku" name="sku" defaultValue={editing?.sku??""}/></div><div><Label htmlFor="stock">Stock inicial / stock objetivo</Label><Input id="stock" name="stock" type="number" min="0" defaultValue={editing?.stock??0}/></div></div><div className="grid grid-cols-2 gap-3"><div><Label htmlFor="low_stock_threshold">Mínimo</Label><Input id="low_stock_threshold" name="low_stock_threshold" type="number" min="0" defaultValue={editing?.low_stock_threshold??0}/></div><div><Label htmlFor="reorder_point">Punto de reposición</Label><Input id="reorder_point" name="reorder_point" type="number" min="0" defaultValue={editing?.reorder_point??0}/></div></div><div className="grid grid-cols-2 gap-3"><div><Label htmlFor="cost">Costo</Label><Input id="cost" name="cost" type="number" min="0" defaultValue={editing?.cost??0}/></div><div><Label htmlFor="price">Precio de venta</Label><Input id="price" name="price" type="number" min="0" defaultValue={editing?.price??0}/></div></div><div><Label htmlFor="max_stock">Stock máximo</Label><Input id="max_stock" name="max_stock" type="number" min="0" defaultValue={editing?.max_stock??0}/></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Cancelar</Button><Button type="submit">Guardar</Button></div></form></DialogContent></Dialog>
-    <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}><DialogContent><DialogHeader><DialogTitle>Ajustar stock — {adjustProduct?.name}</DialogTitle></DialogHeader><form onSubmit={adjustStock} className="space-y-4"><p className="text-sm text-muted-foreground">Stock actual: <strong>{Number(adjustProduct?.stock??0)}</strong>. Usa un número positivo para entrada y negativo para salida.</p><div><Label htmlFor="delta">Variación</Label><Input id="delta" name="delta" type="number" step="1" required placeholder="Ej. 5 o -2"/></div><div><Label htmlFor="reason">Motivo</Label><Input id="reason" name="reason" required placeholder="Ej. merma, corrección"/></div><Button className="w-full" type="submit">Aplicar ajuste</Button></form></DialogContent></Dialog>
-  </div></ModuleGuard>;
+      toast.success(editing ? "Producto actualizado" : "Producto creado");
+      setOpen(false);
+    } catch (error: any) {
+      toast.error(error?.message || "No se pudo guardar el producto.");
+    }
+  }
+  async function adjustStock(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!adjustProduct || !canWrite) return;
+    const form = new FormData(event.currentTarget);
+    const delta = Number(form.get("delta"));
+    const reason = String(form.get("reason") || "").trim();
+    if (!Number.isInteger(delta) || delta === 0)
+      return toast.error("El ajuste debe ser un número entero distinto de cero.");
+    if (!reason) return toast.error("Indica el motivo del ajuste.");
+    try {
+      await adjustInventoryStock(supabase, {
+        productId: adjustProduct.id,
+        delta,
+        reason,
+        sourceType: "manual_adjustment",
+      });
+      toast.success("Stock ajustado y trazado correctamente");
+      setAdjustOpen(false);
+    } catch (error: any) {
+      toast.error(error?.message || "No se pudo ajustar el stock.");
+    }
+  }
+  async function deleteProduct(p: Product) {
+    if (!canWrite || !window.confirm(`¿Eliminar ${p.name || "este producto"}?`)) return;
+    try {
+      await remove.mutateAsync(p.id);
+      toast.success("Producto eliminado");
+    } catch {
+      toast.error("No se pudo eliminar el producto");
+    }
+  }
+  function exportInventory() {
+    downloadCsv(
+      "nuva-inventario.csv",
+      products.map((p) => {
+        const m = getInventoryMetrics(p);
+        return {
+          SKU: p.sku || "",
+          Producto: p.name || "",
+          Stock: Number(p.stock ?? 0),
+          Disponible: m.available,
+          Proyectado: m.projected,
+          Reservado: Number(p.reserved_stock ?? 0),
+          EnTransito: Number(p.in_transit_stock ?? 0),
+          Bloqueado: Number(p.blocked_stock ?? 0),
+          Minimo: Number(p.low_stock_threshold ?? 0),
+          PuntoReposicion: Number(p.reorder_point ?? 0),
+          ReposicionSugerida: m.suggestedReplenishment,
+          Costo: Number(p.cost ?? 0),
+          Precio: Number(p.price ?? 0),
+          ValorCosto: Number(p.stock ?? 0) * Number(p.cost ?? 0),
+        };
+      }),
+    );
+  }
+  return (
+    <ModuleGuard module="inventory">
+      <div className="space-y-6">
+        <PageHeader
+          title="Inventario"
+          description="Controla stock, disponibilidad real, valor inmovilizado y prioridades de reposición desde una sola vista."
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => navigate({ to: "/inventario-conteo" })}>
+                <ScanBarcode className="mr-2 h-4 w-4" />
+                Conteo físico con escáner
+              </Button>
+              <Button variant="outline" onClick={exportInventory} disabled={!products.length}>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+              {canWrite && (
+                <Button onClick={startCreate}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nuevo producto
+                </Button>
+              )}
+            </div>
+          }
+        />
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <Boxes className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-xs text-muted-foreground">Productos</p>
+                <p className="text-2xl font-bold">{products.length}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              <div>
+                <p className="text-xs text-muted-foreground">Críticos</p>
+                <p className="text-2xl font-bold">{lowStock.length}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-xs text-muted-foreground">Valor a costo</p>
+                <p className="text-2xl font-bold">{fmtCLP(totalValue)}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+        <NuvaInventoryIntelligence products={products} />
+        <InventoryActionCenter products={products} canWrite={canWrite} />
+        <Card>
+          <div className="p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Catálogo de productos</h2>
+              <p className="text-sm text-muted-foreground">
+                Gestiona existencias y parámetros de reposición. La disponibilidad descuenta
+                reservado y bloqueado; el stock en tránsito se considera para la proyección.
+              </p>
+            </div>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : !products.length ? (
+              <EmptyState
+                title="Sin productos"
+                description="Agrega tu primer producto para activar la inteligencia de inventario."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Producto</TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Stock</TableHead>
+                      <TableHead>Disponible</TableHead>
+                      <TableHead>Mínimo</TableHead>
+                      <TableHead>Costo</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((p) => {
+                      const m = getInventoryMetrics(p);
+                      return (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-medium">{p.name || "Sin nombre"}</TableCell>
+                          <TableCell>{p.sku || "—"}</TableCell>
+                          <TableCell className="font-semibold">{Number(p.stock ?? 0)}</TableCell>
+                          <TableCell className="font-semibold">{m.available}</TableCell>
+                          <TableCell>{Number(p.low_stock_threshold ?? 0)}</TableCell>
+                          <TableCell>{fmtCLP(Number(p.cost ?? 0))}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                m.status === "out_of_stock"
+                                  ? "destructive"
+                                  : m.status === "critical"
+                                    ? "secondary"
+                                    : m.status === "reorder"
+                                      ? "outline"
+                                      : "outline"
+                              }
+                            >
+                              {m.status === "out_of_stock"
+                                ? "Sin disponible"
+                                : m.status === "critical"
+                                  ? "Crítico"
+                                  : m.status === "reorder"
+                                    ? "Reponer"
+                                    : "Saludable"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-end gap-1">
+                              {canWrite && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => startAdjust(p)}
+                                    title="Ajustar stock"
+                                  >
+                                    <SlidersHorizontal className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" onClick={() => startEdit(p)}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => deleteProduct(p)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </Card>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editing ? "Editar producto" : "Nuevo producto"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={saveProduct} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Producto</Label>
+                <Input id="name" name="name" defaultValue={editing?.name ?? ""} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input id="sku" name="sku" defaultValue={editing?.sku ?? ""} />
+                </div>
+                <div>
+                  <Label htmlFor="stock">Stock inicial / stock objetivo</Label>
+                  <Input
+                    id="stock"
+                    name="stock"
+                    type="number"
+                    min="0"
+                    defaultValue={editing?.stock ?? 0}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="low_stock_threshold">Mínimo</Label>
+                  <Input
+                    id="low_stock_threshold"
+                    name="low_stock_threshold"
+                    type="number"
+                    min="0"
+                    defaultValue={editing?.low_stock_threshold ?? 0}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="reorder_point">Punto de reposición</Label>
+                  <Input
+                    id="reorder_point"
+                    name="reorder_point"
+                    type="number"
+                    min="0"
+                    defaultValue={editing?.reorder_point ?? 0}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="cost">Costo</Label>
+                  <Input
+                    id="cost"
+                    name="cost"
+                    type="number"
+                    min="0"
+                    defaultValue={editing?.cost ?? 0}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="price">Precio de venta</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    min="0"
+                    defaultValue={editing?.price ?? 0}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="max_stock">Stock máximo</Label>
+                <Input
+                  id="max_stock"
+                  name="max_stock"
+                  type="number"
+                  min="0"
+                  defaultValue={editing?.max_stock ?? 0}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">Guardar</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ajustar stock — {adjustProduct?.name}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={adjustStock} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Stock actual: <strong>{Number(adjustProduct?.stock ?? 0)}</strong>. Usa un número
+                positivo para entrada y negativo para salida.
+              </p>
+              <div>
+                <Label htmlFor="delta">Variación</Label>
+                <Input
+                  id="delta"
+                  name="delta"
+                  type="number"
+                  step="1"
+                  required
+                  placeholder="Ej. 5 o -2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="reason">Motivo</Label>
+                <Input id="reason" name="reason" required placeholder="Ej. merma, corrección" />
+              </div>
+              <Button className="w-full" type="submit">
+                Aplicar ajuste
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </ModuleGuard>
+  );
 }

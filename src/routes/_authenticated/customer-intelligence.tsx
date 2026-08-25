@@ -8,9 +8,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBizList } from "@/lib/biz-data";
 import { CustomerIntelligenceCard } from "@/components/customer-intelligence-card";
 
-type Customer = { id: string; name: string; status: string; pipeline_stage?: string | null; last_contacted_at?: string | null };
+type Customer = {
+  id: string;
+  name: string;
+  status: string;
+  pipeline_stage?: string | null;
+  last_contacted_at?: string | null;
+};
 type Sale = { customer_id?: string | null; total?: number | string | null; sale_date: string };
-type Quote = { customer_id?: string | null; total?: number | string | null; status?: string | null; created_at: string };
+type Quote = {
+  customer_id?: string | null;
+  total?: number | string | null;
+  status?: string | null;
+  created_at: string;
+};
 
 export const Route = createFileRoute("/_authenticated/customer-intelligence")({
   head: () => ({ meta: [{ title: "CRM Intelligence — Nüva One" }] }),
@@ -18,9 +29,18 @@ export const Route = createFileRoute("/_authenticated/customer-intelligence")({
 });
 
 function CustomerIntelligence() {
-  const { data: customers, isLoading: customersLoading } = useBizList<Customer>("customers", { order: "name", ascending: true });
-  const { data: sales, isLoading: salesLoading } = useBizList<Sale>("sales", { order: "sale_date", ascending: false });
-  const { data: quotes, isLoading: quotesLoading } = useBizList<Quote>("quotes", { order: "created_at", ascending: false });
+  const { data: customers, isLoading: customersLoading } = useBizList<Customer>("customers", {
+    order: "name",
+    ascending: true,
+  });
+  const { data: sales, isLoading: salesLoading } = useBizList<Sale>("sales", {
+    order: "sale_date",
+    ascending: false,
+  });
+  const { data: quotes, isLoading: quotesLoading } = useBizList<Quote>("quotes", {
+    order: "created_at",
+    ascending: false,
+  });
   const loading = customersLoading || salesLoading || quotesLoading;
 
   return (
@@ -29,7 +49,13 @@ function CustomerIntelligence() {
         <PageHeader
           title="CRM Intelligence"
           description="Prioridades, valor de cartera y señales comerciales detectadas por Nüva."
-          action={<Link to="/customers"><Button variant="outline"><ArrowLeft className="mr-1.5 h-4 w-4" /> Volver a Clientes</Button></Link>}
+          action={
+            <Link to="/customers">
+              <Button variant="outline">
+                <ArrowLeft className="mr-1.5 h-4 w-4" /> Volver a Clientes
+              </Button>
+            </Link>
+          }
         />
 
         {loading ? (
@@ -38,7 +64,11 @@ function CustomerIntelligence() {
             <Skeleton className="h-32 w-full" />
           </div>
         ) : !customers?.length ? (
-          <EmptyState icon={Users} title="Aún no hay clientes" description="Agrega clientes para comenzar a generar inteligencia comercial." />
+          <EmptyState
+            icon={Users}
+            title="Aún no hay clientes"
+            description="Agrega clientes para comenzar a generar inteligencia comercial."
+          />
         ) : (
           <div className="space-y-5">
             <CustomerIntelligenceCard
@@ -49,7 +79,9 @@ function CustomerIntelligence() {
               onAskAI={() => window.location.assign("/chat")}
             />
             <div className="rounded-xl border bg-muted/20 p-5 text-sm text-muted-foreground">
-              <strong className="text-foreground">Próxima evolución:</strong> Customer 360 con Health Score, recencia, frecuencia, valor, pipeline, cotizaciones, actividades y próxima acción.
+              <strong className="text-foreground">Próxima evolución:</strong> Customer 360 con
+              Health Score, recencia, frecuencia, valor, pipeline, cotizaciones, actividades y
+              próxima acción.
             </div>
           </div>
         )}

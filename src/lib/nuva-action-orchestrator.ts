@@ -12,11 +12,21 @@ export type ActionSignal = {
 
 export type NextBestAction = ActionSignal & { rank: number; rationale: string };
 
-const priorityWeight: Record<ActionPriority, number> = { critical: 100, high: 70, medium: 40, low: 15 };
+const priorityWeight: Record<ActionPriority, number> = {
+  critical: 100,
+  high: 70,
+  medium: 40,
+  low: 15,
+};
 
 export function buildNextBestActions(signals: ActionSignal[], limit = 5): NextBestAction[] {
   return [...signals]
-    .sort((a, b) => (priorityWeight[b.priority] + Math.max(0, b.impact)) - (priorityWeight[a.priority] + Math.max(0, a.impact)))
+    .sort(
+      (a, b) =>
+        priorityWeight[b.priority] +
+        Math.max(0, b.impact) -
+        (priorityWeight[a.priority] + Math.max(0, a.impact)),
+    )
     .slice(0, limit)
     .map((signal, index) => ({
       ...signal,

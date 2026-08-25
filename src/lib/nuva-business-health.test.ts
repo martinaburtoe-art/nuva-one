@@ -12,7 +12,14 @@ describe("buildBusinessHealthIntelligence", () => {
   it("ignores drafts, cancellations, future dates and invalid dates", () => {
     const result = buildBusinessHealthIntelligence({
       now: NOW,
-      sales: [sale(5, 100_000), sale(40, 50_000), sale(5, 999_999, "draft"), sale(5, 999_999, "cancelled"), sale(-2, 999_999), { sale_date: "invalid", total: 500_000 }],
+      sales: [
+        sale(5, 100_000),
+        sale(40, 50_000),
+        sale(5, 999_999, "draft"),
+        sale(5, 999_999, "cancelled"),
+        sale(-2, 999_999),
+        { sale_date: "invalid", total: 500_000 },
+      ],
       customers: [],
       products: [],
       activities: [],
@@ -35,7 +42,15 @@ describe("buildBusinessHealthIntelligence", () => {
       reconciliation: [],
     });
     expect(result.healthMethod).toBe("bottleneck");
-    expect(result.health).toBe(Math.min(result.momentum, result.liquidity, result.dataReadiness, result.execution, result.controls));
+    expect(result.health).toBe(
+      Math.min(
+        result.momentum,
+        result.liquidity,
+        result.dataReadiness,
+        result.execution,
+        result.controls,
+      ),
+    );
   });
 
   it("normalizes reconciliation status case and exposes pending controls", () => {
@@ -46,11 +61,22 @@ describe("buildBusinessHealthIntelligence", () => {
       products: [],
       activities: [],
       cashFlow: [],
-      reconciliation: [{ status: "RECONCILED" }, { status: "posted" }, { status: "pending" }, { status: "open" }, { status: "error" }, { status: "unknown" }, { status: "unknown" }, { status: "unknown" }],
+      reconciliation: [
+        { status: "RECONCILED" },
+        { status: "posted" },
+        { status: "pending" },
+        { status: "open" },
+        { status: "error" },
+        { status: "unknown" },
+        { status: "unknown" },
+        { status: "unknown" },
+      ],
     });
     expect(result.reconciliationOpen).toBe(6);
     expect(result.controls).toBe(25);
-    expect(result.signals.find((signal) => signal.id === "open-reconciliations")?.severity).toBe("HIGH");
+    expect(result.signals.find((signal) => signal.id === "open-reconciliations")?.severity).toBe(
+      "HIGH",
+    );
   });
 
   it("creates a critical inventory signal from an exhausted product", () => {

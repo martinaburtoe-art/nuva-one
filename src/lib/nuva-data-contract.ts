@@ -34,7 +34,10 @@ export function normalizeMetric(metric: BusinessMetric): BusinessMetric {
 
 export function normalizeSignals(signals: BusinessSignal[]): BusinessSignal[] {
   return signals
-    .filter((signal) => Number.isFinite(signal.confidence) && signal.confidence >= 0 && signal.confidence <= 100)
+    .filter(
+      (signal) =>
+        Number.isFinite(signal.confidence) && signal.confidence >= 0 && signal.confidence <= 100,
+    )
     .map((signal) => ({
       ...signal,
       confidence: Math.round(signal.confidence),

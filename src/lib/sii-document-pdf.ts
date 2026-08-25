@@ -1,4 +1,7 @@
-import { generateSiiDeclarationPdf, type PendingSaleForDeclaration } from "@/lib/sii-declaration-pdf";
+import {
+  generateSiiDeclarationPdf,
+  type PendingSaleForDeclaration,
+} from "@/lib/sii-declaration-pdf";
 
 type Business = { name?: string | null; logo_url?: string | null; tax_id?: string | null };
 
@@ -14,7 +17,12 @@ type SiiDocument = {
   created_at?: string | null;
 };
 
-const labels: Record<number, string> = { 33: "Factura electrónica", 34: "Factura exenta", 39: "Boleta electrónica", 41: "Boleta exenta" };
+const labels: Record<number, string> = {
+  33: "Factura electrónica",
+  34: "Factura exenta",
+  39: "Boleta electrónica",
+  41: "Boleta exenta",
+};
 
 function downloadBase64(base64: string, filename: string) {
   const raw = atob(base64);
@@ -32,7 +40,11 @@ function downloadBase64(base64: string, filename: string) {
 }
 
 /** Generates a clearly-labelled internal backup when the official SII PDF was not attached. */
-export async function downloadSiiDocumentBackup(document: SiiDocument, sale: any | undefined, business: Business) {
+export async function downloadSiiDocumentBackup(
+  document: SiiDocument,
+  sale: any | undefined,
+  business: Business,
+) {
   const total = Number(document.total ?? sale?.total ?? 0);
   const payload: PendingSaleForDeclaration = {
     id: document.folio ? `Folio ${document.folio}` : document.id,
@@ -43,11 +55,17 @@ export async function downloadSiiDocumentBackup(document: SiiDocument, sale: any
   const base64 = await generateSiiDeclarationPdf([payload], business);
   const type = labels[Number(document.tipo_dte)] ?? "Documento tributario";
   const folio = document.folio ? String(document.folio) : document.id.slice(0, 8);
-  downloadBase64(base64, `respaldo-${type.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-folio-${folio}.pdf`);
+  downloadBase64(
+    base64,
+    `respaldo-${type.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-folio-${folio}.pdf`,
+  );
 }
 
 export function downloadOfficialSiiPdf(base64: string, document: SiiDocument) {
   const type = labels[Number(document.tipo_dte)] ?? "documento-tributario";
   const folio = document.folio ? String(document.folio) : document.id.slice(0, 8);
-  downloadBase64(base64, `${type.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-folio-${folio}-sii.pdf`);
+  downloadBase64(
+    base64,
+    `${type.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-folio-${folio}-sii.pdf`,
+  );
 }

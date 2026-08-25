@@ -15,7 +15,10 @@ if (text.includes("const SHOWCASE_MODULES =")) {
 // build must never fail because that deprecated workflow no longer contains
 // the old replacement payload.
 const workflow = readFileSync(workflowPath, "utf8");
-if (workflow.includes("Legacy homepage showcase integration (manual only)") || workflow.includes("disabled workflow")) {
+if (
+  workflow.includes("Legacy homepage showcase integration (manual only)") ||
+  workflow.includes("disabled workflow")
+) {
   console.log("Legacy homepage integration is disabled; skipping source rewrite");
   process.exit(0);
 }

@@ -12,7 +12,11 @@ describe("decideUnknownCode", () => {
   });
 
   it("accepts an internal SKU", () => {
-    expect(decideUnknownCode("SKU-ABC-01")).toEqual({ kind: "create", code: "SKU-ABC-01", codeKind: "SKU" });
+    expect(decideUnknownCode("SKU-ABC-01")).toEqual({
+      kind: "create",
+      code: "SKU-ABC-01",
+      codeKind: "SKU",
+    });
   });
 
   it("rejects an invalid barcode checksum", () => {

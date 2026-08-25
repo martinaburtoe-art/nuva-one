@@ -12,9 +12,7 @@ type PlatformEvent = {
 
 /** Fire-and-forget: observability can never block or break Nüva One. */
 export function trackPlatformEvent(event: PlatformEvent) {
-  void supabase.functions
-    .invoke("platform-telemetry", { body: event })
-    .catch(() => undefined);
+  void supabase.functions.invoke("platform-telemetry", { body: event }).catch(() => undefined);
 }
 
 export function trackPageView(route: string) {
@@ -28,11 +26,7 @@ export function trackPageView(route: string) {
 export function captureBrowserPerformance() {
   if (typeof window === "undefined" || typeof PerformanceObserver === "undefined") return;
 
-  const send = (
-    eventName: string,
-    value: number,
-    metadata: Record<string, unknown> = {},
-  ) => {
+  const send = (eventName: string, value: number, metadata: Record<string, unknown> = {}) => {
     if (!Number.isFinite(value) || value < 0) return;
 
     trackPlatformEvent({
@@ -44,26 +38,17 @@ export function captureBrowserPerformance() {
     });
   };
 
-  const observe = (
-    type: string,
-    callback: (entry: PerformanceEntry) => void,
-  ) => {
+  const observe = (type: string, callback: (entry: PerformanceEntry) => void) => {
     try {
-      const observer = new PerformanceObserver((list) =>
-        list.getEntries().forEach(callback),
-      );
+      const observer = new PerformanceObserver((list) => list.getEntries().forEach(callback));
       observer.observe({ type, buffered: true } as PerformanceObserverInit);
     } catch {
       // Unsupported metric/browser: silently ignore.
     }
   };
 
-  observe("largest-contentful-paint", (entry) =>
-    send("web_vital_lcp", entry.startTime),
-  );
-  observe("first-contentful-paint", (entry) =>
-    send("web_vital_fcp", entry.startTime),
-  );
+  observe("largest-contentful-paint", (entry) => send("web_vital_lcp", entry.startTime));
+  observe("first-contentful-paint", (entry) => send("web_vital_fcp", entry.startTime));
   observe("layout-shift", (entry) => {
     const shift = entry as PerformanceEntry & {
       value?: number;
@@ -84,10 +69,6 @@ export function captureBrowserPerformance() {
     | PerformanceNavigationTiming
     | undefined;
   if (navigation) {
-    send(
-      "web_vital_ttfb",
-      navigation.responseStart - navigation.requestStart,
-      { metric: "TTFB" },
-    );
+    send("web_vital_ttfb", navigation.responseStart - navigation.requestStart, { metric: "TTFB" });
   }
 }

@@ -1,4 +1,11 @@
-export type TaxExceptionType = "credit_note" | "debit_note" | "voided" | "duplicate" | "exempt" | "rounding" | "period_mismatch";
+export type TaxExceptionType =
+  | "credit_note"
+  | "debit_note"
+  | "voided"
+  | "duplicate"
+  | "exempt"
+  | "rounding"
+  | "period_mismatch";
 
 export type TaxExceptionDocument = {
   id: string;
@@ -18,7 +25,10 @@ export type TaxExceptionResult = {
   adjustedTotal: number;
 };
 
-export function evaluateTaxExceptions(period: string, documents: TaxExceptionDocument[]): TaxExceptionResult {
+export function evaluateTaxExceptions(
+  period: string,
+  documents: TaxExceptionDocument[],
+): TaxExceptionResult {
   const blockers: string[] = [];
   const warnings: string[] = [];
   let adjustedNet = 0;
@@ -39,7 +49,8 @@ export function evaluateTaxExceptions(period: string, documents: TaxExceptionDoc
     }
 
     const sign = document.type === "credit_note" || document.type === "voided" ? -1 : 1;
-    if (document.type === "debit_note") warnings.push(`Nota de débito ${document.id} incrementa la base del período.`);
+    if (document.type === "debit_note")
+      warnings.push(`Nota de débito ${document.id} incrementa la base del período.`);
     if (document.type === "exempt") {
       adjustedNet += sign * document.net;
       adjustedTotal += sign * document.total;
@@ -50,9 +61,15 @@ export function evaluateTaxExceptions(period: string, documents: TaxExceptionDoc
     adjustedIva += sign * document.iva;
     adjustedTotal += sign * document.total;
 
-    if (document.type === "credit_note" && !document.originalDocumentId) blockers.push(`Nota de crédito ${document.id} no referencia documento original.`);
-    if (document.type === "debit_note" && !document.originalDocumentId) blockers.push(`Nota de débito ${document.id} no referencia documento original.`);
-    if (document.type === "rounding" && Math.abs(document.total - (document.net + document.iva)) > 1) warnings.push(`Redondeo del documento ${document.id} supera la tolerancia.`);
+    if (document.type === "credit_note" && !document.originalDocumentId)
+      blockers.push(`Nota de crédito ${document.id} no referencia documento original.`);
+    if (document.type === "debit_note" && !document.originalDocumentId)
+      blockers.push(`Nota de débito ${document.id} no referencia documento original.`);
+    if (
+      document.type === "rounding" &&
+      Math.abs(document.total - (document.net + document.iva)) > 1
+    )
+      warnings.push(`Redondeo del documento ${document.id} supera la tolerancia.`);
   }
 
   return { blockers, warnings, adjustedNet, adjustedIva, adjustedTotal };

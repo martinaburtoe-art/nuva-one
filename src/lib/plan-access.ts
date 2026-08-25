@@ -21,10 +21,7 @@ export function getPlanLimit(plan: string | null | undefined, key: PlanLimitKey)
   }
 }
 
-export function hasPlanFeature(
-  plan: string | null | undefined,
-  feature: PlanFeatureKey,
-) {
+export function hasPlanFeature(plan: string | null | undefined, feature: PlanFeatureKey) {
   return getNuvaPlan(plan).features[feature] !== false;
 }
 
