@@ -33,11 +33,13 @@ function endForPeriod(period: Period, now: Date) {
 }
 
 export function PurchasesProductAnalytics({ purchases, products }: Props) {
-  const [period, setPeriod] = useState<Period>("30d");
+  // Default to all history + all statuses so the analytics always reflects
+  // the purchases visible in the table below. Users can narrow it with filters.
+  const [period, setPeriod] = useState<Period>("all");
   const [metric, setMetric] = useState<Metric>("units");
   const [topN, setTopN] = useState("10");
   const [supplier, setSupplier] = useState("all");
-  const [status, setStatus] = useState("received");
+  const [status, setStatus] = useState("all");
   const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
   const [customFrom, setCustomFrom] = useState("");
@@ -94,8 +96,8 @@ export function PurchasesProductAnalytics({ purchases, products }: Props) {
     value: metric === "spend" ? row.spend : metric === "orders" ? row.orders : row.units,
   }));
   const metricLabel = metric === "spend" ? "Gasto" : metric === "orders" ? "Órdenes" : "Unidades compradas";
-  const hasActiveFilters = period !== "30d" || metric !== "units" || topN !== "10" || supplier !== "all" || status !== "received" || category !== "all" || Boolean(search) || Boolean(customFrom) || Boolean(customTo);
-  function resetFilters() { setPeriod("30d"); setMetric("units"); setTopN("10"); setSupplier("all"); setStatus("received"); setCategory("all"); setSearch(""); setCustomFrom(""); setCustomTo(""); }
+  const hasActiveFilters = period !== "all" || metric !== "units" || topN !== "10" || supplier !== "all" || status !== "all" || category !== "all" || Boolean(search) || Boolean(customFrom) || Boolean(customTo);
+  function resetFilters() { setPeriod("all"); setMetric("units"); setTopN("10"); setSupplier("all"); setStatus("all"); setCategory("all"); setSearch(""); setCustomFrom(""); setCustomTo(""); }
 
   return (
     <Card className="mb-6 overflow-hidden">
