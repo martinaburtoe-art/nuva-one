@@ -10,8 +10,11 @@ const vus = Number(process.env.LOAD_TEST_VUS ?? 10);
 const iterations = Number(process.env.LOAD_TEST_ITERATIONS ?? 3);
 const phases = (process.env.LOAD_TEST_PHASES ?? "").split(",").map(Number).filter((value) => value > 0);
 const outputFile = process.env.LOAD_TEST_OUTPUT ?? "artifacts/load-test-results.json";
+const environment = (process.env.LOAD_TEST_ENV ?? "").toLowerCase();
 
 if (process.env.LOAD_TEST_CONFIRM !== "true") throw new Error("Refusing to run a load test without LOAD_TEST_CONFIRM=true.");
+if (environment !== "staging") throw new Error("Refusing load tests outside an explicitly declared staging environment (LOAD_TEST_ENV=staging).");
+if (/nuva-one\.vercel\.app|nuvaone\.cl/i.test(supabaseUrl)) throw new Error("Production URL detected. Configure an isolated staging Supabase project.");
 if (!supabaseUrl || !anonKey || !email || !password) {
   throw new Error("Missing VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, LOAD_TEST_EMAIL or LOAD_TEST_PASSWORD.");
 }
@@ -74,7 +77,7 @@ async function runVirtualUser() {
 }
 
 async function runPhase(phaseVus) {
-  console.log(`\nNüva One load phase: ${phaseVus} VUs × ${iterations} iterations`);
+  console.log(`\nNüva One staging load phase: ${phaseVus} VUs × ${iterations} iterations`);
   const started = performance.now();
   const users = await Promise.allSettled(Array.from({ length: phaseVus }, () => runVirtualUser()));
   const elapsed = performance.now() - started;
@@ -110,6 +113,6 @@ for (const phase of requestedPhases) {
 }
 
 await mkdir(dirname(outputFile), { recursive: true });
-await writeFile(outputFile, JSON.stringify({ generated_at: new Date().toISOString(), phases: results }, null, 2), "utf8");
+await writeFile(outputFile, JSON.stringify({ generated_at: new Date().toISOString(), environment, phases: results }, null, 2), "utf8");
 console.log(`Load-test results written to ${outputFile}`);
 if (results.some((result) => result.user_failures || result.request_failures)) process.exitCode = 1;
