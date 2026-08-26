@@ -2,6 +2,12 @@ begin;
 
 -- Nüva One — finance integrity + tax control v3
 -- Applied to production first, then committed here so schema-as-code remains aligned.
+-- Sales/purchase tax fields existed in the hosted schema but were missing from the
+-- clean migration chain. Declare them here before the VAT working-paper view.
+alter table public.sales add column if not exists tax_treatment text not null default 'taxable';
+alter table public.sales add column if not exists vat_rate numeric(6,3) not null default 19;
+alter table public.purchases add column if not exists tax_treatment text not null default 'taxable';
+alter table public.purchases add column if not exists vat_rate numeric(6,3) not null default 19;
 
 create or replace function private.guard_accounting_journal_period()
 returns trigger language plpgsql security definer set search_path = public, private as $$
