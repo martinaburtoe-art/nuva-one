@@ -6,22 +6,20 @@ import {
   sendCardRegistration,
   getFlowSubscriptionCreds,
 } from "@/lib/fiscal/flow-subscriptions.server";
+import {
+  createMercadoPagoSubscription,
+  getMercadoPagoConfig,
+} from "@/lib/fiscal/mercadopago-subscriptions.server";
+import { NUVA_PLANS } from "@/lib/plan-config";
 
-// El dueño/admin del negocio hace clic en "Actualizar a Pro" -> este
-// endpoint crea (o reutiliza) el customer de Flow y lo manda a registrar
-// su tarjeta. El negocio recién pasa a plan='pro' cuando el callback
-// (/api/billing/subscribe/callback) confirma el registro server-to-server.
+// Compatibilidad del checkout existente: Mercado Pago es ahora el proveedor
+// primario. Si aún no existen credenciales de Mercado Pago, el mismo endpoint
+// entrega la experiencia demo; si Flow sigue configurado, queda como fallback.
 export const Route = createFileRoute("/api/billing/subscribe/register")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const creds = getFlowSubscriptionCreds();
         const siteUrl = process.env.SITE_URL ?? "https://nuva-one.vercel.app";
-        if (!creds)
-          return new Response(JSON.stringify({ error: "Suscripciones no configuradas" }), {
-            status: 500,
-          });
-
         const client = await authedUserClient(request);
         if (!client) return new Response("Unauthorized", { status: 401 });
 
@@ -37,7 +35,6 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
           });
         }
 
-        // RLS: solo miembros del negocio pasan este SELECT.
         const { data: business, error: bizError } = await client
           .from("businesses")
           .select("id, name, flow_customer_id")
@@ -47,13 +44,71 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
           return new Response("Negocio no encontrado o sin acceso", { status: 403 });
 
         const { data: userData } = await client.auth.getUser();
-        const email = userData.user?.email ?? "sin-correo@nuvaone.cl";
+        const email = userData.user?.email;
+
+        // Inferimos la modalidad desde el checkout actual para no romper la UX
+        // existente: /checkout?plan=pro&billing=annual|monthly.
+        const referer = request.headers.get("referer");
+        const refererUrl = referer ? new URL(referer) : null;
+        const billing = body.billing === "annual" || refererUrl?.searchParams.get("billing") === "annual"
+          ? "annual"
+          : "monthly";
+
+        const mercadoPago = getMercadoPagoConfig();
+        if (mercadoPago) {
+          if (!email) return new Response(JSON.stringify({ error: "No encontramos un email para la cuenta" }), { status: 400 });
+          const plan = NUVA_PLANS.pro;
+          const result = await createMercadoPagoSubscription({
+            config: mercadoPago,
+            businessId,
+            businessName: business.name,
+            email,
+            planName: plan.name,
+            amount: billing === "annual" ? plan.annualPriceClp : plan.monthlyPriceClp,
+            billing,
+            backUrl: `${siteUrl}/settings?billing=mercadopago`,
+          });
+          if (!result.ok) {
+            return new Response(JSON.stringify({ error: result.errorMessage }), {
+              status: 502,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          await supabaseAdmin
+            .from("businesses")
+            .update({
+              billing_provider: "mercadopago",
+              mercadopago_preapproval_id: result.preapprovalId,
+              subscription_status: "pending",
+            })
+            .eq("id", businessId);
+
+          return new Response(
+            JSON.stringify({ ok: true, provider: "mercadopago", url: result.initPoint }),
+            { headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        // Sin credenciales reales, el checkout sigue siendo navegable y testeable.
+        if (!email) {
+          return new Response(JSON.stringify({ error: "No encontramos un email para la cuenta" }), { status: 400 });
+        }
+
+        const demoUrl = `${siteUrl}/checkout-demo?plan=pro&billing=${billing}`;
+        const flow = getFlowSubscriptionCreds();
+        if (!flow) {
+          return new Response(JSON.stringify({ ok: true, provider: "demo", url: demoUrl }), {
+            headers: { "Content-Type": "application/json" },
+          });
+        }
 
         let customerId = (business as any).flow_customer_id as string | null;
         if (!customerId) {
-          const created = await createFlowCustomer(creds, {
+          const created = await createFlowCustomer(flow, {
             businessId,
-            name: (business as any).name,
+            name: business.name,
             email,
           });
           if (!created.ok)
@@ -66,16 +121,14 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
             .eq("id", businessId);
         }
 
-        const registration = await sendCardRegistration(creds, {
+        const registration = await sendCardRegistration(flow, {
           customerId: customerId!,
           returnUrl: `${siteUrl}/api/billing/subscribe/callback?business_id=${businessId}`,
         });
         if (!registration.ok)
-          return new Response(JSON.stringify({ error: registration.errorMessage }), {
-            status: 502,
-          });
+          return new Response(JSON.stringify({ error: registration.errorMessage }), { status: 502 });
 
-        return new Response(JSON.stringify({ ok: true, url: registration.registerUrl }), {
+        return new Response(JSON.stringify({ ok: true, provider: "flow", url: registration.registerUrl }), {
           headers: { "Content-Type": "application/json" },
         });
       },
