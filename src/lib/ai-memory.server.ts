@@ -14,6 +14,8 @@ const SUMMARIZE_EVERY_N_MESSAGES = 20;
 type AiConversation = Database["public"]["Tables"]["ai_conversations"]["Row"];
 type AiChannel = Database["public"]["Enums"]["ai_channel"];
 
+type AiProvider = "groq" | "lovable" | "openai";
+
 export type ConversationIdentity = {
   businessId: string;
   channel: AiChannel;
@@ -68,6 +70,17 @@ export async function getOrCreateConversation(
   return created;
 }
 
+function providerFromModel(model?: string): AiProvider {
+  const normalized = model?.toLowerCase() ?? "";
+  if (normalized.includes("gemini") || normalized.includes("lovable")) return "lovable";
+  if (normalized.startsWith("gpt-") || normalized.includes("openai")) return "openai";
+  return "groq";
+}
+
+function estimateOutputTokens(content: string) {
+  return Math.max(1, Math.ceil(content.length / 4));
+}
+
 export async function appendMessage(
   admin: SupabaseClient<Database>,
   conversationId: string,
@@ -80,6 +93,39 @@ export async function appendMessage(
     .from("ai_conversations")
     .update({ last_message_at: new Date().toISOString() })
     .eq("id", conversationId);
+
+  // Telemetry is deliberately best-effort: a monitoring write must never
+  // make a successful AI response fail. This fallback records output usage
+  // estimated from persisted text until exact provider usage is attached by
+  // the request orchestrator.
+  if (role === "assistant") {
+    try {
+      const { data: conversation } = await admin
+        .from("ai_conversations")
+        .select("business_id, user_id")
+        .eq("id", conversationId)
+        .maybeSingle();
+      const outputTokens = estimateOutputTokens(content);
+      const provider = providerFromModel(model);
+      const inputPrice = provider === "groq" ? 0.075 : 0;
+      const outputPrice = provider === "groq" ? 0.3 : 0;
+      const estimatedCostUsd = (outputTokens / 1_000_000) * outputPrice + (0 / 1_000_000) * inputPrice;
+      await admin.from("ai_usage_events").insert({
+        business_id: conversation?.business_id ?? null,
+        user_id: conversation?.user_id ?? null,
+        provider,
+        model: model ?? "unknown",
+        input_tokens: 0,
+        output_tokens: outputTokens,
+        total_tokens: outputTokens,
+        estimated_cost_usd: estimatedCostUsd,
+        fallback_used: false,
+        attempts: 1,
+      });
+    } catch (telemetryError) {
+      console.warn("AI telemetry write skipped", telemetryError);
+    }
+  }
 }
 
 // Returns the messages to feed the model: the rolling summary (as a system
