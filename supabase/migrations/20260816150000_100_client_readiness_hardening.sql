@@ -2,6 +2,7 @@
 -- Idempotent: safe to apply to environments where the same indexes/grants already exist.
 
 -- Sensitive tables must never be directly reachable by the anonymous role.
+-- Optional/retired modules are guarded so a clean database can always replay the migration.
 DO $$
 DECLARE
   table_name text;
@@ -9,14 +10,16 @@ BEGIN
   FOREACH table_name IN ARRAY ARRAY[
     'profiles','businesses','business_members','business_invites','customers','suppliers',
     'products','sales','purchases','transactions','quotes','automations','audit_log',
-    'customer_activities','collection_reminders','quote_followups','billing_integrations',
+    'collection_reminders','quote_followups','billing_integrations',
     'billing_documents','billing_emit_queue','payment_intents','payment_webhook_events',
     'payments','subscription_charges','rate_limit_counters','system_alerts','device_tokens',
     'whatsapp_connections','whatsapp_messages','whatsapp_owner_links','ai_conversations',
     'ai_messages','ai_usage_daily','shifts'
   ]
   LOOP
-    EXECUTE format('REVOKE ALL ON TABLE public.%I FROM anon', table_name);
+    IF to_regclass(format('public.%I', table_name)) IS NOT NULL THEN
+      EXECUTE format('REVOKE ALL ON TABLE public.%I FROM anon', table_name);
+    END IF;
   END LOOP;
 END;
 $$;
@@ -32,7 +35,6 @@ CREATE INDEX IF NOT EXISTS idx_billing_documents_sale_id ON public.billing_docum
 CREATE INDEX IF NOT EXISTS idx_billing_emit_queue_document_id ON public.billing_emit_queue(document_id);
 CREATE INDEX IF NOT EXISTS idx_billing_emit_queue_sale_id ON public.billing_emit_queue(sale_id);
 CREATE INDEX IF NOT EXISTS idx_business_invites_invited_by ON public.business_invites(invited_by);
-CREATE INDEX IF NOT EXISTS idx_customer_activities_created_by ON public.customer_activities(created_by);
 CREATE INDEX IF NOT EXISTS idx_forum_replies_author_user_id ON public.forum_replies(author_user_id);
 CREATE INDEX IF NOT EXISTS idx_forum_replies_business_id ON public.forum_replies(business_id);
 CREATE INDEX IF NOT EXISTS idx_forum_topics_author_user_id ON public.forum_topics(author_user_id);
@@ -52,10 +54,6 @@ CREATE INDEX IF NOT EXISTS idx_transactions_business_tx_date_created_at
   ON public.transactions(business_id, tx_date DESC, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_quotes_business_created_at
   ON public.quotes(business_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_customer_activities_business_created_at
-  ON public.customer_activities(business_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_customer_activities_business_customer_created_at
-  ON public.customer_activities(business_id, customer_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_business_created_at
   ON public.whatsapp_messages(business_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_messages_conversation_created_at
