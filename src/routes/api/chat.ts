@@ -135,16 +135,20 @@ export const Route = createFileRoute("/api/chat")({
             model,
             system,
             messages: modelMessages,
-            onFinish: async ({ text, usage, totalUsage, model: responseModel }) => {
+            onFinish: async ({ text, usage, totalUsage, steps }) => {
               if (!conversation) return;
               if (userText) await appendMessage(supabaseAdmin, conversation.id, "user", userText);
-              const providerModel = `${responseModel.provider}:${responseModel.modelId}`;
+              const lastStep = steps.at(-1);
+              const provider = lastStep?.model?.provider ?? (process.env.AI_PROVIDER ?? "groq").toLowerCase();
+              const modelId = lastStep?.model?.modelId ?? "unknown";
+              const providerModel = `${provider}:${modelId}`;
               const primaryProvider = (process.env.AI_PROVIDER ?? "groq").toLowerCase();
               await appendMessage(supabaseAdmin, conversation.id, "assistant", text, providerModel, {
                 inputTokens: totalUsage.inputTokens ?? usage.inputTokens,
                 outputTokens: totalUsage.outputTokens ?? usage.outputTokens,
                 totalTokens: totalUsage.totalTokens ?? usage.totalTokens,
-                fallbackUsed: !providerModel.toLowerCase().startsWith(primaryProvider),
+                fallbackUsed: provider.toLowerCase() !== primaryProvider,
+                attempts: steps.length,
               });
               await maybeSummarize(supabaseAdmin, conversation, async (prompt) => {
                 const { text: summary } = await generateText({ model, prompt });
