@@ -1,3 +1,3 @@
 # Deployment verification
 
-This file intentionally triggers a fresh Vercel deployment after the inventory route-tree and SII Ready fixes were applied.
+This file intentionally triggers a fresh Vercel deployment after production-facing fixes, including the landing navigation demo CTA.
