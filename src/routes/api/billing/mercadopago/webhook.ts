@@ -5,6 +5,7 @@ import {
   getMercadoPagoPayment,
   getMercadoPagoSubscription,
   isMercadoPagoSubscriptionActive,
+  validateMercadoPagoWebhookSignature,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
 
 export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
@@ -14,9 +15,18 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
         const config = getMercadoPagoConfig();
         if (!config) return new Response("OK", { status: 200 });
 
+        const url = new URL(request.url);
         const payload = await request.json().catch(() => ({}));
-        const type = String(payload?.type ?? payload?.topic ?? "");
-        const resourceId = String(payload?.data?.id ?? payload?.id ?? "");
+        const resourceId = String(payload?.data?.id ?? payload?.id ?? url.searchParams.get("data.id") ?? "");
+        const signatureValid = validateMercadoPagoWebhookSignature({
+          signature: request.headers.get("x-signature"),
+          requestId: request.headers.get("x-request-id"),
+          dataId: resourceId || null,
+          secret: process.env.MERCADOPAGO_WEBHOOK_SECRET,
+        });
+        if (!signatureValid) return new Response("Invalid webhook signature", { status: 401 });
+
+        const type = String(payload?.type ?? payload?.topic ?? url.searchParams.get("type") ?? "");
         if (!resourceId) return new Response("OK", { status: 200 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -38,8 +48,12 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
             if (active) {
               update.plan = NUVA_PLANS.pro.id;
               update.billing_failed_attempts = 0;
+              const frequency = Number(subscription.data.auto_recurring?.frequency ?? 1);
+              const frequencyType = String(subscription.data.auto_recurring?.frequency_type ?? "months");
               const next = new Date();
-              next.setMonth(next.getMonth() + 1);
+              if (frequencyType === "days") next.setDate(next.getDate() + frequency);
+              else if (frequencyType === "months") next.setMonth(next.getMonth() + frequency);
+              else next.setMonth(next.getMonth() + 1);
               update.next_charge_date = next.toISOString().slice(0, 10);
             }
             if (status === "cancelled" || status === "canceled") {
