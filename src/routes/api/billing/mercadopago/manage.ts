@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/manage")({
           return Response.json({ error: "No existe una suscripción Mercado Pago vinculada" }, { status: 404 });
         }
 
-        const status = action === "pause" ? "paused" : action === "cancel" ? "cancelled" : action === "resume" ? "authorized" : "pending";
+        const status = action === "pause" ? "paused" : action === "cancel" ? "canceled" : action === "resume" ? "authorized" : "pending";
         const result = await updateMercadoPagoSubscription(
           config,
           business.mercadopago_preapproval_id,
