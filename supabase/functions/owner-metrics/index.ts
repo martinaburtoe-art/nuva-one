@@ -19,11 +19,16 @@ export default {
       "platform_metrics",
       {},
     );
+    const { data: aiTelemetry, error: aiTelemetryError } = await ctx.supabaseAdmin.rpc(
+      "get_platform_ai_metrics",
+      {},
+    );
 
     return Response.json(
       {
         ...(data as Record<string, unknown>),
         telemetry: telemetryError ? null : telemetry,
+        ai_telemetry: aiTelemetryError ? null : aiTelemetry,
       },
       { headers: { "Cache-Control": "private, max-age=30" } },
     );
