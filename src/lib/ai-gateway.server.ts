@@ -1,4 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { wrapLanguageModel } from "ai";
 
 const RETIRED_GROQ_MODELS = new Set(["llama-3.1-8b-instant"]);
 const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
@@ -120,14 +121,74 @@ export function getChatModelCandidates(): ProviderCandidate[] {
     .filter((candidate): candidate is ProviderCandidate => candidate !== null);
 }
 
+function createFailoverModel(primary: ProviderCandidate, fallbacks: ProviderCandidate[]) {
+  if (fallbacks.length === 0) return primary.languageModel;
+
+  return wrapLanguageModel({
+    model: primary.languageModel,
+    middleware: {
+      specificationVersion: "v3",
+      wrapGenerate: async ({ doGenerate, params }) => {
+        try {
+          const result = await doGenerate();
+          recordProviderSuccess(primary.provider);
+          return result;
+        } catch (primaryError) {
+          if (!isRetryableAiError(primaryError)) throw primaryError;
+          recordProviderFailure(primary.provider);
+          let lastError: unknown = primaryError;
+          for (const fallback of fallbacks) {
+            if (isCircuitOpen(fallback.provider)) continue;
+            try {
+              const result = await fallback.languageModel.doGenerate(params);
+              recordProviderSuccess(fallback.provider);
+              return result;
+            } catch (fallbackError) {
+              lastError = fallbackError;
+              if (!isRetryableAiError(fallbackError)) throw fallbackError;
+              recordProviderFailure(fallback.provider);
+            }
+          }
+          throw lastError;
+        }
+      },
+      wrapStream: async ({ doStream, params }) => {
+        try {
+          const result = await doStream();
+          recordProviderSuccess(primary.provider);
+          return result;
+        } catch (primaryError) {
+          if (!isRetryableAiError(primaryError)) throw primaryError;
+          recordProviderFailure(primary.provider);
+          let lastError: unknown = primaryError;
+          for (const fallback of fallbacks) {
+            if (isCircuitOpen(fallback.provider)) continue;
+            try {
+              const result = await fallback.languageModel.doStream(params);
+              recordProviderSuccess(fallback.provider);
+              return result;
+            } catch (fallbackError) {
+              lastError = fallbackError;
+              if (!isRetryableAiError(fallbackError)) throw fallbackError;
+              recordProviderFailure(fallback.provider);
+            }
+          }
+          throw lastError;
+        }
+      },
+    },
+  });
+}
+
 export function getChatModel() {
-  const candidate = getChatModelCandidates()[0];
-  if (!candidate) {
+  const candidates = getChatModelCandidates();
+  const primary = candidates[0];
+  if (!primary) {
     throw new Error(
       "No hay un proveedor de IA disponible. Configura GROQ_API_KEY, LOVABLE_API_KEY u OPENAI_API_KEY.",
     );
   }
-  return candidate.languageModel;
+  return createFailoverModel(primary, candidates.slice(1));
 }
 
 function usageNumber(value: unknown): number {
