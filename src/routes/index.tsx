@@ -162,7 +162,7 @@ function Nav() {
               className="whitespace-nowrap border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
             >
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              Demo
+              Visualizar Nüva
             </Button>
           </Link>
           <a
