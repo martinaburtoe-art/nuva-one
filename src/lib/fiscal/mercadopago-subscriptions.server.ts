@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 type MercadoPagoConfig = {
   accessToken: string;
   environment: "test" | "prod";
@@ -33,6 +35,34 @@ async function mpFetch(
   } catch {
     return { ok: false, status: 0, json: {} };
   }
+}
+
+export function validateMercadoPagoWebhookSignature(params: {
+  signature: string | null;
+  requestId: string | null;
+  dataId: string | null;
+  secret: string | undefined;
+}) {
+  if (!params.signature || !params.secret) return false;
+  const parts = Object.fromEntries(
+    params.signature.split(",").map((part) => {
+      const [key, ...rest] = part.trim().split("=");
+      return [key, rest.join("=")];
+    }),
+  ) as Record<string, string>;
+  const ts = parts.ts;
+  const v1 = parts.v1;
+  if (!ts || !v1) return false;
+
+  const manifestParts: string[] = [];
+  if (params.dataId) manifestParts.push(`id:${params.dataId};`);
+  if (params.requestId) manifestParts.push(`request-id:${params.requestId};`);
+  manifestParts.push(`ts:${ts};`);
+  const manifest = manifestParts.join("");
+  const expected = crypto.createHmac("sha256", params.secret).update(manifest).digest("hex");
+  const expectedBuffer = Buffer.from(expected, "hex");
+  const receivedBuffer = Buffer.from(v1, "hex");
+  return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
 export async function createMercadoPagoSubscription(params: {
