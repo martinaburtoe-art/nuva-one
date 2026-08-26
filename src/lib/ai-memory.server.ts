@@ -19,8 +19,8 @@ type AiProvider = "groq" | "lovable" | "openai";
 export type ConversationIdentity = {
   businessId: string;
   channel: AiChannel;
-  externalRef?: string | null; // phone number for whatsapp
-  userId?: string | null; // authenticated business member for web
+  externalRef?: string | null;
+  userId?: string | null;
 };
 
 export async function getOrCreateConversation(
@@ -40,13 +40,11 @@ export async function getOrCreateConversation(
   query = userId === null ? query.is("user_id", null) : query.eq("user_id", userId);
 
   const { data: existing } = await query.maybeSingle();
-
   const expired =
     existing &&
     Date.now() - new Date(existing.last_message_at).getTime() > SESSION_DAYS * 86_400_000;
 
   if (existing && !expired) return existing;
-
   if (existing && expired) {
     await admin.from("ai_conversations").update({ status: "archived" }).eq("id", existing.id);
   }
@@ -57,15 +55,10 @@ export async function getOrCreateConversation(
     .select("*")
     .single();
 
-  // Unique violation on idx_ai_conversations_active_unique means a
-  // concurrent request won the race and already created this exact
-  // conversation between our SELECT and our INSERT -- not a real error,
-  // just fetch the row it created and use that instead.
   if (error?.code === "23505") {
     const { data: winner } = await query.maybeSingle();
     if (winner) return winner;
   }
-
   if (error || !created) throw new Error(`No se pudo crear la conversación: ${error?.message}`);
   return created;
 }
@@ -94,10 +87,8 @@ export async function appendMessage(
     .update({ last_message_at: new Date().toISOString() })
     .eq("id", conversationId);
 
-  // Telemetry is deliberately best-effort: a monitoring write must never
-  // make a successful AI response fail. This fallback records output usage
-  // estimated from persisted text until exact provider usage is attached by
-  // the request orchestrator.
+  // Best-effort platform telemetry. It intentionally cannot break a successful
+  // AI response. Exact provider usage can later enrich these records.
   if (role === "assistant") {
     try {
       const { data: conversation } = await admin
@@ -107,10 +98,9 @@ export async function appendMessage(
         .maybeSingle();
       const outputTokens = estimateOutputTokens(content);
       const provider = providerFromModel(model);
-      const inputPrice = provider === "groq" ? 0.075 : 0;
       const outputPrice = provider === "groq" ? 0.3 : 0;
-      const estimatedCostUsd = (outputTokens / 1_000_000) * outputPrice + (0 / 1_000_000) * inputPrice;
-      await admin.from("ai_usage_events").insert({
+      const estimatedCostUsd = (outputTokens / 1_000_000) * outputPrice;
+      await (admin as any).from("ai_usage_events").insert({
         business_id: conversation?.business_id ?? null,
         user_id: conversation?.user_id ?? null,
         provider,
@@ -128,8 +118,6 @@ export async function appendMessage(
   }
 }
 
-// Returns the messages to feed the model: the rolling summary (as a system
-// note, if one exists) followed by the most recent raw messages.
 export async function buildContextMessages(
   admin: SupabaseClient<Database>,
   conversation: AiConversation,
@@ -143,25 +131,16 @@ export async function buildContextMessages(
 
   const ordered = (recent ?? []).slice().reverse();
   const messages: { role: "user" | "assistant" | "system"; content: string }[] = [];
-
   if (conversation.summary) {
     messages.push({
       role: "system",
       content: `Resumen de la conversación anterior con este negocio: ${conversation.summary}`,
     });
   }
-
-  for (const m of ordered) {
-    messages.push({ role: m.role, content: m.content });
-  }
-
+  for (const m of ordered) messages.push({ role: m.role, content: m.content });
   return messages;
 }
 
-// Cheap housekeeping: once a conversation accumulates enough messages past
-// the last summary point, collapse the older ones into `summary` using a
-// small/fast model call, and advance `summary_up_to`. Fire-and-forget-safe:
-// callers should not await this on the hot path if latency matters.
 export async function maybeSummarize(
   admin: SupabaseClient<Database>,
   conversation: AiConversation,
@@ -176,9 +155,6 @@ export async function maybeSummarize(
     .order("created_at", { ascending: true });
 
   if (!toSummarize || (count ?? 0) < SUMMARIZE_EVERY_N_MESSAGES) return;
-
-  // Keep the most recent RECENT_MESSAGES_LIMIT out of the summarization
-  // batch -- those still get sent verbatim by buildContextMessages.
   const older = toSummarize.slice(0, Math.max(0, toSummarize.length - RECENT_MESSAGES_LIMIT));
   if (older.length === 0) return;
 
@@ -189,7 +165,6 @@ export async function maybeSummarize(
 
   const newSummary = await summarize(prompt);
   const lastSummarized = older[older.length - 1].created_at;
-
   await admin
     .from("ai_conversations")
     .update({ summary: newSummary, summary_up_to: lastSummarized })
