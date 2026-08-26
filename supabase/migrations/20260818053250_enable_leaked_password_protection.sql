@@ -1,0 +1,4 @@
+-- Supabase Auth configuration marker.
+-- Leaked password protection is a project-level Auth setting and is intentionally
+-- not toggled through PostgreSQL SQL. Keep this migration marker in source so
+-- local migration history remains aligned with the hosted project.
