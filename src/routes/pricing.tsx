@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
-  WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -267,7 +266,11 @@ function PricingPage() {
                   </div>
                 ))}
               </div>
-              <Link to="/auth" search={{ mode: "signup" }} className="mt-6">
+              <Link
+                to="/checkout"
+                search={{ plan: plan.id, billing: "monthly" }}
+                className="mt-6"
+              >
                 <Button
                   className="h-12 w-full rounded-xl"
                   variant={plan.featured ? "default" : "outline"}
@@ -390,7 +393,11 @@ function PricingPage() {
               </div>
             </div>
             <div className="mt-8 text-center">
-              <Link to="/auth" search={{ mode: "signup" }} className="inline-flex">
+              <Link
+                to="/checkout"
+                search={{ plan: "pro", billing: "monthly" }}
+                className="inline-flex"
+              >
                 <Button size="lg" className="rounded-xl">
                   Probar Nüva One gratis
                   <ArrowRight className="ml-2 h-4 w-4" />
