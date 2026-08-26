@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -18,7 +18,7 @@ jobs:
   build-and-test:
     name: Lint, typecheck, test, audit, build
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,30 +29,48 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: "2.115.0"
+
+      - name: Verify Docker
+        run: |
+          docker version
+          docker info
+
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Dependency security audit
         run: npm audit --audit-level=high
 
-      - name: Auto-fix lintable issues
-        run: npm run lint -- --fix
+      - name: Start local Supabase stack
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            echo "Starting Supabase local stack (attempt ${attempt}/3)"
+            if supabase start; then
+              echo "Supabase local stack started"
+              exit 0
+            fi
+            supabase status || true
+            docker ps -a || true
+            if [ "$attempt" -lt 3 ]; then
+              supabase stop --no-backup || true
+              sleep 10
+            fi
+          done
+          echo "Supabase failed to start after 3 attempts"
+          exit 1
+
+      - name: Regenerate database types from local schema
+        run: |
+          supabase gen types typescript --local > src/integrations/supabase/types.ts
+          test -s src/integrations/supabase/types.ts
 
       - name: Verify lint
         run: npm run lint
-
-      - name: Persist lint auto-fixes on main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if git diff --quiet; then
-            echo "No lint auto-fixes required"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore(ci): persist lint auto-fixes"
-            git push origin HEAD:main
-          fi
 
       - name: Typecheck
         run: npm run typecheck
@@ -62,6 +80,10 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Stop local Supabase stack
+        if: always()
+        run: supabase stop --no-backup || true
 
   database-tests:
     name: pgTAP database tests
@@ -74,7 +96,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: "2.115.0"
 
       - name: Verify Docker
         run: |
@@ -119,4 +141,4 @@ jobs:
 
       - name: Stop Supabase local stack
         if: always()
-        run: supabase stop --no-backup
+        run: supabase stop --no-backup || true
