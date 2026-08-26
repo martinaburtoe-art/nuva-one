@@ -10,7 +10,7 @@ function CheckoutDemoRedirect() {
   const search = useSearch({ from: "/checkout-demo" });
 
   useEffect(() => {
-    const plan = search?.plan === "start" ? "start" : "pro";
+    const plan = search?.plan === "start" || search?.plan === "starter" ? "starter" : "pro";
     const billing = search?.billing === "annual" ? "annual" : "monthly";
     window.location.replace(`/checkout?plan=${plan}&billing=${billing}`);
   }, [search]);
