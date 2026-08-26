@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Activity, AlertTriangle, Bot, Database, Gauge, RefreshCw, ShieldCheck, Zap } from "lucide-react";
+import { Activity, AlertTriangle, Bot, Database, Gauge, RefreshCw, ShieldCheck, Zap, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type PlatformMetrics = {
@@ -144,11 +144,11 @@ function ControlTower() {
   );
 }
 
-function Card({ icon: Icon, label, value, tone = "normal" }: { icon: typeof Activity; label: string; value: string; tone?: "normal" | "warn" | "ok" }) {
+function Card({ icon: Icon, label, value, tone = "normal" }: { icon: LucideIcon; label: string; value: string; tone?: "normal" | "warn" | "ok" }) {
   return <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><Icon className="h-5 w-5 text-white/50" /><div className="mt-4 text-xs uppercase tracking-[0.18em] text-white/35">{label}</div><div className={`mt-1 text-2xl font-semibold ${tone === "warn" ? "text-amber-200" : tone === "ok" ? "text-emerald-200" : "text-white"}`}>{value}</div></div>;
 }
 
-function Panel({ title, icon: Icon, children }: { title: string; icon: typeof Activity; children: ReactNode }) {
+function Panel({ title, icon: Icon, children }: { title: string; icon: LucideIcon; children: ReactNode }) {
   return <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"><div className="mb-4 flex items-center gap-2 text-sm font-semibold"><Icon className="h-4 w-4 text-white/50" />{title}</div><div className="space-y-2">{children}</div></div>;
 }
 
