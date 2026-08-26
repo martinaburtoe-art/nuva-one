@@ -1,0 +1,83 @@
+-- Nüva One: professional financial, accounting and tax control layer.
+create table if not exists public.financial_reconciliation_items (
+ id uuid primary key default gen_random_uuid(), business_id uuid not null references public.businesses(id) on delete cascade,
+ period_start date not null, period_end date not null, source_kind text not null, source_id uuid, target_kind text, target_id uuid,
+ amount_book numeric not null default 0, amount_external numeric not null default 0,
+ difference numeric generated always as (amount_book-amount_external) stored,
+ status text not null default 'open' check(status in ('open','matched','partial','exception','resolved','ignored')),
+ resolution text, reviewed_by uuid, reviewed_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ check(period_end>=period_start));
+create table if not exists public.financial_adjustments (
+ id uuid primary key default gen_random_uuid(), business_id uuid not null references public.businesses(id) on delete cascade,
+ period_start date not null, period_end date not null, account_id uuid references public.accounting_accounts(id),
+ adjustment_type text not null check(adjustment_type in ('accrual','deferral','depreciation','inventory','provision','tax','reclassification','other')),
+ description text not null, amount numeric not null, tax_treatment text not null default 'pending',
+ status text not null default 'draft' check(status in ('draft','approved','posted','rejected')),
+ supporting_document_id uuid references public.tax_supporting_documents(id) on delete set null, created_by uuid, approved_by uuid,
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table if not exists public.bank_reconciliation_sessions (
+ id uuid primary key default gen_random_uuid(), business_id uuid not null references public.businesses(id) on delete cascade,
+ account_name text not null, period_start date not null, period_end date not null, opening_balance numeric not null default 0,
+ statement_closing_balance numeric not null default 0, book_closing_balance numeric not null default 0,
+ outstanding_deposits numeric not null default 0, outstanding_payments numeric not null default 0, bank_charges numeric not null default 0,
+ adjustments numeric not null default 0, difference numeric generated always as(statement_closing_balance-book_closing_balance) stored,
+ status text not null default 'open' check(status in ('open','in_review','reconciled','exception','closed')),
+ statement_document_id uuid references public.tax_supporting_documents(id) on delete set null, reviewed_by uuid, reviewed_at timestamptz, notes text,
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table if not exists public.financial_close_checklist (
+ id uuid primary key default gen_random_uuid(), business_id uuid not null references public.businesses(id) on delete cascade,
+ period_start date not null, period_end date not null, checklist_key text not null, category text not null, title text not null,
+ status text not null default 'pending' check(status in ('pending','in_review','passed','warning','blocked','not_applicable')),
+ evidence text, assigned_to uuid, reviewed_by uuid, reviewed_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ unique(business_id,period_end,checklist_key));
+create table if not exists public.tax_working_papers (
+ id uuid primary key default gen_random_uuid(), business_id uuid not null references public.businesses(id) on delete cascade,
+ tax_year smallint not null, tax_period_id uuid references public.tax_periods(id) on delete set null, section text not null, sii_form text, sii_code text,
+ concept text not null, accounting_amount numeric not null default 0, tax_adjustment numeric not null default 0, taxable_amount numeric not null default 0,
+ credit_amount numeric not null default 0, source text, supporting_document_id uuid references public.tax_supporting_documents(id) on delete set null,
+ status text not null default 'draft' check(status in ('draft','reviewed','approved','locked')), notes text, created_by uuid, reviewed_by uuid, reviewed_at timestamptz,
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table if not exists public.tax_payments (
+ id uuid primary key default gen_random_uuid(), business_id uuid not null references public.businesses(id) on delete cascade,
+ tax_type text not null check(tax_type in ('f29_iva','f29_ppm','f29_withholding','f29_other','f22_idpc','f22_balance','other')),
+ tax_period_id uuid references public.tax_periods(id) on delete set null, tax_year smallint, due_date date, amount numeric not null default 0, paid_amount numeric not null default 0,
+ status text not null default 'planned' check(status in ('planned','due','paid','partial','overdue','cancelled')), payment_date date, payment_reference text,
+ receipt_document_id uuid references public.tax_supporting_documents(id) on delete set null, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+
+create index if not exists financial_reconciliation_business_period_idx on public.financial_reconciliation_items(business_id,period_end,status);
+create index if not exists financial_adjustments_business_period_idx on public.financial_adjustments(business_id,period_end,status);
+create index if not exists bank_reconciliation_business_period_idx on public.bank_reconciliation_sessions(business_id,period_end,status);
+create index if not exists financial_close_business_period_idx on public.financial_close_checklist(business_id,period_end,status);
+create index if not exists tax_working_papers_business_year_idx on public.tax_working_papers(business_id,tax_year,section,status);
+create index if not exists tax_payments_business_due_idx on public.tax_payments(business_id,due_date,status);
+
+alter table public.financial_reconciliation_items enable row level security;
+alter table public.financial_adjustments enable row level security;
+alter table public.bank_reconciliation_sessions enable row level security;
+alter table public.financial_close_checklist enable row level security;
+alter table public.tax_working_papers enable row level security;
+alter table public.tax_payments enable row level security;
+
+-- Tenant isolation: members read; owner/admin write.
+create policy if not exists financial_reconciliation_member on public.financial_reconciliation_items for select using(exists(select 1 from public.business_members bm where bm.business_id=financial_reconciliation_items.business_id and bm.user_id=auth.uid()));
+create policy if not exists financial_adjustments_member on public.financial_adjustments for select using(exists(select 1 from public.business_members bm where bm.business_id=financial_adjustments.business_id and bm.user_id=auth.uid()));
+create policy if not exists bank_reconciliation_member on public.bank_reconciliation_sessions for select using(exists(select 1 from public.business_members bm where bm.business_id=bank_reconciliation_sessions.business_id and bm.user_id=auth.uid()));
+create policy if not exists financial_close_member on public.financial_close_checklist for select using(exists(select 1 from public.business_members bm where bm.business_id=financial_close_checklist.business_id and bm.user_id=auth.uid()));
+create policy if not exists tax_working_papers_member on public.tax_working_papers for select using(exists(select 1 from public.business_members bm where bm.business_id=tax_working_papers.business_id and bm.user_id=auth.uid()));
+create policy if not exists tax_payments_member on public.tax_payments for select using(exists(select 1 from public.business_members bm where bm.business_id=tax_payments.business_id and bm.user_id=auth.uid()));
+
+create policy if not exists financial_reconciliation_admin on public.financial_reconciliation_items for all using(exists(select 1 from public.business_members bm where bm.business_id=financial_reconciliation_items.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin'))) with check(exists(select 1 from public.business_members bm where bm.business_id=financial_reconciliation_items.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin')));
+create policy if not exists financial_adjustments_admin on public.financial_adjustments for all using(exists(select 1 from public.business_members bm where bm.business_id=financial_adjustments.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin'))) with check(exists(select 1 from public.business_members bm where bm.business_id=financial_adjustments.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin')));
+create policy if not exists bank_reconciliation_admin on public.bank_reconciliation_sessions for all using(exists(select 1 from public.business_members bm where bm.business_id=bank_reconciliation_sessions.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin'))) with check(exists(select 1 from public.business_members bm where bm.business_id=financial_reconciliation_items.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin')));
+create policy if not exists financial_close_admin on public.financial_close_checklist for all using(exists(select 1 from public.business_members bm where bm.business_id=financial_close_checklist.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin'))) with check(exists(select 1 from public.business_members bm where bm.business_id=financial_close_checklist.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin')));
+create policy if not exists tax_working_papers_admin on public.tax_working_papers for all using(exists(select 1 from public.business_members bm where bm.business_id=tax_working_papers.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin'))) with check(exists(select 1 from public.business_members bm where bm.business_id=tax_working_papers.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin')));
+create policy if not exists tax_payments_admin on public.tax_payments for all using(exists(select 1 from public.business_members bm where bm.business_id=tax_payments.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin'))) with check(exists(select 1 from public.business_members bm where bm.business_id=tax_payments.business_id and bm.user_id=auth.uid() and bm.role::text in ('owner','admin')));
+
+create or replace view public.v_financial_management_pnl_monthly with(security_invoker=true) as
+with s as(select business_id,date_trunc('month',sale_date)::date period_start,sum(total) sales_total from public.sales where status::text<>'cancelled' group by business_id,date_trunc('month',sale_date)),
+p as(select business_id,date_trunc('month',purchase_date)::date period_start,sum(total) purchases_total from public.purchases where status::text<>'cancelled' group by business_id,date_trunc('month',purchase_date)),
+t as(select business_id,date_trunc('month',tx_date)::date period_start,sum(case when type::text='income' then amount else 0 end) other_income,sum(case when type::text='expense' then amount else 0 end) operating_expense from public.transactions group by business_id,date_trunc('month',tx_date))
+select coalesce(s.business_id,p.business_id,t.business_id) business_id,coalesce(s.period_start,p.period_start,t.period_start) period_start,coalesce(s.sales_total,0) sales_total,coalesce(p.purchases_total,0) purchases_total,coalesce(t.operating_expense,0) operating_expense,coalesce(t.other_income,0) other_income,coalesce(s.sales_total,0)-coalesce(p.purchases_total,0) gross_profit,coalesce(s.sales_total,0)-coalesce(p.purchases_total,0)-coalesce(t.operating_expense,0)+coalesce(t.other_income,0) net_result from s full join p on p.business_id=s.business_id and p.period_start=s.period_start full join t on t.business_id=coalesce(s.business_id,p.business_id) and t.period_start=coalesce(s.period_start,p.period_start);
+
+create or replace view public.v_cash_flow_daily with(security_invoker=true) as select business_id,tx_date flow_date,sum(case when type::text='income' then amount else 0 end) inflows,sum(case when type::text='expense' then amount else 0 end) outflows,sum(case when type::text='income' then amount else -amount end) net_flow from public.transactions group by business_id,tx_date;
+create or replace view public.v_financial_close_status with(security_invoker=true) as select business_id,period_start,period_end,count(*) total_items,count(*) filter(where status='passed') passed_items,count(*) filter(where status='warning') warning_items,count(*) filter(where status='blocked') blocked_items,count(*) filter(where status in('pending','in_review')) pending_items,case when count(*)=0 then 'not_started' when count(*) filter(where status='blocked')>0 then 'blocked' when count(*) filter(where status in('pending','in_review'))>0 then 'in_review' when count(*) filter(where status='warning')>0 then 'warning' else 'ready_to_close' end close_state from public.financial_close_checklist group by business_id,period_start,period_end;
