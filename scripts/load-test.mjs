@@ -1,5 +1,6 @@
 import { performance } from "node:perf_hooks";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 
 const supabaseUrl = (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "").replace(/\/$/, "");
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
@@ -10,10 +11,7 @@ const iterations = Number(process.env.LOAD_TEST_ITERATIONS ?? 3);
 const phases = (process.env.LOAD_TEST_PHASES ?? "").split(",").map(Number).filter((value) => value > 0);
 const outputFile = process.env.LOAD_TEST_OUTPUT ?? "artifacts/load-test-results.json";
 
-if (process.env.LOAD_TEST_CONFIRM !== "true") {
-  throw new Error("Refusing to run a load test without LOAD_TEST_CONFIRM=true.");
-}
-
+if (process.env.LOAD_TEST_CONFIRM !== "true") throw new Error("Refusing to run a load test without LOAD_TEST_CONFIRM=true.");
 if (!supabaseUrl || !anonKey || !email || !password) {
   throw new Error("Missing VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, LOAD_TEST_EMAIL or LOAD_TEST_PASSWORD.");
 }
@@ -111,7 +109,7 @@ for (const phase of requestedPhases) {
   }
 }
 
+await mkdir(dirname(outputFile), { recursive: true });
 await writeFile(outputFile, JSON.stringify({ generated_at: new Date().toISOString(), phases: results }, null, 2), "utf8");
 console.log(`Load-test results written to ${outputFile}`);
-
 if (results.some((result) => result.user_failures || result.request_failures)) process.exitCode = 1;
