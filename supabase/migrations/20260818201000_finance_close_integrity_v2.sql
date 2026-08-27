@@ -26,9 +26,6 @@ as $$
   );
 $$;
 
--- Some older finance policies use the auth-aware one-argument signature.
--- Keep this overload intentionally: it delegates to the explicit helper and
--- uses auth.uid() so policy evaluation remains tenant-scoped.
 create or replace function private.is_business_member(_business_id uuid)
 returns boolean
 language sql
@@ -55,12 +52,26 @@ as $$
   );
 $$;
 
+-- Some legacy finance policies pass only business_id + roles and rely on auth.uid().
+-- Preserve that overload so a clean rebuild does not depend on migration order.
+create or replace function private.has_business_role(_business_id uuid, _roles public.member_role[])
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select private.has_business_role(_business_id, auth.uid(), _roles);
+$$;
+
 revoke all on function private.is_business_member(uuid, uuid) from public, anon, authenticated;
 revoke all on function private.is_business_member(uuid) from public, anon, authenticated;
 revoke all on function private.has_business_role(uuid, uuid, public.member_role[]) from public, anon, authenticated;
+revoke all on function private.has_business_role(uuid, public.member_role[]) from public, anon, authenticated;
 grant execute on function private.is_business_member(uuid, uuid) to authenticated;
 grant execute on function private.is_business_member(uuid) to authenticated;
 grant execute on function private.has_business_role(uuid, uuid, public.member_role[]) to authenticated;
+grant execute on function private.has_business_role(uuid, public.member_role[]) to authenticated;
 
 create table if not exists public.financial_close_controls (
   id uuid primary key default gen_random_uuid(),
