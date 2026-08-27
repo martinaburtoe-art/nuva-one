@@ -41,7 +41,10 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
-  eslintPluginPrettier,
+  {
+    ...eslintPluginPrettier,
+    files: ["**/*.{ts,tsx}"],
+  },
   {
     files: [
       "src/routes/demo.tsx",
