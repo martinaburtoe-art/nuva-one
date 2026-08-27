@@ -27,6 +27,7 @@ import {
   MessagesSquare,
   Truck,
   ShieldCheck,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AiChatBubble } from "@/components/ai-chat-bubble";
 import { GlobalSearch } from "@/components/global-search";
+import { ModuleSearch } from "@/components/module-search";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -62,9 +64,7 @@ const nav = [
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance" },
   { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics" },
   { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes" },
-  // "Vinculación WhatsApp" oculta del menú a pedido de Martín (11-08-2026):
-  // la ruta /automations, el módulo "automations" y todo el backend siguen
-  // intactos -- reactivar es solo descomentar esta línea.
+  // "Vinculación WhatsApp" permanece fuera del menú; el módulo y backend siguen disponibles.
   // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
   { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai" },
   { to: "/foro", label: "Comunidad", icon: MessagesSquare },
@@ -106,6 +106,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth" });
   }
 
+  function openHelp() {
+    window.dispatchEvent(new CustomEvent("nuva:open-info"));
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-background">
       <aside
@@ -128,39 +132,42 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
 
         {!collapsed && (
-          <div className="border-b border-sidebar-border p-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-primary text-primary-foreground">
-                    <Building2 className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-sidebar-foreground">
-                      {active?.name ?? "Sin negocio"}
+          <>
+            <div className="border-b border-sidebar-border p-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-primary text-primary-foreground">
+                      <Building2 className="h-4 w-4" />
                     </div>
-                    <div className="truncate text-xs text-muted-foreground">{active?.industry}</div>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuLabel>Tus negocios</DropdownMenuLabel>
-                {businesses.map((b) => (
-                  <DropdownMenuItem key={b.id} onClick={() => setActiveId(b.id)}>
-                    <Building2 className="mr-2 h-4 w-4" /> {b.name}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-sidebar-foreground">
+                        {active?.name ?? "Sin negocio"}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">{active?.industry}</div>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Tus negocios</DropdownMenuLabel>
+                  {businesses.map((b) => (
+                    <DropdownMenuItem key={b.id} onClick={() => setActiveId(b.id)}>
+                      <Building2 className="mr-2 h-4 w-4" /> {b.name}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
+                    <Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio
                   </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
-                  <Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate({ to: "/select-business" })}>
-                  Ver todos
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/select-business" })}>
+                    Ver todos
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <ModuleSearch items={visibleNav} />
+          </>
         )}
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
@@ -202,8 +209,18 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="border-t border-sidebar-border p-2">
+          {!collapsed && (
+            <button
+              onClick={openHelp}
+              className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>Centro de ayuda</span>
+            </button>
+          )}
           <button
             onClick={() => setCollapsed((c) => !c)}
+            title={collapsed ? "Expandir menú" : "Colapsar menú"}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           >
             {collapsed ? (
@@ -234,6 +251,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Abrir centro de ayuda"
+            title="Centro de ayuda"
+            onClick={openHelp}
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Notificaciones"
             onClick={() => toast.info("No tienes notificaciones nuevas")}
           >
             <Bell className="h-4 w-4" />
@@ -322,6 +349,17 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
+            <div className="mb-2">
+              <button
+                onClick={() => {
+                  setMoreOpen(false);
+                  openHelp();
+                }}
+                className="flex w-full items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm font-medium text-primary"
+              >
+                <HelpCircle className="h-4 w-4" /> Centro de ayuda
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-2 py-2">
               {mobileMoreNav.map((item) => (
