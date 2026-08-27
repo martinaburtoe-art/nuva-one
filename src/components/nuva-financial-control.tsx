@@ -1,5 +1,13 @@
-import { useMemo } from "react";
-import { AlertTriangle, ArrowRight, CheckCircle2, Sparkles, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +58,11 @@ export function NuvaFinancialControl({ income, expense, inventoryValue }: Props)
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <ControlMetric icon={<Wallet />} label="Resultado acumulado" value={fmtCLP(control.net)} />
-        <ControlMetric icon={control.net >= 0 ? <TrendingUp /> : <TrendingDown />} label="Margen estimado" value={`${control.margin.toFixed(1)}%`} />
+        <ControlMetric
+          icon={control.net >= 0 ? <TrendingUp /> : <TrendingDown />}
+          label="Margen estimado"
+          value={`${control.margin.toFixed(1)}%`}
+        />
         <ControlMetric icon={<TrendingDown />} label="Gasto / ingreso" value={`${control.expenseRatio.toFixed(1)}%`} />
         <ControlMetric icon={<Wallet />} label="Capital en inventario" value={fmtCLP(inventoryValue)} />
       </div>
@@ -64,7 +76,13 @@ export function NuvaFinancialControl({ income, expense, inventoryValue }: Props)
           )}
           <div>
             <p className="text-sm font-medium">Lectura inteligente</p>
-            <p className="text-xs text-muted-foreground">{control.signal === "good" ? "Sin alerta financiera prioritaria." : control.signal === "setup" ? "Registra ingresos y egresos para activar más señales." : "Hay una señal que conviene revisar."}</p>
+            <p className="text-xs text-muted-foreground">
+              {control.signal === "good"
+                ? "Sin alerta financiera prioritaria."
+                : control.signal === "setup"
+                  ? "Registra ingresos y egresos para activar más señales."
+                  : "Hay una señal que conviene revisar."}
+            </p>
           </div>
         </div>
         <Link to="/finance" className="text-xs font-semibold text-primary hover:underline">
@@ -75,7 +93,7 @@ export function NuvaFinancialControl({ income, expense, inventoryValue }: Props)
   );
 }
 
-function ControlMetric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function ControlMetric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-xl border bg-background/70 p-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
