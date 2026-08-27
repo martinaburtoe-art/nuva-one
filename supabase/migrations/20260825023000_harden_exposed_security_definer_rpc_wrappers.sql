@@ -117,6 +117,49 @@ BEGIN
 END;
 $function$;
 
+-- This function existed in the production migration lineage but was missing
+-- from the repository's clean-rebuild lineage. Recreate the same tenant-safe
+-- implementation before moving it to private below.
+CREATE OR REPLACE FUNCTION public.record_cash_register_movement(
+  p_cash_register_id uuid,
+  p_movement_type text,
+  p_amount numeric,
+  p_reason text
+)
+RETURNS public.cash_register_movements
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, extensions
+AS $function$
+DECLARE
+  v_user uuid := auth.uid();
+  v_reg public.cash_registers;
+  v_row public.cash_register_movements;
+  v_expected numeric;
+  v_direction text;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'AUTH_REQUIRED'; END IF;
+  SELECT * INTO v_reg FROM public.cash_registers WHERE id = p_cash_register_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'CASH_REGISTER_NOT_FOUND'; END IF;
+  IF NOT private.has_business_role(v_reg.business_id, v_user, ARRAY['owner'::public.member_role,'admin'::public.member_role,'staff'::public.member_role]) THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  IF v_reg.status <> 'open' THEN RAISE EXCEPTION 'CASH_REGISTER_CLOSED'; END IF;
+  IF p_movement_type NOT IN ('deposit','withdrawal') OR p_amount IS NULL OR p_amount <= 0 OR COALESCE(trim(p_reason),'') = '' THEN RAISE EXCEPTION 'INVALID_CASH_MOVEMENT'; END IF;
+  SELECT v_reg.opening_amount + COALESCE(sum(CASE WHEN movement_type='deposit' THEN amount ELSE -amount END),0)
+    INTO v_expected
+  FROM public.cash_register_movements
+  WHERE cash_register_id = p_cash_register_id;
+  IF p_movement_type='withdrawal' AND p_amount > v_expected THEN RAISE EXCEPTION 'INSUFFICIENT_EXPECTED_CASH'; END IF;
+  INSERT INTO public.cash_register_movements (business_id,cash_register_id,created_by,movement_type,amount,reason)
+  VALUES (v_reg.business_id,p_cash_register_id,v_user,p_movement_type,p_amount,trim(p_reason))
+  RETURNING * INTO v_row;
+  v_direction := CASE WHEN p_movement_type='deposit' THEN 'inflow' ELSE 'outflow' END;
+  INSERT INTO public.financial_cash_ledger (business_id,entry_date,direction,amount,category,description,payment_method,source_type,source_id)
+  VALUES (v_reg.business_id,current_date,v_direction,p_amount,'cash_register_adjustment',trim(p_reason),'efectivo','cash_register_movement',v_row.id)
+  ON CONFLICT (business_id,source_type,source_id) DO NOTHING;
+  RETURN v_row;
+END;
+$function$;
+
 ALTER FUNCTION public.adjust_product_stock(uuid, integer, text, text, uuid) SET SCHEMA private;
 ALTER FUNCTION public.create_mobile_scanner_session(uuid) SET SCHEMA private;
 ALTER FUNCTION public.create_product_from_scanner(uuid, text, text, text, text, text, numeric, numeric, integer, integer) SET SCHEMA private;
@@ -279,7 +322,7 @@ REVOKE EXECUTE ON FUNCTION public.create_product_from_scanner(uuid, text, text, 
 REVOKE EXECUTE ON FUNCTION public.finalize_inventory_stocktake(uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.get_cash_register_summary(uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.open_cash_register(uuid, numeric) FROM PUBLIC, anon;
-REVOKE EXECUTE ON FUNCTION public.pair_mobile_scanner(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.pair_mobile_scanner(uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.record_cash_register_movement(uuid, text, numeric, text) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.revoke_mobile_scanner_session(uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.submit_mobile_scanner_event(uuid, text, uuid, text) FROM PUBLIC, anon;
