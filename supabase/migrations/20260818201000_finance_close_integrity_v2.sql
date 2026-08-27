@@ -26,6 +26,19 @@ as $$
   );
 $$;
 
+-- Some older finance policies use the auth-aware one-argument signature.
+-- Keep this overload intentionally: it delegates to the explicit helper and
+-- uses auth.uid() so policy evaluation remains tenant-scoped.
+create or replace function private.is_business_member(_business_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select private.is_business_member(_business_id, auth.uid());
+$$;
+
 create or replace function private.has_business_role(_business_id uuid, _user_id uuid, _roles public.member_role[])
 returns boolean
 language sql
@@ -43,8 +56,10 @@ as $$
 $$;
 
 revoke all on function private.is_business_member(uuid, uuid) from public, anon, authenticated;
+revoke all on function private.is_business_member(uuid) from public, anon, authenticated;
 revoke all on function private.has_business_role(uuid, uuid, public.member_role[]) from public, anon, authenticated;
 grant execute on function private.is_business_member(uuid, uuid) to authenticated;
+grant execute on function private.is_business_member(uuid) to authenticated;
 grant execute on function private.has_business_role(uuid, uuid, public.member_role[]) to authenticated;
 
 create table if not exists public.financial_close_controls (
