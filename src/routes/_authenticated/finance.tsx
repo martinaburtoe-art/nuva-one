@@ -41,6 +41,12 @@ function Finance() {
           expense={control.expense}
           inventoryValue={control.inventoryValue}
         />
+        <a href="/pricing-calculator" className="block rounded-xl border border-primary/20 bg-primary/[0.04] p-4 transition-colors hover:bg-primary/[0.08]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">₱</div>
+            <div><p className="font-medium">Calculadora de precio de venta</p><p className="text-sm text-muted-foreground">Calcula piso, margen, punto de equilibrio y precio recomendado usando costos, mercado y valor.</p></div>
+          </div>
+        </a>
         <FinanceAccountingWorkspaceV2 />
       </div>
     </ModuleGuard>
