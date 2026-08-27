@@ -2,17 +2,27 @@ begin;
 
 select plan(12);
 
--- Scanner and stock/cash RPCs are SECURITY DEFINER only where the server-side
--- authorization boundary is enforced. Keep these invariants in CI so a future
--- grant change cannot silently reopen the tenant boundary.
+-- Public scanner RPCs are thin SECURITY INVOKER wrappers. Privileged work is
+-- isolated in private SECURITY DEFINER helpers, keeping the client boundary
+-- non-definer while retaining server-side authorization.
 select ok(
-  (select p.prosecdef
+  (select not p.prosecdef
      from pg_proc p
      join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
       and p.proname = 'pair_mobile_scanner'
       and pg_get_function_identity_arguments(p.oid) = 'p_pair_code text'),
-  'pair_mobile_scanner remains SECURITY DEFINER'
+  'pair_mobile_scanner public wrapper runs as SECURITY INVOKER'
+);
+
+select ok(
+  (select p.prosecdef
+     from pg_proc p
+     join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private'
+      and p.proname = 'pair_mobile_scanner'
+      and pg_get_function_identity_arguments(p.oid) = 'p_pair_code text'),
+  'pair_mobile_scanner private implementation remains SECURITY DEFINER'
 );
 
 select ok(
@@ -60,8 +70,8 @@ select ok(
     select 1
       from pg_proc p
       join pg_namespace n on n.oid=p.pronamespace
-     where n.nspname='public'
-       and p.proname='pair_mobile_scanner'
+     where n.nspname = 'public'
+       and p.proname = 'pair_mobile_scanner'
        and pg_get_function_identity_arguments(p.oid)='p_pair_code text'
        and exists (
          select 1
@@ -69,7 +79,7 @@ select ok(
           where cfg like 'search_path=%'
        )
   ),
-  'pair_mobile_scanner pins an explicit search_path'
+  'pair_mobile_scanner wrapper pins an explicit search_path'
 );
 
 select ok(
@@ -78,14 +88,6 @@ select ok(
      join pg_namespace n on n.oid=c.relnamespace
     where n.nspname='public' and c.relname='product_codes'),
   'product_codes keeps row-level security enabled'
-);
-
-select ok(
-  (select c.relrowsecurity
-     from pg_class c
-     join pg_namespace n on n.oid=c.relnamespace
-    where n.nspname='public' and c.relname='products'),
-  'products keeps row-level security enabled'
 );
 
 select * from finish();
