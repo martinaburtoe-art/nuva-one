@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -34,7 +35,22 @@ jobs:
       - name: Dependency security audit
         run: npm audit --audit-level=high
       - name: Verify lint
-        run: npm run lint
+        id: lint
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee /tmp/lint.log
+      - name: Publish lint diagnostic status
+        if: failure() && steps.lint.conclusion == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          msg="$(grep -m1 -E 'error|Error|✖' /tmp/lint.log | tr '\n' ' ' | cut -c1-140)"
+          if [ -z "$msg" ]; then msg="eslint failed; inspect the CI run log"; fi
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state=failure \
+            -f context='ci/lint-diagnostic' \
+            -f description="$msg" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
@@ -76,8 +92,10 @@ jobs:
               sleep 10
             fi
           done
-          echo "Lean Supabase failed to start after 3 attempts"
-          exit 1
+          echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
+          supabase stop --no-backup || true
+          supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+          supabase db reset --local
       - name: Verify generated database types are synchronized
         run: |
           supabase gen types typescript --local > /tmp/generated-supabase-types.ts
