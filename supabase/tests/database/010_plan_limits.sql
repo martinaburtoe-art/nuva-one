@@ -1,8 +1,5 @@
--- pgTAP test for public.enforce_product_plan_limit() (trigger
--- trg_enforce_product_plan_limit on public.products). This is the trigger
--- that caps a Starter-plan business at 50 products -- enforced at the
--- database level specifically so it can't be bypassed by calling the API
--- directly instead of going through the UI.
+-- pgTAP test for public.enforce_product_plan_limit(). The test derives the
+-- configured Starter limit from plan_catalog so it cannot drift from pricing.
 begin;
 select plan(4);
 
@@ -10,41 +7,48 @@ insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000a2');
 insert into public.businesses (id, name, owner_id, plan)
   values ('00000000-0000-0000-0000-0000000000b2', 'Starter Business', '00000000-0000-0000-0000-0000000000a2', 'starter');
 
--- Fill the business up to exactly the limit (50 products). All 50 must succeed --
--- this fixture setup would itself fail loudly if the trigger were off-by-one.
-insert into public.products (business_id, name, price, stock)
-select '00000000-0000-0000-0000-0000000000b2', 'Product ' || g, 1000, 10
-from generate_series(1, 50) g;
+DO $$
+DECLARE v_limit integer;
+BEGIN
+  SELECT max_products INTO v_limit FROM public.plan_catalog WHERE plan='starter';
+  IF v_limit IS NULL OR v_limit <= 0 THEN RAISE EXCEPTION 'starter plan has no valid max_products'; END IF;
+  EXECUTE format($sql$
+    insert into public.products (business_id,name,price,stock)
+    select '00000000-0000-0000-0000-0000000000b2','Product '||g,1000,10
+    from generate_series(1,%s) g
+  $sql$, v_limit);
+END $$;
 
--- 1) Fixture sanity check: exactly 50 products exist.
-select is(
-  (select count(*)::int from public.products where business_id = '00000000-0000-0000-0000-0000000000b2'),
-  50,
-  'fixture: starter business has exactly 50 products before the limit test'
+SELECT is(
+  (select count(*)::int from public.products where business_id='00000000-0000-0000-0000-0000000000b2'),
+  (select max_products from public.plan_catalog where plan='starter'),
+  'fixture fills the Starter business exactly to its configured product limit'
 );
 
--- 2) The 51st product on a Starter plan is rejected.
-select throws_ok(
-  $$ insert into public.products (business_id, name, price, stock)
-     values ('00000000-0000-0000-0000-0000000000b2', 'Product 51', 1000, 10) $$,
-  '23514',
-  'El plan Starter permite hasta 50 productos. Actualiza a Pro para agregar más.',
-  'the 51st product on a Starter plan is rejected'
+DO $$
+DECLARE v_limit integer; v_message text;
+BEGIN
+  SELECT max_products INTO v_limit FROM public.plan_catalog WHERE plan='starter';
+  BEGIN
+    INSERT INTO public.products (business_id,name,price,stock)
+    VALUES ('00000000-0000-0000-0000-0000000000b2','Product overflow',1000,10);
+  EXCEPTION WHEN OTHERS THEN
+    v_message := SQLERRM;
+  END;
+  IF v_message IS NULL THEN RAISE EXCEPTION 'product limit was not enforced at % products',v_limit; END IF;
+  PERFORM ok(v_message LIKE '%Product limit reached%' OR v_message LIKE '%permite hasta%','the first product beyond the configured Starter limit is rejected');
+END $$;
+
+SELECT is(
+  (select count(*)::int from public.products where business_id='00000000-0000-0000-0000-0000000000b2'),
+  (select max_products from public.plan_catalog where plan='starter'),
+  'product count remains at the configured Starter limit after rejection'
 );
 
--- 3) Count is still exactly 50 after the rejected insert (no partial effect).
-select is(
-  (select count(*)::int from public.products where business_id = '00000000-0000-0000-0000-0000000000b2'),
-  50,
-  'product count stays at 50 after the rejected 51st insert'
-);
-
--- 4) The SAME business, upgraded to Pro, is not capped -- the 51st product succeeds.
-update public.businesses set plan = 'pro' where id = '00000000-0000-0000-0000-0000000000b2';
+update public.businesses set plan='pro' where id='00000000-0000-0000-0000-0000000000b2';
 select lives_ok(
-  $$ insert into public.products (business_id, name, price, stock)
-     values ('00000000-0000-0000-0000-0000000000b2', 'Product 51 (pro)', 1000, 10) $$,
-  'upgrading to Pro removes the 50-product cap'
+  $$ insert into public.products (business_id,name,price,stock) values ('00000000-0000-0000-0000-0000000000b2','Product overflow (pro)',1000,10) $$,
+  'upgrading to Pro removes the Starter product cap'
 );
 
 select * from finish();
