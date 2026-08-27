@@ -9,6 +9,7 @@ on:
       - "scripts/prepare-load-test-fixture.mjs"
       - ".github/workflows/staging-load-test.yml"
       - "supabase/migrations/**"
+      - "supabase/config.toml"
 
 permissions:
   contents: read
@@ -31,18 +32,23 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v2.1.1
         with:
-          version: latest
+          version: "2.115.0"
 
-      - name: Start ephemeral local Supabase
+      - name: Start lean ephemeral local Supabase
         run: |
-          supabase start
+          # The load test only needs Postgres, Auth, Kong and PostgREST.
+          # Excluding Studio, Storage, Realtime, Edge Runtime, Mailpit,
+          # analytics/logging and the local pooler removes unnecessary image
+          # pulls and containers while preserving the API/auth test surface.
+          supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
           supabase status
 
       - name: Verify clean migration rebuild
