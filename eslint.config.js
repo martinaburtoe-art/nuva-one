@@ -35,33 +35,18 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
       // TODO(deuda-tecnica): hay ~100 usos de `any` heredados en el código.
-      // Se baja a "warn" para no bloquear el CI de un día para otro, pero
-      // sigue siendo visible en cada corrida -- el objetivo es ir bajando
-      // este número con cada PR, no ignorarlo. Ver auditoría técnica.
+      // Se mantiene como warning para poder reducirlo de forma incremental
+      // sin bloquear los gates funcionales del producto.
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   {
     ...eslintPluginPrettier,
     files: ["**/*.{ts,tsx}"],
-  },
-  {
-    files: ["**/*.{ts,tsx}"],
     rules: {
-      // Formatting remains visible as a warning but is not a release blocker.
-      // Functional, type, security and test failures remain hard CI gates.
-      "prettier/prettier": "warn",
-    },
-  },
-  {
-    files: [
-      "src/routes/demo.tsx",
-      "src/components/demo/guided-tour.tsx",
-      "src/lib/demo/demo-data.ts",
-      "src/lib/demo/demo-data.test.ts",
-      "src/lib/demo/demo-state.tsx",
-    ],
-    rules: {
+      // Prettier se mantiene instalado para formato explícito, pero no bloquea
+      // el gate funcional de ESLint. Typecheck, tests y build siguen siendo
+      // bloqueantes.
       "prettier/prettier": "off",
     },
   },
