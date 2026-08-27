@@ -54,7 +54,7 @@ async function insertMany(table, rows) {
   });
 }
 
-const customers = Array.from({ length: 100 }, (_, i) => ({ business_id: businessId, name: `Cliente Sintético ${i + 1}`, email: `cliente${i + 1}@nuva.local`, status: "active" }));
+const customers = Array.from({ length: 100 }, (_, i) => ({ business_id: businessId, name: `Cliente Sintético ${i + 1}`, email: `cliente${i + 1}@nuva.local` }));
 const products = Array.from({ length: 100 }, (_, i) => ({ business_id: businessId, sku: `NUVA-${String(i + 1).padStart(4, "0")}`, name: `Producto Sintético ${i + 1}`, category: i % 5 === 0 ? "premium" : "general", cost: 1000 + i * 10, price: 1800 + i * 20, stock: 50 + (i % 20), low_stock_threshold: 5 }));
 await insertMany("customers", customers);
 await insertMany("products", products);
