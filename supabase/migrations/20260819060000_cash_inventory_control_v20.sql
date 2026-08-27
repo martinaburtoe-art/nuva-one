@@ -1,4 +1,39 @@
 -- Cash + inventory control hardening v20
+-- Re-establish the stocktake base tables before this migration adds indexes/policies.
+-- These objects are required by the inventory count UI and subsequent stocktake migrations.
+CREATE TABLE IF NOT EXISTS public.inventory_stocktakes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
+  status text NOT NULL DEFAULT 'counting',
+  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  completed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  completed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT inventory_stocktakes_status_check CHECK (status IN ('draft','counting','completed','cancelled'))
+);
+CREATE INDEX IF NOT EXISTS idx_inventory_stocktakes_business_created ON public.inventory_stocktakes(business_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.inventory_stocktake_lines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  stocktake_id uuid NOT NULL REFERENCES public.inventory_stocktakes(id) ON DELETE CASCADE,
+  business_id uuid NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
+  product_id uuid REFERENCES public.products(id) ON DELETE RESTRICT,
+  barcode text,
+  product_name text,
+  system_qty numeric NOT NULL DEFAULT 0,
+  counted_qty numeric NOT NULL DEFAULT 0,
+  difference numeric GENERATED ALWAYS AS (counted_qty - system_qty) STORED,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT inventory_stocktake_lines_system_qty_check CHECK (system_qty >= 0),
+  CONSTRAINT inventory_stocktake_lines_counted_qty_check CHECK (counted_qty >= 0),
+  CONSTRAINT inventory_stocktake_lines_product_check CHECK (product_id IS NOT NULL)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_inventory_stocktake_lines_product ON public.inventory_stocktake_lines(stocktake_id, product_id);
+ALTER TABLE public.inventory_stocktakes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_stocktake_lines ENABLE ROW LEVEL SECURITY;
+
 CREATE INDEX IF NOT EXISTS idx_financial_cash_ledger_business_date ON public.financial_cash_ledger (business_id, entry_date DESC);
 CREATE INDEX IF NOT EXISTS idx_inventory_stocktake_lines_stocktake ON public.inventory_stocktake_lines (stocktake_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_stocktake_lines_product ON public.inventory_stocktake_lines (product_id) WHERE product_id IS NOT NULL;
