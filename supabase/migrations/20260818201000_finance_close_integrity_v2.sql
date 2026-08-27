@@ -1,7 +1,51 @@
 -- Nüva One: finance close integrity v2
 -- Uses the project's current private helper signatures.
+--
+-- Clean-rebuild hardening: finance migrations depend on the private tenant
+-- authorization helpers. Reassert the schema/functions here so a fresh
+-- database cannot fail if an earlier hardening migration is absent, repaired,
+-- or partially migrated. CREATE OR REPLACE is idempotent on hosted databases.
 
 begin;
+
+create schema if not exists private;
+grant usage on schema private to authenticated, anon;
+
+create or replace function private.is_business_member(_business_id uuid, _user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.business_members
+    where business_id = _business_id
+      and user_id = _user_id
+  );
+$$;
+
+create or replace function private.has_business_role(_business_id uuid, _user_id uuid, _roles public.member_role[])
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.business_members
+    where business_id = _business_id
+      and user_id = _user_id
+      and role = any(_roles)
+  );
+$$;
+
+revoke all on function private.is_business_member(uuid, uuid) from public, anon, authenticated;
+revoke all on function private.has_business_role(uuid, uuid, public.member_role[]) from public, anon, authenticated;
+grant execute on function private.is_business_member(uuid, uuid) to authenticated;
+grant execute on function private.has_business_role(uuid, uuid, public.member_role[]) to authenticated;
 
 create table if not exists public.financial_close_controls (
   id uuid primary key default gen_random_uuid(),
