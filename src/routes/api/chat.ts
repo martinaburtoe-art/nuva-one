@@ -105,7 +105,7 @@ export const Route = createFileRoute("/api/chat")({
             const ctx = await buildAuthedBusinessContext(token, businessId);
             if (ctx) {
               const capped = capContext(ctx.summary);
-              contextBlock = `Negocio: \"${ctx.business.name}\" (industria: ${ctx.business.industry}).\n${wrapAsDataBlock("business_data", capped)}`;
+              contextBlock = `Negocio: "${ctx.business.name}" (industria: ${ctx.business.industry}).\n${wrapAsDataBlock("business_data", capped)}`;
             } else contextBlock = "No se encontraron datos para este negocio, o el usuario no tiene acceso a él.";
           } catch (err) {
             console.error("Error building business context", err);
