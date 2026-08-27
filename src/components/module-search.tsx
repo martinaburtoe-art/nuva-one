@@ -1,24 +1,30 @@
 import { Search, Command } from "lucide-react";
-import { useMemo, useState } from "react";
+import { type ComponentType, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
 type NavItem = {
   to: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
 };
 
 export function ModuleSearch({ items }: { items: readonly NavItem[] }) {
   const [query, setQuery] = useState("");
   const normalized = query.trim().toLocaleLowerCase("es-CL");
   const matches = useMemo(
-    () => (normalized ? items.filter((item) => item.label.toLocaleLowerCase("es-CL").includes(normalized)) : []),
+    () =>
+      normalized
+        ? items.filter((item) => item.label.toLocaleLowerCase("es-CL").includes(normalized))
+        : [],
     [items, normalized],
   );
 
   return (
     <div className="relative px-2 pb-2 pt-2">
-      <Search className="pointer-events-none absolute left-4 top-5 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+      <Search
+        className="pointer-events-none absolute left-4 top-5 h-3.5 w-3.5 text-muted-foreground"
+        aria-hidden="true"
+      />
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
