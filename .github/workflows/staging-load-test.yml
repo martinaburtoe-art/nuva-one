@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "scripts/load-test.mjs"
+      - "scripts/prepare-load-test-fixture.mjs"
       - ".github/workflows/staging-load-test.yml"
       - "supabase/migrations/**"
 
@@ -49,20 +50,23 @@ jobs:
           supabase db reset --local
           supabase test db
 
-      - name: Collect local Supabase credentials
+      - name: Export local Supabase credentials
         shell: bash
         run: |
           mkdir -p artifacts
-          supabase status -o env > artifacts/supabase.env
-          grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' artifacts/supabase.env >> "$GITHUB_ENV"
+          eval "$(supabase status -o env)"
+          test -n "$API_URL"
+          test -n "$ANON_KEY"
+          test -n "$SERVICE_ROLE_KEY"
+          {
+            echo "API_URL=$API_URL"
+            echo "ANON_KEY=$ANON_KEY"
+            echo "SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
           echo "Local Supabase URL: $API_URL"
 
-      - name: Create deterministic synthetic auth fixture
-        shell: bash
-        env:
-          SERVICE_ROLE_KEY: ${{ env.SERVICE_ROLE_KEY }}
-        run: |
-          node scripts/prepare-load-test-fixture.mjs
+      - name: Create deterministic synthetic auth and business fixture
+        run: node scripts/prepare-load-test-fixture.mjs
 
       - name: Run 25 / 50 / 100 VU acceptance battery
         env:
