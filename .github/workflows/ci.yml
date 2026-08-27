@@ -44,7 +44,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          msg="$(grep -m1 -E 'error|Error|✖' /tmp/lint.log | tr '\n' ' ' | cut -c1-140)"
+          msg="$(awk '/error|Error|✖/ {print p2; print p1; print; exit} {p2=p1; p1=$0}' /tmp/lint.log | tr '\n' ' ' | cut -c1-140)"
           if [ -z "$msg" ]; then msg="eslint failed; inspect the CI run log"; fi
           gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
             -f state=failure \
