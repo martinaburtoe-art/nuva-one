@@ -2,8 +2,10 @@ import { performance } from "node:perf_hooks";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-const supabaseUrl = (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "")
-  .replace(/\/$/, "");
+const supabaseUrl = (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "").replace(
+  /\/$/,
+  "",
+);
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
 const email = process.env.LOAD_TEST_EMAIL ?? "";
 const password = process.env.LOAD_TEST_PASSWORD ?? "";
