@@ -72,11 +72,12 @@ function DirectoryIndex() {
         <h1 className="text-3xl font-bold tracking-tight">Red de negocios y contactos</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
           Negocios chilenos que usan Nüva One y activaron su perfil público: fotos, redes sociales y
-          contacto directo. Como un LinkedIn de PyMEs.{" "}
+          contacto directo. Como un LinkedIn de PyMEs. El perfil público y la presencia en esta red son
+          gratuitos para toda cuenta de Nüva One.{" "}
           <Link to="/settings" className="underline">
-            Publicita tu negocio aquí
-          </Link>{" "}
-          desde el plan Pro.
+            Crea o gestiona tu perfil público aquí
+          </Link>
+          .
         </p>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
