@@ -1,14 +1,14 @@
 -- Clean-rebuild invariant: remove duplicate access paths left by older
--- migrations. Preserve canonical/constraint-backed indexes in each pair.
+-- migrations. Preserve canonical cash-register indexes and constraint-backed
+-- indexes; remove only standalone duplicate definitions.
 DO $$
 DECLARE
   index_name text;
 BEGIN
   FOREACH index_name IN ARRAY ARRAY[
     'idx_cash_movements_business_created',
-    'idx_cash_movements_register_created',
-    'uq_cash_register_one_open_per_business',
     'products_business_id_id_unique',
+    'products_business_id_id_key',
     'idx_tax_f29_period_business',
     'idx_whatsapp_owner_links_business_id'
   ] LOOP
