@@ -28,7 +28,7 @@ SELECT is(
 SELECT throws_ok(
   $$ INSERT INTO public.products (business_id,name,price,stock)
      VALUES ('00000000-0000-0000-0000-0000000000b2','Product overflow',1000,10) $$,
-  'P0001',
+  '23514',
   NULL,
   'the first product beyond the configured Starter limit is rejected'
 );
