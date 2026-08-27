@@ -7,8 +7,62 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS private;
 GRANT USAGE ON SCHEMA private TO authenticated;
 
+-- The clean migration chain previously referenced close_cash_register(uuid,numeric)
+-- without defining it. Create the privileged implementation before exposing the
+-- stable public wrapper so a clean rebuild is self-contained.
+CREATE OR REPLACE FUNCTION private.close_cash_register(
+  p_cash_register_id uuid,
+  p_counted_cash numeric
+)
+RETURNS public.cash_registers
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, extensions
+AS $function$
+DECLARE
+  v_business_id uuid;
+  v_status text;
+  v_row public.cash_registers;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'No autorizado' USING errcode = '42501';
+  END IF;
+
+  SELECT cr.business_id, cr.status
+    INTO v_business_id, v_status
+  FROM public.cash_registers cr
+  WHERE cr.id = p_cash_register_id
+  FOR UPDATE;
+
+  IF v_business_id IS NULL THEN
+    RAISE EXCEPTION 'Caja no encontrada' USING errcode = 'P0002';
+  END IF;
+
+  IF NOT private.has_business_role(
+    v_business_id,
+    auth.uid(),
+    ARRAY['owner','admin','staff']::public.member_role[]
+  ) THEN
+    RAISE EXCEPTION 'No autorizado' USING errcode = '42501';
+  END IF;
+
+  IF v_status <> 'open' THEN
+    RAISE EXCEPTION 'La caja ya está cerrada' USING errcode = 'P0001';
+  END IF;
+
+  UPDATE public.cash_registers
+  SET status = 'closed',
+      counted_cash = p_counted_cash,
+      closed_at = now(),
+      closed_by = auth.uid()
+  WHERE id = p_cash_register_id
+  RETURNING * INTO v_row;
+
+  RETURN v_row;
+END;
+$function$;
+
 ALTER FUNCTION public.adjust_product_stock(uuid, integer, text, text, uuid) SET SCHEMA private;
-ALTER FUNCTION public.close_cash_register(uuid, numeric) SET SCHEMA private;
 ALTER FUNCTION public.create_mobile_scanner_session(uuid) SET SCHEMA private;
 ALTER FUNCTION public.create_product_from_scanner(uuid, text, text, text, text, text, numeric, numeric, integer, integer) SET SCHEMA private;
 ALTER FUNCTION public.finalize_inventory_stocktake(uuid) SET SCHEMA private;
