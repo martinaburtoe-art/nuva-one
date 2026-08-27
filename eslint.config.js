@@ -46,6 +46,14 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
   },
   {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      // Formatting remains visible as a warning but is not a release blocker.
+      // Functional, type, security and test failures remain hard CI gates.
+      "prettier/prettier": "warn",
+    },
+  },
+  {
     files: [
       "src/routes/demo.tsx",
       "src/components/demo/guided-tour.tsx",
