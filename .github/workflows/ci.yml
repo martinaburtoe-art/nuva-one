@@ -110,13 +110,16 @@ jobs:
         run: |
           node scripts/verify-migrations.mjs
 
-      - name: Start Supabase local stack
+      - name: Start lean Supabase database test stack
         run: |
           set -o pipefail
+          # pgTAP/recovery only need Postgres, Auth, Kong and PostgREST.
+          # Keep the test surface focused and avoid pulling unused UI/media/
+          # realtime/edge/logging containers on every clean rebuild.
           for attempt in 1 2 3; do
-            echo "Starting Supabase local stack (attempt ${attempt}/3)"
-            if supabase start; then
-              echo "Supabase local stack started"
+            echo "Starting lean Supabase stack (attempt ${attempt}/3)"
+            if supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+              echo "Lean Supabase stack started"
               exit 0
             fi
             echo "Supabase start failed; collecting diagnostics before retry"
@@ -127,7 +130,7 @@ jobs:
               sleep 10
             fi
           done
-          echo "Supabase failed to start after 3 attempts"
+          echo "Lean Supabase failed to start after 3 attempts"
           exit 1
 
       - name: Run pgTAP tests
@@ -141,7 +144,7 @@ jobs:
             if [ "$attempt" -lt 2 ]; then
               echo "pgTAP failed; retrying after a clean local stack restart"
               supabase stop --no-backup || true
-              supabase start
+              supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
             fi
           done
           exit 1
