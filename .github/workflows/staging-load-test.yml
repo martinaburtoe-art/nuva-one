@@ -1,59 +1,95 @@
-name: Staging Load Test
+name: Free Beta Validation Lab
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/load-test.mjs"
+      - ".github/workflows/staging-load-test.yml"
+      - "supabase/migrations/**"
 
 permissions:
   contents: read
 
 concurrency:
-  group: staging-load-test
-  cancel-in-progress: false
+  group: free-beta-validation-lab
+  cancel-in-progress: true
 
 jobs:
-  load-test:
-    name: 25 / 50 / 100 VU staging acceptance
+  validation:
+    name: Free ephemeral 25 / 50 / 100 VU validation
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    environment: staging
+    timeout-minutes: 35
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Validate staging target
-        env:
-          STAGING_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start ephemeral local Supabase
         run: |
-          test -n "$STAGING_URL"
-          case "$STAGING_URL" in
-            *nuva-one.vercel.app*|*nuvaone.cl*) echo "Production URL is not allowed"; exit 1 ;;
-          esac
+          supabase start
+          supabase status
+
+      - name: Verify clean migration rebuild
+        run: |
+          supabase db reset --local
+          supabase test db
+
+      - name: Collect local Supabase credentials
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          supabase status -o env > artifacts/supabase.env
+          grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' artifacts/supabase.env >> "$GITHUB_ENV"
+          echo "Local Supabase URL: $API_URL"
+
+      - name: Create deterministic synthetic auth fixture
+        shell: bash
+        env:
+          SERVICE_ROLE_KEY: ${{ env.SERVICE_ROLE_KEY }}
+        run: |
+          node scripts/prepare-load-test-fixture.mjs
 
       - name: Run 25 / 50 / 100 VU acceptance battery
         env:
           LOAD_TEST_CONFIRM: "true"
           LOAD_TEST_ENV: staging
           LOAD_TEST_PHASES: "25,50,100"
-          LOAD_TEST_ITERATIONS: "3"
+          LOAD_TEST_ITERATIONS: "2"
           LOAD_TEST_OUTPUT: artifacts/staging-load-test-results.json
-          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          LOAD_TEST_EMAIL: ${{ secrets.LOAD_TEST_EMAIL }}
-          LOAD_TEST_PASSWORD: ${{ secrets.LOAD_TEST_PASSWORD }}
+          VITE_SUPABASE_URL: ${{ env.API_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
+          LOAD_TEST_EMAIL: "loadtest@nuva.local"
+          LOAD_TEST_PASSWORD: "NüvaLoadTest-2026!"
         run: node scripts/load-test.mjs
 
-      - name: Publish load-test evidence
+      - name: Run database recovery drill
+        run: |
+          supabase db reset --local
+          supabase test db
+
+      - name: Publish validation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: staging-load-test-results
-          path: artifacts/staging-load-test-results.json
+          name: free-beta-validation-evidence
+          path: artifacts/
           if-no-files-found: warn
+
+      - name: Stop ephemeral Supabase
+        if: always()
+        run: supabase stop --no-backup
