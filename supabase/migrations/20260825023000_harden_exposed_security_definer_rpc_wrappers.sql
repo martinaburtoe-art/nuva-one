@@ -7,9 +7,60 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS private;
 GRANT USAGE ON SCHEMA private TO authenticated;
 
--- The clean migration chain previously referenced close_cash_register(uuid,numeric)
--- without defining it. Create the privileged implementation before exposing the
--- stable public wrapper so a clean rebuild is self-contained.
+-- Clean-rebuild-safe cash register implementations. The historical migration
+-- chain did not consistently define the open/close RPCs before this hardening
+-- migration, so define the implementations before creating their wrappers.
+CREATE OR REPLACE FUNCTION private.open_cash_register(
+  p_business_id uuid,
+  p_opening_amount numeric
+)
+RETURNS public.cash_registers
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, extensions
+AS $function$
+DECLARE
+  v_row public.cash_registers;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'No autorizado' USING errcode = '42501';
+  END IF;
+
+  IF NOT private.has_business_role(
+    p_business_id,
+    auth.uid(),
+    ARRAY['owner','admin','staff']::public.member_role[]
+  ) THEN
+    RAISE EXCEPTION 'No autorizado' USING errcode = '42501';
+  END IF;
+
+  IF p_opening_amount IS NULL OR p_opening_amount < 0 THEN
+    RAISE EXCEPTION 'Monto inicial inválido' USING errcode = '22003';
+  END IF;
+
+  INSERT INTO public.cash_registers (
+    business_id,
+    opened_by,
+    opening_amount,
+    opened_at,
+    status
+  )
+  VALUES (
+    p_business_id,
+    auth.uid(),
+    p_opening_amount,
+    now(),
+    'open'
+  )
+  RETURNING * INTO v_row;
+
+  RETURN v_row;
+EXCEPTION
+  WHEN unique_violation THEN
+    RAISE EXCEPTION 'Ya existe una caja abierta para este negocio' USING errcode = '23505';
+END;
+$function$;
+
 CREATE OR REPLACE FUNCTION private.close_cash_register(
   p_cash_register_id uuid,
   p_counted_cash numeric
@@ -46,6 +97,10 @@ BEGIN
     RAISE EXCEPTION 'No autorizado' USING errcode = '42501';
   END IF;
 
+  IF p_counted_cash IS NULL OR p_counted_cash < 0 THEN
+    RAISE EXCEPTION 'Monto contado inválido' USING errcode = '22003';
+  END IF;
+
   IF v_status <> 'open' THEN
     RAISE EXCEPTION 'La caja ya está cerrada' USING errcode = 'P0001';
   END IF;
@@ -67,7 +122,8 @@ ALTER FUNCTION public.create_mobile_scanner_session(uuid) SET SCHEMA private;
 ALTER FUNCTION public.create_product_from_scanner(uuid, text, text, text, text, text, numeric, numeric, integer, integer) SET SCHEMA private;
 ALTER FUNCTION public.finalize_inventory_stocktake(uuid) SET SCHEMA private;
 ALTER FUNCTION public.get_cash_register_summary(uuid) SET SCHEMA private;
-ALTER FUNCTION public.open_cash_register(uuid, numeric) SET SCHEMA private;
+-- open_cash_register is created directly in private above because the clean
+-- migration chain may not contain a public definition to ALTER.
 ALTER FUNCTION public.pair_mobile_scanner(text) SET SCHEMA private;
 ALTER FUNCTION public.record_cash_register_movement(uuid, text, numeric, text) SET SCHEMA private;
 ALTER FUNCTION public.revoke_mobile_scanner_session(uuid) SET SCHEMA private;
