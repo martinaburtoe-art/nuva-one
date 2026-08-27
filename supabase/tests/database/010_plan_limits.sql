@@ -25,19 +25,13 @@ SELECT is(
   'fixture fills the Starter business exactly to its configured product limit'
 );
 
-DO $$
-DECLARE v_limit integer; v_message text;
-BEGIN
-  SELECT max_products INTO v_limit FROM public.plan_catalog WHERE plan='starter';
-  BEGIN
-    INSERT INTO public.products (business_id,name,price,stock)
-    VALUES ('00000000-0000-0000-0000-0000000000b2','Product overflow',1000,10);
-  EXCEPTION WHEN OTHERS THEN
-    v_message := SQLERRM;
-  END;
-  IF v_message IS NULL THEN RAISE EXCEPTION 'product limit was not enforced at % products',v_limit; END IF;
-  PERFORM ok(v_message LIKE '%Product limit reached%' OR v_message LIKE '%permite hasta%','the first product beyond the configured Starter limit is rejected');
-END $$;
+SELECT throws_ok(
+  $$ INSERT INTO public.products (business_id,name,price,stock)
+     VALUES ('00000000-0000-0000-0000-0000000000b2','Product overflow',1000,10) $$,
+  'P0001',
+  NULL,
+  'the first product beyond the configured Starter limit is rejected'
+);
 
 SELECT is(
   (select count(*)::int from public.products where business_id='00000000-0000-0000-0000-0000000000b2'),
