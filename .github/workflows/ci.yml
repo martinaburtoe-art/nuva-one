@@ -22,39 +22,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
-
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2.1.1
         with:
           version: "2.115.0"
-
       - name: Verify Docker
         run: |
           docker version
           docker info
-
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
-
       - name: Verify Supabase migration integrity
         run: npm run verify:migrations
-
       - name: Dependency security audit
         run: npm audit --audit-level=high
-
-      - name: Start local Supabase stack
+      - name: Start lean local Supabase stack
         run: |
           set -o pipefail
+          # Build/type generation only needs Postgres, Auth, Kong and PostgREST.
+          # Avoid pulling unused media/realtime/edge/logging containers.
           for attempt in 1 2 3; do
-            echo "Starting Supabase local stack (attempt ${attempt}/3)"
-            if supabase start; then
-              echo "Supabase local stack started"
+            echo "Starting lean Supabase local stack (attempt ${attempt}/3)"
+            if supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+              echo "Lean Supabase local stack started"
               exit 0
             fi
             supabase status || true
@@ -64,27 +59,21 @@ jobs:
               sleep 10
             fi
           done
-          echo "Supabase failed to start after 3 attempts"
+          echo "Lean Supabase failed to start after 3 attempts"
           exit 1
-
       - name: Regenerate database types from local schema
         run: |
           supabase gen types typescript --local > src/integrations/supabase/types.ts
           test -s src/integrations/supabase/types.ts
-
       - name: Verify lint
         run: npm run lint
-
       - name: Typecheck
         run: npm run typecheck
-
       - name: Unit tests
         run: npm run test
-
       - name: Build
         run: npm run build
-
-      - name: Stop local Supabase stack
+      - name: Stop Supabase local stack
         if: always()
         run: supabase stop --no-backup || true
 
@@ -95,27 +84,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2.1.1
         with:
           version: "2.115.0"
-
       - name: Verify Docker
         run: |
           docker version
           docker info
-
       - name: Verify Supabase migration integrity
-        run: |
-          node scripts/verify-migrations.mjs
-
+        run: node scripts/verify-migrations.mjs
       - name: Start lean Supabase database test stack
         run: |
           set -o pipefail
           # pgTAP/recovery only need Postgres, Auth, Kong and PostgREST.
-          # Keep the test surface focused and avoid pulling unused UI/media/
-          # realtime/edge/logging containers on every clean rebuild.
           for attempt in 1 2 3; do
             echo "Starting lean Supabase stack (attempt ${attempt}/3)"
             if supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
@@ -132,7 +114,6 @@ jobs:
           done
           echo "Lean Supabase failed to start after 3 attempts"
           exit 1
-
       - name: Run pgTAP tests
         run: |
           set -o pipefail
@@ -148,14 +129,12 @@ jobs:
             fi
           done
           exit 1
-
       - name: Recovery drill — rebuild schema from migrations
         run: |
           set -o pipefail
           echo "Running destructive recovery drill against the ephemeral local database only"
           supabase db reset --local
           supabase test db
-
       - name: Stop Supabase local stack
         if: always()
         run: supabase stop --no-backup || true
