@@ -1,8 +1,8 @@
 BEGIN;
 SELECT plan(8);
 SELECT has_function('public', 'get_cash_register_summary', ARRAY['uuid'], 'cash register summary RPC exists');
-SELECT function_privs_are('public', 'get_cash_register_summary', ARRAY['authenticated'], ARRAY['EXECUTE'], 'authenticated can execute cash register summary');
-SELECT function_privs_are('public', 'get_cash_register_summary', ARRAY['anon'], ARRAY[]::text[], 'anonymous users cannot execute cash register summary');
+SELECT ok(has_function_privilege('authenticated', 'public.get_cash_register_summary(uuid)'::regprocedure, 'EXECUTE'), 'authenticated can execute cash register summary');
+SELECT ok(NOT has_function_privilege('anon', 'public.get_cash_register_summary(uuid)'::regprocedure, 'EXECUTE'), 'anonymous users cannot execute cash register summary');
 SELECT has_table('public', 'cash_registers', 'cash registers table exists');
 SELECT has_table('public', 'cash_register_movements', 'cash movements table exists');
 SELECT col_is_pk('public', 'cash_registers', 'id', 'cash register id is primary key');
