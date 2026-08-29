@@ -8,7 +8,7 @@ const signal = (overrides: Partial<IntelligenceSignal>): IntelligenceSignal => (
   title: "Signal",
   explanation: "Explanation",
   action: "Review",
-  source: "test",
+  source: ["test"],
   ...overrides,
 });
 
