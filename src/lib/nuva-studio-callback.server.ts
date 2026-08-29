@@ -43,7 +43,7 @@ export async function processStudioCallback(args: { request: Request; jobId: str
   checkpoint = markStep(checkpoint, args.step, failed ? { status: "pending", attempts, error: result } : { status: "completed", attempts, result });
 
   if (!failed && storagePath) {
-    const assetInsert = await (admin as any).from("ai_asset_library").insert({ id: crypto.randomUUID(), business_id: job.business_id, user_id: job.user_id, job_id: job.id, asset_type: "video", title: `Nüva Studio · video · paso ${args.step + 1}`, storage_path: storagePath, public_url: publicUrl ?? null, metadata: { source: "nuva-studio-callback", capability: "video", step: args.step, model: model ?? null, mimeType: mimeType ?? null } });
+    const assetInsert = await (admin as any).from("ai_asset_library").upsert({ id: callback.data.id, business_id: job.business_id, user_id: job.user_id, job_id: job.id, asset_type: "video", title: `Nüva Studio · video · paso ${args.step + 1}`, storage_path: storagePath, public_url: publicUrl ?? null, metadata: { source: "nuva-studio-callback", capability: "video", step: args.step, model: model ?? null, mimeType: mimeType ?? null } }, { onConflict: "id" });
     if (assetInsert.error) { await releaseClaim(); return { status: 500, body: { error: "Asset registration failed" } }; }
   }
 
