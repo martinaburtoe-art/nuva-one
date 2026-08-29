@@ -67,26 +67,38 @@ Deno.serve(async (req) => {
     businessId = business.id;
   }
 
-  const { error } = await service.from("platform_events").insert({
-    event_name: body.event_name.slice(0, 100),
+  const rawMetadata = body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata)
+    ? body.metadata as Record<string, unknown>
+    : {};
+
+  // Owner Intelligence consumes technical aggregates only. Do not persist the
+  // authenticated user's personal identifier. Route/status/duration remain
+  // technical signals and are nested in metadata because platform_events keeps
+  // its stable, compact schema.
+  const metadata = {
+    ...rawMetadata,
     event_type: body.event_type,
-    business_id: businessId,
-    user_id: user.id,
-    route: typeof body.route === "string" ? body.route.slice(0, 500) : null,
+    route: typeof body.route === "string" ? body.route.slice(0, 500) : undefined,
     duration_ms:
       Number.isInteger(body.duration_ms) && (body.duration_ms as number) >= 0
         ? body.duration_ms
-        : null,
+        : undefined,
     status_code:
       Number.isInteger(body.status_code) &&
       (body.status_code as number) >= 100 &&
       (body.status_code as number) <= 599
         ? body.status_code
-        : null,
-    metadata:
-      body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata)
-        ? body.metadata
-        : {},
+        : undefined,
+  };
+
+  const { error } = await service.from("platform_events").insert({
+    event_name: body.event_name.slice(0, 100),
+    business_id: businessId,
+    session_id: typeof body.session_id === "string" ? body.session_id.slice(0, 200) : null,
+    app_version: typeof body.app_version === "string" ? body.app_version.slice(0, 100) : null,
+    environment: typeof body.environment === "string" ? body.environment.slice(0, 50) : "production",
+    metadata,
+    occurred_at: new Date().toISOString(),
   });
 
   if (error) return new Response("Telemetry unavailable", { status: 503, headers: cors });
