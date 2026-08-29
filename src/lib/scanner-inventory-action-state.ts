@@ -1,6 +1,9 @@
-import type { ScannerAction } from "@/components/scanner/LiveProductScanner";
+import type { InventoryOperation } from "@/lib/inventory-transactions";
 
-export type ScannerInventoryOperation = Extract<ScannerAction, "entry" | "exit" | "count">;
+export type ScannerInventoryOperation = Extract<
+  InventoryOperation,
+  "entry" | "exit" | "count" | "receipt"
+>;
 
 export type ScannerInventoryActionState = {
   operation: ScannerInventoryOperation;
