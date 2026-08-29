@@ -4,7 +4,7 @@ import type { AiCapability } from "@/lib/ai-gateway/types";
 import { executeStudioMedia } from "@/lib/nuva-studio-media-executor.server";
 import { getRunnableSteps, markStep, resumeExecution, type StudioExecutionResult } from "@/lib/nuva-studio-execution.server";
 import type { StudioExecutionStep } from "@/lib/nuva-studio-execution.server";
-import { exponentialBackoffMs, getStudioJob, incrementStudioJobAttempt, updateStudioJobCheckpoint, upsertStudioJobStep, createOrGetStudioJob } from "@/lib/nuva-studio-jobs.server";
+import { exponentialBackoffMs, getStudioJob, getStudioJobByIdempotency, incrementStudioJobAttempt, updateStudioJobCheckpoint, upsertStudioJobStep, createOrGetStudioJob } from "@/lib/nuva-studio-jobs.server";
 import { planNuvaStudioTask, runNuvaStudioTask } from "@/lib/nuva-studio.server";
 
 const TOOL_BY_CAPABILITY: Partial<Record<AiCapability, string>> = {
@@ -16,6 +16,9 @@ const MEDIA_CAPABILITIES = new Set<AiCapability>(["image", "image_edit", "video"
 function jsonResult(result: unknown) { return JSON.parse(JSON.stringify(result)) as StudioExecutionResult; }
 
 export async function createStudioPlanAndJob(args: { supabase: SupabaseClient<Database>; businessId: string; userId: string; prompt: string; maxSteps: number; idempotencyKey: string }) {
+  const existing = await getStudioJobByIdempotency({ supabase: args.supabase, businessId: args.businessId, idempotencyKey: args.idempotencyKey });
+  if (existing) return { plan: { goal: existing.goal, steps: existing.plan }, job: existing, created: false };
+
   const plan = await planNuvaStudioTask({ businessId: args.businessId, prompt: args.prompt, supabase: args.supabase });
   const steps = plan.steps.slice(0, Math.min(Math.max(args.maxSteps, 1), 6)).map((step, index) => ({ ...step, index }));
   const { validateStudioPlan, createExecutionCheckpoint } = await import("@/lib/nuva-studio-execution.server");
