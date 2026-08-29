@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { createStudioPlanAndJob, runStudioJob } from "@/lib/nuva-studio-job-runner.server";
+import { processStudioCallback } from "@/lib/nuva-studio-callback.server";
 import { getStudioJob, updateStudioJobStatus } from "@/lib/nuva-studio-jobs.server";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
@@ -40,6 +41,15 @@ export const Route = createFileRoute("/api/studio-agent")({
         return json({ ok: true, job });
       },
       POST: async ({ request }) => {
+        const url = new URL(request.url);
+        const callbackToken = url.searchParams.get("token");
+        const callbackJobId = url.searchParams.get("jobId");
+        const callbackStep = Number(url.searchParams.get("step"));
+        if (callbackToken && callbackJobId && Number.isInteger(callbackStep) && callbackStep >= 0) {
+          const callback = await processStudioCallback({ request, jobId: callbackJobId, step: callbackStep, token: callbackToken });
+          return json(callback.body, callback.status);
+        }
+
         const auth = await authenticatedClient(request);
         if (auth.error) return auth.error;
         const body = (await request.json().catch(() => null)) as {
