@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 type PlatformEvent = {
   event_name: string;
@@ -16,11 +16,7 @@ export function trackPlatformEvent(event: PlatformEvent) {
 }
 
 export function trackPageView(route: string) {
-  trackPlatformEvent({
-    event_name: "page_view",
-    event_type: "page_view",
-    route,
-  });
+  trackPlatformEvent({ event_name: "page_view", event_type: "page_view", route });
 }
 
 export function captureBrowserPerformance() {
@@ -28,7 +24,6 @@ export function captureBrowserPerformance() {
 
   const send = (eventName: string, value: number, metadata: Record<string, unknown> = {}) => {
     if (!Number.isFinite(value) || value < 0) return;
-
     trackPlatformEvent({
       event_name: eventName,
       event_type: "performance",
@@ -50,25 +45,14 @@ export function captureBrowserPerformance() {
   observe("largest-contentful-paint", (entry) => send("web_vital_lcp", entry.startTime));
   observe("first-contentful-paint", (entry) => send("web_vital_fcp", entry.startTime));
   observe("layout-shift", (entry) => {
-    const shift = entry as PerformanceEntry & {
-      value?: number;
-      hadRecentInput?: boolean;
-    };
-    if (!shift.hadRecentInput) {
-      send("web_vital_cls", Number(shift.value ?? 0), { metric: "CLS" });
-    }
+    const shift = entry as PerformanceEntry & { value?: number; hadRecentInput?: boolean };
+    if (!shift.hadRecentInput) send("web_vital_cls", Number(shift.value ?? 0), { metric: "CLS" });
   });
   observe("event", (entry) => {
-    const event = entry as PerformanceEventTiming;
-    if (event.interactionId) {
-      send("web_vital_inp_candidate", event.duration, { metric: "INP" });
-    }
+    const event = entry as PerformanceEntry & { duration: number; interactionId?: number };
+    if (event.interactionId) send("web_vital_inp_candidate", event.duration, { metric: "INP" });
   });
 
-  const navigation = performance.getEntriesByType("navigation")[0] as
-    | PerformanceNavigationTiming
-    | undefined;
-  if (navigation) {
-    send("web_vital_ttfb", navigation.responseStart - navigation.requestStart, { metric: "TTFB" });
-  }
+  const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  if (navigation) send("web_vital_ttfb", navigation.responseStart - navigation.requestStart, { metric: "TTFB" });
 }
