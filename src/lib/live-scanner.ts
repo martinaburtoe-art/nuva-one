@@ -108,6 +108,7 @@ export class LiveScanner {
   static isSupported() {
     return this.hasCameraSupport();
   }
+
   static supportedFormats() {
     return [...SUPPORTED_FORMATS];
   }
@@ -236,7 +237,7 @@ export class LiveScanner {
         name: "NotSupportedError",
       });
 
-    let detector: ReturnType<BarcodeDetectorLike>;
+    let detector: InstanceType<BarcodeDetectorLike>;
     try {
       detector = new Detector({ formats });
     } catch (error) {
