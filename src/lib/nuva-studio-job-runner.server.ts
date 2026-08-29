@@ -2,8 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { AiCapability } from "@/lib/ai-gateway/types";
 import { executeStudioMedia } from "@/lib/nuva-studio-media-executor.server";
-import { getRunnableSteps, markStep, resumeExecution, type StudioExecutionCheckpoint, type StudioExecutionResult, type StudioExecutionStep } from "@/lib/nuva-studio-execution.server";
-import { exponentialBackoffMs, getStudioJob, incrementStudioJobAttempt, updateStudioJobCheckpoint, upsertStudioJobStep } from "@/lib/nuva-studio-jobs.server";
+import { getRunnableSteps, markStep, resumeExecution, type StudioExecutionResult } from "@/lib/nuva-studio-execution.server";
+import type { StudioExecutionStep } from "@/lib/nuva-studio-execution.server";
+import { exponentialBackoffMs, getStudioJob, incrementStudioJobAttempt, updateStudioJobCheckpoint, upsertStudioJobStep, createOrGetStudioJob } from "@/lib/nuva-studio-jobs.server";
 import { planNuvaStudioTask, runNuvaStudioTask } from "@/lib/nuva-studio.server";
 
 const TOOL_BY_CAPABILITY: Partial<Record<AiCapability, string>> = {
@@ -12,9 +13,7 @@ const TOOL_BY_CAPABILITY: Partial<Record<AiCapability, string>> = {
 };
 const MEDIA_CAPABILITIES = new Set<AiCapability>(["image", "image_edit", "video", "voice"]);
 
-function jsonResult(result: unknown) {
-  return JSON.parse(JSON.stringify(result)) as StudioExecutionResult;
-}
+function jsonResult(result: unknown) { return JSON.parse(JSON.stringify(result)) as StudioExecutionResult; }
 
 export async function createStudioPlanAndJob(args: { supabase: SupabaseClient<Database>; businessId: string; userId: string; prompt: string; maxSteps: number; idempotencyKey: string }) {
   const plan = await planNuvaStudioTask({ businessId: args.businessId, prompt: args.prompt, supabase: args.supabase });
@@ -23,7 +22,6 @@ export async function createStudioPlanAndJob(args: { supabase: SupabaseClient<Da
   const validationErrors = validateStudioPlan(steps);
   if (validationErrors.length) throw Object.assign(new Error("El plan generado no pasó la validación de seguridad."), { code: "PLAN_INVALID", validationErrors, plan: { ...plan, steps } });
   const checkpoint = createExecutionCheckpoint(crypto.randomUUID(), steps);
-  const { createOrGetStudioJob } = await import("@/lib/nuva-studio-jobs.server");
   return { plan: { ...plan, steps }, ...(await createOrGetStudioJob({ supabase: args.supabase, businessId: args.businessId, userId: args.userId, goal: plan.goal, plan: steps, checkpoint, idempotencyKey: args.idempotencyKey })) };
 }
 
@@ -36,20 +34,19 @@ export async function runStudioJob(args: { supabase: SupabaseClient<Database>; j
 
   const claim = await incrementStudioJobAttempt({ supabase: args.supabase, jobId: args.jobId });
   if (!claim.allowed) {
+    if (claim.busy) return job;
     await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint: job.checkpoint, status: "failed", lastError: "Se agotó el máximo de intentos del job." });
     return await getStudioJob({ supabase: args.supabase, jobId: args.jobId });
   }
 
   let checkpoint = resumeExecution(job.checkpoint);
   await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: "running", lastError: null });
-
   const outputs = checkpoint.steps.filter((step) => step.status === "completed" && step.result).map((step) => ({ step: step.step, capability: step.capability, result: step.result as string }));
   const outputByStep = new Map(outputs.map((output) => [output.step, output.result]));
   const plan = job.plan;
 
   try {
     for (const step of getRunnableSteps(plan, checkpoint)) {
-      if (job.status === "cancelled") break;
       const current = checkpoint.steps.find((item) => item.step === step.index);
       const attempts = (current?.attempts ?? 0) + 1;
       checkpoint = markStep(checkpoint, step.index, { status: "running", attempts, error: undefined });
