@@ -5,8 +5,9 @@ const RETIRED_GROQ_MODELS = new Set(["llama-3.1-8b-instant"]);
 const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
 const DEFAULT_LOVABLE_MODEL = "google/gemini-3-flash-preview";
 const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
+const DEFAULT_GOOGLE_MODEL = "gemini-3.1-pro-preview";
 
-type ProviderName = "groq" | "lovable" | "openai";
+type ProviderName = "groq" | "lovable" | "openai" | "google";
 
 type ProviderCandidate = {
   provider: ProviderName;
@@ -53,6 +54,17 @@ export function createOpenAiProvider(apiKey: string) {
   });
 }
 
+/** Google Gemini's OpenAI-compatible endpoint is used for the text gateway.
+ * Native Gemini endpoints remain available for capabilities such as image generation.
+ */
+export function createGoogleProvider(apiKey: string) {
+  return createOpenAICompatible({
+    name: "google",
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    headers: { "x-goog-api-key": apiKey },
+  });
+}
+
 function resolveGroqModel(configuredModel?: string) {
   const normalized = configuredModel?.trim();
   if (!normalized || RETIRED_GROQ_MODELS.has(normalized)) return DEFAULT_GROQ_MODEL;
@@ -61,11 +73,12 @@ function resolveGroqModel(configuredModel?: string) {
 
 function configuredProviderOrder(): ProviderName[] {
   const primary = (process.env.AI_PROVIDER ?? "groq").toLowerCase() as ProviderName;
-  const configuredFallbacks = (process.env.AI_FALLBACK_PROVIDERS ?? "lovable,openai")
+  const configuredFallbacks = (process.env.AI_FALLBACK_PROVIDERS ?? "google,lovable,openai")
     .split(",")
     .map((value) => value.trim().toLowerCase())
-    .filter((value): value is ProviderName =>
-      value === "groq" || value === "lovable" || value === "openai",
+    .filter(
+      (value): value is ProviderName =>
+        value === "groq" || value === "google" || value === "lovable" || value === "openai",
     );
   return Array.from(new Set([primary, ...configuredFallbacks]));
 }
@@ -99,6 +112,13 @@ function buildCandidate(provider: ProviderName): ProviderCandidate | null {
     if (!key) return null;
     const model = resolveGroqModel(process.env.GROQ_MODEL);
     return { provider, model, languageModel: createGroqProvider(key)(model) };
+  }
+
+  if (provider === "google") {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return null;
+    const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_GOOGLE_MODEL;
+    return { provider, model, languageModel: createGoogleProvider(key)(model) };
   }
 
   if (provider === "lovable") {
@@ -185,7 +205,7 @@ export function getChatModel() {
   const primary = candidates[0];
   if (!primary) {
     throw new Error(
-      "No hay un proveedor de IA disponible. Configura GROQ_API_KEY, LOVABLE_API_KEY u OPENAI_API_KEY.",
+      "No hay un proveedor de IA disponible. Configura GEMINI_API_KEY, GROQ_API_KEY, LOVABLE_API_KEY u OPENAI_API_KEY.",
     );
   }
   return createFailoverModel(primary, candidates.slice(1));
@@ -217,7 +237,9 @@ export function estimateAiCostUsd(
 export function isRetryableAiError(error: unknown) {
   if (typeof error === "object" && error !== null && "statusCode" in error) {
     const status = (error as { statusCode?: unknown }).statusCode;
-    if (typeof status === "number") return status === 408 || status === 409 || status === 429 || status >= 500;
+    if (typeof status === "number") {
+      return status === 408 || status === 409 || status === 429 || status >= 500;
+    }
   }
   const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
   return /timeout|timed out|network|fetch failed|econn|socket|temporar|unavailable|overloaded/.test(message);
