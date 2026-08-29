@@ -11,8 +11,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
-const searchSchema = z.object({ plan: z.enum(["starter", "pro"]).optional().default("pro"), billing: z.enum(["monthly", "annual"]).optional().default("monthly") });
-export const Route = createFileRoute("/checkout")({ validateSearch: searchSchema, head: () => ({ meta: [{ title: "Checkout seguro — Nüva One" }, { name: "description", content: "Activa Nüva One mediante un proceso de pago seguro, claro y sin almacenar datos sensibles de tarjeta." }] }), component: CheckoutPage });
+const searchSchema = z.object({
+  plan: z.enum(["starter", "pro"]).optional().default("pro"),
+  billing: z.enum(["monthly", "annual"]).optional().default("monthly"),
+});
+
+export const Route = createFileRoute("/checkout")({
+  validateSearch: searchSchema,
+  head: () => ({
+    meta: [
+      { title: "Checkout seguro — Nüva One" },
+      { name: "description", content: "Activa Nüva One mediante un proceso de pago seguro, claro y sin almacenar datos sensibles de tarjeta." },
+    ],
+  }),
+  component: CheckoutPage,
+});
 
 function CheckoutPage() {
   const search = Route.useSearch();
@@ -57,4 +70,11 @@ function CheckoutPage() {
   );
 }
 
-function TrustItem({ icon, text }: { icon: React.ReactNode; text: string }) { return <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">{icon}{text}</div>; }
+function TrustItem({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500">
+      <span className="text-violet-600">{icon}</span>
+      {text}
+    </div>
+  );
+}
