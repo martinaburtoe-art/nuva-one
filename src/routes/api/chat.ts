@@ -28,7 +28,6 @@ const SPECIALIST_PROFILES: Record<Specialist, string> = {
 function lastUserText(messages: UIMessage[]): string {
   const last = [...messages].reverse().find((m) => m.role === "user");
   if (!last) return "";
-  if (typeof last.content === "string") return last.content;
   return last.parts.filter((part) => part.type === "text").map((part) => part.text).join("\n");
 }
 
