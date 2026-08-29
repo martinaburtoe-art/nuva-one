@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { runNuvaStudioTask } from "@/lib/nuva-studio.server";
+import { generateGeminiImageAsset } from "@/lib/nuva-studio-media.server";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
 import type { Database } from "@/integrations/supabase/types";
@@ -27,7 +28,7 @@ const CAPABILITY_TO_TOOL: Record<AiCapability, string> = {
   marketing: "studio.marketing",
   copywriting: "studio.copywriting",
   image: "studio.image",
-  image_edit: "studio.image",
+  image_edit: "studio.image_edit",
   video: "studio.video",
   voice: "studio.voice",
   brand: "studio.brand",
@@ -45,10 +46,18 @@ function json(data: unknown, status = 200) {
 
 function quotaError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
-  if (message.includes("daily_limit")) return { error: "Has alcanzado el límite diario de esta herramienta.", status: 429 };
-  if (message.includes("monthly_limit")) return { error: "Has alcanzado el límite mensual de esta herramienta.", status: 429 };
-  if (message.includes("plan_not_allowed")) return { error: "Esta herramienta no está disponible en tu plan actual.", status: 403 };
-  if (message.includes("tool_unavailable")) return { error: "Esta herramienta no está disponible temporalmente.", status: 503 };
+  if (message.includes("daily_limit")) {
+    return { error: "Has alcanzado el límite diario de esta herramienta.", status: 429 };
+  }
+  if (message.includes("monthly_limit")) {
+    return { error: "Has alcanzado el límite mensual de esta herramienta.", status: 429 };
+  }
+  if (message.includes("plan_not_allowed")) {
+    return { error: "Esta herramienta no está disponible en tu plan actual.", status: 403 };
+  }
+  if (message.includes("tool_unavailable")) {
+    return { error: "Esta herramienta no está disponible temporalmente.", status: 503 };
+  }
   return null;
 }
 
@@ -136,6 +145,59 @@ export const Route = createFileRoute("/api/studio")({
         }
 
         try {
+          if (body.capability === "image" || body.capability === "image_edit") {
+            const asset = await generateGeminiImageAsset({
+              businessId: body.businessId,
+              userId,
+              prompt: body.prompt,
+              supabase,
+            });
+
+            const { data: libraryAsset, error: assetError } = await supabase
+              .from("ai_asset_library" as never)
+              .insert({
+                business_id: body.businessId,
+                user_id: userId,
+                job_id: (job as { id: string }).id,
+                asset_type: "image",
+                title: body.prompt.slice(0, 120),
+                storage_path: asset.storagePath,
+                metadata: { provider: "google", model: asset.model, mimeType: asset.mimeType },
+              } as never)
+              .select("id")
+              .single();
+            if (assetError) throw new Error(`No se pudo registrar el activo: ${assetError.message}`);
+
+            const result = {
+              text: "Imagen creada y guardada en tu biblioteca de Nüva Studio.",
+              imageUrl: asset.signedUrl,
+              assetId: (libraryAsset as { id: string }).id,
+              metadata: {
+                provider: "google" as const,
+                model: asset.model,
+                inputTokens: 0,
+                outputTokens: 0,
+                totalTokens: 0,
+                estimatedCostUsd: 0,
+                fallbackUsed: false,
+                attempts: 1,
+              },
+            };
+
+            await supabase
+              .from("ai_generation_jobs" as never)
+              .update({
+                status: "completed",
+                provider: result.metadata.provider,
+                model: result.metadata.model,
+                output_metadata: { ...result.metadata, quota: reservation, assetId: result.assetId },
+                completed_at: new Date().toISOString(),
+              } as never)
+              .eq("id", (job as { id: string }).id);
+
+            return json({ ok: true, result, usage: reservation });
+          }
+
           const result = await runNuvaStudioTask({
             businessId: body.businessId,
             capability: body.capability,
