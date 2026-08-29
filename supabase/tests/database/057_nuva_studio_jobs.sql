@@ -1,0 +1,13 @@
+BEGIN;
+SELECT plan(9);
+SELECT has_table('public','nuva_studio_jobs','Studio jobs table exists');
+SELECT has_table('public','nuva_studio_job_steps','Studio job steps table exists');
+SELECT has_table('public','nuva_studio_job_callbacks','Studio callbacks table exists');
+SELECT ok(EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='public' AND tablename='nuva_studio_jobs' AND indexname='nuva_studio_jobs_business_idempotency_idx'),'job idempotency index exists');
+SELECT ok(EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='public' AND tablename='nuva_studio_job_steps' AND indexname='nuva_studio_job_steps_job_status_idx'),'job step checkpoint index exists');
+SELECT ok(EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='public' AND tablename='nuva_studio_job_callbacks' AND indexname='nuva_studio_job_callbacks_job_step_idx'),'callback lookup index exists');
+SELECT is((SELECT relrowsecurity FROM pg_class WHERE oid='public.nuva_studio_jobs'::regclass),true,'Studio jobs RLS enabled');
+SELECT is(has_table_privilege('anon','public.nuva_studio_jobs','SELECT'),false,'anon cannot read Studio jobs');
+SELECT is(has_function_privilege('authenticated','public.nuva_studio_jobs_set_updated_at()','EXECUTE'),false,'authenticated cannot execute Studio job trigger function');
+SELECT * FROM finish();
+ROLLBACK;
