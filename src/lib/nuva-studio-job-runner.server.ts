@@ -3,8 +3,7 @@ import type { Database } from "@/integrations/supabase/types";
 import type { AiCapability } from "@/lib/ai-gateway/types";
 import { executeStudioMedia } from "@/lib/nuva-studio-media-executor.server";
 import { getRunnableSteps, markStep, resumeExecution, type StudioExecutionResult } from "@/lib/nuva-studio-execution.server";
-import type { StudioExecutionStep } from "@/lib/nuva-studio-execution.server";
-import { exponentialBackoffMs, getStudioJob, getStudioJobByIdempotency, incrementStudioJobAttempt, updateStudioJobCheckpoint, upsertStudioJobStep, createOrGetStudioJob } from "@/lib/nuva-studio-jobs.server";
+import { exponentialBackoffMs, getStudioJob, getStudioJobByIdempotency, incrementStudioJobAttempt, recordStudioAudit, updateStudioJobCheckpoint, upsertStudioJobStep, createOrGetStudioJob } from "@/lib/nuva-studio-jobs.server";
 import { planNuvaStudioTask, runNuvaStudioTask } from "@/lib/nuva-studio.server";
 
 const TOOL_BY_CAPABILITY: Partial<Record<AiCapability, string>> = {
@@ -12,13 +11,11 @@ const TOOL_BY_CAPABILITY: Partial<Record<AiCapability, string>> = {
   brand: "studio.brand", strategy: "studio.strategy", document: "studio.document", automation: "studio.automation",
 };
 const MEDIA_CAPABILITIES = new Set<AiCapability>(["image", "image_edit", "video", "voice"]);
-
 function jsonResult(result: unknown) { return JSON.parse(JSON.stringify(result)) as StudioExecutionResult; }
 
 export async function createStudioPlanAndJob(args: { supabase: SupabaseClient<Database>; businessId: string; userId: string; prompt: string; maxSteps: number; idempotencyKey: string }) {
   const existing = await getStudioJobByIdempotency({ supabase: args.supabase, businessId: args.businessId, idempotencyKey: args.idempotencyKey });
   if (existing) return { plan: { goal: existing.goal, steps: existing.plan }, job: existing, created: false };
-
   const plan = await planNuvaStudioTask({ businessId: args.businessId, prompt: args.prompt, supabase: args.supabase });
   const steps = plan.steps.slice(0, Math.min(Math.max(args.maxSteps, 1), 6)).map((step, index) => ({ ...step, index }));
   const { validateStudioPlan, createExecutionCheckpoint } = await import("@/lib/nuva-studio-execution.server");
@@ -39,8 +36,10 @@ export async function runStudioJob(args: { supabase: SupabaseClient<Database>; j
   if (!claim.allowed) {
     if (claim.busy) return job;
     await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint: job.checkpoint, status: "failed", lastError: "Se agotó el máximo de intentos del job." });
+    await recordStudioAudit({ supabase: args.supabase, businessId: job.business_id, userId: args.userId, jobId: job.id, action: "studio.job.failed.max_attempts" });
     return await getStudioJob({ supabase: args.supabase, jobId: args.jobId });
   }
+  await recordStudioAudit({ supabase: args.supabase, businessId: job.business_id, userId: args.userId, jobId: job.id, action: "studio.job.started", metadata: { attempt: claim.attempts } });
 
   let checkpoint = resumeExecution(job.checkpoint);
   await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: "running", lastError: null });
@@ -55,7 +54,6 @@ export async function runStudioJob(args: { supabase: SupabaseClient<Database>; j
       checkpoint = markStep(checkpoint, step.index, { status: "running", attempts, error: undefined });
       await upsertStudioJobStep({ supabase: args.supabase, jobId: args.jobId, step, status: "running", attempts });
       await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: "running" });
-
       const dependencies = step.dependsOn.map((dependency) => outputByStep.get(dependency)).filter(Boolean).join("\n\n");
       const prompt = [`Objetivo: ${job.goal}`, `Paso ${step.index + 1}: ${step.instruction}`, dependencies ? `Resultados de pasos anteriores:\n${dependencies}` : "", "Produce un entregable concreto y utilizable. No inventes datos empresariales."].filter(Boolean).join("\n\n");
 
@@ -73,6 +71,7 @@ export async function runStudioJob(args: { supabase: SupabaseClient<Database>; j
           checkpoint = markStep(checkpoint, step.index, { status: "queued", attempts, result: JSON.stringify(result) });
           await upsertStudioJobStep({ supabase: args.supabase, jobId: args.jobId, step, status: "queued", attempts, result });
           await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: "waiting" });
+          await recordStudioAudit({ supabase: args.supabase, businessId: job.business_id, userId: args.userId, jobId: job.id, action: "studio.job.waiting_callback", metadata: { step: step.index, callbackId: result.callbackId } });
           return await getStudioJob({ supabase: args.supabase, jobId: args.jobId });
         }
         checkpoint = markStep(checkpoint, step.index, { status: result.status, attempts, error: result.error });
@@ -103,12 +102,14 @@ export async function runStudioJob(args: { supabase: SupabaseClient<Database>; j
     const media = checkpoint.steps.filter((step) => ["queued", "blocked", "failed"].includes(step.status)).map((step) => ({ step: step.step, capability: step.capability as "image" | "image_edit" | "video" | "voice", status: step.status === "queued" ? "ready" : "blocked", input: plan.find((item) => item.index === step.step)?.instruction ?? "", reason: step.error }));
     const result = jsonResult({ status: media.length ? "partial" : "completed", completed, media });
     await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: result.status, result, nextRunAt: null });
+    await recordStudioAudit({ supabase: args.supabase, businessId: job.business_id, userId: args.userId, jobId: job.id, action: media.length ? "studio.job.partial" : "studio.job.completed", metadata: { completedSteps: completed.length } });
     return await getStudioJob({ supabase: args.supabase, jobId: args.jobId });
   } catch (error) {
     const nextAttempt = claim.attempts;
     const retryAt = new Date(Date.now() + exponentialBackoffMs(nextAttempt)).toISOString();
     checkpoint = { ...checkpoint, status: "failed", updatedAt: new Date().toISOString() };
     await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: nextAttempt < job.max_attempts ? "queued" : "failed", lastError: error, nextRunAt: nextAttempt < job.max_attempts ? retryAt : null });
+    await recordStudioAudit({ supabase: args.supabase, businessId: job.business_id, userId: args.userId, jobId: job.id, action: nextAttempt < job.max_attempts ? "studio.job.retry_scheduled" : "studio.job.failed", metadata: { attempt: nextAttempt, retryAt } });
     return await getStudioJob({ supabase: args.supabase, jobId: args.jobId });
   }
 }
