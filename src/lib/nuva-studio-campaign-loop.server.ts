@@ -34,7 +34,7 @@ export async function runDueStudioCampaign(args: { supabase: SupabaseClient<Data
   }
 
   try {
-    let job = cycle.studio_job_id ? await db(args.supabase).from("nuva_studio_jobs").select("*").eq("id", cycle.studio_job_id).maybeSingle() : { data: null, error: null };
+    const job = cycle.studio_job_id ? await db(args.supabase).from("nuva_studio_jobs").select("*").eq("id", cycle.studio_job_id).maybeSingle() : { data: null, error: null };
     if (job.error) throw new Error(job.error.message);
     let plannedJob = job.data;
     if (!plannedJob) {
