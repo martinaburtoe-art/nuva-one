@@ -3,7 +3,7 @@ import type { Database } from "@/integrations/supabase/types";
 import type { AiCapability } from "@/lib/ai-gateway/types";
 import { executeStudioMedia } from "@/lib/nuva-studio-media-executor.server";
 import { getRunnableSteps, markStep, resumeExecution, type StudioExecutionResult } from "@/lib/nuva-studio-execution.server";
-import { exponentialBackoffMs, getStudioJob, getStudioJobByIdempotency, incrementStudioJobAttempt, recordStudioAudit, updateStudioJobCheckpoint, upsertStudioJobStep, createOrGetStudioJob } from "@/lib/nuva-studio-jobs.server";
+import { exponentialBackoffMs, getStudioJob, getStudioJobByIdempotency, incrementStudioJobAttempt, recordStudioAudit, updateStudioJobCheckpoint, upsertStudioJobStep, createOrGetStudioJob, withStudioJobLease } from "@/lib/nuva-studio-jobs.server";
 import { planNuvaStudioTask, runNuvaStudioTask } from "@/lib/nuva-studio.server";
 
 const TOOL_BY_CAPABILITY: Partial<Record<AiCapability, string>> = { chat: "agent.chat", research: "studio.research", marketing: "studio.marketing", copywriting: "studio.copywriting", brand: "studio.brand", strategy: "studio.strategy", document: "studio.document", automation: "studio.automation" };
@@ -57,7 +57,7 @@ export async function runStudioJob(args: { supabase: SupabaseClient<Database>; j
       const prompt = [`Objetivo: ${job.goal}`, `Paso ${step.index + 1}: ${step.instruction}`, dependencies ? `Resultados de pasos anteriores:\n${dependencies}` : "", "Produce un entregable concreto y utilizable. No inventes datos empresariales."].filter(Boolean).join("\n\n");
 
       if (MEDIA_CAPABILITIES.has(step.capability)) {
-        const result = await executeStudioMedia({ businessId: job.business_id, userId: args.userId, jobId: args.jobId, step: step.index, capability: step.capability as "image" | "image_edit" | "video" | "voice", prompt, supabase: args.supabase });
+        const result = await withStudioJobLease({ supabase: args.supabase, jobId: args.jobId, lockToken, task: () => executeStudioMedia({ businessId: job.business_id, userId: args.userId, jobId: args.jobId, step: step.index, capability: step.capability as "image" | "image_edit" | "video" | "voice", prompt, supabase: args.supabase }) });
         if (result.status === "completed") { const output = result.signedUrl ?? result.storagePath ?? result.status; outputByStep.set(step.index, output); checkpoint = markStep(checkpoint, step.index, { status: "completed", attempts, result: output }); await upsertStudioJobStep({ supabase: args.supabase, jobId: args.jobId, step, status: "completed", attempts, result }); await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: "running", lockToken }); continue; }
         if (result.status === "queued") { checkpoint = markStep(checkpoint, step.index, { status: "queued", attempts, result: JSON.stringify(result) }); await upsertStudioJobStep({ supabase: args.supabase, jobId: args.jobId, step, status: "queued", attempts, result }); await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: "waiting", lockToken }); await recordStudioAudit({ supabase: args.supabase, businessId: job.business_id, userId: args.userId, jobId: job.id, action: "studio.job.waiting_callback", metadata: { step: step.index, callbackId: result.callbackId } }); return await getStudioJob({ supabase: args.supabase, jobId: args.jobId }); }
         checkpoint = markStep(checkpoint, step.index, { status: result.status, attempts, error: result.error }); await upsertStudioJobStep({ supabase: args.supabase, jobId: args.jobId, step, status: result.status, attempts, error: result.error, result }); await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: result.status === "blocked" ? "blocked" : "failed", lastError: result.error, lockToken }); return await getStudioJob({ supabase: args.supabase, jobId: args.jobId });
@@ -70,7 +70,7 @@ export async function runStudioJob(args: { supabase: SupabaseClient<Database>; j
       const { error: reservationError } = await args.supabase.rpc("reserve_ai_tool_quota" as never, { p_business_id: job.business_id, p_tool_id: toolId, p_units: tool.cost_units } as never);
       if (reservationError) throw new Error("Se alcanzó el límite de uso de una de las herramientas del plan.");
       try {
-        const task = await runNuvaStudioTask({ businessId: job.business_id, capability: step.capability, prompt, supabase: args.supabase });
+        const task = await withStudioJobLease({ supabase: args.supabase, jobId: args.jobId, lockToken, task: () => runNuvaStudioTask({ businessId: job.business_id, capability: step.capability, prompt, supabase: args.supabase }) });
         outputByStep.set(step.index, task.text); checkpoint = markStep(checkpoint, step.index, { status: "completed", attempts, result: task.text }); await upsertStudioJobStep({ supabase: args.supabase, jobId: args.jobId, step, status: "completed", attempts, result: { text: task.text } }); await updateStudioJobCheckpoint({ supabase: args.supabase, jobId: args.jobId, checkpoint, status: "running", lockToken });
       } catch (error) { await args.supabase.rpc("release_ai_tool_quota" as never, { p_business_id: job.business_id, p_tool_id: toolId, p_units: tool.cost_units } as never); throw error; }
     }
