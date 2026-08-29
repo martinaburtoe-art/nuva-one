@@ -11,10 +11,17 @@ type StudioJobRow = {
   max_attempts: number; last_error: string | null; next_run_at: string | null; locked_at: string | null;
   completed_at: string | null; cancelled_at: string | null;
 };
-
 type JobsClient = { from: (table: string) => any };
 function jobs(supabase: SupabaseClient<Database>): JobsClient { return supabase as unknown as JobsClient; }
 function cleanError(error: unknown) { return (error instanceof Error ? error.message : String(error)).replaceAll("\0", "").slice(0, MAX_ERROR_LENGTH); }
+
+export async function recordStudioAudit(args: { supabase: SupabaseClient<Database>; businessId: string; userId: string; jobId: string; action: string; metadata?: Record<string, unknown> }) {
+  try {
+    await jobs(args.supabase).from("audit_log").insert({ business_id: args.businessId, user_id: args.userId, action: args.action, entity: "nuva_studio_job", entity_id: args.jobId, metadata: args.metadata ?? {} });
+  } catch {
+    // Observability must never turn a successful AI execution into a failed request.
+  }
+}
 
 export async function getStudioJobByIdempotency(args: { supabase: SupabaseClient<Database>; businessId: string; idempotencyKey: string }) {
   const { data, error } = await jobs(args.supabase).from("nuva_studio_jobs").select("*").eq("business_id", args.businessId).eq("idempotency_key", args.idempotencyKey).maybeSingle();
