@@ -13,6 +13,7 @@ import { NuvaDecisionTimeline } from "@/components/nuva-decision-timeline";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { buildNuvaDecision } from "@/lib/nuva-decision-engine";
+import type { ActionDestination } from "@/lib/nuva-action-center";
 import { AlertTriangle, CheckCircle2, Lightbulb, ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/executive-command-center")({
@@ -84,7 +85,7 @@ function ExecutiveCommandCenter() {
                   {decision.actions.slice(0, 4).map((item) => (
                     <Link
                       key={item.id}
-                      to={item.destination === "/crm" ? "/customers" : item.destination}
+                      to={decisionDestinationRoute(item.destination)}
                       className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -132,6 +133,23 @@ function ExecutiveCommandCenter() {
       </div>
     </ModuleGuard>
   );
+}
+
+function decisionDestinationRoute(destination: ActionDestination) {
+  switch (destination) {
+    case "inventory":
+      return "/inventory";
+    case "crm":
+      return "/customers";
+    case "purchases":
+      return "/purchases";
+    case "finance":
+      return "/finance";
+    case "customers":
+      return "/customers";
+    case "dashboard":
+      return "/dashboard";
+  }
 }
 
 function DecisionIcon({ status }: { status: "critical" | "attention" | "opportunity" | "stable" }) {
