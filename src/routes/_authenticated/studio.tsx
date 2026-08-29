@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, Megaphone, Image, Video, Mic2, Lightbulb, Search, Palette, Wand2, Send, Loader2 } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Lightbulb,
+  Loader2,
+  Megaphone,
+  Mic2,
+  Palette,
+  Search,
+  Send,
+  Sparkles,
+  Video,
+  Wand2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
 import { Button } from "@/components/ui/button";
@@ -15,10 +27,22 @@ export const Route = createFileRoute("/_authenticated/studio")({
 
 type Capability = "marketing" | "copywriting" | "image" | "video" | "voice" | "research" | "brand" | "strategy";
 
-const actions: Array<{ id: Capability; title: string; description: string; icon: typeof Sparkles; prompt: string }> = [
+type StudioResult = {
+  text: string;
+  imageUrl?: string;
+  audioUrl?: string;
+};
+
+const actions: Array<{
+  id: Capability;
+  title: string;
+  description: string;
+  icon: typeof Sparkles;
+  prompt: string;
+}> = [
   { id: "marketing", title: "Crear campaña", description: "Estrategia, contenido y CTA", icon: Megaphone, prompt: "Diseña una campaña completa para aumentar mis ventas." },
   { id: "copywriting", title: "Crear contenido", description: "Posts, captions, slogans y guiones", icon: Wand2, prompt: "Crea 5 ideas de contenido para mis redes sociales." },
-  { id: "image", title: "Crear imagen", description: "Piezas visuales y producto", icon: Image, prompt: "Crea el concepto visual de una pieza publicitaria para mi negocio." },
+  { id: "image", title: "Crear imagen", description: "Piezas visuales y producto", icon: ImageIcon, prompt: "Crea una pieza publicitaria profesional para mi negocio." },
   { id: "video", title: "Crear video", description: "Reels, anuncios y guiones", icon: Video, prompt: "Crea un Reel de 30 segundos para promocionar mi negocio." },
   { id: "voice", title: "Crear voz", description: "Locución para contenido", icon: Mic2, prompt: "Escribe una locución comercial de 20 segundos." },
   { id: "research", title: "Investigar", description: "Mercado, tendencias y oportunidades", icon: Search, prompt: "Identifica oportunidades de mercado para mi negocio." },
@@ -31,7 +55,7 @@ function StudioPage() {
   const [token, setToken] = useState<string | null>(null);
   const [capability, setCapability] = useState<Capability>("marketing");
   const [prompt, setPrompt] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<StudioResult | null>(null);
   const [loading, setLoading] = useState(false);
   const selected = useMemo(() => actions.find((item) => item.id === capability) ?? actions[0], [capability]);
 
@@ -42,7 +66,7 @@ function StudioPage() {
   async function run() {
     if (!active?.id || !token || !prompt.trim() || loading) return;
     setLoading(true);
-    setResult("");
+    setResult(null);
     try {
       const response = await fetch("/api/studio", {
         method: "POST",
@@ -51,9 +75,13 @@ function StudioPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "No se pudo completar la tarea");
-      setResult(data.result?.text ?? "Tarea completada.");
+      setResult({
+        text: data.result?.text ?? "Tarea completada.",
+        imageUrl: data.result?.imageUrl,
+        audioUrl: data.result?.audioUrl,
+      });
     } catch (error) {
-      setResult(error instanceof Error ? error.message : "Ocurrió un error.");
+      setResult({ text: error instanceof Error ? error.message : "Ocurrió un error." });
     } finally {
       setLoading(false);
     }
@@ -61,10 +89,7 @@ function StudioPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Nüva Studio"
-        description="Tu espacio de creación, marketing e inteligencia para hacer crecer el negocio."
-      />
+      <PageHeader title="Nüva Studio" description="Tu espacio de creación, marketing e inteligencia para hacer crecer el negocio." />
 
       <section className="rounded-2xl border bg-gradient-to-br from-background via-background to-primary/5 p-5 md:p-7">
         <div className="flex items-start gap-4">
@@ -74,7 +99,9 @@ function StudioPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Nüva AI Studio</p>
             <h2 className="mt-1 text-2xl font-bold tracking-tight">Dime qué quieres conseguir.</h2>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Nüva utiliza el contexto de tu empresa para convertir una idea en una acción concreta.</p>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Nüva utiliza el contexto de tu empresa para convertir una idea en una acción concreta.
+            </p>
           </div>
         </div>
 
@@ -86,8 +113,14 @@ function StudioPage() {
               <button
                 key={action.id}
                 type="button"
-                onClick={() => { setCapability(action.id); setPrompt(action.prompt); }}
-                className={cn("rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary", isSelected && "border-primary bg-primary/5 shadow-sm")}
+                onClick={() => {
+                  setCapability(action.id);
+                  setPrompt(action.prompt);
+                }}
+                className={cn(
+                  "rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary",
+                  isSelected && "border-primary bg-primary/5 shadow-sm",
+                )}
               >
                 <Icon className="h-5 w-5" />
                 <p className="mt-3 text-sm font-semibold">{action.title}</p>
@@ -98,7 +131,15 @@ function StudioPage() {
         </div>
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <Input value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void run(); }} placeholder={`¿Qué quieres crear con ${selected.title.toLowerCase()}?`} className="h-12" />
+          <Input
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void run();
+            }}
+            placeholder={`¿Qué quieres crear con ${selected.title.toLowerCase()}?`}
+            className="h-12"
+          />
           <Button onClick={() => void run()} disabled={loading || !prompt.trim() || !active?.id} className="h-12 px-5">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             {loading ? "Creando..." : "Crear"}
@@ -108,16 +149,30 @@ function StudioPage() {
 
       {result && (
         <section className="rounded-2xl border bg-card p-5 md:p-7">
-          <div className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="h-4 w-4" /> Resultado</div>
-          <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{result}</div>
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles className="h-4 w-4" /> Resultado
+          </div>
+          <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{result.text}</div>
+          {result.imageUrl && (
+            <div className="mt-5 overflow-hidden rounded-xl border bg-muted">
+              <img src={result.imageUrl} alt="Activo generado por Nüva Studio" className="mx-auto max-h-[640px] w-full object-contain" />
+            </div>
+          )}
+          {result.audioUrl && (
+            <div className="mt-5 rounded-xl border bg-muted p-4">
+              <audio controls className="w-full" src={result.audioUrl}>
+                Tu navegador no puede reproducir este audio.
+              </audio>
+            </div>
+          )}
         </section>
       )}
 
       <section className="grid gap-4 md:grid-cols-3">
         {[
           ["Contexto empresarial", "Nüva trabaja con la información de tu negocio en vez de responder como una IA genérica."],
-          ["Smart Routing", "La capa de IA está preparada para elegir proveedor y hacer fallback cuando corresponda."],
-          ["Biblioteca de activos", "Las generaciones podrán convertirse en activos reutilizables de marketing y marca."],
+          ["Smart Routing", "La capa de IA elige proveedor y puede hacer fallback cuando corresponda."],
+          ["Biblioteca de activos", "Las imágenes y locuciones se guardan como activos reutilizables del negocio."],
         ].map(([title, description]) => (
           <div key={title} className="rounded-xl border bg-card p-5">
             <p className="text-sm font-semibold">{title}</p>
