@@ -1,4 +1,4 @@
-export type NuvaPlan = "free" | "pro" | "business" | "enterprise";
+export type NuvaPlan = "starter" | "pro";
 
 export type AiCapability =
   | "chat"
