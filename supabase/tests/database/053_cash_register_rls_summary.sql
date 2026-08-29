@@ -5,7 +5,7 @@ SELECT ok(
     SELECT 1
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public'
+    WHERE n.nspname = 'private'
       AND p.proname = 'get_cash_register_summary'
       AND position('is_business_member' in pg_get_functiondef(p.oid)) > 0
   ),
