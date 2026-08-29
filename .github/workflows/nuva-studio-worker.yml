@@ -1,0 +1,38 @@
+name: Nüva Studio worker
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nuva-studio-worker
+  cancel-in-progress: true
+
+jobs:
+  run-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Validate scheduler secret
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Missing repository secret: CRON_SECRET"
+            exit 1
+          fi
+
+      - name: Wake durable Studio worker
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          NUVА_PRODUCTION_URL: https://nuva-one.vercel.app
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 3 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Accept: application/json" \
+            "${NUVА_PRODUCTION_URL}/api/cron/nuva-studio-worker"
