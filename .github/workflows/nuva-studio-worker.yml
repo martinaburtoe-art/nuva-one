@@ -29,10 +29,10 @@ jobs:
       - name: Wake durable Studio worker
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          NUVА_PRODUCTION_URL: https://nuva-one.vercel.app
+          NUVA_PRODUCTION_URL: https://nuva-one.vercel.app
         run: |
           curl --fail-with-body --silent --show-error \
             --retry 2 --retry-delay 3 \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Accept: application/json" \
-            "${NUVА_PRODUCTION_URL}/api/cron/nuva-studio-worker"
+            "${NUVA_PRODUCTION_URL}/api/cron/nuva-studio-worker"
