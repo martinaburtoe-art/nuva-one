@@ -1,0 +1,1 @@
+Temporary trigger for the one-shot TypeScript repair workflow; the workflow removes itself after a successful local typecheck and commit.
