@@ -6,41 +6,34 @@ const MAX_ERROR_LENGTH = 4000;
 const LOCK_TTL_MS = 5 * 60 * 1000;
 
 type StudioJobRow = {
-  id: string;
-  business_id: string;
-  user_id: string;
-  status: string;
-  goal: string;
-  plan: StudioExecutionStep[];
-  checkpoint: StudioExecutionCheckpoint;
-  result: StudioExecutionResult | null;
-  idempotency_key: string;
-  attempts: number;
-  max_attempts: number;
-  last_error: string | null;
-  next_run_at: string | null;
-  locked_at: string | null;
-  completed_at: string | null;
-  cancelled_at: string | null;
+  id: string; business_id: string; user_id: string; status: string; goal: string; plan: StudioExecutionStep[];
+  checkpoint: StudioExecutionCheckpoint; result: StudioExecutionResult | null; idempotency_key: string; attempts: number;
+  max_attempts: number; last_error: string | null; next_run_at: string | null; locked_at: string | null;
+  completed_at: string | null; cancelled_at: string | null;
 };
 
 type JobsClient = { from: (table: string) => any };
 function jobs(supabase: SupabaseClient<Database>): JobsClient { return supabase as unknown as JobsClient; }
 function cleanError(error: unknown) { return (error instanceof Error ? error.message : String(error)).replaceAll("\0", "").slice(0, MAX_ERROR_LENGTH); }
 
+export async function getStudioJobByIdempotency(args: { supabase: SupabaseClient<Database>; businessId: string; idempotencyKey: string }) {
+  const { data, error } = await jobs(args.supabase).from("nuva_studio_jobs").select("*").eq("business_id", args.businessId).eq("idempotency_key", args.idempotencyKey).maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as StudioJobRow | null) ?? null;
+}
+
 export async function createOrGetStudioJob(args: { supabase: SupabaseClient<Database>; businessId: string; userId: string; goal: string; plan: StudioExecutionStep[]; checkpoint: StudioExecutionCheckpoint; idempotencyKey: string; maxAttempts?: number }) {
   const client = jobs(args.supabase);
-  const existing = await client.from("nuva_studio_jobs").select("*").eq("business_id", args.businessId).eq("idempotency_key", args.idempotencyKey).maybeSingle();
-  if (existing.error) throw new Error(existing.error.message);
-  if (existing.data) return { job: existing.data as StudioJobRow, created: false };
+  const existing = await getStudioJobByIdempotency({ supabase: args.supabase, businessId: args.businessId, idempotencyKey: args.idempotencyKey });
+  if (existing) return { job: existing, created: false };
   const inserted = await client.from("nuva_studio_jobs").insert({
     business_id: args.businessId, user_id: args.userId, status: "queued", goal: args.goal.slice(0, 12000), plan: args.plan,
     checkpoint: args.checkpoint, idempotency_key: args.idempotencyKey.slice(0, 200), max_attempts: Math.min(Math.max(args.maxAttempts ?? 3, 1), 10),
   }).select("*").single();
   if (!inserted.error) return { job: inserted.data as StudioJobRow, created: true };
-  const raced = await client.from("nuva_studio_jobs").select("*").eq("business_id", args.businessId).eq("idempotency_key", args.idempotencyKey).maybeSingle();
-  if (raced.error || !raced.data) throw new Error(inserted.error.message);
-  return { job: raced.data as StudioJobRow, created: false };
+  const raced = await getStudioJobByIdempotency({ supabase: args.supabase, businessId: args.businessId, idempotencyKey: args.idempotencyKey });
+  if (!raced) throw new Error(inserted.error.message);
+  return { job: raced, created: false };
 }
 
 export async function updateStudioJobCheckpoint(args: { supabase: SupabaseClient<Database>; jobId: string; checkpoint: StudioExecutionCheckpoint; status?: string; result?: StudioExecutionResult | null; lastError?: unknown; nextRunAt?: string | null }) {
