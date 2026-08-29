@@ -20,31 +20,14 @@ export type StudioMediaRequest = {
 
 export type StudioExecutionResult = {
   status: StudioExecutionStatus;
-  completed: Array<{
-    step: number;
-    capability: AiCapability;
-    result: string;
-  }>;
+  completed: Array<{ step: number; capability: AiCapability; result: string }>;
   media: StudioMediaRequest[];
   nextAction?: string;
 };
 
-const MEDIA_CAPABILITIES = new Set<AiCapability>([
-  "image",
-  "image_edit",
-  "video",
-  "voice",
-]);
+const MEDIA_CAPABILITIES = new Set<AiCapability>(["image", "image_edit", "video", "voice"]);
 
-/**
- * Turns a planner output into an execution contract. Media work is represented
- * explicitly instead of being silently downgraded to text. This lets the
- * orchestrator attach native providers (Nano Banana/Veo/Fish/n8n) without
- * coupling the planner to a particular vendor.
- */
-export function classifyStudioSteps(
-  steps: StudioExecutionStep[],
-): { text: StudioExecutionStep[]; media: StudioExecutionStep[] } {
+export function classifyStudioSteps(steps: StudioExecutionStep[]) {
   return steps.reduce(
     (acc, step) => {
       (MEDIA_CAPABILITIES.has(step.capability) ? acc.media : acc.text).push(step);
@@ -54,56 +37,65 @@ export function classifyStudioSteps(
   );
 }
 
-export function buildMediaRequests(steps: StudioExecutionStep[]): StudioMediaRequest[] {
-  return steps
-    .filter((step) => MEDIA_CAPABILITIES.has(step.capability))
-    .map((step) => {
-      if (step.capability === "image" || step.capability === "image_edit") {
-        return {
-          step: step.index,
-          capability: step.capability,
-          status: "ready",
-          input: step.instruction,
-          recommendedModel:
-            step.capability === "image"
-              ? "gemini-3.1-flash-image"
-              : "gemini-3.1-flash-image",
-        };
-      }
+export function validateStudioPlan(steps: StudioExecutionStep[]): string[] {
+  const errors: string[] = [];
+  const indexes = new Set(steps.map((step) => step.index));
+  if (steps.length === 0) errors.push("El plan no contiene pasos.");
+  if (steps.length > 6) errors.push("El plan excede el máximo de 6 pasos.");
+  if (indexes.size !== steps.length) errors.push("El plan contiene índices duplicados.");
 
-      if (step.capability === "video") {
-        return {
-          step: step.index,
-          capability: step.capability,
-          status: "ready",
-          input: step.instruction,
-          recommendedModel: "veo-3.1-generate-preview",
-        };
-      }
+  for (const step of steps) {
+    if (!step.instruction.trim()) errors.push(`Paso ${step.index} no tiene instrucción.`);
+    if (step.dependsOn.includes(step.index)) errors.push(`Paso ${step.index} depende de sí mismo.`);
+    for (const dependency of step.dependsOn) {
+      if (!indexes.has(dependency)) errors.push(`Paso ${step.index} referencia una dependencia inexistente: ${dependency}.`);
+      if (dependency >= step.index) errors.push(`Paso ${step.index} referencia una dependencia futura: ${dependency}.`);
+    }
+  }
 
-      return {
-        step: step.index,
-        capability: step.capability,
-        status: "ready",
-        input: step.instruction,
-        recommendedModel: "fish-audio",
-      };
-    });
+  return errors;
+}
+
+export function resolveDependencyResults(
+  step: StudioExecutionStep,
+  outputs: Array<{ step: number; capability: AiCapability; result: string }>,
+): string {
+  return step.dependsOn
+    .map((dependency) => outputs.find((output) => output.step === dependency)?.result)
+    .filter((result): result is string => Boolean(result))
+    .join("\n\n");
+}
+
+export function buildMediaRequests(
+  steps: StudioExecutionStep[],
+  outputs: Array<{ step: number; capability: AiCapability; result: string }> = [],
+): StudioMediaRequest[] {
+  return steps.filter((step) => MEDIA_CAPABILITIES.has(step.capability)).map((step) => {
+    const dependencies = resolveDependencyResults(step, outputs);
+    const input = [
+      step.instruction,
+      dependencies ? `Contexto generado por pasos anteriores:\n${dependencies}` : "",
+    ].filter(Boolean).join("\n\n").slice(0, 24000);
+
+    if (step.capability === "image" || step.capability === "image_edit") {
+      return { step: step.index, capability: step.capability, status: "ready", input, recommendedModel: "gemini-3.1-flash-image" };
+    }
+    if (step.capability === "video") {
+      return { step: step.index, capability: step.capability, status: "ready", input, recommendedModel: "veo-3.1-generate-preview" };
+    }
+    return { step: step.index, capability: step.capability, status: "ready", input, recommendedModel: "fish-audio" };
+  });
 }
 
 export function summarizeExecution(
   completed: StudioExecutionResult["completed"],
   media: StudioMediaRequest[],
 ): StudioExecutionResult {
-  if (media.length === 0) {
-    return { status: "completed", completed, media };
-  }
-
+  if (media.length === 0) return { status: "completed", completed, media };
   return {
     status: completed.length > 0 ? "partial" : "blocked",
     completed,
     media,
-    nextAction:
-      "Ejecutar los recursos multimedia mediante los adapters especializados y anexarlos a la biblioteca de activos de Nüva Studio.",
+    nextAction: "Ejecutar los recursos multimedia mediante adapters especializados y anexarlos a la biblioteca de activos de Nüva Studio.",
   };
 }
