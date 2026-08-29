@@ -3,6 +3,7 @@ import { ArrowRight, Eye, RotateCcw, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
+import { DemoHelpCenter } from "@/components/demo/demo-help-center";
 import { DemoStateProvider } from "@/lib/demo/demo-state";
 import { trackDemoEvent } from "@/lib/demo/demo-analytics";
 
@@ -86,6 +87,8 @@ function DemoExperience() {
           <RotateCcw className="h-3 w-3" /> Reiniciar experiencia completa
         </button>
       </div>
+
+      <DemoHelpCenter />
     </div>
   );
 }
