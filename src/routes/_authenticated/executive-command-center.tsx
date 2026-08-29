@@ -84,7 +84,7 @@ function ExecutiveCommandCenter() {
                   {decision.actions.slice(0, 4).map((item) => (
                     <Link
                       key={item.id}
-                      to={`/${item.destination}`}
+                      to={item.destination === "/crm" ? "/customers" : item.destination}
                       className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"
                     >
                       <div className="flex items-start justify-between gap-3">
