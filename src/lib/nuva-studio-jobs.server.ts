@@ -4,25 +4,8 @@ import type { StudioExecutionCheckpoint, StudioExecutionResult, StudioExecutionS
 
 const MAX_ERROR_LENGTH = 4000;
 const LOCK_TTL_MS = 5 * 60 * 1000;
-type StudioJobRow = {
-  id: string;
-  business_id: string;
-  user_id: string;
-  status: string;
-  goal: string;
-  plan: StudioExecutionStep[];
-  checkpoint: StudioExecutionCheckpoint;
-  result: StudioExecutionResult | null;
-  idempotency_key: string;
-  attempts: number;
-  max_attempts: number;
-  last_error: string | null;
-  next_run_at: string | null;
-  locked_at: string | null;
-  execution_lock_token: string | null;
-  completed_at: string | null;
-  cancelled_at: string | null;
-};
+const LOCK_HEARTBEAT_MS = 60 * 1000;
+type StudioJobRow = { id: string; business_id: string; user_id: string; status: string; goal: string; plan: StudioExecutionStep[]; checkpoint: StudioExecutionCheckpoint; result: StudioExecutionResult | null; idempotency_key: string; attempts: number; max_attempts: number; last_error: string | null; next_run_at: string | null; locked_at: string | null; execution_lock_token: string | null; completed_at: string | null; cancelled_at: string | null };
 type JobsClient = { from: (table: string) => any };
 function jobs(supabase: SupabaseClient<Database>): JobsClient { return supabase as unknown as JobsClient; }
 function cleanError(error: unknown) { return (error instanceof Error ? error.message : String(error)).replaceAll("\0", "").slice(0, MAX_ERROR_LENGTH); }
@@ -30,6 +13,10 @@ function cleanError(error: unknown) { return (error instanceof Error ? error.mes
 export async function recordStudioAudit(args: { supabase: SupabaseClient<Database>; businessId: string; userId: string; jobId: string; action: string; metadata?: Record<string, unknown> }) { try { await jobs(args.supabase).from("audit_log").insert({ business_id: args.businessId, user_id: args.userId, action: args.action, entity: "nuva_studio_job", entity_id: args.jobId, metadata: args.metadata ?? {} }); } catch { /* audit is best-effort */ } }
 export async function getStudioJobByIdempotency(args: { supabase: SupabaseClient<Database>; businessId: string; idempotencyKey: string }) { const { data, error } = await jobs(args.supabase).from("nuva_studio_jobs").select("*").eq("business_id", args.businessId).eq("idempotency_key", args.idempotencyKey).maybeSingle(); if (error) throw new Error(error.message); return (data as StudioJobRow | null) ?? null; }
 export async function createOrGetStudioJob(args: { supabase: SupabaseClient<Database>; businessId: string; userId: string; goal: string; plan: StudioExecutionStep[]; checkpoint: StudioExecutionCheckpoint; idempotencyKey: string; maxAttempts?: number }) { const client = jobs(args.supabase); const existing = await getStudioJobByIdempotency({ supabase: args.supabase, businessId: args.businessId, idempotencyKey: args.idempotencyKey }); if (existing) return { job: existing, created: false }; const inserted = await client.from("nuva_studio_jobs").insert({ business_id: args.businessId, user_id: args.userId, status: "queued", goal: args.goal.slice(0, 12000), plan: args.plan, checkpoint: args.checkpoint, idempotency_key: args.idempotencyKey.slice(0, 200), max_attempts: Math.min(Math.max(args.maxAttempts ?? 3, 1), 10) }).select("*").single(); if (!inserted.error) return { job: inserted.data as StudioJobRow, created: true }; const raced = await getStudioJobByIdempotency({ supabase: args.supabase, businessId: args.businessId, idempotencyKey: args.idempotencyKey }); if (!raced) throw new Error(inserted.error.message); return { job: raced, created: false }; }
+
+export async function renewStudioJobLease(args: { supabase: SupabaseClient<Database>; jobId: string; lockToken: string }) { const { data, error } = await jobs(args.supabase).from("nuva_studio_jobs").update({ locked_at: new Date().toISOString() }).eq("id", args.jobId).eq("execution_lock_token", args.lockToken).eq("status", "running").select("id").maybeSingle(); if (error) throw new Error(error.message); if (!data) throw Object.assign(new Error("Studio job lease lost; stale worker fenced"), { code: "LEASE_LOST" }); }
+
+export async function withStudioJobLease<T>(args: { supabase: SupabaseClient<Database>; jobId: string; lockToken: string; task: () => Promise<T> }): Promise<T> { await renewStudioJobLease({ supabase: args.supabase, jobId: args.jobId, lockToken: args.lockToken }); const heartbeat = setInterval(() => { void renewStudioJobLease({ supabase: args.supabase, jobId: args.jobId, lockToken: args.lockToken }).catch(() => { /* task result handles the authoritative lease check */ }); }, LOCK_HEARTBEAT_MS); try { return await args.task(); } finally { clearInterval(heartbeat); } }
 
 export async function updateStudioJobCheckpoint(args: { supabase: SupabaseClient<Database>; jobId: string; checkpoint: StudioExecutionCheckpoint; status?: string; result?: StudioExecutionResult | null; lastError?: unknown; nextRunAt?: string | null; lockToken?: string }) {
   const patch: Record<string, unknown> = { checkpoint: args.checkpoint };
