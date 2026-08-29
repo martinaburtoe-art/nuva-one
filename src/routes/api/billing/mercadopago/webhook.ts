@@ -40,26 +40,33 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
           const active = isMercadoPagoSubscriptionActive(status);
 
           if (externalReference) {
-            const update: Record<string, unknown> = {
+            const frequency = Number(subscription.data.auto_recurring?.frequency ?? 1);
+            const frequencyType = String(subscription.data.auto_recurring?.frequency_type ?? "months");
+            const next = new Date();
+            if (frequencyType === "days") next.setDate(next.getDate() + frequency);
+            else if (frequencyType === "months") next.setMonth(next.getMonth() + frequency);
+            else next.setMonth(next.getMonth() + 1);
+
+            const update = {
               billing_provider: "mercadopago",
               mercadopago_preapproval_id: resourceId,
-              subscription_status: active ? "active" : status,
+              subscription_status: status === "cancelled" || status === "canceled"
+                ? "canceled"
+                : active
+                  ? "active"
+                  : status,
+              ...(active
+                ? {
+                    plan: NUVA_PLANS.pro.id,
+                    billing_failed_attempts: 0,
+                    next_charge_date: next.toISOString().slice(0, 10),
+                  }
+                : {}),
+              ...(status === "cancelled" || status === "canceled"
+                ? { plan: "starter" }
+                : {}),
             };
-            if (active) {
-              update.plan = NUVA_PLANS.pro.id;
-              update.billing_failed_attempts = 0;
-              const frequency = Number(subscription.data.auto_recurring?.frequency ?? 1);
-              const frequencyType = String(subscription.data.auto_recurring?.frequency_type ?? "months");
-              const next = new Date();
-              if (frequencyType === "days") next.setDate(next.getDate() + frequency);
-              else if (frequencyType === "months") next.setMonth(next.getMonth() + frequency);
-              else next.setMonth(next.getMonth() + 1);
-              update.next_charge_date = next.toISOString().slice(0, 10);
-            }
-            if (status === "cancelled" || status === "canceled") {
-              update.subscription_status = "canceled";
-              update.plan = "starter";
-            }
+
             await supabaseAdmin.from("businesses").update(update).eq("id", externalReference);
           }
         }
