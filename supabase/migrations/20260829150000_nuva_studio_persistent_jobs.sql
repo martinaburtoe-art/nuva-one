@@ -110,33 +110,33 @@ alter table public.nuva_studio_job_callbacks enable row level security;
 drop policy if exists nuva_studio_jobs_member_select on public.nuva_studio_jobs;
 create policy nuva_studio_jobs_member_select
 on public.nuva_studio_jobs for select to authenticated
-using (public.is_business_member(business_id));
+using (private.is_business_member(business_id, auth.uid()));
 
 drop policy if exists nuva_studio_jobs_member_insert on public.nuva_studio_jobs;
 create policy nuva_studio_jobs_member_insert
 on public.nuva_studio_jobs for insert to authenticated
-with check (public.is_business_member(business_id) and user_id = auth.uid());
+with check (private.is_business_member(business_id, auth.uid()) and user_id = auth.uid());
 
 drop policy if exists nuva_studio_jobs_member_update on public.nuva_studio_jobs;
 create policy nuva_studio_jobs_member_update
 on public.nuva_studio_jobs for update to authenticated
-using (public.is_business_member(business_id))
-with check (public.is_business_member(business_id));
+using (private.is_business_member(business_id, auth.uid()))
+with check (private.is_business_member(business_id, auth.uid()));
 
 drop policy if exists nuva_studio_job_steps_member_select on public.nuva_studio_job_steps;
 create policy nuva_studio_job_steps_member_select
 on public.nuva_studio_job_steps for select to authenticated
-using (exists (select 1 from public.nuva_studio_jobs j where j.id = job_id and public.is_business_member(j.business_id)));
+using (exists (select 1 from public.nuva_studio_jobs j where j.id = job_id and private.is_business_member(j.business_id, auth.uid())));
 
 drop policy if exists nuva_studio_job_callbacks_member_select on public.nuva_studio_job_callbacks;
 create policy nuva_studio_job_callbacks_member_select
 on public.nuva_studio_job_callbacks for select to authenticated
-using (exists (select 1 from public.nuva_studio_jobs j where j.id = job_id and public.is_business_member(j.business_id)));
+using (exists (select 1 from public.nuva_studio_jobs j where j.id = job_id and private.is_business_member(j.business_id, auth.uid())));
 
 drop policy if exists nuva_studio_job_callbacks_member_insert on public.nuva_studio_job_callbacks;
 create policy nuva_studio_job_callbacks_member_insert
 on public.nuva_studio_job_callbacks for insert to authenticated
-with check (exists (select 1 from public.nuva_studio_jobs j where j.id = job_id and public.is_business_member(j.business_id)));
+with check (exists (select 1 from public.nuva_studio_jobs j where j.id = job_id and private.is_business_member(j.business_id, auth.uid())));
 
 revoke all on table public.nuva_studio_jobs from anon;
 revoke all on table public.nuva_studio_job_steps from anon;
