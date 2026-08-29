@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildMediaRequests,
   classifyStudioSteps,
+  resolveDependencyResults,
   summarizeExecution,
+  validateStudioPlan,
 } from "@/lib/nuva-studio-execution.server";
 
 describe("nuva studio execution engine", () => {
@@ -16,6 +18,34 @@ describe("nuva studio execution engine", () => {
 
     expect(result.text.map((step) => step.capability)).toEqual(["research", "marketing"]);
     expect(result.media.map((step) => step.capability)).toEqual(["image", "voice"]);
+  });
+
+  it("validates dependency ids instead of relying on array positions", () => {
+    const errors = validateStudioPlan([
+      { index: 0, capability: "research", instruction: "Investiga", dependsOn: [] },
+      { index: 2, capability: "marketing", instruction: "Campaña", dependsOn: [0] },
+      { index: 3, capability: "copywriting", instruction: "Copy", dependsOn: [99] },
+    ]);
+    expect(errors).toContain("Paso 3 referencia una dependencia inexistente: 99.");
+  });
+
+  it("resolves dependencies by original step id", () => {
+    const result = resolveDependencyResults(
+      { index: 4, capability: "marketing", instruction: "Campaña", dependsOn: [2] },
+      [
+        { step: 0, capability: "research", result: "Hallazgos" },
+        { step: 2, capability: "strategy", result: "Estrategia" },
+      ],
+    );
+    expect(result).toBe("Estrategia");
+  });
+
+  it("propagates completed context into media requests", () => {
+    const media = buildMediaRequests(
+      [{ index: 2, capability: "image", instruction: "Crear pieza", dependsOn: [0] }],
+      [{ step: 0, capability: "marketing", result: "Campaña de septiembre" }],
+    );
+    expect(media[0]?.input).toContain("Campaña de septiembre");
   });
 
   it("maps media work to current native provider models", () => {
@@ -35,15 +65,7 @@ describe("nuva studio execution engine", () => {
   it("returns partial instead of pretending a media step completed", () => {
     const result = summarizeExecution(
       [{ step: 0, capability: "research", result: "Hallazgos" }],
-      [
-        {
-          step: 1,
-          capability: "image",
-          status: "ready",
-          input: "Imagen",
-          recommendedModel: "gemini-3.1-flash-image",
-        },
-      ],
+      [{ step: 1, capability: "image", status: "ready", input: "Imagen", recommendedModel: "gemini-3.1-flash-image" }],
     );
 
     expect(result.status).toBe("partial");
