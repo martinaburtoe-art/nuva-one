@@ -41,6 +41,10 @@ export const Route = createFileRoute("/api/studio-agent")({
         const callbackJobId = url.searchParams.get("jobId");
         const callbackStep = Number(url.searchParams.get("step"));
         if (callbackToken && callbackJobId && Number.isInteger(callbackStep) && callbackStep >= 0) {
+          if (callbackToken.length > 512) return json({ error: "Callback inválido" }, 400);
+          const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+          const callbackRateKey = `studio-callback:${callbackJobId}:${forwardedFor}`;
+          if (!(await checkRateLimit(callbackRateKey, 30, 60))) return json({ error: "Demasiados callbacks. Intenta nuevamente." }, 429);
           const callback = await processStudioCallback({ request, jobId: callbackJobId, step: callbackStep, token: callbackToken });
           return json(callback.body, callback.status);
         }
