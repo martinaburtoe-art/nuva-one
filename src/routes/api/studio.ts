@@ -7,15 +7,49 @@ import type { Database } from "@/integrations/supabase/types";
 import type { AiCapability } from "@/lib/ai-gateway/types";
 
 const CAPABILITIES = new Set<AiCapability>([
-  "chat", "research", "marketing", "copywriting", "image", "image_edit",
-  "video", "voice", "brand", "strategy", "document", "automation",
+  "chat",
+  "research",
+  "marketing",
+  "copywriting",
+  "image",
+  "image_edit",
+  "video",
+  "voice",
+  "brand",
+  "strategy",
+  "document",
+  "automation",
 ]);
+
+const CAPABILITY_TO_TOOL: Record<AiCapability, string> = {
+  chat: "agent.chat",
+  research: "studio.research",
+  marketing: "studio.marketing",
+  copywriting: "studio.copywriting",
+  image: "studio.image",
+  image_edit: "studio.image",
+  video: "studio.video",
+  voice: "studio.voice",
+  brand: "studio.brand",
+  strategy: "studio.strategy",
+  document: "studio.document",
+  automation: "studio.automation",
+};
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function quotaError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.includes("daily_limit")) return { error: "Has alcanzado el límite diario de esta herramienta.", status: 429 };
+  if (message.includes("monthly_limit")) return { error: "Has alcanzado el límite mensual de esta herramienta.", status: 429 };
+  if (message.includes("plan_not_allowed")) return { error: "Esta herramienta no está disponible en tu plan actual.", status: 403 };
+  if (message.includes("tool_unavailable")) return { error: "Esta herramienta no está disponible temporalmente.", status: 503 };
+  return null;
 }
 
 export const Route = createFileRoute("/api/studio")({
@@ -37,7 +71,7 @@ export const Route = createFileRoute("/api/studio")({
         const userId = claims?.claims?.sub;
         if (claimsError || !userId) return json({ error: "Sesión inválida o expirada" }, 401);
 
-        const body = await request.json().catch(() => null) as {
+        const body = (await request.json().catch(() => null)) as {
           businessId?: string;
           capability?: AiCapability;
           prompt?: string;
@@ -49,7 +83,6 @@ export const Route = createFileRoute("/api/studio")({
         const allowed = await checkRateLimit(`studio:${userId}`, 20, 60);
         if (!allowed) return json({ error: "Demasiadas solicitudes. Intenta nuevamente en un minuto." }, 429);
 
-        // Tenant boundary: the authenticated user must belong to the selected business.
         const { data: membership, error: membershipError } = await supabase
           .from("business_members")
           .select("business_id")
@@ -58,18 +91,49 @@ export const Route = createFileRoute("/api/studio")({
           .maybeSingle();
         if (membershipError || !membership) return json({ error: "No tienes acceso a este negocio" }, 403);
 
+        const toolId = CAPABILITY_TO_TOOL[body.capability];
+        const { data: tool, error: toolError } = await supabase
+          .from("ai_tool_registry")
+          .select("id, cost_units, enabled")
+          .eq("id", toolId)
+          .eq("enabled", true)
+          .maybeSingle();
+        if (toolError || !tool) return json({ error: "La herramienta solicitada no está disponible." }, 503);
+
+        const { data: reservation, error: quotaRpcError } = await supabase.rpc("reserve_ai_tool_quota" as never, {
+          p_business_id: body.businessId,
+          p_tool_id: toolId,
+          p_units: tool.cost_units,
+        } as never);
+        if (quotaRpcError) {
+          const mapped = quotaError(quotaRpcError);
+          if (mapped) return json({ error: mapped.error }, mapped.status);
+          return json({ error: "No se pudo validar el uso disponible." }, 503);
+        }
+
+        const unitsCharged = tool.cost_units;
         const { data: job, error: jobError } = await supabase
           .from("ai_generation_jobs" as never)
           .insert({
             business_id: body.businessId,
             user_id: userId,
+            tool_id: toolId,
             capability: body.capability,
             status: "running",
             prompt: body.prompt.slice(0, 12000),
+            units_charged: unitsCharged,
+            started_at: new Date().toISOString(),
           } as never)
           .select("id")
           .single();
-        if (jobError) return json({ error: "No se pudo iniciar la tarea" }, 500);
+        if (jobError) {
+          await supabase.rpc("release_ai_tool_quota" as never, {
+            p_business_id: body.businessId,
+            p_tool_id: toolId,
+            p_units: unitsCharged,
+          } as never);
+          return json({ error: "No se pudo iniciar la tarea" }, 500);
+        }
 
         try {
           const result = await runNuvaStudioTask({
@@ -85,12 +149,12 @@ export const Route = createFileRoute("/api/studio")({
               status: "completed",
               provider: result.metadata.provider,
               model: result.metadata.model,
-              output_metadata: result.metadata,
+              output_metadata: { ...result.metadata, quota: reservation },
               completed_at: new Date().toISOString(),
             } as never)
             .eq("id", (job as { id: string }).id);
 
-          return json({ ok: true, result });
+          return json({ ok: true, result, usage: reservation });
         } catch (error) {
           await supabase
             .from("ai_generation_jobs" as never)
@@ -100,6 +164,11 @@ export const Route = createFileRoute("/api/studio")({
               completed_at: new Date().toISOString(),
             } as never)
             .eq("id", (job as { id: string }).id);
+          await supabase.rpc("release_ai_tool_quota" as never, {
+            p_business_id: body.businessId,
+            p_tool_id: toolId,
+            p_units: unitsCharged,
+          } as never);
           return json({ error: error instanceof Error ? error.message : "Error generando contenido" }, 502);
         }
       },
