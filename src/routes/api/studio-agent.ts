@@ -2,14 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { createStudioPlanAndJob, runStudioJob } from "@/lib/nuva-studio-job-runner.server";
 import { processStudioCallback } from "@/lib/nuva-studio-callback.server";
-import { getStudioJob, updateStudioJobStatus } from "@/lib/nuva-studio-jobs.server";
+import { getStudioJob, recordStudioAudit, updateStudioJobStatus } from "@/lib/nuva-studio-jobs.server";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
 import type { Database } from "@/integrations/supabase/types";
 
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
-}
+function json(data: unknown, status = 200) { return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } }); }
 
 async function authenticatedClient(request: Request) {
   const env = getServerSupabaseEnv();
@@ -17,10 +15,7 @@ async function authenticatedClient(request: Request) {
   const authorization = request.headers.get("authorization") ?? "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : null;
   if (!token) return { error: json({ error: "No autenticado" }, 401) };
-  const supabase = createClient<Database>(env.url, env.anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-  });
+  const supabase = createClient<Database>(env.url, env.anonKey, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { storage: undefined, persistSession: false, autoRefreshToken: false } });
   const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
   const userId = claims?.claims?.sub;
   if (claimsError || !userId) return { error: json({ error: "Sesión inválida o expirada" }, 401) };
@@ -52,14 +47,7 @@ export const Route = createFileRoute("/api/studio-agent")({
 
         const auth = await authenticatedClient(request);
         if (auth.error) return auth.error;
-        const body = (await request.json().catch(() => null)) as {
-          action?: "start" | "resume" | "cancel";
-          businessId?: string;
-          prompt?: string;
-          maxSteps?: number;
-          jobId?: string;
-          idempotencyKey?: string;
-        } | null;
+        const body = (await request.json().catch(() => null)) as { action?: "start" | "resume" | "cancel"; businessId?: string; prompt?: string; maxSteps?: number; jobId?: string; idempotencyKey?: string } | null;
 
         if (body?.action === "cancel") {
           if (!body.jobId) return json({ error: "jobId es obligatorio" }, 400);
@@ -67,6 +55,7 @@ export const Route = createFileRoute("/api/studio-agent")({
           if (!job) return json({ error: "Job no encontrado" }, 404);
           if (job.user_id !== auth.userId) return json({ error: "No tienes acceso a este job" }, 403);
           await updateStudioJobStatus({ supabase: auth.supabase, jobId: body.jobId, status: "cancelled" });
+          await recordStudioAudit({ supabase: auth.supabase, businessId: job.business_id, userId: auth.userId, jobId: job.id, action: "studio.job.cancelled" });
           return json({ ok: true, status: "cancelled", jobId: body.jobId });
         }
 
@@ -89,9 +78,7 @@ export const Route = createFileRoute("/api/studio-agent")({
         if (!idempotencyKey || idempotencyKey.length > 200) return json({ error: "Idempotency-Key inválida" }, 400);
         try {
           const planned = await createStudioPlanAndJob({ supabase: auth.supabase, businessId: body.businessId, userId: auth.userId, prompt: body.prompt, maxSteps: body.maxSteps ?? 4, idempotencyKey });
-          if (!planned.created && ["completed", "partial", "blocked", "failed", "cancelled"].includes(planned.job.status)) {
-            return json({ ok: true, idempotent: true, job: planned.job, plan: planned.plan });
-          }
+          if (!planned.created && ["completed", "partial", "blocked", "failed", "cancelled"].includes(planned.job.status)) return json({ ok: true, idempotent: true, job: planned.job, plan: planned.plan });
           const result = await runStudioJob({ supabase: auth.supabase, jobId: planned.job.id, userId: auth.userId });
           return json({ ok: true, idempotent: !planned.created, job: result, plan: planned.plan });
         } catch (error) {
