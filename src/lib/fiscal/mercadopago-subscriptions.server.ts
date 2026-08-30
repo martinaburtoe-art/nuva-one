@@ -5,6 +5,8 @@ type MercadoPagoConfig = {
   environment: "test" | "prod";
 };
 
+type MercadoPagoJson = Record<string, unknown>;
+
 export type MercadoPagoPlanId = "starter" | "pro";
 
 const API_BASE = "https://api.mercadopago.com";
@@ -23,7 +25,7 @@ async function mpFetch(
   config: MercadoPagoConfig,
   path: string,
   init?: RequestInit,
-): Promise<{ ok: boolean; status: number; json: any }> {
+): Promise<{ ok: boolean; status: number; json: MercadoPagoJson }> {
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       ...init,
@@ -33,7 +35,8 @@ async function mpFetch(
         ...(init?.headers ?? {}),
       },
     });
-    const json = await response.json().catch(() => ({}));
+    const parsed: unknown = await response.json().catch(() => ({}));
+    const json: MercadoPagoJson = parsed && typeof parsed === "object" ? parsed as MercadoPagoJson : {};
     return { ok: response.ok, status: response.status, json };
   } catch {
     return { ok: false, status: 0, json: {} };
@@ -122,7 +125,7 @@ export async function createMercadoPagoSubscription(params: {
   if (!result.ok || !result.json?.id || !result.json?.init_point) {
     return {
       ok: false as const,
-      errorMessage: result.json?.message ?? "Mercado Pago no pudo crear la suscripción",
+      errorMessage: typeof result.json?.message === "string" ? result.json.message : "Mercado Pago no pudo crear la suscripción",
       preapprovalId: null,
       initPoint: null,
     };
@@ -158,7 +161,7 @@ export async function updateMercadoPagoSubscription(
   return {
     ok: result.ok,
     data: result.ok ? result.json : null,
-    errorMessage: result.json?.message ?? null,
+    errorMessage: typeof result.json?.message === "string" ? result.json.message : null,
   };
 }
 
