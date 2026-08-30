@@ -7,6 +7,7 @@ on:
     paths:
       - "scripts/load-test.mjs"
       - "scripts/prepare-load-test-fixture.mjs"
+      - "scripts/inventory-concurrency-test.mjs"
       - ".github/workflows/staging-load-test.yml"
       - "supabase/migrations/**"
       - "supabase/config.toml"
@@ -86,6 +87,18 @@ jobs:
           LOAD_TEST_EMAIL: "loadtest@nuva.local"
           LOAD_TEST_PASSWORD: "NüvaLoadTest-2026!"
         run: node scripts/load-test.mjs
+
+      - name: Run real inventory concurrency acceptance battery
+        env:
+          LOAD_TEST_CONFIRM: "true"
+          LOAD_TEST_ENV: staging
+          LOAD_TEST_PHASES: "25,50,100"
+          INVENTORY_CONCURRENCY_OUTPUT: artifacts/inventory-concurrency-results.json
+          VITE_SUPABASE_URL: ${{ env.API_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
+          LOAD_TEST_EMAIL: "loadtest@nuva.local"
+          LOAD_TEST_PASSWORD: "NüvaLoadTest-2026!"
+        run: node scripts/inventory-concurrency-test.mjs
 
       - name: Run database recovery drill
         run: |
