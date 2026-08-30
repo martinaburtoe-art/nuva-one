@@ -10,9 +10,11 @@ export type StudioExecutionStep = {
   dependsOn: number[];
 };
 
+export type StudioMediaCapability = Extract<AiCapability, "image" | "image_edit" | "video" | "voice">;
+
 export type StudioMediaRequest = {
   step: number;
-  capability: Extract<AiCapability, "image" | "image_edit" | "video" | "voice">;
+  capability: StudioMediaCapability;
   status: "ready" | "blocked";
   reason?: string;
   input: string;
@@ -75,7 +77,7 @@ export function resolveDependencyResults(step: StudioExecutionStep, outputs: Arr
 }
 
 export function buildMediaRequests(steps: StudioExecutionStep[], outputs: Array<{ step: number; capability: AiCapability; result: string }> = []): StudioMediaRequest[] {
-  return steps.filter((step) => MEDIA_CAPABILITIES.has(step.capability)).map((step) => {
+  return steps.filter((step): step is StudioExecutionStep & { capability: StudioMediaCapability } => MEDIA_CAPABILITIES.has(step.capability)).map((step) => {
     const dependencies = resolveDependencyResults(step, outputs);
     const input = [step.instruction, dependencies ? `Contexto generado por pasos anteriores:\n${dependencies}` : ""].filter(Boolean).join("\n\n").slice(0, 24000);
     if (step.capability === "image" || step.capability === "image_edit") return { step: step.index, capability: step.capability, status: "ready", input, recommendedModel: "gemini-3.1-flash-image" };
