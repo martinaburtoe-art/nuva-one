@@ -4,6 +4,7 @@ import { writeFileSync } from "node:fs";
 const output = execFileSync("npx", ["eslint", ".", "--format", "json"], {
   encoding: "utf8",
   stdio: ["ignore", "pipe", "inherit"],
+  maxBuffer: 20 * 1024 * 1024,
 });
 
 const results = JSON.parse(output);
