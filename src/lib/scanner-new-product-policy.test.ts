@@ -8,7 +8,7 @@ describe("decideUnknownCode", () => {
   });
 
   it("rejects a malformed code", () => {
-    expect(decideUnknownCode("not a barcode").kind).toBe("invalid");
+    expect(decideUnknownCode("not a barcode!").kind).toBe("invalid");
   });
 
   it("accepts an internal SKU", () => {
