@@ -28,7 +28,7 @@ describe("buildNewProductDraft", () => {
   });
 
   it("rejects an invalid barcode", () => {
-    expect(() => buildNewProductDraft({ rawCode: "123456789012", name: "Demo" })).toThrow();
+    expect(() => buildNewProductDraft({ rawCode: "123456789013", name: "Demo" })).toThrow();
   });
 
   it("requires a product name", () => {
