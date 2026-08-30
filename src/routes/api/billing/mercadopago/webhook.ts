@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { NUVA_PLANS } from "@/lib/plan-config";
 import {
   getMercadoPagoConfig,
   getMercadoPagoPayment,
   getMercadoPagoSubscription,
   isMercadoPagoSubscriptionActive,
+  parseMercadoPagoExternalReference,
   validateMercadoPagoWebhookSignature,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
 
@@ -35,17 +35,33 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
           const subscription = await getMercadoPagoSubscription(config, resourceId);
           if (!subscription.ok || !subscription.data) return new Response("OK", { status: 200 });
 
-          const externalReference = String(subscription.data.external_reference ?? "");
+          const { businessId, planId: referencedPlanId } = parseMercadoPagoExternalReference(
+            subscription.data.external_reference,
+          );
           const status = String(subscription.data.status ?? "pending");
           const active = isMercadoPagoSubscriptionActive(status);
 
-          if (externalReference) {
+          if (businessId) {
             const frequency = Number(subscription.data.auto_recurring?.frequency ?? 1);
             const frequencyType = String(subscription.data.auto_recurring?.frequency_type ?? "months");
             const next = new Date();
             if (frequencyType === "days") next.setDate(next.getDate() + frequency);
             else if (frequencyType === "months") next.setMonth(next.getMonth() + frequency);
             else next.setMonth(next.getMonth() + 1);
+
+            // New subscriptions carry the selected plan in external_reference.
+            // Legacy subscriptions without that marker preserve the current plan
+            // instead of silently upgrading a Starter business to Pro.
+            let resolvedPlanId = referencedPlanId;
+            if (active && !resolvedPlanId) {
+              const { data: business } = await supabaseAdmin
+                .from("businesses")
+                .select("plan")
+                .eq("id", businessId)
+                .maybeSingle();
+              const currentPlan = String(business?.plan ?? "starter");
+              resolvedPlanId = currentPlan === "pro" || currentPlan === "starter" ? currentPlan : "starter";
+            }
 
             const update = {
               billing_provider: "mercadopago",
@@ -57,7 +73,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
                   : status,
               ...(active
                 ? {
-                    plan: NUVA_PLANS.pro.id,
+                    plan: resolvedPlanId ?? "starter",
                     billing_failed_attempts: 0,
                     next_charge_date: next.toISOString().slice(0, 10),
                   }
@@ -67,7 +83,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
                 : {}),
             };
 
-            await supabaseAdmin.from("businesses").update(update).eq("id", externalReference);
+            await supabaseAdmin.from("businesses").update(update).eq("id", businessId);
           }
         }
 
