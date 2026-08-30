@@ -1,0 +1,13 @@
+BEGIN;
+SELECT plan(9);
+SELECT has_table('public','nuva_studio_campaigns','Studio campaigns table exists');
+SELECT has_table('public','nuva_studio_campaign_cycles','Studio campaign cycles table exists');
+SELECT ok(EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='public' AND tablename='nuva_studio_campaigns' AND indexname='nuva_studio_campaigns_due_idx'),'campaign due index exists');
+SELECT ok(EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='public' AND tablename='nuva_studio_campaign_cycles' AND indexname='nuva_studio_campaign_cycles_job_idx'),'campaign job index exists');
+SELECT is((SELECT relrowsecurity FROM pg_class WHERE oid='public.nuva_studio_campaigns'::regclass),true,'campaign RLS enabled');
+SELECT is((SELECT relrowsecurity FROM pg_class WHERE oid='public.nuva_studio_campaign_cycles'::regclass),true,'campaign cycle RLS enabled');
+SELECT is(has_table_privilege('anon','public.nuva_studio_campaigns','SELECT'),false,'anon cannot read campaigns');
+SELECT is(has_table_privilege('anon','public.nuva_studio_campaign_cycles','SELECT'),false,'anon cannot read campaign cycles');
+SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.nuva_studio_campaign_cycles'::regclass AND contype='u' AND pg_get_constraintdef(oid) LIKE '%campaign_id%cycle_number%'),'cycle uniqueness constraint exists');
+SELECT * FROM finish();
+ROLLBACK;
