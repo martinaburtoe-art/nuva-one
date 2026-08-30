@@ -33,25 +33,58 @@ if (!supabaseUrl || !anonKey || !email || !password) {
   );
 }
 
+function describeTransportError(error) {
+  const cause = error?.cause;
+  return [
+    error?.name ? `name=${error.name}` : null,
+    error?.message ? `message=${error.message}` : null,
+    cause?.code ? `cause_code=${cause.code}` : null,
+    cause?.name ? `cause_name=${cause.name}` : null,
+    cause?.message ? `cause_message=${cause.message}` : null,
+  ]
+    .filter(Boolean)
+    .join("; ") || String(error);
+}
+
 async function request(path, options = {}) {
   const started = performance.now();
-  const response = await fetch(`${supabaseUrl}${path}`, options);
-  const text = await response.text();
-  let body = null;
   try {
-    body = text ? JSON.parse(text) : null;
-  } catch {
-    body = text;
+    const response = await fetch(`${supabaseUrl}${path}`, options);
+    const text = await response.text();
+    let body = null;
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = text;
+    }
+    return {
+      response,
+      body,
+      elapsed: performance.now() - started,
+      transport_error: null,
+    };
+  } catch (error) {
+    return {
+      response: null,
+      body: null,
+      elapsed: performance.now() - started,
+      transport_error: describeTransportError(error),
+    };
   }
-  return { response, body, elapsed: performance.now() - started };
 }
 
 async function signIn() {
-  const { response, body } = await request("/auth/v1/token?grant_type=password", {
-    method: "POST",
-    headers: { apikey: anonKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  const { response, body, transport_error } = await request(
+    "/auth/v1/token?grant_type=password",
+    {
+      method: "POST",
+      headers: { apikey: anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    },
+  );
+  if (transport_error) {
+    throw new Error(`Auth transport failure: ${transport_error}`);
+  }
   if (!response.ok || !body?.access_token || !body?.user?.id) {
     throw new Error(`Auth failed: HTTP ${response.status}`);
   }
@@ -64,9 +97,15 @@ async function getBusinessId(accessToken, userId) {
     user_id: `eq.${userId}`,
     limit: "1",
   });
-  const { response, body } = await request(`/rest/v1/business_members?${params}`, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
-  });
+  const { response, body, transport_error } = await request(
+    `/rest/v1/business_members?${params}`,
+    {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    },
+  );
+  if (transport_error) {
+    throw new Error(`Membership transport failure: ${transport_error}`);
+  }
   if (!response.ok || !body?.[0]?.business_id) {
     throw new Error(`Membership lookup failed: HTTP ${response.status}`);
   }
@@ -80,9 +119,15 @@ async function getProduct(accessToken, businessId, sku) {
     sku: `eq.${sku}`,
     limit: "1",
   });
-  const { response, body } = await request(`/rest/v1/products?${params}`, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
-  });
+  const { response, body, transport_error } = await request(
+    `/rest/v1/products?${params}`,
+    {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    },
+  );
+  if (transport_error) {
+    throw new Error(`Product lookup transport failure: ${transport_error}`);
+  }
   if (!response.ok || !body?.[0]) {
     throw new Error(`Fixture product ${sku} not found: HTTP ${response.status}`);
   }
@@ -96,9 +141,15 @@ async function getStock(accessToken, businessId, productId) {
     id: `eq.${productId}`,
     limit: "1",
   });
-  const { response, body } = await request(`/rest/v1/products?${params}`, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
-  });
+  const { response, body, transport_error } = await request(
+    `/rest/v1/products?${params}`,
+    {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    },
+  );
+  if (transport_error) {
+    throw new Error(`Stock lookup transport failure: ${transport_error}`);
+  }
   if (!response.ok || !body?.[0]) {
     throw new Error(`Stock lookup failed: HTTP ${response.status}`);
   }
@@ -106,31 +157,41 @@ async function getStock(accessToken, businessId, productId) {
 }
 
 async function createSale(accessToken, businessId, product, sequence) {
-  const { response, body, elapsed } = await request("/rest/v1/sales", {
-    method: "POST",
-    headers: {
-      apikey: anonKey,
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      Prefer: "return=minimal",
+  const { response, body, elapsed, transport_error } = await request(
+    "/rest/v1/sales",
+    {
+      method: "POST",
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        business_id: businessId,
+        customer_name: `Concurrency Test ${sequence}`,
+        status: "paid",
+        total: Number(product.price ?? 1),
+        sale_date: new Date().toISOString().slice(0, 10),
+        items: [
+          {
+            product_id: product.id,
+            name: product.name,
+            qty: 1,
+            price: Number(product.price ?? 1),
+          },
+        ],
+      }),
     },
-    body: JSON.stringify({
-      business_id: businessId,
-      customer_name: `Concurrency Test ${sequence}`,
-      status: "paid",
-      total: Number(product.price ?? 1),
-      sale_date: new Date().toISOString().slice(0, 10),
-      items: [
-        {
-          product_id: product.id,
-          name: product.name,
-          qty: 1,
-          price: Number(product.price ?? 1),
-        },
-      ],
-    }),
-  });
-  return { ok: response.ok, status: response.status, body, elapsed };
+  );
+  return {
+    ok: response?.ok ?? false,
+    status: response?.status ?? null,
+    body,
+    elapsed,
+    transport_error,
+    failure_type: transport_error ? "transport" : response?.ok ? null : "http",
+  };
 }
 
 async function runPhase(accessToken, businessId, phaseVus, phaseIndex) {
@@ -159,7 +220,15 @@ async function runPhase(accessToken, businessId, phaseVus, phaseIndex) {
       JSON.stringify(result.body).toLowerCase().includes("stock insuficiente"),
   ).length;
   const unexpectedErrors = results.filter(
-    (result) => !result.ok && !(result.status === 409 && JSON.stringify(result.body).toLowerCase().includes("stock insuficiente")),
+    (result) =>
+      !result.ok &&
+      !(
+        result.status === 409 &&
+        JSON.stringify(result.body).toLowerCase().includes("stock insuficiente")
+      ),
+  ).length;
+  const transportFailures = results.filter(
+    (result) => result.failure_type === "transport",
   ).length;
   const finalStock = await getStock(accessToken, businessId, product.id);
   const expectedSuccessful = Math.min(phaseVus, initialStock);
@@ -173,6 +242,7 @@ async function runPhase(accessToken, businessId, phaseVus, phaseIndex) {
     successful_commits: successful,
     rejected_insufficient_stock: rejected,
     unexpected_errors: unexpectedErrors,
+    transport_failures: transportFailures,
     final_stock: finalStock,
     expected_successful_commits: expectedSuccessful,
     expected_rejections: expectedRejected,
@@ -184,6 +254,15 @@ async function runPhase(accessToken, businessId, phaseVus, phaseIndex) {
         Math.max(0, Math.ceil(results.length * 0.95) - 1)
       ],
     ),
+    failure_details: results
+      .filter((result) => !result.ok)
+      .slice(0, 20)
+      .map(({ status, body, transport_error, failure_type }) => ({
+        status,
+        body,
+        transport_error,
+        failure_type,
+      })),
   };
 
   console.table(summary);
@@ -192,6 +271,7 @@ async function runPhase(accessToken, businessId, phaseVus, phaseIndex) {
     successful !== expectedSuccessful ||
     rejected !== expectedRejected ||
     unexpectedErrors !== 0 ||
+    transportFailures !== 0 ||
     finalStock < 0 ||
     successful > initialStock ||
     !summary.stock_delta_matches_commits
