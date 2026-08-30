@@ -17,7 +17,7 @@ export type OperatingPulse = {
 };
 
 const weight: Record<PulseSignal["severity"], number> = {
-  critical: 30,
+  critical: 35,
   high: 20,
   medium: 10,
   low: 5,
