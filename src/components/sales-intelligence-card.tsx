@@ -3,8 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fmtCLP } from "@/lib/biz-data";
 
+type SalesIntelligenceSale = {
+  status?: string | null;
+  total?: number | string | null;
+  is_credit?: boolean | null;
+  paid_amount?: number | string | null;
+};
+
 type SalesIntelligenceCardProps = {
-  sales: any[];
+  sales: SalesIntelligenceSale[];
   onAnalyze?: () => void;
   onAskAI?: () => void;
 };
