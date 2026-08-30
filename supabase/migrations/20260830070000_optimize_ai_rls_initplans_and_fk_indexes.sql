@@ -1,13 +1,17 @@
 -- Performance hardening identified by the hosted Supabase advisors.
--- Keep policy semantics unchanged; only force stable auth/function evaluation
--- into init-plan form and add covering indexes for uncovered foreign keys.
+-- Preserve authorization semantics while forcing auth/member checks into
+-- init-plan form and covering uncovered foreign keys.
 
+DROP POLICY IF EXISTS "Members see members" ON public.business_members;
 DROP POLICY IF EXISTS "Users see own membership" ON public.business_members;
-CREATE POLICY "Users see own membership"
+CREATE POLICY "Members see members"
   ON public.business_members
   FOR SELECT
   TO authenticated
-  USING (user_id = (SELECT auth.uid()));
+  USING (
+    user_id = (SELECT auth.uid())
+    OR (SELECT private.is_business_member(business_id, (SELECT auth.uid())))
+  );
 
 DROP POLICY IF EXISTS "Members create own assets" ON public.ai_asset_library;
 CREATE POLICY "Members create own assets"
