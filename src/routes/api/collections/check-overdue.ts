@@ -10,6 +10,21 @@ import { sanitizeForPrompt } from "@/lib/prompt-security.server";
 const REMINDER_COOLDOWN_DAYS = 3;
 const MAX_REMINDERS_PER_SALE = 3;
 
+type RelatedCustomer = { phone?: string | null } | null;
+type RelatedBusiness = { name?: string | null } | null;
+
+function getRelatedCustomer(sale: { customers?: unknown }): RelatedCustomer {
+  if (!sale.customers || typeof sale.customers !== "object") return null;
+  const customer = sale.customers as { phone?: unknown };
+  return { phone: typeof customer.phone === "string" ? customer.phone : null };
+}
+
+function getRelatedBusiness(sale: { businesses?: unknown }): RelatedBusiness {
+  if (!sale.businesses || typeof sale.businesses !== "object") return null;
+  const business = sale.businesses as { name?: unknown };
+  return { name: typeof business.name === "string" ? business.name : null };
+}
+
 async function buildReminderMessage(
   businessName: string,
   customerName: string,
@@ -64,8 +79,6 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Ventas a crédito, vencidas. paid_amount < total no se puede comparar
-        // columna-contra-columna en supabase-js, así que se filtra en memoria abajo.
         const { data: candidateSales, error } = await supabaseAdmin
           .from("sales")
           .select(
@@ -87,9 +100,6 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
         let sent = 0;
         let skipped = 0;
 
-        // Batch-fetch reminders for ALL overdue sales in one round trip instead
-        // of one query per sale inside the loop below (N+1: e.g. 300 overdue
-        // sales meant 300 extra sequential DB calls on every cron run).
         const saleIds = overdueSales.map((s) => s.id);
         const remindersBySale = new Map<string, { id: string; sent_at: string }[]>();
         if (saleIds.length > 0) {
@@ -105,8 +115,6 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
           }
         }
 
-        // Cache WhatsApp connections per business_id -- multiple sales usually
-        // belong to the same business, so this collapses repeat lookups too.
         const connectionByBusiness = new Map<
           string,
           Awaited<ReturnType<typeof findActiveWhatsAppConnection>>
@@ -119,11 +127,13 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
         }
 
         for (const sale of overdueSales) {
-          const customerPhone = (sale as any).customers?.phone;
-          const businessName = (sale as any).businesses?.name ?? "tu proveedor";
+          const customer = getRelatedCustomer(sale);
+          const business = getRelatedBusiness(sale);
+          const customerPhone = customer?.phone;
+          const businessName = business?.name ?? "tu proveedor";
           if (!customerPhone) {
             skipped++;
-            continue; // No hay teléfono asociado al cliente, no se puede recordar por WhatsApp.
+            continue;
           }
 
           const recentReminders = (remindersBySale.get(sale.id) ?? []).slice(
@@ -133,7 +143,7 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
 
           if (recentReminders.length >= MAX_REMINDERS_PER_SALE) {
             skipped++;
-            continue; // Ya se enviaron los recordatorios máximos para esta venta.
+            continue;
           }
 
           const lastSentAt = recentReminders[0]?.sent_at;
@@ -141,7 +151,7 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
             const daysSinceLast = (Date.now() - new Date(lastSentAt).getTime()) / 86_400_000;
             if (daysSinceLast < REMINDER_COOLDOWN_DAYS) {
               skipped++;
-              continue; // Todavía en cooldown, evita spamear al cliente.
+              continue;
             }
           }
 
