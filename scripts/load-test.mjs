@@ -2,35 +2,20 @@ import { performance } from "node:perf_hooks";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-const supabaseUrl = (
-  process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ""
-).replace(/\/$/, "");
-const anonKey =
-  process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
+const supabaseUrl = (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "").replace(/\/$/, "");
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
 const email = process.env.LOAD_TEST_EMAIL ?? "";
 const password = process.env.LOAD_TEST_PASSWORD ?? "";
 const vus = Number(process.env.LOAD_TEST_VUS ?? 10);
 const iterations = Number(process.env.LOAD_TEST_ITERATIONS ?? 3);
-const phases = (process.env.LOAD_TEST_PHASES ?? "")
-  .split(",")
-  .map(Number)
-  .filter((value) => value > 0);
-const outputFile =
-  process.env.LOAD_TEST_OUTPUT ?? "artifacts/load-test-results.json";
+const phases = (process.env.LOAD_TEST_PHASES ?? "").split(",").map(Number).filter((value) => value > 0);
+const outputFile = process.env.LOAD_TEST_OUTPUT ?? "artifacts/load-test-results.json";
 const environment = (process.env.LOAD_TEST_ENV ?? "").toLowerCase();
 
-if (process.env.LOAD_TEST_CONFIRM !== "true") {
-  throw new Error("Refusing to run a load test without LOAD_TEST_CONFIRM=true.");
-}
-if (environment !== "staging") {
-  throw new Error("Refusing load tests outside an explicitly declared staging environment (LOAD_TEST_ENV=staging).");
-}
-if (/nuva-one\.vercel\.app|nuvaone\.cl/i.test(supabaseUrl)) {
-  throw new Error("Production URL detected. Configure an isolated staging Supabase project.");
-}
-if (!supabaseUrl || !anonKey || !email || !password) {
-  throw new Error("Missing VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, LOAD_TEST_EMAIL or LOAD_TEST_PASSWORD.");
-}
+if (process.env.LOAD_TEST_CONFIRM !== "true") throw new Error("Refusing to run a load test without LOAD_TEST_CONFIRM=true.");
+if (environment !== "staging") throw new Error("Refusing load tests outside an explicitly declared staging environment (LOAD_TEST_ENV=staging).");
+if (/nuva-one\.vercel\.app|nuvaone\.cl/i.test(supabaseUrl)) throw new Error("Production URL detected. Configure an isolated staging Supabase project.");
+if (!supabaseUrl || !anonKey || !email || !password) throw new Error("Missing VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, LOAD_TEST_EMAIL or LOAD_TEST_PASSWORD.");
 
 async function request(url, options = {}) {
   const started = performance.now();
@@ -39,46 +24,28 @@ async function request(url, options = {}) {
 }
 
 async function signIn() {
-  const { response } = await request(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-    method: "POST",
-    headers: { apikey: anonKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Auth failed: HTTP ${response.status} ${body}`);
-  }
+  const { response } = await request(`${supabaseUrl}/auth/v1/token?grant_type=password`, { method: "POST", headers: { apikey: anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+  if (!response.ok) throw new Error(`Auth failed: HTTP ${response.status} ${await response.text()}`);
   return response.json();
 }
 
 async function getBusinessId(accessToken, userId) {
   const url = new URL(`${supabaseUrl}/rest/v1/business_members`);
-  url.searchParams.set("select", "business_id");
-  url.searchParams.set("user_id", `eq.${userId}`);
-  url.searchParams.set("limit", "1");
-  const { response } = await request(url, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Membership lookup failed: HTTP ${response.status} ${body}`);
-  }
+  url.searchParams.set("select", "business_id"); url.searchParams.set("user_id", `eq.${userId}`); url.searchParams.set("limit", "1");
+  const { response } = await request(url, { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } });
+  if (!response.ok) throw new Error(`Membership lookup failed: HTTP ${response.status} ${await response.text()}`);
   const rows = await response.json();
-  if (!rows[0]?.business_id) {
-    throw new Error("No business membership available for load-test user");
-  }
+  if (!rows[0]?.business_id) throw new Error("No business membership available for load-test user");
   return rows[0].business_id;
 }
 
 async function query(accessToken, table, businessId, select) {
   const url = new URL(`${supabaseUrl}/rest/v1/${table}`);
-  url.searchParams.set("select", select);
-  url.searchParams.set("business_id", `eq.${businessId}`);
-  url.searchParams.set("limit", "100");
-  const { response, elapsed } = await request(url, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
-  });
-  return { elapsed, ok: response.ok, status: response.status, table };
+  url.searchParams.set("select", select); url.searchParams.set("business_id", `eq.${businessId}`); url.searchParams.set("limit", "100");
+  const { response, elapsed } = await request(url, { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } });
+  const error = response.ok ? null : await response.text();
+  if (error) console.error(`Request failure [${table}] HTTP ${response.status}: ${error}`);
+  return { elapsed, ok: response.ok, status: response.status, table, error };
 }
 
 async function runVirtualUser() {
@@ -86,15 +53,13 @@ async function runVirtualUser() {
   const businessId = await getBusinessId(session.access_token, session.user.id);
   const results = [];
   for (let i = 0; i < iterations; i += 1) {
-    results.push(
-      ...(await Promise.all([
-        query(session.access_token, "customers", businessId, "id,name,status,pipeline_stage,created_at"),
-        query(session.access_token, "products", businessId, "id,name,price,stock,created_at"),
-        query(session.access_token, "sales", businessId, "id,total,sale_date,customer_id"),
-        query(session.access_token, "transactions", businessId, "id,type,amount,tx_date"),
-        query(session.access_token, "quotes", businessId, "id,status,total,created_at"),
-      ])),
-    );
+    results.push(...(await Promise.all([
+      query(session.access_token, "customers", businessId, "id,name,status,pipeline_stage,created_at"),
+      query(session.access_token, "products", businessId, "id,name,price,stock,created_at"),
+      query(session.access_token, "sales", businessId, "id,total,sale_date,customer_id"),
+      query(session.access_token, "transactions", businessId, "id,type,amount,tx_date"),
+      query(session.access_token, "quotes", businessId, "id,status,total,created_at"),
+    ])));
   }
   return results;
 }
@@ -106,41 +71,22 @@ async function runPhase(phaseVus) {
   const elapsed = performance.now() - started;
   const results = users.flatMap((user) => user.status === "fulfilled" ? user.value : []);
   const userFailures = users.filter((user) => user.status === "rejected").length;
-  const failureCauses = users
-    .filter((user) => user.status === "rejected")
-    .slice(0, 5)
-    .map((user) => String(user.reason?.message ?? user.reason));
+  const failureCauses = users.filter((user) => user.status === "rejected").slice(0, 5).map((user) => String(user.reason?.message ?? user.reason));
   if (failureCauses.length) console.error("Virtual-user failure causes:", failureCauses);
   const requestFailures = results.filter((result) => !result.ok).length;
+  const requestFailureDetails = results.filter((result) => !result.ok).slice(0, 20).map(({ table, status, error }) => ({ table, status, error }));
   const latencies = results.map((result) => result.elapsed).sort((a, b) => a - b);
   const percentile = (value) => latencies.length ? latencies[Math.max(0, Math.ceil(latencies.length * value) - 1)] : 0;
-  const summary = {
-    vus: phaseVus,
-    iterations,
-    requests: results.length,
-    user_failures: userFailures,
-    request_failures: requestFailures,
-    failure_causes: failureCauses,
-    p50_ms: Math.round(percentile(0.5)),
-    p95_ms: Math.round(percentile(0.95)),
-    p99_ms: Math.round(percentile(0.99)),
-    total_seconds: Number((elapsed / 1000).toFixed(2)),
-  };
-  console.table(summary);
-  return summary;
+  const summary = { vus: phaseVus, iterations, requests: results.length, user_failures: userFailures, request_failures: requestFailures, failure_causes: failureCauses, request_failure_details: requestFailureDetails, p50_ms: Math.round(percentile(0.5)), p95_ms: Math.round(percentile(0.95)), p99_ms: Math.round(percentile(0.99)), total_seconds: Number((elapsed / 1000).toFixed(2)) };
+  console.table(summary); return summary;
 }
 
 const requestedPhases = phases.length ? phases : [vus];
 const results = [];
 for (const phase of requestedPhases) {
-  const summary = await runPhase(phase);
-  results.push(summary);
-  if (summary.user_failures || summary.request_failures) {
-    console.error(`Phase ${phase} failed; stopping before increasing concurrency.`);
-    break;
-  }
+  const summary = await runPhase(phase); results.push(summary);
+  if (summary.user_failures || summary.request_failures) { console.error(`Phase ${phase} failed; stopping before increasing concurrency.`); break; }
 }
-
 await mkdir(dirname(outputFile), { recursive: true });
 await writeFile(outputFile, JSON.stringify({ generated_at: new Date().toISOString(), environment, phases: results }, null, 2), "utf8");
 console.log(`Load-test results written to ${outputFile}`);
