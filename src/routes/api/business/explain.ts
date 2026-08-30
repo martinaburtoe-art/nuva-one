@@ -92,7 +92,7 @@ export const Route = createFileRoute("/api/business/explain")({
         const plan = getNuvaPlan(bizPlan?.plan);
         const monthlyAiLimit = plan.aiMessagesMonthly;
         const { data: allowed, error: usageError } = await supabaseAdmin.rpc(
-          "increment_ai_usage_monthly" as any,
+          "increment_ai_usage_monthly",
           {
             p_business_id: businessId,
             p_monthly_limit: monthlyAiLimit,
