@@ -21,6 +21,7 @@ export class UnifiedScanEngine {
   private hidStartedAt = 0;
   private hidListener: ((event: KeyboardEvent) => void) | null = null;
   private stopped = true;
+  private nativeEnabled = true;
   private lastEmittedCode = "";
   private lastEmittedAt = 0;
 
@@ -109,6 +110,7 @@ export class UnifiedScanEngine {
 
   async start(video: HTMLVideoElement) {
     this.stopped = false;
+    this.nativeEnabled = true;
     this.lastEmittedCode = "";
     this.lastEmittedAt = 0;
     await this.waitForVideoReady(video);
@@ -133,10 +135,8 @@ export class UnifiedScanEngine {
 
   emitNative(rawValue: string, format?: string) {
     // Native scanner bridges can deliver a scan independently of the camera/HID
-    // lifecycle, so accept native events before start(); stop() still disables them.
-    if (this.stopped) {
-      this.stopped = false;
-    }
+    // lifecycle, so accept native events before start() while retaining stop() semantics.
+    if (!this.nativeEnabled) return;
     this.emit({ rawValue, format }, "native");
   }
 
@@ -154,6 +154,7 @@ export class UnifiedScanEngine {
   }
   stop() {
     this.stopped = true;
+    this.nativeEnabled = false;
     this.stopHid();
     this.scanner.stop();
   }
