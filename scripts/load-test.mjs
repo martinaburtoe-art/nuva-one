@@ -33,26 +33,30 @@ async function request(url, options = {}) {
   const started = performance.now();
   try {
     const response = await fetch(url, options);
-    return { response, elapsed: performance.now() - started, transport_error: null };
+    // Node's fetch is backed by Undici. Consuming the body is required for
+    // deterministic connection reuse; leaving bodies for GC can exhaust
+    // connection resources under concurrent load and produce UND_ERR_SOCKET.
+    const text = await response.text();
+    return { response, body_text: text, elapsed: performance.now() - started, transport_error: null };
   } catch (error) {
-    return { response: null, elapsed: performance.now() - started, transport_error: describeTransportError(error) };
+    return { response: null, body_text: null, elapsed: performance.now() - started, transport_error: describeTransportError(error) };
   }
 }
 
 async function signIn() {
-  const { response, transport_error } = await request(`${supabaseUrl}/auth/v1/token?grant_type=password`, { method: "POST", headers: { apikey: anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+  const { response, body_text, transport_error } = await request(`${supabaseUrl}/auth/v1/token?grant_type=password`, { method: "POST", headers: { apikey: anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
   if (transport_error) throw new Error(`Auth transport failure: ${transport_error}`);
-  if (!response.ok) throw new Error(`Auth failed: HTTP ${response.status} ${await response.text()}`);
-  return response.json();
+  if (!response.ok) throw new Error(`Auth failed: HTTP ${response.status} ${body_text}`);
+  return JSON.parse(body_text);
 }
 
 async function getBusinessId(accessToken, userId) {
   const url = new URL(`${supabaseUrl}/rest/v1/business_members`);
   url.searchParams.set("select", "business_id"); url.searchParams.set("user_id", `eq.${userId}`); url.searchParams.set("limit", "1");
-  const { response, transport_error } = await request(url, { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } });
+  const { response, body_text, transport_error } = await request(url, { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } });
   if (transport_error) throw new Error(`Membership transport failure: ${transport_error}`);
-  if (!response.ok) throw new Error(`Membership lookup failed: HTTP ${response.status} ${await response.text()}`);
-  const rows = await response.json();
+  if (!response.ok) throw new Error(`Membership lookup failed: HTTP ${response.status} ${body_text}`);
+  const rows = JSON.parse(body_text);
   if (!rows[0]?.business_id) throw new Error("No business membership available for load-test user");
   return rows[0].business_id;
 }
@@ -60,12 +64,12 @@ async function getBusinessId(accessToken, userId) {
 async function query(accessToken, table, businessId, select) {
   const url = new URL(`${supabaseUrl}/rest/v1/${table}`);
   url.searchParams.set("select", select); url.searchParams.set("business_id", `eq.${businessId}`); url.searchParams.set("limit", "100");
-  const { response, elapsed, transport_error } = await request(url, { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } });
+  const { response, elapsed, body_text, transport_error } = await request(url, { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } });
   if (transport_error) {
     console.error(`Transport failure [${table}]: ${transport_error}`);
     return { elapsed, ok: false, status: null, table, error: transport_error, failure_type: "transport" };
   }
-  const error = response.ok ? null : await response.text();
+  const error = response.ok ? null : body_text;
   if (error) console.error(`Request failure [${table}] HTTP ${response.status}: ${error}`);
   return { elapsed, ok: response.ok, status: response.status, table, error, failure_type: response.ok ? null : "http" };
 }
