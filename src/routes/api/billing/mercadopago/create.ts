@@ -59,6 +59,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
           businessName: business.name,
           email,
           planName: plan.name,
+          planId,
           amount: billing === "annual" ? plan.annualPriceClp : plan.monthlyPriceClp,
           billing,
           backUrl: `${siteUrl}/settings?billing=mercadopago`,
@@ -85,6 +86,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
           preapproval_id: result.preapprovalId,
           url: result.initPoint,
           environment: config.environment,
+          plan: planId,
         });
       },
     },
