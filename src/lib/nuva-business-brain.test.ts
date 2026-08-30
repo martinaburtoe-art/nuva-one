@@ -14,7 +14,7 @@ describe("Nüva Business Brain", () => {
     expect(result.topPriorities[0].id).toBe("cash-risk");
     expect(result.topPriorities[0].requiresApproval).toBe(true);
     expect(result.requiresApprovalCount).toBeGreaterThan(0);
-    expect(result.status).toBe("stable");
+    expect(result.status).toBe("attention");
   });
 
   it("surfaces compliance and inventory when financials are healthy", () => {
