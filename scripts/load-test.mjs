@@ -33,9 +33,6 @@ async function request(url, options = {}) {
   const started = performance.now();
   try {
     const response = await fetch(url, options);
-    // Node's fetch is backed by Undici. Consuming the body is required for
-    // deterministic connection reuse; leaving bodies for GC can exhaust
-    // connection resources under concurrent load and produce UND_ERR_SOCKET.
     const text = await response.text();
     return { response, body_text: text, elapsed: performance.now() - started, transport_error: null };
   } catch (error) {
@@ -76,14 +73,19 @@ async function query(accessToken, table, businessId, select) {
 
 async function runVirtualUser(accessToken, businessId) {
   const results = [];
+  // One VU is one independent sequential user scenario. This preserves the intended
+  // 25/50/100 concurrency contract instead of multiplying it by the five endpoints.
+  const queries = [
+    ["customers", "id,name,status,created_at"],
+    ["products", "id,name,price,stock,created_at"],
+    ["sales", "id,total,sale_date,customer_id"],
+    ["transactions", "id,type,amount,tx_date"],
+    ["quotes", "id,status,total,created_at"],
+  ];
   for (let i = 0; i < iterations; i += 1) {
-    results.push(...(await Promise.all([
-      query(accessToken, "customers", businessId, "id,name,status,created_at"),
-      query(accessToken, "products", businessId, "id,name,price,stock,created_at"),
-      query(accessToken, "sales", businessId, "id,total,sale_date,customer_id"),
-      query(accessToken, "transactions", businessId, "id,type,amount,tx_date"),
-      query(accessToken, "quotes", businessId, "id,status,total,created_at"),
-    ])));
+    for (const [table, select] of queries) {
+      results.push(await query(accessToken, table, businessId, select));
+    }
   }
   return results;
 }
