@@ -74,6 +74,7 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
           businessName: business.name,
           email,
           planName: plan.name,
+          planId: plan.id,
           amount: billing === "annual" ? plan.annualPriceClp : plan.monthlyPriceClp,
           billing,
           backUrl: `${siteUrl}/settings?billing=mercadopago`,
