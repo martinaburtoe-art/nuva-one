@@ -132,7 +132,12 @@ export class UnifiedScanEngine {
   }
 
   emitNative(rawValue: string, format?: string) {
-    if (!this.stopped) this.emit({ rawValue, format }, "native");
+    // Native scanner bridges can deliver a scan independently of the camera/HID
+    // lifecycle, so accept native events before start(); stop() still disables them.
+    if (this.stopped) {
+      this.stopped = false;
+    }
+    this.emit({ rawValue, format }, "native");
   }
 
   getStream() {
