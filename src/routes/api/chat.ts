@@ -89,7 +89,7 @@ export const Route = createFileRoute("/api/chat")({
           const { data: bizPlan } = await supabaseAdmin.from("businesses").select("plan").eq("id", businessId).maybeSingle();
           const plan = getNuvaPlan(bizPlan?.plan);
           monthlyAiLimit = plan.aiMessagesMonthly;
-          const { data: allowed, error: usageError } = await supabaseAdmin.rpc("increment_ai_usage_monthly" as any, {
+          const { data: allowed, error: usageError } = await supabaseAdmin.rpc("increment_ai_usage_monthly", {
             p_business_id: businessId,
             p_monthly_limit: monthlyAiLimit,
             p_user_id: claims.claims.sub,
