@@ -216,14 +216,16 @@ async function runPhase(accessToken, businessId, phaseVus, phaseIndex) {
   const rejected = results.filter(
     (result) =>
       !result.ok &&
-      result.status === 409 &&
+      result.status === 400 &&
+      result.body?.code === "23514" &&
       JSON.stringify(result.body).toLowerCase().includes("stock insuficiente"),
   ).length;
   const unexpectedErrors = results.filter(
     (result) =>
       !result.ok &&
       !(
-        result.status === 409 &&
+        result.status === 400 &&
+        result.body?.code === "23514" &&
         JSON.stringify(result.body).toLowerCase().includes("stock insuficiente")
       ),
   ).length;
