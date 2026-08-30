@@ -8,6 +8,7 @@ export type ProductResolverStatus =
   | "UNAUTHORIZED";
 
 export type ResolvedProduct = {
+  id: string;
   product_id: string;
   business_id: string;
   name: string | null;
@@ -54,8 +55,12 @@ export async function resolveProductCode(value: string): Promise<ProductResoluti
     throw error;
   }
 
-  const products = (Array.isArray(data) ? data : data ? [data] : []) as ResolvedProduct[];
-  if (products.length === 0) return { status: "NOT_FOUND", input, products: [] };
-  if (products.length > 1) return { status: "DUPLICATE", input, products };
-  return { status: "FOUND", input, products, product: products[0] };
+  const products = (Array.isArray(data) ? data : data ? [data] : []) as Omit<ResolvedProduct, "id">[];
+  const resolvedProducts: ResolvedProduct[] = products.map((product) => ({
+    ...product,
+    id: product.product_id,
+  }));
+  if (resolvedProducts.length === 0) return { status: "NOT_FOUND", input, products: [] };
+  if (resolvedProducts.length > 1) return { status: "DUPLICATE", input, products: resolvedProducts };
+  return { status: "FOUND", input, products: resolvedProducts, product: resolvedProducts[0] };
 }
