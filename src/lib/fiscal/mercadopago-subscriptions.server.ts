@@ -5,7 +5,10 @@ type MercadoPagoConfig = {
   environment: "test" | "prod";
 };
 
+export type MercadoPagoPlanId = "starter" | "pro";
+
 const API_BASE = "https://api.mercadopago.com";
+const PLAN_REFERENCE_SEPARATOR = "|plan=";
 
 export function getMercadoPagoConfig(): MercadoPagoConfig | null {
   const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
@@ -35,6 +38,27 @@ async function mpFetch(
   } catch {
     return { ok: false, status: 0, json: {} };
   }
+}
+
+export function encodeMercadoPagoExternalReference(
+  businessId: string,
+  planId: MercadoPagoPlanId,
+) {
+  return `${businessId}${PLAN_REFERENCE_SEPARATOR}${planId}`;
+}
+
+export function parseMercadoPagoExternalReference(reference: string | null | undefined): {
+  businessId: string;
+  planId: MercadoPagoPlanId | null;
+} {
+  const raw = String(reference ?? "");
+  const separatorIndex = raw.indexOf(PLAN_REFERENCE_SEPARATOR);
+  if (separatorIndex === -1) return { businessId: raw, planId: null };
+
+  const businessId = raw.slice(0, separatorIndex);
+  const plan = raw.slice(separatorIndex + PLAN_REFERENCE_SEPARATOR.length);
+  const planId = plan === "starter" || plan === "pro" ? plan : null;
+  return { businessId, planId };
 }
 
 export function validateMercadoPagoWebhookSignature(params: {
@@ -71,6 +95,7 @@ export async function createMercadoPagoSubscription(params: {
   businessName: string;
   email: string;
   planName: string;
+  planId: MercadoPagoPlanId;
   amount: number;
   billing: "monthly" | "annual";
   backUrl: string;
@@ -86,7 +111,7 @@ export async function createMercadoPagoSubscription(params: {
     method: "POST",
     body: JSON.stringify({
       reason: `${params.planName} — Nüva One`,
-      external_reference: params.businessId,
+      external_reference: encodeMercadoPagoExternalReference(params.businessId, params.planId),
       payer_email: params.email,
       auto_recurring: recurring,
       back_url: params.backUrl,
