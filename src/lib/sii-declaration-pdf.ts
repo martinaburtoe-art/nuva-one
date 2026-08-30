@@ -278,7 +278,7 @@ export function generateSiiDeclarationPdf(sales: PendingSaleForDeclaration[], bu
     y + 43,
   );
 
-  const pageCount = doc.internal.getNumberOfPages();
+  const pageCount = doc.internal.pages.length - 1;
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     footer(i, pageCount);

@@ -11,7 +11,7 @@ export type ShippingLabelData = {
   serviceType?: string | null;
   trackingNumber?: string | null;
   referenceCode?: string | null;
-  recipientName: string;
+  recipientName?: string | null;
   recipientRut?: string | null;
   recipientPhone?: string | null;
   recipientEmail?: string | null;

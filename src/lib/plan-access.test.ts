@@ -26,8 +26,8 @@ describe("plan access", () => {
   });
 
   it("prevents exceeding a quantity limit", () => {
-    expect(canUseQuantity("starter", "products", 499)).toBe(false);
-    expect(canUseQuantity("starter", "products", 498)).toBe(true);
+    expect(canUseQuantity("starter", "products", 500)).toBe(false);
+    expect(canUseQuantity("starter", "products", 499)).toBe(true);
     expect(canUseQuantity("pro", "users", 2)).toBe(true);
     expect(canUseQuantity("pro", "users", 3)).toBe(false);
   });

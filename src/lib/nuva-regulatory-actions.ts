@@ -42,7 +42,7 @@ export function buildRegulatoryActions(
   );
   return results
     .filter(({ missing }) => missing.length > 0)
-    .map(({ rule, readiness, missing }) => ({
+    .map(({ rule, readiness, missing }): RegulatoryAction => ({
       id: `regulatory-${rule.id}`,
       priority: priority[rule.severity],
       title: `${rule.title}: preparación ${readiness}%`,

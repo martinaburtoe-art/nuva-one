@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
-import { useBizList } from "@/lib/biz-data";
-import { resolveProductCode } from "@/lib/product-resolver";
 import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,154 +12,73 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { ModuleGuard } from "@/components/module-guard";
 import { LiveProductScanner } from "@/components/scanner/LiveProductScanner";
-import {
-  FileDown,
-  PackagePlus,
-  ScanBarcode,
-  ClipboardCheck,
-  Plus,
-  Minus,
-  Search,
-  Tag,
-  Sparkles,
-} from "lucide-react";
+import { FileDown, PackagePlus, ScanBarcode, ClipboardCheck, Plus, Minus, Search } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
-export const Route = createFileRoute("/_authenticated/inventario-conteo")({
-  head: () => ({ meta: [{ title: "Conteo físico — Nüva One" }] }),
-  component: InventoryCount,
-});
+export const Route = createFileRoute("/_authenticated/inventario-conteo")({ head: () => ({ meta: [{ title: "Conteo físico — Nüva One" }] }), component: InventoryCount });
 
-type Line = {
-  id: string;
-  product_id: string;
-  barcode: string | null;
-  product_name: string;
-  system_qty: number;
-  counted_qty: number;
-};
-type ResolvedScan = {
-  product_id: string;
-  name: string | null;
-  barcode: string | null;
-  stock: number | null;
-  sku: string | null;
-};
+type Product = Database["public"]["Tables"]["products"]["Row"];
+type Stocktake = Database["public"]["Tables"]["inventory_stocktakes"]["Row"];
+type Line = { id: string; product_id: string; barcode: string | null; product_name: string; system_qty: number; counted_qty: number };
+type ResolvedScan = { product_id: string; name: string | null; barcode: string | null; stock: number | null; sku: string | null };
 
 function InventoryCount() {
   const { active } = useActiveBusiness();
   const { data: role } = useMyRole();
   const canWrite = canWriteOperations(role);
-  const { data: products = [], refetch } = useBizList<any>("products", {
-    order: "name",
-    ascending: true,
-  });
+  const [products, setProducts] = useState<Product[]>([]);
   const [barcode, setBarcode] = useState("");
   const [stocktakeId, setStocktakeId] = useState<string | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [scanActionsOpen, setScanActionsOpen] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
-  const [newSkuOpen, setNewSkuOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    sku: "",
-    barcode: "",
-    category: "",
-    cost: "0",
-    price: "0",
-    stock: "0",
-  });
-  const [newSku, setNewSku] = useState({ productId: "", sku: "" });
+  const [newProduct, setNewProduct] = useState({ name: "", sku: "", barcode: "", category: "", cost: "0", price: "0" });
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const matched = useMemo(
-    () =>
-      products.find(
-        (p: any) =>
-          String(p.barcode ?? "")
-            .trim()
-            .toLowerCase() === barcode.trim().toLowerCase() ||
-          String(p.sku ?? "")
-            .trim()
-            .toLowerCase() === barcode.trim().toLowerCase(),
-      ),
-    [products, barcode],
-  );
+  async function refreshProducts() {
+    if (!active?.id) return;
+    const { data, error } = await supabase.from("products").select("*").eq("business_id", active.id).order("name", { ascending: true });
+    if (error) throw error;
+    setProducts(data ?? []);
+  }
 
-  async function startCount() {
-    if (!active || !canWrite || stocktakeId) return;
+  useMemo(() => { void refreshProducts(); }, [active?.id]);
+
+  const matched = useMemo(() => products.find((product) => String(product.barcode ?? "").trim().toLowerCase() === barcode.trim().toLowerCase() || String(product.sku ?? "").trim().toLowerCase() === barcode.trim().toLowerCase()), [products, barcode]);
+
+  async function startCount(): Promise<string | null> {
+    if (!active || !canWrite || stocktakeId) return stocktakeId;
     const { data: session } = await supabase.auth.getSession();
-    const { data, error } = await supabase
-      .from("inventory_stocktakes" as any)
-      .insert({ business_id: active.id, status: "counting", created_by: session.session?.user.id })
-      .select("id")
-      .single();
-    if (error) return toast.error(error.message);
-    setStocktakeId(data.id);
+    const { data, error } = await supabase.from("inventory_stocktakes").insert({ business_id: active.id, status: "counting", created_by: session.session?.user.id ?? null }).select("*").single();
+    if (error) { toast.error(error.message); return null; }
+    const stocktake: Stocktake = data;
+    setStocktakeId(stocktake.id);
     setLines([]);
     toast.success("Conteo físico iniciado");
+    return stocktake.id;
   }
 
   async function scanValue(value: string, resolved?: ResolvedScan) {
     const code = value.trim();
     if (!code || !active || !canWrite) return;
-    let product: ResolvedScan | undefined = resolved;
+    let product = resolved;
     if (!product) {
-      try {
-        const resolution = await resolveProductCode(code);
-        if (resolution.status === "UNAUTHORIZED")
-          return toast.error("No tienes autorización para consultar este producto");
-        if (resolution.status === "DUPLICATE")
-          return toast.error("El código está asociado a más de un producto");
-        if (resolution.status !== "FOUND" || !resolution.product) {
-          setScannerOpen(false);
-          setScanActionsOpen(false);
-          setNewProduct((v) => ({ ...v, barcode: code }));
-          setNewProductOpen(true);
-          return;
-        }
-        product = resolution.product;
-      } catch (error: any) {
-        return toast.error(error?.message ?? "No se pudo resolver el código");
+      const candidate = products.find((item) => String(item.barcode ?? "").toLowerCase() === code.toLowerCase() || String(item.sku ?? "").toLowerCase() === code.toLowerCase());
+      if (!candidate) {
+        setNewProduct((current) => ({ ...current, barcode: code }));
+        setNewProductOpen(true);
+        return;
       }
+      product = { product_id: candidate.id, name: candidate.name, barcode: candidate.barcode, sku: candidate.sku, stock: candidate.stock };
     }
-
-    let sid = stocktakeId;
-    if (!sid) {
-      const { data: session } = await supabase.auth.getSession();
-      const { data, error } = await supabase
-        .from("inventory_stocktakes" as any)
-        .insert({
-          business_id: active.id,
-          status: "counting",
-          created_by: session.session?.user.id,
-        })
-        .select("id")
-        .single();
-      if (error) return toast.error(error.message);
-      sid = data.id;
-      setStocktakeId(sid);
-    }
+    const sid = stocktakeId ?? await startCount();
+    if (!sid || !product) return;
     const current = product;
-    setLines((prev) => {
-      const existing = prev.find((x) => x.product_id === current.product_id);
-      if (existing)
-        return prev.map((x) =>
-          x.product_id === current.product_id ? { ...x, counted_qty: x.counted_qty + 1 } : x,
-        );
-      return [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          product_id: current.product_id,
-          barcode: current.barcode ?? code,
-          product_name: current.name ?? "Producto",
-          system_qty: Number(current.stock ?? 0),
-          counted_qty: 1,
-        },
-      ];
+    setLines((previous) => {
+      const existing = previous.find((line) => line.product_id === current.product_id);
+      if (existing) return previous.map((line) => line.product_id === current.product_id ? { ...line, counted_qty: line.counted_qty + 1 } : line);
+      return [...previous, { id: crypto.randomUUID(), product_id: current.product_id, barcode: current.barcode ?? code, product_name: current.name ?? "Producto", system_qty: Number(current.stock ?? 0), counted_qty: 1 }];
     });
     setBarcode("");
     inputRef.current?.focus();
@@ -168,554 +86,67 @@ function InventoryCount() {
 
   async function saveLines(): Promise<boolean> {
     if (!stocktakeId || !active) return false;
-    const { error: deleteError } = await supabase
-      .from("inventory_stocktake_lines" as any)
-      .delete()
-      .eq("stocktake_id", stocktakeId)
-      .eq("business_id", active.id);
-    if (deleteError) {
-      toast.error(`No se pudo preparar el guardado del conteo: ${deleteError.message}`);
-      return false;
-    }
-    const payload = lines.map((x) => ({
-      stocktake_id: stocktakeId,
-      business_id: active.id,
-      product_id: x.product_id,
-      barcode: x.barcode,
-      product_name: x.product_name,
-      system_qty: x.system_qty,
-      counted_qty: x.counted_qty,
-      difference: x.counted_qty - x.system_qty,
-    }));
-    const { error } = await supabase.from("inventory_stocktake_lines" as any).insert(payload);
-    if (error) {
-      toast.error(`No se pudo guardar el conteo: ${error.message}`);
-      return false;
-    }
+    const { error: deleteError } = await supabase.from("inventory_stocktake_lines").delete().eq("stocktake_id", stocktakeId).eq("business_id", active.id);
+    if (deleteError) { toast.error(`No se pudo preparar el guardado del conteo: ${deleteError.message}`); return false; }
+    const payload: Database["public"]["Tables"]["inventory_stocktake_lines"]["Insert"][] = lines.map((line) => ({ stocktake_id: stocktakeId, business_id: active.id, product_id: line.product_id, barcode: line.barcode, product_name: line.product_name, system_qty: line.system_qty, counted_qty: line.counted_qty, difference: line.counted_qty - line.system_qty }));
+    const { error } = await supabase.from("inventory_stocktake_lines").insert(payload);
+    if (error) { toast.error(`No se pudo guardar el conteo: ${error.message}`); return false; }
     return true;
   }
 
   async function finishCount() {
     if (!stocktakeId || !active || !lines.length || !canWrite) return;
-    const saved = await saveLines();
-    if (!saved) return;
-    const { data, error } = await (supabase as any).rpc("finalize_inventory_stocktake", {
-      p_stocktake_id: stocktakeId,
-    });
-    if (error) return toast.error(error.message ?? "No se pudo finalizar el conteo");
+    if (!(await saveLines())) return;
+    const { data, error } = await supabase.rpc("finalize_inventory_stocktake", { p_stocktake_id: stocktakeId });
+    if (error) { toast.error(error.message); return; }
     await generatePdf();
+    const result = data[0];
     setStocktakeId(null);
     setLines([]);
-    await refetch();
-    const result = Array.isArray(data) ? data[0] : data;
-    toast.success(
-      `Conteo finalizado. ${Number(result?.adjusted_products ?? 0)} productos ajustados.`,
-    );
-  }
-
-  function openNewProduct(prefilledCode = "") {
-    setScanActionsOpen(false);
-    setNewProduct((v) => ({ ...v, barcode: prefilledCode || v.barcode }));
-    setNewProductOpen(true);
-  }
-
-  async function generateSku() {
-    if (!active || !canWrite) return;
-    try {
-      const { data, error } = await (supabase as any).rpc("generate_product_sku", {
-        p_business_id: active.id,
-        p_prefix: "NVA-PRD",
-      });
-      if (error) throw error;
-      setNewSku((v) => ({ ...v, sku: String(data ?? "") }));
-      setNewProduct((v) => ({ ...v, sku: String(data ?? "") }));
-      toast.success("SKU generado correctamente");
-    } catch (error: any) {
-      toast.error(error?.message ?? "No se pudo generar el SKU");
-    }
-  }
-
-  async function registerSku() {
-    if (!active || !canWrite) return;
-    const product = products.find((p: any) => p.id === newSku.productId);
-    const sku = newSku.sku.trim();
-    if (!product) return toast.error("Selecciona un producto existente");
-    if (!sku) return toast.error("Ingresa o genera un SKU");
-    try {
-      const { error } = await (supabase as any)
-        .from("products")
-        .update({ sku })
-        .eq("id", product.id)
-        .eq("business_id", active.id);
-      if (error) throw error;
-      setNewSkuOpen(false);
-      setNewSku({ productId: "", sku: "" });
-      await refetch();
-      toast.success(`SKU ${sku} registrado para ${product.name ?? "el producto"}`);
-    } catch (error: any) {
-      toast.error(error?.message ?? "No se pudo registrar el SKU");
-    }
+    await refreshProducts();
+    toast.success(`Conteo finalizado. ${Number(result?.adjusted_products ?? 0)} productos ajustados.`);
   }
 
   async function createProduct() {
     if (!active || !canWrite) return;
     if (!newProduct.name.trim()) return toast.error("El nombre del producto es obligatorio");
-    if (!newProduct.barcode.trim() && !newProduct.sku.trim())
-      return toast.error("Ingresa un código o SKU para identificar el producto");
-    const { data, error } = await supabase
-      .from("products" as any)
-      .insert({
-        business_id: active.id,
-        name: newProduct.name.trim(),
-        sku: newProduct.sku.trim() || null,
-        barcode: newProduct.barcode.trim() || null,
-        category: newProduct.category.trim() || null,
-        cost: Number(newProduct.cost) || 0,
-        price: Number(newProduct.price) || 0,
-        stock: 0,
-      })
-      .select("id,name,barcode,stock,sku")
-      .single();
-    if (error)
-      return toast.error(
-        error.message.includes("barcode")
-          ? "Ese código ya existe para este negocio"
-          : error.message.includes("sku")
-            ? "Ese SKU ya existe para este negocio"
-            : error.message,
-      );
+    if (!newProduct.barcode.trim() && !newProduct.sku.trim()) return toast.error("Ingresa un código o SKU para identificar el producto");
+    const { data, error } = await supabase.from("products").insert({ business_id: active.id, name: newProduct.name.trim(), sku: newProduct.sku.trim() || null, barcode: newProduct.barcode.trim() || null, category: newProduct.category.trim() || null, cost: Number(newProduct.cost) || 0, price: Number(newProduct.price) || 0, stock: 0 }).select("id,name,barcode,stock,sku").single();
+    if (error) return toast.error(error.message);
     setNewProductOpen(false);
-    setBarcode("");
-    await refetch();
-    if (data)
-      await scanValue(String(data.barcode ?? data.sku), {
-        product_id: data.id,
-        name: data.name,
-        barcode: data.barcode,
-        sku: data.sku,
-        stock: Number(data.stock ?? 0),
-      });
-    setNewProduct({
-      name: "",
-      sku: "",
-      barcode: "",
-      category: "",
-      cost: "0",
-      price: "0",
-      stock: "0",
-    });
+    setNewProduct({ name: "", sku: "", barcode: "", category: "", cost: "0", price: "0" });
+    await refreshProducts();
+    await scanValue(String(data.barcode ?? data.sku ?? ""), { product_id: data.id, name: data.name, barcode: data.barcode, sku: data.sku, stock: data.stock });
     toast.success("Producto creado y agregado al conteo");
   }
 
   async function generatePdf() {
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Nüva One — Conteo físico de inventario", 14, 18);
-    doc.setFontSize(10);
-    doc.text(`Empresa: ${active?.name ?? "Empresa activa"}`, 14, 26);
-    doc.text(`Fecha: ${new Date().toLocaleString("es-CL")}`, 14, 32);
-    doc.text("Producto", 14, 43);
-    doc.text("Código", 92, 43);
-    doc.text("Sistema", 130, 43);
-    doc.text("Físico", 157, 43);
-    doc.text("Dif.", 181, 43);
+    doc.setFontSize(18); doc.text("Nüva One — Conteo físico de inventario", 14, 18);
+    doc.setFontSize(10); doc.text(`Empresa: ${active?.name ?? "Empresa activa"}`, 14, 26); doc.text(`Fecha: ${new Date().toLocaleString("es-CL")}`, 14, 32);
+    doc.text("Producto", 14, 43); doc.text("Código", 92, 43); doc.text("Sistema", 130, 43); doc.text("Físico", 157, 43); doc.text("Dif.", 181, 43);
     let y = 50;
-    lines.forEach((x) => {
-      if (y > 280) {
-        doc.addPage();
-        y = 18;
-      }
-      doc.setFontSize(9);
-      doc.text(x.product_name.slice(0, 38), 14, y);
-      doc.text(String(x.barcode ?? "—"), 92, y);
-      doc.text(String(x.system_qty), 130, y);
-      doc.text(String(x.counted_qty), 157, y);
-      doc.text(String(x.counted_qty - x.system_qty), 181, y);
-      y += 7;
-    });
-    const totalSystem = lines.reduce((s, x) => s + x.system_qty, 0);
-    const totalPhysical = lines.reduce((s, x) => s + x.counted_qty, 0);
-    y += 5;
-    doc.setFontSize(11);
-    doc.text(`Total unidades registradas: ${totalSystem}`, 14, y);
-    y += 7;
-    doc.text(`Total unidades físicas: ${totalPhysical}`, 14, y);
-    y += 7;
-    doc.text(`Diferencia total: ${totalPhysical - totalSystem}`, 14, y);
-    doc.save(`nuva-conteo-${new Date().toISOString().slice(0, 10)}.pdf`);
+    for (const line of lines) {
+      if (y > 280) { doc.addPage(); y = 18; }
+      doc.setFontSize(9); doc.text(line.product_name.slice(0, 38), 14, y); doc.text(String(line.barcode ?? "—"), 92, y); doc.text(String(line.system_qty), 130, y); doc.text(String(line.counted_qty), 157, y); doc.text(String(line.counted_qty - line.system_qty), 181, y); y += 7;
+    }
+    y += 5; doc.setFontSize(11); doc.text(`Total sistema: ${lines.reduce((sum, line) => sum + line.system_qty, 0)}`, 14, y); doc.text(`Total físico: ${lines.reduce((sum, line) => sum + line.counted_qty, 0)}`, 14, y + 7); doc.save(`nuva-conteo-${new Date().toISOString().slice(0, 10)}.pdf`);
   }
 
-  const differences = lines.filter((x) => x.counted_qty !== x.system_qty).length;
   return (
     <ModuleGuard module="inventory">
       <div className="space-y-6">
-        <PageHeader
-          title="Conteo físico de inventario"
-          description="Escanea con cámara o pistola, compara contra el stock digital y aplica las diferencias de forma atómica al finalizar."
-          action={
-            <Badge variant={stocktakeId ? "default" : "secondary"}>
-              {stocktakeId ? "Conteo en curso" : "Sin conteo"}
-            </Badge>
-          }
-        />
+        <PageHeader title="Conteo físico" description="Cuenta productos, detecta diferencias y aplica los ajustes desde una jornada trazable." action={<div className="flex gap-2"><Button variant="outline" onClick={() => void refreshProducts()}><RefreshCwIcon /></Button><Button disabled={!canWrite} onClick={() => void startCount()}><ClipboardCheck className="mr-2 h-4 w-4" />Iniciar conteo</Button></div>} />
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <Card className="p-5 space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <Button disabled={!canWrite || !!stocktakeId} onClick={startCount}>
-                <ClipboardCheck className="mr-2 h-4 w-4" />
-                Nuevo conteo
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setScanActionsOpen(true)}
-                disabled={!canWrite}
-              >
-                <ScanBarcode className="mr-2 h-4 w-4" />
-                Escanear / registrar
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                autoFocus
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void scanValue(barcode);
-                  }
-                }}
-                placeholder="Pistola USB/Bluetooth HID: escanea y presiona Enter…"
-              />
-              <Button onClick={() => void scanValue(barcode)}>
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-            {matched && (
-              <div className="rounded-lg border p-3 text-sm">
-                <b>{matched.name}</b> · Código {matched.barcode ?? matched.sku} · Stock digital{" "}
-                {matched.stock}
-              </div>
-            )}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left">
-                    <th className="p-2">Producto</th>
-                    <th className="p-2">Código</th>
-                    <th className="p-2">Sistema</th>
-                    <th className="p-2">Físico</th>
-                    <th className="p-2">Dif.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((x) => (
-                    <tr key={x.id} className="border-b">
-                      <td className="p-2">{x.product_name}</td>
-                      <td className="p-2">{x.barcode ?? "—"}</td>
-                      <td className="p-2">{x.system_qty}</td>
-                      <td className="p-2">
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            onClick={() =>
-                              setLines((v) =>
-                                v.map((y) =>
-                                  y.id === x.id
-                                    ? { ...y, counted_qty: Math.max(0, y.counted_qty - 1) }
-                                    : y,
-                                ),
-                              )
-                            }
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center">{x.counted_qty}</span>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            onClick={() =>
-                              setLines((v) =>
-                                v.map((y) =>
-                                  y.id === x.id ? { ...y, counted_qty: y.counted_qty + 1 } : y,
-                                ),
-                              )
-                            }
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </td>
-                      <td
-                        className={
-                          x.counted_qty === x.system_qty
-                            ? "p-2 text-emerald-600"
-                            : "p-2 font-semibold text-destructive"
-                        }
-                      >
-                        {x.counted_qty - x.system_qty}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {!lines.length && (
-                <p className="py-10 text-center text-sm text-muted-foreground">
-                  Escanea el primer producto para comenzar.
-                </p>
-              )}
-            </div>
-          </Card>
-          <Card className="p-5 space-y-4">
-            <h2 className="font-semibold">Resultado del conteo</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric label="Productos contados" value={String(lines.length)} />
-              <Metric label="Con diferencias" value={String(differences)} />
-              <Metric
-                label="Stock digital"
-                value={String(lines.reduce((s, x) => s + x.system_qty, 0))}
-              />
-              <Metric
-                label="Stock físico"
-                value={String(lines.reduce((s, x) => s + x.counted_qty, 0))}
-              />
-            </div>
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={!lines.length}
-              onClick={() => void generatePdf()}
-            >
-              <FileDown className="mr-2 h-4 w-4" />
-              Generar documento comparativo
-            </Button>
-            <Button
-              className="w-full"
-              disabled={!stocktakeId || !lines.length || !canWrite}
-              onClick={() => void finishCount()}
-            >
-              <ClipboardCheck className="mr-2 h-4 w-4" />
-              Guardar, finalizar y auditar
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Si el guardado falla, el conteo no se completa. La finalización aplica los ajustes y
-              crea los movimientos de auditoría dentro de una transacción.
-            </p>
-          </Card>
+          <Card className="p-5"><div className="flex flex-wrap gap-2"><div className="relative flex-1 min-w-[220px]"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input ref={inputRef} value={barcode} onChange={(e) => setBarcode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void scanValue(barcode); }} placeholder="Escanea o ingresa código / SKU" className="pl-9" /></div><Button onClick={() => void scanValue(barcode)} disabled={!canWrite || !barcode.trim()}>Agregar</Button><Button variant="outline" onClick={() => setScannerOpen(true)} disabled={!canWrite}><ScanBarcode className="mr-2 h-4 w-4" />Escanear</Button></div>{matched && <div className="mt-3 rounded-lg border p-3 text-sm"><strong>{matched.name}</strong> · stock sistema {Number(matched.stock ?? 0)}</div>}<div className="mt-5 overflow-x-auto"><table className="w-full min-w-[640px] text-sm"><thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="p-2">Producto</th><th className="p-2">Código</th><th className="p-2 text-right">Sistema</th><th className="p-2 text-right">Físico</th><th className="p-2 text-right">Dif.</th><th className="p-2" /></tr></thead><tbody>{lines.map((line) => <tr key={line.id} className="border-b"><td className="p-2">{line.product_name}</td><td className="p-2">{line.barcode ?? "—"}</td><td className="p-2 text-right">{line.system_qty}</td><td className="p-2 text-right"><div className="flex items-center justify-end gap-1"><Button size="icon" variant="ghost" onClick={() => setLines((current) => current.map((item) => item.id === line.id ? { ...item, counted_qty: Math.max(0, item.counted_qty - 1) } : item))}><Minus className="h-3 w-3" /></Button>{line.counted_qty}<Button size="icon" variant="ghost" onClick={() => setLines((current) => current.map((item) => item.id === line.id ? { ...item, counted_qty: item.counted_qty + 1 } : item))}><Plus className="h-3 w-3" /></Button></div></td><td className="p-2 text-right"><Badge variant={line.counted_qty === line.system_qty ? "secondary" : "destructive"}>{line.counted_qty - line.system_qty}</Badge></td><td className="p-2" /></tr>)}</tbody></table>{lines.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">Todavía no hay productos en el conteo.</p>}</div></Card>
+          <Card className="p-5"><h2 className="font-semibold">Resumen</h2><div className="mt-4 space-y-3 text-sm"><Row label="Productos" value={String(lines.length)} /><Row label="Unidades sistema" value={String(lines.reduce((sum, line) => sum + line.system_qty, 0))} /><Row label="Unidades físicas" value={String(lines.reduce((sum, line) => sum + line.counted_qty, 0))} /><Row label="Diferencia" value={String(lines.reduce((sum, line) => sum + line.counted_qty - line.system_qty, 0))} /></div><div className="mt-5 grid gap-2"><Button disabled={!lines.length || !canWrite} onClick={() => void finishCount()}><ClipboardCheck className="mr-2 h-4 w-4" />Finalizar y ajustar</Button><Button variant="outline" disabled={!lines.length} onClick={() => void generatePdf()}><FileDown className="mr-2 h-4 w-4" />Exportar PDF</Button><Button variant="outline" onClick={() => setNewProductOpen(true)} disabled={!canWrite}><PackagePlus className="mr-2 h-4 w-4" />Nuevo producto</Button></div></Card>
         </div>
-        <Dialog open={scanActionsOpen} onOpenChange={setScanActionsOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Agregar al inventario</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-3">
-              <Button
-                size="lg"
-                onClick={() => {
-                  setScanActionsOpen(false);
-                  setScannerOpen(true);
-                }}
-              >
-                <ScanBarcode className="mr-2 h-5 w-5" />
-                Escanear código
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  setScanActionsOpen(false);
-                  setNewSkuOpen(true);
-                }}
-              >
-                <Tag className="mr-2 h-5 w-5" />
-                Registrar nuevo SKU
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => openNewProduct()}>
-                <PackagePlus className="mr-2 h-5 w-5" />
-                Registrar nuevo producto
-              </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                Escanea un código nuevo y Nüva One te permitirá convertirlo directamente en un
-                producto nuevo.
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <LiveProductScanner
-          open={scannerOpen}
-          onOpenChange={setScannerOpen}
-          title="Nüva Scan · Conteo"
-          onProductFound={(product) => {
-            void scanValue(product.sku ?? product.barcode ?? "", {
-              product_id: product.product_id,
-              name: product.name,
-              barcode: product.barcode,
-              sku: product.sku,
-              stock: product.stock,
-            });
-          }}
-          onCodeNotFound={(code) => {
-            setScannerOpen(false);
-            setNewProduct((v) => ({ ...v, barcode: code }));
-            setNewProductOpen(true);
-          }}
-        />
-        <Dialog open={newSkuOpen} onOpenChange={setNewSkuOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Registrar nuevo SKU</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Asocia un SKU interno a un producto existente. El SKU queda protegido por el
-                negocio.
-              </p>
-              <div>
-                <Label>Producto</Label>
-                <select
-                  className="mt-1 flex h-10 w-full rounded-md border bg-background px-3 text-sm"
-                  value={newSku.productId}
-                  onChange={(e) => setNewSku((v) => ({ ...v, productId: e.target.value }))}
-                >
-                  <option value="">Selecciona un producto</option>
-                  {products.map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name ?? "Producto"}
-                      {p.sku ? ` · ${p.sku}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label>SKU</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={newSku.sku}
-                    onChange={(e) => setNewSku((v) => ({ ...v, sku: e.target.value }))}
-                    placeholder="NVA-PRD-000001"
-                  />
-                  <Button type="button" variant="outline" onClick={() => void generateSku()}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generar
-                  </Button>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setNewSkuOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={() => void registerSku()} disabled={!canWrite}>
-                  Registrar SKU
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nuevo producto desde código escaneado</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div className="rounded-lg border bg-muted/40 p-3">
-                <div className="text-xs text-muted-foreground">Código detectado</div>
-                <div className="font-mono text-sm font-semibold">
-                  {newProduct.barcode || "Sin código"}
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Este código no existe todavía. Completa los datos para crear el producto
-                directamente desde inventario. No necesitas seleccionar un producto existente.
-              </p>
-              <div>
-                <Label>Nombre del producto</Label>
-                <Input
-                  value={newProduct.name}
-                  onChange={(e) => setNewProduct((v) => ({ ...v, name: e.target.value }))}
-                  placeholder="Ej. Bebida, polera, alimento…"
-                  autoFocus
-                  required
-                />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label>SKU</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={newProduct.sku}
-                      onChange={(e) => setNewProduct((v) => ({ ...v, sku: e.target.value }))}
-                      placeholder="Opcional"
-                    />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="outline"
-                      title="Generar SKU"
-                      onClick={() => void generateSku()}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <Label>Código de barras</Label>
-                  <Input
-                    value={newProduct.barcode}
-                    onChange={(e) => setNewProduct((v) => ({ ...v, barcode: e.target.value }))}
-                    placeholder="EAN, UPC, QR…"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Categoría</Label>
-                <Input
-                  value={newProduct.category}
-                  onChange={(e) => setNewProduct((v) => ({ ...v, category: e.target.value }))}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Costo</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newProduct.cost}
-                    onChange={(e) => setNewProduct((v) => ({ ...v, cost: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>Precio</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newProduct.price}
-                    onChange={(e) => setNewProduct((v) => ({ ...v, price: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setNewProductOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={() => void createProduct()} disabled={!canWrite}>
-                  <PackagePlus className="mr-2 h-4 w-4" />
-                  Crear producto y agregar al conteo
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <LiveProductScanner open={scannerOpen} onOpenChange={setScannerOpen} title="Escáner de conteo" onResolved={(resolution) => { const product = resolution.product; if (resolution.status === "FOUND" && product) void scanValue(product.barcode ?? product.sku ?? "", { product_id: product.id, name: product.name, barcode: product.barcode, sku: product.sku, stock: product.stock }); }} />
+        <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}><DialogContent><DialogHeader><DialogTitle>Nuevo producto</DialogTitle></DialogHeader><div className="space-y-3"><Field label="Nombre"><Input value={newProduct.name} onChange={(e) => setNewProduct((v) => ({ ...v, name: e.target.value }))} /></Field><Field label="SKU"><Input value={newProduct.sku} onChange={(e) => setNewProduct((v) => ({ ...v, sku: e.target.value }))} /></Field><Field label="Código de barras"><Input value={newProduct.barcode} onChange={(e) => setNewProduct((v) => ({ ...v, barcode: e.target.value }))} /></Field><Field label="Categoría"><Input value={newProduct.category} onChange={(e) => setNewProduct((v) => ({ ...v, category: e.target.value }))} /></Field><div className="grid grid-cols-2 gap-3"><Field label="Costo"><Input type="number" min="0" value={newProduct.cost} onChange={(e) => setNewProduct((v) => ({ ...v, cost: e.target.value }))} /></Field><Field label="Precio"><Input type="number" min="0" value={newProduct.price} onChange={(e) => setNewProduct((v) => ({ ...v, price: e.target.value }))} /></Field></div><Button className="w-full" onClick={() => void createProduct()} disabled={!canWrite}>Crear producto</Button></div></DialogContent></Dialog>
       </div>
     </ModuleGuard>
   );
 }
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 text-xl font-bold">{value}</div>
-    </div>
-  );
-}
+function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="space-y-1 text-sm"><span className="font-medium">{label}</span>{children}</label>; }
+function Row({ label, value }: { label: string; value: string }) { return <div className="flex justify-between gap-4"><span className="text-muted-foreground">{label}</span><span className="font-medium">{value}</span></div>; }
+function RefreshCwIcon() { return <span className="text-sm">↻</span>; }

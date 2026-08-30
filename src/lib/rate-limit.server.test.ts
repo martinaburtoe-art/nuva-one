@@ -40,10 +40,10 @@ describe("checkRateLimit", () => {
     });
   });
 
-  it("fails OPEN (returns true) when the RPC errors, so an outage doesn't block checkout", async () => {
+  it("fails CLOSED (returns false) when the RPC errors, so protected endpoints cannot become unlimited", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     rpcMock.mockResolvedValue({ data: null, error: new Error("connection refused") });
-    await expect(checkRateLimit("bucket:1", 10, 3600)).resolves.toBe(true);
+    await expect(checkRateLimit("bucket:1", 10, 3600)).resolves.toBe(false);
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
@@ -54,16 +54,19 @@ describe("checkRateLimit", () => {
     await checkRateLimit("bucket:1", 10, 3600);
     expect(fromMock).toHaveBeenCalledWith("system_alerts");
     expect(insertMock).toHaveBeenCalledWith(
-      expect.objectContaining({ source: "rate_limit_fail_open" }),
+      expect.objectContaining({
+        source: "rate_limit_fail_closed",
+        message: 'check_rate_limit RPC failed for bucket "bucket:1"; request blocked',
+      }),
     );
     vi.restoreAllMocks();
   });
 
-  it("still returns true (never throws) even if persisting the alert itself fails", async () => {
+  it("still returns false (never throws) even if persisting the alert itself fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     rpcMock.mockResolvedValue({ data: null, error: new Error("connection refused") });
     insertMock.mockRejectedValueOnce(new Error("insert failed"));
-    await expect(checkRateLimit("bucket:1", 10, 3600)).resolves.toBe(true);
+    await expect(checkRateLimit("bucket:1", 10, 3600)).resolves.toBe(false);
     vi.restoreAllMocks();
   });
 });

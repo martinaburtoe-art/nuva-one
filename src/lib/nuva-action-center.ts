@@ -1,11 +1,7 @@
+import type { IntelligenceSignal } from "./nuva-intelligence";
+
 export type ActionPriority = "critical" | "high" | "medium" | "opportunity";
-export type ActionDestination =
-  | "inventory"
-  | "crm"
-  | "purchases"
-  | "finance"
-  | "customers"
-  | "dashboard";
+export type ActionDestination = "inventory" | "crm" | "purchases" | "finance" | "customers" | "dashboard";
 export type ActionMode = "review" | "prepare";
 
 export type NuvaAction = {
@@ -20,16 +16,7 @@ export type NuvaAction = {
   mode: ActionMode;
 };
 
-type Signal = {
-  id: string;
-  severity?: "critical" | "warning" | "opportunity" | "info";
-  title: string;
-  description: string;
-  action?: string;
-  recommendation?: string;
-};
-
-const priorityMap: Record<NonNullable<Signal["severity"]>, ActionPriority> = {
+const priorityMap: Record<IntelligenceSignal["severity"], ActionPriority> = {
   critical: "critical",
   warning: "high",
   opportunity: "opportunity",
@@ -47,7 +34,7 @@ const destinationMap: Record<string, ActionDestination> = {
   dte: "finance",
   rcv: "finance",
 };
-const impactMap: Record<NonNullable<Signal["severity"]>, number> = {
+const impactMap: Record<IntelligenceSignal["severity"], number> = {
   critical: 100,
   warning: 75,
   opportunity: 65,
@@ -71,19 +58,18 @@ const modeMap: Record<ActionDestination, ActionMode> = {
 };
 
 /** Converts analytical signals into a ranked action list. Execution is always explicit and user-confirmed. */
-export function buildNuvaActionCenter(signals: Signal[], limit = 5): NuvaAction[] {
+export function buildNuvaActionCenter(signals: IntelligenceSignal[], limit = 5): NuvaAction[] {
   return signals
     .filter((signal) => Boolean(signal?.title))
     .map((signal, index) => {
       const destination = destinationMap[signal.id] ?? "dashboard";
-      const severity = signal.severity ?? "info";
+      const severity = signal.severity;
       return {
         id: signal.id || `signal-${index}`,
         priority: priorityMap[severity],
         title: signal.title,
-        reason: signal.description,
-        action:
-          signal.action || signal.recommendation || "Revisar este indicador y definir una acción.",
+        reason: signal.explanation,
+        action: signal.action || "Revisar este indicador y definir una acción.",
         impact: impactMap[severity],
         destination,
         cta: ctaMap[destination],

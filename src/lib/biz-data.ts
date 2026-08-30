@@ -3,6 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "./use-business";
 import { toast } from "sonner";
 
+function requireInsertedRowId<T>(data: T): T & { id: string } {
+  if (!data || typeof data !== "object" || !("id" in data) || typeof data.id !== "string") {
+    throw new Error("La operación no devolvió un registro con id válido");
+  }
+  return data as T & { id: string };
+}
+
 export function useBizList<T = any>(
   table: string,
   opts?: { order?: string; ascending?: boolean; enabled?: boolean },
@@ -12,10 +19,7 @@ export function useBizList<T = any>(
     enabled: !!active?.id && (opts?.enabled ?? true),
     queryKey: [table, active?.id],
     queryFn: async () => {
-      const q = supabase
-        .from(table as any)
-        .select("*")
-        .eq("business_id", active!.id);
+      const q = supabase.from(table as any).select("*").eq("business_id", active!.id);
       if (opts?.order) q.order(opts.order, { ascending: opts.ascending ?? false });
       const { data, error } = await q;
       if (error) throw error;
@@ -30,13 +34,9 @@ export function useBizInsert(table: string) {
   return useMutation({
     mutationFn: async (row: Record<string, any>) => {
       if (!active) throw new Error("Selecciona un negocio");
-      const { error, data } = await supabase
-        .from(table as any)
-        .insert({ ...row, business_id: active.id })
-        .select()
-        .single();
+      const { error, data } = await supabase.from(table as any).insert({ ...row, business_id: active.id }).select().single();
       if (error) throw error;
-      return data;
+      return requireInsertedRowId(data);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table, active?.id] });
@@ -51,10 +51,7 @@ export function useBizDelete(table: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from(table as any)
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from(table as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -70,10 +67,7 @@ export function useBizUpdate(table: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Record<string, any> }) => {
-      const { error } = await supabase
-        .from(table as any)
-        .update(patch)
-        .eq("id", id);
+      const { error } = await supabase.from(table as any).update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -84,9 +78,4 @@ export function useBizUpdate(table: string) {
   });
 }
 
-export const fmtCLP = (n: number) =>
-  new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  }).format(n);
+export const fmtCLP = (n: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(n);

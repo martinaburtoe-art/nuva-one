@@ -23,9 +23,8 @@ export function buildNextBestActions(signals: ActionSignal[], limit = 5): NextBe
   return [...signals]
     .sort(
       (a, b) =>
-        priorityWeight[b.priority] +
-        Math.max(0, b.impact) -
-        (priorityWeight[a.priority] + Math.max(0, a.impact)),
+        priorityWeight[b.priority] - priorityWeight[a.priority] ||
+        Math.max(0, b.impact) - Math.max(0, a.impact),
     )
     .slice(0, limit)
     .map((signal, index) => ({

@@ -143,7 +143,7 @@ export function LiveProductScanner({
   }, []);
   const emitAction = useCallback(
     (action: ScannerAction, product?: ScannerProduct) => {
-      onAction?.({ action, context: { code: lastCode, product } });
+      onAction?.(action, { code: lastCode, product });
       if ((action === "entry" || action === "exit" || action === "count") && product?.id) {
         setOperation(action);
         setOperationProduct(product);
@@ -357,11 +357,11 @@ export function LiveProductScanner({
       if (existing.status === "UNAUTHORIZED")
         throw new Error("No tienes autorización para registrar este código.");
       const codeType =
-        validation.kind === "EAN-13"
+        validation.codeKind === "EAN-13"
           ? "ean_13"
-          : validation.kind === "EAN-8"
+          : validation.codeKind === "EAN-8"
             ? "ean_8"
-            : validation.kind === "UPC-A"
+            : validation.codeKind === "UPC-A"
               ? "upc_a"
               : "alternate";
       const result = await createProductFromScannerRpc(supabase, {
@@ -386,7 +386,7 @@ export function LiveProductScanner({
       toast.success(
         `${name} creado · ${result.sku} · código asociado · stock ${result.stock_after}`,
       );
-      onAction?.({ action: "new_product", context: { code: result.code, product } });
+      onAction?.("new_product", { code: result.code, product });
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "No se pudo crear el producto desde el scanner.",
@@ -526,45 +526,20 @@ export function LiveProductScanner({
                 <span>Producto identificado. Selecciona una operación.</span>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => emitAction("entry", operationProduct)}
-                >
-                  <PackagePlus className="mr-1.5 h-4 w-4" />
-                  Entrada
+                <Button size="sm" variant="outline" onClick={() => emitAction("entry", operationProduct)}>
+                  <PackagePlus className="mr-1.5 h-4 w-4" /> Entrada
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => emitAction("exit", operationProduct)}
-                >
-                  <PackagePlus className="mr-1.5 h-4 w-4" />
-                  Salida
+                <Button size="sm" variant="outline" onClick={() => emitAction("exit", operationProduct)}>
+                  <PackagePlus className="mr-1.5 h-4 w-4" /> Salida
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => emitAction("count", operationProduct)}
-                >
-                  <ClipboardList className="mr-1.5 h-4 w-4" />
-                  Contar
+                <Button size="sm" variant="outline" onClick={() => emitAction("count", operationProduct)}>
+                  <ClipboardList className="mr-1.5 h-4 w-4" /> Contar
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => emitAction("add_code", operationProduct)}
-                >
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Agregar código
+                <Button size="sm" variant="outline" onClick={() => emitAction("add_code", operationProduct)}>
+                  <Plus className="mr-1.5 h-4 w-4" /> Agregar código
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => emitAction("view_product", operationProduct)}
-                >
-                  <Search className="mr-1.5 h-4 w-4" />
-                  Ver producto
+                <Button size="sm" variant="outline" onClick={() => emitAction("view_product", operationProduct)}>
+                  <Search className="mr-1.5 h-4 w-4" /> Ver producto
                 </Button>
               </div>
             </div>
@@ -573,49 +548,19 @@ export function LiveProductScanner({
             <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
               <div>
                 <div className="text-sm font-semibold">
-                  {operation === "entry"
-                    ? "Entrada de inventario"
-                    : operation === "exit"
-                      ? "Salida de inventario"
-                      : "Conteo físico"}
+                  {operation === "entry" ? "Entrada de inventario" : operation === "exit" ? "Salida de inventario" : "Conteo físico"}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {operationProduct.name ?? "Producto"} · Stock actual:{" "}
-                  {Number(operationProduct.stock ?? 0)}
+                  {operationProduct.name ?? "Producto"} · Stock actual: {Number(operationProduct.stock ?? 0)}
                 </div>
               </div>
               <div className="grid gap-2">
-                <Input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="Cantidad"
-                  inputMode="numeric"
-                />
-                <Input
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Motivo del movimiento"
-                />
+                <Input type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Cantidad" inputMode="numeric" />
+                <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo del movimiento" />
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setOperation(null)}
-                    disabled={savingOperation}
-                  >
-                    Cancelar
-                  </Button>
+                  <Button variant="outline" onClick={() => setOperation(null)} disabled={savingOperation}>Cancelar</Button>
                   <Button onClick={() => void submitOperation()} disabled={savingOperation}>
-                    {savingOperation ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Registrando…
-                      </>
-                    ) : (
-                      "Confirmar movimiento"
-                    )}
+                    {savingOperation ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Registrando…</> : "Confirmar movimiento"}
                   </Button>
                 </div>
               </div>
@@ -624,161 +569,42 @@ export function LiveProductScanner({
           {state === "not_found" && (
             <div className="rounded-xl border bg-muted/40 p-3 text-sm">
               <div className="font-medium">Código no registrado</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                El código puede crear un producto nuevo directamente desde el scanner.
-              </div>
+              <div className="mt-1 text-xs text-muted-foreground">El código puede crear un producto nuevo directamente desde el scanner.</div>
               <div className="mt-3 flex gap-2">
-                <Button size="sm" onClick={openNewProduct}>
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Crear producto
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => emitAction("add_code")}>
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Asociar código
-                </Button>
+                <Button size="sm" onClick={openNewProduct}><Plus className="mr-1.5 h-4 w-4" />Crear producto</Button>
+                <Button size="sm" variant="outline" onClick={() => emitAction("add_code")}><Plus className="mr-1.5 h-4 w-4" />Asociar código</Button>
               </div>
             </div>
           )}
-          {(state === "duplicate" ||
-            state === "camera_error" ||
-            state === "permission_denied" ||
-            state === "unsupported") && (
+          {(state === "duplicate" || state === "camera_error" || state === "permission_denied" || state === "unsupported") && (
             <div className="rounded-xl border bg-muted/40 p-3 text-sm">
               <div className="font-medium">{statusText[state]}</div>
-              {state === "duplicate" && (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Revisa las asociaciones y conserva un único código primario por producto.
-                </div>
-              )}
-              {state === "permission_denied" && (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Permite la cámara en el navegador y vuelve a intentarlo.
-                </div>
-              )}
-              {state === "unsupported" && (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Prueba Chrome actualizado en Android o la aplicación nativa.
-                </div>
-              )}
-              <Button
-                variant="outline"
-                className="mt-3"
-                onClick={() => {
-                  stop();
-                  setLastCode("");
-                  setManualCode("");
-                  setState("idle");
-                  onOpenChange(false);
-                  window.setTimeout(() => onOpenChange(true), 0);
-                }}
-              >
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Reintentar
+              {state === "duplicate" && <div className="mt-1 text-xs text-muted-foreground">Revisa las asociaciones y conserva un único código primario por producto.</div>}
+              {state === "permission_denied" && <div className="mt-1 text-xs text-muted-foreground">Permite la cámara en el navegador y vuelve a intentarlo.</div>}
+              {state === "unsupported" && <div className="mt-1 text-xs text-muted-foreground">Prueba Chrome actualizado en Android o la aplicación nativa.</div>}
+              <Button variant="outline" className="mt-3" onClick={() => { stop(); setLastCode(""); setManualCode(""); setState("idle"); onOpenChange(false); window.setTimeout(() => onOpenChange(true), 0); }}>
+                <RotateCcw className="mr-2 h-4 w-4" />Reintentar
               </Button>
             </div>
           )}
-          {state === "scanning" && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Camera className="h-4 w-4" />
-              Cámara en vivo · lector HID · búsqueda manual
-            </div>
-          )}
-          {state === "stopped" && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <CameraOff className="h-4 w-4" />
-              Cámara detenida
-            </div>
-          )}
+          {state === "scanning" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Camera className="h-4 w-4" />Cámara en vivo · lector HID · búsqueda manual</div>}
+          {state === "stopped" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><CameraOff className="h-4 w-4" />Cámara detenida</div>}
         </div>
         <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Crear producto desde código</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Crear producto desde código</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div className="rounded-lg bg-muted/50 p-3 text-sm">
-                <div className="text-xs text-muted-foreground">Código detectado</div>
-                <div className="font-mono font-semibold">{lastCode || "—"}</div>
-              </div>
-              <div>
-                <Label htmlFor="scanner-product-name">Nombre</Label>
-                <Input
-                  id="scanner-product-name"
-                  value={newProductForm.name}
-                  onChange={(e) => setNewProductForm((f) => ({ ...f, name: e.target.value }))}
-                  autoFocus
-                />
-              </div>
-              <div>
-                <Label htmlFor="scanner-product-sku">
-                  SKU{" "}
-                  <span className="text-xs text-muted-foreground">(se genera si queda vacío)</span>
-                </Label>
-                <Input
-                  id="scanner-product-sku"
-                  value={newProductForm.sku}
-                  onChange={(e) => setNewProductForm((f) => ({ ...f, sku: e.target.value }))}
-                />
-              </div>
+              <div className="rounded-lg bg-muted/50 p-3 text-sm"><div className="text-xs text-muted-foreground">Código detectado</div><div className="font-mono font-semibold">{lastCode || "—"}</div></div>
+              <div><Label htmlFor="scanner-product-name">Nombre</Label><Input id="scanner-product-name" value={newProductForm.name} onChange={(e) => setNewProductForm((f) => ({ ...f, name: e.target.value }))} autoFocus /></div>
+              <div><Label htmlFor="scanner-product-sku">SKU <span className="text-xs text-muted-foreground">(se genera si queda vacío)</span></Label><Input id="scanner-product-sku" value={newProductForm.sku} onChange={(e) => setNewProductForm((f) => ({ ...f, sku: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="scanner-product-cost">Costo</Label>
-                  <Input
-                    id="scanner-product-cost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newProductForm.cost}
-                    onChange={(e) => setNewProductForm((f) => ({ ...f, cost: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="scanner-product-price">Precio</Label>
-                  <Input
-                    id="scanner-product-price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newProductForm.price}
-                    onChange={(e) => setNewProductForm((f) => ({ ...f, price: e.target.value }))}
-                  />
-                </div>
+                <div><Label htmlFor="scanner-product-cost">Costo</Label><Input id="scanner-product-cost" type="number" min="0" step="0.01" value={newProductForm.cost} onChange={(e) => setNewProductForm((f) => ({ ...f, cost: e.target.value }))} /></div>
+                <div><Label htmlFor="scanner-product-price">Precio</Label><Input id="scanner-product-price" type="number" min="0" step="0.01" value={newProductForm.price} onChange={(e) => setNewProductForm((f) => ({ ...f, price: e.target.value }))} /></div>
               </div>
-              <div>
-                <Label htmlFor="scanner-product-stock">Stock inicial</Label>
-                <Input
-                  id="scanner-product-stock"
-                  type="number"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                  value={newProductForm.initialStock}
-                  onChange={(e) =>
-                    setNewProductForm((f) => ({ ...f, initialStock: e.target.value }))
-                  }
-                />
-              </div>
+              <div><Label htmlFor="scanner-product-stock">Stock inicial</Label><Input id="scanner-product-stock" type="number" min="0" step="1" inputMode="numeric" value={newProductForm.initialStock} onChange={(e) => setNewProductForm((f) => ({ ...f, initialStock: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setNewProductOpen(false)}
-                  disabled={newProductSaving}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={() => void createProductFromScanner()}
-                  disabled={newProductSaving || !canWrite}
-                >
-                  {newProductSaving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creando…
-                    </>
-                  ) : (
-                    "Crear producto"
-                  )}
-                </Button>
+                <Button variant="outline" onClick={() => setNewProductOpen(false)} disabled={newProductSaving}>Cancelar</Button>
+                <Button onClick={() => void createProductFromScanner()} disabled={newProductSaving || !canWrite}>{newProductSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creando…</> : "Crear producto"}</Button>
               </div>
             </div>
           </DialogContent>

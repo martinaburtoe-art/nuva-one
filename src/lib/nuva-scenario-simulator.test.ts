@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { simulateBusinessScenario } from "./nuva-scenario-simulator";
 
 describe("Nüva scenario simulator", () => {
-  it("detects a dangerous revenue drop", () => {
+  it("detects a dangerous revenue drop when it turns operating result negative", () => {
     const result = simulateBusinessScenario(
       {
         revenue: 10000000,
@@ -14,7 +14,7 @@ describe("Nüva scenario simulator", () => {
       { revenuePct: -30 },
     );
     expect(result.simulated.revenue).toBe(7000000);
-    expect(result.risk).toBe("low");
+    expect(result.risk).toBe("critical");
   });
 
   it("marks a scenario critical when simulated cash or operating result is negative", () => {
