@@ -11,6 +11,7 @@ export type MercadoPagoPlanId = "starter" | "pro";
 
 const API_BASE = "https://api.mercadopago.com";
 const PLAN_REFERENCE_SEPARATOR = "|plan=";
+const WEBHOOK_MAX_AGE_SECONDS = 5 * 60;
 
 export function getMercadoPagoConfig(): MercadoPagoConfig | null {
   const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
@@ -36,7 +37,8 @@ async function mpFetch(
       },
     });
     const parsed: unknown = await response.json().catch(() => ({}));
-    const json: MercadoPagoJson = parsed && typeof parsed === "object" ? parsed as MercadoPagoJson : {};
+    const json: MercadoPagoJson =
+      parsed && typeof parsed === "object" ? (parsed as MercadoPagoJson) : {};
     return { ok: response.ok, status: response.status, json };
   } catch {
     return { ok: false, status: 0, json: {} };
@@ -81,15 +83,29 @@ export function validateMercadoPagoWebhookSignature(params: {
   const v1 = parts.v1;
   if (!ts || !v1) return false;
 
+  const timestampSeconds = Number(ts);
+  if (
+    !Number.isFinite(timestampSeconds) ||
+    Math.abs(Date.now() / 1000 - timestampSeconds) > WEBHOOK_MAX_AGE_SECONDS
+  ) {
+    return false;
+  }
+
   const manifestParts: string[] = [];
   if (params.dataId) manifestParts.push(`id:${params.dataId};`);
   if (params.requestId) manifestParts.push(`request-id:${params.requestId};`);
   manifestParts.push(`ts:${ts};`);
   const manifest = manifestParts.join("");
-  const expected = crypto.createHmac("sha256", params.secret).update(manifest).digest("hex");
+  const expected = crypto
+    .createHmac("sha256", params.secret)
+    .update(manifest)
+    .digest("hex");
   const expectedBuffer = Buffer.from(expected, "hex");
   const receivedBuffer = Buffer.from(v1, "hex");
-  return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
 }
 
 export async function createMercadoPagoSubscription(params: {
@@ -125,7 +141,10 @@ export async function createMercadoPagoSubscription(params: {
   if (!result.ok || !result.json?.id || !result.json?.init_point) {
     return {
       ok: false as const,
-      errorMessage: typeof result.json?.message === "string" ? result.json.message : "Mercado Pago no pudo crear la suscripción",
+      errorMessage:
+        typeof result.json?.message === "string"
+          ? result.json.message
+          : "Mercado Pago no pudo crear la suscripción",
       preapprovalId: null,
       initPoint: null,
     };
