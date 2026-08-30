@@ -20,24 +20,16 @@ const outputFile =
 const environment = (process.env.LOAD_TEST_ENV ?? "").toLowerCase();
 
 if (process.env.LOAD_TEST_CONFIRM !== "true") {
-  throw new Error(
-    "Refusing to run a load test without LOAD_TEST_CONFIRM=true.",
-  );
+  throw new Error("Refusing to run a load test without LOAD_TEST_CONFIRM=true.");
 }
 if (environment !== "staging") {
-  throw new Error(
-    "Refusing load tests outside an explicitly declared staging environment (LOAD_TEST_ENV=staging).",
-  );
+  throw new Error("Refusing load tests outside an explicitly declared staging environment (LOAD_TEST_ENV=staging).");
 }
 if (/nuva-one\.vercel\.app|nuvaone\.cl/i.test(supabaseUrl)) {
-  throw new Error(
-    "Production URL detected. Configure an isolated staging Supabase project.",
-  );
+  throw new Error("Production URL detected. Configure an isolated staging Supabase project.");
 }
 if (!supabaseUrl || !anonKey || !email || !password) {
-  throw new Error(
-    "Missing VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, LOAD_TEST_EMAIL or LOAD_TEST_PASSWORD.",
-  );
+  throw new Error("Missing VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, LOAD_TEST_EMAIL or LOAD_TEST_PASSWORD.");
 }
 
 async function request(url, options = {}) {
@@ -47,15 +39,15 @@ async function request(url, options = {}) {
 }
 
 async function signIn() {
-  const { response } = await request(
-    `${supabaseUrl}/auth/v1/token?grant_type=password`,
-    {
-      method: "POST",
-      headers: { apikey: anonKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    },
-  );
-  if (!response.ok) throw new Error(`Auth failed: HTTP ${response.status}`);
+  const { response } = await request(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: anonKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Auth failed: HTTP ${response.status} ${body}`);
+  }
   return response.json();
 }
 
@@ -68,7 +60,8 @@ async function getBusinessId(accessToken, userId) {
     headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
   });
   if (!response.ok) {
-    throw new Error(`Membership lookup failed: HTTP ${response.status}`);
+    const body = await response.text();
+    throw new Error(`Membership lookup failed: HTTP ${response.status} ${body}`);
   }
   const rows = await response.json();
   if (!rows[0]?.business_id) {
@@ -95,36 +88,11 @@ async function runVirtualUser() {
   for (let i = 0; i < iterations; i += 1) {
     results.push(
       ...(await Promise.all([
-        query(
-          session.access_token,
-          "customers",
-          businessId,
-          "id,name,status,pipeline_stage,created_at",
-        ),
-        query(
-          session.access_token,
-          "products",
-          businessId,
-          "id,name,price,stock,created_at",
-        ),
-        query(
-          session.access_token,
-          "sales",
-          businessId,
-          "id,total,sale_date,customer_id",
-        ),
-        query(
-          session.access_token,
-          "transactions",
-          businessId,
-          "id,type,amount,tx_date",
-        ),
-        query(
-          session.access_token,
-          "quotes",
-          businessId,
-          "id,status,total,created_at",
-        ),
+        query(session.access_token, "customers", businessId, "id,name,status,pipeline_stage,created_at"),
+        query(session.access_token, "products", businessId, "id,name,price,stock,created_at"),
+        query(session.access_token, "sales", businessId, "id,total,sale_date,customer_id"),
+        query(session.access_token, "transactions", businessId, "id,type,amount,tx_date"),
+        query(session.access_token, "quotes", businessId, "id,status,total,created_at"),
       ])),
     );
   }
@@ -132,35 +100,20 @@ async function runVirtualUser() {
 }
 
 async function runPhase(phaseVus) {
-  console.log(
-    `\nNüva One staging load phase: ${phaseVus} VUs × ${iterations} iterations`,
-  );
+  console.log(`\nNüva One staging load phase: ${phaseVus} VUs × ${iterations} iterations`);
   const started = performance.now();
-  const users = await Promise.allSettled(
-    Array.from({ length: phaseVus }, () => runVirtualUser()),
-  );
+  const users = await Promise.allSettled(Array.from({ length: phaseVus }, () => runVirtualUser()));
   const elapsed = performance.now() - started;
-  const results = users.flatMap((user) =>
-    user.status === "fulfilled" ? user.value : [],
-  );
-  const userFailures = users.filter(
-    (user) => user.status === "rejected",
-  ).length;
+  const results = users.flatMap((user) => user.status === "fulfilled" ? user.value : []);
+  const userFailures = users.filter((user) => user.status === "rejected").length;
   const failureCauses = users
     .filter((user) => user.status === "rejected")
     .slice(0, 5)
     .map((user) => String(user.reason?.message ?? user.reason));
-  if (failureCauses.length) {
-    console.error("Virtual-user failure causes:", failureCauses);
-  }
+  if (failureCauses.length) console.error("Virtual-user failure causes:", failureCauses);
   const requestFailures = results.filter((result) => !result.ok).length;
-  const latencies = results
-    .map((result) => result.elapsed)
-    .sort((a, b) => a - b);
-  const percentile = (value) =>
-    latencies.length
-      ? latencies[Math.max(0, Math.ceil(latencies.length * value) - 1)]
-      : 0;
+  const latencies = results.map((result) => result.elapsed).sort((a, b) => a - b);
+  const percentile = (value) => latencies.length ? latencies[Math.max(0, Math.ceil(latencies.length * value) - 1)] : 0;
   const summary = {
     vus: phaseVus,
     iterations,
@@ -183,24 +136,12 @@ for (const phase of requestedPhases) {
   const summary = await runPhase(phase);
   results.push(summary);
   if (summary.user_failures || summary.request_failures) {
-    console.error(
-      `Phase ${phase} failed; stopping before increasing concurrency.`,
-    );
+    console.error(`Phase ${phase} failed; stopping before increasing concurrency.`);
     break;
   }
 }
 
 await mkdir(dirname(outputFile), { recursive: true });
-await writeFile(
-  outputFile,
-  JSON.stringify(
-    { generated_at: new Date().toISOString(), environment, phases: results },
-    null,
-    2,
-  ),
-  "utf8",
-);
+await writeFile(outputFile, JSON.stringify({ generated_at: new Date().toISOString(), environment, phases: results }, null, 2), "utf8");
 console.log(`Load-test results written to ${outputFile}`);
-if (results.some((result) => result.user_failures || result.request_failures)) {
-  process.exitCode = 1;
-}
+if (results.some((result) => result.user_failures || result.request_failures)) process.exitCode = 1;
