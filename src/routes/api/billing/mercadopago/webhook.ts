@@ -140,21 +140,29 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
           if (paymentResult.ok && paymentResult.data) {
             const payment = asPayment(paymentResult.data);
             const externalReference = String(payment.external_reference ?? "");
-            if (externalReference) {
-              await supabaseAdmin.from("subscription_charges").upsert(
-                {
-                  business_id: externalReference,
-                  commerce_order: `mp-${resourceId}`,
-                  amount: Number(payment.transaction_amount ?? 0),
-                  status: String(payment.status ?? "pending"),
-                  provider: "mercadopago",
-                  provider_payment_id: String(payment.id),
-                  provider_subscription_id: payment.metadata?.preapproval_id
-                    ? String(payment.metadata.preapproval_id)
-                    : null,
-                },
-                { onConflict: "commerce_order" },
-              );
+            const { businessId } = parseMercadoPagoExternalReference(externalReference);
+            if (businessId) {
+              const { data: business } = await supabaseAdmin
+                .from("businesses")
+                .select("id")
+                .eq("id", businessId)
+                .maybeSingle();
+              if (business?.id) {
+                await supabaseAdmin.from("subscription_charges").upsert(
+                  {
+                    business_id: business.id,
+                    commerce_order: `mp-${resourceId}`,
+                    amount: Number(payment.transaction_amount ?? 0),
+                    status: String(payment.status ?? "pending"),
+                    provider: "mercadopago",
+                    provider_payment_id: String(payment.id),
+                    provider_subscription_id: payment.metadata?.preapproval_id
+                      ? String(payment.metadata.preapproval_id)
+                      : null,
+                  },
+                  { onConflict: "commerce_order" },
+                );
+              }
             }
           }
         }
