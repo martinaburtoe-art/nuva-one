@@ -45,6 +45,17 @@ if (!businessId) {
   businessId = created[0].id;
 }
 
+// The load-test user must have a deterministic tenant membership. Do not rely
+// on application-side triggers for a test fixture: seed the exact membership
+// the authenticated read path is expected to resolve.
+await api(`/rest/v1/business_members?on_conflict=business_id,user_id`, {
+  method: "POST",
+  headers: {
+    Prefer: "resolution=merge-duplicates,return=minimal",
+  },
+  body: JSON.stringify({ business_id: businessId, user_id: userId, role: "owner" }),
+});
+
 async function insertMany(table, rows) {
   if (!rows.length) return;
   await api(`/rest/v1/${table}`, {
