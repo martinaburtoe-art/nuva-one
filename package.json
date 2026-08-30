@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:report": "node scripts/eslint-report.mjs",
     "format": "prettier --write .",
     "pretypecheck": "vite build --mode development",
     "typecheck": "tsc --noEmit",
