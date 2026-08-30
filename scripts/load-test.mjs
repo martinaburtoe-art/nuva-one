@@ -146,6 +146,13 @@ async function runPhase(phaseVus) {
   const userFailures = users.filter(
     (user) => user.status === "rejected",
   ).length;
+  const failureCauses = users
+    .filter((user) => user.status === "rejected")
+    .slice(0, 5)
+    .map((user) => String(user.reason?.message ?? user.reason));
+  if (failureCauses.length) {
+    console.error("Virtual-user failure causes:", failureCauses);
+  }
   const requestFailures = results.filter((result) => !result.ok).length;
   const latencies = results
     .map((result) => result.elapsed)
@@ -160,6 +167,7 @@ async function runPhase(phaseVus) {
     requests: results.length,
     user_failures: userFailures,
     request_failures: requestFailures,
+    failure_causes: failureCauses,
     p50_ms: Math.round(percentile(0.5)),
     p95_ms: Math.round(percentile(0.95)),
     p99_ms: Math.round(percentile(0.99)),
