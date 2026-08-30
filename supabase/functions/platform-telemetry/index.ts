@@ -5,6 +5,18 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isValidHttpStatus(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 100 && value <= 599;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST")
@@ -24,7 +36,9 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown>;
   try {
-    body = await req.json();
+    const parsed = await req.json();
+    if (!isRecord(parsed)) return new Response("Invalid JSON", { status: 400, headers: cors });
+    body = parsed;
   } catch {
     return new Response("Invalid JSON", { status: 400, headers: cors });
   }
@@ -67,9 +81,7 @@ Deno.serve(async (req) => {
     businessId = business.id;
   }
 
-  const rawMetadata = body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata)
-    ? body.metadata as Record<string, unknown>
-    : {};
+  const rawMetadata = isRecord(body.metadata) ? body.metadata : {};
 
   // Owner Intelligence consumes technical aggregates only. Do not persist the
   // authenticated user's personal identifier. Route/status/duration remain
@@ -79,16 +91,8 @@ Deno.serve(async (req) => {
     ...rawMetadata,
     event_type: body.event_type,
     route: typeof body.route === "string" ? body.route.slice(0, 500) : undefined,
-    duration_ms:
-      Number.isInteger(body.duration_ms) && (body.duration_ms as number) >= 0
-        ? body.duration_ms
-        : undefined,
-    status_code:
-      Number.isInteger(body.status_code) &&
-      (body.status_code as number) >= 100 &&
-      (body.status_code as number) <= 599
-        ? body.status_code
-        : undefined,
+    duration_ms: isNonNegativeInteger(body.duration_ms) ? body.duration_ms : undefined,
+    status_code: isValidHttpStatus(body.status_code) ? body.status_code : undefined,
   };
 
   const { error } = await service.from("platform_events").insert({
