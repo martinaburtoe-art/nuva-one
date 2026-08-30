@@ -24,7 +24,7 @@ describe("parseInsights", () => {
     expect(parseInsights(raw)).toHaveLength(1);
   });
 
-  it("limita el resultado al máximo esperado", () => {
+  it("limita el resultado al máximo de seis insights del contrato", () => {
     const raw = JSON.stringify(
       Array.from({ length: 12 }, (_, i) => ({
         signal: "info",
@@ -32,6 +32,6 @@ describe("parseInsights", () => {
         detail: "detalle",
       })),
     );
-    expect(parseInsights(raw)).toHaveLength(8);
+    expect(parseInsights(raw)).toHaveLength(6);
   });
 });

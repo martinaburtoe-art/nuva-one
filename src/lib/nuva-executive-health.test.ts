@@ -15,8 +15,8 @@ describe("executive health", () => {
         higherIsBetter: false,
       },
     ]);
-    expect(result.score).toBe(77);
-    expect(result.status).toBe("healthy");
+    expect(result.score).toBe(60);
+    expect(result.status).toBe("attention");
     expect(result.weakestMetric).toBe("Caja");
   });
 

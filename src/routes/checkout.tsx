@@ -145,8 +145,8 @@ function CheckoutPage() {
         throw new Error(payload.error ?? "No pudimos preparar el pago seguro.");
       }
 
-      // Nüva One nunca recibe ni almacena el número de tarjeta: Flow aloja el
-      // formulario seguro de registro y devuelve el resultado por callback.
+      // Nüva One nunca recibe ni almacena el número de tarjeta: el proveedor
+      // de pagos aloja el formulario seguro y devuelve el resultado por callback.
       window.location.assign(payload.url);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No pudimos iniciar el pago.");
@@ -341,7 +341,7 @@ function CheckoutPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-white/45">Pago seguro con</p>
-                  <p className="mt-1 text-sm font-semibold">Flow · Webpay</p>
+                  <p className="mt-1 text-sm font-semibold">Proveedor de pagos · Webpay</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-semibold text-white/70">
                   CLP

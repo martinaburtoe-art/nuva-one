@@ -13,6 +13,8 @@ import { executeInventoryOperation, type InventoryOperation } from "@/lib/invent
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
 
+type ScannerProduct = NonNullable<Awaited<ReturnType<typeof resolveProductCode>>["product"]>;
+
 export function InventoryScannerOperations() {
   const { active } = useActiveBusiness();
   const { data: role } = useMyRole();
@@ -21,7 +23,7 @@ export function InventoryScannerOperations() {
   const [operation, setOperation] = useState<InventoryOperation>("entry");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [code, setCode] = useState("");
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<ScannerProduct | null>(null);
   const [quantity, setQuantity] = useState("1");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -40,8 +42,8 @@ export function InventoryScannerOperations() {
       setProduct(result.product);
       setCode(value);
       setOpen(true);
-    } catch (error: any) {
-      toast.error(error?.message ?? "No se pudo resolver el código.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "No se pudo resolver el código.");
     }
   }
 
@@ -71,8 +73,8 @@ export function InventoryScannerOperations() {
       setCode("");
       setQuantity("1");
       setReason("");
-    } catch (error: any) {
-      toast.error(error?.message ?? "No se pudo registrar el movimiento.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "No se pudo registrar el movimiento.");
     } finally {
       setBusy(false);
     }
@@ -122,35 +124,14 @@ export function InventoryScannerOperations() {
         </div>
       </Card>
 
-      <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Scanner de inventario — {operationLabel}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <LiveProductScanner
-              onDetected={(value: string) => {
-                setScannerOpen(false);
-                void resolve(value);
-              }}
-            />
-            <div className="flex gap-2">
-              <Input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void resolve(code);
-                  }
-                }}
-                placeholder="Código de barras o SKU"
-              />
-              <Button onClick={() => void resolve(code)}>Buscar</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LiveProductScanner
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onScan={(result) => {
+          setScannerOpen(false);
+          void resolve(result.rawValue);
+        }}
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

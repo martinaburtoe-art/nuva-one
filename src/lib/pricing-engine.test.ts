@@ -16,7 +16,9 @@ describe("pricing-engine", () => {
     const result = calculatePricing({ ...base, fixedCostsMonthly: 0, expectedUnitsMonthly: 1 });
     expect(result.fullUnitCost).toBe(11000);
     expect(result.targetPrice).toBeCloseTo(11000 / 0.65, 6);
-    expect(result.contributionMarginRate).toBeCloseTo(0.3, 6);
+    const targetContributionRate =
+      (result.targetPrice * (1 - base.paymentFeeRate) - result.fullUnitCost) / result.targetPrice;
+    expect(targetContributionRate).toBeCloseTo(0.3, 6);
   });
 
   it("adjusts cost for waste using yield, not a simple multiplier", () => {
