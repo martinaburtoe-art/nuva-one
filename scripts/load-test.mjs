@@ -54,7 +54,7 @@ async function runVirtualUser() {
   const results = [];
   for (let i = 0; i < iterations; i += 1) {
     results.push(...(await Promise.all([
-      query(session.access_token, "customers", businessId, "id,name,status,pipeline_stage,created_at"),
+      query(session.access_token, "customers", businessId, "id,name,status,created_at"),
       query(session.access_token, "products", businessId, "id,name,price,stock,created_at"),
       query(session.access_token, "sales", businessId, "id,total,sale_date,customer_id"),
       query(session.access_token, "transactions", businessId, "id,type,amount,tx_date"),
