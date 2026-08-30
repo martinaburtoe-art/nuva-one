@@ -123,6 +123,15 @@ jobs:
         run: |
           set -o pipefail
           npm run lint 2>&1 | tee /tmp/lint.log
+      - name: Generate ESLint warning inventory
+        run: npm run lint:report
+      - name: Upload ESLint warning inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-warning-inventory
+          path: eslint-report.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Publish lint diagnostic status
         if: failure() && steps.lint.conclusion == 'failure'
         env:
