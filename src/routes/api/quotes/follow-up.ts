@@ -78,11 +78,9 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
     handlers: {
       POST: async ({ request }) => {
         const secret = process.env.CRON_SECRET;
-        if (secret) {
-          const header = request.headers.get("x-cron-secret");
-          if (header !== secret) {
-            return new Response("Unauthorized", { status: 401 });
-          }
+        const header = request.headers.get("x-cron-secret");
+        if (!secret || !header || header !== secret) {
+          return new Response("Unauthorized", { status: 401 });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
