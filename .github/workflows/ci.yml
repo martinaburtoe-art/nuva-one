@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   statuses: write
 
 concurrency:
@@ -100,8 +100,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -135,64 +133,6 @@ jobs:
             -f context='ci/lint-diagnostic' \
             -f description="$msg" \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-      - name: Apply verified TypeScript contract fixes
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'fix/ci-typecheck-beta-gate' }}
-        shell: python
-        run: |
-          from pathlib import Path
-
-          def replace(path, old, new):
-              p = Path(path)
-              s = p.read_text()
-              if old not in s:
-                  if new in s:
-                      return False
-                  raise SystemExit(f"Expected pattern not found in {path}: {old[:100]!r}")
-              p.write_text(s.replace(old, new, 1))
-              return True
-
-          changed = False
-          changed |= replace('src/components/shipments/ShipmentsWorkspaceV2.tsx', 'type Shipment = any;\ntype Event = any;', '''type Shipment = {\n  id: string;\n  status: Status;\n  customer_name: string | null;\n  customer_phone: string | null;\n  shipping_address: string | null;\n  comuna: string | null;\n  city: string | null;\n  region: string | null;\n  carrier: string | null;\n  tracking_number: string | null;\n  eta: string | null;\n  priority: string;\n  shipping_cost: number;\n  reference_code: string | null;\n  package_count: number;\n  weight_kg: number | null;\n  content_description: string | null;\n  declared_value: number | null;\n  destination_email: string | null;\n  destination_postal_code: string | null;\n};\ntype Event = {\n  id: string;\n  shipment_id: string;\n  status: Status;\n  note: string | null;\n  occurred_at: string;\n};''')
-
-          changed |= replace('src/routes/_authenticated/caja-control.tsx', '''type Summary = {\n  sales_count: number;\n  total_sales: number;\n  cash_sales: number;\n  card_sales: number;\n  transfer_sales: number;\n  other_sales: number;\n  deposits: number;\n  withdrawals: number;\n  opening_amount: number;\n  expected_cash: number;\n};''', '''type Summary = {\n  cash_register_id: string;\n  business_id: string;\n  status: string;\n  opening_amount: number;\n  cash_sales: number;\n  cash_income: number;\n  cash_withdrawals: number;\n  cash_refunds: number;\n  expected_cash: number;\n  counted_cash: number | null;\n  difference: number | null;\n  movement_count: number;\n  opened_at: string;\n  closed_at: string | null;\n};''')
-          for old, new in [
-              ('.from("cash_registers" as any)', '.from("cash_registers")'),
-              ('.from("cash_register_movements" as any)', '.from("cash_register_movements")'),
-              ('return (Array.isArray(data) ? data[0] : data) as Summary;', 'return Array.isArray(data) ? data[0] ?? null : data;'),
-              ('return (data ?? []) as Movement[];', 'return data ?? [];'),
-              ('return (data ?? []) as Register[];', 'return data ?? [];'),
-              ('title="Ventas"\n                value={fmtCLP(Number(s?.total_sales ?? 0))}', 'title="Ventas en efectivo"\n                value={fmtCLP(Number(s?.cash_sales ?? 0))}'),
-              ('title="Tarjetas"\n                value={fmtCLP(Number(s?.card_sales ?? 0))}', 'title="Ingresos"\n                value={fmtCLP(Number(s?.cash_income ?? 0))}'),
-              ('title="Transferencias"\n                value={fmtCLP(Number(s?.transfer_sales ?? 0))}', 'title="Retiros"\n                value={fmtCLP(Number(s?.cash_withdrawals ?? 0))}'),
-              ('<Summary label="Ventas registradas" value={String(s?.sales_count ?? 0)} />', '<Summary label="Movimientos registrados" value={String(s?.movement_count ?? 0)} />'),
-              ('<Summary label="Ingresos manuales" value={fmtCLP(Number(s?.deposits ?? 0))} />', '<Summary label="Ingresos" value={fmtCLP(Number(s?.cash_income ?? 0))} />'),
-              ('<Summary label="Retiros" value={fmtCLP(Number(s?.withdrawals ?? 0))} />', '<Summary label="Retiros" value={fmtCLP(Number(s?.cash_withdrawals ?? 0))} />'),
-              ('<Summary label="Otros medios" value={fmtCLP(Number(s?.other_sales ?? 0))} />', '<Summary label="Reembolsos" value={fmtCLP(Number(s?.cash_refunds ?? 0))} />'),
-              ('<Row label="Ingresos manuales" value={fmtCLP(Number(s?.deposits ?? 0))} />', '<Row label="Ingresos" value={fmtCLP(Number(s?.cash_income ?? 0))} />'),
-              ('<Row label="Retiros" value={fmtCLP(Number(s?.withdrawals ?? 0))} />', '<Row label="Retiros" value={fmtCLP(Number(s?.cash_withdrawals ?? 0))} />'),
-              ('<Row label="Otros" value={fmtCLP(Number(s?.other_sales ?? 0))} />', '<Row label="Reembolsos" value={fmtCLP(Number(s?.cash_refunds ?? 0))} />'),
-              ('label="Total ventas"\n                        value={fmtCLP(Number(s?.total_sales ?? 0))}', 'label="Efectivo esperado"\n                        value={fmtCLP(Number(s?.expected_cash ?? 0))}'),
-          ]:
-              changed |= replace('src/routes/_authenticated/caja-control.tsx', old, new)
-
-          changed |= replace('src/routes/_authenticated/inventario-conteo.tsx', '''type ResolvedScan = {\n  product_id: string;\n  name: string | null;\n  barcode: string | null;\n  stock: number | null;\n  sku: string | null;\n};''', '''type ResolvedScan = {\n  product_id: string;\n  name: string | null;\n  barcode: string | null;\n  stock: number | null;\n  sku: string | null;\n};\ntype ProductRow = {\n  id: string;\n  name: string | null;\n  barcode: string | null;\n  sku: string | null;\n  stock: number | null;\n};''')
-          changed |= replace('src/routes/_authenticated/inventario-conteo.tsx', 'useBizList<any>("products"', 'useBizList<ProductRow>("products"')
-
-          changed |= replace('src/routes/_authenticated/inventory.tsx', '          const createdProduct = created as { id: string };\n          await adjustInventoryStock(supabase, {', '''          if (\n            !created ||\n            typeof created !== "object" ||\n            !("id" in created) ||\n            typeof created.id !== "string"\n          ) {\n            throw new Error("El producto creado no devolvió un id válido");\n          }\n          const createdProduct = { id: created.id };\n          await adjustInventoryStock(supabase, {''')
-          print(f'Applied changes: {changed}')
-
-      - name: Commit verified fixes back to PR branch
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'fix/ci-typecheck-beta-gate' }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/shipments/ShipmentsWorkspaceV2.tsx src/routes/_authenticated/caja-control.tsx src/routes/_authenticated/inventario-conteo.tsx src/routes/_authenticated/inventory.tsx
-          if git diff --cached --quiet; then
-            echo "No TypeScript autofix changes required"
-          else
-            git commit -m "chore(ci): fix compiler-reported type contracts"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
