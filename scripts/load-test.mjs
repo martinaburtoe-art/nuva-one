@@ -48,26 +48,24 @@ async function query(accessToken, table, businessId, select) {
   return { elapsed, ok: response.ok, status: response.status, table, error };
 }
 
-async function runVirtualUser() {
-  const session = await signIn();
-  const businessId = await getBusinessId(session.access_token, session.user.id);
+async function runVirtualUser(accessToken, businessId) {
   const results = [];
   for (let i = 0; i < iterations; i += 1) {
     results.push(...(await Promise.all([
-      query(session.access_token, "customers", businessId, "id,name,status,created_at"),
-      query(session.access_token, "products", businessId, "id,name,price,stock,created_at"),
-      query(session.access_token, "sales", businessId, "id,total,sale_date,customer_id"),
-      query(session.access_token, "transactions", businessId, "id,type,amount,tx_date"),
-      query(session.access_token, "quotes", businessId, "id,status,total,created_at"),
+      query(accessToken, "customers", businessId, "id,name,status,created_at"),
+      query(accessToken, "products", businessId, "id,name,price,stock,created_at"),
+      query(accessToken, "sales", businessId, "id,total,sale_date,customer_id"),
+      query(accessToken, "transactions", businessId, "id,type,amount,tx_date"),
+      query(accessToken, "quotes", businessId, "id,status,total,created_at"),
     ])));
   }
   return results;
 }
 
-async function runPhase(phaseVus) {
+async function runPhase(phaseVus, accessToken, businessId) {
   console.log(`\nNüva One staging load phase: ${phaseVus} VUs × ${iterations} iterations`);
   const started = performance.now();
-  const users = await Promise.allSettled(Array.from({ length: phaseVus }, () => runVirtualUser()));
+  const users = await Promise.allSettled(Array.from({ length: phaseVus }, () => runVirtualUser(accessToken, businessId)));
   const elapsed = performance.now() - started;
   const results = users.flatMap((user) => user.status === "fulfilled" ? user.value : []);
   const userFailures = users.filter((user) => user.status === "rejected").length;
@@ -82,9 +80,11 @@ async function runPhase(phaseVus) {
 }
 
 const requestedPhases = phases.length ? phases : [vus];
+const session = await signIn();
+const businessId = await getBusinessId(session.access_token, session.user.id);
 const results = [];
 for (const phase of requestedPhases) {
-  const summary = await runPhase(phase); results.push(summary);
+  const summary = await runPhase(phase, session.access_token, businessId); results.push(summary);
   if (summary.user_failures || summary.request_failures) { console.error(`Phase ${phase} failed; stopping before increasing concurrency.`); break; }
 }
 await mkdir(dirname(outputFile), { recursive: true });
