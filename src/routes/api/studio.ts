@@ -10,18 +10,8 @@ import type { Database } from "@/integrations/supabase/types";
 import type { AiCapability } from "@/lib/ai-gateway/types";
 
 const CAPABILITIES = new Set<AiCapability>([
-  "chat",
-  "research",
-  "marketing",
-  "copywriting",
-  "image",
-  "image_edit",
-  "video",
-  "voice",
-  "brand",
-  "strategy",
-  "document",
-  "automation",
+  "chat", "research", "marketing", "copywriting", "image", "image_edit",
+  "video", "voice", "brand", "strategy", "document", "automation",
 ]);
 
 const CAPABILITY_TO_TOOL: Record<AiCapability, string> = {
@@ -91,14 +81,20 @@ export const Route = createFileRoute("/api/studio")({
           .maybeSingle();
         if (membershipError || !membership) return json({ error: "No tienes acceso a este negocio" }, 403);
 
+        // Registry lookup is intentionally server-authorized. The request has already
+        // passed JWT + tenant membership checks, so service-role access here only
+        // resolves the canonical tool definition and cannot bypass tenant authorization.
+        const admin = createClient<Database>(env.url, env.serviceRoleKey, {
+          auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+        });
         const toolId = CAPABILITY_TO_TOOL[body.capability];
-        const { data: tool, error: toolError } = await supabase
+        const { data: tool, error: toolError } = await admin
           .from("ai_tool_registry")
           .select("id, cost_units, enabled")
           .eq("id", toolId)
           .eq("enabled", true)
           .maybeSingle();
-        if (toolError || !tool) return json({ error: "La herramienta solicitada no está disponible." }, 503);
+        if (toolError || !tool) return json({ error: "Esta herramienta no está disponible temporalmente." }, 503);
 
         const { data: reservation, error: quotaRpcError } = await supabase.rpc("reserve_ai_tool_quota" as never, {
           p_business_id: body.businessId,
@@ -162,25 +158,16 @@ export const Route = createFileRoute("/api/studio")({
             const asset = await generateFishVoiceAsset({ businessId: body.businessId, prompt: body.prompt, supabase });
             const { data: libraryAsset, error: assetError } = await supabase
               .from("ai_asset_library" as never)
-              .insert({
-                business_id: body.businessId,
-                user_id: userId,
-                job_id: (job as { id: string }).id,
-                asset_type: "audio",
-                title: body.prompt.slice(0, 120),
-                storage_path: asset.storagePath,
-                metadata: { provider: "fish_audio", model: asset.model, mimeType: asset.mimeType },
-              } as never)
-              .select("id")
-              .single();
+              .insert({ business_id: body.businessId, user_id: userId, job_id: (job as { id: string }).id, asset_type: "audio", title: body.prompt.slice(0, 120), storage_path: asset.storagePath, metadata: { provider: "fish_audio", model: asset.model, mimeType: asset.mimeType } }, { count: "exact", head: false });
             if (assetError) throw new Error(`No se pudo registrar el audio: ${assetError.message}`);
+            const audioId = (libraryAsset as unknown as { id?: string }[])[0]?.id;
             const result = {
               text: "Locución creada y guardada en tu biblioteca de Nüva Studio.",
               audioUrl: asset.signedUrl,
-              assetId: (libraryAsset as { id: string }).id,
+              ...(audioId ? { assetId: audioId } : {}),
               metadata: { provider: "fish_audio" as const, model: asset.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, fallbackUsed: false, attempts: 1 },
             };
-            await supabase.from("ai_generation_jobs" as never).update({ status: "completed", provider: result.metadata.provider, model: result.metadata.model, output_metadata: { ...result.metadata, quota: reservation, assetId: result.assetId }, completed_at: new Date().toISOString() } as never).eq("id", (job as { id: string }).id);
+            await supabase.from("ai_generation_jobs" as never).update({ status: "completed", provider: result.metadata.provider, model: result.metadata.model, output_metadata: { ...result.metadata, quota: reservation, assetId: audioId }, completed_at: new Date().toISOString() } as never).eq("id", (job as { id: string }).id);
             return json({ ok: true, result, usage: reservation });
           }
 
