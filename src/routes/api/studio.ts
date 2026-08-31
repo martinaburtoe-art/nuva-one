@@ -60,24 +60,20 @@ export const Route = createFileRoute("/api/studio")({
           .from("business_members").select("business_id").eq("business_id", body.businessId).eq("user_id", userId).maybeSingle();
         if (membershipError || !membership) return json({ error: "No tienes acceso a este negocio" }, 403);
 
-        // ai_tool_registry is intentionally readable by authenticated users for enabled tools.
-        // Keep this lookup on the authenticated client so Studio does not depend on a
-        // service-role secret being configured in Vercel just to discover an enabled tool.
+        // Tool availability is enforced by reserve_ai_tool_quota. Do not perform a
+        // second RLS-sensitive registry read here: it caused valid tools to appear
+        // unavailable when PostgREST could not evaluate the registry policy.
         const toolId = CAPABILITY_TO_TOOL[body.capability];
-        const { data: tool, error: toolError } = await supabase
-          .from("ai_tool_registry").select("id, cost_units, enabled").eq("id", toolId).eq("enabled", true).maybeSingle();
-        if (toolError) return json({ error: "No se pudo consultar la disponibilidad de la herramienta." }, 503);
-        if (!tool) return json({ error: "Esta herramienta no está disponible temporalmente." }, 503);
-
+        const unitsCharged = 1;
         const { data: reservation, error: quotaRpcError } = await supabase.rpc("reserve_ai_tool_quota" as never, {
-          p_business_id: body.businessId, p_tool_id: toolId, p_units: tool.cost_units,
+          p_business_id: body.businessId, p_tool_id: toolId, p_units: unitsCharged,
         } as never);
         if (quotaRpcError) {
           const mapped = quotaError(quotaRpcError);
           if (mapped) return json({ error: mapped.error }, mapped.status);
           return json({ error: "No se pudo validar el uso disponible." }, 503);
         }
-        const unitsCharged = tool.cost_units;
+
         const { data: job, error: jobError } = await supabase.from("ai_generation_jobs" as never).insert({
           business_id: body.businessId, user_id: userId, tool_id: toolId, capability: body.capability,
           status: "running", prompt: body.prompt.slice(0, 12000), units_charged: unitsCharged,
@@ -98,11 +94,7 @@ export const Route = createFileRoute("/api/studio")({
               metadata: { provider: "google", model: asset.model, mimeType: asset.mimeType },
             } as never).select("id").single();
             if (assetError) throw new Error(`No se pudo registrar el activo: ${assetError.message}`);
-            const result = {
-              text: "Imagen creada y guardada en tu biblioteca de Nüva Studio.", imageUrl: asset.signedUrl,
-              assetId: (libraryAsset as { id: string }).id,
-              metadata: { provider: "google" as const, model: asset.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, fallbackUsed: false, attempts: 1 },
-            };
+            const result = { text: "Imagen creada y guardada en tu biblioteca de Nüva Studio.", imageUrl: asset.signedUrl, assetId: (libraryAsset as { id: string }).id, metadata: { provider: "google" as const, model: asset.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, fallbackUsed: false, attempts: 1 } };
             await supabase.from("ai_generation_jobs" as never).update({ status: "completed", provider: result.metadata.provider, model: result.metadata.model, output_metadata: { ...result.metadata, quota: reservation, assetId: result.assetId }, completed_at: new Date().toISOString() } as never).eq("id", jobId);
             return json({ ok: true, result, usage: reservation });
           }
@@ -115,11 +107,7 @@ export const Route = createFileRoute("/api/studio")({
               metadata: { provider: "fish_audio", model: asset.model, mimeType: asset.mimeType },
             } as never).select("id").single();
             if (assetError) throw new Error(`No se pudo registrar el audio: ${assetError.message}`);
-            const result = {
-              text: "Locución creada y guardada en tu biblioteca de Nüva Studio.", audioUrl: asset.signedUrl,
-              assetId: (libraryAsset as { id: string }).id,
-              metadata: { provider: "fish_audio" as const, model: asset.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, fallbackUsed: false, attempts: 1 },
-            };
+            const result = { text: "Locución creada y guardada en tu biblioteca de Nüva Studio.", audioUrl: asset.signedUrl, assetId: (libraryAsset as { id: string }).id, metadata: { provider: "fish_audio" as const, model: asset.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, fallbackUsed: false, attempts: 1 } };
             await supabase.from("ai_generation_jobs" as never).update({ status: "completed", provider: result.metadata.provider, model: result.metadata.model, output_metadata: { ...result.metadata, quota: reservation, assetId: result.assetId }, completed_at: new Date().toISOString() } as never).eq("id", jobId);
             return json({ ok: true, result, usage: reservation });
           }
@@ -129,18 +117,11 @@ export const Route = createFileRoute("/api/studio")({
             const assetType = body.capability === "video" ? "video" : null;
             let assetId: string | undefined;
             if (assetType && result.url) {
-              const { data: libraryAsset, error: assetError } = await supabase.from("ai_asset_library" as never).insert({
-                business_id: body.businessId, user_id: userId, job_id: jobId, asset_type: assetType,
-                title: body.prompt.slice(0, 120), public_url: result.url,
-                metadata: { provider: "n8n", capability: body.capability },
-              } as never).select("id").single();
+              const { data: libraryAsset, error: assetError } = await supabase.from("ai_asset_library" as never).insert({ business_id: body.businessId, user_id: userId, job_id: jobId, asset_type: assetType, title: body.prompt.slice(0, 120), public_url: result.url, metadata: { provider: "n8n", capability: body.capability } } as never).select("id").single();
               if (assetError) throw new Error(`No se pudo registrar el video: ${assetError.message}`);
               assetId = (libraryAsset as { id: string }).id;
             }
-            const output = {
-              text: result.text, ...(result.url ? { mediaUrl: result.url } : {}), ...(assetId ? { assetId } : {}),
-              metadata: { provider: "n8n", model: body.capability, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, fallbackUsed: false, attempts: 1 },
-            };
+            const output = { text: result.text, ...(result.url ? { mediaUrl: result.url } : {}), ...(assetId ? { assetId } : {}), metadata: { provider: "n8n", model: body.capability, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, fallbackUsed: false, attempts: 1 } };
             await supabase.from("ai_generation_jobs" as never).update({ status: "completed", provider: "n8n", model: body.capability, output_metadata: { ...output.metadata, quota: reservation, assetId }, completed_at: new Date().toISOString() } as never).eq("id", jobId);
             return json({ ok: true, result: output, usage: reservation });
           }
