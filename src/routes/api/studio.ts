@@ -60,15 +60,14 @@ export const Route = createFileRoute("/api/studio")({
           .from("business_members").select("business_id").eq("business_id", body.businessId).eq("user_id", userId).maybeSingle();
         if (membershipError || !membership) return json({ error: "No tienes acceso a este negocio" }, 403);
 
-        // The registry is platform configuration, so resolve it with the server client only
-        // after the caller has passed JWT and tenant-membership authorization above.
-        const admin = createClient<Database>(env.url, env.serviceRoleKey, {
-          auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-        });
+        // ai_tool_registry is intentionally readable by authenticated users for enabled tools.
+        // Keep this lookup on the authenticated client so Studio does not depend on a
+        // service-role secret being configured in Vercel just to discover an enabled tool.
         const toolId = CAPABILITY_TO_TOOL[body.capability];
-        const { data: tool, error: toolError } = await admin
+        const { data: tool, error: toolError } = await supabase
           .from("ai_tool_registry").select("id, cost_units, enabled").eq("id", toolId).eq("enabled", true).maybeSingle();
-        if (toolError || !tool) return json({ error: "Esta herramienta no está disponible temporalmente." }, 503);
+        if (toolError) return json({ error: "No se pudo consultar la disponibilidad de la herramienta." }, 503);
+        if (!tool) return json({ error: "Esta herramienta no está disponible temporalmente." }, 503);
 
         const { data: reservation, error: quotaRpcError } = await supabase.rpc("reserve_ai_tool_quota" as never, {
           p_business_id: body.businessId, p_tool_id: toolId, p_units: tool.cost_units,
