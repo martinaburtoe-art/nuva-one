@@ -126,6 +126,12 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      SUPABASE_URL: https://vnzyecnbdqbfuxawzrda.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_HrwPy_KEw7KzxjCf9wphQQ_64VyMrCj
+      VITE_SUPABASE_PROJECT_ID: vnzyecnbdqbfuxawzrda
+      VITE_SUPABASE_URL: https://vnzyecnbdqbfuxawzrda.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_HrwPy_KEw7KzxCf9wphQQ_64VyMrCj
     steps:
       - name: Checkout
         uses: actions/checkout@v6
