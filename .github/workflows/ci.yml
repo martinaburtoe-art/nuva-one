@@ -170,13 +170,13 @@ jobs:
         run: npm run build
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
-      - name: Start production preview
+      - name: Start application server for browser gate
         run: |
-          npm run preview -- --host 127.0.0.1 > /tmp/nuva-preview.log 2>&1 &
+          npm run dev -- --host 127.0.0.1 > /tmp/nuva-preview.log 2>&1 &
           echo $! > /tmp/nuva-preview.pid
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
-              echo "Preview is ready"
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then
+              echo "Application server is ready"
               exit 0
             fi
             sleep 1
@@ -185,7 +185,7 @@ jobs:
           exit 1
       - name: Run landing smoke, accessibility and performance gate
         env:
-          BASE_URL: http://127.0.0.1:4173
+          BASE_URL: http://127.0.0.1:3000
         run: npx playwright test quality/landing.spec.mjs --reporter=line
       - name: Upload browser quality evidence
         if: always()
@@ -198,7 +198,7 @@ jobs:
             /tmp/nuva-preview.log
           if-no-files-found: warn
           retention-days: 14
-      - name: Stop preview server
+      - name: Stop application server
         if: always()
         run: |
           if [ -f /tmp/nuva-preview.pid ]; then kill "$(cat /tmp/nuva-preview.pid)" || true; fi
