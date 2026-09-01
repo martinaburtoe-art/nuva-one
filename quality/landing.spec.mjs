@@ -102,7 +102,26 @@ test('landing has no horizontal overflow on desktop and mobile', async ({ page }
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await expectHealthyPage(page, '/');
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow, `horizontal overflow at ${viewport.width}px`).toBeLessThanOrEqual(1);
+    const diagnostics = await page.evaluate(() => {
+      const width = window.innerWidth;
+      const offenders = [...document.querySelectorAll('*')].map((el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          tag: el.tagName,
+          id: el.id,
+          className: typeof el.className === 'string' ? el.className.slice(0, 180) : '',
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+          width: Math.round(rect.width),
+          position: getComputedStyle(el).position,
+          overflowX: getComputedStyle(el).overflowX,
+          transform: getComputedStyle(el).transform,
+        };
+      }).filter((item) => item.left < -1 || item.right > width + 1)
+        .sort((a, b) => Math.max(b.right - width, -b.left) - Math.max(a.right - width, -a.left))
+        .slice(0, 20);
+      return { width, scrollWidth: document.documentElement.scrollWidth, overflow: document.documentElement.scrollWidth - width, offenders };
+    });
+    expect(diagnostics.overflow, `horizontal overflow at ${viewport.width}px; offenders=${JSON.stringify(diagnostics.offenders)}`).toBeLessThanOrEqual(1);
   }
 });
