@@ -36,30 +36,23 @@ jobs:
         run: node scripts/verify-migrations.mjs
       - name: Start lean Supabase database test stack
         run: |
-          set -o pipefail
-          for attempt in 1 2 3; do
-            echo "Starting lean Supabase stack (attempt ${attempt}/3)"
-            if timeout --signal=TERM --kill-after=30s 8m supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
-              echo "Lean Supabase stack started"
+          set -euo pipefail
+          echo "Starting lean Supabase database stack with health checks bypassed"
+          timeout --signal=TERM --kill-after=30s 8m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+          echo "Supabase containers started"
+          supabase status
+          echo "Waiting for local Postgres readiness"
+          for attempt in $(seq 1 60); do
+            if supabase db ping --local >/dev/null 2>&1; then
+              echo "Local Postgres is ready"
               exit 0
             fi
-            echo "Supabase start failed or timed out; collecting diagnostics before retry"
-            supabase status || true
-            docker ps -a || true
-            if [ "$attempt" -lt 3 ]; then
-              supabase stop --no-backup || true
-              sleep 10
-            fi
+            sleep 2
           done
-          echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
-          supabase stop --no-backup || true
-          if ! timeout --signal=TERM --kill-after=30s 8m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
-            echo "Fallback Supabase startup failed or timed out"
-            supabase status || true
-            docker ps -a || true
-            exit 1
-          fi
-          supabase db reset --local
+          echo "Local Postgres did not become ready"
+          supabase status || true
+          docker ps -a || true
+          exit 1
       - name: Generate database types from clean schema
         run: |
           supabase gen types typescript --local > /tmp/generated-supabase-types.ts
@@ -75,7 +68,7 @@ jobs:
             if [ "$attempt" -lt 2 ]; then
               echo "pgTAP failed; retrying after a clean local stack restart"
               supabase stop --no-backup || true
-              timeout --signal=TERM --kill-after=30s 8m supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+              timeout --signal=TERM --kill-after=30s 8m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
             fi
           done
           exit 1
