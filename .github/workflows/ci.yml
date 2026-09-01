@@ -171,8 +171,8 @@ jobs:
       - name: Start production bundle server for browser gate
         run: |
           set -euo pipefail
-          if [ -f .vercel/output/config.json ] && [ -f .vercel/output/functions/__server.func/index.mjs ]; then
-            node -e "import('./.vercel/output/functions/__server.func/index.mjs').catch(err => { console.error(err); process.exit(1) })" > /tmp/nuva-browser.log 2>&1 &
+          if [ -f .vercel/output/config.json ] && [ -f .vercel/output/nitro.json ]; then
+            npx nitro preview --port 3000 --host 127.0.0.1 > /tmp/nuva-browser.log 2>&1 &
           else
             npm run preview -- --host 127.0.0.1 --port 3000 > /tmp/nuva-browser.log 2>&1 &
           fi
