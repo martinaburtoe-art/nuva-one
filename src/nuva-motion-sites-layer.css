@@ -9,121 +9,29 @@ body:has(section#experience) {
     radial-gradient(circle at 50% -10%, oklch(.58 .22 268 / .055), transparent 34%),
     hsl(var(--background));
 }
-
 body:has(section#experience) section { scroll-margin-top: 88px; }
-
 @media (min-width: 768px) {
   body:has(section#experience) section:first-of-type { isolation: isolate; overflow: clip; }
-
-  body:has(section#experience) section:first-of-type::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    background:
-      radial-gradient(circle at 72% 34%, var(--nuva-motion-glow), transparent 27%),
-      radial-gradient(circle at 18% 78%, oklch(.58 .18 290 / .07), transparent 24%);
-    filter: blur(12px);
-    animation: nuva-cinematic-drift-contained 12s ease-in-out infinite alternate;
-    will-change: transform;
-  }
-
-  body:has(section#experience) section:first-of-type > div:first-child { position: relative; z-index: 2; }
-
-  body:has(section#experience) section:first-of-type > div:first-child::before {
-    content: "";
-    position: absolute;
-    inset: -4rem -12vw;
-    z-index: -1;
-    pointer-events: none;
-    opacity: .32;
-    background-image:
-      linear-gradient(to right, oklch(.65 .12 268 / .045) 1px, transparent 1px),
-      linear-gradient(to bottom, oklch(.65 .12 268 / .045) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
-  }
-
-  body:has(section#experience) section:first-of-type > div:first-child::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: -25%;
-    width: min(60vw, 720px);
-    height: 1px;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, oklch(.72 .2 268 / .38), transparent);
-    box-shadow: 0 0 34px oklch(.58 .22 268 / .22);
-    transform: translateX(-50%);
-    animation: nuva-cinematic-scan 8s cubic-bezier(.45,0,.25,1) infinite;
-    will-change: top, opacity;
-  }
-
-  body:has(section#experience) section:first-of-type > div:last-child {
-    position: relative;
-    z-index: 1;
-    transform: translateZ(0);
-    filter: drop-shadow(0 34px 70px oklch(.2 .12 270 / .16));
-    animation: nuva-product-float 8s ease-in-out infinite;
-  }
-
+  body:has(section#experience) section:first-of-type::before { content:""; position:absolute; inset:0; z-index:-2; pointer-events:none; background:radial-gradient(circle at 72% 34%,var(--nuva-motion-glow),transparent 27%),radial-gradient(circle at 18% 78%,oklch(.58 .18 290 / .07),transparent 24%); filter:blur(12px); animation:nuva-cinematic-drift-contained 12s ease-in-out infinite alternate; will-change:transform; }
+  body:has(section#experience) section:first-of-type > div:first-child { position:relative; z-index:2; }
+  body:has(section#experience) section:first-of-type > div:first-child::before { content:""; position:absolute; inset:-4rem -12vw; z-index:-1; pointer-events:none; opacity:.32; background-image:linear-gradient(to right,oklch(.65 .12 268 / .045) 1px,transparent 1px),linear-gradient(to bottom,oklch(.65 .12 268 / .045) 1px,transparent 1px); background-size:72px 72px; mask-image:radial-gradient(ellipse at center,black 0%,transparent 70%); }
+  body:has(section#experience) section:first-of-type > div:first-child::after { content:""; position:absolute; left:50%; top:-25%; width:min(60vw,720px); height:1px; pointer-events:none; background:linear-gradient(90deg,transparent,oklch(.72 .2 268 / .38),transparent); box-shadow:0 0 34px oklch(.58 .22 268 / .22); transform:translateX(-50%); animation:nuva-cinematic-scan 8s cubic-bezier(.45,0,.25,1) infinite; will-change:top,opacity; }
+  body:has(section#experience) section:first-of-type > div:last-child { position:relative; z-index:1; transform:translateZ(0); filter:drop-shadow(0 34px 70px oklch(.2 .12 270 / .16)); animation:nuva-product-float 8s ease-in-out infinite; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
-    position: relative;
-    overflow: hidden;
-    transform: translateZ(0);
-    transition: transform 520ms var(--nuva-motion-ease), box-shadow 520ms var(--nuva-motion-ease), border-color 360ms ease, background-color 360ms ease;
-  }
-
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl { position:relative; overflow:hidden; transform:translateZ(0); transition:transform 520ms var(--nuva-motion-ease),box-shadow 520ms var(--nuva-motion-ease),border-color 360ms ease,background-color 360ms ease; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover {
-    transform: translate3d(0,-5px,0) scale(1.008);
-    border-color: oklch(.55 .22 268 / .24);
-    box-shadow: 0 28px 70px -42px oklch(.35 .18 270 / .42);
-  }
-
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover { transform:translate3d(0,-5px,0) scale(1.008); border-color:oklch(.55 .22 268 / .24); box-shadow:0 28px 70px -42px oklch(.35 .18 270 / .42); }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl::after,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    border-radius: inherit;
-    background: linear-gradient(115deg, transparent 22%, oklch(.7 .18 268 / .07) 48%, transparent 72%);
-    transform: translateX(-125%);
-    transition: transform 900ms var(--nuva-motion-ease);
-  }
-
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl::after { content:""; position:absolute; inset:0; z-index:3; pointer-events:none; border-radius:inherit; background:linear-gradient(115deg,transparent 22%,oklch(.7 .18 268 / .07) 48%,transparent 72%); transform:translateX(-125%); transition:transform 900ms var(--nuva-motion-ease); }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover::after,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after { transform: translateX(125%); }
-
-  body:has(section#experience) a:has(> button) button { transition: transform 260ms var(--nuva-motion-ease), box-shadow 260ms var(--nuva-motion-ease), background-color 220ms ease; }
-  body:has(section#experience) a:has(> button):hover button { transform: translateY(-2px); }
-  body:has(section#experience) nav a,
-  body:has(section#experience) header a { transition: color 220ms ease, opacity 220ms ease; }
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after { transform:translateX(125%); }
+  body:has(section#experience) a:has(> button) button { transition:transform 260ms var(--nuva-motion-ease),box-shadow 260ms var(--nuva-motion-ease),background-color 220ms ease; }
+  body:has(section#experience) a:has(> button):hover button { transform:translateY(-2px); }
+  body:has(section#experience) nav a,body:has(section#experience) header a { transition:color 220ms ease,opacity 220ms ease; }
 }
-
-body:has(section#experience) :focus-visible { outline: 2px solid oklch(.58 .22 268 / .72); outline-offset: 4px; border-radius: .5rem; }
-body:has(section#experience) ::selection { background: oklch(.58 .22 268 / .22); }
-
-@keyframes nuva-cinematic-drift-contained {
-  from { transform: translate3d(0,-1%,0); }
-  to { transform: translate3d(0,2%,0); }
-}
-@keyframes nuva-cinematic-scan {
-  0%,14% { top: -25%; opacity: 0; }
-  28% { opacity: .8; }
-  66% { top: 118%; opacity: .32; }
-  78%,100% { top: 118%; opacity: 0; }
-}
-@keyframes nuva-product-float {
-  0%,100% { transform: translate3d(0,0,0); }
-  50% { transform: translate3d(0,-7px,0); }
-}
-
-@media (max-width: 767px) {
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl { transition: box-shadow 360ms ease, border-color 300ms ease; }
-}
+body:has(section#experience) :focus-visible { outline:2px solid oklch(.58 .22 268 / .72); outline-offset:4px; border-radius:.5rem; }
+body:has(section#experience) ::selection { background:oklch(.58 .22 268 / .22); }
+@keyframes nuva-cinematic-drift-contained { from{transform:translate3d(0,-1%,0)} to{transform:translate3d(0,2%,0)} }
+@keyframes nuva-cinematic-scan { 0%,14%{top:-25%;opacity:0} 28%{opacity:.8} 66%{top:118%;opacity:.32} 78%,100%{top:118%;opacity:0} }
+@keyframes nuva-product-float { 0%,100%{transform:translate3d(0,0,0)} 50%{transform:translate3d(0,-7px,0)} }
+@media (max-width:767px){body:has(section#experience) section:not(:first-of-type) .rounded-2xl,body:has(section#experience) section:not(:first-of-type) .rounded-3xl{transition:box-shadow 360ms ease,border-color 300ms ease}}
