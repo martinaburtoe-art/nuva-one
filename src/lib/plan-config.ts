@@ -70,9 +70,8 @@ export function getNuvaPlan(plan: string | null | undefined) {
 }
 
 export function formatClp(value: number) {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  }).format(value);
+  const rounded = Math.round(value);
+  const sign = rounded < 0 ? "-" : "";
+  const grouped = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sign}$${grouped}`;
 }
