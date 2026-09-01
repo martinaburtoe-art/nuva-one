@@ -15,6 +15,7 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Quality Gate: database -> application -> browser. Keep the pipeline deterministic.
 jobs:
   database-tests:
     name: pgTAP database tests
