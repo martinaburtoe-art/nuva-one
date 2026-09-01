@@ -37,39 +37,11 @@ jobs:
         run: |
           set -euo pipefail
           start_log=/tmp/supabase-start.log
-          supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta >"$start_log" 2>&1 &
-          start_pid=$!
-          db_container=""
-          ready=0
-          for attempt in $(seq 1 180); do
-            if ! kill -0 "$start_pid" 2>/dev/null && [ -z "$db_container" ]; then
-              cat "$start_log"
-              exit 1
-            fi
-            db_container="$(docker ps --filter 'name=supabase_db_' --filter 'status=running' --format '{{.Names}}' | head -n 1 || true)"
-            if [ -n "$db_container" ] && docker exec "$db_container" pg_isready -U postgres -d postgres >/dev/null 2>&1; then
-              ready=1
-              break
-            fi
-            sleep 2
-          done
-          if [ "$ready" -ne 1 ]; then
-            cat "$start_log" || true
-            docker ps -a || true
-            if [ -n "$db_container" ]; then
-              docker inspect "$db_container" --format '{{json .State.Health}}' || true
-              docker logs "$db_container" --tail 200 || true
-            fi
-            kill "$start_pid" 2>/dev/null || true
-            wait "$start_pid" 2>/dev/null || true
-            exit 1
-          fi
-          if kill -0 "$start_pid" 2>/dev/null; then
-            wait "$start_pid" || {
-              cat "$start_log"
-              exit 1
-            }
-          fi
+          rm -f "$start_log"
+          timeout --signal=TERM --kill-after=30s 12m \
+            supabase start --ignore-health-check \
+            -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta \
+            2>&1 | tee "$start_log"
           supabase status
       - name: Generate database types from clean schema
         run: |
@@ -82,7 +54,9 @@ jobs:
             if supabase test db; then exit 0; fi
             if [ "$attempt" -lt 2 ]; then
               supabase stop --no-backup || true
-              supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+              timeout --signal=TERM --kill-after=30s 12m \
+                supabase start --ignore-health-check \
+                -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
             fi
           done
           exit 1
