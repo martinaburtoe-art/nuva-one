@@ -26,18 +26,18 @@ body:has(section#experience) section {
     overflow: clip;
   }
 
-  /* Cinematic hero atmosphere. */
+  /* Cinematic hero atmosphere. Keep its geometry inside the hero so transforms cannot expand page scrollWidth. */
   body:has(section#experience) section:first-of-type::before {
     content: "";
     position: absolute;
-    inset: -15% -8%;
+    inset: 0;
     z-index: -2;
     pointer-events: none;
     background:
       radial-gradient(circle at 72% 34%, var(--nuva-motion-glow), transparent 27%),
       radial-gradient(circle at 18% 78%, oklch(.58 .18 290 / .07), transparent 24%);
     filter: blur(12px);
-    animation: nuva-cinematic-drift 12s ease-in-out infinite alternate;
+    animation: nuva-cinematic-drift-contained 12s ease-in-out infinite alternate;
     will-change: transform;
   }
 
@@ -154,9 +154,9 @@ body:has(section#experience) ::selection {
   background: oklch(.58 .22 268 / .22);
 }
 
-@keyframes nuva-cinematic-drift {
-  from { transform: translate3d(-1%, -1%, 0) scale(1); }
-  to { transform: translate3d(2%, 2%, 0) scale(1.04); }
+@keyframes nuva-cinematic-drift-contained {
+  from { transform: translate3d(0,-1%,0); }
+  to { transform: translate3d(0,2%,0); }
 }
 
 @keyframes nuva-cinematic-scan {
@@ -175,24 +175,5 @@ body:has(section#experience) ::selection {
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
     transition: box-shadow 360ms ease, border-color 300ms ease;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body:has(section#experience) section:first-of-type::before,
-  body:has(section#experience) section:first-of-type > div:first-child::after,
-  body:has(section#experience) section:first-of-type > div:last-child {
-    animation: none !important;
-  }
-
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
-    transition-duration: .01ms !important;
-    transform: none !important;
-  }
-
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl::after,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl::after {
-    display: none !important;
   }
 }
