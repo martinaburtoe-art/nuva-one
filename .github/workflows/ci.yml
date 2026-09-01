@@ -103,14 +103,13 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git diff --binary -- package-lock.json > /tmp/package-lock.patch
-          if [ ! -s /tmp/package-lock.patch ]; then
+          git fetch origin "${{ github.head_ref }}"
+          git checkout -B "${{ github.head_ref }}" "origin/${{ github.head_ref }}"
+          npm install --ignore-scripts --no-audit --no-fund
+          if git diff --quiet -- package-lock.json; then
             echo "package-lock.json already current"
             exit 0
           fi
-          git fetch origin "${{ github.head_ref }}"
-          git checkout -B "${{ github.head_ref }}" "origin/${{ github.head_ref }}"
-          git apply --binary /tmp/package-lock.patch
           git add package-lock.json
           git commit -m "security: refresh npm lockfile for patched browserslist"
           git push origin "HEAD:${{ github.head_ref }}"
