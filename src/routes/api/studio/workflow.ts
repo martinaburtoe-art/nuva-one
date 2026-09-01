@@ -11,9 +11,16 @@ import type { AiCapability } from "@/lib/ai-gateway/types";
 
 export const maxDuration = 300;
 const ALLOWED = new Set<AiCapability>(["chat", "research", "marketing", "copywriting", "image", "image_edit", "video", "voice", "brand", "strategy", "document", "automation"]);
-function json(data: unknown, status = 200) { return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } }); }
+function json(data: unknown, status = 200) { return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } }); }
 function normalize(text: string) { return text.replaceAll("\0", "").trim().slice(0, 12000); }
 function serializeOutput(output: Record<string, unknown>) { return JSON.stringify({ capability: output.capability, title: output.title, summary: output.summary, text: output.text, imageUrl: output.imageUrl, audioUrl: output.audioUrl, mediaUrl: output.mediaUrl, metadata: output.metadata }); }
+function classifyProviderError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  if (lower.includes("429") || lower.includes("quota") || lower.includes("rate limit")) return { status: 429, code: "AI_QUOTA_EXCEEDED", message: "El proveedor de IA alcanzó el límite de uso disponible para esta cuenta. Revisa el plan y la facturación de la API." };
+  if (lower.includes("api key") || lower.includes("api_key") || lower.includes("not configured") || lower.includes("no está configurada")) return { status: 503, code: "AI_PROVIDER_NOT_CONFIGURED", message: "El proveedor de IA no está configurado correctamente en producción." };
+  return { status: 502, code: "AI_PROVIDER_ERROR", message: "El proveedor de IA no pudo completar esta generación. Inténtalo nuevamente." };
+}
 
 async function executeCapability(args: { capability: AiCapability; businessId: string; userId: string; prompt: string; supabase: ReturnType<typeof createClient<Database>> }) {
   const { capability, businessId, userId, prompt, supabase } = args;
@@ -34,32 +41,43 @@ async function executeCapability(args: { capability: AiCapability; businessId: s
 }
 
 export const Route = createFileRoute("/api/studio/workflow")({ server: { handlers: { POST: async ({ request }) => {
-  const env = getServerSupabaseEnv();
-  if (!env.ok) return json({ error: "Configuración de Supabase incompleta" }, 500);
-  const authorization = request.headers.get("authorization") ?? "";
-  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : null;
-  if (!token) return json({ error: "No autenticado" }, 401);
-  const supabase = createClient<Database>(env.url, env.anonKey, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { storage: undefined, persistSession: false, autoRefreshToken: false } });
-  const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
-  const userId = claims?.claims?.sub;
-  if (claimsError || !userId) return json({ error: "Sesión inválida o expirada" }, 401);
-  const body = (await request.json().catch(() => null)) as { businessId?: string; prompt?: string; maxSteps?: number } | null;
-  if (!body?.businessId || !body.prompt?.trim()) return json({ error: "businessId y prompt son obligatorios" }, 400);
-  if (!(await checkRateLimit(`studio-workflow:${userId}`, 6, 60))) return json({ error: "Demasiadas ejecuciones de Studio. Intenta nuevamente en un minuto." }, 429);
-  const { data: membership, error: membershipError } = await supabase.from("business_members").select("business_id").eq("business_id", body.businessId).eq("user_id", userId).maybeSingle();
-  if (membershipError || !membership) return json({ error: "No tienes acceso a este negocio" }, 403);
-  const plan = await planNuvaStudioTask({ businessId: body.businessId, prompt: normalize(body.prompt), supabase });
-  const steps = plan.steps.slice(0, Math.min(body.maxSteps ?? 6, 6)).filter((step) => ALLOWED.has(step.capability));
-  const outputs: Array<Record<string, unknown>> = [];
-  const completed = new Map<number, string>();
-  for (let index = 0; index < steps.length; index += 1) {
-    const step = steps[index];
-    const dependencies = step.dependsOn.map((dependency) => completed.get(dependency)).filter(Boolean).join("\n\n");
-    const enrichedPrompt = [`Objetivo general: ${plan.goal}`, `Instrucción: ${step.instruction}`, dependencies ? `Resultados previos estructurados que debes reutilizar:\n${dependencies}` : "", "Construye este paso para que el siguiente pueda reutilizar decisiones, mensajes, datos y assets. No repitas información innecesariamente."].filter(Boolean).join("\n\n");
-    const output = await executeCapability({ capability: step.capability, businessId: body.businessId, userId, prompt: enrichedPrompt, supabase });
-    const enrichedOutput = { step: index + 1, instruction: step.instruction, dependsOn: step.dependsOn, ...output };
-    outputs.push(enrichedOutput);
-    completed.set(index, serializeOutput(enrichedOutput));
+  try {
+    const env = getServerSupabaseEnv();
+    if (!env.ok) return json({ ok: false, error: { code: "SUPABASE_CONFIG_ERROR", message: "Configuración de Supabase incompleta" } }, 500);
+    const authorization = request.headers.get("authorization") ?? "";
+    const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : null;
+    if (!token) return json({ ok: false, error: { code: "UNAUTHENTICATED", message: "No autenticado" } }, 401);
+    const supabase = createClient<Database>(env.url, env.anonKey, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { storage: undefined, persistSession: false, autoRefreshToken: false } });
+    const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
+    const userId = claims?.claims?.sub;
+    if (claimsError || !userId) return json({ ok: false, error: { code: "INVALID_SESSION", message: "Sesión inválida o expirada" } }, 401);
+    const body = (await request.json().catch(() => null)) as { businessId?: string; prompt?: string; maxSteps?: number } | null;
+    if (!body?.businessId || !body.prompt?.trim()) return json({ ok: false, error: { code: "INVALID_REQUEST", message: "businessId y prompt son obligatorios" } }, 400);
+    if (!(await checkRateLimit(`studio-workflow:${userId}`, 6, 60))) return json({ ok: false, error: { code: "RATE_LIMITED", message: "Demasiadas ejecuciones de Studio. Intenta nuevamente en un minuto." } }, 429);
+    const { data: membership, error: membershipError } = await supabase.from("business_members").select("business_id").eq("business_id", body.businessId).eq("user_id", userId).maybeSingle();
+    if (membershipError || !membership) return json({ ok: false, error: { code: "FORBIDDEN", message: "No tienes acceso a este negocio" } }, 403);
+    const plan = await planNuvaStudioTask({ businessId: body.businessId, prompt: normalize(body.prompt), supabase });
+    const steps = plan.steps.slice(0, Math.min(body.maxSteps ?? 6, 6)).filter((step) => ALLOWED.has(step.capability));
+    const outputs: Array<Record<string, unknown>> = [];
+    const completed = new Map<number, string>();
+    for (let index = 0; index < steps.length; index += 1) {
+      const step = steps[index];
+      const dependencies = step.dependsOn.map((dependency) => completed.get(dependency)).filter(Boolean).join("\n\n");
+      const enrichedPrompt = [`Objetivo general: ${plan.goal}`, `Instrucción: ${step.instruction}`, dependencies ? `Resultados previos estructurados que debes reutilizar:\n${dependencies}` : "", "Construye este paso para que el siguiente pueda reutilizar decisiones, mensajes, datos y assets. No repitas información innecesariamente."].filter(Boolean).join("\n\n");
+      let output: Record<string, unknown>;
+      try {
+        output = await executeCapability({ capability: step.capability, businessId: body.businessId, userId, prompt: enrichedPrompt, supabase });
+      } catch (error) {
+        const classified = classifyProviderError(error);
+        return json({ ok: false, error: classified, failedStep: index + 1, failedCapability: step.capability, completedOutputs: outputs }, classified.status);
+      }
+      const enrichedOutput = { step: index + 1, instruction: step.instruction, dependsOn: step.dependsOn, ...output };
+      outputs.push(enrichedOutput);
+      completed.set(index, serializeOutput(enrichedOutput));
+    }
+    return json({ ok: true, goal: plan.goal, rationale: plan.rationale, steps, outputs });
+  } catch (error) {
+    const classified = classifyProviderError(error);
+    return json({ ok: false, error: classified }, classified.status);
   }
-  return json({ ok: true, goal: plan.goal, rationale: plan.rationale, steps, outputs });
 } } } });
