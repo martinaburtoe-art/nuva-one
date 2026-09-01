@@ -95,6 +95,15 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify Supabase migration integrity
         run: npm run verify:migrations
+      - name: Refresh npm lockfile for security validation
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Upload refreshed npm lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: refreshed-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Dependency security audit
         run: npm audit --audit-level=high
       - name: Download generated database types
