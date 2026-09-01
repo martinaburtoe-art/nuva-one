@@ -6,7 +6,6 @@ import { useActiveBusiness } from "@/lib/use-business";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/page-utils";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/studio")({ head: () => ({ meta: [{ title: "Nüva Studio — Nüva One" }] }), component: StudioPage });
 
