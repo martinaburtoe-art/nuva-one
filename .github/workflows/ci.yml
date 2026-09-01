@@ -38,11 +38,11 @@ jobs:
           set -o pipefail
           for attempt in 1 2 3; do
             echo "Starting lean Supabase stack (attempt ${attempt}/3)"
-            if supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+            if timeout --signal=TERM --kill-after=30s 8m supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started"
               exit 0
             fi
-            echo "Supabase start failed; collecting diagnostics before retry"
+            echo "Supabase start failed or timed out; collecting diagnostics before retry"
             supabase status || true
             docker ps -a || true
             if [ "$attempt" -lt 3 ]; then
@@ -52,7 +52,12 @@ jobs:
           done
           echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
           supabase stop --no-backup || true
-          supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+          if ! timeout --signal=TERM --kill-after=30s 8m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+            echo "Fallback Supabase startup failed or timed out"
+            supabase status || true
+            docker ps -a || true
+            exit 1
+          fi
           supabase db reset --local
       - name: Generate database types from clean schema
         run: |
@@ -69,7 +74,7 @@ jobs:
             if [ "$attempt" -lt 2 ]; then
               echo "pgTAP failed; retrying after a clean local stack restart"
               supabase stop --no-backup || true
-              supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+              timeout --signal=TERM --kill-after=30s 8m supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
             fi
           done
           exit 1
