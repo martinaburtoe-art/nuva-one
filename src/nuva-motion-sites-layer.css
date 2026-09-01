@@ -1,30 +1,19 @@
-/* Nüva One — MotionSites-inspired visual layer
- * Cinematic composition, bento rhythm, restrained glow, depth and premium motion.
- * No external assets or business logic.
- */
+/* Nüva One — MotionSites-inspired visual layer */
 
 body:has(section#experience) {
   --nuva-motion-glow: oklch(.58 .22 268 / .16);
   --nuva-motion-line: oklch(.55 .22 268 / .14);
   --nuva-motion-ease: cubic-bezier(.16,1,.3,1);
   overflow-x: clip;
-}
-
-body:has(section#experience) {
   background:
     radial-gradient(circle at 50% -10%, oklch(.58 .22 268 / .055), transparent 34%),
     hsl(var(--background));
 }
 
-body:has(section#experience) section {
-  scroll-margin-top: 88px;
-}
+body:has(section#experience) section { scroll-margin-top: 88px; }
 
 @media (min-width: 768px) {
-  body:has(section#experience) section:first-of-type {
-    isolation: isolate;
-    overflow: clip;
-  }
+  body:has(section#experience) section:first-of-type { isolation: isolate; overflow: clip; }
 
   body:has(section#experience) section:first-of-type::before {
     content: "";
@@ -40,10 +29,7 @@ body:has(section#experience) section {
     will-change: transform;
   }
 
-  body:has(section#experience) section:first-of-type > div:first-child {
-    position: relative;
-    z-index: 2;
-  }
+  body:has(section#experience) section:first-of-type > div:first-child { position: relative; z-index: 2; }
 
   body:has(section#experience) section:first-of-type > div:first-child::before {
     content: "";
@@ -87,11 +73,7 @@ body:has(section#experience) section {
     position: relative;
     overflow: hidden;
     transform: translateZ(0);
-    transition:
-      transform 520ms var(--nuva-motion-ease),
-      box-shadow 520ms var(--nuva-motion-ease),
-      border-color 360ms ease,
-      background-color 360ms ease;
+    transition: transform 520ms var(--nuva-motion-ease), box-shadow 520ms var(--nuva-motion-ease), border-color 360ms ease, background-color 360ms ease;
   }
 
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
@@ -115,57 +97,33 @@ body:has(section#experience) section {
   }
 
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover::after,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after {
-    transform: translateX(125%);
-  }
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after { transform: translateX(125%); }
 
-  body:has(section#experience) a:has(> button) button {
-    transition:
-      transform 260ms var(--nuva-motion-ease),
-      box-shadow 260ms var(--nuva-motion-ease),
-      background-color 220ms ease;
-  }
-
-  body:has(section#experience) a:has(> button):hover button {
-    transform: translateY(-2px);
-  }
-
+  body:has(section#experience) a:has(> button) button { transition: transform 260ms var(--nuva-motion-ease), box-shadow 260ms var(--nuva-motion-ease), background-color 220ms ease; }
+  body:has(section#experience) a:has(> button):hover button { transform: translateY(-2px); }
   body:has(section#experience) nav a,
-  body:has(section#experience) header a {
-    transition: color 220ms ease, opacity 220ms ease;
-  }
+  body:has(section#experience) header a { transition: color 220ms ease, opacity 220ms ease; }
 }
 
-body:has(section#experience) :focus-visible {
-  outline: 2px solid oklch(.58 .22 268 / .72);
-  outline-offset: 4px;
-  border-radius: .5rem;
-}
-
-body:has(section#experience) ::selection {
-  background: oklch(.58 .22 268 / .22);
-}
+body:has(section#experience) :focus-visible { outline: 2px solid oklch(.58 .22 268 / .72); outline-offset: 4px; border-radius: .5rem; }
+body:has(section#experience) ::selection { background: oklch(.58 .22 268 / .22); }
 
 @keyframes nuva-cinematic-drift-contained {
   from { transform: translate3d(0,-1%,0); }
   to { transform: translate3d(0,2%,0); }
 }
-
 @keyframes nuva-cinematic-scan {
-  0%, 14% { top: -25%; opacity: 0; }
+  0%,14% { top: -25%; opacity: 0; }
   28% { opacity: .8; }
   66% { top: 118%; opacity: .32; }
-  78%, 100% { top: 118%; opacity: 0; }
+  78%,100% { top: 118%; opacity: 0; }
 }
-
 @keyframes nuva-product-float {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -7px, 0); }
+  0%,100% { transform: translate3d(0,0,0); }
+  50% { transform: translate3d(0,-7px,0); }
 }
 
 @media (max-width: 767px) {
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
-    transition: box-shadow 360ms ease, border-color 300ms ease;
-  }
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl { transition: box-shadow 360ms ease, border-color 300ms ease; }
 }
