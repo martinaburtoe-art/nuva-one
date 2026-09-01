@@ -171,7 +171,11 @@ jobs:
       - name: Start production bundle server for browser gate
         run: |
           set -euo pipefail
-          npm run preview -- --host 127.0.0.1 --port 3000 > /tmp/nuva-browser.log 2>&1 &
+          if [ -f .vercel/output/config.json ] && [ -f .vercel/output/functions/__server.func/index.mjs ]; then
+            node -e "import('./.vercel/output/functions/__server.func/index.mjs').catch(err => { console.error(err); process.exit(1) })" > /tmp/nuva-browser.log 2>&1 &
+          else
+            npm run preview -- --host 127.0.0.1 --port 3000 > /tmp/nuva-browser.log 2>&1 &
+          fi
           server_pid=$!
           echo "$server_pid" > /tmp/nuva-browser.pid
           for attempt in $(seq 1 60); do
