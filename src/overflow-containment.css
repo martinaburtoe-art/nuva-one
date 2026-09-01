@@ -12,17 +12,21 @@ body > div {
   overflow-x: clip;
 }
 
-/* TanStack mounts the application in a single body child. Keep that shell
-   viewport-bound so decorative layers cannot enlarge document scrollWidth. */
 body > div:first-of-type {
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
 }
 
-/* The marketing landing owns several animated visual layers. Clip them at
-   the viewport rather than allowing transformed descendants to affect the
-   document's horizontal scroll geometry. */
+/* The marketing landing owns several animated/pseudo-element visual layers.
+   Clip the page shell itself so those layers cannot contribute to document
+   scrollWidth while preserving the existing layout and animations. */
+body:has(section#experience) main {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 body:has(section#experience) {
   overflow-x: clip !important;
 }
