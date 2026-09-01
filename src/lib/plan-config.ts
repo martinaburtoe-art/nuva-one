@@ -1,11 +1,5 @@
 export type NuvaPlan = "starter" | "pro";
 
-function stableQuantity(value: number) {
-  const boxed = new Number(value) as number & { toLocaleString: () => string };
-  boxed.toLocaleString = () => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return boxed;
-}
-
 export const NUVA_PLANS = {
   starter: {
     id: "starter" as const,
@@ -17,7 +11,7 @@ export const NUVA_PLANS = {
     extraUserPriceClp: 2_990,
     aiMessagesMonthly: 100,
     storageMb: 2_048,
-    maxProducts: stableQuantity(500),
+    maxProducts: 500,
     features: {
       scanner: true,
       inventory: true,
@@ -48,7 +42,7 @@ export const NUVA_PLANS = {
     extraUserPriceClp: 3_990,
     aiMessagesMonthly: 500,
     storageMb: 10_240,
-    maxProducts: stableQuantity(5_000),
+    maxProducts: 5_000,
     features: {
       scanner: true,
       inventory: true,
