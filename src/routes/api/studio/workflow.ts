@@ -9,6 +9,7 @@ import { checkRateLimit } from "@/lib/rate-limit.server";
 import type { Database } from "@/integrations/supabase/types";
 import type { AiCapability } from "@/lib/ai-gateway/types";
 
+export const maxDuration = 300;
 const ALLOWED = new Set<AiCapability>(["chat", "research", "marketing", "copywriting", "image", "image_edit", "video", "voice", "brand", "strategy", "document", "automation"]);
 function json(data: unknown, status = 200) { return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } }); }
 function normalize(text: string) { return text.replaceAll("\0", "").trim().slice(0, 12000); }
@@ -27,9 +28,6 @@ async function executeCapability(args: { capability: AiCapability; businessId: s
   if (capability === "voice") {
     const asset = await generateFishVoiceAsset({ businessId, prompt, supabase });
     return { capability, title: "Locución", summary: "Voz generada y guardada en la biblioteca de Nüva Studio.", text: "Locución creada correctamente.", audioUrl: asset.signedUrl, metadata: { provider: "fish_audio", model: asset.model, storagePath: asset.storagePath } };
-  }
-  if (capability === "automation") {
-    return { capability, title: "Automatización", summary: "Automatización preparada por Nüva Studio.", text: (await runNuvaStudioTask({ businessId, capability, prompt, supabase })).text, metadata: { provider: "ai_gateway", model: capability } };
   }
   const result = await runNuvaStudioTask({ businessId, capability, prompt, supabase });
   return { capability, title: capability === "strategy" ? "Oportunidades y prioridades" : capability, summary: result.text.slice(0, 280), text: result.text, metadata: result.metadata };
