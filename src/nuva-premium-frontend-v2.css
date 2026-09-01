@@ -1,0 +1,131 @@
+/* Nüva One — Premium Frontend V2
+ * Presentation-only layer. No business logic, data, API or auth changes.
+ */
+
+:root {
+  --nuva-v2-ink: #0b0d12;
+  --nuva-v2-muted: #687080;
+  --nuva-v2-line: color-mix(in srgb, currentColor 11%, transparent);
+  --nuva-v2-surface: color-mix(in srgb, hsl(var(--background)) 88%, white 12%);
+  --nuva-v2-radius: 20px;
+}
+
+/* Landing chrome */
+nav:has(a[href="/pricing"]) {
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  background: color-mix(in srgb, hsl(var(--background)) 72%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, currentColor 8%, transparent) !important;
+}
+
+nav:has(a[href="/pricing"]) a {
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+nav:has(a[href="/pricing"]) a:hover {
+  opacity: .72;
+}
+
+/* Stronger editorial hierarchy */
+main > section:first-of-type h1,
+main section h1[class*="text-7xl"],
+main section h1[class*="text-6xl"] {
+  letter-spacing: -.055em;
+  line-height: .94;
+}
+
+main > section:first-of-type p,
+main section p[class*="text-xl"],
+main section p[class*="text-2xl"] {
+  letter-spacing: -.012em;
+}
+
+/* Product surfaces become objects rather than ordinary cards. */
+main [class*="shadow-2xl"],
+main [class*="shadow-xl"] {
+  border-color: color-mix(in srgb, currentColor 9%, transparent);
+}
+
+main [class*="rounded-3xl"] {
+  border-radius: 24px;
+}
+
+/* Give major visual blocks more breathing room. */
+main > section {
+  scroll-margin-top: 96px;
+}
+
+/* CTA hierarchy */
+main a[href="/demo"],
+main a[href="/pricing"] {
+  transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, opacity .2s ease;
+}
+
+main a[href="/demo"]:hover,
+main a[href="/pricing"]:hover {
+  transform: translateY(-2px);
+}
+
+/* Product preview depth */
+main [data-testid="home-product-preview"],
+main [data-component="home-product-preview"],
+main .home-product-preview {
+  transform: translateZ(0);
+  transition: transform .45s cubic-bezier(.22,1,.36,1), filter .45s ease;
+}
+
+main .home-product-preview:hover {
+  transform: translateY(-5px) scale(1.006);
+}
+
+/* Premium section separators */
+main > section + section {
+  position: relative;
+}
+
+main > section + section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--nuva-v2-line), transparent);
+  pointer-events: none;
+}
+
+/* Reduce the visual weight of secondary UI so the product leads. */
+main .text-muted-foreground {
+  color: color-mix(in srgb, hsl(var(--muted-foreground)) 88%, hsl(var(--foreground)) 12%);
+}
+
+/* Better focus treatment without changing interaction semantics. */
+main a:focus-visible,
+main button:focus-visible,
+main input:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 4px;
+}
+
+/* Mobile: preserve hierarchy instead of shrinking desktop composition. */
+@media (max-width: 767px) {
+  main > section:first-of-type h1,
+  main section h1[class*="text-7xl"],
+  main section h1[class*="text-6xl"] {
+    letter-spacing: -.045em;
+    line-height: .98;
+  }
+
+  main > section + section::before {
+    left: 5%;
+    right: 5%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main a[href="/demo"],
+  main a[href="/pricing"],
+  main .home-product-preview {
+    transition: none;
+  }
+}
