@@ -1,11 +1,23 @@
 /* Nüva One — MotionSites-inspired visual layer
- * Inspiration: cinematic hero composition, bento rhythm, restrained glow,
- * directional hover and layered depth. No external assets or business logic.
+ * Cinematic composition, bento rhythm, restrained glow, depth and premium motion.
+ * No external assets or business logic.
  */
 
 body:has(section#experience) {
   --nuva-motion-glow: oklch(.58 .22 268 / .16);
   --nuva-motion-line: oklch(.55 .22 268 / .14);
+  --nuva-motion-ease: cubic-bezier(.16,1,.3,1);
+}
+
+/* Keep the visual language coherent from the first pixel to the footer. */
+body:has(section#experience) {
+  background:
+    radial-gradient(circle at 50% -10%, oklch(.58 .22 268 / .055), transparent 34%),
+    hsl(var(--background));
+}
+
+body:has(section#experience) section {
+  scroll-margin-top: 88px;
 }
 
 @media (min-width: 768px) {
@@ -14,6 +26,7 @@ body:has(section#experience) {
     overflow: clip;
   }
 
+  /* Cinematic hero atmosphere. */
   body:has(section#experience) section:first-of-type::before {
     content: "";
     position: absolute;
@@ -25,11 +38,27 @@ body:has(section#experience) {
       radial-gradient(circle at 18% 78%, oklch(.58 .18 290 / .07), transparent 24%);
     filter: blur(12px);
     animation: nuva-cinematic-drift 12s ease-in-out infinite alternate;
+    will-change: transform;
   }
 
   body:has(section#experience) section:first-of-type > div:first-child {
     position: relative;
     z-index: 2;
+  }
+
+  /* Fine grid gives the hero a crafted, editorial surface without an image asset. */
+  body:has(section#experience) section:first-of-type > div:first-child::before {
+    content: "";
+    position: absolute;
+    inset: -4rem -12vw;
+    z-index: -1;
+    pointer-events: none;
+    opacity: .32;
+    background-image:
+      linear-gradient(to right, oklch(.65 .12 268 / .045) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(.65 .12 268 / .045) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
   }
 
   /* A subtle cinematic scan line gives the hero a living, premium surface. */
@@ -45,15 +74,27 @@ body:has(section#experience) {
     box-shadow: 0 0 34px oklch(.58 .22 268 / .22);
     transform: translateX(-50%);
     animation: nuva-cinematic-scan 8s cubic-bezier(.45,0,.25,1) infinite;
+    will-change: top, opacity;
+  }
+
+  /* Product preview enters as a floating focal object rather than a flat screenshot. */
+  body:has(section#experience) section:first-of-type > div:last-child {
+    position: relative;
+    z-index: 1;
+    transform: translateZ(0);
+    filter: drop-shadow(0 34px 70px oklch(.2 .12 270 / .16));
+    animation: nuva-product-float 8s ease-in-out infinite;
   }
 
   /* Bento-like rhythm for the existing product cards, without changing markup. */
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
+    position: relative;
+    overflow: hidden;
     transform: translateZ(0);
     transition:
-      transform 520ms cubic-bezier(.16,1,.3,1),
-      box-shadow 520ms cubic-bezier(.16,1,.3,1),
+      transform 520ms var(--nuva-motion-ease),
+      box-shadow 520ms var(--nuva-motion-ease),
       border-color 360ms ease,
       background-color 360ms ease;
   }
@@ -76,12 +117,29 @@ body:has(section#experience) {
     border-radius: inherit;
     background: linear-gradient(115deg, transparent 22%, oklch(.7 .18 268 / .07) 48%, transparent 72%);
     transform: translateX(-125%);
-    transition: transform 900ms cubic-bezier(.16,1,.3,1);
+    transition: transform 900ms var(--nuva-motion-ease);
   }
 
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover::after,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after {
     transform: translateX(125%);
+  }
+
+  /* Give primary actions a tactile, intentional response. */
+  body:has(section#experience) a:has(> button) button {
+    transition:
+      transform 260ms var(--nuva-motion-ease),
+      box-shadow 260ms var(--nuva-motion-ease),
+      background-color 220ms ease;
+  }
+
+  body:has(section#experience) a:has(> button):hover button {
+    transform: translateY(-2px);
+  }
+
+  body:has(section#experience) nav a,
+  body:has(section#experience) header a {
+    transition: color 220ms ease, opacity 220ms ease;
   }
 }
 
@@ -108,6 +166,11 @@ body:has(section#experience) ::selection {
   78%, 100% { top: 118%; opacity: 0; }
 }
 
+@keyframes nuva-product-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -7px, 0); }
+}
+
 @media (max-width: 767px) {
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
@@ -117,7 +180,8 @@ body:has(section#experience) ::selection {
 
 @media (prefers-reduced-motion: reduce) {
   body:has(section#experience) section:first-of-type::before,
-  body:has(section#experience) section:first-of-type > div:first-child::after {
+  body:has(section#experience) section:first-of-type > div:first-child::after,
+  body:has(section#experience) section:first-of-type > div:last-child {
     animation: none !important;
   }
 
