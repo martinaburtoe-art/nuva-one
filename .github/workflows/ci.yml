@@ -148,3 +148,55 @@ jobs:
         run: npm run test
       - name: Build
         run: npm run build
+
+  browser-quality:
+    name: Browser quality gate
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build production bundle
+        run: npm run build
+      - name: Install Chromium for Playwright
+        run: npx --yes playwright@1.55.0 install --with-deps chromium
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/nuva-preview.log 2>&1 &
+          echo $! > /tmp/nuva-preview.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              echo "Preview is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/nuva-preview.log
+          exit 1
+      - name: Run landing smoke, accessibility and performance gate
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: npx --yes playwright@1.55.0 test quality/landing.spec.mjs --reporter=line
+      - name: Upload browser quality evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuva-browser-quality-evidence
+          path: |
+            artifacts/landing.png
+            test-results/
+            /tmp/nuva-preview.log
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Stop preview server
+        if: always()
+        run: |
+          if [ -f /tmp/nuva-preview.pid ]; then kill "$(cat /tmp/nuva-preview.pid)" || true; fi
