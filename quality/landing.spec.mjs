@@ -40,8 +40,8 @@ test('landing smoke, accessibility and performance budget', async ({ page }) => 
   await expectHealthyPage(page, '/');
   await expect(page.locator('main').first()).toBeVisible();
   await expect(page.locator('h1').first()).toBeVisible();
-  await expect(page.locator('a[href="/demo"]')).toBeVisible();
-  await expect(page.locator('a[href="/pricing"]')).toBeVisible();
+  await expect(page.locator('a[href="/demo"]').first()).toBeVisible();
+  await expect(page.locator('a[href="/pricing"]').first()).toBeVisible();
   await expectAccessible(page, '/', { disableRules: ['region'] });
   const navigationTiming = await page.evaluate(() => {
     const entry = performance.getEntriesByType('navigation')[0];
