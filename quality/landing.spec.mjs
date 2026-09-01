@@ -14,10 +14,19 @@ async function attachRuntimeGuards(page) {
   return { consoleErrors, pageErrors };
 }
 
+async function expectHealthyPage(page, path) {
+  const response = await page.goto(path, { waitUntil: 'networkidle' });
+  expect(response, `${path} must return a response`).not.toBeNull();
+  expect(response.ok(), `${path} returned HTTP ${response.status()}`).toBe(true);
+  await expect(page.locator('body')).toBeVisible();
+}
+
 test('landing smoke, accessibility heuristics and performance budget', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  const response = await page.goto('/', { waitUntil: 'networkidle' });
+  expect(response).not.toBeNull();
+  expect(response.ok(), `landing returned HTTP ${response.status()}`).toBe(true);
   await expect(page.locator('body')).toBeVisible();
   await expect(page.locator('h1').first()).toBeVisible();
 
@@ -58,10 +67,22 @@ test('landing smoke, accessibility heuristics and performance budget', async ({ 
   expect(pageErrors, `page errors: ${pageErrors.join(' | ')}`).toEqual([]);
 });
 
+test('public critical routes return successfully and remain runtime-clean', async ({ page }) => {
+  const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
+
+  for (const path of ['/demo', '/pricing']) {
+    await expectHealthyPage(page, path);
+    await expect(page.locator('h1').first()).toBeVisible();
+  }
+
+  expect(consoleErrors, `critical-route console errors: ${consoleErrors.join(' | ')}`).toEqual([]);
+  expect(pageErrors, `critical-route page errors: ${pageErrors.join(' | ')}`).toEqual([]);
+});
+
 test('public demo is interactive, safe and visually stable', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
 
-  await page.goto('/demo', { waitUntil: 'networkidle' });
+  await expectHealthyPage(page, '/demo');
   await expect(page.locator('h1')).toContainText('Entra a Nüva One');
   await expect(page.getByText('Demo completa')).toBeVisible();
   await expect(page.getByText('Sin registro · datos ficticios · sin pagos')).toBeVisible();
@@ -79,7 +100,7 @@ test('public demo is interactive, safe and visually stable', async ({ page }) =>
 test('landing experience has the Nüva motion layer and respects reduced motion', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await expectHealthyPage(page, '/');
   await expect(page.locator('section#experience')).toBeVisible();
 
   const motionLayerLoaded = await page.evaluate(() => {
