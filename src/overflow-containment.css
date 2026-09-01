@@ -1,6 +1,7 @@
 /* Keep transformed/absolute visual layers from expanding the document scroll width. */
 html,
 body {
+  width: 100%;
   max-width: 100%;
   overflow-x: clip;
 }
@@ -8,5 +9,13 @@ body {
 body > div {
   width: 100%;
   max-width: 100%;
+  overflow-x: clip;
+}
+
+/* TanStack mounts the application in a single body child. Keep that shell
+   viewport-bound so decorative layers cannot enlarge document scrollWidth. */
+body > div:first-of-type {
+  width: 100%;
+  max-width: 100vw;
   overflow-x: clip;
 }

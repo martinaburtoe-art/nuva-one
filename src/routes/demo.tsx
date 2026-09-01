@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Eye, RotateCcw, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,12 @@ function DemoPage() {
 }
 
 function DemoExperience() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <section className="border-b bg-card/95 px-4 py-3 sm:px-6">
@@ -66,11 +73,13 @@ function DemoExperience() {
         </div>
       </section>
 
-      <DemoWorkspace
-        onExit={() => {
-          window.location.assign("/");
-        }}
-      />
+      {mounted ? (
+        <DemoWorkspace
+          onExit={() => {
+            window.location.assign("/");
+          }}
+        />
+      ) : null}
 
       <div className="border-t bg-secondary/20 px-4 py-5 text-center text-xs text-muted-foreground">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-2 sm:flex-row">
