@@ -9,7 +9,6 @@ import {
   BarChart3,
   Sparkles,
   FileText,
-  Workflow,
   Settings,
   Bell,
   LogOut,
@@ -67,7 +66,6 @@ const nav = [
   // "Vinculación WhatsApp" permanece fuera del menú; el módulo y backend siguen disponibles.
   // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
   { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai" },
-  { to: "/studio", label: "Nüva Studio", icon: Sparkles },
   { to: "/foro", label: "Comunidad", icon: MessagesSquare },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true },
   { to: "/settings", label: "Configuración", icon: Settings },
