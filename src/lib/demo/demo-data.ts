@@ -46,5 +46,9 @@ export const DEMO_SALES = [
   { id: "s3", customer: "Sofía Pérez", product: "Granos Colombia 1 kg", total: 18_990, status: "Pagada" },
 ];
 
-export const money = (value: number) =>
-  new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
+export const money = (value: number) => {
+  const rounded = Math.round(value);
+  const sign = rounded < 0 ? "-" : "";
+  const grouped = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sign}$${grouped}`;
+};
