@@ -15,6 +15,7 @@ import { Toaster, toast } from "sonner";
 import appCss from "../styles.css?url";
 import "../home-experience.css";
 import "../nuva-motion-system.css";
+import "../nuva-motion-sites-layer.css";
 import "../nuva-premium-frontend.css";
 import "../nuva-premium-frontend-v2.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
