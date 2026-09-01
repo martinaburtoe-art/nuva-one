@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Starting lean Supabase database stack with health checks bypassed"
-          timeout --signal=TERM --kill-after=30s 8m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+          timeout --signal=TERM --kill-after=30s 6m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
           echo "Supabase containers started"
           supabase status
           echo "Waiting for local Postgres readiness"
@@ -68,7 +68,7 @@ jobs:
             if [ "$attempt" -lt 2 ]; then
               echo "pgTAP failed; retrying after a clean local stack restart"
               supabase stop --no-backup || true
-              timeout --signal=TERM --kill-after=30s 8m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+              timeout --signal=TERM --kill-after=30s 6m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
             fi
           done
           exit 1
