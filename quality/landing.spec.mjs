@@ -76,11 +76,10 @@ test('public demo is interactive, safe and visually stable', async ({ page }) =>
   expect(pageErrors, `demo page errors: ${pageErrors.join(' | ')}`).toEqual([]);
 });
 
-test('experience applies the Nüva motion layer and honors reduced motion', async ({ page }) => {
+test('landing experience has the Nüva motion layer and respects reduced motion', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
 
-  await page.goto('/experiencia', { waitUntil: 'networkidle' });
-  await expect(page.locator('body')).toHaveClass(/.*/);
+  await page.goto('/', { waitUntil: 'networkidle' });
   await expect(page.locator('section#experience')).toBeVisible();
 
   const motionLayerLoaded = await page.evaluate(() => {
@@ -93,7 +92,11 @@ test('experience applies the Nüva motion layer and honors reduced motion', asyn
       }
     });
   });
-  expect(motionLayerLoaded, 'Nüva motion layer must be loaded on experience').toBe(true);
+  expect(motionLayerLoaded, 'Nüva motion layer must be loaded on landing').toBe(true);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedMotion = await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
+  expect(reducedMotion).toBe(true);
 
   await page.screenshot({ path: 'artifacts/experience.png', fullPage: true });
 
