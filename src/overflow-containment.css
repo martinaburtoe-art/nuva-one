@@ -3,13 +3,13 @@ html,
 body {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip !important;
 }
 
 body > div {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* TanStack mounts the application in a single body child. Keep that shell
@@ -17,5 +17,12 @@ body > div {
 body > div:first-of-type {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/* The marketing landing owns several animated visual layers. Clip them at
+   the viewport rather than allowing transformed descendants to affect the
+   document's horizontal scroll geometry. */
+body:has(section#experience) {
+  overflow-x: clip !important;
 }
