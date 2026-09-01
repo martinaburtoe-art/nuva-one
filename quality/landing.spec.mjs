@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 const baseURL = process.env.BASE_URL ?? 'http://127.0.0.1:4173';
 
@@ -21,7 +22,12 @@ async function expectHealthyPage(page, path) {
   await expect(page.locator('body')).toBeVisible();
 }
 
-test('landing smoke, accessibility heuristics and performance budget', async ({ page }) => {
+async function expectAccessible(page, path) {
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, `${path} has accessibility violations`).toEqual([]);
+}
+
+test('landing smoke, accessibility and performance budget', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
 
   const response = await page.goto('/', { waitUntil: 'networkidle' });
@@ -36,21 +42,7 @@ test('landing smoke, accessibility heuristics and performance budget', async ({ 
   expect(navigationTargets).toContain('/demo');
   expect(navigationTargets).toContain('/pricing');
 
-  const accessibility = await page.locator('img').evaluateAll((images) =>
-    images.map((img) => ({
-      alt: img.getAttribute('alt'),
-      ariaHidden: img.getAttribute('aria-hidden'),
-    })),
-  );
-  expect(
-    accessibility.filter(({ alt, ariaHidden }) => alt === null && ariaHidden !== 'true'),
-    'images must have alt text or be explicitly decorative',
-  ).toEqual([]);
-
-  const unlabeledButtons = await page.locator('button').evaluateAll((buttons) =>
-    buttons.filter((button) => !button.textContent?.trim() && !button.getAttribute('aria-label')),
-  );
-  expect(unlabeledButtons, 'buttons need an accessible name').toEqual([]);
+  await expectAccessible(page, '/');
 
   const navigationTiming = await page.evaluate(() => {
     const entry = performance.getEntriesByType('navigation')[0];
@@ -67,12 +59,13 @@ test('landing smoke, accessibility heuristics and performance budget', async ({ 
   expect(pageErrors, `page errors: ${pageErrors.join(' | ')}`).toEqual([]);
 });
 
-test('public critical routes return successfully and remain runtime-clean', async ({ page }) => {
+test('public critical routes return successfully, accessible and runtime-clean', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
 
   for (const path of ['/demo', '/pricing']) {
     await expectHealthyPage(page, path);
     await expect(page.locator('h1').first()).toBeVisible();
+    await expectAccessible(page, path);
   }
 
   expect(consoleErrors, `critical-route console errors: ${consoleErrors.join(' | ')}`).toEqual([]);
@@ -87,6 +80,7 @@ test('public demo is interactive, safe and visually stable', async ({ page }) =>
   await expect(page.getByText('Demo completa')).toBeVisible();
   await expect(page.getByText('Sin registro · datos ficticios · sin pagos')).toBeVisible();
   await expect(page.getByText('Reiniciar experiencia completa')).toBeVisible();
+  await expectAccessible(page, '/demo');
 
   const cta = page.getByRole('link', { name: /Crear mi cuenta/i }).first();
   await expect(cta).toHaveAttribute('href', /\/auth/);
@@ -102,6 +96,7 @@ test('landing experience has the Nüva motion layer and respects reduced motion'
 
   await expectHealthyPage(page, '/');
   await expect(page.locator('section#experience')).toBeVisible();
+  await expectAccessible(page, '/');
 
   const motionLayerLoaded = await page.evaluate(() => {
     const styles = [...document.styleSheets];
