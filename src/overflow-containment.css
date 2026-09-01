@@ -30,3 +30,20 @@ body:has(section#experience) main {
 body:has(section#experience) {
   overflow-x: clip !important;
 }
+
+/* The full desktop navigation cannot fit beside the brand on narrow phones.
+   Keep the primary demo/signup actions visible and progressively simplify
+   only the header controls; the same destinations remain available in the
+   landing content below. */
+@media (max-width: 639px) {
+  body:has(section#experience) header a[href="#what-is-nuva"],
+  body:has(section#experience) header a[href="/auth"] {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  body:has(section#experience) header a[href="/demo"] {
+    display: none !important;
+  }
+}
