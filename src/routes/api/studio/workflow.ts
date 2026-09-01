@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { runNuvaStudioTask, planNuvaStudioTask } from "@/lib/nuva-studio.server";
 import { generateGeminiImageAsset } from "@/lib/nuva-studio-media.server";
+import { generateGeminiVideoAsset } from "@/lib/nuva-studio-video.server";
 import { generateFishVoiceAsset } from "@/lib/nuva-studio-voice.server";
-import { runNuvaStudioN8nTask } from "@/lib/nuva-studio-n8n.server";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
 import type { Database } from "@/integrations/supabase/types";
@@ -20,13 +20,16 @@ async function executeCapability(args: { capability: AiCapability; businessId: s
     const asset = await generateGeminiImageAsset({ businessId, userId, prompt, supabase });
     return { capability, title: "Pieza visual", summary: "Imagen generada y guardada en la biblioteca de Nüva Studio.", text: "Imagen creada correctamente.", imageUrl: asset.signedUrl, metadata: { provider: "google", model: asset.model, storagePath: asset.storagePath } };
   }
+  if (capability === "video") {
+    const asset = await generateGeminiVideoAsset({ businessId, prompt, supabase });
+    return { capability, title: "Video", summary: "Video generado y guardado en la biblioteca de Nüva Studio.", text: "Video creado correctamente.", mediaUrl: asset.signedUrl, metadata: { provider: "google", model: asset.model, storagePath: asset.storagePath } };
+  }
   if (capability === "voice") {
     const asset = await generateFishVoiceAsset({ businessId, prompt, supabase });
     return { capability, title: "Locución", summary: "Voz generada y guardada en la biblioteca de Nüva Studio.", text: "Locución creada correctamente.", audioUrl: asset.signedUrl, metadata: { provider: "fish_audio", model: asset.model, storagePath: asset.storagePath } };
   }
-  if (capability === "video" || capability === "automation") {
-    const result = await runNuvaStudioN8nTask({ businessId, userId, capability, prompt, supabase });
-    return { capability, title: capability === "video" ? "Video" : "Automatización", summary: result.text, text: result.text, mediaUrl: result.url, metadata: { provider: "n8n", model: capability } };
+  if (capability === "automation") {
+    return { capability, title: "Automatización", summary: "Automatización preparada por Nüva Studio.", text: (await runNuvaStudioTask({ businessId, capability, prompt, supabase })).text, metadata: { provider: "ai_gateway", model: capability } };
   }
   const result = await runNuvaStudioTask({ businessId, capability, prompt, supabase });
   return { capability, title: capability === "strategy" ? "Oportunidades y prioridades" : capability, summary: result.text.slice(0, 280), text: result.text, metadata: result.metadata };
