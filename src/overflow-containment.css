@@ -1,0 +1,12 @@
+/* Keep transformed/absolute visual layers from expanding the document scroll width. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body > div {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
