@@ -14,19 +14,25 @@ const ALLOWED = new Set<AiCapability>([
   "video", "voice", "brand", "strategy", "document", "automation",
 ]);
 
-const TOOL: Record<AiCapability, string> = {
-  chat: "agent.chat", research: "studio.research", marketing: "studio.marketing",
-  copywriting: "studio.copywriting", image: "studio.image", image_edit: "studio.image_edit",
-  video: "studio.video", voice: "studio.voice", brand: "studio.brand",
-  strategy: "studio.strategy", document: "studio.document", automation: "studio.automation",
-};
-
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
 }
 
 function normalize(text: string) {
   return text.replaceAll("\0", "").trim().slice(0, 12000);
+}
+
+function serializeOutput(output: Record<string, unknown>) {
+  return JSON.stringify({
+    capability: output.capability,
+    title: output.title,
+    summary: output.summary,
+    text: output.text,
+    imageUrl: output.imageUrl,
+    audioUrl: output.audioUrl,
+    mediaUrl: output.mediaUrl,
+    metadata: output.metadata,
+  });
 }
 
 async function executeCapability(args: {
@@ -121,13 +127,14 @@ export const Route = createFileRoute("/api/studio/workflow")({
           const enrichedPrompt = [
             `Objetivo general: ${plan.goal}`,
             `Instrucción: ${step.instruction}`,
-            dependencies ? `Resultados previos que debes reutilizar:\n${dependencies}` : "",
-            "Construye este paso para que el siguiente pueda reutilizarlo. No repitas información innecesariamente.",
+            dependencies ? `Resultados previos estructurados que debes reutilizar:\n${dependencies}` : "",
+            "Construye este paso para que el siguiente pueda reutilizar decisiones, mensajes, datos y assets. No repitas información innecesariamente.",
           ].filter(Boolean).join("\n\n");
 
           const output = await executeCapability({ capability: step.capability, businessId: body.businessId, userId, prompt: enrichedPrompt, supabase });
-          outputs.push({ step: index + 1, instruction: step.instruction, dependsOn: step.dependsOn, ...output });
-          completed.set(index, output.text);
+          const enrichedOutput = { step: index + 1, instruction: step.instruction, dependsOn: step.dependsOn, ...output };
+          outputs.push(enrichedOutput);
+          completed.set(index, serializeOutput(enrichedOutput));
         }
 
         return json({ ok: true, goal: plan.goal, rationale: plan.rationale, steps, outputs });
