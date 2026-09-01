@@ -38,12 +38,14 @@ jobs:
           set -euo pipefail
           timeout --signal=TERM --kill-after=30s 6m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
           supabase status
-          for attempt in $(seq 1 60); do
-            if supabase db ping --local >/dev/null 2>&1; then exit 0; fi
+          db_container="$(docker ps --filter 'name=supabase_db_' --filter 'status=running' --format '{{.Names}}' | head -n 1)"
+          test -n "${db_container}"
+          for attempt in $(seq 1 30); do
+            if docker exec "${db_container}" pg_isready -U postgres -d postgres >/dev/null 2>&1; then exit 0; fi
             sleep 2
           done
-          supabase status || true
-          docker ps -a || true
+          docker inspect "${db_container}" --format '{{json .State.Health}}' || true
+          docker logs "${db_container}" --tail 200 || true
           exit 1
       - name: Generate database types from clean schema
         run: |
