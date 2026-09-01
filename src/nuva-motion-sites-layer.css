@@ -1,0 +1,134 @@
+/* Nüva One — MotionSites-inspired visual layer
+ * Inspiration: cinematic hero composition, bento rhythm, restrained glow,
+ * directional hover and layered depth. No external assets or business logic.
+ */
+
+body:has(section#experience) {
+  --nuva-motion-glow: oklch(.58 .22 268 / .16);
+  --nuva-motion-line: oklch(.55 .22 268 / .14);
+}
+
+@media (min-width: 768px) {
+  body:has(section#experience) section:first-of-type {
+    isolation: isolate;
+    overflow: clip;
+  }
+
+  body:has(section#experience) section:first-of-type::before {
+    content: "";
+    position: absolute;
+    inset: -15% -8%;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 72% 34%, var(--nuva-motion-glow), transparent 27%),
+      radial-gradient(circle at 18% 78%, oklch(.58 .18 290 / .07), transparent 24%);
+    filter: blur(12px);
+    animation: nuva-cinematic-drift 12s ease-in-out infinite alternate;
+  }
+
+  body:has(section#experience) section:first-of-type > div:first-child {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* A subtle cinematic scan line gives the hero a living, premium surface. */
+  body:has(section#experience) section:first-of-type > div:first-child::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -25%;
+    width: min(60vw, 720px);
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, oklch(.72 .2 268 / .38), transparent);
+    box-shadow: 0 0 34px oklch(.58 .22 268 / .22);
+    transform: translateX(-50%);
+    animation: nuva-cinematic-scan 8s cubic-bezier(.45,0,.25,1) infinite;
+  }
+
+  /* Bento-like rhythm for the existing product cards, without changing markup. */
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
+    transform: translateZ(0);
+    transition:
+      transform 520ms cubic-bezier(.16,1,.3,1),
+      box-shadow 520ms cubic-bezier(.16,1,.3,1),
+      border-color 360ms ease,
+      background-color 360ms ease;
+  }
+
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover {
+    transform: translate3d(0,-5px,0) scale(1.008);
+    border-color: oklch(.55 .22 268 / .24);
+    box-shadow: 0 28px 70px -42px oklch(.35 .18 270 / .42);
+  }
+
+  /* Directional sheen, inspired by premium template galleries. */
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl::after,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(115deg, transparent 22%, oklch(.7 .18 268 / .07) 48%, transparent 72%);
+    transform: translateX(-125%);
+    transition: transform 900ms cubic-bezier(.16,1,.3,1);
+  }
+
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover::after,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after {
+    transform: translateX(125%);
+  }
+}
+
+/* Scrollbar and focus treatment: quiet, intentional, never ornamental. */
+body:has(section#experience) :focus-visible {
+  outline: 2px solid oklch(.58 .22 268 / .72);
+  outline-offset: 4px;
+  border-radius: .5rem;
+}
+
+body:has(section#experience) ::selection {
+  background: oklch(.58 .22 268 / .22);
+}
+
+@keyframes nuva-cinematic-drift {
+  from { transform: translate3d(-1%, -1%, 0) scale(1); }
+  to { transform: translate3d(2%, 2%, 0) scale(1.04); }
+}
+
+@keyframes nuva-cinematic-scan {
+  0%, 14% { top: -25%; opacity: 0; }
+  28% { opacity: .8; }
+  66% { top: 118%; opacity: .32; }
+  78%, 100% { top: 118%; opacity: 0; }
+}
+
+@media (max-width: 767px) {
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
+    transition: box-shadow 360ms ease, border-color 300ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(section#experience) section:first-of-type::before,
+  body:has(section#experience) section:first-of-type > div:first-child::after {
+    animation: none !important;
+  }
+
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl {
+    transition-duration: .01ms !important;
+    transform: none !important;
+  }
+
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl::after,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl::after {
+    display: none !important;
+  }
+}
