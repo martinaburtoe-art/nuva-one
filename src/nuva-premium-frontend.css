@@ -1,0 +1,244 @@
+/* Nüva One — Premium Frontend V1
+ * Visual-only layer. No business logic, data access, routes or API behavior.
+ * Scoped primarily to the public landing experience.
+ */
+
+:root {
+  --nuva-display: clamp(3.25rem, 7vw, 7rem);
+  --nuva-section: clamp(5.5rem, 11vw, 10rem);
+  --nuva-content: 1180px;
+  --nuva-line: color-mix(in oklch, var(--border) 70%, transparent);
+}
+
+html { scroll-behavior: smooth; }
+
+/* ---------- Global primitive refinement ---------- */
+button, a { -webkit-tap-highlight-color: transparent; }
+
+/* ---------- Landing shell ---------- */
+body:has(#experience) {
+  background:
+    radial-gradient(circle at 50% -12%, oklch(.60 .18 268 / .12), transparent 38%),
+    linear-gradient(180deg, oklch(.995 .003 270), var(--background));
+}
+
+body:has(#experience) header.sticky {
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
+  background: color-mix(in oklch, var(--background) 76%, transparent);
+  box-shadow: 0 10px 35px -30px oklch(.25 .08 270 / .35);
+}
+
+body:has(#experience) header.sticky > div {
+  min-height: 64px;
+  max-width: 1320px;
+}
+
+body:has(#experience) header.sticky a:first-child > div {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px -12px oklch(.35 .18 270 / .55);
+}
+
+body:has(#experience) header.sticky a:first-child > span {
+  font-size: .98rem;
+  letter-spacing: -.025em;
+}
+
+body:has(#experience) header.sticky nav a {
+  position: relative;
+  padding: 7px 0;
+  font-size: .76rem;
+  letter-spacing: -.005em;
+}
+
+body:has(#experience) header.sticky nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1px;
+  height: 1px;
+  transform: scaleX(0);
+  transform-origin: center;
+  background: var(--primary);
+  transition: transform .25s ease;
+}
+
+body:has(#experience) header.sticky nav a:hover::after { transform: scaleX(1); }
+
+/* ---------- Hero: editorial typography + product-first composition ---------- */
+body:has(#experience) section:first-of-type {
+  min-height: min(920px, calc(100vh - 64px));
+  display: flex;
+  align-items: center;
+  padding-top: clamp(2rem, 6vw, 5rem);
+  background:
+    radial-gradient(circle at 50% 8%, oklch(.58 .20 268 / .16), transparent 32%),
+    radial-gradient(circle at 18% 45%, oklch(.72 .13 300 / .07), transparent 25%),
+    linear-gradient(180deg, transparent, color-mix(in oklch, var(--background) 95%, var(--primary) 5%));
+}
+
+body:has(#experience) section:first-of-type > div {
+  max-width: 1320px;
+}
+
+body:has(#experience) section:first-of-type h1 {
+  max-width: 1050px;
+  margin-inline: auto;
+  font-size: var(--nuva-display);
+  line-height: .94;
+  letter-spacing: -.065em;
+  font-weight: 700;
+}
+
+body:has(#experience) section:first-of-type h1 span {
+  display: inline-block;
+  padding-bottom: .05em;
+  background-image: linear-gradient(105deg, oklch(.35 .18 270), oklch(.55 .22 268) 45%, oklch(.47 .20 295));
+  filter: drop-shadow(0 12px 35px oklch(.55 .22 268 / .12));
+}
+
+body:has(#experience) section:first-of-type p {
+  max-width: 700px;
+  font-size: clamp(1rem, 1.45vw, 1.25rem);
+  line-height: 1.65;
+  color: color-mix(in oklch, var(--muted-foreground) 88%, var(--foreground));
+}
+
+body:has(#experience) section:first-of-type [class*="rounded-full"] {
+  letter-spacing: .01em;
+  box-shadow: inset 0 0 0 1px oklch(.55 .22 268 / .035);
+}
+
+body:has(#experience) section:first-of-type a > button {
+  border-radius: 999px;
+  min-height: 50px;
+  padding-inline: 1.45rem;
+  font-weight: 650;
+  transition: transform .28s cubic-bezier(.16,1,.3,1), box-shadow .28s ease, background .28s ease;
+}
+
+body:has(#experience) section:first-of-type a > button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 50px -28px oklch(.35 .18 270 / .7);
+}
+
+/* Product preview becomes the visual anchor rather than a generic card. */
+body:has(#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] {
+  margin-top: clamp(3rem, 6vw, 5.5rem);
+  border-radius: 28px;
+  border: 1px solid color-mix(in oklch, var(--primary) 18%, var(--border));
+  box-shadow:
+    0 60px 120px -70px oklch(.30 .16 270 / .55),
+    0 18px 50px -35px oklch(.35 .18 270 / .35),
+    0 0 0 1px oklch(1 0 0 / .65) inset;
+  transform: perspective(1800px) rotateX(1deg);
+  transition: transform .6s cubic-bezier(.16,1,.3,1), box-shadow .6s ease;
+}
+
+body:has(#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\]:hover {
+  transform: perspective(1800px) rotateX(0deg) translateY(-5px);
+  box-shadow:
+    0 75px 145px -75px oklch(.30 .16 270 / .65),
+    0 25px 65px -38px oklch(.35 .18 270 / .42),
+    0 0 0 1px oklch(1 0 0 / .72) inset;
+}
+
+/* ---------- Section rhythm ---------- */
+body:has(#experience) section#what-is-nuva,
+body:has(#experience) section#ecosystem,
+body:has(#experience) section#intelligence {
+  padding-block: var(--nuva-section);
+}
+
+body:has(#experience) section#what-is-nuva {
+  background: linear-gradient(180deg, color-mix(in oklch, var(--secondary) 34%, transparent), transparent);
+}
+
+body:has(#experience) section#what-is-nuva > div,
+body:has(#experience) section#ecosystem > div,
+body:has(#experience) section#intelligence > div {
+  max-width: var(--nuva-content);
+}
+
+body:has(#experience) section h2 {
+  letter-spacing: -.045em;
+  line-height: 1.02;
+}
+
+body:has(#experience) section p {
+  text-wrap: pretty;
+}
+
+/* Replace repeated "card stack" feel with quieter surfaces. */
+body:has(#experience) section#what-is-nuva .rounded-3xl,
+body:has(#experience) section#ecosystem .rounded-3xl,
+body:has(#experience) section#intelligence .rounded-3xl {
+  border-color: color-mix(in oklch, var(--border) 65%, transparent);
+  box-shadow: 0 30px 80px -60px oklch(.30 .10 270 / .35);
+}
+
+body:has(#experience) section#what-is-nuva .rounded-3xl:hover,
+body:has(#experience) section#ecosystem .rounded-3xl:hover,
+body:has(#experience) section#intelligence .rounded-3xl:hover {
+  border-color: color-mix(in oklch, var(--primary) 22%, var(--border));
+}
+
+/* ---------- Product Story ---------- */
+body:has(#experience) section#experience {
+  min-height: 780px;
+  padding-block: var(--nuva-section);
+  background:
+    radial-gradient(circle at 80% 15%, oklch(.55 .22 268 / .10), transparent 28%),
+    radial-gradient(circle at 15% 85%, oklch(.55 .16 300 / .06), transparent 28%),
+    linear-gradient(180deg, transparent, color-mix(in oklch, var(--secondary) 24%, transparent), transparent);
+}
+
+body:has(#experience) section#experience::before {
+  opacity: .16;
+  background-size: 64px 64px;
+}
+
+/* ---------- Buttons / badges ---------- */
+body:has(#experience) .rounded-full.border-primary\/20 {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* ---------- Accessible focus ---------- */
+body:has(#experience) :is(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--ring) 80%, white);
+  outline-offset: 3px;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 767px) {
+  body:has(#experience) section:first-of-type {
+    min-height: auto;
+    padding-top: 2rem;
+  }
+
+  body:has(#experience) section:first-of-type h1 {
+    font-size: clamp(3rem, 15vw, 4.6rem);
+    letter-spacing: -.07em;
+    line-height: .95;
+  }
+
+  body:has(#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\] {
+    margin-top: 2.75rem;
+    border-radius: 20px;
+    transform: none;
+  }
+
+  body:has(#experience) section:first-of-type .overflow-hidden.rounded-\[1\.75rem\]:hover {
+    transform: none;
+  }
+
+  body:has(#experience) section#experience { min-height: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  body:has(#experience) * { transition-duration: .01ms !important; }
+}
