@@ -16,6 +16,7 @@ import appCss from "../styles.css?url";
 import "../home-experience.css";
 import "../nuva-motion-system.css";
 import "../nuva-premium-frontend.css";
+import "../nuva-premium-frontend-v2.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
