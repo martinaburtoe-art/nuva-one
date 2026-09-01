@@ -103,6 +103,24 @@ test('landing has no horizontal overflow on desktop and mobile', async ({ page }
     await page.setViewportSize(viewport);
     await expectHealthyPage(page, '/');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    if (overflow > 1) {
+      const offenders = await page.evaluate(() => [...document.querySelectorAll('*')].map((el) => {
+        const rect = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        return {
+          tag: el.tagName,
+          id: el.id,
+          className: typeof el.className === 'string' ? el.className.slice(0, 240) : '',
+          left: Math.round(rect.left * 100) / 100,
+          right: Math.round(rect.right * 100) / 100,
+          width: Math.round(rect.width * 100) / 100,
+          position: cs.position,
+          transform: cs.transform,
+          overflowX: cs.overflowX,
+        };
+      }).filter((item) => item.right > window.innerWidth + 1 || item.left < -1).sort((a, b) => (b.right - window.innerWidth) - (a.right - window.innerWidth)).slice(0, 20));
+      console.log(`OVERFLOW_DIAGNOSTIC ${viewport.width}: ${JSON.stringify({ overflow, offenders })}`);
+    }
     expect(overflow, `horizontal overflow at ${viewport.width}px`).toBeLessThanOrEqual(1);
   }
 });
