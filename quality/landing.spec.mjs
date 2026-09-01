@@ -104,22 +104,66 @@ test('landing has no horizontal overflow on desktop and mobile', async ({ page }
     await expectHealthyPage(page, '/');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     if (overflow > 1) {
-      const offenders = await page.evaluate(() => [...document.querySelectorAll('*')].map((el) => {
-        const rect = el.getBoundingClientRect();
-        const cs = getComputedStyle(el);
-        return {
-          tag: el.tagName,
-          id: el.id,
-          className: typeof el.className === 'string' ? el.className.slice(0, 240) : '',
-          left: Math.round(rect.left * 100) / 100,
-          right: Math.round(rect.right * 100) / 100,
-          width: Math.round(rect.width * 100) / 100,
-          position: cs.position,
-          transform: cs.transform,
-          overflowX: cs.overflowX,
+      const diagnostic = await page.evaluate(() => {
+        const describePseudo = (el, pseudo) => {
+          const cs = getComputedStyle(el, pseudo);
+          if (!cs || cs.content === 'none') return null;
+          return {
+            content: cs.content,
+            position: cs.position,
+            left: cs.left,
+            right: cs.right,
+            width: cs.width,
+            height: cs.height,
+            transform: cs.transform,
+            marginLeft: cs.marginLeft,
+            marginRight: cs.marginRight,
+            display: cs.display,
+          };
         };
-      }).filter((item) => item.right > window.innerWidth + 1 || item.left < -1).sort((a, b) => (b.right - window.innerWidth) - (a.right - window.innerWidth)).slice(0, 20));
-      console.log(`OVERFLOW_DIAGNOSTIC ${viewport.width}: ${JSON.stringify({ overflow, offenders })}`);
+        const offenders = [...document.querySelectorAll('*')].map((el) => {
+          const rect = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          return {
+            tag: el.tagName,
+            id: el.id,
+            className: typeof el.className === 'string' ? el.className.slice(0, 240) : '',
+            left: Math.round(rect.left * 100) / 100,
+            right: Math.round(rect.right * 100) / 100,
+            width: Math.round(rect.width * 100) / 100,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+            position: cs.position,
+            transform: cs.transform,
+            overflowX: cs.overflowX,
+            before: describePseudo(el, '::before'),
+            after: describePseudo(el, '::after'),
+          };
+        }).filter((item) => item.right > window.innerWidth + 1 || item.left < -1 || item.scrollWidth > item.clientWidth + 1);
+        const roots = ['html', 'body', 'main'].map((selector) => {
+          const el = document.querySelector(selector);
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            selector,
+            rect: { left: rect.left, right: rect.right, width: rect.width },
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+            offsetWidth: el.offsetWidth,
+            overflowX: getComputedStyle(el).overflowX,
+          };
+        });
+        return {
+          innerWidth: window.innerWidth,
+          outerWidth: window.outerWidth,
+          devicePixelRatio: window.devicePixelRatio,
+          documentScrollWidth: document.documentElement.scrollWidth,
+          bodyScrollWidth: document.body.scrollWidth,
+          roots,
+          offenders: offenders.sort((a, b) => Math.max(b.right - window.innerWidth, b.scrollWidth - b.clientWidth) - Math.max(a.right - window.innerWidth, a.scrollWidth - a.clientWidth)).slice(0, 30),
+        };
+      });
+      console.log(`OVERFLOW_DEEP_DIAGNOSTIC ${viewport.width}: ${JSON.stringify({ overflow, diagnostic })}`);
     }
     expect(overflow, `horizontal overflow at ${viewport.width}px`).toBeLessThanOrEqual(1);
   }
