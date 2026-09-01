@@ -15,7 +15,6 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Quality Gate: database -> application -> browser. Keep the pipeline deterministic.
 jobs:
   database-tests:
     name: pgTAP database tests
@@ -37,19 +36,12 @@ jobs:
       - name: Start lean Supabase database test stack
         run: |
           set -euo pipefail
-          echo "Starting lean Supabase database stack with health checks bypassed"
           timeout --signal=TERM --kill-after=30s 6m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
-          echo "Supabase containers started"
           supabase status
-          echo "Waiting for local Postgres readiness"
           for attempt in $(seq 1 60); do
-            if supabase db ping --local >/dev/null 2>&1; then
-              echo "Local Postgres is ready"
-              exit 0
-            fi
+            if supabase db ping --local >/dev/null 2>&1; then exit 0; fi
             sleep 2
           done
-          echo "Local Postgres did not become ready"
           supabase status || true
           docker ps -a || true
           exit 1
@@ -61,12 +53,8 @@ jobs:
         run: |
           set -o pipefail
           for attempt in 1 2; do
-            echo "Running pgTAP database tests (attempt ${attempt}/2)"
-            if supabase test db; then
-              exit 0
-            fi
+            if supabase test db; then exit 0; fi
             if [ "$attempt" -lt 2 ]; then
-              echo "pgTAP failed; retrying after a clean local stack restart"
               supabase stop --no-backup || true
               timeout --signal=TERM --kill-after=30s 6m supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
             fi
@@ -75,7 +63,6 @@ jobs:
       - name: Recovery drill — rebuild schema from migrations
         run: |
           set -o pipefail
-          echo "Running destructive recovery drill against the ephemeral local database only"
           supabase db reset --local
           supabase gen types typescript --local > /tmp/recovery-supabase-types.ts
           cp /tmp/recovery-supabase-types.ts src/integrations/supabase/types.ts
@@ -117,9 +104,7 @@ jobs:
           path: src/integrations/supabase
       - name: Verify lint
         id: lint
-        run: |
-          set -o pipefail
-          npm run lint 2>&1 | tee /tmp/lint.log
+        run: npm run lint
       - name: Generate ESLint warning inventory
         run: npm run lint:report
       - name: Upload ESLint warning inventory
@@ -129,18 +114,6 @@ jobs:
           path: eslint-report.json
           if-no-files-found: error
           retention-days: 14
-      - name: Publish lint diagnostic status
-        if: failure() && steps.lint.conclusion == 'failure'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          msg="$(awk '/error|Error|✖/ {print p2; print p1; print; exit} {p2=p1; p1=$0}' /tmp/lint.log | tr '\n' ' ' | cut -c1-140)"
-          if [ -z "$msg" ]; then msg="eslint failed; inspect the CI run log"; fi
-          gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -f state=failure \
-            -f context='ci/lint-diagnostic' \
-            -f description="$msg" \
-            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
@@ -176,18 +149,10 @@ jobs:
           server_pid=$!
           echo "$server_pid" > /tmp/nuva-browser.pid
           for attempt in $(seq 1 60); do
-            if ! kill -0 "$server_pid" 2>/dev/null; then
-              echo "Application server exited unexpectedly"
-              cat /tmp/nuva-browser.log
-              exit 1
-            fi
-            if curl --fail --silent --max-time 2 http://127.0.0.1:3000/ > /dev/null; then
-              echo "Production preview server is ready"
-              exit 0
-            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then cat /tmp/nuva-browser.log; exit 1; fi
+            if curl --fail --silent --max-time 2 http://127.0.0.1:3000/ > /dev/null; then exit 0; fi
             sleep 1
           done
-          echo "Production preview server did not become ready"
           cat /tmp/nuva-browser.log
           exit 1
       - name: Run landing smoke, accessibility and performance gate
@@ -200,9 +165,7 @@ jobs:
         with:
           name: nuva-browser-quality-evidence
           path: |
-            artifacts/landing.png
-            artifacts/demo.png
-            artifacts/experience.png
+            artifacts/
             test-results/
             /tmp/nuva-browser.log
           if-no-files-found: warn
