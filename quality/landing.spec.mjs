@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const baseURL = process.env.BASE_URL ?? 'http://127.0.0.1:4173';
-
 test.use({ baseURL });
 
 async function attachRuntimeGuards(page) {
@@ -29,93 +28,70 @@ async function expectAccessible(page, path) {
 
 test('landing smoke, accessibility and performance budget', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
-
-  const response = await page.goto('/', { waitUntil: 'networkidle' });
-  expect(response).not.toBeNull();
-  expect(response.ok(), `landing returned HTTP ${response.status()}`).toBe(true);
-  await expect(page.locator('body')).toBeVisible();
+  await expectHealthyPage(page, '/');
   await expect(page.locator('h1').first()).toBeVisible();
-
-  const navigationTargets = await page.locator('a[href]').evaluateAll((links) =>
-    links.map((link) => link.getAttribute('href')).filter(Boolean),
-  );
-  expect(navigationTargets).toContain('/demo');
-  expect(navigationTargets).toContain('/pricing');
-
+  await expect(page.locator('a[href="/demo"]')).toBeVisible();
+  await expect(page.locator('a[href="/pricing"]')).toBeVisible();
   await expectAccessible(page, '/');
-
   const navigationTiming = await page.evaluate(() => {
     const entry = performance.getEntriesByType('navigation')[0];
-    if (!entry) return null;
-    return { domContentLoaded: entry.domContentLoadedEventEnd, load: entry.loadEventEnd };
+    return entry ? { domContentLoaded: entry.domContentLoadedEventEnd, load: entry.loadEventEnd } : null;
   });
   expect(navigationTiming).not.toBeNull();
   expect(navigationTiming.domContentLoaded).toBeLessThan(3000);
   expect(navigationTiming.load).toBeLessThan(5000);
-
   await page.screenshot({ path: 'artifacts/landing.png', fullPage: true });
-
-  expect(consoleErrors, `browser console errors: ${consoleErrors.join(' | ')}`).toEqual([]);
-  expect(pageErrors, `page errors: ${pageErrors.join(' | ')}`).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
 });
 
 test('public critical routes return successfully, accessible and runtime-clean', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
-
   for (const path of ['/demo', '/pricing']) {
     await expectHealthyPage(page, path);
     await expect(page.locator('h1').first()).toBeVisible();
     await expectAccessible(page, path);
   }
-
-  expect(consoleErrors, `critical-route console errors: ${consoleErrors.join(' | ')}`).toEqual([]);
-  expect(pageErrors, `critical-route page errors: ${pageErrors.join(' | ')}`).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
 });
 
 test('public demo is interactive, safe and visually stable', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
-
   await expectHealthyPage(page, '/demo');
   await expect(page.locator('h1')).toContainText('Entra a Nüva One');
   await expect(page.getByText('Demo completa')).toBeVisible();
   await expect(page.getByText('Sin registro · datos ficticios · sin pagos')).toBeVisible();
   await expect(page.getByText('Reiniciar experiencia completa')).toBeVisible();
   await expectAccessible(page, '/demo');
-
   const cta = page.getByRole('link', { name: /Crear mi cuenta/i }).first();
   await expect(cta).toHaveAttribute('href', /\/auth/);
-
   await page.screenshot({ path: 'artifacts/demo.png', fullPage: true });
-
-  expect(consoleErrors, `demo console errors: ${consoleErrors.join(' | ')}`).toEqual([]);
-  expect(pageErrors, `demo page errors: ${pageErrors.join(' | ')}`).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
 });
 
 test('landing experience has the Nüva motion layer and respects reduced motion', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
-
   await expectHealthyPage(page, '/');
   await expect(page.locator('section#experience')).toBeVisible();
   await expectAccessible(page, '/');
-
-  const motionLayerLoaded = await page.evaluate(() => {
-    const styles = [...document.styleSheets];
-    return styles.some((sheet) => {
-      try {
-        return [...sheet.cssRules].some((rule) => rule.cssText.includes('nuva-cinematic-drift'));
-      } catch {
-        return false;
-      }
-    });
-  });
-  expect(motionLayerLoaded, 'Nüva motion layer must be loaded on landing').toBe(true);
-
+  const motionLayerLoaded = await page.evaluate(() => [...document.styleSheets].some((sheet) => {
+    try { return [...sheet.cssRules].some((rule) => rule.cssText.includes('nuva-cinematic-drift')); } catch { return false; }
+  }));
+  expect(motionLayerLoaded).toBe(true);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const reducedMotion = await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
-  expect(reducedMotion).toBe(true);
-
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
   await page.screenshot({ path: 'artifacts/experience.png', fullPage: true });
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
 
-  expect(consoleErrors, `experience console errors: ${consoleErrors.join(' | ')}`).toEqual([]);
-  expect(pageErrors, `experience page errors: ${pageErrors.join(' | ')}`).toEqual([]);
+test('landing has no horizontal overflow on desktop and mobile', async ({ page }) => {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await expectHealthyPage(page, '/');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, `horizontal overflow at ${viewport.width}px`).toBeLessThanOrEqual(1);
+  }
 });
