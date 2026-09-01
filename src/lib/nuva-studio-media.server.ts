@@ -4,6 +4,7 @@ import { buildBusinessContext, capContext } from "@/lib/business-context.server"
 
 const GEMINI_INTERACTIONS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL ?? "gemini-3.1-flash-image";
+const IMAGE_MIME_TYPE = "image/jpeg";
 
 function cleanPrompt(value: string) {
   return value.replaceAll("\0", "").trim().slice(0, 12000);
@@ -34,7 +35,7 @@ export async function generateGeminiImageAsset(args: {
     body: JSON.stringify({
       model: IMAGE_MODEL,
       input,
-      response_format: { type: "image", mime_type: "image/png", aspect_ratio: "1:1", image_size: "1K" },
+      response_format: { type: "image", mime_type: IMAGE_MIME_TYPE, aspect_ratio: "1:1", image_size: "1K" },
     }),
   });
 
@@ -50,7 +51,7 @@ export async function generateGeminiImageAsset(args: {
   const imageBlock = payload.output_image ?? payload.output?.find((item) => item.type === "image");
   if (!imageBlock?.data) throw new Error("Gemini no devolvió una imagen utilizable.");
 
-  const mimeType = imageBlock.mime_type ?? "image/png";
+  const mimeType = imageBlock.mime_type ?? IMAGE_MIME_TYPE;
   const extension = mimeType.includes("jpeg") ? "jpg" : "png";
   const storagePath = `${args.businessId}/studio/${crypto.randomUUID()}.${extension}`;
   const bytes = Uint8Array.from(Buffer.from(imageBlock.data, "base64"));
