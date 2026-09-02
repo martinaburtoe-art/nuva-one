@@ -320,32 +320,24 @@ function FinanceView() {
             style={{ animationDelay: `${i * 100}ms` }}
           >
             <p className="text-xs text-muted-foreground">{a}</p>
-            <p className="mt-2 text-2xl font-bold">{b}</p>
+            <p className="mt-2 text-xl font-bold">{b}</p>
             <p className="mt-1 text-xs text-primary">{c}</p>
           </div>
         ))}
       </div>
       <div className="rounded-2xl border bg-background/70 p-4 sm:p-5">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">Ingresos vs egresos</p>
-          <BarChart3 className="h-4 w-4 text-primary animate-pulse" />
+          <p className="text-sm font-semibold">Evolución de ingresos</p>
+          <span className="text-[10px] text-muted-foreground">12 meses</span>
         </div>
-        <div className="mt-5 flex h-36 items-end gap-1.5">
+        <div className="mt-5 flex h-40 items-end gap-2">
           {bars.map((h, i) => (
-            <div key={i} className="flex flex-1 items-end gap-0.5">
-              <div
-                className="w-1/2 rounded-t bg-primary/70 animate-grow-bar"
-                style={{ height: `${h}%`, animationDelay: `${i * 50}ms` }}
-              />
-              <div
-                className="w-1/2 rounded-t bg-muted-foreground/20 animate-grow-bar"
-                style={{ height: `${Math.max(20, h - 18)}%`, animationDelay: `${i * 50 + 80}ms` }}
-              />
-            </div>
+            <div
+              key={i}
+              className="flex-1 origin-bottom rounded-t-md bg-primary/60 animate-grow-bar"
+              style={{ height: `${h}%`, animationDelay: `${i * 55}ms` }}
+            />
           ))}
-        </div>
-        <div className="mt-4 rounded-xl border bg-primary/5 p-3 text-xs animate-fade-in-up">
-          <b>Nüva detectó:</b> tu margen mejoró 3,2% durante el período.
         </div>
       </div>
     </div>
@@ -355,78 +347,55 @@ function FinanceView() {
 function CrmView() {
   return (
     <div className="space-y-4">
-      <Header
-        title="Clientes y CRM"
-        subtitle="Conoce quién compra, qué compra y cómo evoluciona tu relación comercial."
-      />
+      <Header title="Clientes" subtitle="Centraliza relaciones, oportunidades y seguimiento comercial." />
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          ["87", "Clientes"],
-          ["12", "Recurrentes"],
-          ["14", "Nuevos este mes"],
+          ["Clientes activos", "184"],
+          ["Oportunidades", "23"],
+          ["Conversión", "32,4%"],
         ].map(([a, b], i) => (
           <div
-            key={b}
+            key={a}
             className="rounded-2xl border bg-background/70 p-4 animate-fade-in-up"
             style={{ animationDelay: `${i * 100}ms` }}
           >
-            <p className="text-2xl font-bold">{a}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{b}</p>
+            <p className="text-xs text-muted-foreground">{a}</p>
+            <p className="mt-2 text-xl font-bold">{b}</p>
           </div>
         ))}
       </div>
-      <div className="rounded-2xl border bg-background/70 divide-y">
-        {[
-          ["Cliente Demo 01", "Hoy", "$284.000"],
-          ["Cliente Demo 02", "Hace 3 días", "$192.000"],
-          ["Cliente Demo 03", "Hace 8 días", "$421.000"],
-        ].map(([a, b, c], i) => (
-          <div
-            key={a}
-            className="flex items-center justify-between gap-4 p-4 animate-fade-in-up"
-            style={{ animationDelay: `${i * 100}ms` }}
-          >
+      <div className="space-y-2 rounded-2xl border bg-background/70 p-4">
+        {["Comercial Los Andes", "Distribuidora Maule", "Tienda Central"].map((name, i) => (
+          <div key={name} className="flex items-center justify-between rounded-xl border bg-secondary/20 p-3 animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Users className="h-4 w-4" />
-              </div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{name.charAt(0)}</div>
               <div>
-                <p className="text-sm font-semibold">{a}</p>
-                <p className="text-xs text-muted-foreground">Última compra: {b}</p>
+                <p className="text-xs font-semibold">{name}</p>
+                <p className="text-[10px] text-muted-foreground">Último contacto hace {i + 1} días</p>
               </div>
             </div>
-            <b className="text-sm">{c}</b>
+            <Badge variant="outline" className="text-[10px]">Activa</Badge>
           </div>
         ))}
-      </div>
-      <div className="rounded-2xl border bg-primary/5 p-4 text-sm animate-fade-in-up">
-        <b>Nüva detectó:</b> tus clientes recurrentes aumentaron 14%.
       </div>
     </div>
   );
 }
 
 function CopilotView() {
+  const answer = "Tu negocio está creciendo de forma saludable: ventas +12,4%, margen +3,2% y clientes recurrentes +14%.";
   const [typed, setTyped] = useState(0);
-  const answer =
-    "Tus ventas aumentaron 12,4%, pero hay 5 productos con stock bajo. Nüva recomienda revisar reposición y el margen de la categoría que más creció.";
   useEffect(() => {
     setTyped(0);
-    const id = window.setInterval(() => setTyped((v) => Math.min(v + 2, answer.length)), 35);
+    const id = window.setInterval(() => setTyped((v) => Math.min(v + 2, answer.length)), 28);
     return () => window.clearInterval(id);
   }, [answer]);
   return (
     <div className="space-y-4">
-      <Header
-        title="Nüva Copilot"
-        subtitle="Pregunta sobre tu negocio y recibe contexto para decidir."
-      />
-      <div className="mx-auto max-w-2xl space-y-4 rounded-2xl border bg-background/70 p-4 sm:p-6">
-        <div className="ml-auto max-w-[90%] rounded-2xl rounded-br-md bg-primary p-4 text-sm text-primary-foreground animate-fade-in-up">
-          ¿Cómo está mi negocio y qué debería revisar primero?
-        </div>
-        <div className="max-w-[90%] rounded-2xl rounded-bl-md border bg-secondary/30 p-4 text-sm leading-relaxed animate-fade-in-up">
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold">
+      <Header title="Nüva Copilot" subtitle="Pregunta y entiende qué está pasando en tu negocio." />
+      <div className="rounded-2xl border bg-background/70 p-4 sm:p-6">
+        <div className="rounded-2xl border bg-primary/5 p-4 text-sm leading-relaxed">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" /> Nüva analizando...
           </div>
           <span>{answer.slice(0, typed)}</span>
@@ -508,7 +477,7 @@ export function HomeProductPreview() {
               {auto ? "Pausar recorrido" : "Reanudar recorrido"}
             </button>
           </div>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
+          <div className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-2 [scrollbar-width:none]" style={{ contain: "layout paint" }}>
             {modules.map((m) => {
               const MIcon = m.icon;
               const selected = m.key === active;
