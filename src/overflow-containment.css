@@ -6,6 +6,7 @@ body:has(section#experience) main { width: 100%; max-width: 100%; min-width: 0; 
 body:has(section#experience) main section, body:has(section#experience) main section > div { min-width: 0; max-width: 100%; overflow-x: hidden; }
 body:has(section#experience) { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden !important; }
 body:has(section#experience) main section > .absolute { width: 100% !important; max-width: 100% !important; }
+body:has(section#experience) main section#product-preview { width: 100%; max-width: 100%; min-width: 0; }
 @media (max-width: 639px) {
  body:has(section#experience) header a[href="#what-is-nuva"], body:has(section#experience) header a[href="/auth"] { display:none !important; }
 }
