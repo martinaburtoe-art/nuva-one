@@ -1,62 +1,12 @@
 /* Keep transformed/absolute visual layers from expanding the document scroll width. */
 html,
-body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden !important;
-}
-
-body > div {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-body > div:first-of-type {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-body:has(section#experience) main {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: hidden;
-}
-
-body:has(section#experience) main section,
-body:has(section#experience) main section > div {
-  min-width: 0;
-  max-width: 100%;
-}
-
-body:has(section#experience) main section {
-  overflow-x: hidden;
-}
-
-body:has(section#experience) {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: hidden !important;
-}
-
+body { width: 100%; max-width: 100%; overflow-x: hidden !important; }
+body > div, body > div:first-of-type { width: 100%; max-width: 100%; overflow-x: hidden; }
+body:has(section#experience) main { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+body:has(section#experience) main section, body:has(section#experience) main section > div { min-width: 0; max-width: 100%; overflow-x: hidden; }
+body:has(section#experience) { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden !important; }
 @media (max-width: 639px) {
-  body:has(section#experience) header a[href="#what-is-nuva"],
-  body:has(section#experience) header a[href="/auth"] {
-    display: none !important;
-  }
-
-  body:has(section#experience) main,
-  body:has(section#experience) main > section,
-  body:has(section#experience) main > section > div {
-    contain: inline-size;
-  }
+  body:has(section#experience) header a[href="#what-is-nuva"], body:has(section#experience) header a[href="/auth"] { display: none !important; }
+  body:has(section#experience) main, body:has(section#experience) main > section, body:has(section#experience) main > section > div { contain: inline-size; }
 }
-
-@media (max-width: 480px) {
-  body:has(section#experience) header a[href="/demo"] {
-    display: none !important;
-  }
-}
+@media (max-width: 480px) { body:has(section#experience) header a[href="/demo"] { display: none !important; } }
