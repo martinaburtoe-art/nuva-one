@@ -8,6 +8,9 @@ body:has(section#experience) { width: 100%; max-width: 100%; min-width: 0; overf
 body:has(section#experience) main section > .absolute { width: 100% !important; max-width: 100% !important; }
 body:has(section#experience) main section#product-preview { width: 100%; max-width: 100%; min-width: 0; overflow: clip !important; contain: layout paint; }
 body:has(section#experience) main section#experience { overflow: clip !important; contain: layout paint; }
+/* The hero contains the product preview. Containment stops the preview's intentional
+   horizontal module rail from propagating its scrollable overflow to the document. */
+body:has(section#experience) main > section:first-child { min-width: 0; max-width: 100%; contain: layout paint; }
 #product-preview .flex.items-center.justify-between { min-width: 0; max-width: 100%; }
 #product-preview .flex.items-center.justify-between > div { min-width: 0; max-width: 100%; }
 #product-preview .flex.items-center.justify-between > .shrink-0 { min-width: 0; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
