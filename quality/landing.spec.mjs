@@ -167,6 +167,9 @@ test('landing has no horizontal overflow on desktop and mobile', async ({ page }
       };
     });
 
+    // documentElement.scrollWidth can include an intentionally scrollable child rail even when
+    // the page itself is not horizontally scrollable. bodyScrollWidth plus uncontained bounds
+    // are therefore the page-level invariants we enforce here.
     const pageOverflow = diagnostics.bodyScrollWidth - viewport.width;
     if (pageOverflow > 1 || diagnostics.nodes.length > 0) {
       throw new Error(
