@@ -8,13 +8,30 @@ body:has(#product-preview) main > section:first-child > div.mx-auto.max-w-7xl {
   box-sizing: border-box;
 }
 #product-preview,
-#product-preview > div { min-width: 0; max-width: 100%; box-sizing: border-box; }
-#product-preview .mt-10 { min-width: 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+#product-preview > div {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#product-preview {
+  overflow: clip !important;
+  contain: paint;
+}
+#product-preview .mt-10 {
+  min-width: 0;
+  max-width: 100%;
+  overflow: clip;
+  contain: paint;
+  box-sizing: border-box;
+}
 #product-preview .mt-3.flex.max-w-full.gap-2.overflow-x-auto {
   width: 100%;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  contain: paint;
 }
 #product-preview .flex.items-center.justify-between { min-width: 0; max-width: 100%; }
 #product-preview .flex.items-center.justify-between > div { min-width: 0; max-width: 100%; }
