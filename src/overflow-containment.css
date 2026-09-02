@@ -47,18 +47,16 @@ body:has(section#experience) {
   body:has(section#experience) header a[href="/auth"] {
     display: none !important;
   }
+
+  body:has(section#experience) main,
+  body:has(section#experience) main > section,
+  body:has(section#experience) main > section > div {
+    contain: inline-size;
+  }
 }
 
 @media (max-width: 480px) {
   body:has(section#experience) header a[href="/demo"] {
     display: none !important;
-  }
-}
-
-@media (max-width: 639px) {
-  body:has(section#experience) main,
-  body:has(section#experience) main > section,
-  body:has(section#experience) main > section > div {
-    contain: inline-size;
   }
 }
