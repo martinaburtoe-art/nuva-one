@@ -28,10 +28,11 @@ body:has(#product-preview) main > section:first-child > div.mx-auto.max-w-7xl {
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  height: 42px;
   box-sizing: border-box;
   overflow-x: auto;
   overflow-y: hidden;
-  contain: paint;
+  contain: size layout paint;
 }
 #product-preview .flex.items-center.justify-between { min-width: 0; max-width: 100%; }
 #product-preview .flex.items-center.justify-between > div { min-width: 0; max-width: 100%; }
