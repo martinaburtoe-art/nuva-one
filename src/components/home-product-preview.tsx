@@ -66,14 +66,14 @@ const demo = "Vista de demostración · Datos ficticios";
 
 function Header({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b pb-4">
-      <div>
+    <div className="flex min-w-0 items-start justify-between gap-3 border-b pb-4">
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">Nüva One</p>
         <h3 className="mt-1 text-lg font-bold sm:text-xl">{title}</h3>
         <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
       </div>
-      <Badge variant="outline" className="shrink-0 rounded-full text-[10px]">
-        {demo}
+      <Badge variant="outline" className="max-w-[48%] shrink-0 rounded-full text-[10px]">
+        <span className="truncate">{demo}</span>
       </Badge>
     </div>
   );
@@ -320,33 +320,28 @@ function FinanceView() {
             style={{ animationDelay: `${i * 100}ms` }}
           >
             <p className="text-xs text-muted-foreground">{a}</p>
-            <p className="mt-2 text-2xl font-bold">{b}</p>
+            <p className="mt-2 text-xl font-bold">{b}</p>
             <p className="mt-1 text-xs text-primary">{c}</p>
           </div>
         ))}
       </div>
       <div className="rounded-2xl border bg-background/70 p-4 sm:p-5">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">Ingresos vs egresos</p>
-          <BarChart3 className="h-4 w-4 text-primary animate-pulse" />
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold">Ingresos vs. tendencia</p>
+          <span className="text-[10px] text-muted-foreground">12 meses</span>
         </div>
-        <div className="mt-5 flex h-36 items-end gap-1.5">
+        <div className="mt-5 flex h-36 items-end gap-1.5 sm:h-44">
           {bars.map((h, i) => (
-            <div key={i} className="flex flex-1 items-end gap-0.5">
-              <div
-                className="w-1/2 rounded-t bg-primary/70 animate-grow-bar"
-                style={{ height: `${h}%`, animationDelay: `${i * 50}ms` }}
-              />
-              <div
-                className="w-1/2 rounded-t bg-muted-foreground/20 animate-grow-bar"
-                style={{ height: `${Math.max(20, h - 18)}%`, animationDelay: `${i * 50 + 80}ms` }}
-              />
-            </div>
+            <div
+              key={i}
+              className="flex-1 origin-bottom rounded-t-md bg-primary/60 animate-grow-bar"
+              style={{ height: `${h}%`, animationDelay: `${i * 55}ms` }}
+            />
           ))}
         </div>
-        <div className="mt-4 rounded-xl border bg-primary/5 p-3 text-xs animate-fade-in-up">
-          <b>Nüva detectó:</b> tu margen mejoró 3,2% durante el período.
-        </div>
+      </div>
+      <div className="rounded-2xl border bg-primary/5 p-4 text-sm animate-fade-in-up">
+        <b>Nüva detectó:</b> tu utilidad está creciendo más rápido que tus egresos.
       </div>
     </div>
   );
@@ -474,7 +469,7 @@ export function HomeProductPreview() {
       id="product-preview"
       className="relative overflow-hidden border-y bg-secondary/10 py-20 sm:py-28"
     >
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl animate-pulse" />
+      <div className="pointer-events-none absolute left-1/2 top-0 h-[28rem] w-[28rem] max-w-full -translate-x-1/2 rounded-full bg-primary/10 blur-3xl animate-pulse" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
           <Badge
@@ -508,7 +503,7 @@ export function HomeProductPreview() {
               {auto ? "Pausar recorrido" : "Reanudar recorrido"}
             </button>
           </div>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
+          <div className="mt-3 flex min-w-0 gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
             {modules.map((m) => {
               const MIcon = m.icon;
               const selected = m.key === active;
@@ -530,8 +525,8 @@ export function HomeProductPreview() {
               );
             })}
           </div>
-          <div className="relative mt-2 min-h-[22rem] overflow-hidden rounded-[1.5rem]">
-            <div key={active} className="animate-fade-in-up">
+          <div className="relative mt-2 min-h-[22rem] min-w-0 overflow-hidden rounded-[1.5rem]">
+            <div key={active} className="min-w-0 animate-fade-in-up">
               <View />
             </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card/50 to-transparent" />
