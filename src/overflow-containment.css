@@ -47,14 +47,19 @@ body:has(#product-preview) main > section:first-child > div.mx-auto.max-w-7xl {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* The landing header has four actions. Keep the primary signup action available on
+   narrow screens while removing secondary actions before they can create a page-level
+   overflow. Structural selectors are used because router-generated links can normalize
+   their href attributes during hydration. */
 @media (max-width: 639px) {
-  body:has(#product-preview) header a[href="#what-is-nuva"],
-  body:has(#product-preview) header a[href="/auth"] {
+  body:has(#product-preview) header > div > div:last-child > :nth-child(2),
+  body:has(#product-preview) header > div > div:last-child > :nth-child(3) {
     display: none !important;
   }
 }
 @media (max-width: 480px) {
-  body:has(#product-preview) header a[href="/demo"] {
+  body:has(#product-preview) header > div > div:last-child > :nth-child(1) {
     display: none !important;
   }
 }
