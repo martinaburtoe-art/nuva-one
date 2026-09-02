@@ -17,6 +17,10 @@ body:has(#product-preview) main > section:first-child > div.mx-auto.max-w-7xl {
   overflow: clip !important;
   contain: paint;
 }
+#product-preview > .absolute {
+  width: 100% !important;
+  max-width: 100% !important;
+}
 #product-preview .mt-10 {
   min-width: 0;
   max-width: 100%;
