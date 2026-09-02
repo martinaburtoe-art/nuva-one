@@ -9,13 +9,13 @@ body {
 body > div {
   width: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 body > div:first-of-type {
   width: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 /* The marketing landing owns several animated/pseudo-element visual layers.
@@ -25,7 +25,7 @@ body:has(section#experience) main {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 body:has(section#experience) main section,
@@ -37,7 +37,7 @@ body:has(section#experience) main section > div {
 /* Pseudo-elements and absolute visual layers are allowed to paint inside
    their section, but never enlarge the page's scrollable inline dimension. */
 body:has(section#experience) main section {
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 body:has(section#experience) {
