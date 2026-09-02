@@ -43,3 +43,14 @@ body:has(#product-preview) main > section:first-child > div.mx-auto.max-w-7xl {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+@media (max-width: 639px) {
+  body:has(#product-preview) header a[href="#what-is-nuva"],
+  body:has(#product-preview) header a[href="/auth"] {
+    display: none !important;
+  }
+}
+@media (max-width: 480px) {
+  body:has(#product-preview) header a[href="/demo"] {
+    display: none !important;
+  }
+}
