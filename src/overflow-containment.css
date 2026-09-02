@@ -18,9 +18,6 @@ body > div:first-of-type {
   overflow-x: hidden;
 }
 
-/* The marketing landing owns several animated/pseudo-element visual layers.
-   Clip the page shell itself so those layers cannot contribute to document
-   scrollWidth while preserving the existing layout and animations. */
 body:has(section#experience) main {
   width: 100%;
   max-width: 100%;
@@ -34,8 +31,6 @@ body:has(section#experience) main section > div {
   max-width: 100%;
 }
 
-/* Pseudo-elements and absolute visual layers are allowed to paint inside
-   their section, but never enlarge the page's scrollable inline dimension. */
 body:has(section#experience) main section {
   overflow-x: hidden;
 }
@@ -47,10 +42,6 @@ body:has(section#experience) {
   overflow-x: hidden !important;
 }
 
-/* The full desktop navigation cannot fit beside the brand on narrow phones.
-   Keep the primary demo/signup actions visible and progressively simplify
-   only the header controls; the same destinations remain available in the
-   landing content below. */
 @media (max-width: 639px) {
   body:has(section#experience) header a[href="#what-is-nuva"],
   body:has(section#experience) header a[href="/auth"] {
@@ -61,5 +52,13 @@ body:has(section#experience) {
 @media (max-width: 480px) {
   body:has(section#experience) header a[href="/demo"] {
     display: none !important;
+  }
+}
+
+@media (max-width: 639px) {
+  body:has(section#experience) main,
+  body:has(section#experience) main > section,
+  body:has(section#experience) main > section > div {
+    contain: inline-size;
   }
 }
