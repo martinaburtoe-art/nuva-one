@@ -10,7 +10,10 @@ body:has(section#experience) main section#product-preview { width: 100%; max-wid
 body:has(section#experience) main section#experience { overflow: clip !important; contain: layout paint; }
 #product-preview .flex.items-center.justify-between { min-width: 0; max-width: 100%; }
 #product-preview .flex.items-center.justify-between > div { min-width: 0; max-width: 100%; }
-#product-preview .flex.items-center.justify-between > .shrink-0 { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#product-preview .flex.items-center.justify-between > .shrink-0 { min-width: 0; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The module selector is intentionally scrollable. Contain its scrollable overflow so the
+   internal rail cannot become the section's document-level scroll width. */
+#product-preview .mt-3.flex.max-w-full.gap-2.overflow-x-auto { width: 100%; min-width: 0; max-width: 100%; contain: layout paint; }
 @media (max-width: 639px) {
  body:has(section#experience) header a[href="#what-is-nuva"], body:has(section#experience) header a[href="/auth"] { display:none !important; }
 }
