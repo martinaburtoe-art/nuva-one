@@ -1,4 +1,4 @@
-/* Keep transformed/absolute visual layers from expanding the document scroll width. */
+/* Keep visual layers contained without disabling intentional local scrollers. */
 html,
 body { width: 100%; max-width: 100%; overflow-x: hidden !important; }
 body > div, body > div:first-of-type { width: 100%; max-width: 100%; overflow-x: hidden; }
@@ -8,14 +8,13 @@ body:has(section#experience) { width: 100%; max-width: 100%; min-width: 0; overf
 body:has(section#experience) main section > .absolute { width: 100% !important; max-width: 100% !important; }
 body:has(section#experience) main section#product-preview { width: 100%; max-width: 100%; min-width: 0; overflow: clip !important; contain: layout paint; }
 body:has(section#experience) main section#experience { overflow: clip !important; contain: layout paint; }
-/* The hero contains the product preview. Containment stops the preview's intentional
-   horizontal module rail from propagating its scrollable overflow to the document. */
 body:has(section#experience) main > section:first-child { min-width: 0; max-width: 100%; contain: layout paint; }
 #product-preview .flex.items-center.justify-between { min-width: 0; max-width: 100%; }
 #product-preview .flex.items-center.justify-between > div { min-width: 0; max-width: 100%; }
 #product-preview .flex.items-center.justify-between > .shrink-0 { min-width: 0; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* The module selector is intentionally scrollable. Contain its scrollable overflow so the
-   internal rail cannot become the section's document-level scroll width. */
+/* Product-preview owns a horizontally scrollable module rail. The rail itself remains
+   scrollable; this card is the correct containment boundary for its scrollable overflow. */
+#product-preview .mt-10.rounded-\[2rem\] { min-width: 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
 #product-preview .mt-3.flex.max-w-full.gap-2.overflow-x-auto { width: 100%; min-width: 0; max-width: 100%; contain: layout paint; }
 @media (max-width: 639px) {
  body:has(section#experience) header a[href="#what-is-nuva"], body:has(section#experience) header a[href="/auth"] { display:none !important; }
