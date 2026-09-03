@@ -1,26 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
+import { getClientIpFingerprint, jsonRequestTooLarge } from "@/lib/request-security.server";
 import { NUVA_PLANS } from "@/lib/plan-config";
 import {
   createMercadoPagoSubscription,
   getMercadoPagoConfig,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
 
+const createSubscriptionSchema = z.object({
+  business_id: z.string().uuid(),
+  plan: z.enum(["starter", "pro"]),
+  billing: z.enum(["monthly", "annual"]).default("monthly"),
+}).strict();
+
 export const Route = createFileRoute("/api/billing/mercadopago/create")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        if (jsonRequestTooLarge(request, 8 * 1024)) {
+          return Response.json({ error: "Solicitud demasiado grande" }, { status: 413 });
+        }
         const client = await authedUserClient(request);
         if (!client) return new Response("Unauthorized", { status: 401 });
 
-        const body = await request.json().catch(() => ({}));
-        const businessId = body.business_id as string | undefined;
-        const planId = body.plan as "starter" | "pro" | undefined;
-        const billing = body.billing === "annual" ? "annual" : "monthly";
-        if (!businessId || !planId) {
-          return Response.json({ error: "business_id y plan son requeridos" }, { status: 400 });
+        const parsed = createSubscriptionSchema.safeParse(await request.json().catch(() => null));
+        if (!parsed.success) {
+          return Response.json({ error: "Datos de suscripción inválidos" }, { status: 400 });
         }
+        const { business_id: businessId, plan: planId, billing } = parsed.data;
 
         const config = getMercadoPagoConfig();
         if (!config) {
@@ -33,9 +42,25 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
           );
         }
 
-        const allowed = await checkRateLimit(`mp-subscription:${businessId}`, 10, 3600);
-        if (!allowed) {
-          return Response.json({ error: "Demasiados intentos, intenta más tarde" }, { status: 429 });
+        const { data: userData } = await client.auth.getUser();
+        const userId = userData.user?.id;
+        const email = userData.user?.email;
+        if (!userId) return new Response("Unauthorized", { status: 401 });
+        if (!email) return Response.json({ error: "No encontramos un email para la cuenta" }, { status: 400 });
+
+        const { data: membership } = await client
+          .from("business_members")
+          .select("role")
+          .eq("business_id", businessId)
+          .eq("user_id", userId)
+          .in("role", ["owner", "admin"])
+          .maybeSingle();
+        if (!membership) return new Response("Forbidden", { status: 403 });
+
+        const allowedByBusiness = await checkRateLimit(`mp-subscription:${businessId}`, 10, 3600);
+        const allowedByIp = await checkRateLimit(`mp-subscription-ip:${getClientIpFingerprint(request)}`, 30, 3600);
+        if (!allowedByBusiness || !allowedByIp) {
+          return Response.json({ error: "Demasiados intentos, intenta más tarde" }, { status: 429, headers: { "Retry-After": "3600" } });
         }
 
         const plan = NUVA_PLANS[planId];
@@ -47,10 +72,6 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
         if (error || !business) {
           return Response.json({ error: "Negocio no encontrado o sin acceso" }, { status: 403 });
         }
-
-        const { data: userData } = await client.auth.getUser();
-        const email = userData.user?.email;
-        if (!email) return Response.json({ error: "No encontramos un email para la cuenta" }, { status: 400 });
 
         const siteUrl = process.env.SITE_URL ?? "https://nuva-one.vercel.app";
         const result = await createMercadoPagoSubscription({
