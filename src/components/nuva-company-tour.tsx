@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent, type WheelEvent } from "react";
 import { Link } from "@tanstack/react-router";
 
 const ROOMS = [
@@ -65,12 +65,13 @@ export function NuvaCompanyTour() {
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") previous();
     };
     window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      timers.current.forEach((timer) => window.clearTimeout(timer));
-      timers.current = [];
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [active, transitioning]);
+
+  useEffect(() => () => {
+    timers.current.forEach((timer) => window.clearTimeout(timer));
+    timers.current = [];
+  }, []);
 
   const hotspots = useMemo(() => {
     const firstTarget = Math.min(active + 1, ROOMS.length - 1);
@@ -81,7 +82,7 @@ export function NuvaCompanyTour() {
     ];
   }, [active]);
 
-  const onWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+  const onWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (Math.abs(event.deltaY) < 8 || wheelLock.current) return;
     wheelLock.current = true;
     event.deltaY > 0 ? next() : previous();
@@ -89,8 +90,8 @@ export function NuvaCompanyTour() {
     timers.current.push(timer);
   };
 
-  const onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => { touchStart.current = event.touches[0]?.clientY ?? null; };
-  const onTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => { touchStart.current = event.touches[0]?.clientY ?? null; };
+  const onTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
     const start = touchStart.current;
     const end = event.changedTouches[0]?.clientY;
     touchStart.current = null;
@@ -104,15 +105,11 @@ export function NuvaCompanyTour() {
         {ROOMS.map((item, index) => (
           <div key={item.id} className={`nuva-company-tour__scene ${index === active ? "is-active" : ""}`} style={{ "--tour-accent": `hsl(${item.accent})` } as CSSProperties} aria-hidden={index !== active}>
             <SceneSurface room={item} />
-            {index === active && hotspots.map((hotspot) => (
-              <button key={`${hotspot.target}-${hotspot.left}`} type="button" className="nuva-company-tour__hotspot" style={{ left: hotspot.left, top: hotspot.top }} onClick={() => go(hotspot.target)} aria-label={hotspot.label}><span>{hotspot.label}</span></button>
-            ))}
+            {index === active && hotspots.map((hotspot) => <button key={`${hotspot.target}-${hotspot.left}`} type="button" className="nuva-company-tour__hotspot" style={{ left: hotspot.left, top: hotspot.top }} onClick={() => go(hotspot.target)} aria-label={hotspot.label}><span>{hotspot.label}</span></button>)}
           </div>
         ))}
         <div className="nuva-company-tour__hud"><div className="nuva-company-tour__eyebrow">{room.module} / 0{active + 1}</div><h2 className="nuva-company-tour__title">{room.title}</h2><p className="nuva-company-tour__copy">{room.copy}</p></div>
-        <div className="nuva-company-tour__map" aria-label="Mapa del recorrido">
-          {ROOMS.map((item, index) => <button key={item.id} type="button" className={index === active ? "is-active" : ""} onClick={() => go(index)} aria-label={`Ir a ${item.area}`} aria-current={index === active ? "step" : undefined} />)}
-        </div>
+        <div className="nuva-company-tour__map" aria-label="Mapa del recorrido">{ROOMS.map((item, index) => <button key={item.id} type="button" className={index === active ? "is-active" : ""} onClick={() => go(index)} aria-label={`Ir a ${item.area}`} aria-current={index === active ? "step" : undefined} />)}</div>
         <button type="button" className="nuva-company-tour__skip" onClick={() => document.getElementById("what-is-nuva")?.scrollIntoView({ behavior: "smooth" })}>Saltar tour ↗</button>
         <div className="nuva-company-tour__controls">
           <div className="nuva-company-tour__progress" aria-label={`Sala ${active + 1} de ${ROOMS.length}`}>{ROOMS.map((item, index) => <span key={item.id} className={`nuva-company-tour__dot ${index === active ? "is-active" : ""}`} />)}</div>
