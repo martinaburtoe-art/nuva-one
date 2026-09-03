@@ -1,0 +1,20 @@
+/* Nüva One — editorial product-hero art direction. Kept CSS-only so business flows stay untouched. */
+.nuva-cinematic-hero{position:relative;min-height:100svh;overflow:clip;background:radial-gradient(circle at 72% 42%,hsl(var(--primary)/.16),transparent 30%),radial-gradient(circle at 25% 18%,hsl(var(--primary)/.08),transparent 34%),hsl(var(--background));}
+.nuva-cinematic-hero:before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(hsl(var(--foreground)/.12) .65px,transparent .8px);background-size:9px 9px;mask-image:linear-gradient(to bottom,transparent,black 16%,black 78%,transparent);opacity:.24;}
+.nuva-cinematic-hero>.mx-auto.max-w-7xl{position:relative;z-index:3;max-width:none;padding-left:clamp(1rem,5vw,5.5rem);padding-right:clamp(1rem,5vw,5.5rem);padding-top:clamp(5rem,10vh,8rem);}
+.nuva-cinematic-hero .mx-auto.max-w-4xl{position:relative;z-index:6;margin-left:clamp(0rem,4vw,5rem);margin-right:auto;max-width:min(56rem,62vw);text-align:left;}
+.nuva-cinematic-hero .mx-auto.max-w-4xl h1{font-size:clamp(3.5rem,7.2vw,8.4rem);line-height:.86;letter-spacing:-.075em;max-width:8.8ch;text-wrap:balance;}
+.nuva-cinematic-hero .mx-auto.max-w-4xl h1 span{background-image:linear-gradient(115deg,hsl(var(--primary)),hsl(var(--primary)/.45) 55%,hsl(var(--foreground)/.82));filter:drop-shadow(0 12px 35px hsl(var(--primary)/.15));}
+.nuva-cinematic-hero .mx-auto.max-w-4xl>p{margin-left:0;max-width:38rem;font-size:clamp(1rem,1.3vw,1.25rem);}
+.nuva-cinematic-hero .mx-auto.max-w-4xl>div.mt-9{justify-content:flex-start;}
+.nuva-cinematic-hero #product-preview{position:relative;z-index:7;width:min(61vw,900px);margin-left:auto;margin-right:clamp(-3rem,1vw,1rem);margin-top:clamp(-13rem,-13vw,-7rem);transform-origin:70% 50%;filter:drop-shadow(0 45px 90px hsl(0 0% 0%/.28));}
+.nuva-cinematic-hero #product-preview:before{content:"LIVE BUSINESS SYSTEM";position:absolute;right:2%;top:-2rem;font:600 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.2em;color:hsl(var(--foreground)/.42);}
+.nuva-cinematic-hero #product-preview:after{content:"NÜVA ONE / 01";position:absolute;left:-2rem;bottom:4%;font:600 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.2em;color:hsl(var(--foreground)/.34);writing-mode:vertical-rl;}
+.nuva-cinematic-hero #product-preview>.mt-10{border:1px solid hsl(var(--foreground)/.13);background:linear-gradient(145deg,hsl(var(--background)/.88),hsl(var(--background)/.55));box-shadow:0 35px 90px hsl(0 0% 0%/.28),0 0 0 1px hsl(var(--primary)/.06),inset 0 1px 0 hsl(var(--foreground)/.08);backdrop-filter:blur(18px);}
+.nuva-cinematic-hero .nuva-art-stage{z-index:2;}
+.nuva-cinematic-hero .nuva-art-stage__word{left:29%;top:39%;font-size:clamp(10rem,30vw,34rem);opacity:.095;letter-spacing:-.11em;mix-blend-mode:screen;}
+.nuva-cinematic-hero .nuva-art-stage__field{right:2%;top:51%;width:min(43vw,680px);opacity:.78;}
+.nuva-cinematic-hero .nuva-art-stage__core{box-shadow:0 0 55px hsl(var(--primary)/.65),0 0 180px hsl(var(--primary)/.3);}
+.nuva-cinematic-hero .nuva-art-stage__dots{opacity:.6;}
+@media(max-width:900px){.nuva-cinematic-hero>.mx-auto.max-w-7xl{padding-top:4.5rem}.nuva-cinematic-hero .mx-auto.max-w-4xl{max-width:none;text-align:left}.nuva-cinematic-hero .mx-auto.max-w-4xl h1{font-size:clamp(3.25rem,14vw,6rem);max-width:8.2ch}.nuva-cinematic-hero #product-preview{width:min(92vw,720px);margin-top:-3rem;margin-right:-1rem}.nuva-cinematic-hero #product-preview:after{display:none}.nuva-cinematic-hero .nuva-art-stage__field{right:50%;top:35%;width:min(88vw,560px);opacity:.5}.nuva-cinematic-hero .nuva-art-stage__word{left:50%;top:31%;font-size:clamp(7rem,29vw,15rem);}}
+@media(prefers-reduced-motion:reduce){.nuva-cinematic-hero #product-preview{transform:none!important}.nuva-cinematic-hero:before{opacity:.12;}}
