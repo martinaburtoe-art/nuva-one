@@ -11,23 +11,29 @@ import { sendPushToTokens } from "@/lib/push.server";
 // — este endpoint puede correr sin romperse antes de que exista el proyecto
 // Firebase.
 
-const COOLDOWN_HOURS = 24; // no reavisar el mismo producto más de 1 vez al día
+const COOLDOWN_HOURS = 24;
+type RelatedBusiness = { name?: string | null } | null;
+
+function getRelatedBusiness(product: { businesses?: unknown }): RelatedBusiness {
+  if (!product.businesses || typeof product.businesses !== "object") return null;
+  const business = product.businesses as { name?: unknown };
+  return { name: typeof business.name === "string" ? business.name : null };
+}
 
 export const Route = createFileRoute("/api/notifications/low-stock-check")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const secret = process.env.CRON_SECRET;
-        if (secret) {
-          const header = request.headers.get("x-cron-secret");
-          if (header !== secret) {
-            return new Response("Unauthorized", { status: 401 });
-          }
+        if (!secret) {
+          console.error("CRON_SECRET is not configured; refusing public notification cron execution");
+          return new Response("Service unavailable", { status: 503 });
         }
+        const header = request.headers.get("x-cron-secret");
+        if (!header || header !== secret) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // 1) Productos bajo su umbral, con umbral definido (> 0 = feature activada por el negocio).
         const { data: lowStockProducts, error } = await supabaseAdmin
           .from("products")
           .select("id, business_id, name, stock, low_stock_threshold, businesses(name)")
@@ -47,9 +53,6 @@ export const Route = createFileRoute("/api/notifications/low-stock-check")({
           return new Response(JSON.stringify({ checked: 0, notified: 0 }), { status: 200 });
         }
 
-        // 2) Evitar reavisar el mismo producto dentro de la ventana de cooldown.
-        //    Reusamos audit_log como registro liviano de "ya avisamos esto" en vez
-        //    de crear una tabla nueva solo para este flag.
         const cooldownCutoff = new Date(Date.now() - COOLDOWN_HOURS * 3_600_000).toISOString();
         const { data: recentAlerts } = await supabaseAdmin
           .from("audit_log")
@@ -65,11 +68,11 @@ export const Route = createFileRoute("/api/notifications/low-stock-check")({
           });
         }
 
-        // 3) Agrupar por negocio para no spamear: 1 push por negocio con el resumen.
         const byBusiness = new Map<string, { name: string; products: typeof toNotify }>();
         for (const p of toNotify) {
           const key = p.business_id as string;
-          const bizName = (p.businesses as any)?.name ?? "tu negocio";
+          const business = getRelatedBusiness(p);
+          const bizName = business?.name ?? "tu negocio";
           if (!byBusiness.has(key)) byBusiness.set(key, { name: bizName, products: [] });
           byBusiness.get(key)!.products.push(p);
         }
@@ -77,7 +80,6 @@ export const Route = createFileRoute("/api/notifications/low-stock-check")({
         let notified = 0;
 
         for (const [businessId, { name, products }] of byBusiness) {
-          // Dueños y administradores del negocio (a ellos les importa el stock, no a todo el equipo).
           const { data: members } = await supabaseAdmin
             .from("business_members")
             .select("user_id")
@@ -109,7 +111,6 @@ export const Route = createFileRoute("/api/notifications/low-stock-check")({
 
           if (sent > 0) {
             notified += 1;
-            // Registrar que ya avisamos, para no repetir dentro del cooldown.
             await supabaseAdmin.from("audit_log").insert(
               products.map((p) => ({
                 business_id: businessId,
@@ -121,7 +122,6 @@ export const Route = createFileRoute("/api/notifications/low-stock-check")({
             );
           }
 
-          // Limpiar tokens que Firebase reporta como inválidos (app desinstalada, etc.)
           if (invalidTokens.length > 0) {
             await supabaseAdmin.from("device_tokens").delete().in("fcm_token", invalidTokens);
           }
