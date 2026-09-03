@@ -1,0 +1,87 @@
+/* Spatial gallery layer: turns the tour into a photographed/showroom-like environment. */
+.nuva-company-tour{background:#050505!important;overflow:clip!important}
+.nuva-company-tour__sticky{background:#050505!important;isolation:isolate}
+.nuva-company-tour__stage{position:relative!important;overflow:hidden!important;perspective:1600px;background:#050505!important}
+.nuva-company-tour__room{overflow:hidden!important;transform-style:preserve-3d!important;background:linear-gradient(145deg,#111315,#070809 68%,#030303)!important}
+.nuva-company-tour__room::before{z-index:2!important;background:radial-gradient(ellipse at 52% 35%,hsl(var(--tour-accent)/.2),transparent 30%),linear-gradient(180deg,rgba(255,255,255,.055),transparent 23%,transparent 67%,rgba(0,0,0,.58))!important}
+.nuva-company-tour__room::after{z-index:60!important;background:radial-gradient(ellipse at center,transparent 48%,rgba(0,0,0,.18) 72%,rgba(0,0,0,.72) 100%),linear-gradient(90deg,rgba(0,0,0,.28),transparent 18%,transparent 82%,rgba(0,0,0,.3))!important}
+
+/* Re-enable the physical scene elements hidden by the earlier flat-gallery override. */
+.nuva-company-tour__back-wall{display:block!important;position:absolute!important;left:8%!important;right:8%!important;top:4%!important;bottom:16%!important;z-index:3!important;clip-path:polygon(4% 0,96% 0,100% 100%,0 100%)!important;background:linear-gradient(145deg,#25282a 0%,#111416 46%,#0a0c0d 100%)!important;border:1px solid rgba(255,255,255,.1)!important;box-shadow:inset 0 0 120px rgba(0,0,0,.55),0 50px 120px rgba(0,0,0,.55)!important}
+.nuva-company-tour__side-wall{display:block!important;position:absolute!important;top:4%!important;bottom:13%!important;width:27%!important;z-index:4!important;opacity:1!important}
+.nuva-company-tour__side-wall--left{left:-10%!important;transform:perspective(1000px) rotateY(50deg)!important;transform-origin:right center!important;background:linear-gradient(90deg,#030405,#181b1d)!important}
+.nuva-company-tour__side-wall--right{right:-10%!important;transform:perspective(1000px) rotateY(-50deg)!important;transform-origin:left center!important;background:linear-gradient(90deg,#181b1d,#030405)!important}
+.nuva-company-tour__ceiling{display:block!important;position:absolute!important;left:6%!important;right:6%!important;top:-8%!important;height:28%!important;z-index:5!important;clip-path:polygon(8% 0,92% 0,100% 100%,0 100%)!important;background:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 7vw),linear-gradient(180deg,rgba(255,255,255,.12),transparent 70%)!important;box-shadow:inset 0 -40px 80px rgba(0,0,0,.3)!important}
+.nuva-company-tour__floor{display:block!important;position:absolute!important;left:-15%!important;right:-15%!important;bottom:-36%!important;height:62%!important;z-index:6!important;transform:perspective(900px) rotateX(61deg)!important;background:linear-gradient(180deg,rgba(255,255,255,.08),transparent 26%),repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 7vw),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 6vw)!important;box-shadow:inset 0 35px 70px rgba(0,0,0,.35)!important}
+.nuva-company-tour__window{display:block!important;position:absolute!important;right:8%!important;top:13%!important;width:19%!important;height:31%!important;z-index:7!important;transform:perspective(900px) rotateY(-9deg)!important;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(0,0,0,.28)),radial-gradient(circle at 40% 32%,hsl(var(--tour-accent)/.5),transparent 60%)!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:0 0 90px hsl(var(--tour-accent)/.16),inset 0 0 45px rgba(255,255,255,.04)!important;overflow:hidden!important}
+.nuva-company-tour__window::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 47%,rgba(255,255,255,.08) 49% 51%,transparent 53%),linear-gradient(0deg,transparent 47%,rgba(255,255,255,.08) 49% 51%,transparent 53%)}
+.nuva-company-tour__window span{display:block;position:absolute;width:7px;height:7px;border:1px solid rgba(255,255,255,.65);border-radius:50%;box-shadow:0 0 16px currentColor;opacity:.7}
+.nuva-company-tour__window span:nth-child(1){left:25%;top:28%}.nuva-company-tour__window span:nth-child(2){left:64%;top:58%}.nuva-company-tour__window span:nth-child(3){left:48%;top:77%}
+.nuva-company-tour__desk{display:block!important;position:absolute!important;left:14%!important;right:12%!important;bottom:14%!important;height:14%!important;z-index:22!important;transform:perspective(900px) rotateX(9deg)!important;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.035) 12%,rgba(0,0,0,.55) 100%)!important;border:1px solid rgba(255,255,255,.1)!important;box-shadow:0 50px 100px rgba(0,0,0,.72)!important}
+.nuva-company-tour__desk::after{content:"";position:absolute;left:4%;right:4%;bottom:-130%;height:130%;background:linear-gradient(90deg,transparent,rgba(0,0,0,.45),transparent);transform:perspective(600px) rotateX(-50deg);transform-origin:top}
+.nuva-company-tour__desk-edge{position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,transparent,hsl(var(--tour-accent)/.65),transparent);box-shadow:0 0 25px hsl(var(--tour-accent)/.3)}
+.nuva-company-tour__chair{position:absolute!important;right:7%!important;bottom:-55%!important;width:13%!important;height:120%!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:38% 38% 12% 12%!important;background:linear-gradient(90deg,#080909,#242729 48%,#090a0b)!important;transform:perspective(500px) rotateX(-2deg)!important;box-shadow:0 35px 55px rgba(0,0,0,.7)!important}
+.nuva-company-tour__object-stack{display:block!important;position:absolute!important;z-index:23!important;left:12%!important;bottom:20%!important;width:15%!important;height:20%!important;transform:perspective(700px) rotateY(14deg) rotateX(7deg)!important}
+.nuva-company-tour__object-stack span{display:block!important;position:absolute!important;left:0!important;width:100%!important;height:54%!important;border:1px solid rgba(255,255,255,.11)!important;border-radius:3px!important;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.025))!important;box-shadow:0 22px 45px rgba(0,0,0,.6)!important}
+.nuva-company-tour__object-stack span:nth-child(1){top:8%;transform:translateX(10%);opacity:.55}.nuva-company-tour__object-stack span:nth-child(2){top:22%;transform:translateX(5%);opacity:.72}.nuva-company-tour__object-stack span:nth-child(3){top:36%;transform:translateX(0);box-shadow:0 0 30px hsl(var(--tour-accent)/.12),0 22px 45px rgba(0,0,0,.6)}
+
+/* Product becomes a physical monitor/product artifact inside the room. */
+.nuva-company-tour__screen-frame{left:22%!important;top:15%!important;width:min(54vw,900px)!important;height:min(48vw,570px)!important;padding:9px!important;z-index:18!important;border-radius:8px!important;background:linear-gradient(145deg,#303335,#090a0b 65%)!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:0 55px 130px rgba(0,0,0,.78),0 0 120px hsl(var(--tour-accent)/.12),inset 0 1px rgba(255,255,255,.25)!important;transform:perspective(1500px) rotateY(-9deg) rotateX(2deg) translateZ(35px)!important}
+.nuva-company-tour__scene.is-active .nuva-company-tour__screen-frame{transform:perspective(1500px) rotateY(-4deg) rotateX(1deg) translate3d(0,-1%,35px) scale(var(--scene-scale,1))!important}
+.nuva-company-tour__screen-frame::after{content:"";position:absolute;left:50%;bottom:-9px;width:32%;height:12px;transform:translateX(-50%);border-radius:50%;background:rgba(0,0,0,.7);filter:blur(7px);z-index:-1}
+.nuva-company-tour__screen-glow{inset:-30%!important;filter:blur(65px)!important;opacity:.7!important}
+.nuva-company-tour__product{border-radius:2px!important}
+.nuva-company-tour__product::before{background:linear-gradient(120deg,rgba(255,255,255,.09),transparent 20%,transparent 74%,rgba(255,255,255,.025)),repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 4px)!important}
+
+/* Gallery-like camera language: scene scale and camera drift follow the scroll progress. */
+.nuva-company-tour__scene.is-active .nuva-company-tour__room{transform:scale(calc(1 + var(--tour-scene-progress,0) * .012)) translate3d(calc(var(--tour-scene-progress,0) * -1.1%),calc(var(--tour-scene-progress,0) * -.45%),0)!important;transition:transform 900ms cubic-bezier(.16,1,.3,1)}
+.nuva-company-tour__scene:not(.is-active) .nuva-company-tour__room{transform:scale(1.045)!important}
+.nuva-company-tour__ambient-light{z-index:8!important;inset:-25%!important;filter:blur(48px)!important;opacity:.72!important}
+.nuva-company-tour__label--top{left:6%!important;top:6%!important;z-index:70!important}
+.nuva-company-tour__label--bottom{left:6%!important;bottom:6%!important;z-index:70!important}
+.nuva-company-tour__label--right{right:6%!important;bottom:6%!important;z-index:70!important}
+.nuva-company-tour__scene-index{z-index:70!important;font-family:ui-monospace,SFMono-Regular,Menlo,monospace!important;text-shadow:0 3px 20px rgba(0,0,0,.8)}
+
+/* Hotspots mimic gallery/camera markers rather than generic CTA buttons. */
+.nuva-company-tour__hotspot{width:46px!important;height:46px!important;z-index:75!important;background:rgba(8,8,8,.32)!important;border:1px solid rgba(255,255,255,.9)!important;box-shadow:0 0 0 5px rgba(255,255,255,.055),0 14px 42px rgba(0,0,0,.6)!important;backdrop-filter:blur(8px)!important}
+.nuva-company-tour__hotspot::before{inset:12px!important;border:1px solid currentColor!important}
+.nuva-company-tour__hotspot::after{content:""!important;position:absolute!important;left:50%!important;top:50%!important;width:4px!important;height:4px!important;border-radius:50%!important;background:currentColor!important;transform:translate(-50%,-50%)!important;box-shadow:0 0 12px currentColor!important}
+.nuva-company-tour__hotspot:hover,.nuva-company-tour__hotspot:focus-visible{transform:scale(1.18)!important;box-shadow:0 0 0 10px hsl(var(--tour-accent)/.08),0 20px 60px rgba(0,0,0,.7)!important}
+.nuva-company-tour__hotspot span{font-family:ui-monospace,SFMono-Regular,Menlo,monospace!important;text-transform:uppercase!important;letter-spacing:.12em!important}
+
+/* Ambient editorial chrome. */
+.nuva-company-tour__map{z-index:80!important;background:rgba(4,4,4,.42)!important;border-color:rgba(255,255,255,.16)!important}
+.nuva-company-tour__skip{z-index:80!important}
+.nuva-company-tour__controls{z-index:80!important}
+.nuva-company-tour__next{box-shadow:0 12px 45px rgba(0,0,0,.35)!important}
+
+@media(max-width:900px){
+  .nuva-company-tour__back-wall{left:3%!important;right:3%!important;top:10%!important;bottom:21%!important}
+  .nuva-company-tour__side-wall{top:10%!important;bottom:18%!important;width:22%!important}
+  .nuva-company-tour__ceiling{left:1%!important;right:1%!important;top:0!important;height:22%!important}
+  .nuva-company-tour__floor{bottom:-38%!important;height:60%!important}
+  .nuva-company-tour__window{right:4%!important;top:18%!important;width:16%!important;height:26%!important}
+  .nuva-company-tour__desk{left:7%!important;right:6%!important;bottom:16%!important;height:12%!important}
+  .nuva-company-tour__object-stack{left:7%!important;bottom:19%!important;width:14%!important}
+  .nuva-company-tour__screen-frame{left:10%!important;top:23%!important;width:78%!important;height:45%!important;transform:perspective(1200px) rotateY(-5deg) rotateX(1deg) translateZ(20px)!important}
+  .nuva-company-tour__scene.is-active .nuva-company-tour__screen-frame{transform:perspective(1200px) rotateY(-2deg) rotateX(1deg) translate3d(0,-1%,20px) scale(var(--scene-scale,1))!important}
+}
+@media(max-width:560px){
+  .nuva-company-tour__back-wall{left:1%!important;right:1%!important;top:15%!important;bottom:25%!important}
+  .nuva-company-tour__side-wall{top:15%!important;bottom:21%!important;width:18%!important}
+  .nuva-company-tour__ceiling{height:18%!important}
+  .nuva-company-tour__floor{bottom:-42%!important;height:60%!important}
+  .nuva-company-tour__window{right:3%!important;top:23%!important;width:14%!important;height:22%!important}
+  .nuva-company-tour__desk{left:4%!important;right:4%!important;bottom:18%!important;height:10%!important}
+  .nuva-company-tour__chair{right:3%!important}
+  .nuva-company-tour__object-stack{left:4%!important;bottom:20%!important;width:17%!important}
+  .nuva-company-tour__screen-frame{left:5%!important;top:29%!important;width:90%!important;height:39%!important;padding:4px!important;border-radius:5px!important;transform:perspective(1000px) rotateY(-2deg) rotateX(1deg) translateZ(10px)!important}
+  .nuva-company-tour__scene.is-active .nuva-company-tour__screen-frame{transform:perspective(1000px) rotateY(-1deg) rotateX(1deg) translate3d(0,-.5%,10px) scale(var(--scene-scale,1))!important}
+  .nuva-company-tour__hotspot{width:40px!important;height:40px!important}
+  .nuva-company-tour__hotspot::before{inset:10px!important}
+  .nuva-company-tour__label{font-size:5px!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nuva-company-tour__scene.is-active .nuva-company-tour__room,.nuva-company-tour__screen-frame,.nuva-company-tour__scene.is-active .nuva-company-tour__screen-frame{transition:none!important;transform:none!important}
+}
