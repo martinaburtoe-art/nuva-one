@@ -107,6 +107,21 @@ test('landing spatial tour is scroll-driven, navigable and reduced-motion safe',
   const after = await page.locator('.nuva-company-tour__scene.is-active .nuva-company-tour__scene-index').innerText();
   expect(after).not.toBe(before);
 
+  const crossfade = await page.locator('#company-tour').evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    const scrollable = Math.max(1, node.offsetHeight - window.innerHeight);
+    const start = window.scrollY + rect.top;
+    const sceneSpan = scrollable / 8;
+    window.scrollTo({ top: start + sceneSpan * 2.5, behavior: 'auto' });
+    return true;
+  });
+  expect(crossfade).toBe(true);
+  await page.waitForTimeout(350);
+  const visibleScenes = await page.locator('.nuva-company-tour__scene').evaluateAll((nodes) =>
+    nodes.filter((node) => Number.parseFloat(getComputedStyle(node).opacity) > 0.05).length,
+  );
+  expect(visibleScenes).toBeGreaterThanOrEqual(2);
+
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload({ waitUntil: 'networkidle' });
   await dismissWelcomeOverlay(page);
