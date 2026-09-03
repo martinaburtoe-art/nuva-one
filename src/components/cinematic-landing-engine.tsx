@@ -1,20 +1,14 @@
 import { useEffect } from "react";
 
+type TimelineLike = { fromTo: (...args: unknown[]) => TimelineLike };
 type GsapLike = {
   registerPlugin: (plugin: unknown) => void;
   context: (callback: () => void) => { revert: () => void };
-  set: (targets: unknown, vars: Record<string, unknown>) => void;
-  timeline: (vars?: Record<string, unknown>) => { fromTo: (...args: unknown[]) => GsapLike["timeline"] extends never ? never : unknown };
+  timeline: (vars?: Record<string, unknown>) => TimelineLike;
   fromTo: (targets: unknown, from: Record<string, unknown>, to: Record<string, unknown>) => void;
   to: (targets: unknown, vars: Record<string, unknown>) => void;
 };
-
-type ScrollTriggerLike = object;
-
-type WindowWithGsap = Window & {
-  gsap?: GsapLike;
-  ScrollTrigger?: ScrollTriggerLike;
-};
+type WindowWithGsap = Window & { gsap?: GsapLike; ScrollTrigger?: object };
 
 function loadScript(src: string, id: string) {
   return new Promise<void>((resolve, reject) => {
@@ -98,9 +92,7 @@ export function CinematicLandingEngine() {
           gsap.fromTo(targets, { y: 38, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, stagger: 0.045, ease: "power3.out", scrollTrigger: { trigger: section, start: "top 78%", once: true } });
         });
 
-        if (experience) {
-          gsap.to(experience, { backgroundPosition: "50% 35%", ease: "none", scrollTrigger: { trigger: experience, start: "top bottom", end: "bottom top", scrub: true } });
-        }
+        if (experience) gsap.to(experience, { backgroundPosition: "50% 35%", ease: "none", scrollTrigger: { trigger: experience, start: "top bottom", end: "bottom top", scrub: true } });
 
         const progress = root.querySelector(".nuva-cinema-progress span");
         if (progress) gsap.to(progress, { scaleX: 1, transformOrigin: "left center", ease: "none", scrollTrigger: { start: 0, end: "max", scrub: 0.15 } });
