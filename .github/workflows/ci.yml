@@ -15,6 +15,7 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Quality Gate executes against the exact branch HEAD as well as main.
 jobs:
   database-tests:
     name: pgTAP database tests
