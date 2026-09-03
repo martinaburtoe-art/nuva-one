@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from "react";
 import { Link } from "@tanstack/react-router";
 
 const ROOMS = [
@@ -144,6 +144,7 @@ export function NuvaCompanyTour() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const activeRef = useRef(0);
+  const touchStartY = useRef<number | null>(null);
   const prefersReducedMotion = useRef(false);
 
   const sync = () => {
@@ -196,6 +197,20 @@ export function NuvaCompanyTour() {
     else window.scrollTo({ top: destination, behavior: "smooth" });
   };
 
+  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    touchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const onTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartY.current;
+    const end = event.changedTouches[0]?.clientY;
+    touchStartY.current = null;
+    if (start === null || end === undefined) return;
+    const delta = start - end;
+    if (Math.abs(delta) < 52) return;
+    go(delta > 0 ? activeRef.current + 1 : activeRef.current - 1);
+  };
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "ArrowRight" || event.key === "ArrowDown") go(activeRef.current + 1);
@@ -220,7 +235,7 @@ export function NuvaCompanyTour() {
   return (
     <section ref={sectionRef} id="company-tour" className="nuva-company-tour" aria-label="Visita a la empresa Nüva" style={{ "--tour-room-count": ROOMS.length } as CSSProperties}>
       <div className="nuva-company-tour__sticky">
-        <div className="nuva-company-tour__stage">
+        <div className="nuva-company-tour__stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <div className="nuva-company-tour__grain" />
           {ROOMS.map((item, index) => {
             const distance = index - active - sceneProgress;
