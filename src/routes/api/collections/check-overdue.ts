@@ -7,6 +7,21 @@ import { sanitizeForPrompt } from "@/lib/prompt-security.server";
 const REMINDER_COOLDOWN_DAYS = 3;
 const MAX_REMINDERS_PER_SALE = 3;
 
+type RelatedCustomer = { phone?: string | null } | null;
+type RelatedBusiness = { name?: string | null } | null;
+
+function getRelatedCustomer(sale: { customers?: unknown }): RelatedCustomer {
+  if (!sale.customers || typeof sale.customers !== "object") return null;
+  const customer = sale.customers as { phone?: unknown };
+  return { phone: typeof customer.phone === "string" ? customer.phone : null };
+}
+
+function getRelatedBusiness(sale: { businesses?: unknown }): RelatedBusiness {
+  if (!sale.businesses || typeof sale.businesses !== "object") return null;
+  const business = sale.businesses as { name?: unknown };
+  return { name: typeof business.name === "string" ? business.name : null };
+}
+
 async function buildReminderMessage(businessName: string, customerName: string, total: number, paidAmount: number, daysOverdue: number): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
   const pendiente = total - paidAmount;
@@ -75,8 +90,10 @@ export const Route = createFileRoute("/api/collections/check-overdue")({
         }
 
         for (const sale of overdueSales) {
-          const customerPhone = (sale as any).customers?.phone;
-          const businessName = (sale as any).businesses?.name ?? "tu proveedor";
+          const customer = getRelatedCustomer(sale);
+          const business = getRelatedBusiness(sale);
+          const customerPhone = customer?.phone;
+          const businessName = business?.name ?? "tu proveedor";
           if (!customerPhone) { skipped++; continue; }
           const recentReminders = (remindersBySale.get(sale.id) ?? []).slice(0, MAX_REMINDERS_PER_SALE);
           if (recentReminders.length >= MAX_REMINDERS_PER_SALE) { skipped++; continue; }
