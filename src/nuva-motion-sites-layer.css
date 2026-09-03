@@ -36,23 +36,26 @@ body:has(section#experience) ::selection { background:oklch(.58 .22 268 / .22); 
 @keyframes nuva-product-float { 0%,100%{transform:translate3d(0,0,0)} 50%{transform:translate3d(0,-7px,0)} }
 @media (max-width:767px){body:has(section#experience) section:not(:first-of-type) .rounded-2xl,body:has(section#experience) section:not(:first-of-type) .rounded-3xl{transition:box-shadow 360ms ease,border-color 300ms ease}}
 
+.nuva-cinema-vignette,
+.nuva-cinema-progress,
+.nuva-cinema-beam { position:fixed; pointer-events:none; z-index:9990; }
+.nuva-cinema-vignette { inset:0; z-index:9989; opacity:.22; background:radial-gradient(ellipse at center,transparent 45%,hsl(var(--background)/.28) 100%); mix-blend-mode:multiply; }
+.nuva-cinema-progress { left:0; right:0; top:0; height:2px; overflow:hidden; background:transparent; }
+.nuva-cinema-progress span { display:block; width:100%; height:100%; transform:scaleX(0); transform-origin:left center; background:linear-gradient(90deg,hsl(var(--primary)/.15),hsl(var(--primary)),hsl(var(--primary)/.35)); box-shadow:0 0 16px hsl(var(--primary)/.65); }
+.nuva-cinema-beam { left:50%; top:18%; width:min(42vw,620px); height:1px; opacity:.34; transform:translateX(-50%); background:linear-gradient(90deg,transparent,hsl(var(--primary)/.8),transparent); box-shadow:0 0 42px hsl(var(--primary)/.34); }
+@media (max-width:767px) { .nuva-cinema-vignette { opacity:.1; } .nuva-cinema-beam { width:70vw; opacity:.2; } }
+
 @media (prefers-reduced-motion: reduce) {
   body:has(section#experience) section:first-of-type::before,
   body:has(section#experience) section:first-of-type > div:first-child::after,
-  body:has(section#experience) section:first-of-type > div:last-child {
-    animation: none !important;
-  }
+  body:has(section#experience) section:first-of-type > div:last-child { animation: none !important; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl,
   body:has(section#experience) a:has(> button) button,
   body:has(section#experience) nav a,
-  body:has(section#experience) header a {
-    transition: none !important;
-  }
+  body:has(section#experience) header a { transition: none !important; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover,
-  body:has(section#experience) a:has(> button):hover button {
-    transform: none !important;
-    box-shadow: none;
-  }
+  body:has(section#experience) a:has(> button):hover button { transform: none !important; box-shadow: none; }
+  .nuva-cinema-vignette,.nuva-cinema-progress,.nuva-cinema-beam { display:none !important; }
 }
