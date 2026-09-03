@@ -91,9 +91,9 @@ export function NuvaWebLovedHeroObject() {
       const projected = verts.map(([x, y, z]) => {
         const ax = rotation * 0.9 + pointerX * 0.25;
         const ay = rotation * 0.58 + pointerY * 0.18;
-        let px = x * Math.cos(ay) - z * Math.sin(ay);
+        const px = x * Math.cos(ay) - z * Math.sin(ay);
         let pz = x * Math.sin(ay) + z * Math.cos(ay);
-        let py = y * Math.cos(ax) - pz * Math.sin(ax);
+        const py = y * Math.cos(ax) - pz * Math.sin(ax);
         pz = y * Math.sin(ax) + pz * Math.cos(ax);
         const perspective = 1 / (1.9 - pz * 0.32);
         return [px * size * perspective, py * size * perspective, pz] as const;
