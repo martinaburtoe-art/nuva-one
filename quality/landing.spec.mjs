@@ -51,6 +51,8 @@ test('landing smoke, accessibility and performance budget', async ({ page }) => 
   await expect(page.locator('h1').first()).toBeVisible();
   await expect(page.locator('a[href="/demo"]:visible').first()).toBeVisible();
   await expect(page.locator('a[href="/pricing"]:visible').first()).toBeVisible();
+  await expect(page.locator('#company-tour')).toBeVisible();
+  await expect(page.locator('.nuva-company-tour__hotspot').first()).toBeVisible();
   await expectAccessible(page, '/', { disableRules: ['region'] });
   const navigationTiming = await page.evaluate(() => {
     const entry = performance.getEntriesByType('navigation')[0];
@@ -91,24 +93,27 @@ test('public demo is interactive, safe and visually stable', async ({ page }) =>
   expect(pageErrors).toEqual([]);
 });
 
-test('landing experience has the Nüva motion layer and respects reduced motion', async ({ page }) => {
+test('landing spatial tour is scroll-driven, navigable and reduced-motion safe', async ({ page }) => {
   const { consoleErrors, pageErrors } = await attachRuntimeGuards(page);
-  await page.emulateMedia({ reducedMotion: 'reduce' });
   await expectHealthyPage(page, '/');
-  await expect(page.locator('section#experience')).toBeVisible();
-  await expectAccessible(page, '/', { disableRules: ['region'] });
-  const motionLayerLoaded = await page.evaluate(() =>
-    [...document.styleSheets].some((sheet) => {
-      try {
-        return [...sheet.cssRules].some((rule) => rule.cssText.includes('nuva-cinematic-drift'));
-      } catch {
-        return false;
-      }
-    }),
-  );
-  expect(motionLayerLoaded).toBe(true);
+  await expect(page.locator('#company-tour')).toBeVisible();
+  await expect(page.locator('.nuva-company-tour__map button')).toHaveCount(9);
+  await expect(page.locator('.nuva-company-tour__hotspot').first()).toBeVisible();
+
+  const before = await page.locator('.nuva-company-tour__scene.is-active').getAttribute('data-room-index');
+  await page.locator('#company-tour').evaluate((node) => node.scrollIntoView({ block: 'start' }));
+  await page.mouse.wheel(0, 900);
+  await page.waitForTimeout(350);
+  const after = await page.locator('.nuva-company-tour__scene.is-active').getAttribute('data-room-index');
+  expect(Number(after)).toBeGreaterThanOrEqual(Number(before));
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload({ waitUntil: 'networkidle' });
+  await dismissWelcomeOverlay(page);
+  await expect(page.locator('#company-tour')).toBeVisible();
+  await expect(page.locator('.nuva-cursor')).toHaveCount(0);
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
-  await page.screenshot({ path: 'artifacts/experience.png', fullPage: true });
+  await expectAccessible(page, '/', { disableRules: ['region'] });
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
@@ -181,4 +186,4 @@ test('landing has no horizontal overflow on supported desktop, tablet and mobile
   }
 });
 
-// Quality-gate trigger marker: visible CTA selector is intentional; no assertion coverage is weakened.
+// Quality-gate trigger marker: spatial tour coverage is intentional; no assertion coverage is weakened.
