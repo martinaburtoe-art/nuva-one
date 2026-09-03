@@ -6,6 +6,17 @@ const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 const ABSOLUTE_SESSION_MAX_MS = 12 * 60 * 60 * 1000;
 const ACTIVITY_THROTTLE_MS = 30 * 1000;
 
+function getSessionIssuedAt(session: Session): number | null {
+  try {
+    const payload = JSON.parse(atob(session.access_token.split(".")[1] ?? "")) as {
+      iat?: number;
+    };
+    return typeof payload.iat === "number" ? payload.iat * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -43,14 +54,10 @@ export function useAuth() {
     const timer = window.setInterval(() => {
       if (!mounted || !session) return;
       const now = Date.now();
-      const sessionCreatedAt = Date.parse(session.user?.created_at ?? "");
-      const authSessionStartedAt = Number.isFinite(sessionCreatedAt)
-        ? sessionCreatedAt
-        : now;
-
+      const issuedAt = getSessionIssuedAt(session);
       if (
         now - lastActivityAt >= INACTIVITY_TIMEOUT_MS ||
-        now - authSessionStartedAt >= ABSOLUTE_SESSION_MAX_MS
+        (issuedAt !== null && now - issuedAt >= ABSOLUTE_SESSION_MAX_MS)
       ) {
         void supabase.auth.signOut();
       }
