@@ -5,6 +5,7 @@ import { NuvaCompanyTour } from "@/components/nuva-company-tour";
 import "../nuva-company-tour.css";
 
 const LANDING_SECTIONS = [
+  ["company-tour", "Tour"],
   ["what-is-nuva", "Información"],
   ["ecosystem", "Plataforma"],
   ["intelligence", "Inteligencia"],
@@ -79,9 +80,9 @@ export function NuvaWebLovedInteractions() {
     if (landing) {
       const tourMount = document.createElement("div");
       tourMount.className = "nuva-company-tour-mount";
-      const anchor = document.getElementById("what-is-nuva");
-      if (anchor?.parentNode) anchor.parentNode.insertBefore(tourMount, anchor);
-      else document.querySelector("main")?.appendChild(tourMount);
+      const main = document.querySelector("main");
+      if (main?.firstChild) main.insertBefore(tourMount, main.firstChild);
+      else main?.appendChild(tourMount);
       const legacyExperience = document.getElementById("experience");
       legacyExperience?.setAttribute("data-nuva-tour-replaced", "true");
       document.body.classList.add("nuva-company-tour-enabled");
