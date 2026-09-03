@@ -36,6 +36,16 @@ body:has(section#experience) ::selection { background:oklch(.58 .22 268 / .22); 
 @keyframes nuva-product-float { 0%,100%{transform:translate3d(0,0,0)} 50%{transform:translate3d(0,-7px,0)} }
 @media (max-width:767px){body:has(section#experience) section:not(:first-of-type) .rounded-2xl,body:has(section#experience) section:not(:first-of-type) .rounded-3xl{transition:box-shadow 360ms ease,border-color 300ms ease}}
 
+/* Cinematic stage: decorative, fixed, GPU-friendly and never interactive. */
+.nuva-cinema-atmosphere { position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:clip; opacity:0; }
+.nuva-cinema-atmosphere__aurora { position:absolute; inset:-20%; background:radial-gradient(circle at 50% 28%,hsl(var(--primary)/.09),transparent 27%),radial-gradient(circle at 15% 62%,hsl(205 90% 58%/.06),transparent 26%),radial-gradient(circle at 85% 45%,hsl(270 80% 65%/.045),transparent 24%); filter:blur(28px); }
+.nuva-cinema-atmosphere__grid { position:absolute; inset:-15%; opacity:.16; background-image:linear-gradient(hsl(var(--foreground)/.055) 1px,transparent 1px),linear-gradient(90deg,hsl(var(--foreground)/.055) 1px,transparent 1px); background-size:clamp(44px,5vw,76px) clamp(44px,5vw,76px); mask-image:radial-gradient(ellipse at center,black 5%,transparent 74%); transform:perspective(900px) rotateX(58deg) translateY(22%); transform-origin:center bottom; }
+.nuva-cinema-atmosphere__orb { position:absolute; width:clamp(220px,30vw,520px); aspect-ratio:1; border-radius:50%; filter:blur(1px); opacity:.16; mix-blend-mode:screen; will-change:transform; }
+.nuva-cinema-atmosphere__orb--a { left:-10%; top:16%; background:radial-gradient(circle at 65% 55%,hsl(205 95% 62%/.38),transparent 62%); }
+.nuva-cinema-atmosphere__orb--b { right:-12%; top:35%; background:radial-gradient(circle at 35% 48%,hsl(270 90% 70%/.26),transparent 62%); }
+.nuva-cinema-atmosphere__wordmark { position:absolute; left:50%; top:39%; transform:translate(-50%,-50%); white-space:nowrap; font-size:clamp(10rem,29vw,34rem); line-height:.75; font-weight:900; letter-spacing:.08em; color:hsl(var(--foreground)); opacity:0; user-select:none; will-change:transform,opacity; }
+.nuva-cinema-atmosphere__scan { position:absolute; left:0; right:0; top:18%; height:1px; background:linear-gradient(90deg,transparent,hsl(var(--primary)/.24),transparent); box-shadow:0 0 28px hsl(var(--primary)/.18); opacity:.5; }
+
 .nuva-cinema-vignette,
 .nuva-cinema-progress,
 .nuva-cinema-beam { position:fixed; pointer-events:none; z-index:9990; }
@@ -43,19 +53,19 @@ body:has(section#experience) ::selection { background:oklch(.58 .22 268 / .22); 
 .nuva-cinema-progress { left:0; right:0; top:0; height:2px; overflow:hidden; background:transparent; }
 .nuva-cinema-progress span { display:block; width:100%; height:100%; transform:scaleX(0); transform-origin:left center; background:linear-gradient(90deg,hsl(var(--primary)/.15),hsl(var(--primary)),hsl(var(--primary)/.35)); box-shadow:0 0 16px hsl(var(--primary)/.65); }
 .nuva-cinema-beam { left:50%; top:18%; width:min(42vw,620px); height:1px; opacity:.34; transform:translateX(-50%); background:linear-gradient(90deg,transparent,hsl(var(--primary)/.8),transparent); box-shadow:0 0 42px hsl(var(--primary)/.34); }
-@media (max-width:767px) { .nuva-cinema-vignette { opacity:.1; } .nuva-cinema-beam { width:70vw; opacity:.2; } }
+@media (max-width:767px) { .nuva-cinema-vignette { opacity:.1; } .nuva-cinema-beam { width:70vw; opacity:.2; } .nuva-cinema-atmosphere__grid { opacity:.08; } .nuva-cinema-atmosphere__wordmark { font-size:clamp(6rem,28vw,12rem); } .nuva-cinema-atmosphere__orb { opacity:.09; } }
 
 @media (prefers-reduced-motion: reduce) {
   body:has(section#experience) section:first-of-type::before,
   body:has(section#experience) section:first-of-type > div:first-child::after,
-  body:has(section#experience) section:first-of-type > div:last-child { animation: none !important; }
+  body:has(section#experience) section:first-of-type > div:last-child { animation:none !important; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl,
   body:has(section#experience) a:has(> button) button,
   body:has(section#experience) nav a,
-  body:has(section#experience) header a { transition: none !important; }
+  body:has(section#experience) header a { transition:none !important; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover,
-  body:has(section#experience) a:has(> button):hover button { transform: none !important; box-shadow: none; }
-  .nuva-cinema-vignette,.nuva-cinema-progress,.nuva-cinema-beam { display:none !important; }
+  body:has(section#experience) a:has(> button):hover button { transform:none !important; box-shadow:none; }
+  .nuva-cinema-vignette,.nuva-cinema-progress,.nuva-cinema-beam,.nuva-cinema-atmosphere { display:none !important; }
 }
