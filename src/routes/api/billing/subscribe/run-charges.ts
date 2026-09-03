@@ -69,8 +69,11 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
             .eq("commerce_order", commerceOrder)
             .maybeSingle();
 
-          if (existing?.status === "paid" || existing?.status === "rejected") {
-            results.push({ businessId: biz.id, status: `already_${existing.status}` });
+          // A paid charge is terminal for this billing period. A rejected charge
+          // is deliberately retryable: the business record schedules the next
+          // attempt, and this worker reclaims the same idempotency key when due.
+          if (existing?.status === "paid") {
+            results.push({ businessId: biz.id, status: "already_paid" });
             continue;
           }
 
@@ -92,6 +95,27 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
               }
               console.error("subscription_charge_reservation_failed", reserveError);
               results.push({ businessId: biz.id, status: "reservation_failed" });
+              continue;
+            }
+          } else if (existing.status === "rejected") {
+            const { data: reclaimed, error: reclaimError } = await supabaseAdmin
+              .from("subscription_charges")
+              .update({
+                status: "processing",
+                attempt_started_at: new Date().toISOString(),
+              })
+              .eq("id", existing.id)
+              .eq("status", "rejected")
+              .select("id")
+              .maybeSingle();
+
+            if (reclaimError) {
+              console.error("subscription_charge_retry_reservation_failed", reclaimError);
+              results.push({ businessId: biz.id, status: "retry_reservation_failed" });
+              continue;
+            }
+            if (!reclaimed) {
+              results.push({ businessId: biz.id, status: "already_processing" });
               continue;
             }
           } else {
