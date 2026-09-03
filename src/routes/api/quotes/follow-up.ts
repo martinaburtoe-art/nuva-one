@@ -11,6 +11,35 @@ const FOLLOWUP_COOLDOWN_DAYS = 3;
 const MAX_FOLLOWUPS_PER_QUOTE = 2;
 const DAYS_BEFORE_FIRST_FOLLOWUP = 3;
 
+type QuoteItem = { name?: unknown };
+type RelatedCustomer = { phone?: string | null } | null;
+type RelatedBusiness = { name?: string | null } | null;
+
+function getRelatedCustomer(quote: { customers?: unknown }): RelatedCustomer {
+  if (!quote.customers || typeof quote.customers !== "object") return null;
+  const customer = quote.customers as { phone?: unknown };
+  return { phone: typeof customer.phone === "string" ? customer.phone : null };
+}
+
+function getRelatedBusiness(quote: { businesses?: unknown }): RelatedBusiness {
+  if (!quote.businesses || typeof quote.businesses !== "object") return null;
+  const business = quote.businesses as { name?: unknown };
+  return { name: typeof business.name === "string" ? business.name : null };
+}
+
+function getItemsSummary(items: unknown): string {
+  if (!Array.isArray(items)) return "productos cotizados";
+  const names = items
+    .slice(0, 3)
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const name = (item as QuoteItem).name;
+      return typeof name === "string" ? name : null;
+    })
+    .filter((name): name is string => Boolean(name));
+  return names.join(", ") || "productos cotizados";
+}
+
 async function buildFollowUpMessage(
   businessName: string,
   customerName: string,
@@ -49,17 +78,18 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
     handlers: {
       POST: async ({ request }) => {
         const secret = process.env.CRON_SECRET;
-        if (secret) {
-          const header = request.headers.get("x-cron-secret");
-          if (header !== secret) {
-            return new Response("Unauthorized", { status: 401 });
-          }
+        if (!secret) {
+          console.error("CRON_SECRET is not configured; refusing public quote follow-up cron execution");
+          return new Response("Service unavailable", { status: 503 });
+        }
+        const header = request.headers.get("x-cron-secret");
+        if (!header || header !== secret) {
+          return new Response("Unauthorized", { status: 401 });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const todayIso = new Date().toISOString().slice(0, 10);
 
-        // 1) Auto-expirar cotizaciones vencidas (valid_until pasado, sin resolver).
         const { data: expiredQuotes } = await supabaseAdmin
           .from("quotes")
           .select("id")
@@ -76,7 +106,6 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
             );
         }
 
-        // 2) Buscar cotizaciones enviadas/vistas, sin vencer, candidatas a seguimiento.
         const cutoff = new Date(Date.now() - DAYS_BEFORE_FIRST_FOLLOWUP * 86_400_000).toISOString();
         const { data: candidates, error } = await supabaseAdmin
           .from("quotes")
@@ -96,9 +125,6 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
         let skipped = 0;
         const expired = expiredQuotes?.length ?? 0;
 
-        // Batch-fetch followups for ALL candidates in one round trip instead of
-        // one query per quote inside the loop below (was N+1: with e.g. 200
-        // candidates that's 200 extra sequential DB calls on every cron run).
         const candidateIds = (candidates ?? []).map((q) => q.id);
         const followupsByQuote = new Map<string, { id: string; sent_at: string }[]>();
         if (candidateIds.length > 0) {
@@ -114,8 +140,6 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
           }
         }
 
-        // Cache WhatsApp connections per business_id -- multiple quotes usually
-        // belong to the same business, so this collapses repeat lookups too.
         const connectionByBusiness = new Map<
           string,
           Awaited<ReturnType<typeof findActiveWhatsAppConnection>>
@@ -128,10 +152,12 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
         }
 
         for (const quote of candidates ?? []) {
-          if (quote.valid_until && quote.valid_until < todayIso) continue; // ya expiró arriba
+          if (quote.valid_until && quote.valid_until < todayIso) continue;
 
-          const customerPhone = (quote as any).customers?.phone;
-          const businessName = (quote as any).businesses?.name ?? "el negocio";
+          const customer = getRelatedCustomer(quote);
+          const business = getRelatedBusiness(quote);
+          const customerPhone = customer?.phone;
+          const businessName = business?.name ?? "el negocio";
           if (!customerPhone) {
             skipped++;
             continue;
@@ -160,12 +186,7 @@ export const Route = createFileRoute("/api/quotes/follow-up")({
             (Date.now() - new Date(quote.sent_at as string).getTime()) / 86_400_000,
           );
 
-          const items = Array.isArray(quote.items) ? (quote.items as any[]) : [];
-          const itemsSummary =
-            items
-              .slice(0, 3)
-              .map((i) => i.name)
-              .join(", ") || "productos cotizados";
+          const itemsSummary = getItemsSummary(quote.items);
 
           const message = await buildFollowUpMessage(
             businessName,
