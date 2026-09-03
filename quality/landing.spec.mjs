@@ -183,3 +183,5 @@ test('landing has no horizontal overflow on supported desktop, tablet and mobile
     expect(diagnostics.nodes).toEqual([]);
   }
 });
+
+// Quality-gate trigger marker: no runtime or assertion behavior changed.
