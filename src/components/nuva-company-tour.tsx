@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "@tanstack/react-router";
 
 const ROOMS = [
@@ -17,23 +17,15 @@ type Room = (typeof ROOMS)[number];
 
 function SceneSurface({ room }: { room: Room }) {
   return (
-    <div className="nuva-company-tour__room" style={{ "--tour-accent": `hsl(${room.accent})` } as React.CSSProperties}>
+    <div className="nuva-company-tour__room" style={{ "--tour-accent": `hsl(${room.accent})` } as CSSProperties}>
       <div className="nuva-company-tour__ceiling" />
       <div className="nuva-company-tour__floor" />
       <div className="nuva-company-tour__desk" />
       <div className="nuva-company-tour__screen">
-        <div className="nuva-company-tour__screen-head">
-          <span>NÜVA ONE / {room.module}</span>
-          <span>LIVE · 09:41</span>
-        </div>
+        <div className="nuva-company-tour__screen-head"><span>NÜVA ONE / {room.module}</span><span>LIVE · 09:41</span></div>
         <div className="nuva-company-tour__screen-title">{room.area}</div>
         <div className="nuva-company-tour__screen-grid">
-          {room.metrics.map((metric, index) => (
-            <div className="nuva-company-tour__metric" key={metric}>
-              <b>{metric}</b>
-              <span>{room.labels[index]}</span>
-            </div>
-          ))}
+          {room.metrics.map((metric, index) => <div className="nuva-company-tour__metric" key={metric}><b>{metric}</b><span>{room.labels[index]}</span></div>)}
         </div>
         <div className="nuva-company-tour__chart" />
       </div>
@@ -49,16 +41,19 @@ export function NuvaCompanyTour() {
   const [transitioning, setTransitioning] = useState(false);
   const wheelLock = useRef(false);
   const touchStart = useRef<number | null>(null);
+  const timers = useRef<number[]>([]);
   const room = ROOMS[active];
 
-  const go = (next: number) => {
-    const target = Math.max(0, Math.min(ROOMS.length - 1, next));
+  const go = (nextIndex: number) => {
+    const target = Math.max(0, Math.min(ROOMS.length - 1, nextIndex));
     if (target === active || transitioning) return;
     setTransitioning(true);
-    window.setTimeout(() => {
+    const first = window.setTimeout(() => {
       setActive(target);
-      window.setTimeout(() => setTransitioning(false), 90);
+      const second = window.setTimeout(() => setTransitioning(false), 90);
+      timers.current.push(second);
     }, 260);
+    timers.current.push(first);
   };
 
   const next = () => go(active + 1);
@@ -70,30 +65,31 @@ export function NuvaCompanyTour() {
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") previous();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      timers.current.forEach((timer) => window.clearTimeout(timer));
+      timers.current = [];
+    };
+  }, [active, transitioning]);
 
-  const hotspots = useMemo(
-    () => [
-      { left: "24%", top: "42%", target: Math.min(active + 1, ROOMS.length - 1), label: `Entrar a ${ROOMS[Math.min(active + 1, ROOMS.length - 1)].area}` },
-      { left: "68%", top: "48%", target: Math.min(active + 2, ROOMS.length - 1), label: `Explorar ${ROOMS[Math.min(active + 2, ROOMS.length - 1)].module}` },
-    ],
-    [active],
-  );
+  const hotspots = useMemo(() => {
+    const firstTarget = Math.min(active + 1, ROOMS.length - 1);
+    const secondTarget = Math.min(active + 2, ROOMS.length - 1);
+    return [
+      { left: "24%", top: "42%", target: firstTarget, label: `Entrar a ${ROOMS[firstTarget].area}` },
+      { left: "68%", top: "48%", target: secondTarget, label: `Explorar ${ROOMS[secondTarget].module}` },
+    ];
+  }, [active]);
 
   const onWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     if (Math.abs(event.deltaY) < 8 || wheelLock.current) return;
     wheelLock.current = true;
     event.deltaY > 0 ? next() : previous();
-    window.setTimeout(() => {
-      wheelLock.current = false;
-    }, 820);
+    const timer = window.setTimeout(() => { wheelLock.current = false; }, 820);
+    timers.current.push(timer);
   };
 
-  const onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    touchStart.current = event.touches[0]?.clientY ?? null;
-  };
-
+  const onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => { touchStart.current = event.touches[0]?.clientY ?? null; };
   const onTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
     const start = touchStart.current;
     const end = event.changedTouches[0]?.clientY;
@@ -104,78 +100,27 @@ export function NuvaCompanyTour() {
 
   return (
     <section id="company-tour" className="nuva-company-tour" aria-label="Visita a la empresa Nüva">
-      <div
-        className="nuva-company-tour__stage"
-        onWheel={onWheel}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
+      <div className="nuva-company-tour__stage" onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {ROOMS.map((item, index) => (
-          <div
-            key={item.id}
-            className={`nuva-company-tour__scene ${index === active ? "is-active" : ""}`}
-            style={{ "--tour-accent": `hsl(${item.accent})` } as React.CSSProperties}
-            aria-hidden={index !== active}
-          >
+          <div key={item.id} className={`nuva-company-tour__scene ${index === active ? "is-active" : ""}`} style={{ "--tour-accent": `hsl(${item.accent})` } as CSSProperties} aria-hidden={index !== active}>
             <SceneSurface room={item} />
             {index === active && hotspots.map((hotspot) => (
-              <button
-                key={`${hotspot.target}-${hotspot.left}`}
-                type="button"
-                className="nuva-company-tour__hotspot"
-                style={{ left: hotspot.left, top: hotspot.top }}
-                onClick={() => go(hotspot.target)}
-                aria-label={hotspot.label}
-              >
-                <span>{hotspot.label}</span>
-              </button>
+              <button key={`${hotspot.target}-${hotspot.left}`} type="button" className="nuva-company-tour__hotspot" style={{ left: hotspot.left, top: hotspot.top }} onClick={() => go(hotspot.target)} aria-label={hotspot.label}><span>{hotspot.label}</span></button>
             ))}
           </div>
         ))}
-
-        <div className="nuva-company-tour__hud">
-          <div className="nuva-company-tour__eyebrow">{room.module} / 0{active + 1}</div>
-          <h2 className="nuva-company-tour__title">{room.title}</h2>
-          <p className="nuva-company-tour__copy">{room.copy}</p>
-        </div>
-
+        <div className="nuva-company-tour__hud"><div className="nuva-company-tour__eyebrow">{room.module} / 0{active + 1}</div><h2 className="nuva-company-tour__title">{room.title}</h2><p className="nuva-company-tour__copy">{room.copy}</p></div>
         <div className="nuva-company-tour__map" aria-label="Mapa del recorrido">
-          {ROOMS.map((item, index) => (
-            <button
-              key={item.id}
-              type="button"
-              className={index === active ? "is-active" : ""}
-              onClick={() => go(index)}
-              aria-label={`Ir a ${item.area}`}
-              aria-current={index === active ? "step" : undefined}
-            />
-          ))}
+          {ROOMS.map((item, index) => <button key={item.id} type="button" className={index === active ? "is-active" : ""} onClick={() => go(index)} aria-label={`Ir a ${item.area}`} aria-current={index === active ? "step" : undefined} />)}
         </div>
-
-        <button type="button" className="nuva-company-tour__skip" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-          Saltar tour ↗
-        </button>
-
+        <button type="button" className="nuva-company-tour__skip" onClick={() => document.getElementById("what-is-nuva")?.scrollIntoView({ behavior: "smooth" })}>Saltar tour ↗</button>
         <div className="nuva-company-tour__controls">
-          <div className="nuva-company-tour__progress" aria-label={`Sala ${active + 1} de ${ROOMS.length}`}>
-            {ROOMS.map((item, index) => <span key={item.id} className={`nuva-company-tour__dot ${index === active ? "is-active" : ""}`} />)}
-          </div>
+          <div className="nuva-company-tour__progress" aria-label={`Sala ${active + 1} de ${ROOMS.length}`}>{ROOMS.map((item, index) => <span key={item.id} className={`nuva-company-tour__dot ${index === active ? "is-active" : ""}`} />)}</div>
           <div className="nuva-company-tour__room-name">{room.area} — {room.module}</div>
-          {active < ROOMS.length - 1 ? (
-            <button type="button" className="nuva-company-tour__next" onClick={next}>Siguiente sala <span>↗</span></button>
-          ) : (
-            <Link to="/auth" search={{ mode: "signup" }} className="nuva-company-tour__next">Entrar a Nüva <span>↗</span></Link>
-          )}
+          {active < ROOMS.length - 1 ? <button type="button" className="nuva-company-tour__next" onClick={next}>Siguiente sala <span>↗</span></button> : <Link to="/auth" search={{ mode: "signup" }} className="nuva-company-tour__next">Entrar a Nüva <span>↗</span></Link>}
         </div>
-
         <div className="nuva-company-tour__scroll-hint">SCROLL / WHEEL / SWIPE TO MOVE</div>
-
-        <div className={`nuva-company-tour__transition ${transitioning ? "is-on" : ""}`} aria-hidden="true">
-          <div>
-            <small>Entrando a la siguiente sala</small>
-            <strong>{room.area}</strong>
-          </div>
-        </div>
+        <div className={`nuva-company-tour__transition ${transitioning ? "is-on" : ""}`} aria-hidden="true"><div><small>Entrando a la siguiente sala</small><strong>{room.area}</strong></div></div>
       </div>
     </section>
   );
