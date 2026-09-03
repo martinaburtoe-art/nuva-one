@@ -1,44 +1,49 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
+import { checkRateLimit } from "@/lib/rate-limit.server";
+import { getClientIpFingerprint, jsonRequestTooLarge } from "@/lib/request-security.server";
 
-// Cancela la suscripción Pro: downgrade inmediato a Starter (no hay
-// "período ya pagado que se aprovecha", el cobro es simple mes a mes).
-// La tarjeta queda registrada en Flow por si el negocio reactiva después.
+const cancelSchema = z.object({ business_id: z.string().uuid() }).strict();
+
 export const Route = createFileRoute("/api/billing/subscribe/cancel")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        if (jsonRequestTooLarge(request, 8 * 1024)) return Response.json({ error: "Solicitud demasiado grande" }, { status: 413 });
         const client = await authedUserClient(request);
         if (!client) return new Response("Unauthorized", { status: 401 });
 
-        const body = await request.json().catch(() => ({}));
-        const businessId = body.business_id as string | undefined;
-        if (!businessId) return new Response("business_id requerido", { status: 400 });
+        const parsed = cancelSchema.safeParse(await request.json().catch(() => null));
+        if (!parsed.success) return Response.json({ error: "Datos de cancelación inválidos" }, { status: 400 });
+        const { business_id: businessId } = parsed.data;
 
-        // RLS (vía el client con el JWT del usuario) confirma que el
-        // caller realmente pertenece a este negocio -- recién después se
-        // usa supabaseAdmin para el UPDATE real, porque plan/
-        // subscription_status son columnas bloqueadas para el rol
-        // authenticated (ver migración lock_billing_columns): nadie puede
-        // dárselas a sí mismo con su propio JWT, ni siquiera el dueño.
-        const { data: business, error: bizError } = await client
-          .from("businesses")
-          .select("id")
-          .eq("id", businessId)
+        const { data: userData } = await client.auth.getUser();
+        if (!userData.user?.id) return new Response("Unauthorized", { status: 401 });
+
+        const { data: membership } = await client
+          .from("business_members")
+          .select("role")
+          .eq("business_id", businessId)
+          .eq("user_id", userData.user.id)
+          .in("role", ["owner", "admin"])
           .maybeSingle();
-        if (bizError || !business)
-          return new Response("Negocio no encontrado o sin acceso", { status: 403 });
+        if (!membership) return new Response("Forbidden", { status: 403 });
+
+        const allowedByBusiness = await checkRateLimit(`subscribe-cancel:${businessId}`, 10, 3600);
+        const allowedByIp = await checkRateLimit(`subscribe-cancel-ip:${getClientIpFingerprint(request)}`, 30, 3600);
+        if (!allowedByBusiness || !allowedByIp) {
+          return Response.json({ error: "Demasiados intentos, intenta más tarde" }, { status: 429, headers: { "Retry-After": "3600" } });
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { error } = await supabaseAdmin
           .from("businesses")
           .update({ plan: "starter", subscription_status: "canceled", next_charge_date: null })
           .eq("id", businessId);
-        if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        if (error) return Response.json({ error: "No pudimos cancelar la suscripción." }, { status: 500 });
 
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { "Content-Type": "application/json" },
-        });
+        return Response.json({ ok: true });
       },
     },
   },
