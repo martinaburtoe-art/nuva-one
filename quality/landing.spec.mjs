@@ -113,10 +113,13 @@ test('landing experience has the Nüva motion layer and respects reduced motion'
   expect(pageErrors).toEqual([]);
 });
 
-test('landing has no horizontal overflow on desktop and mobile', async ({ page }) => {
+test('landing has no horizontal overflow on supported desktop, tablet and mobile viewports', async ({ page }) => {
   for (const viewport of [
-    { width: 1440, height: 900 },
+    { width: 320, height: 844 },
     { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 900 },
   ]) {
     await page.setViewportSize(viewport);
     await expectHealthyPage(page, '/');
