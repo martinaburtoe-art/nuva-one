@@ -1,7 +1,7 @@
 /* WebLoved gallery layer: scene-first composition, continuous crossfade, restrained editorial chrome. */
 .nuva-company-tour{background:#070707!important;color:#f5f1e8}
 .nuva-company-tour__sticky,.nuva-company-tour__stage{background:#070707!important}
-.nuva-company-tour__scene{visibility:visible!important;z-index:1;opacity:var(--scene-opacity,0);transform:scale(var(--scene-scale,1.055));filter:blur(calc(12px * (1 - var(--scene-opacity,0))));transition:opacity 120ms linear,transform 120ms linear,filter 160ms linear;pointer-events:none}
+.nuva-company-tour__scene{visibility:visible!important;z-index:1;opacity:var(--scene-opacity,0);transform:scale(var(--scene-scale,1.055));filter:blur(8px);transition:opacity 120ms linear,transform 120ms linear,filter 180ms linear;pointer-events:none}
 .nuva-company-tour__scene.is-active{z-index:2;opacity:var(--scene-opacity,1);transform:scale(var(--scene-scale,1));filter:blur(0);pointer-events:auto}
 .nuva-company-tour__room{inset:0!important;background:#080808!important;isolation:isolate}
 .nuva-company-tour__room::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 52% 42%,hsl(var(--tour-accent)/.16),transparent 34%),linear-gradient(180deg,rgba(255,255,255,.035),transparent 25%,transparent 72%,rgba(0,0,0,.38))}
