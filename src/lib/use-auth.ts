@@ -13,7 +13,6 @@ export function useAuth() {
 
   useEffect(() => {
     let lastActivityAt = Date.now();
-    let signedInAt = Date.now();
     let mounted = true;
 
     const markActivity = () => {
@@ -30,29 +29,28 @@ export function useAuth() {
       if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
-      if (s) {
-        const now = Date.now();
-        lastActivityAt = now;
-        signedInAt = now;
-      }
+      if (!s) lastActivityAt = Date.now();
     });
 
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      const now = Date.now();
-      lastActivityAt = now;
-      signedInAt = now;
+      lastActivityAt = Date.now();
       setLoading(false);
     });
 
     const timer = window.setInterval(() => {
       if (!mounted || !session) return;
       const now = Date.now();
+      const sessionCreatedAt = Date.parse(session.user?.created_at ?? "");
+      const authSessionStartedAt = Number.isFinite(sessionCreatedAt)
+        ? sessionCreatedAt
+        : now;
+
       if (
         now - lastActivityAt >= INACTIVITY_TIMEOUT_MS ||
-        now - signedInAt >= ABSOLUTE_SESSION_MAX_MS
+        now - authSessionStartedAt >= ABSOLUTE_SESSION_MAX_MS
       ) {
         void supabase.auth.signOut();
       }
