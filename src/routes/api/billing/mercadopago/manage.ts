@@ -20,6 +20,21 @@ export const Route = createFileRoute("/api/billing/mercadopago/manage")({
         const action = body.action as "pause" | "resume" | "cancel" | "pending" | undefined;
         if (!businessId || !action) return Response.json({ error: "Datos incompletos" }, { status: 400 });
 
+        const { data: userData } = await client.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) return new Response("Unauthorized", { status: 401 });
+
+        const { data: membership } = await client
+          .from("business_members")
+          .select("role")
+          .eq("business_id", businessId)
+          .eq("user_id", userId)
+          .in("role", ["owner", "admin"])
+          .maybeSingle();
+        if (!membership) {
+          return new Response("Forbidden", { status: 403 });
+        }
+
         const allowed = await checkRateLimit(`mp-manage:${businessId}`, 20, 3600);
         if (!allowed) return Response.json({ error: "Demasiados intentos, intenta más tarde" }, { status: 429 });
 
