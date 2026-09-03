@@ -100,12 +100,12 @@ test('landing spatial tour is scroll-driven, navigable and reduced-motion safe',
   await expect(page.locator('.nuva-company-tour__map button')).toHaveCount(9);
   await expect(page.locator('.nuva-company-tour__hotspot').first()).toBeVisible();
 
-  const before = await page.locator('.nuva-company-tour__scene.is-active').getAttribute('data-room-index');
   await page.locator('#company-tour').evaluate((node) => node.scrollIntoView({ block: 'start' }));
-  await page.mouse.wheel(0, 900);
-  await page.waitForTimeout(350);
-  const after = await page.locator('.nuva-company-tour__scene.is-active').getAttribute('data-room-index');
-  expect(Number(after)).toBeGreaterThanOrEqual(Number(before));
+  const before = await page.locator('.nuva-company-tour__scene.is-active .nuva-company-tour__scene-index').innerText();
+  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 1.1));
+  await page.waitForTimeout(500);
+  const after = await page.locator('.nuva-company-tour__scene.is-active .nuva-company-tour__scene-index').innerText();
+  expect(after).not.toBe(before);
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload({ waitUntil: 'networkidle' });
