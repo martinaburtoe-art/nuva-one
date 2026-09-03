@@ -5,6 +5,8 @@ import {
 } from "@/lib/fiscal/flow-subscriptions.server";
 import { NUVA_PLANS } from "@/lib/plan-config";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export const Route = createFileRoute("/api/billing/subscribe/callback")({
   server: {
     handlers: {
@@ -25,7 +27,9 @@ export const Route = createFileRoute("/api/billing/subscribe/callback")({
             },
           });
 
-        if (!creds || !businessId || !token) return redirect("error", "Datos incompletos");
+        if (!creds || !businessId || !UUID_RE.test(businessId) || !token || token.length > 512) {
+          return redirect("error", "Datos incompletos");
+        }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: business } = await supabaseAdmin
           .from("businesses")
@@ -41,11 +45,9 @@ export const Route = createFileRoute("/api/billing/subscribe/callback")({
           !status.customerId ||
           status.customerId !== business.flow_customer_id
         ) {
-          await supabaseAdmin
-            .from("businesses")
-            .update({ flow_card_status: "failed" })
-            .eq("id", businessId)
-            .eq("flow_customer_id", business.flow_customer_id);
+          // Never mutate the target business on an untrusted callback. A valid
+          // token for another customer could otherwise be used to force a
+          // victim's card status to "failed" if their business ID were known.
           return redirect("error", "No se pudo registrar la tarjeta");
         }
 
