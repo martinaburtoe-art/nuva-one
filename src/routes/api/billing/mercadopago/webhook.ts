@@ -57,12 +57,20 @@ function asPayment(value: JsonRecord): MercadoPagoPayment {
   };
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_WEBHOOK_BODY_BYTES = 32 * 1024;
+
 export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const config = getMercadoPagoConfig();
-        if (!config) return new Response("OK", { status: 200 });
+        if (!config) return new Response("Service unavailable", { status: 503 });
+
+        const contentLength = Number(request.headers.get("content-length") ?? "0");
+        if (contentLength > MAX_WEBHOOK_BODY_BYTES) {
+          return new Response("Payload too large", { status: 413 });
+        }
 
         const url = new URL(request.url);
         const parsed = await request.json().catch(() => ({}));
@@ -94,7 +102,14 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
           const status = subscription.status ?? "pending";
           const active = isMercadoPagoSubscriptionActive(status);
 
-          if (businessId) {
+          if (businessId && UUID_RE.test(businessId)) {
+            const { data: business } = await supabaseAdmin
+              .from("businesses")
+              .select("id,plan")
+              .eq("id", businessId)
+              .maybeSingle();
+            if (!business?.id) return new Response("OK", { status: 200 });
+
             const frequency = subscription.auto_recurring?.frequency ?? 1;
             const frequencyType = subscription.auto_recurring?.frequency_type ?? "months";
             const next = new Date();
@@ -104,12 +119,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
 
             let resolvedPlanId = referencedPlanId;
             if (active && !resolvedPlanId) {
-              const { data: business } = await supabaseAdmin
-                .from("businesses")
-                .select("plan")
-                .eq("id", businessId)
-                .maybeSingle();
-              const currentPlan = String(business?.plan ?? "starter");
+              const currentPlan = String(business.plan ?? "starter");
               resolvedPlanId = currentPlan === "pro" || currentPlan === "starter" ? currentPlan : "starter";
             }
 
@@ -140,21 +150,29 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
           if (paymentResult.ok && paymentResult.data) {
             const payment = asPayment(paymentResult.data);
             const externalReference = String(payment.external_reference ?? "");
-            if (externalReference) {
-              await supabaseAdmin.from("subscription_charges").upsert(
-                {
-                  business_id: externalReference,
-                  commerce_order: `mp-${resourceId}`,
-                  amount: Number(payment.transaction_amount ?? 0),
-                  status: String(payment.status ?? "pending"),
-                  provider: "mercadopago",
-                  provider_payment_id: String(payment.id),
-                  provider_subscription_id: payment.metadata?.preapproval_id
-                    ? String(payment.metadata.preapproval_id)
-                    : null,
-                },
-                { onConflict: "commerce_order" },
-              );
+            const { businessId } = parseMercadoPagoExternalReference(externalReference);
+            if (UUID_RE.test(businessId)) {
+              const { data: business } = await supabaseAdmin
+                .from("businesses")
+                .select("id")
+                .eq("id", businessId)
+                .maybeSingle();
+              if (business?.id) {
+                await supabaseAdmin.from("subscription_charges").upsert(
+                  {
+                    business_id: business.id,
+                    commerce_order: `mp-${resourceId}`,
+                    amount: Number(payment.transaction_amount ?? 0),
+                    status: String(payment.status ?? "pending"),
+                    provider: "mercadopago",
+                    provider_payment_id: String(payment.id),
+                    provider_subscription_id: payment.metadata?.preapproval_id
+                      ? String(payment.metadata.preapproval_id)
+                      : null,
+                  },
+                  { onConflict: "commerce_order" },
+                );
+              }
             }
           }
         }
