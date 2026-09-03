@@ -1,5 +1,8 @@
+import { createRoot, type Root } from "react-dom/client";
 import { useEffect } from "react";
 import { useLocation } from "@tanstack/react-router";
+import { NuvaCompanyTour } from "@/components/nuva-company-tour";
+import "../nuva-company-tour.css";
 
 const LANDING_SECTIONS = [
   ["what-is-nuva", "Información"],
@@ -21,6 +24,7 @@ export function NuvaWebLovedInteractions() {
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     const landing = location.pathname === "/";
     const cleanups: Array<() => void> = [];
+    let tourRoot: Root | null = null;
 
     root.classList.add("nuva-webloved-runtime");
 
@@ -73,6 +77,24 @@ export function NuvaWebLovedInteractions() {
     });
 
     if (landing) {
+      const tourMount = document.createElement("div");
+      tourMount.className = "nuva-company-tour-mount";
+      const anchor = document.getElementById("what-is-nuva");
+      if (anchor?.parentNode) anchor.parentNode.insertBefore(tourMount, anchor);
+      else document.querySelector("main")?.appendChild(tourMount);
+      const legacyExperience = document.getElementById("experience");
+      legacyExperience?.setAttribute("data-nuva-tour-replaced", "true");
+      document.body.classList.add("nuva-company-tour-enabled");
+      tourRoot = createRoot(tourMount);
+      tourRoot.render(<NuvaCompanyTour />);
+      cleanups.push(() => {
+        tourRoot?.unmount();
+        tourRoot = null;
+        tourMount.remove();
+        legacyExperience?.removeAttribute("data-nuva-tour-replaced");
+        document.body.classList.remove("nuva-company-tour-enabled");
+      });
+
       const nav = document.createElement("nav");
       nav.className = "nuva-editorial-nav";
       nav.setAttribute("aria-label", "Navegación de Nüva One");
@@ -225,10 +247,7 @@ export function NuvaWebLovedInteractions() {
     const contact = document.createElement("a");
     contact.className = "nuva-floating-contact";
     contact.href = landing ? "#faq" : "/";
-    contact.setAttribute(
-      "aria-label",
-      landing ? "Ir a preguntas frecuentes de Nüva One" : "Volver a Nüva One",
-    );
+    contact.setAttribute("aria-label", landing ? "Ir a preguntas frecuentes de Nüva One" : "Volver a Nüva One");
     contact.innerHTML = "<span>CONTACTO</span><b>↗</b>";
     document.body.appendChild(contact);
     cleanups.push(() => contact.remove());
