@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { NuvaCompanyTour } from "@/components/nuva-company-tour";
 import "../nuva-company-tour.css";
+import "../nuva-company-tour-webloved.css";
 
 const LANDING_SECTIONS = [
   ["company-tour", "Tour"],
