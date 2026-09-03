@@ -1,30 +1,23 @@
-/* Nüva One — MotionSites-inspired visual layer */
-
+/* Nüva One — cinematic visual system */
 body:has(section#experience) {
   --nuva-motion-glow: oklch(.58 .22 268 / .16);
   --nuva-motion-line: oklch(.55 .22 268 / .14);
   --nuva-motion-ease: cubic-bezier(.16,1,.3,1);
   overflow-x: clip;
-  background:
-    radial-gradient(circle at 50% -10%, oklch(.58 .22 268 / .055), transparent 34%),
-    hsl(var(--background));
+  background: radial-gradient(circle at 50% -10%, oklch(.58 .22 268 / .055), transparent 34%), hsl(var(--background));
 }
 body:has(section#experience) section { scroll-margin-top: 88px; }
 @media (min-width: 768px) {
-  body:has(section#experience) section:first-of-type { isolation: isolate; overflow: clip; }
-  body:has(section#experience) section:first-of-type::before { content:""; position:absolute; inset:0; z-index:-2; pointer-events:none; background:radial-gradient(circle at 72% 34%,var(--nuva-motion-glow),transparent 27%),radial-gradient(circle at 18% 78%,oklch(.58 .18 290 / .07),transparent 24%); filter:blur(12px); animation:nuva-cinematic-drift-contained 12s ease-in-out infinite alternate; will-change:transform; }
+  body:has(section#experience) section:first-of-type { isolation:isolate; overflow:clip; }
+  body:has(section#experience) section:first-of-type::before { content:""; position:absolute; inset:0; z-index:-2; pointer-events:none; background:radial-gradient(circle at 72% 34%,var(--nuva-motion-glow),transparent 27%),radial-gradient(circle at 18% 78%,oklch(.58 .18 290 / .07),transparent 24%); filter:blur(12px); animation:nuva-cinematic-drift-contained 12s ease-in-out infinite alternate; }
   body:has(section#experience) section:first-of-type > div:first-child { position:relative; z-index:2; }
   body:has(section#experience) section:first-of-type > div:first-child::before { content:""; position:absolute; inset:-4rem -12vw; z-index:-1; pointer-events:none; opacity:.32; background-image:linear-gradient(to right,oklch(.65 .12 268 / .045) 1px,transparent 1px),linear-gradient(to bottom,oklch(.65 .12 268 / .045) 1px,transparent 1px); background-size:72px 72px; mask-image:radial-gradient(ellipse at center,black 0%,transparent 70%); }
-  body:has(section#experience) section:first-of-type > div:first-child::after { content:""; position:absolute; left:50%; top:-25%; width:min(60vw,720px); height:1px; pointer-events:none; background:linear-gradient(90deg,transparent,oklch(.72 .2 268 / .38),transparent); box-shadow:0 0 34px oklch(.58 .22 268 / .22); transform:translateX(-50%); animation:nuva-cinematic-scan 8s cubic-bezier(.45,0,.25,1) infinite; will-change:top,opacity; }
-  body:has(section#experience) section:first-of-type > div:last-child { position:relative; z-index:1; transform:translateZ(0); filter:drop-shadow(0 34px 70px oklch(.2 .12 270 / .16)); animation:nuva-product-float 8s ease-in-out infinite; will-change:transform; }
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl { position:relative; overflow:hidden; transform:translateZ(0); transition:transform 520ms var(--nuva-motion-ease),box-shadow 520ms var(--nuva-motion-ease),border-color 360ms ease,background-color 360ms ease; }
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover { transform:translate3d(0,-5px,0) scale(1.008); border-color:oklch(.55 .22 268 / .24); box-shadow:0 28px 70px -42px oklch(.35 .18 270 / .42); }
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl::after,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl::after { content:""; position:absolute; inset:0; z-index:3; pointer-events:none; border-radius:inherit; background:linear-gradient(115deg,transparent 22%,oklch(.7 .18 268 / .07) 48%,transparent 72%); transform:translateX(-125%); transition:transform 900ms var(--nuva-motion-ease); }
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover::after,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after { transform:translateX(125%); }
+  body:has(section#experience) section:first-of-type > div:first-child::after { content:""; position:absolute; left:50%; top:-25%; width:min(60vw,720px); height:1px; pointer-events:none; background:linear-gradient(90deg,transparent,oklch(.72 .2 268 / .38),transparent); box-shadow:0 0 34px oklch(.58 .22 268 / .22); transform:translateX(-50%); animation:nuva-cinematic-scan 8s cubic-bezier(.45,0,.25,1) infinite; }
+  body:has(section#experience) section:first-of-type > div:last-child { position:relative; z-index:1; transform:translateZ(0); filter:drop-shadow(0 34px 70px oklch(.2 .12 270 / .16)); animation:nuva-product-float 8s ease-in-out infinite; }
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,body:has(section#experience) section:not(:first-of-type) .rounded-3xl { position:relative; overflow:hidden; transform:translateZ(0); transition:transform 520ms var(--nuva-motion-ease),box-shadow 520ms var(--nuva-motion-ease),border-color 360ms ease,background-color 360ms ease; }
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover { transform:translate3d(0,-5px,0) scale(1.008); border-color:oklch(.55 .22 268 / .24); box-shadow:0 28px 70px -42px oklch(.35 .18 270 / .42); }
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl::after,body:has(section#experience) section:not(:first-of-type) .rounded-3xl::after { content:""; position:absolute; inset:0; z-index:3; pointer-events:none; border-radius:inherit; background:linear-gradient(115deg,transparent 22%,oklch(.7 .18 268 / .07) 48%,transparent 72%); transform:translateX(-125%); transition:transform 900ms var(--nuva-motion-ease); }
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover::after,body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover::after { transform:translateX(125%); }
   body:has(section#experience) a:has(> button) button { transition:transform 260ms var(--nuva-motion-ease),box-shadow 260ms var(--nuva-motion-ease),background-color 220ms ease; }
   body:has(section#experience) a:has(> button):hover button { transform:translateY(-2px); }
   body:has(section#experience) nav a,body:has(section#experience) header a { transition:color 220ms ease,opacity 220ms ease; }
@@ -34,38 +27,24 @@ body:has(section#experience) ::selection { background:oklch(.58 .22 268 / .22); 
 @keyframes nuva-cinematic-drift-contained { from{transform:translate3d(0,-1%,0)} to{transform:translate3d(0,2%,0)} }
 @keyframes nuva-cinematic-scan { 0%,14%{top:-25%;opacity:0} 28%{opacity:.8} 66%{top:118%;opacity:.32} 78%,100%{top:118%;opacity:0} }
 @keyframes nuva-product-float { 0%,100%{transform:translate3d(0,0,0)} 50%{transform:translate3d(0,-7px,0)} }
-@media (max-width:767px){body:has(section#experience) section:not(:first-of-type) .rounded-2xl,body:has(section#experience) section:not(:first-of-type) .rounded-3xl{transition:box-shadow 360ms ease,border-color 300ms ease}}
 
-/* Cinematic stage: decorative, fixed, GPU-friendly and never interactive. */
 .nuva-cinema-atmosphere { position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:clip; opacity:0; }
 .nuva-cinema-atmosphere__aurora { position:absolute; inset:-20%; background:radial-gradient(circle at 50% 28%,hsl(var(--primary)/.09),transparent 27%),radial-gradient(circle at 15% 62%,hsl(205 90% 58%/.06),transparent 26%),radial-gradient(circle at 85% 45%,hsl(270 80% 65%/.045),transparent 24%); filter:blur(28px); }
 .nuva-cinema-atmosphere__grid { position:absolute; inset:-15%; opacity:.16; background-image:linear-gradient(hsl(var(--foreground)/.055) 1px,transparent 1px),linear-gradient(90deg,hsl(var(--foreground)/.055) 1px,transparent 1px); background-size:clamp(44px,5vw,76px) clamp(44px,5vw,76px); mask-image:radial-gradient(ellipse at center,black 5%,transparent 74%); transform:perspective(900px) rotateX(58deg) translateY(22%); transform-origin:center bottom; }
+.nuva-cinema-atmosphere__field { position:absolute; left:50%; top:44%; width:min(46vw,650px); aspect-ratio:1; transform:translate(-50%,-50%); opacity:.82; filter:drop-shadow(0 0 38px hsl(var(--primary)/.12)); will-change:transform; }
+.nuva-cinema-atmosphere__ring { position:absolute; inset:12%; border:1px solid hsl(var(--primary)/.16); border-radius:50%; box-shadow:inset 0 0 36px hsl(var(--primary)/.035),0 0 24px hsl(var(--primary)/.025); transform:rotateX(66deg); }
+.nuva-cinema-atmosphere__ring--b { inset:20%; transform:rotateY(66deg) rotateZ(24deg); border-style:dashed; opacity:.65; }
+.nuva-cinema-atmosphere__ring--c { inset:29%; transform:rotateX(66deg) rotateZ(-35deg); opacity:.45; }
+.nuva-cinema-atmosphere__core { position:absolute; left:50%; top:50%; width:clamp(54px,7vw,96px); aspect-ratio:1; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle,hsl(var(--primary)/.9) 0%,hsl(var(--primary)/.28) 28%,transparent 70%); box-shadow:0 0 30px hsl(var(--primary)/.35),0 0 100px hsl(var(--primary)/.16); }
+.nuva-cinema-atmosphere__core::after { content:""; position:absolute; inset:25%; border-radius:50%; background:hsl(var(--background)/.7); box-shadow:0 0 18px hsl(var(--primary)/.7); }
+.nuva-cinema-atmosphere__node { position:absolute; padding:.42rem .62rem; border:1px solid hsl(var(--primary)/.18); border-radius:999px; background:hsl(var(--background)/.28); backdrop-filter:blur(8px); color:hsl(var(--foreground)/.48); font:600 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.14em; white-space:nowrap; box-shadow:0 0 22px hsl(var(--primary)/.06); }
+.nuva-cinema-atmosphere__node--a { left:5%; top:40%; }.nuva-cinema-atmosphere__node--b { right:1%; top:19%; }.nuva-cinema-atmosphere__node--c { right:7%; bottom:23%; }.nuva-cinema-atmosphere__node--d { left:12%; bottom:13%; }
+.nuva-cinema-atmosphere__line { position:absolute; height:1px; transform-origin:left center; background:linear-gradient(90deg,hsl(var(--primary)/.04),hsl(var(--primary)/.28),hsl(var(--primary)/.03)); box-shadow:0 0 12px hsl(var(--primary)/.12); opacity:.55; }
+.nuva-cinema-atmosphere__line--a { width:40%; left:17%; top:45%; transform:rotate(3deg); }.nuva-cinema-atmosphere__line--b { width:43%; left:52%; top:38%; transform:rotate(-31deg); }.nuva-cinema-atmosphere__line--c { width:39%; left:52%; top:57%; transform:rotate(31deg); }.nuva-cinema-atmosphere__line--d { width:37%; left:20%; top:61%; transform:rotate(-26deg); }
 .nuva-cinema-atmosphere__orb { position:absolute; width:clamp(220px,30vw,520px); aspect-ratio:1; border-radius:50%; filter:blur(1px); opacity:.16; mix-blend-mode:screen; will-change:transform; }
-.nuva-cinema-atmosphere__orb--a { left:-10%; top:16%; background:radial-gradient(circle at 65% 55%,hsl(205 95% 62%/.38),transparent 62%); }
-.nuva-cinema-atmosphere__orb--b { right:-12%; top:35%; background:radial-gradient(circle at 35% 48%,hsl(270 90% 70%/.26),transparent 62%); }
+.nuva-cinema-atmosphere__orb--a { left:-10%; top:16%; background:radial-gradient(circle at 65% 55%,hsl(205 95% 62%/.38),transparent 62%); }.nuva-cinema-atmosphere__orb--b { right:-12%; top:35%; background:radial-gradient(circle at 35% 48%,hsl(270 90% 70%/.26),transparent 62%); }
 .nuva-cinema-atmosphere__wordmark { position:absolute; left:50%; top:39%; transform:translate(-50%,-50%); white-space:nowrap; font-size:clamp(10rem,29vw,34rem); line-height:.75; font-weight:900; letter-spacing:.08em; color:hsl(var(--foreground)); opacity:0; user-select:none; will-change:transform,opacity; }
 .nuva-cinema-atmosphere__scan { position:absolute; left:0; right:0; top:18%; height:1px; background:linear-gradient(90deg,transparent,hsl(var(--primary)/.24),transparent); box-shadow:0 0 28px hsl(var(--primary)/.18); opacity:.5; }
-
-.nuva-cinema-vignette,
-.nuva-cinema-progress,
-.nuva-cinema-beam { position:fixed; pointer-events:none; z-index:9990; }
-.nuva-cinema-vignette { inset:0; z-index:9989; opacity:.22; background:radial-gradient(ellipse at center,transparent 45%,hsl(var(--background)/.28) 100%); mix-blend-mode:multiply; }
-.nuva-cinema-progress { left:0; right:0; top:0; height:2px; overflow:hidden; background:transparent; }
-.nuva-cinema-progress span { display:block; width:100%; height:100%; transform:scaleX(0); transform-origin:left center; background:linear-gradient(90deg,hsl(var(--primary)/.15),hsl(var(--primary)),hsl(var(--primary)/.35)); box-shadow:0 0 16px hsl(var(--primary)/.65); }
-.nuva-cinema-beam { left:50%; top:18%; width:min(42vw,620px); height:1px; opacity:.34; transform:translateX(-50%); background:linear-gradient(90deg,transparent,hsl(var(--primary)/.8),transparent); box-shadow:0 0 42px hsl(var(--primary)/.34); }
-@media (max-width:767px) { .nuva-cinema-vignette { opacity:.1; } .nuva-cinema-beam { width:70vw; opacity:.2; } .nuva-cinema-atmosphere__grid { opacity:.08; } .nuva-cinema-atmosphere__wordmark { font-size:clamp(6rem,28vw,12rem); } .nuva-cinema-atmosphere__orb { opacity:.09; } }
-
-@media (prefers-reduced-motion: reduce) {
-  body:has(section#experience) section:first-of-type::before,
-  body:has(section#experience) section:first-of-type > div:first-child::after,
-  body:has(section#experience) section:first-of-type > div:last-child { animation:none !important; }
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl,
-  body:has(section#experience) a:has(> button) button,
-  body:has(section#experience) nav a,
-  body:has(section#experience) header a { transition:none !important; }
-  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
-  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover,
-  body:has(section#experience) a:has(> button):hover button { transform:none !important; box-shadow:none; }
-  .nuva-cinema-vignette,.nuva-cinema-progress,.nuva-cinema-beam,.nuva-cinema-atmosphere { display:none !important; }
-}
+.nuva-cinema-vignette,.nuva-cinema-progress,.nuva-cinema-beam { position:fixed; pointer-events:none; z-index:9990; }.nuva-cinema-vignette { inset:0; z-index:9989; opacity:.22; background:radial-gradient(ellipse at center,transparent 45%,hsl(var(--background)/.28) 100%); mix-blend-mode:multiply; }.nuva-cinema-progress { left:0; right:0; top:0; height:2px; overflow:hidden; }.nuva-cinema-progress span { display:block; width:100%; height:100%; transform:scaleX(0); transform-origin:left center; background:linear-gradient(90deg,hsl(var(--primary)/.15),hsl(var(--primary)),hsl(var(--primary)/.35)); box-shadow:0 0 16px hsl(var(--primary)/.65); }.nuva-cinema-beam { left:50%; top:18%; width:min(42vw,620px); height:1px; opacity:.34; transform:translateX(-50%); background:linear-gradient(90deg,transparent,hsl(var(--primary)/.8),transparent); box-shadow:0 0 42px hsl(var(--primary)/.34); }
+@media (max-width:767px) { .nuva-cinema-vignette{opacity:.1}.nuva-cinema-beam{width:70vw;opacity:.2}.nuva-cinema-atmosphere__grid{opacity:.08}.nuva-cinema-atmosphere__wordmark{font-size:clamp(6rem,28vw,12rem)}.nuva-cinema-atmosphere__orb{opacity:.09}.nuva-cinema-atmosphere__field{width:92vw;top:39%;opacity:.48}.nuva-cinema-atmosphere__node{font-size:6px;padding:.34rem .46rem}.nuva-cinema-atmosphere__ring{border-color:hsl(var(--primary)/.12)} }
+@media (prefers-reduced-motion:reduce) { body:has(section#experience) section:first-of-type::before,body:has(section#experience) section:first-of-type > div:first-child::after,body:has(section#experience) section:first-of-type > div:last-child{animation:none!important}.nuva-cinema-vignette,.nuva-cinema-progress,.nuva-cinema-beam,.nuva-cinema-atmosphere{display:none!important} }
