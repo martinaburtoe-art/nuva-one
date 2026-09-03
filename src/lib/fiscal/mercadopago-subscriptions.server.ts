@@ -11,6 +11,7 @@ export type MercadoPagoPlanId = "starter" | "pro";
 
 const API_BASE = "https://api.mercadopago.com";
 const PLAN_REFERENCE_SEPARATOR = "|plan=";
+const WEBHOOK_MAX_AGE_SECONDS = 5 * 60;
 
 export function getMercadoPagoConfig(): MercadoPagoConfig | null {
   const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
@@ -69,6 +70,7 @@ export function validateMercadoPagoWebhookSignature(params: {
   requestId: string | null;
   dataId: string | null;
   secret: string | undefined;
+  nowSeconds?: number;
 }) {
   if (!params.signature || !params.secret) return false;
   const parts = Object.fromEntries(
@@ -79,7 +81,12 @@ export function validateMercadoPagoWebhookSignature(params: {
   ) as Record<string, string>;
   const ts = parts.ts;
   const v1 = parts.v1;
-  if (!ts || !v1) return false;
+  if (!ts || !v1 || !/^\d+$/.test(ts) || !/^[0-9a-fA-F]{64}$/.test(v1)) return false;
+
+  const timestamp = Number(ts);
+  if (!Number.isSafeInteger(timestamp)) return false;
+  const nowSeconds = params.nowSeconds ?? Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestamp) > WEBHOOK_MAX_AGE_SECONDS) return false;
 
   const manifestParts: string[] = [];
   if (params.dataId) manifestParts.push(`id:${params.dataId};`);
