@@ -67,13 +67,24 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
         const config = getMercadoPagoConfig();
         if (!config) return new Response("Service unavailable", { status: 503 });
 
-        const contentLength = Number(request.headers.get("content-length") ?? "0");
-        if (contentLength > MAX_WEBHOOK_BODY_BYTES) {
+        const contentLengthHeader = request.headers.get("content-length");
+        if (contentLengthHeader !== null) {
+          const contentLength = Number(contentLengthHeader);
+          if (!Number.isFinite(contentLength) || contentLength < 0) {
+            return new Response("Invalid content length", { status: 400 });
+          }
+          if (contentLength > MAX_WEBHOOK_BODY_BYTES) {
+            return new Response("Payload too large", { status: 413 });
+          }
+        }
+
+        const body = await request.text();
+        if (new TextEncoder().encode(body).byteLength > MAX_WEBHOOK_BODY_BYTES) {
           return new Response("Payload too large", { status: 413 });
         }
 
         const url = new URL(request.url);
-        const parsed = await request.json().catch(() => ({}));
+        const parsed = JSON.parse(body) as unknown;
         const payload = isRecord(parsed) ? parsed : {};
         const data = isRecord(payload.data) ? payload.data : {};
         const resourceId = String(
