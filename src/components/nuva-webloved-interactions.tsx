@@ -1,4 +1,3 @@
-import { createRoot, type Root } from "react-dom/client";
 import { useEffect } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { NuvaCompanyTour } from "@/components/nuva-company-tour";
@@ -27,9 +26,6 @@ export function NuvaWebLovedInteractions() {
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     const landing = location.pathname === "/";
     const cleanups: Array<() => void> = [];
-    let tourRoot: Root | null = null;
-    let tourMount: HTMLDivElement | null = null;
-    let landingMountObserver: MutationObserver | null = null;
 
     root.classList.add("nuva-webloved-runtime");
 
@@ -82,38 +78,6 @@ export function NuvaWebLovedInteractions() {
     });
 
     if (landing) {
-      const mountTour = () => {
-        if (tourRoot || document.getElementById("company-tour")) return true;
-        tourMount = document.createElement("div");
-        tourMount.className = "nuva-company-tour-mount";
-        document.body.insertBefore(tourMount, document.body.firstChild);
-        const legacyExperience = document.getElementById("experience");
-        legacyExperience?.setAttribute("data-nuva-tour-replaced", "true");
-        document.body.classList.add("nuva-company-tour-enabled");
-        tourRoot = createRoot(tourMount);
-        tourRoot.render(<NuvaCompanyTour />);
-        cleanups.push(() => {
-          tourRoot?.unmount();
-          tourRoot = null;
-          tourMount?.remove();
-          tourMount = null;
-          legacyExperience?.removeAttribute("data-nuva-tour-replaced");
-          document.body.classList.remove("nuva-company-tour-enabled");
-        });
-        return true;
-      };
-
-      if (!mountTour()) {
-        landingMountObserver = new MutationObserver(() => {
-          if (mountTour()) landingMountObserver?.disconnect();
-        });
-        landingMountObserver.observe(document.body, { childList: true, subtree: true });
-        cleanups.push(() => {
-          landingMountObserver?.disconnect();
-          landingMountObserver = null;
-        });
-      }
-
       const nav = document.createElement("nav");
       nav.className = "nuva-editorial-nav";
       nav.setAttribute("aria-label", "Navegación de Nüva One");
@@ -300,5 +264,5 @@ export function NuvaWebLovedInteractions() {
     };
   }, [location.pathname]);
 
-  return null;
+  return location.pathname === "/" ? <NuvaCompanyTour /> : null;
 }
