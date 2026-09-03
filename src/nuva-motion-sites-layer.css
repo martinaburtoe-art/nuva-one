@@ -16,7 +16,7 @@ body:has(section#experience) section { scroll-margin-top: 88px; }
   body:has(section#experience) section:first-of-type > div:first-child { position:relative; z-index:2; }
   body:has(section#experience) section:first-of-type > div:first-child::before { content:""; position:absolute; inset:-4rem -12vw; z-index:-1; pointer-events:none; opacity:.32; background-image:linear-gradient(to right,oklch(.65 .12 268 / .045) 1px,transparent 1px),linear-gradient(to bottom,oklch(.65 .12 268 / .045) 1px,transparent 1px); background-size:72px 72px; mask-image:radial-gradient(ellipse at center,black 0%,transparent 70%); }
   body:has(section#experience) section:first-of-type > div:first-child::after { content:""; position:absolute; left:50%; top:-25%; width:min(60vw,720px); height:1px; pointer-events:none; background:linear-gradient(90deg,transparent,oklch(.72 .2 268 / .38),transparent); box-shadow:0 0 34px oklch(.58 .22 268 / .22); transform:translateX(-50%); animation:nuva-cinematic-scan 8s cubic-bezier(.45,0,.25,1) infinite; will-change:top,opacity; }
-  body:has(section#experience) section:first-of-type > div:last-child { position:relative; z-index:1; transform:translateZ(0); filter:drop-shadow(0 34px 70px oklch(.2 .12 270 / .16)); animation:nuva-product-float 8s ease-in-out infinite; }
+  body:has(section#experience) section:first-of-type > div:last-child { position:relative; z-index:1; transform:translateZ(0); filter:drop-shadow(0 34px 70px oklch(.2 .12 270 / .16)); animation:nuva-product-float 8s ease-in-out infinite; will-change:transform; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
   body:has(section#experience) section:not(:first-of-type) .rounded-3xl { position:relative; overflow:hidden; transform:translateZ(0); transition:transform 520ms var(--nuva-motion-ease),box-shadow 520ms var(--nuva-motion-ease),border-color 360ms ease,background-color 360ms ease; }
   body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
@@ -35,3 +35,24 @@ body:has(section#experience) ::selection { background:oklch(.58 .22 268 / .22); 
 @keyframes nuva-cinematic-scan { 0%,14%{top:-25%;opacity:0} 28%{opacity:.8} 66%{top:118%;opacity:.32} 78%,100%{top:118%;opacity:0} }
 @keyframes nuva-product-float { 0%,100%{transform:translate3d(0,0,0)} 50%{transform:translate3d(0,-7px,0)} }
 @media (max-width:767px){body:has(section#experience) section:not(:first-of-type) .rounded-2xl,body:has(section#experience) section:not(:first-of-type) .rounded-3xl{transition:box-shadow 360ms ease,border-color 300ms ease}}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(section#experience) section:first-of-type::before,
+  body:has(section#experience) section:first-of-type > div:first-child::after,
+  body:has(section#experience) section:first-of-type > div:last-child {
+    animation: none !important;
+  }
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl,
+  body:has(section#experience) a:has(> button) button,
+  body:has(section#experience) nav a,
+  body:has(section#experience) header a {
+    transition: none !important;
+  }
+  body:has(section#experience) section:not(:first-of-type) .rounded-2xl:hover,
+  body:has(section#experience) section:not(:first-of-type) .rounded-3xl:hover,
+  body:has(section#experience) a:has(> button):hover button {
+    transform: none !important;
+    box-shadow: none;
+  }
+}
