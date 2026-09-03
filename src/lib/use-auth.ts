@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,46 +21,53 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const sessionRef = useRef<Session | null>(null);
+  const lastActivityAtRef = useRef(Date.now());
+  const sessionStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
-    let lastActivityAt = Date.now();
     let mounted = true;
 
     const markActivity = () => {
       const now = Date.now();
-      if (now - lastActivityAt >= ACTIVITY_THROTTLE_MS) {
-        lastActivityAt = now;
+      if (now - lastActivityAtRef.current >= ACTIVITY_THROTTLE_MS) {
+        lastActivityAtRef.current = now;
       }
     };
 
     const events = ["pointerdown", "keydown", "touchstart", "scroll"] as const;
     events.forEach((event) => window.addEventListener(event, markActivity, { passive: true }));
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const applySession = (s: Session | null) => {
       if (!mounted) return;
+      sessionRef.current = s;
       setSession(s);
       setUser(s?.user ?? null);
-      if (!s) lastActivityAt = Date.now();
-    });
+      if (s && sessionStartedAtRef.current === null) {
+        sessionStartedAtRef.current = getSessionIssuedAt(s);
+      }
+      if (!s) {
+        sessionStartedAtRef.current = null;
+        lastActivityAtRef.current = Date.now();
+      }
+    };
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => applySession(s));
 
     supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      lastActivityAt = Date.now();
-      setLoading(false);
+      applySession(data.session);
+      if (mounted) setLoading(false);
     });
 
     const timer = window.setInterval(() => {
-      if (!mounted || !session) return;
+      const current = sessionRef.current;
+      if (!mounted || !current) return;
       const now = Date.now();
-      const issuedAt = getSessionIssuedAt(session);
-      if (
-        now - lastActivityAt >= INACTIVITY_TIMEOUT_MS ||
-        (issuedAt !== null && now - issuedAt >= ABSOLUTE_SESSION_MAX_MS)
-      ) {
-        void supabase.auth.signOut();
-      }
+      const inactive = now - lastActivityAtRef.current >= INACTIVITY_TIMEOUT_MS;
+      const absolute =
+        sessionStartedAtRef.current !== null &&
+        now - sessionStartedAtRef.current >= ABSOLUTE_SESSION_MAX_MS;
+      if (inactive || absolute) void supabase.auth.signOut();
     }, 60 * 1000);
 
     return () => {
@@ -69,7 +76,7 @@ export function useAuth() {
       events.forEach((event) => window.removeEventListener(event, markActivity));
       sub.subscription.unsubscribe();
     };
-  }, [session]);
+  }, []);
 
   return { session, user, loading };
 }
