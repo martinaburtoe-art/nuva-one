@@ -99,8 +99,8 @@ function ProductScene({ room }: { room: Room }) {
       <div className="nuva-company-tour__product nuva-company-tour__product--billing">
         <div className="nuva-company-tour__product-top"><b>Plan actual</b><span>CONTROL</span></div>
         <div className="nuva-company-tour__plan"><span>PRO</span><strong>$39.990</strong><small>mensual · 12 usuarios</small></div>
-        <div className="nuva-company-tour__entitlement"><span>Usuarios</span><MiniBar value={72} index={0}></MiniBar><b>9 / 12</b></div>
-        <div className="nuva-company-tour__entitlement"><span>Documentos</span><MiniBar value={48} index={1}></MiniBar><b>392 / 800</b></div>
+        <div className="nuva-company-tour__entitlement"><span>Usuarios</span><MiniBar value={72} index={0} /><b>9 / 12</b></div>
+        <div className="nuva-company-tour__entitlement"><span>Documentos</span><MiniBar value={48} index={1} /><b>392 / 800</b></div>
       </div>
     );
   }
@@ -192,7 +192,7 @@ export function NuvaCompanyTour() {
     const destination = start + (scrollable * index) / (ROOMS.length - 1);
     setActive(index);
     activeRef.current = index;
-    if (prefersReducedMotion.current) window.scrollTo(0, destination);
+    if (prefersReducedMotion.current) window.scrollTo({ top: destination });
     else window.scrollTo({ top: destination, behavior: "smooth" });
   };
 
@@ -224,8 +224,10 @@ export function NuvaCompanyTour() {
           <div className="nuva-company-tour__grain" />
           {ROOMS.map((item, index) => {
             const distance = index - active - sceneProgress;
+            const opacity = Math.max(0, 1 - Math.abs(distance) * 1.12);
+            const scale = 1.018 + Math.min(0.032, Math.abs(distance) * 0.032);
             return (
-              <div key={item.id} className={`nuva-company-tour__scene ${index === active ? "is-active" : ""}`} data-room-index={index} style={{ "--scene-distance": distance } as CSSProperties} aria-hidden={index !== active}>
+              <div key={item.id} className={`nuva-company-tour__scene ${index === active ? "is-active" : ""}`} data-room-index={index} style={{ "--scene-distance": distance, "--scene-opacity": opacity, "--scene-scale": scale } as CSSProperties} aria-hidden={index !== active}>
                 <SceneSurface room={item} />
                 {index === active && hotspots.map((hotspot) => <button key={`${hotspot.target}-${hotspot.left}`} type="button" className="nuva-company-tour__hotspot" style={{ left: hotspot.left, top: hotspot.top }} onClick={() => go(hotspot.target)} aria-label={hotspot.label}><span>{hotspot.label}</span></button>)}
               </div>
