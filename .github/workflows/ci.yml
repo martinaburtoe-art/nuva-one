@@ -26,9 +26,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate route tree
-        run: npx tsr generate
-
       - name: Format repository
         run: npx prettier --write .
 
