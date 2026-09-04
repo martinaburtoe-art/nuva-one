@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { MessageCircle, MoveUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
@@ -10,7 +10,6 @@ export function LandingMotion() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const mobile = window.matchMedia("(max-width: 767px)").matches;
     const root = document.documentElement;
     root.classList.add("nuva-landing-motion");
     root.style.scrollBehavior = reduceMotion ? "auto" : "smooth";
@@ -21,7 +20,6 @@ export function LandingMotion() {
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-
     const timer = window.setTimeout(() => setLoading(false), reduceMotion ? 120 : 650);
 
     const revealTargets = Array.from(
@@ -132,7 +130,7 @@ export function LandingMotion() {
         .nuva-reveal { opacity: 0; transform: translate3d(0, 22px, 0); transition: opacity .72s cubic-bezier(.22,1,.36,1) var(--nuva-delay, 0ms), transform .72s cubic-bezier(.22,1,.36,1) var(--nuva-delay, 0ms); }
         .nuva-revealed { opacity: 1; transform: none; }
         [data-parallax] { transform: translate3d(0, var(--nuva-parallax, 0px), 0); will-change: transform; }
-        .nuva-cursor { position: fixed; left: 0; top: 0; z-index: 9999; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 1px solid hsl(var(--foreground) / .55); border-radius: 999px; pointer-events: none; transform: translate3d(var(--cursor-x), var(--cursor-y), 0) scale(var(--cursor-scale)); transition: transform .16s ease, opacity .2s ease, width .16s ease, height .16s ease; mix-blend-mode: difference; }
+        .nuva-cursor { position: fixed; left: 0; top: 0; z-index: 9999; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 1px solid hsl(var(--foreground) / .55); border-radius: 999px; pointer-events: none; transform: translate3d(var(--cursor-x), var(--cursor-y), 0) scale(var(--cursor-scale)); transition: transform .16s ease, opacity .2s ease; mix-blend-mode: difference; }
         .nuva-cursor-dot { position: fixed; left: 0; top: 0; z-index: 10000; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 999px; background: hsl(var(--foreground)); pointer-events: none; transform: translate3d(var(--cursor-x), var(--cursor-y), 0); }
         .nuva-nav-scrolled { box-shadow: 0 12px 34px hsl(var(--foreground) / .07); backdrop-filter: blur(20px); }
         .nuva-page-enter { animation: nuvaPageEnter .55s cubic-bezier(.22,1,.36,1) both; }
@@ -142,20 +140,16 @@ export function LandingMotion() {
         @keyframes nuvaFloat { to { transform: translate3d(5vw, 3vw, 0) scale(1.08); } }
         @keyframes nuvaPulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         @keyframes nuvaPageEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes nuvaLoader { 0% { transform: translateX(-100%); } 50% { transform: translateX(100%); } 100% { transform: translateX(220%); } }
         @media (max-width: 767px) { .nuva-motion-bg::before, .nuva-motion-bg::after { width: 70vw; height: 70vw; filter: blur(48px); } .nuva-motion-grid { background-size: 36px 36px; } }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } .nuva-reveal { opacity: 1; transform: none; } }
       `}</style>
 
       <div className="nuva-motion-bg" aria-hidden="true"><div className="nuva-motion-grid" /></div>
-
-      <div
-        className="fixed left-0 top-0 z-[10000] h-[2px] origin-left bg-primary shadow-[0_0_12px_hsl(var(--primary)/.55)]"
-        style={{ width: `${progress}%` }}
-        aria-hidden="true"
-      />
+      <div className="fixed left-0 top-0 z-[10000] h-[2px] origin-left bg-primary shadow-[0_0_12px_hsl(var(--primary)/.55)]" style={{ width: `${progress}%` }} aria-hidden="true" />
 
       {loading && (
-        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-background transition-opacity duration-500" aria-label="Cargando Nüva One">
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-background" aria-label="Cargando Nüva One">
           <div className="flex flex-col items-center gap-4">
             <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-border/70 bg-card shadow-lg">
               <span className="absolute inset-1 rounded-xl border border-primary/30 animate-pulse" />
@@ -168,16 +162,12 @@ export function LandingMotion() {
 
       {cursor.visible && (
         <>
-          <div className="nuva-cursor hidden md:block" style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px`, "--cursor-scale": cursorHover ? 1.8 : 1 } as React.CSSProperties} />
-          <div className="nuva-cursor-dot hidden md:block" style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px` } as React.CSSProperties} />
+          <div className="nuva-cursor hidden md:block" style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px`, "--cursor-scale": cursorHover ? 1.8 : 1 } as CSSProperties} />
+          <div className="nuva-cursor-dot hidden md:block" style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px` } as CSSProperties} />
         </>
       )}
 
-      <Link
-        to="/demo"
-        aria-label="Abrir demo de Nüva One"
-        className="nuva-floating-contact fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-xl transition-transform hover:scale-105 sm:bottom-6 sm:right-6"
-      >
+      <Link to="/demo" aria-label="Abrir demo de Nüva One" className="nuva-floating-contact fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-xl transition-transform hover:scale-105 sm:bottom-6 sm:right-6">
         <MessageCircle className="h-4 w-4" />
         <span className="hidden sm:inline">Habla con Nüva</span>
         <MoveUpRight className="h-3.5 w-3.5 opacity-70" />
