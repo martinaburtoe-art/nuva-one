@@ -34,6 +34,23 @@ nav_replacement = nav_marker + '''
           </Link>'''
 text = text.replace(nav_marker, nav_replacement, 1)
 
+login_marker = '''          <Link to="/auth">
+            <Button variant="ghost" size="sm">
+              Iniciar sesión
+            </Button>
+          </Link>'''
+login_replacement = '''          <Link to="/auth" className="hidden sm:block">
+            <Button variant="ghost" size="sm">
+              Iniciar sesión
+            </Button>
+          </Link>
+          <Link to="/demo" className="sm:hidden">
+            <Button variant="outline" size="sm" className="border-primary/30 bg-background/70">
+              Visualizar Nüva
+            </Button>
+          </Link>'''
+text = text.replace(login_marker, login_replacement, 1)
+
 marker = 'function Pricing() {'
 if 'function HomepageDemo()' not in text:
     block = r'''
@@ -149,8 +166,8 @@ function ConnectionsPreview() {
 
 function PymeNewsPreview() {
   const news = [
-    { source: "Sercotec", date: "26 ago 2026", title: "Programa Hazlo con IA llega a Sercotec para acercar el uso de la Inteligencia Artificial a las pymes", url: "https://www.sercotec.cl/noticias/" },
-    { source: "Sercotec", date: "24 ago 2026", title: "Gobierno lanza nuevo fondo concursable de $2.500 millones para impulsar la empleabilidad", url: "https://www.sercotec.cl/noticias/" },
+    { source: "Sercotec", date: "26 ago 2026", title: "Programa Hazlo con IA llega a Sercotec para acercar el uso de la Inteligencia Artificial a las pymes", url: "https://www.sercotec.cl/programa-hazlo-con-ia-llega-a-sercotec-para-acercar-el-uso-de-la-inteligencia-artificial-a-las-pymes/" },
+    { source: "Sercotec", date: "24 ago 2026", title: "Gobierno lanza nuevo fondo concursable de $2.500 millones para impulsar la empleabilidad", url: "https://www.sercotec.cl/gobierno-lanza-nuevo-fondo-concursable-de-2-500-millones-para-impulsar-la-empleabilidad/" },
     { source: "SII", date: "1 sep 2026", title: "Nueva Declaración Jurada N°1965 para creadores y empresas de contenido digital desde Operación Renta 2027", url: "https://www.sii.cl/noticias/2026/010926noti02pcr.htm" },
   ];
   return (
