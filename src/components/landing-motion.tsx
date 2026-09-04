@@ -27,9 +27,13 @@ export function LandingMotion() {
         "main section > div, main section article, main section [data-card], footer > div",
       ),
     );
-    const textTargets = Array.from(document.querySelectorAll<HTMLElement>("main h1, main h2, main h3"));
+    const textTargets = Array.from(
+      document.querySelectorAll<HTMLElement>("main h1, main h2, main h3"),
+    );
     const parallaxTargets = Array.from(
-      document.querySelectorAll<HTMLElement>("main section img[data-parallax], main > section:first-child img"),
+      document.querySelectorAll<HTMLElement>(
+        "main section img[data-parallax], main > section:first-child img",
+      ),
     );
 
     if (reduceMotion) {
@@ -64,7 +68,10 @@ export function LandingMotion() {
           parallaxTargets.forEach((el) => {
             const rect = el.getBoundingClientRect();
             const offset = (window.innerHeight / 2 - (rect.top + rect.height / 2)) * 0.018;
-            el.style.setProperty("--nuva-parallax", `${Math.max(-12, Math.min(12, offset))}px`);
+            el.style.setProperty(
+              "--nuva-parallax",
+              `${Math.max(-12, Math.min(12, offset))}px`,
+            );
           });
         });
       };
@@ -122,10 +129,17 @@ export function LandingMotion() {
     const desktop = window.matchMedia("(min-width: 768px)").matches;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!desktop || reduceMotion) return;
-    const onMove = (event: MouseEvent) => setCursor({ x: event.clientX, y: event.clientY, visible: true });
+    const onMove = (event: MouseEvent) =>
+      setCursor({ x: event.clientX, y: event.clientY, visible: true });
     const onLeave = () => setCursor((value) => ({ ...value, visible: false }));
     const updateHover = (event: MouseEvent) =>
-      setCursorHover(Boolean((event.target as HTMLElement | null)?.closest("a, button, [role=button], input, textarea, select")));
+      setCursorHover(
+        Boolean(
+          (event.target as HTMLElement | null)?.closest(
+            "a, button, [role=button], input, textarea, select",
+          ),
+        ),
+      );
     window.addEventListener("mousemove", onMove, { passive: true });
     window.addEventListener("mouseout", onLeave);
     window.addEventListener("mouseover", updateHover, { passive: true });
@@ -138,7 +152,9 @@ export function LandingMotion() {
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
-      const target = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>("a[href^='#']");
+      const target = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>(
+        "a[href^='#']",
+      );
       if (!target) return;
       const href = target.getAttribute("href");
       if (!href || href === "#") return;
@@ -184,27 +200,62 @@ export function LandingMotion() {
         @media (min-width: 768px) { main > section:first-child .grid.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } .nuva-reveal, .nuva-text-reveal { opacity: 1; clip-path: none; transform: none; } }
       `}</style>
-      <div className="nuva-motion-bg" aria-hidden="true"><div className="nuva-motion-grid" /></div>
-      <div className="fixed left-0 top-0 z-[10000] h-[2px] origin-left bg-primary shadow-[0_0_12px_var(--primary)]" style={{ width: `${progress}%` }} aria-hidden="true" />
+      <div className="nuva-motion-bg" aria-hidden="true">
+        <div className="nuva-motion-grid" />
+      </div>
+      <div
+        className="fixed left-0 top-0 z-[10000] h-[2px] origin-left bg-primary shadow-[0_0_12px_var(--primary)]"
+        style={{ width: `${progress}%` }}
+        aria-hidden="true"
+      />
       {loading && (
-        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-background/95 px-6 backdrop-blur-sm" aria-label="Cargando Nüva One">
+        <div
+          className="fixed inset-0 z-[10001] flex items-center justify-center bg-background/95 px-6 backdrop-blur-sm"
+          aria-label="Cargando Nüva One"
+        >
           <div className="flex w-full max-w-xs flex-col items-center gap-5">
             <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-border/70 bg-card shadow-lg">
               <span className="absolute inset-1 rounded-xl border border-primary/30 animate-pulse" />
               <span className="text-xl font-black tracking-tight">N</span>
             </div>
-            <div className="w-full"><div className="mb-2 flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground"><span>Nüva One</span><span>Iniciando</span></div><div className="h-1 overflow-hidden rounded-full bg-secondary"><div className="h-full w-1/2 animate-[nuvaLoader_0.9s_ease-in-out_infinite] rounded-full bg-primary" /></div></div>
+            <div className="w-full">
+              <div className="mb-2 flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                <span>Nüva One</span>
+                <span>Iniciando</span>
+              </div>
+              <div className="h-1 overflow-hidden rounded-full bg-secondary">
+                <div className="h-full w-1/2 animate-[nuvaLoader_0.9s_ease-in-out_infinite] rounded-full bg-primary" />
+              </div>
+            </div>
           </div>
         </div>
       )}
       {cursor.visible && (
         <>
-          <div className="nuva-cursor hidden md:block" style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px`, "--cursor-scale": cursorHover ? 1.8 : 1 } as CSSProperties} />
-          <div className="nuva-cursor-dot hidden md:block" style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px` } as CSSProperties} />
+          <div
+            className="nuva-cursor hidden md:block"
+            style={
+              {
+                "--cursor-x": `${cursor.x}px`,
+                "--cursor-y": `${cursor.y}px`,
+                "--cursor-scale": cursorHover ? 1.8 : 1,
+              } as CSSProperties
+            }
+          />
+          <div
+            className="nuva-cursor-dot hidden md:block"
+            style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px` } as CSSProperties}
+          />
         </>
       )}
-      <Link to="/demo" aria-label="Abrir demo de Nüva One" className="nuva-floating-contact fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-xl transition-transform hover:scale-105 sm:bottom-6 sm:right-6">
-        <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">Habla con Nüva</span><MoveUpRight className="h-3.5 w-3.5 opacity-70" />
+      <Link
+        to="/demo"
+        aria-label="Abrir demo de Nüva One"
+        className="nuva-floating-contact fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-xl transition-transform hover:scale-105 sm:bottom-6 sm:right-6"
+      >
+        <MessageCircle className="h-4 w-4" />
+        <span className="hidden sm:inline">Habla con Nüva</span>
+        <MoveUpRight className="h-3.5 w-3.5 opacity-70" />
       </Link>
     </>
   );
