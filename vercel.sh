@@ -19,6 +19,21 @@ new_cta = '''            <Link to="/demo">
             </Link>'''
 text = text.replace(old_cta, new_cta, 1)
 
+nav_marker = '''          <Link
+            to="/foro"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Foro
+          </Link>'''
+nav_replacement = nav_marker + '''
+          <Link
+            to="/demo"
+            className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+          >
+            Visualizar Nüva
+          </Link>'''
+text = text.replace(nav_marker, nav_replacement, 1)
+
 marker = 'function Pricing() {'
 if 'function HomepageDemo()' not in text:
     block = r'''
@@ -96,6 +111,76 @@ function NuvaComparison() {
 '''
     text = text.replace(marker, block + '\n' + marker, 1)
 
+if 'function ConnectionsPreview()' not in text:
+    connections = r'''
+
+function ConnectionsPreview() {
+  const connections = [
+    { icon: MessageSquare, name: "WhatsApp", desc: "Asistente IA y atención basada en los datos de tu negocio." },
+    { icon: Megaphone, name: "Meta Business", desc: "Conecta Instagram y Facebook para organizar tu presencia comercial." },
+    { icon: CreditCard, name: "Stripe", desc: "Pagos y suscripciones integrados para la operación de Nüva One." },
+    { icon: Workflow, name: "Automatizaciones", desc: "Conecta procesos y flujos para reducir tareas repetitivas." },
+  ];
+  return (
+    <section className="border-y bg-secondary/20 py-20" id="connections">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <Badge variant="secondary" className="mb-3">Conexiones</Badge>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Tu negocio no vive en una sola herramienta.</h2>
+          <p className="mt-4 text-muted-foreground">Nüva One reúne los canales y procesos clave para que la información deje de estar dispersa.</p>
+        </div>
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {connections.map((item) => (
+            <Card key={item.name} className="border-border/60 p-6 transition-all hover:-translate-y-1 hover:shadow-elegant">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground"><item.icon className="h-5 w-5" /></div>
+              <h3 className="mt-4 font-semibold">{item.name}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+            </Card>
+          ))}
+        </div>
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border bg-card p-5 sm:flex-row">
+          <div><div className="font-semibold">Una operación conectada, no otra colección de apps.</div><p className="mt-1 text-sm text-muted-foreground">Explora el producto y revisa qué conexiones están disponibles para tu negocio.</p></div>
+          <Link to="/demo"><Button variant="outline" className="shrink-0">Visualizar Nüva <ArrowRight className="ml-1.5 h-4 w-4" /></Button></Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PymeNewsPreview() {
+  const news = [
+    { source: "Sercotec", date: "26 ago 2026", title: "Programa Hazlo con IA llega a Sercotec para acercar el uso de la Inteligencia Artificial a las pymes", url: "https://www.sercotec.cl/noticias/" },
+    { source: "Sercotec", date: "24 ago 2026", title: "Gobierno lanza nuevo fondo concursable de $2.500 millones para impulsar la empleabilidad", url: "https://www.sercotec.cl/noticias/" },
+    { source: "SII", date: "1 sep 2026", title: "Nueva Declaración Jurada N°1965 para creadores y empresas de contenido digital desde Operación Renta 2027", url: "https://www.sii.cl/noticias/2026/010926noti02pcr.htm" },
+  ];
+  return (
+    <section className="py-20" id="news">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Badge variant="secondary" className="mb-3">Actualidad PYME</Badge>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Lo que está pasando también importa.</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">Noticias y cambios oficiales que pueden afectar la operación, digitalización y crecimiento de una PYME en Chile.</p>
+          </div>
+          <a href="https://www.sercotec.cl/noticias/" target="_blank" rel="noreferrer"><Button variant="outline">Ver más noticias <ArrowRight className="ml-1.5 h-4 w-4" /></Button></a>
+        </div>
+        <div className="grid gap-5 md:grid-cols-3">
+          {news.map((item) => (
+            <a key={item.title} href={item.url} target="_blank" rel="noreferrer" className="group block rounded-2xl border bg-card p-6 shadow-soft transition-all hover:-translate-y-1 hover:shadow-elegant">
+              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground"><span className="rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary">{item.source}</span><span>{item.date}</span></div>
+              <h3 className="mt-5 line-clamp-3 text-base font-semibold leading-6 transition-colors group-hover:text-primary">{item.title}</h3>
+              <div className="mt-6 flex items-center text-sm font-medium text-primary">Leer noticia <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" /></div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+'''
+    text = text.replace('function Pricing() {', connections + '\nfunction Pricing() {', 1)
+
+text = text.replace('<BusinessNetworkPreview />', '<BusinessNetworkPreview />\n        <ConnectionsPreview />\n        <PymeNewsPreview />', 1)
 text = text.replace('<ProductShowcase />', '<ProductShowcase />\n      <HomepageDemo />', 1)
 text = text.replace('<Pricing />', '<NuvaComparison />\n      <Pricing />', 1)
 path.write_text(text, encoding='utf-8')
