@@ -1,1 +1,1 @@
-export { NuvaIcgTour as NuvaSpatialGallery } from "./nuva-icg-tour";
+export { NuvaCinematicExperience as NuvaSpatialGallery } from "./nuva-cinematic-experience";
