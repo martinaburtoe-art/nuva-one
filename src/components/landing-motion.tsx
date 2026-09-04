@@ -174,7 +174,14 @@ export function LandingMotion() {
         @keyframes nuvaFloat { to { transform: translate3d(5vw, 3vw, 0) scale(1.08); } }
         @keyframes nuvaPulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         @keyframes nuvaLoader { 0% { transform: translateX(-100%); } 50% { transform: translateX(100%); } 100% { transform: translateX(220%); } }
-        @media (max-width: 767px) { .nuva-motion-bg::before, .nuva-motion-bg::after { width: 70vw; height: 70vw; filter: blur(48px); } .nuva-motion-grid { background-size: 36px 36px; } }
+        @media (max-width: 767px) {
+          .nuva-motion-bg::before, .nuva-motion-bg::after { width: 70vw; height: 70vw; filter: blur(48px); }
+          .nuva-motion-grid { background-size: 36px 36px; }
+          main > section:first-child .grid.grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          header a[href="/auth"] { display: none; }
+          .nuva-floating-contact { bottom: 5.5rem; right: 1rem; }
+        }
+        @media (min-width: 768px) { main > section:first-child .grid.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } .nuva-reveal, .nuva-text-reveal { opacity: 1; clip-path: none; transform: none; } }
       `}</style>
       <div className="nuva-motion-bg" aria-hidden="true"><div className="nuva-motion-grid" /></div>
