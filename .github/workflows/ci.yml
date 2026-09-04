@@ -97,7 +97,7 @@ jobs:
       - name: Verify Supabase migration integrity
         run: npm run verify:migrations
       - name: Dependency security audit
-        run: npm audit --audit-level=high
+        run: npx --yes npm@latest audit --audit-level=high
       - name: Download generated database types
         uses: actions/download-artifact@v4
         with:
