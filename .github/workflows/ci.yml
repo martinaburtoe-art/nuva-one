@@ -1,5 +1,7 @@
 name: CI
 
+# Quality gates run on every real push/PR. Formatting is normalized before
+# linting so the gate validates the actual tree that will be shipped.
 on:
   push:
     branches: [main]
