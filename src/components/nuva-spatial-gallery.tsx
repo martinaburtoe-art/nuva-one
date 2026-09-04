@@ -1,1 +1,1 @@
-export { NuvaCinematicExperience as NuvaSpatialGallery } from "./nuva-cinematic-experience";
+export { NuvaCinematicExperience as NuvaSpatialGallery } from "./nuva-cinematic-experience-v2";
