@@ -145,10 +145,30 @@ function ExperiencePage() {
                   </div>
 
                   <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-                    <MiniMetric icon={<TrendingUp className="h-3.5 w-3.5" />} label="Ingresos" value="$4,82 M" trend="+18,4%" />
-                    <MiniMetric icon={<WalletCards className="h-3.5 w-3.5" />} label="Flujo neto" value="$1,36 M" trend="+9,2%" />
-                    <MiniMetric icon={<Boxes className="h-3.5 w-3.5" />} label="Inventario" value="$2,14 M" trend="128 SKU" />
-                    <MiniMetric icon={<BarChart3 className="h-3.5 w-3.5" />} label="Nüva Score" value="86/100" trend="+6 pts" />
+                    <MiniMetric
+                      icon={<TrendingUp className="h-3.5 w-3.5" />}
+                      label="Ingresos"
+                      value="$4,82 M"
+                      trend="+18,4%"
+                    />
+                    <MiniMetric
+                      icon={<WalletCards className="h-3.5 w-3.5" />}
+                      label="Flujo neto"
+                      value="$1,36 M"
+                      trend="+9,2%"
+                    />
+                    <MiniMetric
+                      icon={<Boxes className="h-3.5 w-3.5" />}
+                      label="Inventario"
+                      value="$2,14 M"
+                      trend="128 SKU"
+                    />
+                    <MiniMetric
+                      icon={<BarChart3 className="h-3.5 w-3.5" />}
+                      label="Nüva Score"
+                      value="86/100"
+                      trend="+6 pts"
+                    />
                   </div>
 
                   <div className="mt-4 grid gap-4 md:grid-cols-[1.5fr_1fr]">
@@ -198,9 +218,21 @@ function ExperiencePage() {
       <section className="border-y bg-secondary/20 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <Feature icon={<TrendingUp />} title="Entiende" text="Convierte tus movimientos en indicadores claros y accionables." />
-            <Feature icon={<Boxes />} title="Controla" text="Mantén ventas, inventario y finanzas conectados en el mismo lugar." />
-            <Feature icon={<Bot />} title="Decide" text="Usa IA para interpretar tu negocio y detectar oportunidades." />
+            <Feature
+              icon={<TrendingUp />}
+              title="Entiende"
+              text="Convierte tus movimientos en indicadores claros y accionables."
+            />
+            <Feature
+              icon={<Boxes />}
+              title="Controla"
+              text="Mantén ventas, inventario y finanzas conectados en el mismo lugar."
+            />
+            <Feature
+              icon={<Bot />}
+              title="Decide"
+              text="Usa IA para interpretar tu negocio y detectar oportunidades."
+            />
           </div>
         </div>
       </section>
@@ -225,13 +257,25 @@ function ExperiencePage() {
             </Button>
           </Link>
         </div>
-        <p className="mt-5 text-xs text-muted-foreground">Nüva One · Gestión inteligente para PYMEs</p>
+        <p className="mt-5 text-xs text-muted-foreground">
+          Nüva One · Gestión inteligente para PYMEs
+        </p>
       </section>
     </main>
   );
 }
 
-function MiniMetric({ icon, label, value, trend }: { icon: React.ReactNode; label: string; value: string; trend: string }) {
+function MiniMetric({
+  icon,
+  label,
+  value,
+  trend,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  trend: string;
+}) {
   return (
     <div className="rounded-xl border bg-card p-3">
       <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -247,7 +291,9 @@ function MiniMetric({ icon, label, value, trend }: { icon: React.ReactNode; labe
 function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
     <div className="rounded-2xl border bg-card/80 p-5 shadow-soft transition-transform duration-300 hover:-translate-y-1">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">{icon}</div>
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </div>
       <h3 className="mt-4 font-semibold">{title}</h3>
       <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{text}</p>
     </div>
