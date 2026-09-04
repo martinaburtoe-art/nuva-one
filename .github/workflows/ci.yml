@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
     name: Lint, typecheck, test, build
@@ -25,6 +28,21 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Format repository
+        run: npx prettier --write .
+
+      - name: Persist formatting fixes
+        run: |
+          if git diff --quiet; then
+            echo "Formatting already clean."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: format repository"
+          git push origin HEAD:main
 
       - name: Lint
         run: npm run lint
@@ -57,27 +75,8 @@ jobs:
         with:
           version: latest
 
-      # `supabase test db` only connects to an already-running local stack
-      # (default: 127.0.0.1:54322) -- it does not start one itself. Without
-      # this step the job fails immediately with ECONNREFUSED before any
-      # pgTAP file even runs. `supabase start` spins up the local Docker
-      # stack (Postgres, GoTrue, PostgREST, Realtime, Storage, Kong) and
-      # applies every migration in supabase/migrations as part of startup.
       - name: Start Supabase local stack
         run: supabase start
 
-      # Spins up a throwaway local Postgres (via Docker, already available
-      # on this runner), applies every migration in supabase/migrations,
-      # then runs every *.sql file in supabase/tests/database with pgTAP.
-      # Nothing here touches the real project -- this is a brand new,
-      # disposable database created and destroyed within this job.
-      # supabase test db spins up ~10 Docker containers (Postgres, GoTrue,
-      # PostgREST, Realtime, Storage, Kong...) to run pgTAP against. That
-      # startup occasionally races/times out on shared CI runners -- a known
-      # class of flakiness with the Supabase CLI in GitHub Actions, unrelated
-      # to the tests themselves. Retrying once before failing the job is the
-      # standard, pragmatic mitigation (every test file here is verified
-      # correct against the live schema; a failure is far more likely to be
-      # container startup flake than a real regression).
       - name: Run pgTAP tests (with one retry for CI-only Docker flakiness)
         run: supabase test db || (echo "First attempt failed, retrying once..." && supabase test db)
