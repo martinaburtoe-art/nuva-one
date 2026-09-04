@@ -24,11 +24,15 @@ function PricingPage() {
             Empieza gratis. Escala cuando lo necesites.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Prueba Nüva One durante 15 días, sin tarjeta. Conecta la operación de tu negocio y descubre qué cambia cuando los datos trabajan juntos.
+            Prueba Nüva One durante 15 días, sin tarjeta. Conecta la operación de tu negocio y
+            descubre qué cambia cuando los datos trabajan juntos.
           </p>
         </div>
 
-        <section className="mx-auto mt-12 max-w-md rounded-3xl border bg-card p-7 shadow-xl sm:p-9" aria-label="Plan de prueba Nüva One">
+        <section
+          className="mx-auto mt-12 max-w-md rounded-3xl border bg-card p-7 shadow-xl sm:p-9"
+          aria-label="Plan de prueba Nüva One"
+        >
           <p className="text-sm font-semibold text-primary">Prueba Nüva One</p>
           <p className="mt-2 text-4xl font-bold tracking-tight">15 días gratis</p>
           <p className="mt-2 text-sm text-muted-foreground">Sin tarjeta para comenzar.</p>
@@ -47,7 +51,10 @@ function PricingPage() {
           >
             Empezar gratis <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
-          <Link to="/" className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border text-sm font-medium hover:bg-accent">
+          <Link
+            to="/"
+            className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border text-sm font-medium hover:bg-accent"
+          >
             Volver al inicio
           </Link>
         </section>
