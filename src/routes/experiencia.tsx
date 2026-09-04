@@ -243,8 +243,8 @@ function ExperiencePage() {
           Tu negocio merece una vista así.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-          Explora la demo con datos ficticios o crea tu cuenta para empezar a trabajar con tus propios
-          datos.
+          Explora la demo con datos ficticios o crea tu cuenta para empezar a trabajar con tus
+          propios datos.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link to="/demo">
