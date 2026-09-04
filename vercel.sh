@@ -19,6 +19,13 @@ new_cta = '''            <Link to="/demo">
             </Link>'''
 text = text.replace(old_cta, new_cta, 1)
 
+if 'from "@/components/landing-motion"' not in text:
+    import_marker = 'import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";'
+    text = text.replace(import_marker, import_marker + '\nimport { LandingMotion } from "@/components/landing-motion";', 1)
+
+if '<LandingMotion />' not in text:
+    text = text.replace('      <Nav />\n      <main>', '      <Nav />\n      <LandingMotion />\n      <main>', 1)
+
 marker = 'function Pricing() {'
 if 'function HomepageDemo()' not in text:
     block = r'''
@@ -29,13 +36,9 @@ function HomepageDemo() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <Badge variant="secondary" className="mb-4 rounded-full border border-primary/20 bg-primary/5">
-              Demo interactiva
-            </Badge>
+            <Badge variant="secondary" className="mb-4 rounded-full border border-primary/20 bg-primary/5">Demo interactiva</Badge>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Mira Nüva One antes de crear tu cuenta.</h2>
-            <p className="mt-4 text-base leading-7 text-muted-foreground">
-              Explora un negocio de ejemplo y descubre cómo se conectan ventas, inventario, finanzas, Nüva Score y la inteligencia artificial en una sola experiencia.
-            </p>
+            <p className="mt-4 text-base leading-7 text-muted-foreground">Explora un negocio de ejemplo y descubre cómo se conectan ventas, inventario, finanzas, Nüva Score y la inteligencia artificial en una sola experiencia.</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/demo"><Button size="lg" className="shadow-elegant">Explorar la demo <ArrowRight className="ml-1.5 h-4 w-4" /></Button></Link>
               <a href="#features"><Button size="lg" variant="outline">Ver funcionalidades</Button></a>
@@ -50,9 +53,7 @@ function HomepageDemo() {
             <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-2 shadow-elegant transition-transform duration-300 group-hover:-translate-y-1">
               <div className="overflow-hidden rounded-xl border bg-background">
                 <div className="flex items-center gap-2 border-b bg-secondary/40 px-4 py-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" /><span className="h-2.5 w-2.5 rounded-full bg-warning/60" /><span className="h-2.5 w-2.5 rounded-full bg-success/60" />
                   <div className="ml-2 flex-1 rounded-md border bg-background px-3 py-1 text-[10px] text-muted-foreground">nuva-one.vercel.app/demo</div>
                 </div>
                 <div className="p-5">
@@ -101,5 +102,5 @@ text = text.replace('<Pricing />', '<NuvaComparison />\n      <Pricing />', 1)
 path.write_text(text, encoding='utf-8')
 PY
 
-npx prettier --write src/routes/index.tsx
+npx prettier --write src/routes/index.tsx src/components/landing-motion.tsx
 npm run build
