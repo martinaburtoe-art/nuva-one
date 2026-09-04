@@ -94,10 +94,49 @@ function NuvaComparison() {
     </section>
   );
 }
+
+function ConnectionsPreview() {
+  const connections = [
+    { icon: MessageSquare, name: "WhatsApp", text: "Consulta y atiende con IA usando el contexto real de tu negocio." },
+    { icon: Megaphone, name: "Meta Business", text: "Conecta Instagram y Facebook para centralizar tu operación comercial." },
+    { icon: CreditCard, name: "Stripe", text: "Centraliza cobros y suscripciones sin salir del ecosistema." },
+    { icon: Workflow, name: "Automatizaciones", text: "Lleva datos entre herramientas y elimina tareas repetitivas." },
+  ];
+  return (
+    <section id="connections" className="border-y bg-secondary/20 py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-2xl text-center"><Badge variant="secondary" className="mb-3">Conexiones</Badge><h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Tu negocio no vive en una sola herramienta.</h2><p className="mt-4 text-muted-foreground">Nüva One conecta los canales que ya utilizas para que la información fluya hacia un mismo centro de control.</p></div>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {connections.map((item) => { const Icon = item.icon; return <div key={item.name} className="group rounded-2xl border bg-card p-5 shadow-soft transition-all hover:-translate-y-1 hover:shadow-elegant"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground"><Icon className="h-5 w-5" /></div><h3 className="mt-4 font-semibold">{item.name}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{item.text}</p></div>; })}
+        </div>
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border bg-card/80 p-5 sm:flex-row"><div><div className="font-semibold">Más conexiones, menos trabajo manual.</div><div className="text-sm text-muted-foreground">Explora cómo Nüva One puede convertirse en el centro de tu operación.</div></div><Link to="/demo"><Button variant="outline">Explorar Nüva <ArrowRight className="ml-1.5 h-4 w-4" /></Button></Link></div>
+      </div>
+    </section>
+  );
+}
+
+function PymeNewsPreview() {
+  const news = [
+    { source: "Sercotec", date: "26 ago 2026", title: "Programa Hazlo con IA llega a Sercotec para acercar el uso de la Inteligencia Artificial a las pymes", url: "https://www.sercotec.cl/programa-hazlo-con-ia-llega-a-sercotec-para-acercar-el-uso-de-la-inteligencia-artificial-a-las-pymes/" },
+    { source: "Sercotec", date: "24 ago 2026", title: "Gobierno lanza nuevo fondo concursable de $2.500 millones para impulsar la empleabilidad", url: "https://www.sercotec.cl/gobierno-lanza-nuevo-fondo-concursable-de-2-500-millones-para-impulsar-la-empleabilidad/" },
+    { source: "SII", date: "1 sep 2026", title: "Nueva Declaración Jurada N°1965 para creadores y empresas de contenido digital desde Operación Renta 2027", url: "https://www.sii.cl/noticias/2026/010926noti02pcr.htm" },
+  ];
+  return (
+    <section id="news" className="py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><Badge variant="secondary" className="mb-3">Noticias para PYMEs</Badge><h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Lo que cambia afuera también importa.</h2><p className="mt-3 max-w-2xl text-muted-foreground">Una selección de novedades oficiales que pueden afectar oportunidades, obligaciones y decisiones de tu negocio.</p></div><span className="text-xs text-muted-foreground">Fuentes oficiales</span></div>
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          {news.map((item) => <a key={item.title} href={item.url} target="_blank" rel="noreferrer" className="group flex h-full flex-col rounded-2xl border bg-card p-5 shadow-soft transition-all hover:-translate-y-1 hover:shadow-elegant"><div className="flex items-center justify-between gap-3 text-xs text-muted-foreground"><span className="font-semibold text-primary">{item.source}</span><span>{item.date}</span></div><h3 className="mt-4 flex-1 text-base font-semibold leading-6 transition-colors group-hover:text-primary">{item.title}</h3><span className="mt-5 text-sm font-medium text-primary">Leer fuente oficial →</span></a>)}
+        </div>
+      </div>
+    </section>
+  );
+}
 '''
     text = text.replace(marker, block + '\n' + marker, 1)
 
 text = text.replace('<ProductShowcase />', '<ProductShowcase />\n      <HomepageDemo />', 1)
+text = text.replace('<BusinessNetworkPreview />', '<BusinessNetworkPreview />\n      <ConnectionsPreview />\n      <PymeNewsPreview />', 1)
 text = text.replace('<Pricing />', '<NuvaComparison />\n      <Pricing />', 1)
 path.write_text(text, encoding='utf-8')
 PY
