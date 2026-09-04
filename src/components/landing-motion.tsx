@@ -241,10 +241,12 @@ export function LandingMotion() {
           />
           <div
             className="nuva-cursor-dot hidden md:block"
-            style={{
-              "--cursor-x": `${cursor.x}px`,
-              "--cursor-y": `${cursor.y}px`,
-            } as CSSProperties}
+            style={
+              {
+                "--cursor-x": `${cursor.x}px`,
+                "--cursor-y": `${cursor.y}px`,
+              } as CSSProperties
+            }
           />
         </>
       )}
