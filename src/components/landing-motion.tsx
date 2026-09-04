@@ -68,10 +68,7 @@ export function LandingMotion() {
           parallaxTargets.forEach((el) => {
             const rect = el.getBoundingClientRect();
             const offset = (window.innerHeight / 2 - (rect.top + rect.height / 2)) * 0.018;
-            el.style.setProperty(
-              "--nuva-parallax",
-              `${Math.max(-12, Math.min(12, offset))}px`,
-            );
+            el.style.setProperty("--nuva-parallax", `${Math.max(-12, Math.min(12, offset))}px`);
           });
         });
       };
@@ -244,7 +241,10 @@ export function LandingMotion() {
           />
           <div
             className="nuva-cursor-dot hidden md:block"
-            style={{ "--cursor-x": `${cursor.x}px`, "--cursor-y": `${cursor.y}px` } as CSSProperties}
+            style={{
+              "--cursor-x": `${cursor.x}px`,
+              "--cursor-y": `${cursor.y}px`,
+            } as CSSProperties}
           />
         </>
       )}
