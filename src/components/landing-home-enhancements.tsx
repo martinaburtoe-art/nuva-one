@@ -1,19 +1,47 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, BarChart3, Boxes, Check, MessageSquare, Sparkles, Workflow } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  Boxes,
+  Check,
+  MessageSquare,
+  Sparkles,
+  Workflow,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 const pillars = [
   { value: "1", label: "panel de control", detail: "Una vista para entender tu negocio." },
-  { value: "10+", label: "módulos conectados", detail: "Operación, clientes, inventario y finanzas." },
-  { value: "IA", label: "con contexto real", detail: "Respuestas basadas en los datos de tu empresa." },
-  { value: "24/7", label: "visión disponible", detail: "Consulta indicadores cuando los necesites." },
+  {
+    value: "10+",
+    label: "módulos conectados",
+    detail: "Operación, clientes, inventario y finanzas.",
+  },
+  {
+    value: "IA",
+    label: "con contexto real",
+    detail: "Respuestas basadas en los datos de tu empresa.",
+  },
+  {
+    value: "24/7",
+    label: "visión disponible",
+    detail: "Consulta indicadores cuando los necesites.",
+  },
 ];
 
 const workflow = [
-  { icon: Boxes, title: "Capturas", text: "Ventas, productos, gastos y movimientos quedan registrados." },
-  { icon: BarChart3, title: "Entiendes", text: "Nüva Score e indicadores convierten datos en señales." },
+  {
+    icon: Boxes,
+    title: "Capturas",
+    text: "Ventas, productos, gastos y movimientos quedan registrados.",
+  },
+  {
+    icon: BarChart3,
+    title: "Entiendes",
+    text: "Nüva Score e indicadores convierten datos en señales.",
+  },
   { icon: Sparkles, title: "Preguntas", text: "La IA explica qué está pasando y qué mirar." },
   { icon: Workflow, title: "Actúas", text: "Cotizas, compras y automatizas desde el mismo lugar." },
 ];
@@ -24,15 +52,20 @@ export function LandingValueSystem() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
           <div>
-            <Badge variant="secondary" className="mb-4">El sistema detrás del negocio</Badge>
+            <Badge variant="secondary" className="mb-4">
+              El sistema detrás del negocio
+            </Badge>
             <h2 id="value-system-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
               No necesitas más información. Necesitas una mejor vista.
             </h2>
             <p className="mt-4 leading-7 text-muted-foreground">
-              Nüva One conecta la operación diaria con indicadores y decisiones. Menos tiempo buscando datos; más tiempo haciendo crecer el negocio.
+              Nüva One conecta la operación diaria con indicadores y decisiones. Menos tiempo
+              buscando datos; más tiempo haciendo crecer el negocio.
             </p>
             <Link to="/demo" className="mt-6 inline-block">
-              <Button>Ver cómo se conecta <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
+              <Button>
+                Ver cómo se conecta <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Button>
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -55,12 +88,15 @@ export function LandingWorkflow() {
     <section className="border-y bg-secondary/20 py-20" aria-labelledby="workflow-title">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <Badge variant="secondary" className="mb-4">De dato a decisión</Badge>
+          <Badge variant="secondary" className="mb-4">
+            De dato a decisión
+          </Badge>
           <h2 id="workflow-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
             El valor aparece cuando todo conversa entre sí.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Una venta alimenta tus indicadores. El stock cambia. La IA lo interpreta. Tú decides qué hacer.
+            Una venta alimenta tus indicadores. El stock cambia. La IA lo interpreta. Tú decides qué
+            hacer.
           </p>
         </div>
         <div className="relative mt-12 grid gap-4 md:grid-cols-4">
@@ -84,15 +120,31 @@ export function LandingWorkflow() {
           <div className="flex gap-3">
             <MessageSquare className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
-              <div className="font-semibold">Y si no sabes qué significa un indicador, pregúntale a Nüva.</div>
-              <p className="mt-1 text-sm text-muted-foreground">La IA está pensada para explicar el negocio, no solo mostrar números.</p>
+              <div className="font-semibold">
+                Y si no sabes qué significa un indicador, pregúntale a Nüva.
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                La IA está pensada para explicar el negocio, no solo mostrar números.
+              </p>
             </div>
           </div>
-          <Link to="/demo"><Button variant="outline" className="shrink-0">Probar la experiencia <ArrowRight className="ml-1.5 h-4 w-4" /></Button></Link>
+          <Link to="/demo">
+            <Button variant="outline" className="shrink-0">
+              Probar la experiencia <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
         <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-          {["Sin tarjeta para probar", "Datos aislados por negocio", "Diseñado para PYMEs", "Hecho en Chile"].map((text) => (
-            <span key={text} className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success" />{text}</span>
+          {[
+            "Sin tarjeta para probar",
+            "Datos aislados por negocio",
+            "Diseñado para PYMEs",
+            "Hecho en Chile",
+          ].map((text) => (
+            <span key={text} className="flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-success" />
+              {text}
+            </span>
           ))}
         </div>
       </div>

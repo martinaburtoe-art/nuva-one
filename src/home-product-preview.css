@@ -1,30 +1,81 @@
 @keyframes nuva-scan-line {
-  0%, 100% { transform: translateY(-92px); opacity: .25; }
-  50% { transform: translateY(92px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateY(-92px);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(92px);
+    opacity: 1;
+  }
 }
 @keyframes nuva-grow-bar {
-  from { transform: scaleY(0); opacity: .35; }
-  to { transform: scaleY(1); opacity: 1; }
+  from {
+    transform: scaleY(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 @keyframes nuva-score-ring {
-  0% { transform: rotate(-8deg) scale(.96); opacity: .65; }
-  50% { transform: rotate(8deg) scale(1); opacity: 1; }
-  100% { transform: rotate(-8deg) scale(.96); opacity: .65; }
+  0% {
+    transform: rotate(-8deg) scale(0.96);
+    opacity: 0.65;
+  }
+  50% {
+    transform: rotate(8deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-8deg) scale(0.96);
+    opacity: 0.65;
+  }
 }
 @keyframes nuva-radar-sweep {
-  from { transform: rotate(-45deg); opacity: .25; }
-  50% { opacity: .85; }
-  to { transform: rotate(315deg); opacity: .25; }
+  from {
+    transform: rotate(-45deg);
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  to {
+    transform: rotate(315deg);
+    opacity: 0.25;
+  }
 }
 @keyframes nuva-fill-bar {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
-.animate-scan-line { animation: nuva-scan-line 2.2s ease-in-out infinite; }
-.animate-grow-bar { animation: nuva-grow-bar .8s cubic-bezier(.22,1,.36,1) both; }
-.animate-score-ring { animation: nuva-score-ring 3.2s ease-in-out infinite; }
-.animate-radar-sweep { animation: nuva-radar-sweep 3.8s linear infinite; }
-.animate-fill-bar { transform-origin: left; animation: nuva-fill-bar 1s cubic-bezier(.22,1,.36,1) both; }
+.animate-scan-line {
+  animation: nuva-scan-line 2.2s ease-in-out infinite;
+}
+.animate-grow-bar {
+  animation: nuva-grow-bar 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-score-ring {
+  animation: nuva-score-ring 3.2s ease-in-out infinite;
+}
+.animate-radar-sweep {
+  animation: nuva-radar-sweep 3.8s linear infinite;
+}
+.animate-fill-bar {
+  transform-origin: left;
+  animation: nuva-fill-bar 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 @media (prefers-reduced-motion: reduce) {
-  .animate-scan-line,.animate-grow-bar,.animate-score-ring,.animate-radar-sweep,.animate-fill-bar { animation: none !important; }
+  .animate-scan-line,
+  .animate-grow-bar,
+  .animate-score-ring,
+  .animate-radar-sweep,
+  .animate-fill-bar {
+    animation: none !important;
+  }
 }

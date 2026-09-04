@@ -96,6 +96,7 @@ The existing `business-context.server.ts` is an important foundation. It already
 Do not turn this into an uncontrolled giant context payload. Evolve toward a modular **Nüva Business Context Engine**:
 
 ### Financial Context
+
 - revenue
 - expenses
 - net cash flow
@@ -106,6 +107,7 @@ Do not turn this into an uncontrolled giant context payload. Evolve toward a mod
 - trends
 
 ### Commercial Context
+
 - sales
 - average ticket
 - customers
@@ -117,6 +119,7 @@ Do not turn this into an uncontrolled giant context payload. Evolve toward a mod
 - sales trends
 
 ### Operations Context
+
 - stock
 - low stock
 - stock rotation
@@ -282,12 +285,14 @@ For meaningful code changes:
 ## 16. Immediate roadmap
 
 ### P0 — Security hardening
+
 - Close `x-business-id` authorization before AI quota mutation.
 - Review AI quota RPC.
 - Add negative cross-tenant tests.
 - Verify Supabase leaked-password protection manually.
 
 ### P1 — Intelligence foundation
+
 - Modular Business Context Engine.
 - Nüva Intelligence contracts.
 - Read tool schemas.
@@ -295,20 +300,24 @@ For meaningful code changes:
 - Explainable Score 2.0.
 
 ### P1 — Activation
+
 - Intelligent Excel/CSV import.
 - Better empty-business onboarding.
 - First-value experience within minutes.
 
 ### P2 — Safe actions
+
 - Tool-calling read layer.
 - First write tools with confirmation, transactions, idempotency and audit logs.
 
 ### P2 — Growth
+
 - Business Scan.
 - SEO/content engine around real SME problems.
 - Referral/community loops.
 
 ### P3 — Ecosystem
+
 - More automations/integrations.
 - WhatsApp workflows.
 - Advanced analytics.
