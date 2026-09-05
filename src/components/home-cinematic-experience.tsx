@@ -14,6 +14,13 @@ type Scene = {
   metric?: string;
   metricLabel?: string;
   screen?: string;
+  /**
+   * Optional Google Flow/Veo asset slots. Keep these relative to /public so
+   * the cinematic experience can switch from CSS art direction to real
+   * footage without changing the story engine.
+   */
+  poster?: string;
+  video?: string;
 };
 
 const SCENES: Scene[] = [
@@ -52,6 +59,7 @@ function useElementProgress(ref: RefObject<HTMLElement | null>) {
         setProgress(clamp(-rect.top / scrollable));
       });
     };
+
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -65,12 +73,52 @@ function useElementProgress(ref: RefObject<HTMLElement | null>) {
   return progress;
 }
 
+function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: number }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !scene.video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    const target = clamp(sceneProgress) * Math.max(video.duration - 0.04, 0);
+    if (Math.abs(video.currentTime - target) > 0.02) video.currentTime = target;
+  }, [scene.video, sceneProgress]);
+
+  if (!scene.video) return null;
+
+  return (
+    <video
+      ref={videoRef}
+      className="cinematic-visual__media"
+      src={scene.video}
+      poster={scene.poster}
+      muted
+      playsInline
+      preload="metadata"
+      aria-hidden="true"
+      onLoadedMetadata={(event) => {
+        const video = event.currentTarget;
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+          video.currentTime = clamp(sceneProgress) * Math.max(video.duration - 0.04, 0);
+        }
+      }}
+    />
+  );
+}
+
 function SceneVisual({ scene, sceneProgress }: { scene: Scene; sceneProgress: number }) {
   const shift = `${(sceneProgress - 0.5) * -3}%`;
   const scale = 1.02 + sceneProgress * 0.045;
 
   return (
-    <div className={`cinematic-visual cinematic-visual--${scene.visual}`} style={{ transform: `translate3d(0, ${shift}, 0) scale(${scale})` }}>
+    <div
+      className={`cinematic-visual cinematic-visual--${scene.visual}`}
+      data-scene={scene.id}
+      style={{
+        transform: `translate3d(0, ${shift}, 0) scale(${scale})`,
+        "--scene-progress": sceneProgress,
+      } as React.CSSProperties}
+    >
+      <SceneVideo scene={scene} sceneProgress={sceneProgress} />
       <div className="cinematic-visual__grain" />
       <div className="cinematic-visual__window" />
       <div className="cinematic-visual__light" />
@@ -101,16 +149,27 @@ export function HomeCinematicExperience() {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     const sync = () => setReducedMotion(query.matches);
     sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
+    query.addEventListener?.("change", sync);
+    return () => query.removeEventListener?.("change", sync);
   }, []);
 
   const sceneIndex = Math.min(SCENES.length - 1, Math.floor(progress * SCENES.length));
-  const sceneProgress = reducedMotion ? 0.5 : (progress * SCENES.length) % 1;
+  const rawSceneProgress = (progress * SCENES.length) % 1;
+  const sceneProgress = reducedMotion ? 0.5 : rawSceneProgress;
   const scene = SCENES[sceneIndex];
   const nextScene = SCENES[Math.min(sceneIndex + 1, SCENES.length - 1)];
   const globalPercent = Math.round(progress * 100);
   const navItems = useMemo(() => SCENES.filter((item) => ["hero", "sales", "inventory", "score", "studio", "final"].includes(item.id)), []);
+
+  const jumpToScene = (index: number) => {
+    const element = storyRef.current;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    const scrollable = Math.max(element.offsetHeight - window.innerHeight, 1);
+    const targetProgress = index / SCENES.length + 0.002;
+    const target = window.scrollY + rect.top + scrollable * clamp(targetProgress);
+    window.scrollTo({ top: target, behavior: reducedMotion ? "auto" : "smooth" });
+  };
 
   return (
     <section ref={storyRef} className="cinematic-story" aria-label="Experiencia cinematográfica de Nüva One">
@@ -123,13 +182,32 @@ export function HomeCinematicExperience() {
 
         <div className="cinematic-story__chrome">
           <Link to="/" className="cinematic-wordmark">Nüva One</Link>
-          <div className="cinematic-progress" aria-label={`Progreso ${globalPercent}%`}><span>{scene.number}</span><div><i style={{ transform: `scaleX(${progress})` }} /></div><span>{String(SCENES.length).padStart(2, "0")}</span></div>
+          <div className="cinematic-progress" aria-label={`Progreso ${globalPercent}%`}>
+            <span>{scene.number}</span>
+            <div><i style={{ transform: `scaleX(${progress})` }} /></div>
+            <span>{String(SCENES.length).padStart(2, "0")}</span>
+          </div>
           <Link to="/auth" search={{ mode: "signup" }} className="cinematic-start">Empezar gratis <ArrowRight size={14} /></Link>
         </div>
 
-        <div className="cinematic-story__nav" aria-hidden="true">
-          {navItems.map((item) => <span key={item.id} className={item.id === scene.id ? "is-active" : ""}>{item.number}</span>)}
-        </div>
+        <nav className="cinematic-story__nav" aria-label="Capítulos de la historia">
+          {navItems.map((item) => {
+            const itemIndex = SCENES.findIndex((sceneItem) => sceneItem.id === item.id);
+            const isActive = scene.id === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={isActive ? "is-active" : ""}
+                aria-label={`Ir a ${item.eyebrow.toLowerCase()}`}
+                aria-current={isActive ? "step" : undefined}
+                onClick={() => jumpToScene(itemIndex)}
+              >
+                <span>{item.number}</span>
+              </button>
+            );
+          })}
+        </nav>
 
         <div className="cinematic-story__copy" key={scene.id}>
           <div className="cinematic-copy__eyebrow"><span>{scene.number}</span><span>{scene.eyebrow}</span></div>
