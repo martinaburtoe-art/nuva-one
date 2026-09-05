@@ -83,6 +83,9 @@ BEGIN
 END;
 $$;
 
+-- SECURITY DEFINER trigger functions must not be callable as a public RPC surface.
+REVOKE EXECUTE ON FUNCTION public.validate_shipment_event_business() FROM PUBLIC, anon, authenticated;
+
 DROP TRIGGER IF EXISTS trg_validate_shipment_event_business ON public.shipment_events;
 CREATE TRIGGER trg_validate_shipment_event_business
   BEFORE INSERT OR UPDATE ON public.shipment_events
