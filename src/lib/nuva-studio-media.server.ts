@@ -20,10 +20,9 @@ export async function generateGeminiImageAsset(args: {
 
   const context = await buildBusinessContext(args.supabase, args.businessId);
   const contextText = context ? capContext(context) : "No hay contexto empresarial disponible.";
-  const input = [
-    "Genera una pieza visual profesional para Nüva Studio.",
-    "Respeta estrictamente el producto, la marca y el objetivo descritos.",
-    "No inventes precios, logos o atributos de producto que no estén indicados.",
+  const prompt = [
+    "Crea una pieza visual profesional para Nüva Studio.",
+    "Respeta estrictamente el producto, la marca y el objetivo. No inventes precios, logos o atributos.",
     `CONTEXTO EMPRESARIAL:\n${contextText}`,
     `SOLICITUD:\n${cleanPrompt(args.prompt)}`,
   ].join("\n\n");
@@ -33,27 +32,29 @@ export async function generateGeminiImageAsset(args: {
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
       model: IMAGE_MODEL,
-      input,
+      input: prompt,
       response_format: { type: "image", mime_type: "image/png", aspect_ratio: "1:1", image_size: "1K" },
     }),
   });
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Gemini Creative respondió ${response.status}: ${detail.slice(0, 500)}`);
+    throw new Error(`Gemini Creative respondió ${response.status}: ${detail.slice(0, 700)}`);
   }
 
   const payload = (await response.json()) as {
     output_image?: { data?: string; mime_type?: string };
-    output?: Array<{ type?: string; data?: string; mime_type?: string }>;
+    steps?: Array<{ type?: string; content?: Array<{ type?: string; data?: string; mime_type?: string }> }>;
   };
-  const imageBlock = payload.output_image ?? payload.output?.find((item) => item.type === "image");
-  if (!imageBlock?.data) throw new Error("Gemini no devolvió una imagen utilizable.");
+  const fromConvenience = payload.output_image?.data ? { data: payload.output_image.data, mime_type: payload.output_image.mime_type } : null;
+  const fromSteps = payload.steps?.flatMap((step) => step.content ?? []).find((item) => item.type === "image" && item.data);
+  const image = fromConvenience ?? (fromSteps?.data ? { data: fromSteps.data, mime_type: fromSteps.mime_type } : null);
+  if (!image?.data) throw new Error("Gemini no devolvió una imagen utilizable.");
 
-  const mimeType = imageBlock.mime_type ?? "image/png";
+  const mimeType = image.mime_type ?? "image/png";
   const extension = mimeType.includes("jpeg") ? "jpg" : "png";
   const storagePath = `${args.businessId}/studio/${crypto.randomUUID()}.${extension}`;
-  const bytes = Uint8Array.from(Buffer.from(imageBlock.data, "base64"));
+  const bytes = Uint8Array.from(Buffer.from(image.data, "base64"));
 
   const { error: uploadError } = await args.supabase.storage.from("nuva-studio-assets").upload(storagePath, bytes, { contentType: mimeType, upsert: false });
   if (uploadError) throw new Error(`No se pudo guardar el activo: ${uploadError.message}`);
