@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ArrowDown, ArrowRight, Check, ScanLine, Sparkles } from "lucide-react";
 import "@/home-cinematic.css";
+import "@/home-cinematic-art-direction.css";
 
 type Scene = {
   id: string;
