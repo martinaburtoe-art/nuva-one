@@ -72,12 +72,19 @@ function SceneVisual({ scene, sceneProgress }: { scene: Scene; sceneProgress: nu
     <div className={`cinematic-visual cinematic-visual--${scene.visual}`} style={{ transform: `translate3d(0, ${shift}, 0) scale(${scale})` }}>
       <div className="cinematic-visual__grain" />
       <div className="cinematic-visual__window" />
+      <div className="cinematic-visual__light" />
       <div className="cinematic-visual__floor" />
-      <div className="cinematic-visual__subject"><div className="cinematic-visual__subject-head" /><div className="cinematic-visual__subject-body" /></div>
-      <div className="cinematic-visual__counter" />
       <div className="cinematic-visual__shelf" />
+      <div className="cinematic-visual__boxes" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+      <div className="cinematic-visual__subject"><div className="cinematic-visual__subject-head" /><div className="cinematic-visual__subject-body" /></div>
+      <div className="cinematic-visual__customer" aria-hidden="true"><span /><i /></div>
+      <div className="cinematic-visual__counter" />
       <div className="cinematic-visual__device"><div className="cinematic-screen"><span>{scene.screen ?? "NÜVA ONE"}</span><div className="cinematic-screen__lines" /></div></div>
+      <div className="cinematic-visual__scanner" aria-hidden="true"><span /><i /></div>
+      <div className="cinematic-visual__package" aria-hidden="true"><span /><i /><b /></div>
       <div className="cinematic-visual__object" />
+      <div className="cinematic-visual__signal" aria-hidden="true"><i /><i /><i /></div>
+      <div className="cinematic-visual__network" aria-hidden="true"><i /><i /><i /><i /></div>
       <div className="cinematic-visual__accent" />
       {scene.metric && <div className="cinematic-visual__metric"><strong>{scene.metric}</strong><span>{scene.metricLabel}</span></div>}
     </div>
