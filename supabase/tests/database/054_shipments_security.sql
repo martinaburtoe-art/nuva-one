@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(6);
+SELECT plan(8);
 
 SELECT ok(
   EXISTS (
@@ -63,6 +63,16 @@ SELECT ok(
       AND NOT t.tgisinternal
   ),
   'shipment event trigger enforces business ownership'
+);
+
+SELECT ok(
+  has_function_privilege('anon', 'public.validate_shipment_event_business()', 'EXECUTE') = false,
+  'shipment trigger function is not executable by anon'
+);
+
+SELECT ok(
+  has_function_privilege('authenticated', 'public.validate_shipment_event_business()', 'EXECUTE') = false,
+  'shipment trigger function is not executable by authenticated'
 );
 
 SELECT * FROM finish();
