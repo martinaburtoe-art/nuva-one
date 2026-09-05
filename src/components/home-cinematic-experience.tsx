@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { ArrowDown, ArrowRight, Check, ScanLine, Sparkles } from "lucide-react";
 import "@/home-cinematic.css";
 import "@/home-cinematic-art-direction.css";
@@ -14,11 +14,7 @@ type Scene = {
   metric?: string;
   metricLabel?: string;
   screen?: string;
-  /**
-   * Optional Google Flow/Veo asset slots. Keep these relative to /public so
-   * the cinematic experience can switch from CSS art direction to real
-   * footage without changing the story engine.
-   */
+  /** Optional Google Flow/Veo asset slots relative to /public. */
   poster?: string;
   video?: string;
 };
@@ -116,7 +112,7 @@ function SceneVisual({ scene, sceneProgress }: { scene: Scene; sceneProgress: nu
       style={{
         transform: `translate3d(0, ${shift}, 0) scale(${scale})`,
         "--scene-progress": sceneProgress,
-      } as React.CSSProperties}
+      } as CSSProperties}
     >
       <SceneVideo scene={scene} sceneProgress={sceneProgress} />
       <div className="cinematic-visual__grain" />
