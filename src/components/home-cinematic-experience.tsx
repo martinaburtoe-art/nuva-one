@@ -149,9 +149,10 @@ export function HomeCinematicExperience() {
     return () => query.removeEventListener?.("change", sync);
   }, []);
 
-  const sceneIndex = Math.min(SCENES.length - 1, Math.floor(progress * SCENES.length));
-  const rawSceneProgress = (progress * SCENES.length) % 1;
-  const sceneProgress = reducedMotion ? 0.5 : rawSceneProgress;
+  const storyPosition = progress * SCENES.length;
+  const sceneIndex = Math.min(SCENES.length - 1, Math.floor(storyPosition));
+  const rawSceneProgress = sceneIndex === SCENES.length - 1 ? 1 : storyPosition - sceneIndex;
+  const sceneProgress = reducedMotion ? 0.5 : clamp(rawSceneProgress);
   const scene = SCENES[sceneIndex];
   const nextScene = SCENES[Math.min(sceneIndex + 1, SCENES.length - 1)];
   const globalPercent = Math.round(progress * 100);
