@@ -14,26 +14,30 @@ type Scene = {
   metric?: string;
   metricLabel?: string;
   screen?: string;
+  context: string[];
+  action: string;
   /** Optional Google Flow/Veo asset slots relative to /public. */
   poster?: string;
   video?: string;
 };
 
+const BASE_CONTEXT = ["VENTAS", "CLIENTES", "INVENTARIO", "CAJA", "FINANZAS"];
+
 const SCENES: Scene[] = [
-  { id: "hero", number: "01", eyebrow: "EL NEGOCIO REAL", title: "Todo empieza aquí.", body: "Tu negocio ya está funcionando. Nüva One entra en escena para conectar lo que ocurre detrás de cada venta.", visual: "store-open", metric: "07:42", metricLabel: "apertura" },
-  { id: "sales", number: "02", eyebrow: "VENTAS", title: "Cada oportunidad cuenta.", body: "Una persona atiende. Una venta sucede. Nüva One convierte esa acción en información útil para todo el negocio.", visual: "counter", screen: "VENTA · $48.990" },
-  { id: "customers", number: "03", eyebrow: "CLIENTES", title: "Conoce a quien vuelve.", body: "El cliente no es una fila de tickets. Su historial, sus compras y su relación con tu negocio viven en el mismo contexto.", visual: "customer", screen: "CLIENTE · RECURRENTE" },
-  { id: "inventory", number: "04", eyebrow: "INVENTARIO", title: "Cuando todo está desordenado, cada minuto cuesta.", body: "La cámara entra al almacenamiento. Productos, cajas y stock dejan de ser una búsqueda a ciegas.", visual: "inventory", screen: "248 SKU · 5 ATENCIÓN" },
-  { id: "scanner", number: "05", eyebrow: "SCANNER", title: "Un código. Toda la información.", body: "Escanea un producto y conecta en segundos SKU, precio, stock y movimientos.", visual: "scanner", screen: "SKU 8472 · STOCK 18" },
-  { id: "purchases", number: "06", eyebrow: "COMPRAS", title: "Anticípate.", body: "Nüva detecta una señal antes de que se convierta en un problema y propone el siguiente movimiento.", visual: "replenish", screen: "STOCK BAJO → REPOSICIÓN" },
-  { id: "cash", number: "07", eyebrow: "CAJA", title: "Cada peso cuenta.", body: "La venta actualiza cliente, inventario, caja y finanzas sin obligarte a duplicar trabajo.", visual: "cash", screen: "VENTA · SINCRONIZADA" },
-  { id: "shipping", number: "08", eyebrow: "DESPACHOS", title: "Del negocio a la puerta.", body: "El pedido sale del estante y el estado sigue avanzando contigo.", visual: "shipping", screen: "PEDIDO · DESPACHADO" },
-  { id: "finance", number: "09", eyebrow: "FINANZAS", title: "Entiende lo que realmente está pasando.", body: "En vez de más gráficos, una lectura clara: qué cambió, por qué importa y dónde conviene mirar.", visual: "desk", screen: "MARGEN +3,2%" },
-  { id: "score", number: "10", eyebrow: "NÜVA SCORE", title: "No solo muestra datos. Los entiende.", body: "Ventas, inventario, clientes, finanzas y operaciones convergen en una lectura ejecutiva del negocio.", visual: "score", metric: "86", metricLabel: "salud del negocio" },
-  { id: "automation", number: "11", eyebrow: "AUTOMATIZACIONES", title: "Tu negocio empieza a trabajar contigo.", body: "Una señal activa una cadena: detectar, alertar, recomendar y actuar.", visual: "automation", screen: "DETECTA → RECOMIENDA → ACTÚA" },
-  { id: "studio", number: "12", eyebrow: "NÜVA STUDIO · IA", title: "Pregúntale a tu negocio.", body: "La IA entiende el contexto de tu empresa para ayudarte a decidir qué hacer esta semana.", visual: "studio", screen: "¿QUÉ DEBERÍA HACER ESTA SEMANA?" },
-  { id: "connections", number: "13", eyebrow: "CONEXIONES", title: "Todo conectado.", body: "WhatsApp, facturación, pagos, IA y automatizaciones forman parte del mismo flujo operativo.", visual: "connections", metric: "∞", metricLabel: "contexto compartido" },
-  { id: "final", number: "14", eyebrow: "NÜVA ONE", title: "Tu negocio. Todo conectado.", body: "La cámara vuelve al mismo lugar donde comenzó. La diferencia es que ahora todo tiene contexto.", visual: "store-final" },
+  { id: "hero", number: "01", eyebrow: "EL NEGOCIO REAL", title: "Todo empieza aquí.", body: "Tu negocio ya está funcionando. Nüva One entra en escena para conectar lo que ocurre detrás de cada venta.", visual: "store-open", metric: "07:42", metricLabel: "apertura", context: BASE_CONTEXT, action: "OBSERVA" },
+  { id: "sales", number: "02", eyebrow: "VENTAS", title: "Cada oportunidad cuenta.", body: "Una persona atiende. Una venta sucede. Nüva One convierte esa acción en información útil para todo el negocio.", visual: "counter", screen: "VENTA · $48.990", context: ["VENTAS", "CLIENTES", "CAJA"], action: "REGISTRA" },
+  { id: "customers", number: "03", eyebrow: "CLIENTES", title: "Conoce a quien vuelve.", body: "El cliente no es una fila de tickets. Su historial, sus compras y su relación con tu negocio viven en el mismo contexto.", visual: "customer", screen: "CLIENTE · RECURRENTE", context: ["VENTAS", "CLIENTES", "HISTORIAL"], action: "RECONOCE" },
+  { id: "inventory", number: "04", eyebrow: "INVENTARIO", title: "Cuando todo está desordenado, cada minuto cuesta.", body: "La cámara entra al almacenamiento. Productos, cajas y stock dejan de ser una búsqueda a ciegas.", visual: "inventory", screen: "248 SKU · 5 ATENCIÓN", context: ["INVENTARIO", "SKU", "STOCK"], action: "ORDENA" },
+  { id: "scanner", number: "05", eyebrow: "SCANNER", title: "Un código. Toda la información.", body: "Escanea un producto y conecta en segundos SKU, precio, stock y movimientos.", visual: "scanner", screen: "SKU 8472 · STOCK 18", context: ["SCANNER", "SKU", "STOCK", "PRECIO"], action: "IDENTIFICA" },
+  { id: "purchases", number: "06", eyebrow: "COMPRAS", title: "Anticípate.", body: "Nüva detecta una señal antes de que se convierta en un problema y propone el siguiente movimiento.", visual: "replenish", screen: "STOCK BAJO → REPOSICIÓN", context: ["STOCK", "COMPRAS", "PROVEEDORES"], action: "ANTICIPA" },
+  { id: "cash", number: "07", eyebrow: "CAJA", title: "Cada peso cuenta.", body: "La venta actualiza cliente, inventario, caja y finanzas sin obligarte a duplicar trabajo.", visual: "cash", screen: "VENTA · SINCRONIZADA", context: ["VENTAS", "CAJA", "INVENTARIO", "FINANZAS"], action: "SINCRONIZA" },
+  { id: "shipping", number: "08", eyebrow: "DESPACHOS", title: "Del negocio a la puerta.", body: "El pedido sale del estante y el estado sigue avanzando contigo.", visual: "shipping", screen: "PEDIDO · DESPACHADO", context: ["PEDIDO", "INVENTARIO", "DESPACHO"], action: "MUEVE" },
+  { id: "finance", number: "09", eyebrow: "FINANZAS", title: "Entiende lo que realmente está pasando.", body: "En vez de más gráficos, una lectura clara: qué cambió, por qué importa y dónde conviene mirar.", visual: "desk", screen: "MARGEN +3,2%", context: ["VENTAS", "COSTOS", "MARGEN", "FINANZAS"], action: "EXPLICA" },
+  { id: "score", number: "10", eyebrow: "NÜVA SCORE", title: "No solo muestra datos. Los entiende.", body: "Ventas, inventario, clientes, finanzas y operaciones convergen en una lectura ejecutiva del negocio.", visual: "score", metric: "86", metricLabel: "salud del negocio", context: ["VENTAS", "INVENTARIO", "CLIENTES", "FINANZAS", "OPERACIONES"], action: "ENTIENDE" },
+  { id: "automation", number: "11", eyebrow: "AUTOMATIZACIONES", title: "Tu negocio empieza a trabajar contigo.", body: "Una señal activa una cadena: detectar, alertar, recomendar y actuar.", visual: "automation", screen: "DETECTA → RECOMIENDA → ACTÚA", context: ["SEÑAL", "REGLA", "ACCIÓN", "RESULTADO"], action: "AUTOMATIZA" },
+  { id: "studio", number: "12", eyebrow: "NÜVA STUDIO · IA", title: "Pregúntale a tu negocio.", body: "La IA entiende el contexto de tu empresa para ayudarte a decidir qué hacer esta semana.", visual: "studio", screen: "¿QUÉ DEBERÍA HACER ESTA SEMANA?", context: ["NEGOCIO", "CONTEXTO", "IA", "DECISIÓN"], action: "PREGUNTA" },
+  { id: "connections", number: "13", eyebrow: "CONEXIONES", title: "Todo conectado.", body: "WhatsApp, facturación, pagos, IA y automatizaciones forman parte del mismo flujo operativo.", visual: "connections", metric: "∞", metricLabel: "contexto compartido", context: ["WHATSAPP", "FACTURACIÓN", "PAGOS", "IA", "AUTOMATIZACIONES"], action: "CONECTA" },
+  { id: "final", number: "14", eyebrow: "NÜVA ONE", title: "Tu negocio. Todo conectado.", body: "La cámara vuelve al mismo lugar donde comenzó. La diferencia es que ahora todo tiene contexto.", visual: "store-final", context: ["VENTAS", "CLIENTES", "INVENTARIO", "CAJA", "FINANZAS"], action: "ADELANTE" },
 ];
 
 function clamp(value: number, min = 0, max = 1) {
@@ -168,6 +172,19 @@ export function HomeCinematicExperience() {
     window.scrollTo({ top: target, behavior: reducedMotion ? "auto" : "smooth" });
   };
 
+  const contextRailStyle: CSSProperties = {
+    position: "absolute",
+    zIndex: 18,
+    left: "clamp(20px, 4vw, 64px)",
+    top: "50%",
+    transform: "translateY(-50%)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    pointerEvents: "none",
+    maxWidth: "min(170px, 24vw)",
+  };
+
   return (
     <section ref={storyRef} className="cinematic-story" aria-label="Experiencia cinematográfica de Nüva One">
       <div className="cinematic-story__sticky">
@@ -185,6 +202,27 @@ export function HomeCinematicExperience() {
             <span>{String(SCENES.length).padStart(2, "0")}</span>
           </div>
           <Link to="/auth" search={{ mode: "signup" }} className="cinematic-start">Empezar gratis <ArrowRight size={14} /></Link>
+        </div>
+
+        <div style={contextRailStyle} aria-hidden="true">
+          <span style={{ font: "800 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace", letterSpacing: ".18em", color: "rgba(18,61,64,.52)", marginBottom: 4 }}>MISMO NEGOCIO · {scene.action}</span>
+          {scene.context.map((item, index) => (
+            <span
+              key={item}
+              style={{
+                display: "inline-flex",
+                width: "fit-content",
+                padding: "6px 9px",
+                border: "1px solid rgba(18,61,64,.12)",
+                borderRadius: 999,
+                background: index === 0 ? "rgba(255,255,255,.74)" : "rgba(255,255,255,.42)",
+                color: index === 0 ? "#28656a" : "rgba(18,61,64,.55)",
+                backdropFilter: "blur(10px)",
+                font: "800 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace",
+                letterSpacing: ".1em",
+              }}
+            >{item}</span>
+          ))}
         </div>
 
         <nav className="cinematic-story__nav" aria-label="Capítulos de la historia">
