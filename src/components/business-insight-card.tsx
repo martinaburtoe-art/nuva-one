@@ -119,37 +119,21 @@ export function BusinessInsightCard({
           {hasData && (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-2xl border bg-background/65 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Ingresos
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ingresos</p>
                 <p className="mt-1 text-lg font-bold">{fmtCLP(income)}</p>
               </div>
               <div className="rounded-2xl border bg-background/65 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Gastos
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Gastos</p>
                 <p className="mt-1 text-lg font-bold">{fmtCLP(expense)}</p>
-                {income > 0 && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {expenseRatio.toFixed(0)}% de ingresos
-                  </p>
-                )}
+                {income > 0 && <p className="mt-1 text-[11px] text-muted-foreground">{expenseRatio.toFixed(0)}% de ingresos</p>}
               </div>
               <div className="rounded-2xl border bg-background/65 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Flujo neto
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Flujo neto</p>
                 <p className="mt-1 text-lg font-bold">{fmtCLP(net)}</p>
-                {income > 0 && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Margen {margin.toFixed(1)}%
-                  </p>
-                )}
+                {income > 0 && <p className="mt-1 text-[11px] text-muted-foreground">Margen {margin.toFixed(1)}%</p>}
               </div>
               <div className="rounded-2xl border bg-background/65 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Operación
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Operación</p>
                 <p className="mt-1 text-lg font-bold">{salesCount} ventas</p>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {productsCount} productos · {fmtCLP(inventoryValue)} inventario
@@ -160,9 +144,7 @@ export function BusinessInsightCard({
 
           <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
             <div className="rounded-2xl border bg-background/70 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Recomendación de Nüva
-              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Recomendación de Nüva</p>
               <p className="mt-1 text-sm font-medium">{recommendation}</p>
             </div>
             <Link to="/ai" className="shrink-0">
@@ -179,27 +161,16 @@ export function BusinessInsightCard({
                 <Sparkles className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-                  Siguiente decisión
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Siguiente decisión</p>
                 <p className="mt-1 text-sm font-medium">{nextStep}</p>
               </div>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">
-              Datos del negocio
-            </span>
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">
-              Señal determinística
-            </span>
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">
-              Acción sugerida
-            </span>
-            <span className="rounded-full border bg-background/60 px-2.5 py-1">
-              Siguiente decisión
-            </span>
+            <span className="rounded-full border bg-background/60 px-2.5 py-1">Datos del negocio</span>
+            <span className="rounded-full border bg-background/60 px-2.5 py-1">Señal determinística</span>
+            <span className="rounded-full border bg-background/60 px-2.5 py-1">Acción sugerida</span>
           </div>
         </div>
       </Card>
