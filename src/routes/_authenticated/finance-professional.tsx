@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ModuleGuard } from "@/components/module-guard";
-import { FinanceAccountingWorkspaceV2 } from "@/components/finance-accounting-workspace-v2";
-import { FinanceAdvancedTools } from "@/components/finance-advanced-tools";
+import { FinanceToolsHub } from "@/components/finance-tools-hub";
 import { NuvaFinancialControl } from "@/components/nuva-financial-control";
 import { useBizList } from "@/lib/biz-data";
 
@@ -22,10 +21,13 @@ function FinanceProfessional() {
 
   return (
     <ModuleGuard module="finance">
-      <div className="space-y-5">
-        <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} />
-        <FinanceAdvancedTools />
-        <FinanceAccountingWorkspaceV2 />
+      <div className="space-y-6">
+        <NuvaFinancialControl
+          income={control.income}
+          expense={control.expense}
+          inventoryValue={control.inventoryValue}
+        />
+        <FinanceToolsHub />
       </div>
     </ModuleGuard>
   );
