@@ -10,6 +10,7 @@ import { NuvaPredictiveSignals } from "@/components/nuva-predictive-signals";
 import { NuvaDecisionOutcomes } from "@/components/nuva-decision-outcomes";
 import { NuvaDecisionMemory } from "@/components/nuva-decision-memory";
 import { NuvaDecisionTimeline } from "@/components/nuva-decision-timeline";
+import { NuvaActionCenter } from "@/components/nuva-action-center";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { buildNuvaDecision } from "@/lib/nuva-decision-engine";
@@ -24,14 +25,14 @@ export const Route = createFileRoute("/_authenticated/executive-command-center")
 type ExecutiveSection = "command" | "decision" | "timeline" | "scenarios" | "context" | "outcomes" | "memory" | "execution";
 
 const executiveSections: Array<{ id: ExecutiveSection; title: string; description: string }> = [
-  { id: "command", title: "Puesto de mando", description: "Prioridad actual, impacto y foco" },
-  { id: "decision", title: "Decisión", description: "Convertir una prioridad en acción" },
-  { id: "timeline", title: "Seguimiento", description: "Qué se decidió y qué se hizo" },
-  { id: "scenarios", title: "Escenarios", description: "Qué puede pasar si actuamos o esperamos" },
-  { id: "context", title: "Contexto", description: "Cambios que afectan la decisión" },
-  { id: "outcomes", title: "Resultados", description: "Medir el efecto de las decisiones" },
-  { id: "memory", title: "Memoria", description: "Aprendizaje acumulado del negocio" },
-  { id: "execution", title: "Ejecución", description: "Disciplina y cumplimiento" },
+  { id: "command", title: "Puesto de mando", description: "Qué decisión merece tu atención" },
+  { id: "decision", title: "Decidir y ejecutar", description: "Elegir una prioridad y convertirla en acción" },
+  { id: "timeline", title: "Seguimiento", description: "Qué se decidió, cuándo y qué ocurrió" },
+  { id: "scenarios", title: "Escenarios", description: "Qué resultado esperar si actúas o esperas" },
+  { id: "context", title: "Factores", description: "Qué cambios pueden afectar la decisión" },
+  { id: "outcomes", title: "Resultados", description: "Qué efecto tuvieron tus decisiones" },
+  { id: "memory", title: "Memoria", description: "Qué aprendió Nüva de tus decisiones" },
+  { id: "execution", title: "Disciplina", description: "Qué tan bien se están cumpliendo" },
 ];
 
 function ExecutiveCommandCenter() {
@@ -56,7 +57,7 @@ function ExecutiveCommandCenter() {
   return (
     <ModuleGuard module="customers">
       <div className="p-4 md:p-6">
-        <PageHeader title="Centro Ejecutivo" description="El puesto de mando de Nüva: decidir, ejecutar, medir resultados y aprender. El análisis detallado vive en Nüva Intelligence." />
+        <PageHeader title="Centro Ejecutivo" description="Tu capa de dirección: elegir prioridades, ejecutar decisiones, medir resultados y aprender. El análisis vive en Nüva Intelligence; la operación diaria vive en Resumen." />
         {loading ? (
           <div className="space-y-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-56 w-full" /></div>
         ) : (
@@ -70,19 +71,22 @@ function ExecutiveCommandCenter() {
               </div>
             </Card>
             <div className="flex items-center justify-between gap-3 border-b pb-3">
-              <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Puesto de mando</p><h2 className="mt-1 text-xl font-semibold">{section.title}</h2></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Dirección</p><h2 className="mt-1 text-xl font-semibold">{section.title}</h2></div>
               <span className="hidden text-xs text-muted-foreground md:block">Vista {executiveSections.findIndex((item) => item.id === activeSection) + 1} de {executiveSections.length}</span>
             </div>
             {activeSection === "command" && <NuvaExecutiveCommandCenter customers={customers ?? []} sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} products={products ?? []} executionScore={executionScore} />}
             {activeSection === "decision" && decision && (
-              <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Decisión prioritaria</p><h2 className="mt-1 text-xl font-bold">{decision.headline}</h2><p className="mt-1 text-sm text-muted-foreground">Prioridad <strong className="text-foreground">{decision.score}/100</strong> · Estado <strong className="text-foreground">{decision.status}</strong></p></div>
-                  <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold"><DecisionIcon status={decision.status} /> {decision.topSignal.title}</div>
-                </div>
-                <p className="mt-4 text-sm leading-6 text-muted-foreground">Esta vista no amplía el diagnóstico: selecciona la prioridad que merece convertirse en ejecución.</p>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">{decision.actions.slice(0, 4).map((item) => <Link key={item.id} to={decisionDestinationRoute(item.destination)} className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{item.title}</p><p className="mt-1 text-xs text-muted-foreground">Impacto {item.impact}/100 · {item.mode === "prepare" ? "Preparar" : "Revisar"}</p></div><span className="text-xs font-medium text-primary">{item.cta} →</span></div></Link>)}</div>
-              </Card>
+              <div className="space-y-5">
+                <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Decisión prioritaria</p><h2 className="mt-1 text-xl font-bold">{decision.headline}</h2><p className="mt-1 text-sm text-muted-foreground">Prioridad <strong className="text-foreground">{decision.score}/100</strong> · Estado <strong className="text-foreground">{decision.status}</strong></p></div>
+                    <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold"><DecisionIcon status={decision.status} /> {decision.topSignal.title}</div>
+                  </div>
+                  <p className="mt-4 text-sm leading-6 text-muted-foreground">Aquí termina el análisis y comienza la dirección. Elige qué mover primero, ejecuta la acción y deja que Nüva mida el resultado.</p>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">{decision.actions.slice(0, 4).map((item) => <Link key={item.id} to={decisionDestinationRoute(item.destination)} className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{item.title}</p><p className="mt-1 text-xs text-muted-foreground">Impacto {item.impact}/100 · {item.mode === "prepare" ? "Preparar" : "Revisar"}</p></div><span className="text-xs font-medium text-primary">{item.cta} →</span></div></Link>)}</div>
+                </Card>
+                <NuvaActionCenter />
+              </div>
             )}
             {activeSection === "timeline" && <NuvaDecisionTimeline activities={activities ?? []} />}
             {activeSection === "scenarios" && <NuvaPredictiveSignals sales={sales ?? []} quotes={quotes ?? []} activities={activities ?? []} />}
