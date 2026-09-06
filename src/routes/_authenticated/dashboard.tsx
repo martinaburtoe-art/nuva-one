@@ -12,7 +12,6 @@ import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { BusinessInsightCard } from "@/components/business-insight-card";
-import { NuvaActionCenter } from "@/components/nuva-action-center";
 import { ArrowUpRight, X, CheckCircle2, Sparkles, ShieldAlert } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -113,7 +112,6 @@ function Dashboard() {
     <ModuleGuard module="dashboard">
       <>
         <PageHeader title={`Hola, ${active?.name ?? "negocio"}`} description="Tu panel operativo: qué está pasando y qué necesita atención hoy." />
-        <NuvaActionCenter />
         {kpis !== undefined && !hasActivity && (
           <Card className="mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/[0.08] via-accent/40 to-background p-6 shadow-soft">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div className="max-w-2xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><Sparkles className="h-4 w-4" /> Activación de Nüva One</div><h2 className="mt-2 text-xl font-bold">Tu Nüva One está listo. Ahora hagamos que empiece a trabajar para ti.</h2><p className="mt-1 text-sm text-muted-foreground">Tu foco inicial es <strong className="text-foreground">{goalsLabel(onboardingFocus)}</strong>. Completa una primera operación y comenzaremos a construir tu visión del negocio.</p></div><Link to={focusAction.href} className="shrink-0"><Button size="lg">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link></div>
