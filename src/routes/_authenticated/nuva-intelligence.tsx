@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AlertTriangle, ArrowUpRight, Brain, CheckCircle2, Lightbulb, ShieldAlert, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -135,37 +135,48 @@ function NuvaIntelligence() {
             </Card>
 
             <div className="grid gap-5 lg:grid-cols-3">
-              <InsightTile title="Qué observa" value={`${intelligence.lowStock} riesgos de stock`} detail="Cruza disponibilidad y mínimos configurados." />
-              <InsightTile title="Dónde mirar" value={`${intelligence.openQuotes} cotizaciones abiertas`} detail={`Pipeline potencial de ${money(intelligence.openPipeline)}.`} />
-              <InsightTile title="Qué priorizar" value={`${intelligence.overdue} seguimientos vencidos`} detail="La prioridad aumenta cuando existen tareas comerciales pendientes." />
+              <InsightTile title="Qué observa" value={`${intelligence.lowStock} riesgos de stock`} detail="Cruza disponibilidad y mínimos configurados." href="/inventory" />
+              <InsightTile title="Dónde mirar" value={`${intelligence.openQuotes} cotizaciones abiertas`} detail={`Pipeline potencial de ${money(intelligence.openPipeline)}.`} href="/quotes" />
+              <InsightTile title="Qué priorizar" value={`${intelligence.overdue} seguimientos vencidos`} detail="La prioridad aumenta cuando existen tareas comerciales pendientes." href="/customers" />
             </div>
           </div>
         )}
 
         {activeView === "signals" && (
           <div className="grid gap-5 md:grid-cols-2">
-            <SignalCard icon={<ShieldAlert className="h-5 w-5" />} title="Riesgos operativos" value={intelligence.lowStock} description="Productos en o bajo su mínimo configurado." />
-            <SignalCard icon={<AlertTriangle className="h-5 w-5" />} title="Seguimientos vencidos" value={intelligence.overdue} description="Tareas comerciales que requieren atención." />
-            <SignalCard icon={<CheckCircle2 className="h-5 w-5" />} title="Cotizaciones abiertas" value={intelligence.openQuotes} description={`Pipeline potencial de ${money(intelligence.openPipeline)}.`} />
-            <SignalCard icon={<Sparkles className="h-5 w-5" />} title="Lectura financiera" value={`${intelligence.margin}%`} description="Margen estimado sobre los movimientos registrados." />
+            <SignalCard icon={<ShieldAlert className="h-5 w-5" />} title="Riesgos operativos" value={intelligence.lowStock} description="Productos en o bajo su mínimo configurado." href="/inventory" actionLabel="Abrir Inventario" />
+            <SignalCard icon={<AlertTriangle className="h-5 w-5" />} title="Seguimientos vencidos" value={intelligence.overdue} description="Tareas comerciales que requieren atención." href="/customers" actionLabel="Abrir Clientes" />
+            <SignalCard icon={<CheckCircle2 className="h-5 w-5" />} title="Cotizaciones abiertas" value={intelligence.openQuotes} description={`Pipeline potencial de ${money(intelligence.openPipeline)}.`} href="/quotes" actionLabel="Abrir Cotizaciones" />
+            <SignalCard icon={<Sparkles className="h-5 w-5" />} title="Lectura financiera" value={`${intelligence.margin}%`} description="Margen estimado sobre los movimientos registrados." href="/finance" actionLabel="Abrir Finanzas" />
           </div>
         )}
 
         {activeView === "opportunities" && (
           <Card className="p-6 md:p-8">
-            <div className="flex items-start gap-3">
-              <Lightbulb className="mt-0.5 h-5 w-5 text-primary" />
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Oportunidad prioritaria</p>
-                <h2 className="mt-1 text-xl font-semibold">
-                  {intelligence.openQuotes > 0 ? "Convierte el pipeline abierto en seguimiento comercial." : "Construye señales con más datos operativos."}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  {intelligence.openQuotes > 0
-                    ? `Hay ${intelligence.openQuotes} cotizaciones abiertas por ${money(intelligence.openPipeline)}. El siguiente paso es priorizar aquellas con mayor valor y antigüedad.`
-                    : "A medida que registres ventas, gastos, productos y clientes, Nüva aumentará la precisión de sus recomendaciones."}
-                </p>
+            <div className="flex flex-wrap items-start justify-between gap-5">
+              <div className="flex items-start gap-3">
+                <Lightbulb className="mt-0.5 h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Oportunidad prioritaria</p>
+                  <h2 className="mt-1 text-xl font-semibold">
+                    {intelligence.openQuotes > 0 ? "Convierte el pipeline abierto en seguimiento comercial." : "Construye señales con más datos operativos."}
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    {intelligence.openQuotes > 0
+                      ? `Hay ${intelligence.openQuotes} cotizaciones abiertas por ${money(intelligence.openPipeline)}. El siguiente paso es priorizar aquellas con mayor valor y antigüedad.`
+                      : "A medida que registres ventas, gastos, productos y clientes, Nüva aumentará la precisión de sus recomendaciones."}
+                  </p>
+                </div>
               </div>
+              {intelligence.openQuotes > 0 ? (
+                <Link to="/quotes" className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent">
+                  Revisar pipeline <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent">
+                  Completar datos <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              )}
             </div>
           </Card>
         )}
@@ -186,28 +197,33 @@ function Kpi({ label, value }: { label: string; value: string }) {
   );
 }
 
-function InsightTile({ title, value, detail }: { title: string; value: string; detail: string }) {
+function InsightTile({ title, value, detail, href }: { title: string; value: string; detail: string; href: "/inventory" | "/quotes" | "/customers" }) {
   return (
-    <Card className="p-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
-      <p className="mt-2 text-lg font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p>
-    </Card>
+    <Link to={href} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <Card className="h-full p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+        <p className="mt-2 text-lg font-semibold tracking-tight">{value}</p>
+        <p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p>
+        <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary">Abrir módulo <ArrowUpRight className="h-3.5 w-3.5" /></span>
+      </Card>
+    </Link>
   );
 }
 
-function SignalCard({ icon, title, value, description }: { icon: React.ReactNode; title: string; value: number | string; description: string }) {
+function SignalCard({ icon, title, value, description, href, actionLabel }: { icon: React.ReactNode; title: string; value: number | string; description: string; href: "/inventory" | "/customers" | "/quotes" | "/finance"; actionLabel: string }) {
   return (
-    <Card className="p-6">
-      <div className="flex items-start gap-3">
-        <div className="rounded-xl border bg-accent p-2">{icon}</div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{title}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    <Link to={href} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <Card className="h-full p-6 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl border bg-accent p-2">{icon}</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">{title}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary">{actionLabel} <ArrowUpRight className="h-3.5 w-3.5" /></span>
+          </div>
         </div>
-        <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-      </div>
-    </Card>
+      </Card>
+    </Link>
   );
 }
