@@ -68,7 +68,6 @@ export function InventorySmartImport() {
           low_stock_threshold: parseNumber(m.minimum) ?? 0, reorder_point: parseNumber(m.reorderPoint) ?? 0,
           max_stock: parseNumber(m.maxStock) ?? 0,
         };
-        if (m.category) payload.category = m.category.trim();
         if (current) {
           const { error } = await supabase.from("products").update(payload).eq("id", current.id).eq("business_id", active.id);
           if (error) throw error;
