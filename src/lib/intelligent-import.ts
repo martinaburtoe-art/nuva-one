@@ -25,18 +25,69 @@ export type IntelligentImportRow = {
   warnings: string[];
 };
 
-const aliases: Record<CanonicalImportField, string[]> = {
-  name: ["nombre", "producto", "articulo", "artículo", "descripcion", "descripción", "detalle", "item", "ítem", "product", "description", "name"],
-  sku: ["sku", "codigo sku", "código sku", "cod sku", "referencia", "ref", "codigo interno", "código interno", "codigo producto", "código producto", "product code", "item code", "item number", "part number", "modelo"],
-  barcode: ["codigo de barras", "código de barras", "barra", "ean", "ean13", "ean 13", "upc", "gtin", "barcode", "codigo barra", "código barra"],
-  stock: ["stock", "existencia", "existencias", "inventario", "cantidad", "cant", "qty", "quantity", "unidades", "uds", "disponible", "saldo", "saldo stock", "on hand", "physical stock"],
-  cost: ["costo", "coste", "costo unitario", "coste unitario", "precio costo", "precio de costo", "valor compra", "compra", "unit cost", "cost", "purchase price"],
-  price: ["precio", "precio venta", "precio de venta", "valor venta", "pvp", "pv", "retail", "sale price", "selling price", "unit price", "venta"],
-  minimum: ["minimo", "mínimo", "stock minimo", "stock mínimo", "min", "min stock", "min level", "minimum", "minimum stock", "nivel minimo", "nivel mínimo"],
-  reorderPoint: ["punto de pedido", "punto pedido", "reposicion", "reposición", "reorder", "reorder point", "reorder level", "nivel reposicion", "nivel reposición", "pedido minimo", "pedido mínimo"],
-  maxStock: ["maximo", "máximo", "stock maximo", "stock máximo", "max", "max stock", "maximum", "target stock", "stock objetivo", "objetivo", "tope"],
-  category: ["categoria", "categoría", "familia", "rubro", "tipo", "grupo", "linea", "línea", "category", "family", "group"],
+export type ImportMappingQuality = "high" | "review" | "weak";
+
+export type ImportAnalysis = {
+  detections: FieldDetection[];
+  rows: IntelligentImportRow[];
+  headers: string[];
+  quality: ImportMappingQuality;
+  unmappedHeaders: string[];
+  duplicateIdentifiers: string[];
 };
+
+const aliases: Record<CanonicalImportField, string[]> = {
+  name: [
+    "nombre", "nombre producto", "nombre articulo", "nombre artículo", "producto", "articulo", "artículo",
+    "descripcion", "descripción", "descripcion producto", "detalle", "item", "ítem", "product", "product name",
+    "description", "name", "title", "item name", "item description", "article",
+  ],
+  sku: [
+    "sku", "codigo sku", "código sku", "cod sku", "codigo interno", "código interno", "codigo producto",
+    "código producto", "codigo de producto", "código de producto", "codigo articulo", "código artículo",
+    "referencia", "referencia producto", "ref", "ref producto", "codigo", "código", "cod", "product code",
+    "item code", "item number", "part number", "part no", "model", "modelo", "reference", "internal code",
+  ],
+  barcode: [
+    "codigo de barras", "código de barras", "codigo barra", "código barra", "barra", "ean", "ean13", "ean 13",
+    "ean 8", "ean8", "upc", "upca", "upc a", "gtin", "gtin13", "gtin 13", "barcode", "bar code",
+    "isbn", "codigo barras", "código barras",
+  ],
+  stock: [
+    "stock", "existencia", "existencias", "inventario", "cantidad", "cant", "qty", "quantity", "unidades",
+    "uds", "disponible", "disponibles", "saldo", "saldo stock", "on hand", "physical stock", "stock actual",
+    "cantidad disponible", "available", "available qty", "units", "units on hand",
+  ],
+  cost: [
+    "costo", "coste", "costo unitario", "coste unitario", "precio costo", "precio de costo", "valor compra",
+    "precio compra", "precio de compra", "compra", "costo adquisicion", "costo adquisición", "unit cost", "cost",
+    "purchase price", "buy price", "landed cost", "unit purchase cost",
+  ],
+  price: [
+    "precio", "precio venta", "precio de venta", "valor venta", "valor de venta", "pvp", "pv", "retail",
+    "sale price", "selling price", "unit price", "precio unitario", "precio publico", "precio público", "venta",
+    "retail price", "list price",
+  ],
+  minimum: [
+    "minimo", "mínimo", "stock minimo", "stock mínimo", "min", "min stock", "min level", "minimum",
+    "minimum stock", "nivel minimo", "nivel mínimo", "stock de seguridad", "safety stock", "minimum level",
+  ],
+  reorderPoint: [
+    "punto de pedido", "punto pedido", "reposicion", "reposición", "reorder", "reorder point", "reorder level",
+    "nivel reposicion", "nivel reposición", "pedido minimo", "pedido mínimo", "punto reposicion", "punto reposición",
+    "rop", "reorder threshold",
+  ],
+  maxStock: [
+    "maximo", "máximo", "stock maximo", "stock máximo", "max", "max stock", "maximum", "target stock",
+    "stock objetivo", "objetivo", "tope", "maximum stock", "target level", "nivel objetivo",
+  ],
+  category: [
+    "categoria", "categoría", "familia", "rubro", "tipo", "grupo", "linea", "línea", "subcategoria", "subcategoría",
+    "category", "family", "group", "department", "departamento", "class", "product category",
+  ],
+};
+
+const fields = Object.keys(aliases) as CanonicalImportField[];
 
 function normalize(value: string): string {
   return value
@@ -52,7 +103,7 @@ function normalize(value: string): string {
 function similarity(a: string, b: string): number {
   if (a === b) return 1;
   if (!a || !b) return 0;
-  if (a.includes(b) || b.includes(a)) return 0.9;
+  if (a.includes(b) || b.includes(a)) return 0.88;
   const aa = new Set(a.split(" ").filter(Boolean));
   const bb = new Set(b.split(" ").filter(Boolean));
   const intersection = [...aa].filter((x) => bb.has(x)).length;
@@ -60,50 +111,96 @@ function similarity(a: string, b: string): number {
   return union ? intersection / union : 0;
 }
 
+function looksNumeric(value: string): boolean {
+  return parseNumber(value) !== null;
+}
+
 function valueShape(field: CanonicalImportField, values: string[]): number {
-  const sample = values.filter(Boolean).slice(0, 30);
+  const sample = values.map((v) => v.trim()).filter(Boolean).slice(0, 40);
   if (!sample.length) return 0;
   if (["stock", "cost", "price", "minimum", "reorderPoint", "maxStock"].includes(field)) {
-    const numeric = sample.filter((v) => parseNumber(v) !== null).length / sample.length;
-    return numeric >= 0.8 ? 0.08 : 0;
+    const numeric = sample.filter(looksNumeric).length / sample.length;
+    return numeric >= 0.9 ? 0.14 : numeric >= 0.7 ? 0.06 : 0;
   }
   if (field === "barcode") {
-    const coded = sample.filter((v) => /^[0-9A-Z-]{6,32}$/i.test(v.replace(/\s/g, ""))).length / sample.length;
-    return coded >= 0.7 ? 0.08 : 0;
+    const coded = sample.filter((v) => /^[0-9]{6,18}$/.test(v.replace(/\s/g, ""))).length / sample.length;
+    return coded >= 0.8 ? 0.16 : coded >= 0.6 ? 0.07 : 0;
+  }
+  if (field === "sku") {
+    const coded = sample.filter((v) => /^[A-Z0-9][A-Z0-9._/-]{2,31}$/i.test(v.replace(/\s/g, ""))).length / sample.length;
+    return coded >= 0.75 ? 0.1 : coded >= 0.5 ? 0.04 : 0;
+  }
+  if (field === "name") {
+    const descriptive = sample.filter((v) => /[a-záéíóúñü]/i.test(v) && v.length >= 3).length / sample.length;
+    return descriptive >= 0.8 ? 0.08 : descriptive >= 0.5 ? 0.03 : 0;
   }
   return 0;
+}
+
+function scoreField(field: CanonicalImportField, header: string, values: string[]): { score: number; alias: string } {
+  const normalized = normalize(header);
+  let best = { score: 0, alias: "" };
+  for (const alias of aliases[field]) {
+    const score = similarity(normalized, normalize(alias));
+    if (score > best.score) best = { score, alias };
+  }
+  return { score: Math.min(1.2, best.score + valueShape(field, values)), alias: best.alias };
 }
 
 export function detectField(header: string, values: string[]): FieldDetection | null {
   const normalized = normalize(header);
   if (!normalized) return null;
-  let best: { field: CanonicalImportField; score: number; alias: string } | null = null;
-  for (const [field, fieldAliases] of Object.entries(aliases) as [CanonicalImportField, string[]][]) {
-    for (const alias of fieldAliases) {
-      const score = similarity(normalized, normalize(alias)) + valueShape(field, values);
-      if (!best || score > best.score) best = { field, score, alias };
-    }
-  }
+  const candidates = fields
+    .map((field) => ({ field, ...scoreField(field, header, values) }))
+    .sort((a, b) => b.score - a.score);
+  const best = candidates[0];
+  const second = candidates[1];
   if (!best || best.score < 0.52) return null;
   const confidence = Math.min(0.99, Math.max(0.52, best.score));
+  const ambiguous = second && best.score - second.score < 0.08;
   return {
     field: best.field,
     sourceHeader: header,
-    confidence,
-    reason: best.alias === normalized ? "Coincidencia exacta" : `Relacionado con “${best.alias}”`,
+    confidence: ambiguous ? Math.min(confidence, 0.76) : confidence,
+    reason: ambiguous
+      ? `Ambiguo entre ${best.field} y ${second.field}; se priorizó ${best.field} por el contenido.`
+      : best.alias === normalized ? "Coincidencia exacta" : `Relacionado con “${best.alias}” y validado por el contenido`,
   };
 }
 
 export function detectColumns(headers: string[], rows: Record<string, string>[]): FieldDetection[] {
-  const used = new Set<CanonicalImportField>();
-  return headers
-    .map((header) => {
-      const detection = detectField(header, rows.map((row) => row[header] ?? ""));
-      if (!detection || used.has(detection.field)) return null;
-      used.add(detection.field);
-      return detection;
-    })
-    .filter((x): x is FieldDetection => Boolean(x));
+  const candidates = headers.flatMap((header) => {
+    const values = rows.map((row) => row[header] ?? "");
+    return fields.map((field) => ({ header, field, ...scoreField(field, header, values) }));
+  });
+  const selected: FieldDetection[] = [];
+  const usedHeaders = new Set<string>();
+  const usedFields = new Set<CanonicalImportField>();
+
+  while (true) {
+    const available = candidates
+      .filter((c) => !usedHeaders.has(c.header) && !usedFields.has(c.field) && c.score >= 0.52)
+      .sort((a, b) => b.score - a.score);
+    const best = available[0];
+    if (!best) break;
+    const alternatives = candidates
+      .filter((c) => c.header === best.header && c.field !== best.field)
+      .sort((a, b) => b.score - a.score);
+    const second = alternatives[0];
+    const confidence = Math.min(0.99, Math.max(0.52, best.score));
+    const ambiguous = second && best.score - second.score < 0.08;
+    selected.push({
+      field: best.field,
+      sourceHeader: best.header,
+      confidence: ambiguous ? Math.min(confidence, 0.76) : confidence,
+      reason: ambiguous
+        ? `Ambiguo; se priorizó ${best.field} por el contenido de la columna.`
+        : best.score >= 1 ? "Coincidencia semántica fuerte + contenido compatible" : `Relacionado con “${best.alias}”`,
+    });
+    usedHeaders.add(best.header);
+    usedFields.add(best.field);
+  }
+  return selected;
 }
 
 export function parseDelimited(text: string): Record<string, string>[] {
@@ -138,33 +235,62 @@ function splitLine(line: string, delimiter: string): string[] {
 export function parseNumber(value: string | null | undefined): number | null {
   if (value == null || !String(value).trim()) return null;
   let raw = String(value).trim().replace(/\s/g, "").replace(/[$€£CLPUSD]/gi, "");
+  const negative = /^\(.*\)$/.test(raw);
+  raw = raw.replace(/^\(|\)$/g, "");
   if (raw.includes(",") && raw.includes(".")) {
     raw = raw.lastIndexOf(",") > raw.lastIndexOf(".") ? raw.replace(/\./g, "").replace(",", ".") : raw.replace(/,/g, "");
   } else if (raw.includes(",")) {
     const decimals = raw.split(",")[1];
     raw = decimals && decimals.length <= 2 ? raw.replace(",", ".") : raw.replace(/,/g, "");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+    raw = raw.replace(/\./g, "");
   }
   const number = Number(raw.replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(number) ? number : null;
+  if (!Number.isFinite(number)) return null;
+  return negative ? -Math.abs(number) : number;
 }
 
-export function buildIntelligentRows(text: string): { detections: FieldDetection[]; rows: IntelligentImportRow[]; headers: string[] } {
+export function buildIntelligentRows(text: string): ImportAnalysis {
   const rawRows = parseDelimited(text);
   const headers = rawRows.length ? Object.keys(rawRows[0]) : [];
   const detections = detectColumns(headers, rawRows);
+  const detectedHeaders = new Set(detections.map((d) => d.sourceHeader));
+  const unmappedHeaders = headers.filter((header) => !detectedHeaders.has(header));
   const rows = rawRows.map((raw, index) => {
     const mapped: Partial<Record<CanonicalImportField, string>> = {};
-    const rowDetections: FieldDetection[] = [];
+    const rowDetections = detections;
     for (const detection of detections) {
       const value = raw[detection.sourceHeader]?.trim();
       if (value) mapped[detection.field] = value;
-      rowDetections.push(detection);
     }
     const warnings: string[] = [];
     if (!mapped.name) warnings.push("No se identificó una columna de nombre/producto.");
     if (!mapped.sku && !mapped.barcode) warnings.push("No hay identificador único claro; Nüva usará el nombre con cautela.");
     if (mapped.stock && parseNumber(mapped.stock) === null) warnings.push("Stock no numérico: revisar antes de importar.");
+    if (detections.some((d) => d.confidence < 0.8)) warnings.push("Hay columnas con confianza media; conviene revisar el mapeo antes de importar.");
     return { rowNumber: index + 2, raw, mapped, detections: rowDetections, warnings };
   });
-  return { detections, rows, headers };
+
+  const identifiers = rows
+    .map((row) => normalize(row.mapped.sku || row.mapped.barcode || row.mapped.name || ""))
+    .filter(Boolean);
+  const counts = new Map<string, number>();
+  identifiers.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
+  const duplicateIdentifiers = [...counts.entries()].filter(([, count]) => count > 1).map(([id]) => id);
+  const duplicateSet = new Set(duplicateIdentifiers);
+  rows.forEach((row) => {
+    const id = normalize(row.mapped.sku || row.mapped.barcode || row.mapped.name || "");
+    if (id && duplicateSet.has(id)) row.warnings.push("Identificador repetido dentro del archivo; Nüva no debe fusionarlo a ciegas.");
+  });
+
+  const averageConfidence = detections.length
+    ? detections.reduce((sum, detection) => sum + detection.confidence, 0) / detections.length
+    : 0;
+  const quality: ImportMappingQuality = !detections.length || averageConfidence < 0.65 || !rows.some((row) => row.mapped.name)
+    ? "weak"
+    : averageConfidence < 0.82 || rows.some((row) => row.warnings.length)
+      ? "review"
+      : "high";
+
+  return { detections, rows, headers, quality, unmappedHeaders, duplicateIdentifiers };
 }
