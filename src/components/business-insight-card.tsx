@@ -57,13 +57,13 @@ export function BusinessInsightCard({
     recommendation = "Registra una venta para comenzar a relacionar rotación, ingresos y stock.";
   } else if (hasData && income > 0 && net >= 0) {
     kind = "positive";
-    signalLabel = "Tendencia positiva";
+    signalLabel = "Resultado positivo";
     title = "El negocio mantiene flujo positivo";
     explanation = `Ingresos por ${fmtCLP(income)}, flujo neto de ${fmtCLP(net)} y margen de ${margin.toFixed(1)}%.`;
-    actionLabel = "Ver Nüva Intelligence";
+    actionLabel = "Profundizar análisis";
     actionHref = "/nuva-intelligence";
     Icon = TrendingUp;
-    recommendation = "Profundiza en qué ventas, productos y clientes están impulsando el resultado.";
+    recommendation = "El resultado es positivo. Revisa Intelligence para identificar qué está impulsando el desempeño y dónde existe oportunidad.";
   }
 
   const tone =
@@ -90,7 +90,7 @@ export function BusinessInsightCard({
                 <span className={`grid h-8 w-8 place-items-center rounded-xl ${iconTone}`}>
                   <Icon className="h-4 w-4" />
                 </span>
-                <span>Pulso de Nüva</span>
+                <span>Resumen operativo</span>
                 <span className="rounded-full border bg-background/70 px-2.5 py-1 tracking-normal text-muted-foreground">
                   {signalLabel}
                 </span>
@@ -117,12 +117,12 @@ export function BusinessInsightCard({
 
           <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
             <div className="rounded-2xl border bg-background/70 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Recomendación de Nüva</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Siguiente foco</p>
               <p className="mt-1 text-sm font-medium">{recommendation}</p>
             </div>
             <Link to="/nuva-intelligence" className="shrink-0">
               <Button variant="outline">
-                Abrir Intelligence
+                Ver Intelligence
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
