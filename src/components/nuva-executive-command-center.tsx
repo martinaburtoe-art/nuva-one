@@ -129,7 +129,7 @@ export function NuvaExecutiveCommandCenter({
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-2xl">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                <Zap className="h-4 w-4" /> Nüva Executive Intelligence
+                <Zap className="h-4 w-4" /> Resumen ejecutivo
               </div>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">
                 Nüva encontró lo que merece tu atención.
