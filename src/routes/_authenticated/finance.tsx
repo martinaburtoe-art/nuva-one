@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ModuleGuard } from "@/components/module-guard";
 import { FinanceAccountingWorkspaceV2 } from "@/components/finance-accounting-workspace-v2";
+import { FinanceAdvancedTools } from "@/components/finance-advanced-tools";
 import { NuvaFinancialControl } from "@/components/nuva-financial-control";
-import { useActiveBusiness } from "@/lib/use-business";
 import { useBizList } from "@/lib/biz-data";
 
 export const Route = createFileRoute("/_authenticated/finance")({
@@ -12,7 +12,6 @@ export const Route = createFileRoute("/_authenticated/finance")({
 });
 
 function Finance() {
-  const { active } = useActiveBusiness();
   const { data: transactions = [] } = useBizList<any>("transactions", { order: "tx_date", ascending: false });
   const { data: products = [] } = useBizList<any>("products");
 
@@ -27,6 +26,7 @@ function Finance() {
     <ModuleGuard module="finance">
       <div className="space-y-5">
         <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} />
+        <FinanceAdvancedTools />
         <a href="/pricing-calculator" className="block rounded-xl border border-primary/20 bg-primary/[0.04] p-4 transition-colors hover:bg-primary/[0.08]">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold">$</div>
