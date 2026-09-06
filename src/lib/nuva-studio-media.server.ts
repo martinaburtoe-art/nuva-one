@@ -33,7 +33,7 @@ export async function generateGeminiImageAsset(args: {
     body: JSON.stringify({
       model: IMAGE_MODEL,
       input: prompt,
-      response_format: { type: "image", mime_type: "image/png", aspect_ratio: "1:1", image_size: "1K" },
+      response_format: { type: "image", mime_type: "image/jpeg", aspect_ratio: "1:1", image_size: "1K" },
     }),
   });
 
@@ -51,7 +51,7 @@ export async function generateGeminiImageAsset(args: {
   const image = fromConvenience ?? (fromSteps?.data ? { data: fromSteps.data, mime_type: fromSteps.mime_type } : null);
   if (!image?.data) throw new Error("Gemini no devolvió una imagen utilizable.");
 
-  const mimeType = image.mime_type ?? "image/png";
+  const mimeType = image.mime_type ?? "image/jpeg";
   const extension = mimeType.includes("jpeg") ? "jpg" : "png";
   const storagePath = `${args.businessId}/studio/${crypto.randomUUID()}.${extension}`;
   const bytes = Uint8Array.from(Buffer.from(image.data, "base64"));
