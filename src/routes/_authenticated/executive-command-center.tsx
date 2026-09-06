@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useBizList } from "@/lib/biz-data";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
@@ -21,18 +21,33 @@ export const Route = createFileRoute("/_authenticated/executive-command-center")
   component: ExecutiveCommandCenter,
 });
 
-const intelligenceSections = [
-  ["executive-overview-core", "Resumen ejecutivo", "Salud, señales y foco actual"],
-  ["executive-decision", "Decision Engine", "Prioridades y acciones recomendadas"],
-  ["executive-timeline", "Timeline", "Evolución de decisiones y actividad"],
-  ["executive-predictive", "Predictivo", "Riesgos y señales anticipadas"],
-  ["executive-trends", "Tendencias", "Cambios comerciales y operativos"],
-  ["executive-outcomes", "Resultados", "Qué ocurrió después de decidir"],
-  ["executive-memory", "Memoria", "Contexto y aprendizaje del negocio"],
-  ["executive-execution", "Execution Score", "Disciplina y cumplimiento"],
-] as const;
+type IntelligenceSection =
+  | "overview"
+  | "decision"
+  | "timeline"
+  | "predictive"
+  | "trends"
+  | "outcomes"
+  | "memory"
+  | "execution";
+
+const intelligenceSections: Array<{
+  id: IntelligenceSection;
+  title: string;
+  description: string;
+}> = [
+  { id: "overview", title: "Resumen ejecutivo", description: "Salud, señales y foco actual" },
+  { id: "decision", title: "Decision Engine", description: "Prioridades y acciones recomendadas" },
+  { id: "timeline", title: "Timeline", description: "Evolución de decisiones y actividad" },
+  { id: "predictive", title: "Predictivo", description: "Riesgos y señales anticipadas" },
+  { id: "trends", title: "Tendencias", description: "Cambios comerciales y operativos" },
+  { id: "outcomes", title: "Resultados", description: "Qué ocurrió después de decidir" },
+  { id: "memory", title: "Memoria", description: "Contexto y aprendizaje del negocio" },
+  { id: "execution", title: "Execution Score", description: "Disciplina y cumplimiento" },
+];
 
 function ExecutiveCommandCenter() {
+  const [activeSection, setActiveSection] = useState<IntelligenceSection>("overview");
   const { data: customers, isLoading: a } = useBizList<any>("customers", { order: "name" });
   const { data: sales, isLoading: b } = useBizList<any>("sales", { order: "sale_date" });
   const { data: activities, isLoading: c } = useBizList<any>("customer_activities", { order: "created_at" });
@@ -54,57 +69,112 @@ function ExecutiveCommandCenter() {
     });
   }, [loading, sales, purchases, transactions, products]);
 
+  const section = intelligenceSections.find((item) => item.id === activeSection)!;
+
   return (
     <ModuleGuard module="customers">
       <div className="p-4 md:p-6">
-        <PageHeader title="Executive Intelligence" description="La vista ejecutiva de Nüva: qué está pasando, qué importa y qué hacer ahora." />
+        <PageHeader
+          title="Executive Intelligence"
+          description="La vista ejecutiva de Nüva: qué está pasando, qué importa y qué hacer ahora."
+        />
         {loading ? (
-          <div className="space-y-4"><Skeleton className="h-56 w-full" /><Skeleton className="h-40 w-full" /></div>
+          <div className="space-y-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-56 w-full" />
+          </div>
         ) : (
           <div className="space-y-5">
             <Card className="border-primary/20 bg-background/70 p-3">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {intelligenceSections.map(([id, title, description]) => (
-                  <a key={id} href={`#${id}`} className="group rounded-2xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">{title}</p>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
+                {intelligenceSections.map((item) => {
+                  const active = item.id === activeSection;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setActiveSection(item.id)}
+                      className={`group rounded-2xl border p-4 text-left transition-all ${
+                        active
+                          ? "border-primary bg-primary/[0.07] shadow-sm"
+                          : "bg-background/70 hover:-translate-y-0.5 hover:border-primary hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{item.title}</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p>
+                        </div>
+                        <Arrow active={active} />
                       </div>
-                      <Arrow className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </div>
-                  </a>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </Card>
 
-            {decision && (
-              <Card id="executive-decision" className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5 scroll-mt-6">
+            <div className="flex items-center justify-between gap-3 border-b pb-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Executive workspace</p>
+                <h2 className="mt-1 text-xl font-semibold">{section.title}</h2>
+              </div>
+              <span className="hidden text-xs text-muted-foreground md:block">Vista {intelligenceSections.findIndex((item) => item.id === activeSection) + 1} de {intelligenceSections.length}</span>
+            </div>
+
+            {activeSection === "overview" && (
+              <NuvaExecutiveCommandCenter
+                customers={customers ?? []}
+                sales={sales ?? []}
+                activities={activities ?? []}
+                quotes={quotes ?? []}
+                products={products ?? []}
+                executionScore={executionScore}
+              />
+            )}
+
+            {activeSection === "decision" && decision && (
+              <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-primary">Nüva Decision Engine</p>
                     <h2 className="mt-1 text-xl font-bold">{decision.headline}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">Prioridad ejecutiva: <strong className="text-foreground">{decision.score}/100</strong> · Estado: <strong className="text-foreground">{decision.status}</strong></p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Prioridad ejecutiva: <strong className="text-foreground">{decision.score}/100</strong> · Estado: <strong className="text-foreground">{decision.status}</strong>
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold"><DecisionIcon status={decision.status} /> {decision.topSignal.title}</div>
+                  <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold">
+                    <DecisionIcon status={decision.status} /> {decision.topSignal.title}
+                  </div>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   {decision.actions.slice(0, 4).map((item) => (
-                    <Link key={item.id} to={decisionDestinationRoute(item.destination)} className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary">
-                      <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{item.title}</p><p className="mt-1 text-xs text-muted-foreground">Impacto {item.impact}/100 · {item.mode === "prepare" ? "Preparar" : "Revisar"}</p></div><span className="text-xs font-medium text-primary">{item.cta} →</span></div>
+                    <Link
+                      key={item.id}
+                      to={decisionDestinationRoute(item.destination)}
+                      className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{item.title}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Impacto {item.impact}/100 · {item.mode === "prepare" ? "Preparar" : "Revisar"}
+                          </p>
+                        </div>
+                        <span className="text-xs font-medium text-primary">{item.cta} →</span>
+                      </div>
                     </Link>
                   ))}
                 </div>
               </Card>
             )}
 
-            <div id="executive-overview-core" className="scroll-mt-6"><NuvaExecutiveCommandCenter customers={customers ?? []} sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} products={products ?? []} executionScore={executionScore} /></div>
-            <section id="executive-timeline" className="scroll-mt-6"><NuvaDecisionTimeline activities={activities ?? []} /></section>
-            <section id="executive-predictive" className="scroll-mt-6"><NuvaPredictiveSignals sales={sales ?? []} quotes={quotes ?? []} activities={activities ?? []} /></section>
-            <section id="executive-trends" className="scroll-mt-6"><NuvaTrendIntelligence sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} /></section>
-            <section id="executive-outcomes" className="scroll-mt-6"><NuvaDecisionOutcomes activities={activities ?? []} /></section>
-            <section id="executive-memory" className="scroll-mt-6"><NuvaDecisionMemory activities={activities ?? []} /></section>
-            <section id="executive-execution" className="scroll-mt-6"><NuvaExecutionScore activities={activities ?? []} priorities={(customers ?? []).length} /></section>
+            {activeSection === "timeline" && <NuvaDecisionTimeline activities={activities ?? []} />}
+            {activeSection === "predictive" && <NuvaPredictiveSignals sales={sales ?? []} quotes={quotes ?? []} activities={activities ?? []} />}
+            {activeSection === "trends" && <NuvaTrendIntelligence sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} />}
+            {activeSection === "outcomes" && <NuvaDecisionOutcomes activities={activities ?? []} />}
+            {activeSection === "memory" && <NuvaDecisionMemory activities={activities ?? []} />}
+            {activeSection === "execution" && <NuvaExecutionScore activities={activities ?? []} priorities={(customers ?? []).length} />}
           </div>
         )}
       </div>
@@ -112,7 +182,19 @@ function ExecutiveCommandCenter() {
   );
 }
 
-function Arrow({ className }: { className?: string }) { return <span className={className} aria-hidden="true">→</span>; }
+function Arrow({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`text-sm font-semibold transition-transform ${
+        active ? "text-primary" : "text-muted-foreground group-hover:translate-x-0.5 group-hover:text-primary"
+      }`}
+      aria-hidden="true"
+    >
+      {active ? "●" : "→"}
+    </span>
+  );
+}
+
 function decisionDestinationRoute(destination: ActionDestination) {
   switch (destination) {
     case "inventory": return "/inventory";
@@ -123,6 +205,7 @@ function decisionDestinationRoute(destination: ActionDestination) {
     case "dashboard": return "/dashboard";
   }
 }
+
 function DecisionIcon({ status }: { status: "critical" | "attention" | "opportunity" | "stable" }) {
   if (status === "critical") return <ShieldAlert className="h-4 w-4" />;
   if (status === "attention") return <AlertTriangle className="h-4 w-4" />;
