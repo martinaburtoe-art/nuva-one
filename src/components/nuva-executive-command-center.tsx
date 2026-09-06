@@ -129,7 +129,7 @@ export function NuvaExecutiveCommandCenter({
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-2xl">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                <Zap className="h-4 w-4" /> Resumen ejecutivo
+                <Zap className="h-4 w-4" /> Estado ejecutivo
               </div>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">
                 Nüva encontró lo que merece tu atención.
@@ -147,43 +147,15 @@ export function NuvaExecutiveCommandCenter({
             </div>
           </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Metric
-              icon={<CircleDollarSign className="h-4 w-4" />}
-              label="Ventas registradas"
-              value={money(revenue)}
-            />
-            <Metric
-              icon={<Users className="h-4 w-4" />}
-              label="Clientes activos"
-              value={String(activeCustomers)}
-            />
-            <Metric
-              icon={<AlertTriangle className="h-4 w-4" />}
-              label="Tareas vencidas"
-              value={String(overdue)}
-            />
-            <Metric
-              icon={<CheckCircle2 className="h-4 w-4" />}
-              label="Execution Score"
-              value={`${executionScore}/100`}
-            />
+            <Metric icon={<CircleDollarSign className="h-4 w-4" />} label="Ventas registradas" value={money(revenue)} />
+            <Metric icon={<Users className="h-4 w-4" />} label="Clientes activos" value={String(activeCustomers)} />
+            <Metric icon={<AlertTriangle className="h-4 w-4" />} label="Tareas vencidas" value={String(overdue)} />
+            <Metric icon={<CheckCircle2 className="h-4 w-4" />} label="Execution Score" value={`${executionScore}/100`} />
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <Signal
-              icon={<Package className="h-4 w-4" />}
-              label="Inventario"
-              value={`${inventory}/100`}
-            />
-            <Signal
-              icon={<FileText className="h-4 w-4" />}
-              label="Cotizaciones"
-              value={String(pendingQuotes.length)}
-            />
-            <Signal
-              icon={<CircleDollarSign className="h-4 w-4" />}
-              label="Pipeline abierto"
-              value={money(pendingQuoteValue)}
-            />
+            <Signal icon={<Package className="h-4 w-4" />} label="Inventario" value={`${inventory}/100`} />
+            <Signal icon={<FileText className="h-4 w-4" />} label="Cotizaciones" value={String(pendingQuotes.length)} />
+            <Signal icon={<CircleDollarSign className="h-4 w-4" />} label="Pipeline abierto" value={money(pendingQuoteValue)} />
           </div>
         </div>
       </Card>
@@ -192,85 +164,43 @@ export function NuvaExecutiveCommandCenter({
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Nüva Focus
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Nüva Focus</p>
                 <h3 className="mt-1 text-xl font-semibold">{urgency}</h3>
               </div>
-              {risk ? (
-                <ShieldAlert className="h-5 w-5" />
-              ) : (
-                <ArrowUpRight className="h-5 w-5 text-primary" />
-              )}
+              {risk ? <ShieldAlert className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5 text-primary" />}
             </div>
             <div className="mt-5 rounded-xl border bg-muted/30 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-semibold">{diagnosis}</p>
-                <span className="rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums">
-                  Prioridad {best.priority}/100
-                </span>
+                <span className="rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums">Prioridad {best.priority}/100</span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                La prioridad combina impacto estimado y urgencia observable. Es una señal de
-                decisión, no una promesa de resultado.
+                La prioridad combina impacto estimado y urgencia observable. Es una señal de decisión, no una promesa de resultado.
               </p>
             </div>
           </div>
         </Card>
         <Card>
           <div className="p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Decision Engine
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Decision Engine</p>
             <h3 className="mt-2 text-lg font-semibold">{best.label}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {best.reason}. Convierte la señal prioritaria en una acción operativa.
-            </p>
-            <Link
-              to="/customer-action-center"
-              className="mt-4 inline-flex items-center text-sm font-semibold text-primary"
-            >
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{best.reason}. Convierte la señal prioritaria en una acción operativa.</p>
+            <Link to="/customer-action-center" className="mt-4 inline-flex items-center text-sm font-semibold text-primary">
               Ejecutar en Action Center <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
         </Card>
       </div>
       <div className="flex flex-wrap gap-2 text-sm">
-        <Link
-          to="/business-health"
-          className="rounded-xl border px-4 py-2 font-semibold hover:bg-muted"
-        >
-          Ver Business Health
-        </Link>
-        <Link
-          to="/customer-action-center"
-          className="rounded-xl border px-4 py-2 font-semibold hover:bg-muted"
-        >
-          Ver prioridades CRM
-        </Link>
+        <Link to="/business-health" className="rounded-xl border px-4 py-2 font-semibold hover:bg-muted">Ver Business Health</Link>
+        <Link to="/customer-action-center" className="rounded-xl border px-4 py-2 font-semibold hover:bg-muted">Ver prioridades CRM</Link>
       </div>
     </section>
   );
 }
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-xl border bg-background/70 p-4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
-    </div>
-  );
+  return <div className="rounded-xl border bg-background/70 p-4"><div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div><p className="mt-1 text-lg font-bold tabular-nums">{value}</p></div>;
 }
 function Signal({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border bg-background/60 px-4 py-3">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <span className="font-semibold tabular-nums">{value}</span>
-    </div>
-  );
+  return <div className="flex items-center justify-between rounded-xl border bg-background/60 px-4 py-3"><div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div><span className="font-semibold tabular-nums">{value}</span></div>;
 }
