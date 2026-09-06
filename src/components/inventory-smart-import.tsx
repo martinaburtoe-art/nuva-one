@@ -2,9 +2,8 @@ import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileSpreadsheet, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
 import { adjustInventoryStock } from "@/lib/inventory-transactions";
-import { buildIntelligentRows, parseNumber, type CanonicalImportField, type IntelligentImportRow } from "@/lib/intelligent-import";
+import { buildIntelligentRows, parseNumber, type CanonicalImportField, type IntelligentImportRow, type ImportMappingQuality } from "@/lib/intelligent-import";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +12,7 @@ const labels: Record<CanonicalImportField, string> = {
   name: "Producto", sku: "SKU / referencia", barcode: "Código de barras", stock: "Stock", cost: "Costo", price: "Precio",
   minimum: "Mínimo", reorderPoint: "Punto de reposición", maxStock: "Stock objetivo", category: "Categoría",
 };
+const qualityLabels: Record<ImportMappingQuality, string> = { high: "Mapeo automático", review: "Revisión recomendada", weak: "Mapeo insuficiente" };
 
 export function InventorySmartImport() {
   const { active } = useActiveBusiness();
@@ -22,29 +22,38 @@ export function InventorySmartImport() {
   const [fileName, setFileName] = useState("");
   const [rows, setRows] = useState<IntelligentImportRow[]>([]);
   const [detections, setDetections] = useState<{ field: CanonicalImportField; sourceHeader: string; confidence: number; reason: string }[]>([]);
+  const [unmappedHeaders, setUnmappedHeaders] = useState<string[]>([]);
+  const [duplicateIdentifiers, setDuplicateIdentifiers] = useState<string[]>([]);
+  const [quality, setQuality] = useState<ImportMappingQuality>("weak");
   const [busy, setBusy] = useState(false);
 
-  const stats = useMemo(() => ({
-    ready: rows.filter((row) => Boolean(row.mapped.name) && (!row.mapped.stock || parseNumber(row.mapped.stock) !== null)).length,
-    warnings: rows.filter((row) => row.warnings.length).length,
-  }), [rows]);
+  const stats = useMemo(() => {
+    const blocked = new Set(duplicateIdentifiers);
+    const ready = rows.filter((row) => {
+      const identifier = (row.mapped.sku || row.mapped.barcode || row.mapped.name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      return Boolean(row.mapped.name) && (!row.mapped.stock || parseNumber(row.mapped.stock) !== null) && (!identifier || !blocked.has(identifier));
+    }).length;
+    return { ready, warnings: rows.filter((row) => row.warnings.length).length, blocked: rows.filter((row) => row.warnings.some((warning) => warning.includes("Identificador repetido"))).length };
+  }, [rows, duplicateIdentifiers]);
 
   async function readFile(file: File) {
     setFileName(file.name);
     const text = await file.text();
     if (/\.xlsx?$/i.test(file.name)) {
-      toast.error("El archivo Excel debe guardarse como CSV UTF-8 para esta versión del importador.");
-      setRows([]); setDetections([]); return;
+      toast.error("El Excel nativo todavía requiere el lector XLSX dedicado; usa CSV UTF-8 mientras se habilita esa capa.");
+      setRows([]); setDetections([]); setUnmappedHeaders([]); setDuplicateIdentifiers([]); setQuality("weak"); return;
     }
     const result = buildIntelligentRows(text);
-    setRows(result.rows);
-    setDetections(result.detections);
+    setRows(result.rows); setDetections(result.detections); setUnmappedHeaders(result.unmappedHeaders); setDuplicateIdentifiers(result.duplicateIdentifiers); setQuality(result.quality);
     if (!result.rows.length) toast.error("No encontré filas legibles en el archivo.");
-    else toast.success(`Detecté ${result.detections.length} campos y ${result.rows.length} filas.`);
+    else if (result.quality === "weak") toast.warning("No tengo suficiente evidencia para importar automáticamente este archivo.");
+    else toast.success(`Analicé ${result.rows.length} filas y detecté ${result.detections.length} campos.`);
   }
 
   async function importRows() {
     if (!active?.id || !canWrite || !rows.length) return;
+    if (quality === "weak") return toast.error("El mapeo no es suficientemente confiable para importar.");
+    if (duplicateIdentifiers.length) return toast.error("Hay identificadores repetidos dentro del archivo. Corrígelos antes de importar para evitar fusiones incorrectas.");
     const valid = rows.filter((row) => row.mapped.name && (!row.mapped.stock || parseNumber(row.mapped.stock) !== null));
     if (!valid.length) return toast.error("No hay filas válidas para importar.");
     setBusy(true);
@@ -85,7 +94,7 @@ export function InventorySmartImport() {
       }
       skipped = rows.length - valid.length;
       toast.success(`Importación terminada: ${created} creados, ${updated} actualizados y ${adjusted} stocks trazados${skipped ? `; ${skipped} omitidos` : ""}.`);
-      setRows([]); setDetections([]); setFileName("");
+      setRows([]); setDetections([]); setUnmappedHeaders([]); setDuplicateIdentifiers([]); setQuality("weak"); setFileName("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "La importación se detuvo por un error.");
     } finally { setBusy(false); }
@@ -93,11 +102,12 @@ export function InventorySmartImport() {
 
   return <Card className="p-5">
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div><div className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5" /><h2 className="text-lg font-semibold">Importación inteligente</h2></div><p className="mt-1 max-w-3xl text-sm text-muted-foreground">Nüva no exige que tu negocio use el mismo Excel. Detecta semánticamente columnas como SKU, Código, Referencia, EAN, Producto, Existencias, Cantidad, Precio de venta, Costo, Mínimo o Reposición y las convierte al modelo interno.</p></div>
-      <div className="flex gap-2"><input ref={inputRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void readFile(file); e.currentTarget.value = ""; }} /><Button variant="outline" onClick={() => inputRef.current?.click()} disabled={busy}><Upload className="mr-2 h-4 w-4" />Analizar archivo</Button><Button onClick={() => void importRows()} disabled={!canWrite || busy || !stats.ready}>{busy ? "Importando…" : `Importar ${stats.ready} filas`}</Button></div>
+      <div><div className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5" /><h2 className="text-lg font-semibold">Importación inteligente</h2></div><p className="mt-1 max-w-3xl text-sm text-muted-foreground">Nüva interpreta la estructura del negocio: no exige nombres de columnas idénticos. Combina semántica, forma de los datos y contexto para reconocer SKU, código, referencia, EAN, producto, existencias, precios, costos, mínimos y reposición.</p></div>
+      <div className="flex gap-2"><input ref={inputRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void readFile(file); e.currentTarget.value = ""; }} /><Button variant="outline" onClick={() => inputRef.current?.click()} disabled={busy}><Upload className="mr-2 h-4 w-4" />Analizar archivo</Button><Button onClick={() => void importRows()} disabled={!canWrite || busy || !stats.ready || quality === "weak"}>{busy ? "Importando…" : `Importar ${stats.ready} filas`}</Button></div>
     </div>
-    {fileName && <div className="mt-4 rounded-lg border bg-muted/20 p-3 text-sm"><strong>{fileName}</strong> · {rows.length} filas · {stats.ready} listas · {stats.warnings} con advertencias</div>}
+    {fileName && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/20 p-3 text-sm"><strong>{fileName}</strong><Badge variant={quality === "high" ? "secondary" : "outline"}>{qualityLabels[quality]}</Badge><span>· {rows.length} filas · {stats.ready} listas · {stats.warnings} advertencias</span>{stats.blocked > 0 && <Badge variant="destructive">{stats.blocked} duplicadas</Badge>}</div>}
     {detections.length > 0 && <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{detections.map((d) => <div key={d.field} className="rounded-lg border p-3"><div className="flex items-center justify-between gap-2"><span className="text-sm font-medium">{labels[d.field]}</span><Badge variant={d.confidence >= 0.9 ? "secondary" : "outline"}>{Math.round(d.confidence * 100)}%</Badge></div><p className="mt-1 text-xs text-muted-foreground">← {d.sourceHeader} · {d.reason}</p></div>)}</div>}
+    {(unmappedHeaders.length > 0 || duplicateIdentifiers.length > 0) && <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><AlertTriangle className="h-4 w-4" />Nüva detectó cosas que no debe adivinar</div>{unmappedHeaders.length > 0 && <p className="mt-1 text-muted-foreground">Columnas sin uso automático: {unmappedHeaders.join(", ")}</p>}{duplicateIdentifiers.length > 0 && <p className="mt-1 text-muted-foreground">Identificadores repetidos: {duplicateIdentifiers.slice(0, 8).join(", ")}{duplicateIdentifiers.length > 8 ? "…" : ""}</p>}</div>}
     {rows.length > 0 && <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="p-2">Fila</th><th className="p-2">Producto</th><th className="p-2">Identificador</th><th className="p-2">Stock</th><th className="p-2">Precio</th><th className="p-2">Resultado</th></tr></thead><tbody>{rows.slice(0, 50).map((row) => <tr key={row.rowNumber} className="border-b"><td className="p-2">{row.rowNumber}</td><td className="p-2 font-medium">{row.mapped.name || "—"}</td><td className="p-2">{row.mapped.sku || row.mapped.barcode || "Nombre"}</td><td className="p-2">{row.mapped.stock || "—"}</td><td className="p-2">{row.mapped.price || "—"}</td><td className="p-2">{row.warnings.length ? <span className="inline-flex items-center gap-1 text-amber-600"><AlertTriangle className="h-4 w-4" />Revisar</span> : <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 className="h-4 w-4" />Listo</span>}</td></tr>)}</tbody></table>{rows.length > 50 && <p className="mt-2 text-xs text-muted-foreground">Vista previa limitada a 50 filas; la importación procesa todas las filas válidas.</p>}</div>}
   </Card>;
 }
