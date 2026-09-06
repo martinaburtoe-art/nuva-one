@@ -62,14 +62,8 @@ function ExecutiveCommandCenter() {
           <div className="space-y-4"><Skeleton className="h-56 w-full" /><Skeleton className="h-40 w-full" /></div>
         ) : (
           <div className="space-y-5">
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5 scroll-mt-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-bold">Resumen ejecutivo</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Todo el sistema ejecutivo, en un solo workspace. Elige una capa de inteligencia y Nüva te lleva directamente a ella sin perder el contexto.</p>
-                </div>
-              </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-primary/20 bg-background/70 p-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {intelligenceSections.map(([id, title, description]) => (
                   <a key={id} href={`#${id}`} className="group rounded-2xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm">
                     <div className="flex items-start justify-between gap-3">
