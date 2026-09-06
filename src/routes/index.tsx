@@ -120,6 +120,7 @@ function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <link rel="stylesheet" href="/home-cinematic-editorial-v2.css" precedence="high" />
       <Nav />
       <main>
         <HomeCinematicExperience />
