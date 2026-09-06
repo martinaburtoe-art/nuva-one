@@ -13,119 +13,54 @@ type BusinessInsightCardProps = {
   salesCount: number;
 };
 
-export function BusinessInsightCard({
-  income,
-  expense,
-  inventoryValue,
-  productsCount,
-  salesCount,
-}: BusinessInsightCardProps) {
-  const hasData =
-    income > 0 || expense > 0 || inventoryValue > 0 || productsCount > 0 || salesCount > 0;
+export function BusinessInsightCard({ income, expense, inventoryValue, productsCount, salesCount }: BusinessInsightCardProps) {
+  const hasData = income > 0 || expense > 0 || inventoryValue > 0 || productsCount > 0 || salesCount > 0;
   const net = income - expense;
   const margin = income > 0 ? (net / income) * 100 : 0;
   const expenseRatio = income > 0 ? (expense / income) * 100 : 0;
 
-  let kind: "positive" | "warning" | "neutral" = "neutral";
-  let title = "Tu resumen está listo para empezar a aprender";
-  let explanation =
-    "Registra ventas, gastos, inventario y clientes para que Nüva pueda construir una lectura cada vez más precisa.";
-  let actionLabel = "Registrar una venta";
-  let actionHref = "/sales";
-  let Icon = Sparkles;
-  let recommendation =
-    "Completa una primera operación para desbloquear señales, comparaciones y recomendaciones más útiles.";
-  let signalLabel = "Construyendo contexto";
+  const state =
+    hasData && income > 0 && expense > income
+      ? { label: "Atención", title: "La operación financiera necesita atención", description: `Los gastos superan los ingresos en ${fmtCLP(expense - income)}.`, action: "Revisar finanzas", href: "/finance", Icon: CircleAlert, tone: "border-warning/30 bg-warning/[0.055]", iconTone: "bg-warning/10 text-warning" }
+      : hasData && productsCount > 0 && income === 0
+        ? { label: "Activar ventas", title: "Tienes operación preparada, pero aún no hay ventas", description: `${productsCount} productos y ${fmtCLP(inventoryValue)} en inventario están listos para operar.`, action: "Registrar venta", href: "/pos", Icon: Boxes, tone: "border-primary/25 bg-primary/[0.045]", iconTone: "bg-primary/10 text-primary" }
+        : hasData && income > 0 && net >= 0
+          ? { label: "Flujo positivo", title: "La operación mantiene un resultado positivo", description: `${fmtCLP(net)} de flujo neto con un margen de ${margin.toFixed(1)}%.`, action: "Profundizar en Intelligence", href: "/nuva-intelligence", Icon: TrendingUp, tone: "border-success/30 bg-success/[0.045]", iconTone: "bg-success/10 text-success" }
+          : { label: "Construyendo contexto", title: "Nüva está preparando tu lectura operativa", description: "Registra operaciones para que el Resumen pueda detectar prioridades reales.", action: "Comenzar operación", href: "/sales", Icon: Sparkles, tone: "border-primary/25 bg-primary/[0.045]", iconTone: "bg-primary/10 text-primary" };
 
-  if (hasData && income > 0 && expense > income) {
-    kind = "warning";
-    signalLabel = "Revisar";
-    title = "El flujo requiere atención";
-    explanation = `Los gastos (${fmtCLP(expense)}) superan los ingresos (${fmtCLP(income)}), dejando un flujo neto de ${fmtCLP(net)}.`;
-    actionLabel = "Analizar finanzas";
-    actionHref = "/finance";
-    Icon = CircleAlert;
-    recommendation = "Revisa los gastos de mayor impacto antes de asumir nuevos compromisos de caja.";
-  } else if (hasData && productsCount > 0 && inventoryValue > 0 && income === 0) {
-    kind = "warning";
-    signalLabel = "Activar ventas";
-    title = "Tienes operación preparada, pero aún no hay ventas";
-    explanation = `Hay ${productsCount} productos y un inventario aproximado de ${fmtCLP(inventoryValue)}, pero no aparecen ingresos registrados.`;
-    actionLabel = "Registrar venta";
-    actionHref = "/pos";
-    Icon = Boxes;
-    recommendation = "Registra una venta para comenzar a relacionar rotación, ingresos y stock.";
-  } else if (hasData && income > 0 && net >= 0) {
-    kind = "positive";
-    signalLabel = "Resultado positivo";
-    title = "El negocio mantiene flujo positivo";
-    explanation = `Ingresos por ${fmtCLP(income)}, flujo neto de ${fmtCLP(net)} y margen de ${margin.toFixed(1)}%.`;
-    actionLabel = "Profundizar análisis";
-    actionHref = "/nuva-intelligence";
-    Icon = TrendingUp;
-    recommendation = "El resultado es positivo. Revisa Intelligence para identificar qué está impulsando el desempeño y dónde existe oportunidad.";
-  }
-
-  const tone =
-    kind === "warning"
-      ? "border-warning/30 bg-warning/[0.06]"
-      : kind === "positive"
-        ? "border-success/30 bg-success/[0.05]"
-        : "border-primary/25 bg-primary/[0.05]";
-  const iconTone =
-    kind === "warning"
-      ? "bg-warning/10 text-warning"
-      : kind === "positive"
-        ? "bg-success/10 text-success"
-        : "bg-primary/10 text-primary";
+  const StateIcon = state.Icon;
 
   return (
-    <div className="space-y-6">
-      <Card className={`relative overflow-hidden p-6 ${tone}`}>
-        <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
-        <div className="relative flex flex-col gap-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-                <span className={`grid h-8 w-8 place-items-center rounded-xl ${iconTone}`}>
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span>Resumen operativo</span>
-                <span className="rounded-full border bg-background/70 px-2.5 py-1 tracking-normal text-muted-foreground">
-                  {signalLabel}
-                </span>
+    <div className="space-y-4">
+      <Card className={`relative overflow-hidden p-5 md:p-6 ${state.tone}`}>
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative space-y-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`grid h-9 w-9 place-items-center rounded-xl ${state.iconTone}`}><StateIcon className="h-4 w-4" /></span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Pulso operativo</span>
+                <span className="rounded-full border bg-background/70 px-2.5 py-1 text-[11px] font-semibold">{state.label}</span>
               </div>
-              <h2 className="mt-4 text-2xl font-bold tracking-tight md:text-3xl">{title}</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{explanation}</p>
+              <h2 className="mt-4 max-w-3xl text-2xl font-bold tracking-tight md:text-3xl">{state.title}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{state.description}</p>
             </div>
-            <Link to={actionHref} className="shrink-0">
-              <Button size="lg">
-                {actionLabel}
-                <ArrowUpRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
+            <Link to={state.href} className="shrink-0"><Button size="lg">{state.action}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
           </div>
 
-          {hasData && (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <SummaryMetric label="Ingresos" value={fmtCLP(income)} />
-              <SummaryMetric label="Gastos" value={fmtCLP(expense)} hint={income > 0 ? `${expenseRatio.toFixed(0)}% de ingresos` : undefined} />
-              <SummaryMetric label="Flujo neto" value={fmtCLP(net)} hint={income > 0 ? `Margen ${margin.toFixed(1)}%` : undefined} />
-              <SummaryMetric label="Operación" value={`${salesCount} ventas`} hint={`${productsCount} productos · ${fmtCLP(inventoryValue)} inventario`} />
-            </div>
-          )}
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <PulseMetric label="Ingresos" value={fmtCLP(income)} />
+            <PulseMetric label="Gastos" value={fmtCLP(expense)} hint={income > 0 ? `${expenseRatio.toFixed(0)}% de ingresos` : "Sin base de comparación"} />
+            <PulseMetric label="Flujo neto" value={fmtCLP(net)} hint={income > 0 ? `Margen ${margin.toFixed(1)}%` : "Esperando movimientos"} />
+            <PulseMetric label="Operación" value={`${salesCount} ventas`} hint={`${productsCount} productos · ${fmtCLP(inventoryValue)} inventario`} />
+          </div>
 
-          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
             <div className="rounded-2xl border bg-background/70 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Siguiente foco</p>
-              <p className="mt-1 text-sm font-medium">{recommendation}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Rol del Resumen</p>
+              <p className="mt-1 text-sm font-medium">Aquí ves qué está pasando. Cuando necesites entender por qué ocurre o qué oportunidad existe, pasa a Nüva Intelligence.</p>
             </div>
-            <Link to="/nuva-intelligence" className="shrink-0">
-              <Button variant="outline">
-                Ver Intelligence
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
+            <Link to="/executive-command-center" className="shrink-0"><Button variant="outline">Dirección ejecutiva<ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
           </div>
         </div>
       </Card>
@@ -134,12 +69,6 @@ export function BusinessInsightCard({
   );
 }
 
-function SummaryMetric({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-2xl border bg-background/65 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
-      {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
-    </div>
-  );
+function PulseMetric({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return <div className="rounded-2xl border bg-background/65 p-4"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</p><p className="mt-1 text-lg font-bold tabular-nums tracking-tight">{value}</p>{hint && <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{hint}</p>}</div>;
 }
