@@ -144,7 +144,12 @@ function scoreField(field: CanonicalImportField, header: string, values: string[
     const score = similarity(normalized, normalize(alias));
     if (score > best.score) best = { score, alias };
   }
-  return { score: Math.min(1.2, best.score + valueShape(field, values)), alias: best.alias };
+  let score = best.score + valueShape(field, values);
+  if ((normalized === "codigo" || normalized === "cod") && field === "barcode") {
+    const numericCodes = values.map((value) => value.trim()).filter(Boolean).filter((value) => /^[0-9]{6,18}$/.test(value.replace(/\s/g, "")));
+    if (numericCodes.length >= Math.max(1, Math.ceil(values.filter((value) => value.trim()).length * 0.8))) score += 0.2;
+  }
+  return { score: Math.min(1.2, score), alias: best.alias };
 }
 
 export function detectField(header: string, values: string[]): FieldDetection | null {
@@ -200,7 +205,8 @@ export function detectColumns(headers: string[], rows: Record<string, string>[])
     usedHeaders.add(best.header);
     usedFields.add(best.field);
   }
-  return selected;
+  const headerOrder = new Map(headers.map((header, index) => [header, index]));
+  return selected.sort((a, b) => (headerOrder.get(a.sourceHeader) ?? Number.MAX_SAFE_INTEGER) - (headerOrder.get(b.sourceHeader) ?? Number.MAX_SAFE_INTEGER));
 }
 
 export function parseDelimited(text: string): Record<string, string>[] {
