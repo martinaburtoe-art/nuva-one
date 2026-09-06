@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { Boxes, ClipboardCheck, Download, History, PackagePlus, Pencil, Plus, Search, ShoppingCart, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
@@ -18,29 +17,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NuvaInventoryIntelligence } from "@/components/nuva-inventory-intelligence";
 import { InventoryActionCenter } from "@/components/inventory-action-center";
+import { InventoryScannerOperations } from "@/components/inventory-scanner-operations";
+import { InventoryCountPanel } from "@/components/inventory-count-panel";
 import { getInventoryMetrics, type InventoryStatus } from "@/lib/inventory-metrics";
 import { adjustInventoryStock } from "@/lib/inventory-transactions";
 
-type Product = {
-  id: string;
-  name: string | null;
-  sku: string | null;
-  stock: number | null;
-  reserved_stock: number | null;
-  in_transit_stock: number | null;
-  blocked_stock: number | null;
-  low_stock_threshold: number | null;
-  reorder_point: number | null;
-  max_stock: number | null;
-  cost: number | null;
-  price: number | null;
-};
-type View = "intelligence" | "stock" | "products" | "replenishment";
-const views = [["intelligence", "Intelligence", "Entiende qué pasa y qué atender.", Sparkles], ["stock", "Stock", "Consulta disponibilidad y reposición.", Boxes], ["products", "Productos", "Administra catálogo y parámetros.", PackagePlus], ["replenishment", "Abastecimiento", "Convierte alertas en una compra accionable.", ShoppingCart]] as const;
+type Product = { id: string; name: string | null; sku: string | null; stock: number | null; reserved_stock: number | null; in_transit_stock: number | null; blocked_stock: number | null; low_stock_threshold: number | null; reorder_point: number | null; max_stock: number | null; cost: number | null; price: number | null; };
+type View = "intelligence" | "stock" | "products" | "replenishment" | "operations" | "count";
+const views = [["intelligence", "Intelligence", "Entiende qué pasa y qué atender.", Sparkles], ["stock", "Stock", "Disponibilidad, reservas y reposición.", Boxes], ["products", "Productos", "Administra catálogo y parámetros.", PackagePlus], ["replenishment", "Abastecimiento", "Convierte alertas en una compra accionable.", ShoppingCart], ["operations", "Movimientos", "Entradas, salidas y ajustes trazables.", History], ["count", "Conteo", "Compara físico vs. sistema y ajusta.", ClipboardCheck]] as const;
 const statusText: Record<InventoryStatus, string> = { out_of_stock: "Sin stock", critical: "Crítico", reorder: "Reponer", healthy: "Saludable" };
 
 export function InventoryWorkspace() {
-  const navigate = useNavigate(); const { data: role } = useMyRole(); const canWrite = canWriteOperations(role); const [businessId] = useActiveBusinessId();
+  const { data: role } = useMyRole(); const canWrite = canWriteOperations(role); const [businessId] = useActiveBusinessId();
   const { data, isLoading } = useBizList<Product>("products", { order: "created_at" }); const insert = useBizInsert("products"); const update = useBizUpdate("products"); const remove = useBizDelete("products");
   const products = data ?? []; const [view, setView] = useState<View>("intelligence"); const [query, setQuery] = useState(""); const [open, setOpen] = useState(false); const [editing, setEditing] = useState<Product | null>(null); const [adjustOpen, setAdjustOpen] = useState(false); const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
   const filtered = useMemo(() => { const q = query.trim().toLowerCase(); return q ? products.filter(p => `${p.name ?? ""} ${p.sku ?? ""}`.toLowerCase().includes(q)) : products; }, [products, query]);
@@ -53,14 +41,16 @@ export function InventoryWorkspace() {
   async function del(p: Product) { if (!canWrite || !window.confirm(`¿Eliminar ${p.name || "este producto"}?`)) return; try { await remove.mutateAsync(p.id); toast.success("Producto eliminado"); } catch { toast.error("No se pudo eliminar el producto"); } }
   function exportData() { downloadCsv("nuva-inventario.csv", products.map(p => { const m = getInventoryMetrics(p); return { SKU: p.sku || "", Producto: p.name || "", Stock: Number(p.stock || 0), Disponible: m.available, Proyectado: m.projected, Estado: statusText[m.status], Reposicion: m.suggestedReplenishment, Costo: Number(p.cost || 0), Precio: Number(p.price || 0), ValorCosto: Number(p.stock || 0) * Number(p.cost || 0) }; })); }
   function exportReplenishment() { downloadCsv("nuva-abastecimiento.csv", replenishment.map(({ product: p, metrics: m }) => ({ SKU: p.sku || "", Producto: p.name || "", Proyectado: m.projected, Reposicion: m.suggestedReplenishment, CostoUnitario: Number(p.cost || 0), InversionEstimada: m.suggestedReplenishment * Number(p.cost || 0), Estado: statusText[m.status] }))); }
-  return <ModuleGuard module="inventory"><div className="space-y-5"><PageHeader title="Inventario" description="Entiende, controla y opera tu inventario sin mezclar decisiones con tareas operativas." actions={<div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportData} disabled={!products.length}><Download className="mr-2 h-4 w-4" />Exportar</Button>{canWrite && <Button onClick={create}><Plus className="mr-2 h-4 w-4" />Nuevo producto</Button>}</div>} />
-    <Card className="overflow-hidden"><div className="grid md:grid-cols-3 lg:grid-cols-6">{views.map(([id, label, desc, Icon]) => <button key={id} type="button" onClick={() => setView(id)} className={`min-h-[82px] border-b p-4 text-left lg:border-b-0 lg:border-r ${view === id ? "bg-primary/[0.06] text-primary" : "hover:bg-muted/50"}`}><div className="flex items-center gap-2 text-sm font-semibold"><Icon className="h-4 w-4" />{label}</div><p className="mt-1 text-xs text-muted-foreground">{desc}</p></button>)}<button type="button" onClick={() => navigate({ to: "/inventario-operaciones" })} className="min-h-[82px] border-b p-4 text-left hover:bg-muted/50 lg:border-b-0 lg:border-r"><div className="flex items-center gap-2 text-sm font-semibold"><History className="h-4 w-4" />Movimientos</div><p className="mt-1 text-xs text-muted-foreground">Entradas, salidas, devoluciones y ajustes.</p></button><button type="button" onClick={() => navigate({ to: "/inventario-conteo" })} className="min-h-[82px] border-b p-4 text-left hover:bg-muted/50 lg:border-b-0 lg:border-r"><div className="flex items-center gap-2 text-sm font-semibold"><ClipboardCheck className="h-4 w-4" />Conteo</div><p className="mt-1 text-xs text-muted-foreground">Físico vs. sistema y correcciones.</p></button></div></Card>
+  return <ModuleGuard module="inventory"><div className="space-y-5"><PageHeader title="Inventario" description="Un solo espacio para stock, productos, movimientos, conteo y abastecimiento." actions={<div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportData} disabled={!products.length}><Download className="mr-2 h-4 w-4" />Exportar</Button>{canWrite && <Button onClick={create}><Plus className="mr-2 h-4 w-4" />Nuevo producto</Button>}</div>} />
+    <Card className="overflow-hidden"><div className="grid md:grid-cols-3 lg:grid-cols-6">{views.map(([id, label, desc, Icon]) => <button key={id} type="button" onClick={() => setView(id)} className={`min-h-[82px] border-b p-4 text-left lg:border-b-0 lg:border-r ${view === id ? "bg-primary/[0.06] text-primary" : "hover:bg-muted/50"}`}><div className="flex items-center gap-2 text-sm font-semibold"><Icon className="h-4 w-4" />{label}</div><p className="mt-1 text-xs text-muted-foreground">{desc}</p></button>)}</div></Card>
     <div className="grid gap-3 sm:grid-cols-3"><Stat label="Productos" value={String(products.length)} /><Stat label="Disponibles" value={String(available)} /><Stat label="Atención" value={String(critical)} danger={critical > 0} /></div>
     {view === "intelligence" && <><NuvaInventoryIntelligence products={products} /><InventoryActionCenter products={products} canWrite={canWrite} /></>}
     {view === "stock" && <StockView products={filtered} loading={isLoading} value={value} query={query} onQuery={setQuery} onAdjust={adjust} />}
     {view === "products" && <ProductsView products={filtered} loading={isLoading} query={query} onQuery={setQuery} onCreate={create} onEdit={edit} onAdjust={adjust} onDelete={del} canWrite={canWrite} />}
-    {view === "replenishment" && <ReplenishmentView items={replenishment} units={replenishmentUnits} value={replenishmentValue} onExport={exportReplenishment} onPurchase={() => navigate({ to: "/purchases" })} onAdjust={adjust} />}
-    <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground"><strong className="text-foreground">Flujo:</strong> Intelligence = decidir · Stock = consultar · Movimientos = operar · Conteo = verificar · Productos = administrar · Abastecimiento = preparar compra.<Button variant="link" className="h-auto px-1" onClick={() => navigate({ to: "/purchases" })}>Ir a Compras</Button></div>
+    {view === "replenishment" && <ReplenishmentView items={replenishment} units={replenishmentUnits} value={replenishmentValue} onExport={exportReplenishment} onPurchase={() => window.location.assign("/purchases")} onAdjust={adjust} />}
+    {view === "operations" && <InventoryScannerOperations />}
+    {view === "count" && <InventoryCountPanel />}
+    <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground"><strong className="text-foreground">Flujo:</strong> Intelligence = decidir · Stock = consultar · Movimientos = operar · Conteo = verificar · Productos = administrar · Abastecimiento = preparar compra.</div>
     <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>{editing ? "Editar producto" : "Nuevo producto"}</DialogTitle></DialogHeader><form onSubmit={save} className="space-y-4"><Field label="Producto"><Input name="name" defaultValue={editing?.name ?? ""} required /></Field><div className="grid grid-cols-2 gap-3"><Field label="SKU"><Input name="sku" defaultValue={editing?.sku ?? ""} /></Field><Field label="Stock"><Input name="stock" type="number" min="0" defaultValue={editing?.stock ?? 0} /></Field></div><div className="grid grid-cols-2 gap-3"><Field label="Mínimo"><Input name="minimum" type="number" min="0" defaultValue={editing?.low_stock_threshold ?? 0} /></Field><Field label="Reposición"><Input name="reorder" type="number" min="0" defaultValue={editing?.reorder_point ?? 0} /></Field></div><div className="grid grid-cols-2 gap-3"><Field label="Costo"><Input name="cost" type="number" min="0" defaultValue={editing?.cost ?? 0} /></Field><Field label="Precio"><Input name="price" type="number" min="0" defaultValue={editing?.price ?? 0} /></Field></div><Field label="Stock objetivo"><Input name="target" type="number" min="0" defaultValue={editing?.max_stock ?? 0} /></Field><Button className="w-full" type="submit" disabled={!canWrite}>{editing ? "Guardar cambios" : "Crear producto"}</Button></form></DialogContent></Dialog>
     <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}><DialogContent><DialogHeader><DialogTitle>Ajustar stock · {adjustProduct?.name || "Producto"}</DialogTitle></DialogHeader><form onSubmit={doAdjust} className="space-y-4"><p className="text-sm text-muted-foreground">Positivo = entrada · negativo = salida. El movimiento queda trazado.</p><Field label="Cantidad (+ / -)"><Input name="delta" type="number" step="1" required /></Field><Field label="Motivo"><Input name="reason" placeholder="Recepción, merma, corrección…" required /></Field><Button className="w-full" type="submit" disabled={!canWrite}>Registrar ajuste</Button></form></DialogContent></Dialog>
   </div></ModuleGuard>;
