@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { MessageCircle, Phone, CheckCircle2, ChevronDown, Sparkles } from "lucide-react";
-import { useBizList, useBizInsert, useBizUpdate, useBizDelete } from "@/lib/biz-data";
-import { useMyRole, canWriteOperations } from "@/lib/use-business";
+import { supabase } from "@/integrations/supabase/client";
+import { useBizList, useBizUpdate, useBizDelete } from "@/lib/biz-data";
+import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
 import { normalizeWhatsAppNumber, isPlausiblePhoneNumber } from "@/lib/phone";
 import { toast } from "sonner";
 import { ModuleGuard } from "@/components/module-guard";
@@ -26,14 +28,40 @@ type OwnerLink = {
   active: boolean;
 };
 
+type WhatsAppConnection = {
+  id: string;
+  phone_number_id: string;
+  waba_id: string | null;
+  display_phone_number: string | null;
+  auto_stock_query: boolean;
+  auto_price_query: boolean;
+  auto_general_ai: boolean;
+  active: boolean;
+};
+
 function WhatsAppLinking() {
+  const { active } = useActiveBusiness();
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
+  const queryClient = useQueryClient();
 
   // --- Vinculación personal (Doña María pregunta por SU negocio) ---
   const { data: ownerLinks, isLoading: ownerLoading } =
     useBizList<OwnerLink>("whatsapp_owner_links");
-  const ownerInsert = useBizInsert("whatsapp_owner_links");
+  const ownerInsert = useMutation({
+    mutationFn: async (row: Record<string, unknown>) => {
+      if (!active) throw new Error("Selecciona un negocio");
+      const { error } = await supabase
+        .from("whatsapp_owner_links")
+        .insert({ ...row, business_id: active.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["whatsapp_owner_links", active?.id] });
+      toast.success("Guardado");
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Error al guardar"),
+  });
   const ownerUpdate = useBizUpdate("whatsapp_owner_links");
   const ownerDelete = useBizDelete("whatsapp_owner_links");
   const ownerLink = ownerLinks?.[0];
@@ -59,9 +87,6 @@ function WhatsAppLinking() {
         await ownerInsert.mutateAsync({ owner_phone_number: normalized, active: true });
       }
     } catch (err: any) {
-      // Índice único parcial en whatsapp_owner_links (owner_phone_number
-      // WHERE active = true) -- este número ya está vinculado como owner de
-      // OTRO negocio.
       if (err?.code === "23505") {
         toast.error(
           "Ese número de WhatsApp ya está vinculado a otro negocio en Nüva One. Cada número solo puede estar vinculado a un negocio a la vez.",
@@ -79,18 +104,22 @@ function WhatsAppLinking() {
   }
 
   // --- Avanzado / opcional: número propio del negocio para SUS clientes ---
-  const { data: waConnections, isLoading: waLoading } = useBizList<{
-    id: string;
-    phone_number_id: string;
-    waba_id: string | null;
-    display_phone_number: string | null;
-    access_token: string;
-    auto_stock_query: boolean;
-    auto_price_query: boolean;
-    auto_general_ai: boolean;
-    active: boolean;
-  }>("whatsapp_connections");
-  const waInsert = useBizInsert("whatsapp_connections");
+  // Deliberately omit access_token from the browser-readable projection.
+  const { data: waConnections, isLoading: waLoading } = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["whatsapp_connections", active?.id],
+    queryFn: async () => {
+      if (!active) return [] as WhatsAppConnection[];
+      const { data, error } = await supabase
+        .from("whatsapp_connections")
+        .select(
+          "id, phone_number_id, waba_id, display_phone_number, auto_stock_query, auto_price_query, auto_general_ai, active",
+        )
+        .eq("business_id", active.id);
+      if (error) throw error;
+      return (data ?? []) as WhatsAppConnection[];
+    },
+  });
   const waUpdate = useBizUpdate("whatsapp_connections");
   const wa = waConnections?.[0];
   const [waForm, setWaForm] = useState({
@@ -102,14 +131,30 @@ function WhatsAppLinking() {
 
   useEffect(() => {
     if (wa) {
-      setWaForm({
+      setWaForm((current) => ({
+        ...current,
         phone_number_id: wa.phone_number_id,
         waba_id: wa.waba_id ?? "",
         display_phone_number: wa.display_phone_number ?? "",
-        access_token: wa.access_token,
-      });
+      }));
     }
-  }, [wa?.id]);
+  }, [wa?.id, wa?.phone_number_id, wa?.waba_id, wa?.display_phone_number]);
+
+  const waInsert = useMutation({
+    mutationFn: async (row: Record<string, unknown>) => {
+      if (!active) throw new Error("Selecciona un negocio");
+      const { error } = await supabase
+        .from("whatsapp_connections")
+        .insert({ ...row, business_id: active.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["whatsapp_connections", active?.id] });
+      toast.success("Guardado");
+      setWaForm((current) => ({ ...current, access_token: "" }));
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Error al guardar"),
+  });
 
   async function saveWhatsAppBusinessNumber() {
     if (!waForm.phone_number_id || !waForm.access_token) {
@@ -117,7 +162,16 @@ function WhatsAppLinking() {
       return;
     }
     if (wa) {
-      await waUpdate.mutateAsync({ id: wa.id, patch: waForm });
+      await waUpdate.mutateAsync({
+        id: wa.id,
+        patch: {
+          phone_number_id: waForm.phone_number_id,
+          waba_id: waForm.waba_id || null,
+          display_phone_number: waForm.display_phone_number || null,
+          access_token: waForm.access_token,
+        },
+      });
+      setWaForm((current) => ({ ...current, access_token: "" }));
     } else {
       await waInsert.mutateAsync({
         ...waForm,
@@ -251,11 +305,13 @@ function WhatsAppLinking() {
                         <Input
                           id="wa_token"
                           type="password"
+                          autoComplete="new-password"
                           value={waForm.access_token}
                           onChange={(e) =>
                             setWaForm((f) => ({ ...f, access_token: e.target.value }))
                           }
                           disabled={!canWrite}
+                          placeholder="Se solicita solo al guardar"
                         />
                       </div>
                     </div>
