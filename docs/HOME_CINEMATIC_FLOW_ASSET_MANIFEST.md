@@ -43,9 +43,9 @@ Avoid: cyberpunk, neon, holograms, giant floating dashboards, CGI/3D-render appe
 
 ## Flow generation strategy
 
-Google Flow supports text-to-video, image-to-video, first/last-frame workflows and ingredients/references; the exact capabilities depend on the active model. Google's current documentation lists 4/6/8-second clip lengths for Veo 3.1 Lite and recommends consistent visual references/ingredients to maintain character and object continuity. citeturn12search10turn12search7
+Google Flow supports text-to-video, image-to-video, first/last-frame workflows and ingredients/references; the exact capabilities depend on the active model. Google's current documentation lists 4/6/8-second clip lengths for Veo 3.1 Lite and recommends consistent visual references/ingredients to maintain character and object continuity.
 
-For this project, prefer a generated master frame first and then animate that frame. Use first+last frames when a transition must land on a precise composition. Keep the same character, wardrobe, location and lighting references across scenes. Flow also supports saving video frames for reuse as ingredients or first/last frames, and SceneBuilder can assemble clips into a sequence. citeturn12search4
+For this project, prefer a generated master frame first and then animate that frame. Use first+last frames when a transition must land on a precise composition. Keep the same character, wardrobe, location and lighting references across scenes. Flow also supports saving video frames for reuse as ingredients or first/last frames, and SceneBuilder can assemble clips into a sequence.
 
 Recommended workflow:
 
