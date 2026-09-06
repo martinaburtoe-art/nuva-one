@@ -57,6 +57,7 @@ const nav = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard" },
   { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain },
   { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles },
+  { to: "/pricing-calculator", label: "Precios", icon: Calculator },
   { to: "/pos", label: "Caja", icon: Calculator, module: "pos" },
   { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales" },
   { to: "/customers", label: "Clientes", icon: Users, module: "customers" },
@@ -333,9 +334,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                       <div className="truncate text-sm font-medium">
                         {active?.name ?? "Sin negocio"}
                       </div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {active?.industry}
-                      </div>
+                      <div className="truncate text-xs text-muted-foreground">{active?.industry}</div>
                     </div>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </button>
@@ -351,81 +350,62 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
                     <Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/select-business" })}>
+                    Ver todos
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <div className="mb-2">
-              <button
-                onClick={() => {
-                  setMoreOpen(false);
-                  openHelp();
-                }}
-                className="flex w-full items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm font-medium text-primary"
-              >
-                <HelpCircle className="h-4 w-4" /> Centro de ayuda
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-2 py-2">
+            <div className="space-y-1 pb-6">
               {mobileMoreNav.map((item) => (
                 <Link
                   key={item.to}
                   to={item.to}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs",
-                    pathname === item.to ? "border-primary text-primary" : "text-muted-foreground",
+                    "flex items-center gap-3 rounded-xl px-3 py-3 text-sm",
+                    pathname === item.to
+                      ? "bg-secondary font-medium text-foreground"
+                      : "text-muted-foreground hover:bg-secondary/60",
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                  <span className="text-center leading-tight">{item.label}</span>
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
                 </Link>
               ))}
               {myRole === "owner" && (
                 <Link
                   to="/owner"
                   onClick={() => setMoreOpen(false)}
-                  className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs",
-                    pathname === "/owner" ? "border-primary text-primary" : "text-muted-foreground",
-                  )}
+                  className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3 text-sm text-primary"
                 >
-                  <ShieldCheck className="h-5 w-5" />
-                  <span className="text-center leading-tight">Owner</span>
+                  <ShieldCheck className="h-4 w-4" />
+                  Nüva Owner · Command Center
                 </Link>
               )}
-              <button
-                onClick={logout}
-                className="flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs text-destructive"
-              >
-                <LogOut className="h-5 w-5" />
-                Cerrar sesión
-              </button>
             </div>
           </SheetContent>
         </Sheet>
       </nav>
 
-      <div className="hidden md:block">
-        <AiChatBubble />
-      </div>
+      <AiChatBubble />
     </div>
   );
 }
 
 function TrialExpiredScreen({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent">
-        <Lock className="h-6 w-6 text-primary" />
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="max-w-md rounded-2xl border bg-card p-8 text-center shadow-sm">
+        <Lock className="mx-auto h-10 w-10 text-muted-foreground" />
+        <h2 className="mt-4 text-xl font-semibold">Tu prueba gratuita terminó</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Elige un plan para continuar usando todas las herramientas de Nüva One.
+        </p>
+        <Button className="mt-6" onClick={() => navigate({ to: "/pricing" })}>
+          Ver planes
+        </Button>
       </div>
-      <h2 className="text-xl font-bold">Tu prueba gratuita de 15 días terminó</h2>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        Actualiza a Pro para seguir usando Nüva One sin interrupciones — mantienes todos tus datos
-        tal como los dejaste.
-      </p>
-      <Button className="mt-5" onClick={() => navigate({ to: "/settings" })}>
-        Actualizar a Pro — $29.990/mes
-      </Button>
     </div>
   );
 }
