@@ -8,6 +8,7 @@ import {
   CreditCard,
   BarChart3,
   Sparkles,
+  Brain,
   FileText,
   Workflow,
   Settings,
@@ -54,6 +55,8 @@ import { toast } from "sonner";
 
 const nav = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard" },
+  { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain },
+  { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles },
   { to: "/pos", label: "Caja", icon: Calculator, module: "pos" },
   { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales" },
   { to: "/customers", label: "Clientes", icon: Users, module: "customers" },
