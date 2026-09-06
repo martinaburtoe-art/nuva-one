@@ -18,10 +18,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NuvaInventoryIntelligence } from "@/components/nuva-inventory-intelligence";
 import { InventoryActionCenter } from "@/components/inventory-action-center";
-import { getInventoryMetrics, type InventoryMetricInput, type InventoryStatus } from "@/lib/inventory-metrics";
+import { getInventoryMetrics, type InventoryStatus } from "@/lib/inventory-metrics";
 import { adjustInventoryStock } from "@/lib/inventory-transactions";
 
-type Product = InventoryMetricInput & { id: string; name: string | null; sku: string | null; cost: number | null; price: number | null };
+type Product = {
+  id: string;
+  name: string | null;
+  sku: string | null;
+  stock: number | null;
+  reserved_stock: number | null;
+  in_transit_stock: number | null;
+  blocked_stock: number | null;
+  low_stock_threshold: number | null;
+  reorder_point: number | null;
+  max_stock: number | null;
+  cost: number | null;
+  price: number | null;
+};
 type View = "intelligence" | "stock" | "products" | "replenishment";
 const views = [["intelligence", "Intelligence", "Entiende qué pasa y qué atender.", Sparkles], ["stock", "Stock", "Consulta disponibilidad y reposición.", Boxes], ["products", "Productos", "Administra catálogo y parámetros.", PackagePlus], ["replenishment", "Abastecimiento", "Convierte alertas en una compra accionable.", ShoppingCart]] as const;
 const statusText: Record<InventoryStatus, string> = { out_of_stock: "Sin stock", critical: "Crítico", reorder: "Reponer", healthy: "Saludable" };
