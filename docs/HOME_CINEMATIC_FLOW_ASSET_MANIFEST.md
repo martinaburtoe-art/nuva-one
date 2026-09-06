@@ -43,14 +43,16 @@ Avoid: cyberpunk, neon, holograms, giant floating dashboards, CGI/3D-render appe
 
 ## Flow generation strategy
 
-Google Flow currently supports Veo 3.1 Lite/Fast/Quality with 4/6/8 second clips, first-frame and first+last-frame workflows, and reference/ingredient workflows where supported. For continuity, prefer a generated master frame first, then animate that frame; use first+last frames for transitions that must land on a precise composition. Keep the same character/location references across the project.
+Google Flow supports text-to-video, image-to-video, first/last-frame workflows and ingredients/references; the exact capabilities depend on the active model. Google's current documentation lists 4/6/8-second clip lengths for Veo 3.1 Lite and recommends consistent visual references/ingredients to maintain character and object continuity. citeturn12search10turn12search7
+
+For this project, prefer a generated master frame first and then animate that frame. Use first+last frames when a transition must land on a precise composition. Keep the same character, wardrobe, location and lighting references across scenes. Flow also supports saving video frames for reuse as ingredients or first/last frames, and SceneBuilder can assemble clips into a sequence. citeturn12search4
 
 Recommended workflow:
 
 1. Generate the canonical business/location frame.
 2. Generate owner/customer reference frames with matching wardrobe and lighting.
-3. Generate the 8–12 second visual masters as short clips.
-4. Save clean first frames for transitions.
+3. Generate 4–8 second motion clips and combine them into longer sequences where needed.
+4. Save clean first/last frames for transitions.
 5. Trim/export production masters as web-optimized MP4/WebM where appropriate.
 6. Place media under `public/home-cinematic/` using the scene IDs.
 7. Wire the scene `poster` and `video` slots; do not alter scene logic.
