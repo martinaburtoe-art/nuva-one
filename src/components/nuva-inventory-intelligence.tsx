@@ -12,13 +12,11 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { fmtCLP } from "@/lib/biz-data";
 
 type Product = {
   id?: string;
   name?: string | null;
-  sku?: string | null;
   stock?: number | string | null;
   low_stock_threshold?: number | string | null;
   cost?: number | string | null;
@@ -84,13 +82,8 @@ export function NuvaInventoryIntelligence({ products = [] }: Props) {
               <p className="text-xs font-medium">{healthLabel(riskScore)}</p>
             </div>
           </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Metric icon={<Boxes className="h-4 w-4" />} label="SKUs" value={String(rows.length)} />
-            <Metric
-              icon={<PackageCheck className="h-4 w-4" />}
-              label="Unidades"
-              value={String(totalUnits)}
-            />
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Metric icon={<PackageCheck className="h-4 w-4" />} label="Unidades" value={String(totalUnits)} />
             <Metric
               icon={<CircleDollarSign className="h-4 w-4" />}
               label="Valor a costo"
@@ -164,7 +157,7 @@ export function NuvaInventoryIntelligence({ products = [] }: Props) {
                       <div>
                         <p className="text-sm font-semibold">{p.name || "Producto"}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {p.sku || "Sin SKU"} · {p.stock} unidades · mínimo {p.threshold}
+                          {p.stock} unidades · mínimo {p.threshold}
                         </p>
                       </div>
                     </div>
