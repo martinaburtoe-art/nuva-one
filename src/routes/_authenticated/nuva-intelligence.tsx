@@ -5,10 +5,8 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { useBizList } from "@/lib/biz-data";
-import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { ExplainMyBusiness } from "@/components/explain-my-business";
 import { NuvaActionCenter } from "@/components/nuva-action-center";
-import { BusinessInsightCard } from "@/components/business-insight-card";
 
 export const Route = createFileRoute("/_authenticated/nuva-intelligence")({
   head: () => ({ meta: [{ title: "Nüva Intelligence — Nüva One" }] }),
@@ -30,7 +28,6 @@ function NuvaIntelligence() {
   const { data: sales } = useBizList<any>("sales", { order: "sale_date" });
   const { data: transactions } = useBizList<any>("transactions", { order: "tx_date" });
   const { data: products } = useBizList<any>("products", { order: "name" });
-  const { data: customers } = useBizList<any>("customers", { order: "name" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at" });
   const { data: activities } = useBizList<any>("customer_activities", { order: "created_at" });
 
@@ -58,8 +55,21 @@ function NuvaIntelligence() {
       0,
       Math.min(100, Math.round(60 + (margin > 0 ? Math.min(25, margin / 4) : -15) - lowStock * 4 - overdue * 5)),
     );
-    return { income, expense, net, margin, lowStock, overdue, openQuotes: openQuotes.length, openPipeline, critical, health };
-  }, [transactions, products, activities, quotes]);
+    return {
+      income,
+      expense,
+      net,
+      margin,
+      lowStock,
+      overdue,
+      openQuotes: openQuotes.length,
+      openPipeline,
+      critical,
+      health,
+      salesCount: (sales ?? []).length,
+      productsCount: (products ?? []).length,
+    };
+  }, [activities, products, quotes, sales, transactions]);
 
   const money = (value: number) =>
     new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
@@ -114,21 +124,21 @@ function NuvaIntelligence() {
                     <p className="text-xs font-medium">/100</p>
                   </div>
                 </div>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                   <Kpi label="Flujo neto" value={money(intelligence.net)} />
                   <Kpi label="Margen" value={`${intelligence.margin}%`} />
-                  <Kpi label="Alertas operativas" value={String(intelligence.lowStock + intelligence.overdue)} />
-                  <Kpi label="Pipeline abierto" value={money(intelligence.openPipeline)} />
+                  <Kpi label="Alertas" value={String(intelligence.lowStock + intelligence.overdue)} />
+                  <Kpi label="Pipeline" value={money(intelligence.openPipeline)} />
+                  <Kpi label="Operación" value={`${intelligence.salesCount} ventas · ${intelligence.productsCount} productos`} />
                 </div>
               </div>
             </Card>
-            <BusinessInsightCard
-              income={intelligence.income}
-              expense={intelligence.expense}
-              inventoryValue={(products ?? []).reduce((s: number, p: any) => s + Number(p.stock ?? 0) * Number(p.price ?? 0), 0)}
-              productsCount={(products ?? []).length}
-              salesCount={(sales ?? []).length}
-            />
+
+            <div className="grid gap-5 lg:grid-cols-3">
+              <InsightTile title="Qué observa" value={`${intelligence.lowStock} riesgos de stock`} detail="Cruza disponibilidad y mínimos configurados." />
+              <InsightTile title="Dónde mirar" value={`${intelligence.openQuotes} cotizaciones abiertas`} detail={`Pipeline potencial de ${money(intelligence.openPipeline)}.`} />
+              <InsightTile title="Qué priorizar" value={`${intelligence.overdue} seguimientos vencidos`} detail="La prioridad aumenta cuando existen tareas comerciales pendientes." />
+            </div>
           </div>
         )}
 
@@ -168,9 +178,36 @@ function NuvaIntelligence() {
 }
 
 function Kpi({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border bg-background/70 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-lg font-bold tabular-nums">{value}</p></div>;
+  return (
+    <div className="rounded-xl border bg-background/70 p-4">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function InsightTile({ title, value, detail }: { title: string; value: string; detail: string }) {
+  return (
+    <Card className="p-5">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+      <p className="mt-2 text-lg font-semibold tracking-tight">{value}</p>
+      <p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p>
+    </Card>
+  );
 }
 
 function SignalCard({ icon, title, value, description }: { icon: React.ReactNode; title: string; value: number | string; description: string }) {
-  return <Card className="p-6"><div className="flex items-start gap-3"><div className="rounded-xl border bg-accent p-2">{icon}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p><p className="mt-1 text-sm text-muted-foreground">{description}</p></div><ArrowUpRight className="h-4 w-4 text-muted-foreground" /></div></Card>;
+  return (
+    <Card className="p-6">
+      <div className="flex items-start gap-3">
+        <div className="rounded-xl border bg-accent p-2">{icon}</div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        </div>
+        <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+      </div>
+    </Card>
+  );
 }
