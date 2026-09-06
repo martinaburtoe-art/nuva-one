@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/executive-command-center")
 });
 
 const intelligenceSections = [
-  ["executive-overview", "Resumen ejecutivo", "Salud, señales y foco actual"],
+  ["executive-overview-core", "Resumen ejecutivo", "Salud, señales y foco actual"],
   ["executive-decision", "Decision Engine", "Prioridades y acciones recomendadas"],
   ["executive-timeline", "Timeline", "Evolución de decisiones y actividad"],
   ["executive-predictive", "Predictivo", "Riesgos y señales anticipadas"],
@@ -62,12 +62,11 @@ function ExecutiveCommandCenter() {
           <div className="space-y-4"><Skeleton className="h-56 w-full" /><Skeleton className="h-40 w-full" /></div>
         ) : (
           <div className="space-y-5">
-            <Card id="executive-overview" className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5 scroll-mt-6">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5 scroll-mt-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Executive Intelligence</p>
-                  <h2 className="mt-1 text-xl font-bold">Todo el sistema ejecutivo, en un solo workspace</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Elige una capa de inteligencia y Nüva te lleva directamente a ella sin perder el contexto.</p>
+                  <h2 className="text-xl font-bold">Resumen ejecutivo</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Todo el sistema ejecutivo, en un solo workspace. Elige una capa de inteligencia y Nüva te lleva directamente a ella sin perder el contexto.</p>
                 </div>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
