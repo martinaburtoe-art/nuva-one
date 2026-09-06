@@ -75,12 +75,12 @@ export function InventorySmartImport() {
         const current = existing?.[0];
         const payload: Record<string, unknown> = { business_id: businessId, name, sku, barcode, cost: parseNumber(m.cost) ?? 0, price: parseNumber(m.price) ?? 0, low_stock_threshold: parseNumber(m.minimum) ?? 0, reorder_point: parseNumber(m.reorderPoint) ?? 0, max_stock: parseNumber(m.maxStock) ?? 0 };
         if (current) {
-          const { error } = await supabase.from("products").update(payload).eq("id", current.id).eq("business_id", businessId); if (error) throw error; updated += 1;
+          const { error } = await supabase.from("products").update(payload as never).eq("id", current.id).eq("business_id", businessId); if (error) throw error; updated += 1;
           const target = parseNumber(m.stock); const delta = target === null ? 0 : target - Number(current.stock ?? 0);
-          if (delta) { await adjustInventoryStock(supabase, { productId: current.id, delta, reason: `Importación inteligente · fila ${row.rowNumber}`, sourceType: "smart_import", sourceId: fileName || null }); adjusted += 1; }
+          if (delta) { await adjustInventoryStock(supabase, { productId: current.id, delta, reason: `Importación inteligente · fila ${row.rowNumber}`, sourceType: "smart_import", sourceId: fileName || undefined }); adjusted += 1; }
         } else {
           const { data: product, error } = await supabase.from("products").insert({ ...payload, stock: 0 } as never).select("id").single(); if (error) throw error; created += 1;
-          const target = parseNumber(m.stock); if (target) { await adjustInventoryStock(supabase, { productId: product.id, delta: target, reason: `Stock inicial · importación inteligente · fila ${row.rowNumber}`, sourceType: "smart_import", sourceId: fileName || null }); adjusted += 1; }
+          const target = parseNumber(m.stock); if (target) { await adjustInventoryStock(supabase, { productId: product.id, delta: target, reason: `Stock inicial · importación inteligente · fila ${row.rowNumber}`, sourceType: "smart_import", sourceId: fileName || undefined }); adjusted += 1; }
         }
       }
       skipped = rows.length - valid.length;
