@@ -26,7 +26,7 @@ export function BusinessInsightCard({ income, expense, inventoryValue, productsC
         ? { label: "Activar ventas", title: "Tienes operación preparada, pero aún no hay ventas", description: `${productsCount} productos y ${fmtCLP(inventoryValue)} en inventario están listos para operar.`, action: "Registrar venta", href: "/pos", Icon: Boxes, tone: "border-primary/25 bg-primary/[0.045]", iconTone: "bg-primary/10 text-primary" }
         : hasData && income > 0 && net >= 0
           ? { label: "Resultado positivo", title: "La operación mantiene un resultado positivo", description: `${fmtCLP(net)} de flujo neto con un margen de ${margin.toFixed(1)}%.`, action: "Ver ventas", href: "/sales", Icon: TrendingUp, tone: "border-success/30 bg-success/[0.045]", iconTone: "bg-success/10 text-success" }
-          : { label: "Construyendo contexto", title: "Nüva está preparando tu lectura operativa", description: "Registra operaciones para que el Resumen pueda detectar prioridades reales.", action: "Comenzar operación", href: "/sales", Icon: Sparkles, tone: "border-primary/25 bg-primary/[0.045]", iconTone: "bg-primary/10 text-primary" };
+          : { label: "Construyendo contexto", title: "Nüva está preparando tu lectura operativa", description: "Registra operaciones para que el Resumen pueda mostrar prioridades reales.", action: "Comenzar operación", href: "/sales", Icon: Sparkles, tone: "border-primary/25 bg-primary/[0.045]", iconTone: "bg-primary/10 text-primary" };
 
   const StateIcon = state.Icon;
 
@@ -58,7 +58,7 @@ export function BusinessInsightCard({ income, expense, inventoryValue, productsC
           <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
             <div className="rounded-2xl border bg-background/70 px-4 py-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Rol del Resumen</p>
-              <p className="mt-1 text-sm font-medium">Aquí ves qué está pasando ahora. No necesitas interpretar los datos aquí: para entender causas y patrones usa Nüva Intelligence.</p>
+              <p className="mt-1 text-sm font-medium">Aquí ves qué está pasando ahora. El Resumen está diseñado para orientarte rápidamente sobre la operación del día.</p>
             </div>
             <Link to="/executive-command-center" className="shrink-0"><Button variant="outline">Tomar una decisión<ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
           </div>
