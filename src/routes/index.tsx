@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
 import { HomeCinematicExperience } from "@/components/home-cinematic-experience";
 import "@/home-cinematic-editorial-v2.css";
+import "@/home-cinematic-media.css";
 import { Sparkles } from "lucide-react";
 
 const FAQ_ITEMS = [
