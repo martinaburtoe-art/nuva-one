@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ModuleGuard } from "@/components/module-guard";
+import { ModuleInformation } from "@/components/module-information";
 import { FinanceAccountingWorkspaceV2 } from "@/components/finance-accounting-workspace-v2";
 import { FinanceAdvancedTools } from "@/components/finance-advanced-tools";
 import { FinanceSiiWorkspace } from "@/components/finance-sii-workspace";
@@ -26,6 +27,24 @@ function Finance() {
   return (
     <ModuleGuard module="finance">
       <div className="space-y-5">
+        <ModuleInformation
+          title="Finanzas"
+          summary="Centro para entender, controlar y tomar decisiones sobre el dinero del negocio, desde la operación diaria hasta la contabilidad y tributación."
+          purpose="Concentrar en un solo lugar la situación financiera, el flujo de caja, las cuentas por cobrar, obligaciones, contabilidad, tributación y herramientas de análisis."
+          includes={[
+            "Control financiero y flujo de caja",
+            "Tesorería, cuentas por cobrar y pendientes contables",
+            "Facturación y tributación SII integrada",
+            "Contabilidad profesional e inteligencia financiera",
+          ]}
+          data="Utiliza los movimientos, ventas, compras, obligaciones tributarias, productos y registros financieros disponibles para tu negocio. Las cifras dependen de los datos registrados."
+          actions={[
+            "Revisar la situación financiera actual",
+            "Detectar obligaciones y riesgos de liquidez",
+            "Analizar cartera y pendientes contables",
+            "Emitir, revisar o respaldar información tributaria cuando corresponda",
+          ]}
+        />
         <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} />
         <FinanceSiiWorkspace />
         <FinanceAdvancedTools />
