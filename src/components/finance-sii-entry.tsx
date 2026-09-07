@@ -3,6 +3,7 @@ import { Receipt, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+/** SII is presented as a finance tool, not as a top-level module. */
 export function FinanceSiiEntry() {
   return (
     <Card className="border-border/70 bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
@@ -15,13 +16,13 @@ export function FinanceSiiEntry() {
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Finanzas · Tributación</p>
             <h2 className="mt-1 text-lg font-semibold">Facturación SII</h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Emisión y gestión de documentos tributarios electrónicos, folios, declaraciones y respaldos asociados al SII.
+              Gestiona documentos tributarios, folios, declaraciones y respaldos del SII directamente desde Finanzas.
             </p>
           </div>
         </div>
         <Button asChild className="shrink-0">
           <Link to="/billing">
-            Abrir SII
+            Abrir herramienta SII
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
