@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, AlertTriangle, CheckCircle2, Lightbulb, ShieldAlert, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle2, Info, Lightbulb, ShieldAlert, ArrowUpRight } from "lucide-react";
 import { useBizList } from "@/lib/biz-data";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
+import { ModuleInformation } from "@/components/module-information";
 import { NuvaExecutiveCommandCenter } from "@/components/nuva-executive-command-center";
 import { NuvaExecutionScore } from "@/components/nuva-execution-score";
 import { NuvaTrendIntelligence } from "@/components/nuva-trend-intelligence";
@@ -57,6 +58,26 @@ function ExecutiveCommandCenter() {
   return (
     <ModuleGuard module="customers">
       <div className="space-y-6">
+        <ModuleInformation
+          title="Centro Ejecutivo"
+          summary="Capa de dirección para convertir información del negocio en prioridades, decisiones, ejecución y aprendizaje."
+          purpose="Ayudar a la persona responsable del negocio a decidir qué atender primero, ejecutar acciones, revisar escenarios y aprender de los resultados sin mezclar esta capa con la operación diaria."
+          includes={[
+            "Puesto de mando y decisión prioritaria",
+            "Centro de acciones y disciplina de ejecución",
+            "Seguimiento temporal de decisiones",
+            "Escenarios y señales predictivas",
+            "Factores de contexto, resultados y memoria de decisiones",
+          ]}
+          data="Cruza ventas, compras, transacciones, clientes, actividades, cotizaciones, inventario y resultados de ejecución disponibles para el negocio activo."
+          actions={[
+            "Identificar la prioridad ejecutiva más importante",
+            "Convertir una decisión en una acción concreta",
+            "Revisar escenarios y factores que pueden cambiar el resultado",
+            "Medir cumplimiento y resultados posteriores",
+            "Consultar la memoria para mejorar decisiones futuras",
+          ]}
+        />
         <PageHeader title="Centro Ejecutivo" description="Tu capa de dirección: elegir prioridades, ejecutar decisiones, medir resultados y aprender. El análisis vive en Nüva Intelligence; la operación diaria vive en Resumen." />
         {loading ? (
           <div className="space-y-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-56 w-full" /></div>
@@ -71,7 +92,7 @@ function ExecutiveCommandCenter() {
             <div>
               <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Herramientas del Centro Ejecutivo</p><h2 className="mt-1 text-xl font-semibold">Elige qué quieres gestionar</h2></div><span className="hidden text-xs text-muted-foreground md:block">8 herramientas</span></div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {executiveSections.map((item) => <button key={item.id} type="button" onClick={() => setActiveSection(item.id)} className="group rounded-2xl border bg-background/70 p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><p className="font-semibold">{item.title}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
+                {executiveSections.map((item) => <button key={item.id} type="button" onClick={() => setActiveSection(item.id)} className="group rounded-2xl border bg-background/70 p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><div className="flex items-center justify-between gap-2"><p className="font-semibold">{item.title}</p><span title={`Información: ${item.title}`} aria-label={`Información: ${item.title}`} className="rounded-full p-1 text-muted-foreground"><Info className="h-4 w-4" /></span></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
               </div>
             </div>
           </>
