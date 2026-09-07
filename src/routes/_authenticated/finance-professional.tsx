@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ModuleGuard } from "@/components/module-guard";
 import { FinanceToolsHub } from "@/components/finance-tools-hub";
+import { FinanceSiiEntry } from "@/components/finance-sii-entry";
 import { NuvaFinancialControl } from "@/components/nuva-financial-control";
 import { useBizList } from "@/lib/biz-data";
 
@@ -27,6 +28,7 @@ function FinanceProfessional() {
           expense={control.expense}
           inventoryValue={control.inventoryValue}
         />
+        <FinanceSiiEntry />
         <FinanceToolsHub />
       </div>
     </ModuleGuard>
