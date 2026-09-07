@@ -1,9 +1,9 @@
 /*
  * Nüva One — Homepage cinematic media layer.
  *
- * These are free Unsplash photographs used as an editorial fallback while the
- * final Flow/Veo masters are being produced. The selector-level art direction
- * keeps the experience functional if an external image is unavailable.
+ * Free Unsplash photographs are used as an editorial fallback while the final
+ * Flow/Veo masters are being produced. The cinematic scene logic remains
+ * independent from these assets, so final masters can replace this layer.
  *
  * Sources:
  * - https://unsplash.com/photos/a-store-front-with-baskets-of-food-on-display-m0oITkh5fz8
@@ -52,7 +52,7 @@
   background-position: center center;
 }
 
-/* Let the photographic layer carry the scene; keep the editorial overlays. */
+/* Keep the photographic layer readable under editorial typography. */
 .cinematic-visual--store-open::before,
 .cinematic-visual--store-final::before,
 .cinematic-visual--counter::before,
@@ -87,40 +87,137 @@
   background: linear-gradient(105deg, transparent 0 48%, rgba(255,255,255,.2) 64%, transparent 78%);
 }
 
-/* The photo is the hero visual; hide geometric placeholders when it is present. */
-.cinematic-visual--store-open > :not(.cinematic-visual__grain),
-.cinematic-visual--store-final > :not(.cinematic-visual__grain),
-.cinematic-visual--counter > :not(.cinematic-visual__grain),
-.cinematic-visual--customer > :not(.cinematic-visual__grain),
-.cinematic-visual--inventory > :not(.cinematic-visual__grain),
-.cinematic-visual--replenish > :not(.cinematic-visual__grain),
-.cinematic-visual--shipping > :not(.cinematic-visual__grain),
-.cinematic-visual--scanner > :not(.cinematic-visual__grain),
-.cinematic-visual--studio > :not(.cinematic-visual__grain),
-.cinematic-visual--cash > :not(.cinematic-visual__grain),
-.cinematic-visual--finance > :not(.cinematic-visual__grain),
-.cinematic-visual--score > :not(.cinematic-visual__grain),
-.cinematic-visual--connections > :not(.cinematic-visual__grain) {
-  /* Preserve the media stage and suppress fallback geometry without affecting
-     the scene metric/copy overlays which live outside .cinematic-visual. */
-}
-
+/* The real photograph is primary. Keep only purposeful UI/data inserts. */
+.cinematic-visual--store-open .cinematic-visual__window,
+.cinematic-visual--store-open .cinematic-visual__light,
+.cinematic-visual--store-open .cinematic-visual__floor,
+.cinematic-visual--store-open .cinematic-visual__shelf,
+.cinematic-visual--store-open .cinematic-visual__boxes,
 .cinematic-visual--store-open .cinematic-visual__subject,
 .cinematic-visual--store-open .cinematic-visual__customer,
+.cinematic-visual--store-open .cinematic-visual__counter,
+.cinematic-visual--store-open .cinematic-visual__object,
+.cinematic-visual--store-final .cinematic-visual__window,
+.cinematic-visual--store-final .cinematic-visual__light,
+.cinematic-visual--store-final .cinematic-visual__floor,
+.cinematic-visual--store-final .cinematic-visual__shelf,
+.cinematic-visual--store-final .cinematic-visual__boxes,
 .cinematic-visual--store-final .cinematic-visual__subject,
 .cinematic-visual--store-final .cinematic-visual__customer,
+.cinematic-visual--store-final .cinematic-visual__counter,
+.cinematic-visual--store-final .cinematic-visual__object,
+.cinematic-visual--counter .cinematic-visual__window,
+.cinematic-visual--counter .cinematic-visual__light,
+.cinematic-visual--counter .cinematic-visual__floor,
+.cinematic-visual--counter .cinematic-visual__shelf,
+.cinematic-visual--counter .cinematic-visual__boxes,
 .cinematic-visual--counter .cinematic-visual__subject,
 .cinematic-visual--counter .cinematic-visual__customer,
+.cinematic-visual--counter .cinematic-visual__counter,
+.cinematic-visual--counter .cinematic-visual__object,
+.cinematic-visual--customer .cinematic-visual__window,
+.cinematic-visual--customer .cinematic-visual__light,
+.cinematic-visual--customer .cinematic-visual__floor,
+.cinematic-visual--customer .cinematic-visual__shelf,
+.cinematic-visual--customer .cinematic-visual__boxes,
 .cinematic-visual--customer .cinematic-visual__subject,
 .cinematic-visual--customer .cinematic-visual__customer,
-.cinematic-visual--inventory .cinematic-visual__subject,
+.cinematic-visual--customer .cinematic-visual__counter,
+.cinematic-visual--customer .cinematic-visual__object,
+.cinematic-visual--inventory .cinematic-visual__window,
+.cinematic-visual--inventory .cinematic-visual__light,
+.cinematic-visual--inventory .cinematic-visual__floor,
+.cinematic-visual--inventory .cinematic-visual__shelf,
 .cinematic-visual--inventory .cinematic-visual__boxes,
+.cinematic-visual--inventory .cinematic-visual__subject,
+.cinematic-visual--inventory .cinematic-visual__customer,
+.cinematic-visual--inventory .cinematic-visual__counter,
+.cinematic-visual--inventory .cinematic-visual__object,
+.cinematic-visual--replenish .cinematic-visual__window,
+.cinematic-visual--replenish .cinematic-visual__light,
+.cinematic-visual--replenish .cinematic-visual__floor,
+.cinematic-visual--replenish .cinematic-visual__shelf,
 .cinematic-visual--replenish .cinematic-visual__boxes,
-.cinematic-visual--shipping .cinematic-visual__package,
-.cinematic-visual--scanner .cinematic-visual__scanner,
+.cinematic-visual--replenish .cinematic-visual__subject,
+.cinematic-visual--replenish .cinematic-visual__customer,
+.cinematic-visual--replenish .cinematic-visual__counter,
+.cinematic-visual--replenish .cinematic-visual__object,
+.cinematic-visual--shipping .cinematic-visual__window,
+.cinematic-visual--shipping .cinematic-visual__light,
+.cinematic-visual--shipping .cinematic-visual__floor,
+.cinematic-visual--shipping .cinematic-visual__shelf,
+.cinematic-visual--shipping .cinematic-visual__boxes,
+.cinematic-visual--shipping .cinematic-visual__subject,
+.cinematic-visual--shipping .cinematic-visual__customer,
+.cinematic-visual--shipping .cinematic-visual__counter,
+.cinematic-visual--shipping .cinematic-visual__object,
+.cinematic-visual--scanner .cinematic-visual__window,
+.cinematic-visual--scanner .cinematic-visual__light,
+.cinematic-visual--scanner .cinematic-visual__floor,
+.cinematic-visual--scanner .cinematic-visual__shelf,
+.cinematic-visual--scanner .cinematic-visual__boxes,
+.cinematic-visual--scanner .cinematic-visual__subject,
+.cinematic-visual--scanner .cinematic-visual__customer,
+.cinematic-visual--scanner .cinematic-visual__counter,
+.cinematic-visual--scanner .cinematic-visual__object,
+.cinematic-visual--studio .cinematic-visual__window,
+.cinematic-visual--studio .cinematic-visual__light,
+.cinematic-visual--studio .cinematic-visual__floor,
+.cinematic-visual--studio .cinematic-visual__shelf,
+.cinematic-visual--studio .cinematic-visual__boxes,
+.cinematic-visual--studio .cinematic-visual__subject,
+.cinematic-visual--studio .cinematic-visual__customer,
+.cinematic-visual--studio .cinematic-visual__counter,
+.cinematic-visual--studio .cinematic-visual__object,
+.cinematic-visual--cash .cinematic-visual__window,
+.cinematic-visual--cash .cinematic-visual__light,
+.cinematic-visual--cash .cinematic-visual__floor,
+.cinematic-visual--cash .cinematic-visual__shelf,
+.cinematic-visual--cash .cinematic-visual__boxes,
 .cinematic-visual--cash .cinematic-visual__subject,
-.cinematic-visual--finance .cinematic-visual__subject {
-  opacity: 0;
+.cinematic-visual--cash .cinematic-visual__customer,
+.cinematic-visual--cash .cinematic-visual__counter,
+.cinematic-visual--cash .cinematic-visual__object,
+.cinematic-visual--finance .cinematic-visual__window,
+.cinematic-visual--finance .cinematic-visual__light,
+.cinematic-visual--finance .cinematic-visual__floor,
+.cinematic-visual--finance .cinematic-visual__shelf,
+.cinematic-visual--finance .cinematic-visual__boxes,
+.cinematic-visual--finance .cinematic-visual__subject,
+.cinematic-visual--finance .cinematic-visual__customer,
+.cinematic-visual--finance .cinematic-visual__counter,
+.cinematic-visual--finance .cinematic-visual__object,
+.cinematic-visual--score .cinematic-visual__window,
+.cinematic-visual--score .cinematic-visual__light,
+.cinematic-visual--score .cinematic-visual__floor,
+.cinematic-visual--score .cinematic-visual__shelf,
+.cinematic-visual--score .cinematic-visual__boxes,
+.cinematic-visual--score .cinematic-visual__subject,
+.cinematic-visual--score .cinematic-visual__customer,
+.cinematic-visual--score .cinematic-visual__counter,
+.cinematic-visual--score .cinematic-visual__object,
+.cinematic-visual--connections .cinematic-visual__window,
+.cinematic-visual--connections .cinematic-visual__light,
+.cinematic-visual--connections .cinematic-visual__floor,
+.cinematic-visual--connections .cinematic-visual__shelf,
+.cinematic-visual--connections .cinematic-visual__boxes,
+.cinematic-visual--connections .cinematic-visual__subject,
+.cinematic-visual--connections .cinematic-visual__customer,
+.cinematic-visual--connections .cinematic-visual__counter,
+.cinematic-visual--connections .cinematic-visual__object {
+  display: none;
+}
+
+/* Header chapter anchors now land on real scene intervals instead of zero-height spans. */
+.cinematic-story__timeline {
+  pointer-events: none;
+}
+
+.cinematic-story__timeline > span {
+  display: block;
+  width: 1px;
+  height: calc(100% / 14);
+  scroll-margin-top: 84px;
 }
 
 @media (max-width: 640px) {
