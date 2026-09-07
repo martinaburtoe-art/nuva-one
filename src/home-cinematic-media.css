@@ -1,0 +1,139 @@
+/*
+ * Nüva One — Homepage cinematic media layer.
+ *
+ * These are free Unsplash photographs used as an editorial fallback while the
+ * final Flow/Veo masters are being produced. The selector-level art direction
+ * keeps the experience functional if an external image is unavailable.
+ *
+ * Sources:
+ * - https://unsplash.com/photos/a-store-front-with-baskets-of-food-on-display-m0oITkh5fz8
+ * - https://unsplash.com/photos/a-modern-retail-display-with-window-and-open-sign-r93JK7nBPMU
+ * - https://unsplash.com/photos/woman-checking-package-with-phone-near-laptop-and-boxes-k63Or81F8-M
+ * - https://unsplash.com/photos/multiple-cash-registers-with-computer-monitors-at-a-checkout-counter-UaMMROu5fq0
+ * - https://unsplash.com/photos/sunlight-streams-across-a-store-display-with-merchandise-3hhrqOrIsF8
+ * - https://unsplash.com/photos/retail-display-with-products-and-shelving-ea_703_mEQg
+ */
+
+.cinematic-visual--store-open,
+.cinematic-visual--store-final,
+.cinematic-visual--counter,
+.cinematic-visual--customer {
+  background-image: url("https://images.unsplash.com/photo-1690924620667-a5cb8eaa45e1?auto=format&fit=crop&w=2400&q=86");
+  background-size: cover;
+  background-position: center 58%;
+}
+
+.cinematic-visual--inventory,
+.cinematic-visual--replenish,
+.cinematic-visual--shipping {
+  background-image: url("https://images.unsplash.com/photo-1770013413878-2530e2c3d82b?auto=format&fit=crop&w=2400&q=86");
+  background-size: cover;
+  background-position: center center;
+}
+
+.cinematic-visual--scanner,
+.cinematic-visual--studio {
+  background-image: url("https://images.unsplash.com/photo-1746723386880-ca68b5f4b22d?auto=format&fit=crop&w=2400&q=86");
+  background-size: cover;
+  background-position: center center;
+}
+
+.cinematic-visual--cash,
+.cinematic-visual--finance {
+  background-image: url("https://images.unsplash.com/photo-1780037190608-1d871be1fe41?auto=format&fit=crop&w=2400&q=86");
+  background-size: cover;
+  background-position: center 46%;
+}
+
+.cinematic-visual--score,
+.cinematic-visual--connections {
+  background-image: url("https://images.unsplash.com/photo-1777008873256-fcdf52ae61b3?auto=format&fit=crop&w=2400&q=86");
+  background-size: cover;
+  background-position: center center;
+}
+
+/* Let the photographic layer carry the scene; keep the editorial overlays. */
+.cinematic-visual--store-open::before,
+.cinematic-visual--store-final::before,
+.cinematic-visual--counter::before,
+.cinematic-visual--customer::before,
+.cinematic-visual--inventory::before,
+.cinematic-visual--replenish::before,
+.cinematic-visual--shipping::before,
+.cinematic-visual--scanner::before,
+.cinematic-visual--studio::before,
+.cinematic-visual--cash::before,
+.cinematic-visual--finance::before,
+.cinematic-visual--score::before,
+.cinematic-visual--connections::before {
+  background:
+    linear-gradient(90deg, rgba(248,250,249,.88) 0%, rgba(248,250,249,.42) 32%, rgba(248,250,249,.08) 67%, rgba(248,250,249,.16) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.2), rgba(16,32,32,.1));
+}
+
+.cinematic-visual--store-open::after,
+.cinematic-visual--store-final::after,
+.cinematic-visual--counter::after,
+.cinematic-visual--customer::after,
+.cinematic-visual--inventory::after,
+.cinematic-visual--replenish::after,
+.cinematic-visual--shipping::after,
+.cinematic-visual--scanner::after,
+.cinematic-visual--studio::after,
+.cinematic-visual--cash::after,
+.cinematic-visual--finance::after,
+.cinematic-visual--score::after,
+.cinematic-visual--connections::after {
+  background: linear-gradient(105deg, transparent 0 48%, rgba(255,255,255,.2) 64%, transparent 78%);
+}
+
+/* The photo is the hero visual; hide geometric placeholders when it is present. */
+.cinematic-visual--store-open > :not(.cinematic-visual__grain),
+.cinematic-visual--store-final > :not(.cinematic-visual__grain),
+.cinematic-visual--counter > :not(.cinematic-visual__grain),
+.cinematic-visual--customer > :not(.cinematic-visual__grain),
+.cinematic-visual--inventory > :not(.cinematic-visual__grain),
+.cinematic-visual--replenish > :not(.cinematic-visual__grain),
+.cinematic-visual--shipping > :not(.cinematic-visual__grain),
+.cinematic-visual--scanner > :not(.cinematic-visual__grain),
+.cinematic-visual--studio > :not(.cinematic-visual__grain),
+.cinematic-visual--cash > :not(.cinematic-visual__grain),
+.cinematic-visual--finance > :not(.cinematic-visual__grain),
+.cinematic-visual--score > :not(.cinematic-visual__grain),
+.cinematic-visual--connections > :not(.cinematic-visual__grain) {
+  /* Preserve the media stage and suppress fallback geometry without affecting
+     the scene metric/copy overlays which live outside .cinematic-visual. */
+}
+
+.cinematic-visual--store-open .cinematic-visual__subject,
+.cinematic-visual--store-open .cinematic-visual__customer,
+.cinematic-visual--store-final .cinematic-visual__subject,
+.cinematic-visual--store-final .cinematic-visual__customer,
+.cinematic-visual--counter .cinematic-visual__subject,
+.cinematic-visual--counter .cinematic-visual__customer,
+.cinematic-visual--customer .cinematic-visual__subject,
+.cinematic-visual--customer .cinematic-visual__customer,
+.cinematic-visual--inventory .cinematic-visual__subject,
+.cinematic-visual--inventory .cinematic-visual__boxes,
+.cinematic-visual--replenish .cinematic-visual__boxes,
+.cinematic-visual--shipping .cinematic-visual__package,
+.cinematic-visual--scanner .cinematic-visual__scanner,
+.cinematic-visual--cash .cinematic-visual__subject,
+.cinematic-visual--finance .cinematic-visual__subject {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .cinematic-visual--store-open,
+  .cinematic-visual--store-final,
+  .cinematic-visual--counter,
+  .cinematic-visual--customer { background-position: 58% center; }
+
+  .cinematic-visual--inventory,
+  .cinematic-visual--replenish,
+  .cinematic-visual--shipping { background-position: 55% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-visual { scroll-behavior: auto; }
+}
