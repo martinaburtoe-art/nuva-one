@@ -1,0 +1,70 @@
+/* Nüva One — Homepage cinematic media delivery.
+ * Keeps the editorial fallback intact while reducing mobile transfer size.
+ */
+@media (max-width: 640px) {
+  .cinematic-visual--store-open,
+  .cinematic-visual--store-final,
+  .cinematic-visual--counter,
+  .cinematic-visual--customer {
+    background-image: url("https://images.unsplash.com/photo-1690924620667-a5cb8eaa45e1?auto=format&fit=crop&w=1400&q=78");
+  }
+
+  .cinematic-visual--inventory,
+  .cinematic-visual--replenish,
+  .cinematic-visual--shipping {
+    background-image: url("https://images.unsplash.com/photo-1770013413878-2530e2c3d82b?auto=format&fit=crop&w=1400&q=78");
+  }
+
+  .cinematic-visual--scanner,
+  .cinematic-visual--studio {
+    background-image: url("https://images.unsplash.com/photo-1746723386880-ca68b5f4b22d?auto=format&fit=crop&w=1400&q=78");
+  }
+
+  .cinematic-visual--cash,
+  .cinematic-visual--finance {
+    background-image: url("https://images.unsplash.com/photo-1780037190608-1d871be1fe41?auto=format&fit=crop&w=1400&q=78");
+  }
+
+  .cinematic-visual--score,
+  .cinematic-visual--connections {
+    background-image: url("https://images.unsplash.com/photo-1777008873256-fcdf52ae61b3?auto=format&fit=crop&w=1400&q=78");
+  }
+
+  .cinematic-visual--desk {
+    background-image: url("https://images.unsplash.com/photo-1783094269325-4ba186e8e01b?auto=format&fit=crop&w=1400&q=78");
+  }
+}
+
+@media (prefers-reduced-data: reduce) {
+  .cinematic-visual--store-open,
+  .cinematic-visual--store-final,
+  .cinematic-visual--counter,
+  .cinematic-visual--customer {
+    background-image: url("https://images.unsplash.com/photo-1690924620667-a5cb8eaa45e1?auto=format&fit=crop&w=900&q=68");
+  }
+
+  .cinematic-visual--inventory,
+  .cinematic-visual--replenish,
+  .cinematic-visual--shipping {
+    background-image: url("https://images.unsplash.com/photo-1770013413878-2530e2c3d82b?auto=format&fit=crop&w=900&q=68");
+  }
+
+  .cinematic-visual--scanner,
+  .cinematic-visual--studio {
+    background-image: url("https://images.unsplash.com/photo-1746723386880-ca68b5f4b22d?auto=format&fit=crop&w=900&q=68");
+  }
+
+  .cinematic-visual--cash,
+  .cinematic-visual--finance {
+    background-image: url("https://images.unsplash.com/photo-1780037190608-1d871be1fe41?auto=format&fit=crop&w=900&q=68");
+  }
+
+  .cinematic-visual--score,
+  .cinematic-visual--connections {
+    background-image: url("https://images.unsplash.com/photo-1777008873256-fcdf52ae61b3?auto=format&fit=crop&w=900&q=68");
+  }
+
+  .cinematic-visual--desk {
+    background-image: url("https://images.unsplash.com/photo-1783094269325-4ba186e8e01b?auto=format&fit=crop&w=900&q=68");
+  }
+}
