@@ -56,11 +56,18 @@ jobs:
           fi
 
       - name: Verify generated media
+        env:
+          VEO_SCENES: ${{ inputs.scenes }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
           const manifest = JSON.parse(fs.readFileSync('docs/home-cinematic-veo-manifest.json', 'utf8'));
-          for (const scene of manifest.scenes) {
+          const requested = (process.env.VEO_SCENES || '').trim().split(/\s+/).filter(Boolean);
+          const scenes = requested.length
+            ? manifest.scenes.filter((scene) => requested.includes(scene.id) || requested.includes(scene.number))
+            : manifest.scenes;
+          if (!scenes.length) throw new Error('No valid scenes selected.');
+          for (const scene of scenes) {
             const required = [
               `public/home-cinematic/${scene.id}.mp4`,
               `public/home-cinematic/${scene.id}-poster.webp`,
@@ -70,7 +77,7 @@ jobs:
               if (!fs.existsSync(file) || fs.statSync(file).size < 1024) throw new Error(`Missing/invalid generated asset: ${file}`);
             }
           }
-          console.log(`Verified ${manifest.scenes.length} cinematic scene asset sets.`);
+          console.log(`Verified ${scenes.length} cinematic scene asset sets.`);
           NODE
 
       - name: Wire generated assets into the scene engine
