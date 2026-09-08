@@ -14,6 +14,7 @@ create table if not exists public.n8n_event_outbox (
   attempts integer not null default 0 check (attempts >= 0),
   last_error text,
   delivered_at timestamptz,
+  next_attempt_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint n8n_event_outbox_idempotency_key_check check (length(trim(idempotency_key)) between 1 and 180),
@@ -21,8 +22,10 @@ create table if not exists public.n8n_event_outbox (
   constraint n8n_event_outbox_entity_type_check check (entity_type ~ '^[a-z][a-z0-9_.-]{1,60}$')
 );
 
+alter table public.n8n_event_outbox add column if not exists next_attempt_at timestamptz not null default now();
+
 create unique index if not exists n8n_event_outbox_business_idempotency_idx on public.n8n_event_outbox(business_id, idempotency_key);
-create index if not exists n8n_event_outbox_delivery_idx on public.n8n_event_outbox(status, created_at);
+create index if not exists n8n_event_outbox_delivery_idx on public.n8n_event_outbox(status, next_attempt_at, created_at);
 create index if not exists n8n_event_outbox_business_created_idx on public.n8n_event_outbox(business_id, created_at desc);
 
 alter table public.n8n_event_outbox enable row level security;
