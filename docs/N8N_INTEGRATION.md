@@ -45,7 +45,7 @@ El worker `/api/n8n-delivery`:
 - conserva el error de la última entrega fallida;
 - nunca persiste `N8N_WEBHOOK_SECRET` ni credenciales externas en la cola.
 
-Vercel Cron está configurado con una frecuencia diaria para mantener compatibilidad con planes Hobby; en Pro/Enterprise puede elevarse a una frecuencia por minuto cuando se necesite procesamiento casi en tiempo real. citeturn1view0
+Vercel Cron está configurado con una frecuencia diaria para mantener compatibilidad con planes Hobby. En Pro/Enterprise puede elevarse a una frecuencia por minuto cuando se necesite procesamiento casi en tiempo real.
 
 ## Contrato de evento
 
@@ -84,7 +84,7 @@ Vercel Cron está configurado con una frecuencia diaria para mantener compatibil
 - Registrar resultado, código HTTP y duración sin guardar secretos.
 - Aplicar mínimo privilegio a credenciales externas.
 - No permitir que un agente de IA tenga permisos implícitos para acciones irreversibles.
-- Usar n8n `2.37.11` estable o una versión posterior parcheada; las vulnerabilidades publicadas el 2 de septiembre de 2026 fueron corregidas desde `2.37.7`/`2.38.2` según rama. citeturn0search0turn0search1turn0search2
+- Usar n8n `2.37.11` estable o una versión posterior parcheada.
 
 ## Estado
 
