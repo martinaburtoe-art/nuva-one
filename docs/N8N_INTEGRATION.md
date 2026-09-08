@@ -2,9 +2,9 @@
 
 ## Objetivo
 
-n8n es el motor de automatización externo de Nüva One. La integración debe mantener la frontera:
+n8n es el motor de automatización externo de Nüva One. La integración mantiene la frontera:
 
-`Nüva UI → /api/n8n → n8n webhook → workflow → servicios externos`
+`Nüva UI → /api/n8n → durable outbox → n8n webhook → workflow → servicios externos`
 
 Las credenciales n8n nunca se exponen al navegador.
 
@@ -14,8 +14,10 @@ Configurar únicamente en Vercel Production/Preview según corresponda:
 
 - `N8N_WEBHOOK_URL`: URL de producción del Webhook Trigger de n8n.
 - `N8N_WEBHOOK_SECRET`: secreto compartido para firmar cada evento.
+- `SUPABASE_SERVICE_ROLE_KEY`: usada únicamente por el worker programado para procesar la cola durable.
+- `CRON_SECRET`: protege `/api/n8n-delivery` frente a invocaciones manuales.
 
-No usar `NEXT_PUBLIC_` para ninguna de estas variables.
+No usar `NEXT_PUBLIC_` ni `VITE_` para ninguna de estas variables.
 
 ## Firma
 
@@ -29,6 +31,22 @@ Nüva envía:
 
 El workflow de n8n debe validar timestamp, firma y esquema antes de ejecutar lógica de negocio. Para cargas sensibles, añadir rate limiting/IP allowlist en la infraestructura n8n.
 
+## Outbox durable
+
+Los eventos se almacenan en `public.n8n_event_outbox` antes de intentar la entrega. La tabla es tenant-scoped y tiene RLS, índice único por `(business_id, idempotency_key)`, contador de intentos y programación de reintentos.
+
+El worker `/api/n8n-delivery`:
+
+- procesa hasta 25 eventos por ejecución;
+- reclama cada evento de forma condicional para reducir carreras entre ejecuciones;
+- usa backoff exponencial hasta 1 hora;
+- limita cada evento a 8 intentos;
+- marca entregas exitosas como `delivered`;
+- conserva el error de la última entrega fallida;
+- nunca persiste `N8N_WEBHOOK_SECRET` ni credenciales externas en la cola.
+
+Vercel Cron está configurado con una frecuencia diaria para mantener compatibilidad con planes Hobby; en Pro/Enterprise puede elevarse a una frecuencia por minuto cuando se necesite procesamiento casi en tiempo real. citeturn1view0
+
 ## Contrato de evento
 
 ```json
@@ -39,7 +57,7 @@ El workflow de n8n debe validar timestamp, firma y esquema antes de ejecutar ló
   "provider": "nuva",
   "source": "nuva_one",
   "entity_type": "sale",
-  "entity_id": "uuid|null",
+  "entity_id": "external-or-internal-id|null",
   "event_type": "sale.created",
   "occurred_at": "2026-09-08T00:00:00.000Z",
   "idempotency_key": "stable-key",
@@ -66,11 +84,8 @@ El workflow de n8n debe validar timestamp, firma y esquema antes de ejecutar ló
 - Registrar resultado, código HTTP y duración sin guardar secretos.
 - Aplicar mínimo privilegio a credenciales externas.
 - No permitir que un agente de IA tenga permisos implícitos para acciones irreversibles.
-
-## Versión n8n
-
-Para producción, usar una versión soportada y con los parches de seguridad vigentes. El 2 de septiembre de 2026 n8n publicó correcciones de seguridad para la rama 2.x en `2.37.7` y posteriores; no desplegar una versión inferior a esa referencia sin revisar los advisories actuales.
+- Usar n8n `2.37.11` estable o una versión posterior parcheada; las vulnerabilidades publicadas el 2 de septiembre de 2026 fueron corregidas desde `2.37.7`/`2.38.2` según rama. citeturn0search0turn0search1turn0search2
 
 ## Estado
 
-La pasarela server-side y el endpoint autenticado `/api/n8n` ya forman parte de Nüva One. La activación real requiere una instancia n8n y sus dos variables server-side. Hasta completar ese paso, la UI debe mostrar `Preparado` y nunca `Conectado`.
+La pasarela server-side, el outbox durable y el worker programado ya forman parte de Nüva One. La activación real requiere una instancia n8n y sus variables server-side. Hasta completar ese paso, la UI debe mostrar `Preparado` y nunca `Conectado`.
