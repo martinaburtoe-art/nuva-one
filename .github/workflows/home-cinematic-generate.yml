@@ -83,6 +83,9 @@ jobs:
       - name: Wire generated assets into the scene engine
         run: node scripts/wire-home-cinematic-assets.mjs
 
+      - name: Run cinematic integrity gate
+        run: node scripts/verify-home-cinematic-assets.mjs
+
       - name: Commit generated masters and wiring
         run: |
           git config user.name "github-actions[bot]"
