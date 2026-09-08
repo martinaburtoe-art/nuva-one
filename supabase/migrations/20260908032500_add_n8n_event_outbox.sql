@@ -5,7 +5,7 @@ create table if not exists public.n8n_event_outbox (
   provider text not null default 'n8n',
   source text not null default 'nuva_one',
   entity_type text not null,
-  entity_id uuid,
+  entity_id text,
   event_type text not null,
   occurred_at timestamptz not null default now(),
   idempotency_key text not null,
