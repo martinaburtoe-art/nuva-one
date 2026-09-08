@@ -19,11 +19,11 @@ if (!API_KEY) {
 
 const manifest = JSON.parse(await fs.readFile(MANIFEST_PATH, "utf8"));
 const only = process.argv.slice(2).filter(Boolean);
-const scenes = only.length
+const requested = only.length
   ? manifest.scenes.filter((scene) => only.includes(scene.id) || only.includes(scene.number))
   : manifest.scenes;
 
-if (!scenes.length) {
+if (!requested.length) {
   console.error("No matching scenes. Use scene ids/numbers such as 01 or hero.");
   process.exit(1);
 }
@@ -37,6 +37,15 @@ function mimeFor(filePath) {
   return "image/png";
 }
 
+async function exists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function inlineImage(relativePath) {
   if (!relativePath) return undefined;
   const absolute = path.resolve(ROOT, relativePath);
@@ -44,10 +53,16 @@ async function inlineImage(relativePath) {
   return { inlineData: { mimeType: mimeFor(absolute), data: data.toString("base64") } };
 }
 
-async function generate(scene) {
-  const prompt = [manifest.continuityLock, scene.prompt].filter(Boolean).join("\n\n");
+async function generate(scene, fallbackFirstFrame) {
+  const firstFrame = scene.firstFrame || fallbackFirstFrame;
+  const prompt = [
+    manifest.continuityLock,
+    "CONTINUITY RULE: if a start frame is supplied, preserve its location, subject identity, wardrobe, camera direction, lighting and physical objects. Begin from that exact visual state and continue the action naturally; do not redesign the scene.",
+    scene.prompt,
+  ].filter(Boolean).join("\n\n");
+
   const instance = { prompt };
-  if (scene.firstFrame) instance.image = await inlineImage(scene.firstFrame);
+  if (firstFrame) instance.image = await inlineImage(firstFrame);
   if (scene.lastFrame) instance.lastFrame = await inlineImage(scene.lastFrame);
 
   if (scene.references?.length) {
@@ -66,7 +81,7 @@ async function generate(scene) {
       aspectRatio: scene.aspectRatio ?? manifest.defaults.aspectRatio,
       durationSeconds: scene.durationSeconds ?? manifest.defaults.durationSeconds,
       resolution: scene.resolution ?? manifest.defaults.resolution,
-      personGeneration: "allow_adult",
+      personGeneration: manifest.defaults.personGeneration ?? "allow_adult",
     },
   };
 
@@ -108,23 +123,35 @@ async function generate(scene) {
   if (!videoResponse.ok) throw new Error(`Video download failed (${videoResponse.status})`);
 
   const videoPath = path.join(OUTPUT_DIR, `${scene.id}.mp4`);
-  await fs.writeFile(videoPath, Buffer.from(await videoResponse.arrayBuffer()));
+  const videoBytes = Buffer.from(await videoResponse.arrayBuffer());
+  if (videoBytes.length < 100_000) {
+    throw new Error(`Video download for ${scene.id} is unexpectedly small (${videoBytes.length} bytes)`);
+  }
+  await fs.writeFile(videoPath, videoBytes);
 
   const posterPath = path.join(OUTPUT_DIR, `${scene.id}-poster.webp`);
-  try {
-    await execFileAsync("ffmpeg", [
-      "-y", "-i", videoPath, "-frames:v", "1", "-vf", "scale=1600:-2", "-q:v", "5", posterPath,
-    ]);
-  } catch (error) {
-    console.warn(`Poster extraction skipped for ${scene.id}: ${error.message}`);
-  }
+  const lastFramePath = path.join(OUTPUT_DIR, `${scene.id}-last.webp`);
+  await execFileAsync("ffmpeg", [
+    "-y", "-i", videoPath, "-frames:v", "1", "-vf", "scale=1600:-2", "-q:v", "5", posterPath,
+  ]);
+  await execFileAsync("ffmpeg", [
+    "-y", "-sseof", "-0.15", "-i", videoPath, "-frames:v", "1", "-vf", "scale=1600:-2", "-q:v", "5", lastFramePath,
+  ]);
 
   console.log(`Generated ${scene.id}: ${videoPath}`);
+  return `public/home-cinematic/${scene.id}-last.webp`;
 }
 
-for (const scene of scenes) {
+for (const scene of requested) {
+  const index = manifest.scenes.findIndex((candidate) => candidate.id === scene.id);
+  const previous = index > 0 ? manifest.scenes[index - 1] : null;
+  const previousLastFrame = previous ? `public/home-cinematic/${previous.id}-last.webp` : undefined;
+  const fallbackFirstFrame = previousLastFrame && (await exists(path.resolve(ROOT, previousLastFrame)))
+    ? previousLastFrame
+    : undefined;
+
   try {
-    await generate(scene);
+    await generate(scene, fallbackFirstFrame);
   } catch (error) {
     console.error(`\n[FAILED] ${scene.id}: ${error.message}`);
     process.exitCode = 1;
