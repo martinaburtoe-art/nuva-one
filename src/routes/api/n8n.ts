@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
-import { emitN8nEvent, getN8nConfig, verifyN8nSignature } from "@/lib/n8n.server";
+import { emitN8nEvent, getN8nConfig } from "@/lib/n8n.server";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 
@@ -45,7 +45,18 @@ export const Route = createFileRoute("/api/n8n")({
           .maybeSingle();
         if (!membership) return json({ error: "No tienes acceso a este negocio" }, 403);
         const config = getN8nConfig();
-        return json({ provider: "n8n", configured: config.configured, capabilities: ["events", "webhooks", "idempotency", "hmac"] });
+        const outbox = auth.supabase as typeof auth.supabase & { from: (table: string) => any };
+        const { count } = await outbox
+          .from("n8n_event_outbox")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .in("status", ["pending", "failed"]);
+        return json({
+          provider: "n8n",
+          configured: config.configured,
+          capabilities: ["events", "webhooks", "idempotency", "hmac", "durable_outbox"],
+          pending_events: count ?? 0,
+        });
       },
       POST: async ({ request }) => {
         const auth = await authenticate(request);
@@ -91,9 +102,67 @@ export const Route = createFileRoute("/api/n8n")({
           payload: body.payload && typeof body.payload === "object" ? (body.payload as Record<string, unknown>) : {},
         };
 
+        const outbox = auth.supabase as typeof auth.supabase & { from: (table: string) => any };
+        const { data: inserted, error: insertError } = await outbox
+          .from("n8n_event_outbox")
+          .upsert(
+            {
+              id: event.id,
+              business_id: event.business_id,
+              actor_user_id: event.actor_user_id,
+              provider: event.provider,
+              source: event.source,
+              entity_type: event.entity_type,
+              entity_id: event.entity_id,
+              event_type: event.event_type,
+              occurred_at: event.occurred_at,
+              idempotency_key: event.idempotency_key,
+              payload: event.payload,
+              status: "pending",
+              attempts: 0,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "business_id,idempotency_key", ignoreDuplicates: true },
+          )
+          .select("id,status,attempts")
+          .maybeSingle();
+
+        if (insertError) return json({ error: "No se pudo encolar el evento", code: "N8N_OUTBOX_WRITE_FAILED" }, 500);
+        if (!inserted) {
+          const { data: existing } = await outbox
+            .from("n8n_event_outbox")
+            .select("id,status,attempts")
+            .eq("business_id", businessId)
+            .eq("idempotency_key", event.idempotency_key)
+            .maybeSingle();
+          if (!existing) return json({ error: "Evento duplicado pero no recuperable", code: "N8N_IDEMPOTENCY_CONFLICT" }, 409);
+          return json({ ok: true, duplicate: true, event_id: existing.id, status: existing.status, attempts: existing.attempts });
+        }
+
         const result = await emitN8nEvent(event);
-        if (!result.ok) return json({ error: "n8n no pudo recibir el evento", code: result.code }, result.status);
-        return json({ ok: true, event_id: event.id, status: result.status, code: result.code });
+        if (result.ok) {
+          await outbox
+            .from("n8n_event_outbox")
+            .update({ status: "delivered", attempts: 1, delivered_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq("id", event.id)
+            .eq("business_id", businessId);
+          return json({ ok: true, event_id: event.id, status: "delivered", code: result.code });
+        }
+
+        await outbox
+          .from("n8n_event_outbox")
+          .update({ status: "failed", attempts: 1, last_error: result.code, updated_at: new Date().toISOString() })
+          .eq("id", event.id)
+          .eq("business_id", businessId);
+
+        return json({
+          ok: false,
+          queued: true,
+          event_id: event.id,
+          status: "failed",
+          code: result.code,
+          message: "El evento quedó persistido para reintento; n8n no está disponible todavía.",
+        }, 202);
       },
     },
   },
