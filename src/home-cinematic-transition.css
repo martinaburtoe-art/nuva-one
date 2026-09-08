@@ -1,0 +1,83 @@
+/* Nüva One — cinematic transition compositor.
+ *
+ * The scene engine remains scroll-driven: the active clip advances with scroll
+ * and the next clip is revealed as the user crosses the scene boundary. This
+ * layer makes that handoff feel like a camera transition rather than a hard
+ * slide: restrained cross-dissolve, depth separation, film grain continuity,
+ * and compositor-friendly transforms only.
+ */
+
+.cinematic-story__stage {
+  isolation: isolate;
+  contain: paint;
+}
+
+.cinematic-story__stage > .cinematic-visual {
+  z-index: 1;
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.cinematic-story__next {
+  z-index: 2;
+  overflow: hidden;
+  isolation: isolate;
+  contain: paint;
+  will-change: opacity;
+}
+
+.cinematic-story__next > .cinematic-visual {
+  z-index: 1;
+  transform: translate3d(1.75%, 0, 0) scale(1.045);
+  filter: saturate(.94) contrast(.98);
+  backface-visibility: hidden;
+  will-change: transform, filter;
+}
+
+/* The next frame enters with a subtle optical settle. The parent opacity is
+ * driven directly by scroll, so the transition remains reversible with no
+ * timer and no arbitrary scene cut. */
+.cinematic-story__next .cinematic-visual__grain {
+  opacity: .11;
+}
+
+.cinematic-story__next .cinematic-visual__media {
+  transform: scale(1.018);
+  transform-origin: center;
+}
+
+/* Keep the editorial wash above both photographic layers, but below text/UI. */
+.cinematic-story__wash {
+  z-index: 4;
+}
+
+.cinematic-visual__media {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+  background: transparent;
+}
+
+@media (max-width: 640px) {
+  .cinematic-story__next > .cinematic-visual {
+    transform: translate3d(1%, 0, 0) scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-story__stage > .cinematic-visual,
+  .cinematic-story__next > .cinematic-visual,
+  .cinematic-story__next .cinematic-visual__media {
+    transform: none !important;
+    filter: none !important;
+    will-change: auto;
+  }
+}
