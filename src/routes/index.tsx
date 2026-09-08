@@ -7,6 +7,7 @@ import { HomeCinematicExperience } from "@/components/home-cinematic-experience"
 import "@/home-cinematic-editorial-v2.css";
 import "@/home-cinematic-media.css";
 import "@/home-cinematic-performance.css";
+import "@/home-cinematic-transition.css";
 import { Sparkles } from "lucide-react";
 
 const FAQ_ITEMS = [
