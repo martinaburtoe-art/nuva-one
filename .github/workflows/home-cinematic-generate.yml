@@ -42,16 +42,36 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           VEO_MODEL: ${{ inputs.model }}
+          VEO_SCENES: ${{ inputs.scenes }}
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then
             echo "GEMINI_API_KEY GitHub Actions secret is required."
             exit 1
           fi
-          if [ -n "${{ inputs.scenes }}" ]; then
-            node scripts/generate-home-cinematic-veo.mjs ${{ inputs.scenes }}
+          if [ -n "$VEO_SCENES" ]; then
+            read -r -a SCENES <<< "$VEO_SCENES"
+            node scripts/generate-home-cinematic-veo.mjs "${SCENES[@]}"
           else
             node scripts/generate-home-cinematic-veo.mjs
           fi
+
+      - name: Verify generated media
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('docs/home-cinematic-veo-manifest.json', 'utf8'));
+          for (const scene of manifest.scenes) {
+            const required = [
+              `public/home-cinematic/${scene.id}.mp4`,
+              `public/home-cinematic/${scene.id}-poster.webp`,
+              `public/home-cinematic/${scene.id}-last.webp`,
+            ];
+            for (const file of required) {
+              if (!fs.existsSync(file) || fs.statSync(file).size < 1024) throw new Error(`Missing/invalid generated asset: ${file}`);
+            }
+          }
+          console.log(`Verified ${manifest.scenes.length} cinematic scene asset sets.`);
+          NODE
 
       - name: Wire generated assets into the scene engine
         run: node scripts/wire-home-cinematic-assets.mjs
@@ -60,7 +80,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp src/components/home-cinematic-experience.tsx
+          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp public/home-cinematic/*-last.webp src/components/home-cinematic-experience.tsx
           if git diff --cached --quiet; then
             echo "No generated assets or wiring changes to commit."
             exit 0
