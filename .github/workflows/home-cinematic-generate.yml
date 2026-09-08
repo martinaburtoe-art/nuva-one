@@ -1,0 +1,66 @@
+name: Home cinematic — generate Veo masters
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenes:
+        description: "Optional scene ids/numbers separated by spaces (blank = all 14)"
+        required: false
+        default: ""
+      model:
+        description: "Veo model"
+        required: false
+        default: "veo-3.1-generate-preview"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: home-cinematic-veo
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify production manifest
+        run: node -e "const m=require('./docs/home-cinematic-veo-manifest.json'); if(m.scenes.length!==14) throw new Error('Expected 14 scenes'); console.log('Veo manifest OK:', m.scenes.length)"
+
+      - name: Generate Veo masters
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          VEO_MODEL: ${{ inputs.model }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY GitHub Actions secret is required."
+            exit 1
+          fi
+          if [ -n "${{ inputs.scenes }}" ]; then
+            node scripts/generate-home-cinematic-veo.mjs ${{ inputs.scenes }}
+          else
+            node scripts/generate-home-cinematic-veo.mjs
+          fi
+
+      - name: Commit generated masters
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp
+          if git diff --cached --quiet; then
+            echo "No generated assets to commit."
+            exit 0
+          fi
+          git commit -m "feat(home): add generated cinematic Veo masters"
+          git push origin main
