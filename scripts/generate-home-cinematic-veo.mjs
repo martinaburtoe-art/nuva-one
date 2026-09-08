@@ -45,7 +45,8 @@ async function inlineImage(relativePath) {
 }
 
 async function generate(scene) {
-  const instance = { prompt: scene.prompt };
+  const prompt = [manifest.continuityLock, scene.prompt].filter(Boolean).join("\n\n");
+  const instance = { prompt };
   if (scene.firstFrame) instance.image = await inlineImage(scene.firstFrame);
   if (scene.lastFrame) instance.lastFrame = await inlineImage(scene.lastFrame);
 
@@ -62,9 +63,9 @@ async function generate(scene) {
   const body = {
     instances: [instance],
     parameters: {
-      aspectRatio: scene.aspectRatio ?? "16:9",
-      durationSeconds: scene.durationSeconds ?? "8",
-      resolution: scene.resolution ?? "1080p",
+      aspectRatio: scene.aspectRatio ?? manifest.defaults.aspectRatio,
+      durationSeconds: scene.durationSeconds ?? manifest.defaults.durationSeconds,
+      resolution: scene.resolution ?? manifest.defaults.resolution,
       personGeneration: "allow_adult",
     },
   };
