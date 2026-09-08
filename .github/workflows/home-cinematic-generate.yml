@@ -53,13 +53,16 @@ jobs:
             node scripts/generate-home-cinematic-veo.mjs
           fi
 
-      - name: Commit generated masters
+      - name: Wire generated assets into the scene engine
+        run: node scripts/wire-home-cinematic-assets.mjs
+
+      - name: Commit generated masters and wiring
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp
+          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp src/components/home-cinematic-experience.tsx
           if git diff --cached --quiet; then
-            echo "No generated assets to commit."
+            echo "No generated assets or wiring changes to commit."
             exit 0
           fi
           git commit -m "feat(home): add generated cinematic Veo masters"
