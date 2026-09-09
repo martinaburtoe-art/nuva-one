@@ -7,10 +7,12 @@ on:
         description: "Optional scene ids/numbers separated by spaces (blank = all 14)"
         required: false
         default: ""
+        type: string
       model:
         description: "Veo model"
         required: false
         default: "veo-3.1-generate-preview"
+        type: string
 
 permissions:
   contents: write
@@ -23,6 +25,7 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -36,7 +39,8 @@ jobs:
           node-version: 22
 
       - name: Verify production manifest
-        run: node -e "const m=require('./docs/home-cinematic-veo-manifest.json'); if(m.scenes.length!==14) throw new Error('Expected 14 scenes'); console.log('Veo manifest OK:', m.scenes.length)"
+        run: |
+          node -e "const m=require('./docs/home-cinematic-veo-manifest.json'); if(m.scenes.length!==14) throw new Error('Expected 14 scenes'); console.log('Veo manifest OK:', m.scenes.length)"
 
       - name: Generate Veo masters
         env:
@@ -45,13 +49,15 @@ jobs:
           VEO_SCENES: ${{ inputs.scenes }}
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY GitHub Actions secret is required."
+            echo "ERROR: GEMINI_API_KEY GitHub Actions secret is required."
             exit 1
           fi
+
           if [ -n "$VEO_SCENES" ]; then
             read -r -a SCENES <<< "$VEO_SCENES"
             node scripts/generate-home-cinematic-veo.mjs "${SCENES[@]}"
           else
+            echo "No scenes specified — generating all 14 scenes."
             node scripts/generate-home-cinematic-veo.mjs
           fi
 
@@ -61,23 +67,50 @@ jobs:
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
-          const manifest = JSON.parse(fs.readFileSync('docs/home-cinematic-veo-manifest.json', 'utf8'));
-          const requested = (process.env.VEO_SCENES || '').trim().split(/\s+/).filter(Boolean);
+
+          const manifest = JSON.parse(
+            fs.readFileSync('docs/home-cinematic-veo-manifest.json', 'utf8')
+          );
+
+          const requested = (process.env.VEO_SCENES || '')
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
+
           const scenes = requested.length
-            ? manifest.scenes.filter((scene) => requested.includes(scene.id) || requested.includes(scene.number))
+            ? manifest.scenes.filter(
+                (scene) =>
+                  requested.includes(scene.id) ||
+                  requested.includes(scene.number)
+              )
             : manifest.scenes;
-          if (!scenes.length) throw new Error('No valid scenes selected.');
+
+          if (!scenes.length) {
+            throw new Error('No valid scenes selected.');
+          }
+
           for (const scene of scenes) {
             const required = [
               `public/home-cinematic/${scene.id}.mp4`,
               `public/home-cinematic/${scene.id}-poster.webp`,
               `public/home-cinematic/${scene.id}-last.webp`,
             ];
+
             for (const file of required) {
-              if (!fs.existsSync(file) || fs.statSync(file).size < 1024) throw new Error(`Missing/invalid generated asset: ${file}`);
+              if (
+                !fs.existsSync(file) ||
+                fs.statSync(file).size < 1024
+              ) {
+                throw new Error(
+                  `Missing/invalid generated asset: ${file}`
+                );
+              }
             }
           }
-          console.log(`Verified ${scenes.length} cinematic scene asset sets.`);
+
+          console.log(
+            `Verified ${scenes.length} cinematic scene asset sets.`
+          );
           NODE
 
       - name: Wire generated assets into the scene engine
@@ -90,10 +123,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp public/home-cinematic/*-last.webp src/components/home-cinematic-experience.tsx
+
+          git add \
+            public/home-cinematic/*.mp4 \
+            public/home-cinematic/*-poster.webp \
+            public/home-cinematic/*-last.webp \
+            src/components/home-cinematic-experience.tsx
+
           if git diff --cached --quiet; then
             echo "No generated assets or wiring changes to commit."
             exit 0
           fi
+
           git commit -m "feat(home): add generated cinematic Veo masters"
           git push origin main
