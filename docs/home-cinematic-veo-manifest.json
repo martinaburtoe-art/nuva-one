@@ -2,7 +2,7 @@
   "model": "veo-3.1-generate-preview",
   "defaults": {
     "aspectRatio": "16:9",
-    "durationSeconds": "8",
+    "durationSeconds": 8,
     "resolution": "1080p",
     "personGeneration": "allow_adult"
   },
