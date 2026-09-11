@@ -121,8 +121,9 @@ export function EditorialHomeExperience() {
     const element = storyRef.current;
     if (!element) return;
     const range = Math.max(element.offsetHeight - window.innerHeight, 1);
+    const targetProgress = index === chapters.length - 1 ? 0.998 : (index + 0.5) / chapters.length;
     window.scrollTo({
-      top: window.scrollY + element.getBoundingClientRect().top + range * ((index + 0.002) / chapters.length),
+      top: window.scrollY + element.getBoundingClientRect().top + range * targetProgress,
       behavior: reducedMotion ? "auto" : "smooth",
     });
   };
@@ -146,6 +147,9 @@ export function EditorialHomeExperience() {
       <main>
         <section ref={storyRef} className="editorial-story" aria-label="Nüva One, una historia de negocio">
           <div className="editorial-story__sticky">
+            <div className="editorial-story__progress-readout" aria-live="polite">
+              <span>PROGRESO</span><strong>{Math.round(progress * 100)}%</strong><i><b style={{ transform: `scaleX(${progress})` }} /></i>
+            </div>
             <div className={`editorial-story__background editorial-story__background--${chapter.visual}`} style={{ "--scene-progress": chapterProgress } as React.CSSProperties} />
             <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: outgoingOpacity, filter: `blur(${transitionProgress * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}>
               <SceneArt kind={outgoingChapter.visual} progress={isTransitioningForward ? chapterProgress : 0.5} />
@@ -168,7 +172,7 @@ export function EditorialHomeExperience() {
               {chapters.map((item, index) => <button key={item.id} className={index === active ? "is-active" : ""} onClick={() => go(index)} aria-label={`Ir a ${item.label}`}><i /> <span>{item.label}</span></button>)}
             </aside>
 
-            <div className="editorial-progress"><span style={{ transform: `scaleX(${progress})` }} /></div>
+            <div className="editorial-progress" aria-label={`Progreso de la experiencia: ${Math.round(progress * 100)}%`}><span style={{ transform: `scaleX(${progress})` }} /></div>
           </div>
         </section>
 
