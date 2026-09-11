@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowDown, ArrowRight, Check, ScanLine, Sparkles, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Sparkles, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const CHAPTERS = [
