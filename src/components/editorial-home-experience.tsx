@@ -101,12 +101,21 @@ export function EditorialHomeExperience() {
   }, []);
 
   useEffect(() => {
-    const next = Math.min(chapters.length - 1, Math.floor(progress * chapters.length));
+    const next = Math.min(chapters.length - 1, Math.floor(progress * chapters.length + 0.5));
     setActive(next);
   }, [progress, chapters.length]);
 
   const chapter = chapters[active];
-  const chapterProgress = reducedMotion ? 0.5 : active === chapters.length - 1 ? 1 : clamp(progress * chapters.length - active);
+  const rawChapterProgress = progress * chapters.length - active + 0.5;
+  const chapterProgress = reducedMotion ? 0.5 : active === chapters.length - 1 ? 1 : clamp(rawChapterProgress);
+  const transitionProgress = reducedMotion ? 0 : clamp(Math.abs(rawChapterProgress - 0.5) * 2);
+  const nextChapter = chapters[Math.min(active + 1, chapters.length - 1)];
+  const previousChapter = chapters[Math.max(active - 1, 0)];
+  const isTransitioningForward = rawChapterProgress > 0.5 && active < chapters.length - 1;
+  const outgoingChapter = isTransitioningForward ? chapter : previousChapter;
+  const incomingChapter = isTransitioningForward ? nextChapter : chapter;
+  const outgoingOpacity = isTransitioningForward ? 1 - transitionProgress : 0;
+  const incomingOpacity = isTransitioningForward ? transitionProgress : 1;
 
   const go = (index: number) => {
     const element = storyRef.current;
@@ -138,8 +147,11 @@ export function EditorialHomeExperience() {
         <section ref={storyRef} className="editorial-story" aria-label="Nüva One, una historia de negocio">
           <div className="editorial-story__sticky">
             <div className={`editorial-story__background editorial-story__background--${chapter.visual}`} style={{ "--scene-progress": chapterProgress } as React.CSSProperties} />
-            <div key={chapter.id} className="editorial-story__art-wrap editorial-scene-enter">
-              <SceneArt kind={chapter.visual} progress={chapterProgress} />
+            <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: outgoingOpacity, filter: `blur(${transitionProgress * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}>
+              <SceneArt kind={outgoingChapter.visual} progress={isTransitioningForward ? chapterProgress : 0.5} />
+            </div>
+            <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: incomingOpacity, filter: `blur(${(1 - transitionProgress) * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}>
+              <SceneArt kind={incomingChapter.visual} progress={isTransitioningForward ? 0 : chapterProgress} />
             </div>
             <div className="editorial-story__veil" />
 
