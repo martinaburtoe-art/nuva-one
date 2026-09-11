@@ -15,6 +15,13 @@ export function installEditorialScrollTransition() {
     layer.dataset.editorialLayer = String(index);
   });
 
+  const progressReadout = story.querySelector<HTMLElement>(".editorial-story__progress-readout");
+  const progressBar = story.querySelector<HTMLElement>(".editorial-progress");
+  progressReadout?.setAttribute("aria-live", "off");
+  progressBar?.setAttribute("role", "progressbar");
+  progressBar?.setAttribute("aria-valuemin", "0");
+  progressBar?.setAttribute("aria-valuemax", "100");
+
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let frame = 0;
   let previousY = window.scrollY;
@@ -37,6 +44,7 @@ export function installEditorialScrollTransition() {
       story.dataset.transitionDirection = direction;
       story.style.setProperty("--transition-progress", String(transition));
       story.style.setProperty("--story-progress", String(progress));
+      progressBar?.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
     });
   };
 
