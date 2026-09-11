@@ -7,6 +7,7 @@ export const Route = createFileRoute("/experience")({
     meta: [
       { title: "Nüva One — Experiencia" },
       { name: "description", content: "Una nueva forma de entender tu negocio: gestión, contexto e inteligencia en una experiencia editorial." },
+      { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Nüva One — Experiencia" },
       { property: "og:description", content: "Tu negocio. Todo conectado." },
     ],
