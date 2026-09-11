@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowRight, Check, Sparkles, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
 
 const CHAPTERS = [
   { id: "hero", label: "Inicio", kicker: "EL NEGOCIO REAL", title: "Todo empieza aquí.", text: "Una sola mirada para entender lo que ocurre detrás de cada decisión.", visual: "hero", metric: "01" },
@@ -19,51 +20,68 @@ const CHAPTERS = [
   { id: "final", label: "Nüva One", kicker: "NÜVA ONE", title: "Tu negocio. Todo conectado.", text: "Empieza con una operación más clara y construye sobre ella a medida que creces.", visual: "final", metric: "14 / 14" },
 ] as const;
 
-function clamp(value: number) { return Math.min(1, Math.max(0, value)); }
+function clamp(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
 
 function useProgress(ref: React.RefObject<HTMLElement | null>) {
   const [progress, setProgress] = useState(0);
+
   useEffect(() => {
     let raf = 0;
     const update = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const el = ref.current;
-        if (!el) return;
-        const range = Math.max(el.offsetHeight - window.innerHeight, 1);
-        setProgress(clamp(-el.getBoundingClientRect().top / range));
+        const element = ref.current;
+        if (!element) return;
+        const range = Math.max(element.offsetHeight - window.innerHeight, 1);
+        setProgress(clamp(-element.getBoundingClientRect().top / range));
       });
     };
+
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", update); window.removeEventListener("resize", update); };
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
   }, [ref]);
+
   return progress;
 }
 
 function SceneArt({ kind, progress }: { kind: string; progress: number }) {
   const style = { "--art-progress": progress } as React.CSSProperties;
+  const chapter = CHAPTERS.find((item) => item.visual === kind);
+
   return (
     <div className={`editorial-art editorial-art--${kind}`} style={style} aria-hidden="true">
-      <div className="editorial-art__image" />
+      <div className="editorial-art__image">
+        <div className="editorial-art__grain" />
+        <div className="editorial-art__architecture editorial-art__architecture--one" />
+        <div className="editorial-art__architecture editorial-art__architecture--two" />
+        <div className="editorial-art__architecture editorial-art__architecture--three" />
+      </div>
       <div className="editorial-art__light" />
       <div className="editorial-art__subject"><span /><i /></div>
       <div className="editorial-art__surface" />
       <div className="editorial-art__object editorial-art__object--a" />
       <div className="editorial-art__object editorial-art__object--b" />
       <div className="editorial-art__ui">
-        <span className="editorial-art__ui-label">NÜVA ONE</span>
-        <strong>{CHAPTERS.find((item) => item.visual === kind)?.metric}</strong>
+        <span className="editorial-art__ui-label">NÜVA ONE / {chapter?.kicker}</span>
+        <strong>{chapter?.metric}</strong>
         <small>contexto actualizado</small>
       </div>
       <div className="editorial-art__line" />
+      <div className="editorial-art__caption"><span>{String(CHAPTERS.findIndex((item) => item.visual === kind) + 1).padStart(2, "0")}</span><small>{chapter?.label}</small></div>
     </div>
   );
 }
 
 function FeatureStrip() {
-  const items = ["Ventas", "Clientes", "Inventario", "Compras", "Caja", "Despachos", "Finanzas", "Nüva Score", "IA", "Automatizaciones"];
+  const items = ["Ventas", "Clientes", "Inventario", "Scanner", "Compras", "Caja", "Despachos", "Finanzas", "Nüva Score", "IA", "Automatizaciones"];
   return <div className="editorial-feature-strip" aria-label="Módulos conectados">{items.map((item) => <span key={item}>{item}</span>)}</div>;
 }
 
@@ -77,7 +95,8 @@ export function EditorialHomeExperience() {
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     const sync = () => setReducedMotion(query.matches);
-    sync(); query.addEventListener?.("change", sync);
+    sync();
+    query.addEventListener?.("change", sync);
     return () => query.removeEventListener?.("change", sync);
   }, []);
 
@@ -87,12 +106,16 @@ export function EditorialHomeExperience() {
   }, [progress, chapters.length]);
 
   const chapter = chapters[active];
-  const chapterProgress = reducedMotion ? 0.5 : (active === chapters.length - 1 ? 1 : progress * chapters.length - active);
+  const chapterProgress = reducedMotion ? 0.5 : active === chapters.length - 1 ? 1 : clamp(progress * chapters.length - active);
+
   const go = (index: number) => {
-    const el = storyRef.current;
-    if (!el) return;
-    const range = Math.max(el.offsetHeight - window.innerHeight, 1);
-    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + range * ((index + 0.002) / chapters.length), behavior: reducedMotion ? "auto" : "smooth" });
+    const element = storyRef.current;
+    if (!element) return;
+    const range = Math.max(element.offsetHeight - window.innerHeight, 1);
+    window.scrollTo({
+      top: window.scrollY + element.getBoundingClientRect().top + range * ((index + 0.002) / chapters.length),
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
   };
 
   return (
@@ -114,7 +137,7 @@ export function EditorialHomeExperience() {
       <main>
         <section ref={storyRef} className="editorial-story" aria-label="Nüva One, una historia de negocio">
           <div className="editorial-story__sticky">
-            <div className="editorial-story__background" />
+            <div className={`editorial-story__background editorial-story__background--${chapter.visual}`} style={{ "--scene-progress": chapterProgress } as React.CSSProperties} />
             <div className="editorial-story__art-wrap">
               <SceneArt kind={chapter.visual} progress={chapterProgress} />
             </div>
@@ -151,24 +174,27 @@ export function EditorialHomeExperience() {
         </section>
 
         <section id="editorial-faq" className="editorial-faq">
-          <div><span className="editorial-kicker">PREGUNTAS FRECUENTES</span><h2>Lo esencial, sin letra pequeña.</h2></div>
+          <div><span className="editorial-kicker">PREGUNTAS FRECUENTES</span><h2>Lo esencial, sin letra pequeña.</h2><p className="editorial-faq__note">Nüva One está pensado para acompañar la operación real de una PYME sin convertirla en una experiencia compleja.</p></div>
           <div className="editorial-faq__list">
-            <details><summary>¿Necesito tarjeta para empezar?</summary><p>No. Puedes comenzar con la prueba gratuita sin tarjeta.</p></details>
-            <details><summary>¿Puedo conectar mis canales?</summary><p>Sí. Nüva One está preparado para trabajar con conexiones de negocio y servicios externos.</p></details>
-            <details><summary>¿Funciona para distintos rubros?</summary><p>Sí. La plataforma está pensada para adaptarse a la operación real de distintos tipos de negocios.</p></details>
+            <details><summary>¿Mis datos están seguros?</summary><p>Usamos cifrado en tránsito y en reposo y aislamiento por negocio con Row-Level Security.</p></details>
+            <details><summary>¿Necesito tarjeta para empezar?</summary><p>No. Tienes 15 días de prueba gratuita con acceso completo, sin tarjeta.</p></details>
+            <details><summary>¿Puedo conectar Instagram y Facebook?</summary><p>Sí, mediante tu propia cuenta de Meta Business. Te guiamos en la conexión.</p></details>
+            <details><summary>¿Funciona para mi rubro?</summary><p>Sí. Nüva One está pensado para adaptarse a distintos tipos de negocios y operaciones.</p></details>
+            <details><summary>¿Puedo cancelar cuando quiera?</summary><p>Sí. Sin contratos ni cargos por cancelación.</p></details>
           </div>
         </section>
 
         <section className="editorial-final">
           <div className="editorial-final__mark"><Zap size={18} /> NÜVA ONE</div>
           <h2>Menos fragmentación.<br /><em>Más contexto.</em></h2>
-          <p>Haz que tu negocio vuelva a sentirse como una sola cosa.</p>
+          <p>Empieza con 15 días gratis y descubre cómo cambia la forma en que gestionas y entiendes tu negocio.</p>
           <div className="editorial-final__actions"><Link to="/auth" search={{ mode: "signup" }}>Empezar gratis <ArrowRight size={15} /></Link><Link to="/pricing">Ver planes</Link></div>
           <div className="editorial-final__checks"><span><Check size={13} /> 15 días gratis</span><span><Check size={13} /> Sin tarjeta</span><span><Check size={13} /> Crece contigo</span></div>
         </section>
       </main>
 
-      <footer className="editorial-footer"><span>Nüva One</span><span>Experiencia alternativa · 2026</span><Link to="/">Volver a la Homepage actual</Link></footer>
+      <footer className="editorial-footer"><span>Nüva One</span><span>© {new Date().getFullYear()} Nüva One. Todos los derechos reservados.</span><Link to="/">Volver a la Homepage actual</Link></footer>
+      <PublicAiChatWidget />
     </div>
   );
 }
