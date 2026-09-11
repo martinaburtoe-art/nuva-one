@@ -138,19 +138,19 @@ export function EditorialHomeExperience() {
         <section ref={storyRef} className="editorial-story" aria-label="Nüva One, una historia de negocio">
           <div className="editorial-story__sticky">
             <div className={`editorial-story__background editorial-story__background--${chapter.visual}`} style={{ "--scene-progress": chapterProgress } as React.CSSProperties} />
-            <div className="editorial-story__art-wrap">
+            <div key={chapter.id} className="editorial-story__art-wrap editorial-scene-enter">
               <SceneArt kind={chapter.visual} progress={chapterProgress} />
             </div>
             <div className="editorial-story__veil" />
 
             <div className="editorial-story__topline"><span>EXPERIENCIA / NÜVA ONE</span><span>{String(active + 1).padStart(2, "0")} — {String(chapters.length).padStart(2, "0")}</span></div>
-            <div className="editorial-story__copy">
+            <div key={`copy-${chapter.id}`} className="editorial-story__copy editorial-scene-copy-enter">
               <span className="editorial-kicker">{chapter.kicker}</span>
               <h1>{chapter.title}</h1>
               <p>{chapter.text}</p>
               <span className="editorial-scroll-note"><ArrowDown size={14} /> Desplaza para continuar</span>
             </div>
-            <div className="editorial-story__metric"><span>{chapter.metric}</span><small>SEÑAL DEL NEGOCIO</small></div>
+            <div key={`metric-${chapter.id}`} className="editorial-story__metric editorial-scene-metric-enter"><span>{chapter.metric}</span><small>SEÑAL DEL NEGOCIO</small></div>
 
             <aside className="editorial-chapters" aria-label="Capítulos">
               {chapters.map((item, index) => <button key={item.id} className={index === active ? "is-active" : ""} onClick={() => go(index)} aria-label={`Ir a ${item.label}`}><i /> <span>{item.label}</span></button>)}
