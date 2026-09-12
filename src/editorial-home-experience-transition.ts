@@ -33,9 +33,9 @@ export function installEditorialScrollTransition() {
       const range = Math.max(story.offsetHeight - window.innerHeight, 1);
       const progress = clamp(-story.getBoundingClientRect().top / range);
       const chapterPosition = progress * CHAPTER_COUNT;
-      const active = Math.min(CHAPTER_COUNT - 1, Math.floor(chapterPosition + 0.5));
-      const raw = chapterPosition - active + 0.5;
-      const transition = reducedMotion.matches ? 0 : clamp(Math.abs(raw - 0.5) * 2);
+      const active = Math.min(CHAPTER_COUNT - 1, Math.floor(chapterPosition));
+      const localProgress = active === CHAPTER_COUNT - 1 ? 1 : chapterPosition - active;
+      const transition = reducedMotion.matches ? 0 : clamp(localProgress);
 
       if (window.scrollY > previousY + 1) direction = "forward";
       if (window.scrollY < previousY - 1) direction = "backward";
