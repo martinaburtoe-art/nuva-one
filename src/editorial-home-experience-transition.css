@@ -1,10 +1,10 @@
 .editorial-story{--transition-progress:0;--story-progress:0}
 
-.editorial-story[data-transition-direction="forward"] .editorial-story__art-wrap[data-editorial-layer="0"]{opacity:calc(1 - var(--transition-progress)) !important;filter:blur(calc(var(--transition-progress) * 2px)) !important}
-.editorial-story[data-transition-direction="forward"] .editorial-story__art-wrap[data-editorial-layer="1"]{opacity:var(--transition-progress) !important;filter:blur(calc((1 - var(--transition-progress)) * 2px)) !important}
-
-.editorial-story[data-transition-direction="backward"] .editorial-story__art-wrap[data-editorial-layer="0"]{opacity:var(--transition-progress) !important;filter:blur(calc((1 - var(--transition-progress)) * 2px)) !important}
-.editorial-story[data-transition-direction="backward"] .editorial-story__art-wrap[data-editorial-layer="1"]{opacity:calc(1 - var(--transition-progress)) !important;filter:blur(calc(var(--transition-progress) * 2px)) !important}
+/* Ambas capas representan siempre: estado actual -> estado siguiente. */
+.editorial-story[data-transition-direction="forward"] .editorial-story__art-wrap[data-editorial-layer="0"],
+.editorial-story[data-transition-direction="backward"] .editorial-story__art-wrap[data-editorial-layer="0"]{opacity:calc(1 - var(--transition-progress)) !important;filter:blur(calc((1 - var(--transition-progress)) * 2px)) !important}
+.editorial-story[data-transition-direction="forward"] .editorial-story__art-wrap[data-editorial-layer="1"],
+.editorial-story[data-transition-direction="backward"] .editorial-story__art-wrap[data-editorial-layer="1"]{opacity:var(--transition-progress) !important;filter:blur(calc((1 - var(--transition-progress)) * 2px)) !important}
 
 @media (prefers-reduced-motion:reduce){
   .editorial-story[data-transition-direction] .editorial-story__art-wrap{filter:none !important;transition:none !important}
