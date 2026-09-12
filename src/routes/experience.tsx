@@ -6,6 +6,7 @@ import "@/editorial-home-experience.css";
 import "@/editorial-home-experience-transition.css";
 import "@/editorial-home-experience-reference.css";
 import "@/editorial-home-experience-story.css";
+import "@/editorial-home-experience-reference-2.css";
 
 function EditorialExperienceRoute() {
   useEffect(() => {
