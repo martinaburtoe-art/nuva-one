@@ -4,6 +4,7 @@ import { EditorialHomeExperience } from "@/components/editorial-home-experience"
 import { installEditorialScrollTransition } from "@/editorial-home-experience-transition";
 import "@/editorial-home-experience.css";
 import "@/editorial-home-experience-transition.css";
+import "@/editorial-home-experience-reference.css";
 
 function EditorialExperienceRoute() {
   useEffect(() => installEditorialScrollTransition(), []);
