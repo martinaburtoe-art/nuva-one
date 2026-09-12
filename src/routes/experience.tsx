@@ -8,6 +8,7 @@ import "@/editorial-home-experience-reference.css";
 import "@/editorial-home-experience-story.css";
 import "@/editorial-home-experience-reference-2.css";
 import "@/editorial-home-experience-media.css";
+import "@/editorial-home-experience-transition-fix.css";
 
 function EditorialExperienceRoute() {
   useEffect(() => {
