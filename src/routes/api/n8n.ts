@@ -99,10 +99,13 @@ export const Route = createFileRoute("/api/n8n")({
             typeof body.idempotency_key === "string" && body.idempotency_key.trim()
               ? body.idempotency_key.trim().slice(0, 180)
               : randomUUID(),
-          payload: body.payload && typeof body.payload === "object" ? (body.payload as Record<string, unknown>) : {},
+          payload: body.payload && typeof body.payload === "object" && !Array.isArray(body.payload)
+            ? (body.payload as Record<string, unknown>)
+            : {},
         };
 
         const outbox = auth.supabase as typeof auth.supabase & { from: (table: string) => any };
+        const insertPayload = event.payload as unknown as Database["public"]["Tables"]["n8n_event_outbox"]["Insert"]["payload"];
         const { data: inserted, error: insertError } = await outbox
           .from("n8n_event_outbox")
           .upsert(
@@ -117,7 +120,7 @@ export const Route = createFileRoute("/api/n8n")({
               event_type: event.event_type,
               occurred_at: event.occurred_at,
               idempotency_key: event.idempotency_key,
-              payload: event.payload,
+              payload: insertPayload,
               status: "pending",
               attempts: 0,
               updated_at: new Date().toISOString(),
