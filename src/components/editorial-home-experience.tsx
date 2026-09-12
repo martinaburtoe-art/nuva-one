@@ -90,6 +90,8 @@ export function EditorialHomeExperience() {
   const progress = useProgress(storyRef);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [active, setActive] = useState(0);
+  const [scrollDirection, setScrollDirection] = useState<"forward" | "backward">("forward");
+  const previousProgress = useRef(0);
   const chapters = useMemo(() => CHAPTERS, []);
 
   useEffect(() => {
@@ -101,27 +103,29 @@ export function EditorialHomeExperience() {
   }, []);
 
   useEffect(() => {
-    const next = Math.min(chapters.length - 1, Math.floor(progress * chapters.length + 0.5));
+    if (progress > previousProgress.current + 0.0005) setScrollDirection("forward");
+    if (progress < previousProgress.current - 0.0005) setScrollDirection("backward");
+    previousProgress.current = progress;
+    const next = Math.min(chapters.length - 1, Math.floor(progress * chapters.length));
     setActive(next);
   }, [progress, chapters.length]);
 
   const chapter = chapters[active];
-  const rawChapterProgress = progress * chapters.length - active + 0.5;
-  const chapterProgress = reducedMotion ? 0.5 : active === chapters.length - 1 ? 1 : clamp(rawChapterProgress);
-  const transitionProgress = reducedMotion ? 0 : clamp(Math.abs(rawChapterProgress - 0.5) * 2);
-  const nextChapter = chapters[Math.min(active + 1, chapters.length - 1)];
+  const chapterPosition = progress * chapters.length;
+  const chapterProgress = reducedMotion ? 0.5 : active === chapters.length - 1 ? 1 : clamp(chapterPosition - active);
   const previousChapter = chapters[Math.max(active - 1, 0)];
-  const isTransitioningForward = rawChapterProgress > 0.5 && active < chapters.length - 1;
-  const outgoingChapter = isTransitioningForward ? chapter : previousChapter;
-  const incomingChapter = isTransitioningForward ? nextChapter : chapter;
-  const outgoingOpacity = isTransitioningForward ? 1 - transitionProgress : 0;
-  const incomingOpacity = isTransitioningForward ? transitionProgress : 1;
+  const nextChapter = chapters[Math.min(active + 1, chapters.length - 1)];
+  const isBackward = scrollDirection === "backward" && active > 0;
+  const outgoingChapter = isBackward ? previousChapter : chapter;
+  const incomingChapter = isBackward ? chapter : nextChapter;
+  const outgoingOpacity = isBackward ? 1 - chapterProgress : 1 - chapterProgress;
+  const incomingOpacity = isBackward ? chapterProgress : chapterProgress;
 
   const go = (index: number) => {
     const element = storyRef.current;
     if (!element) return;
     const range = Math.max(element.offsetHeight - window.innerHeight, 1);
-    const targetProgress = index === chapters.length - 1 ? 0.998 : (index + 0.5) / chapters.length;
+    const targetProgress = index === chapters.length - 1 ? 0.998 : Math.min(0.998, index / chapters.length + 0.02);
     window.scrollTo({
       top: window.scrollY + element.getBoundingClientRect().top + range * targetProgress,
       behavior: reducedMotion ? "auto" : "smooth",
@@ -151,11 +155,11 @@ export function EditorialHomeExperience() {
               <span>PROGRESO</span><strong>{Math.round(progress * 100)}%</strong><i><b style={{ transform: `scaleX(${progress})` }} /></i>
             </div>
             <div className={`editorial-story__background editorial-story__background--${chapter.visual}`} style={{ "--scene-progress": chapterProgress } as React.CSSProperties} />
-            <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: outgoingOpacity, filter: `blur(${transitionProgress * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}>
-              <SceneArt kind={outgoingChapter.visual} progress={isTransitioningForward ? chapterProgress : 0.5} />
+            <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: outgoingOpacity, filter: `blur(${(1 - chapterProgress) * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}>
+              <SceneArt kind={outgoingChapter.visual} progress={isBackward ? 0.5 : chapterProgress} />
             </div>
-            <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: incomingOpacity, filter: `blur(${(1 - transitionProgress) * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}>
-              <SceneArt kind={incomingChapter.visual} progress={isTransitioningForward ? 0 : chapterProgress} />
+            <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: incomingOpacity, filter: `blur(${(1 - chapterProgress) * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}>
+              <SceneArt kind={incomingChapter.visual} progress={isBackward ? chapterProgress : 0} />
             </div>
             <div className="editorial-story__veil" />
 
