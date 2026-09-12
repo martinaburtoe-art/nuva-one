@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "route": "/experience",
+  "format": "webp",
+  "master": { "aspectRatio": "16:9", "minWidth": 2400, "textInMedia": false, "logoInMedia": false },
+  "scenes": [
+    { "id": "hero", "file": "hero.webp", "subject": "dueño de pyme en un espacio de trabajo contemporáneo, operación real" },
+    { "id": "sales", "file": "sales.webp", "subject": "venta consultiva y producto sobre mostrador, contexto comercial premium" },
+    { "id": "customers", "file": "customers.webp", "subject": "cliente y encargado interactuando, relación humana y confianza" },
+    { "id": "inventory", "file": "inventory.webp", "subject": "bodega ordenada, productos etiquetados y stock físico visible" },
+    { "id": "scanner", "file": "scanner.webp", "subject": "mano escaneando un producto, detalle macro realista" },
+    { "id": "purchases", "file": "purchases.webp", "subject": "gestión de reposición, cajas y recepción de mercadería" },
+    { "id": "cash", "file": "cash.webp", "subject": "cobro en punto de venta y flujo de caja cotidiano" },
+    { "id": "shipping", "file": "shipping.webp", "subject": "preparación y despacho de pedidos, última milla" },
+    { "id": "finance", "file": "finance.webp", "subject": "dueño revisando resultados y documentos financieros en escritorio" },
+    { "id": "score", "file": "score.webp", "subject": "momento ejecutivo de análisis, señales de negocio y toma de decisiones" },
+    { "id": "automation", "file": "automation.webp", "subject": "operación fluida con tareas automatizadas, equipo trabajando sin fricción" },
+    { "id": "studio", "file": "studio.webp", "subject": "persona conversando con IA desde laptop, ambiente profesional natural" },
+    { "id": "connections", "file": "connections.webp", "subject": "visión amplia de una operación conectada, personas, productos y procesos" },
+    { "id": "final", "file": "final.webp", "subject": "cierre aspiracional del negocio, espacio amplio, luz natural y sensación de avance" }
+  ]
+}
