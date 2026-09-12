@@ -7,7 +7,10 @@ import "@/editorial-home-experience-transition.css";
 import "@/editorial-home-experience-reference.css";
 
 function EditorialExperienceRoute() {
-  useEffect(() => installEditorialScrollTransition(), []);
+  useEffect(() => {
+    const cleanup = installEditorialScrollTransition();
+    return cleanup;
+  }, []);
   return <EditorialHomeExperience />;
 }
 
