@@ -16,7 +16,7 @@
 .editorial-story__topline{color:rgba(255,255,255,.7);text-shadow:0 2px 16px rgba(0,0,0,.25)}
 .editorial-story__copy{color:#fff;text-shadow:0 3px 26px rgba(0,0,0,.28)}
 .editorial-story__copy .editorial-kicker{color:rgba(255,255,255,.72)}
-.editorial-story__copy h1{max-width:760px}
+.editorial-story__copy h1{max-width:760px;font-family:Iowan Old Style,Baskerville,"Times New Roman",serif;font-weight:400;letter-spacing:-.055em;line-height:.86}
 .editorial-story__copy p{color:rgba(255,255,255,.78);text-shadow:0 2px 18px rgba(0,0,0,.24)}
 .editorial-scroll-note{color:rgba(255,255,255,.68)}
 .editorial-story__metric{color:#fff;text-shadow:0 3px 24px rgba(0,0,0,.28)}
@@ -33,9 +33,9 @@
 .editorial-art--customers .editorial-art__image{background:radial-gradient(circle at 62% 38%,rgba(255,239,199,.78),transparent 30%),linear-gradient(125deg,#4b514d,#9d927b 48%,#e7e9e2 74%,#6e817d)}
 .editorial-art--inventory .editorial-art__image{background:radial-gradient(circle at 75% 32%,rgba(236,245,239,.86),transparent 28%),linear-gradient(125deg,#273b3a,#8b775f 43%,#d6ded8 70%,#60746f)}
 .editorial-art--scanner .editorial-art__image{background:radial-gradient(circle at 72% 38%,rgba(255,248,218,.9),transparent 25%),linear-gradient(125deg,#36413d,#a7906c 44%,#e5e9e0 72%,#72857e)}
-.editorial-art--purchases .editorial-art__image{background:radial-gradient(circle at 75% 27%,rgba(255,231,182,.88),transparent 25%),linear-gradient(125deg,#4a514d,#a98c65 43%,#dfe8e2 73%,#71837d)}
+.editorial-art--purchases .editorial-art__image{background:radial-gradient(circle at 75% 27%,rgba(255,231,182,.88),transparent 25%),linear-gradient(135deg,#4a514d,#a98c65 43%,#dfe8e2 73%,#71837d)}
 .editorial-art--cash .editorial-art__image{background:radial-gradient(circle at 70% 35%,rgba(255,237,190,.9),transparent 26%),linear-gradient(125deg,#394441,#a98c62 46%,#e6e7de 72%,#72837d)}
-.editorial-art--shipping .editorial-art__image{background:radial-gradient(circle at 72% 26%,rgba(234,248,242,.9),transparent 27%),linear-gradient(125deg,#33433f,#879a90 48%,#dfe9e2 74%,#64766f)}
+.editorial-art--shipping .editorial-art__image{background:radial-gradient(circle at 72% 26%,rgba(234,248,242,.9),transparent 27%),linear-gradient(130deg,#33433f,#879a90 48%,#dfe9e2 74%,#64766f)}
 .editorial-art--finance .editorial-art__image{background:radial-gradient(circle at 72% 32%,rgba(255,242,207,.84),transparent 28%),linear-gradient(125deg,#3c4742,#9f8b6d 46%,#e1e8e2 72%,#6d7f79)}
 .editorial-art--score .editorial-art__image{background:radial-gradient(circle at 72% 34%,rgba(240,240,255,.88),transparent 27%),linear-gradient(125deg,#343a40,#9b8d77 44%,#e4e5e8 72%,#68747b)}
 .editorial-art--automation .editorial-art__image{background:radial-gradient(circle at 70% 29%,rgba(255,231,181,.9),transparent 26%),linear-gradient(125deg,#414741,#ad956d 44%,#e4e7df 72%,#738079)}
@@ -43,4 +43,28 @@
 .editorial-art--connections .editorial-art__image{background:radial-gradient(circle at 70% 38%,rgba(233,249,240,.9),transparent 28%),linear-gradient(125deg,#30423e,#9e9b82 44%,#dfe8e0 72%,#66766f)}
 .editorial-art--final .editorial-art__image{background:radial-gradient(circle at 72% 32%,rgba(255,232,181,.9),transparent 27%),linear-gradient(125deg,#3b4541,#ae9167 44%,#e4e7df 72%,#718078)}
 
-@media (max-width:900px){.editorial-story__copy{left:24px;right:24px;top:auto;bottom:15vh;width:auto}.editorial-story__copy h1{font-size:clamp(48px,14vw,92px)}.editorial-story__copy p{max-width:520px}.editorial-story__metric{right:24px;bottom:8vh}.editorial-chapters{display:none}.editorial-story__art-wrap{inset:0}.editorial-story__topline{top:92px}}
+/* Cada capítulo usa un lenguaje de cámara distinto, como un montaje editorial. */
+.editorial-art--hero .editorial-art__subject{left:52%;transform:translate3d(calc(var(--art-progress) * 5%),calc(var(--art-progress) * -1%),0) scale(1.08)}
+.editorial-art--sales .editorial-art__subject{left:61%;bottom:16%;height:58%;transform:translate3d(calc((var(--art-progress) - .5) * -7%),0,0) scale(1.02)}
+.editorial-art--customers .editorial-art__subject{left:23%;bottom:14%;height:70%;transform:translate3d(calc(var(--art-progress) * 5%),0,0)}
+.editorial-art--inventory .editorial-art__subject{left:68%;bottom:18%;height:54%;transform:translate3d(calc((.5 - var(--art-progress)) * 5%),calc(var(--art-progress) * -2%),0) scale(.92)}
+.editorial-art--scanner .editorial-art__subject{left:43%;bottom:8%;height:84%;transform:translate3d(calc(var(--art-progress) * 4%),0,0) scale(1.12)}
+.editorial-art--purchases .editorial-art__subject{left:17%;bottom:20%;height:52%;transform:translate3d(calc(var(--art-progress) * 8%),0,0)}
+.editorial-art--cash .editorial-art__subject{left:55%;bottom:12%;height:62%;transform:translate3d(calc((.5 - var(--art-progress)) * 8%),0,0) scale(1.06)}
+.editorial-art--shipping .editorial-art__subject{left:76%;bottom:19%;height:50%;transform:translate3d(calc((.5 - var(--art-progress)) * 10%),0,0) scale(.9)}
+.editorial-art--finance .editorial-art__subject{left:31%;bottom:16%;height:58%;transform:translate3d(calc(var(--art-progress) * -5%),0,0)}
+.editorial-art--score .editorial-art__subject{left:66%;bottom:12%;height:64%;transform:translate3d(calc((.5 - var(--art-progress)) * 5%),calc(var(--art-progress) * -2%),0) scale(1.04)}
+.editorial-art--automation .editorial-art__subject{left:42%;bottom:18%;height:56%;transform:translate3d(calc(var(--art-progress) * 6%),0,0)}
+.editorial-art--studio .editorial-art__subject{left:24%;bottom:14%;height:68%;transform:translate3d(calc((.5 - var(--art-progress)) * 6%),0,0)}
+.editorial-art--connections .editorial-art__subject{left:50%;bottom:15%;height:60%;transform:translate3d(calc((var(--art-progress) - .5) * 10%),0,0) scale(1.03)}
+.editorial-art--final .editorial-art__subject{left:72%;bottom:17%;height:56%;transform:translate3d(calc((.5 - var(--art-progress)) * 5%),0,0)}
+
+@media (max-width:900px){
+  .editorial-story__copy{left:24px;right:24px;top:auto;bottom:15vh;width:auto}
+  .editorial-story__copy h1{font-size:clamp(48px,14vw,92px);line-height:.9}
+  .editorial-story__copy p{max-width:520px}
+  .editorial-story__metric{right:24px;bottom:8vh}
+  .editorial-chapters{display:none}
+  .editorial-story__art-wrap{inset:0}
+  .editorial-story__topline{top:92px}
+}
