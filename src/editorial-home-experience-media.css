@@ -16,6 +16,20 @@
 .editorial-art--connections .editorial-art__image{background-image:linear-gradient(120deg,rgba(222,232,227,.16),rgba(192,208,202,.08)),url("/home-editorial/connections.webp")}
 .editorial-art--final .editorial-art__image{background-image:linear-gradient(120deg,rgba(236,228,211,.18),rgba(194,210,201,.08)),url("/home-editorial/final.webp")}
 
+/* The horizontal module gallery uses the same stills, keeping one visual language. */
+.editorial-gallery__visual{background-color:#202526;background-repeat:no-repeat;background-position:center;background-size:cover}
+.editorial-gallery__visual--1{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/sales.webp")}
+.editorial-gallery__visual--2{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/customers.webp")}
+.editorial-gallery__visual--3{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/inventory.webp")}
+.editorial-gallery__visual--4{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/scanner.webp")}
+.editorial-gallery__visual--5{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/purchases.webp")}
+.editorial-gallery__visual--6{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/cash.webp")}
+.editorial-gallery__visual--7{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/shipping.webp")}
+.editorial-gallery__visual--8{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/finance.webp")}
+.editorial-gallery__visual--9{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/score.webp")}
+.editorial-gallery__visual--10{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/studio.webp")}
+.editorial-gallery__visual--11{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/automation.webp")}
+
 @media (prefers-reduced-motion:reduce){
   .editorial-art{transform:none}
 }
