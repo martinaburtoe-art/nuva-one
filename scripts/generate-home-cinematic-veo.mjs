@@ -77,10 +77,13 @@ async function generate(scene, fallbackFirstFrame) {
   }
 
   const requestedDuration = scene.durationSeconds ?? manifest.defaults.durationSeconds;
-  const durationSeconds = String(requestedDuration);
+  const durationSeconds = Number(requestedDuration);
   const resolution = scene.resolution ?? manifest.defaults.resolution;
 
-  if (resolution === "1080p" && durationSeconds !== "8") {
+  if (!Number.isFinite(durationSeconds)) {
+    throw new Error(`Invalid durationSeconds for ${scene.id}: ${requestedDuration}`);
+  }
+  if (resolution === "1080p" && durationSeconds !== 8) {
     throw new Error(`Invalid Veo configuration for ${scene.id}: 1080p requires 8 seconds.`);
   }
 
