@@ -53,6 +53,17 @@ function SceneArt({ kind, progress }: { kind: string; progress: number }) {
   const style = { "--art-progress": progress } as React.CSSProperties;
   const chapter = CHAPTERS.find((item) => item.visual === kind);
   return <div className={`editorial-art editorial-art--${kind}`} style={style} aria-hidden="true">
+    <video
+      className="editorial-art__video"
+      src={`/home-editorial/${kind}.mp4`}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      onError={(event) => { event.currentTarget.hidden = true; }}
+      aria-hidden="true"
+    />
     <div className="editorial-art__image"><div className="editorial-art__grain" /><div className="editorial-art__architecture editorial-art__architecture--one" /><div className="editorial-art__architecture editorial-art__architecture--two" /><div className="editorial-art__architecture editorial-art__architecture--three" /></div>
     <div className="editorial-art__light" /><div className="editorial-art__subject"><span /><i /></div><div className="editorial-art__surface" />
     <div className="editorial-art__object editorial-art__object--a" /><div className="editorial-art__object editorial-art__object--b" />
