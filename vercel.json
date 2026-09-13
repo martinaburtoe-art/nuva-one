@@ -8,6 +8,12 @@
       "permanent": false
     }
   ],
+  "rewrites": [
+    {
+      "source": "/home-editorial/:path*",
+      "destination": "/home-cinematic/:path*"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
