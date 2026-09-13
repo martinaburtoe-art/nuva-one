@@ -38,6 +38,21 @@ jobs:
       - name: Verify production manifest
         run: node -e "const m=require('./docs/home-cinematic-veo-manifest.json'); if(m.scenes.length!==14) throw new Error('Expected 14 scenes'); console.log('Veo manifest OK:', m.scenes.length)"
 
+      - name: Verify media routing contract
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+          const rewrites = config.rewrites || [];
+          const mediaRewrite = rewrites.some((item) =>
+            item.source === '/home-editorial/:path*' && item.destination === '/home-cinematic/:path*',
+          );
+          if (!mediaRewrite) {
+            throw new Error('Missing Vercel media rewrite: /home-editorial/:path* -> /home-cinematic/:path*');
+          }
+          console.log('Editorial media routing contract OK.');
+          NODE
+
       - name: Generate Veo masters
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
