@@ -1,5 +1,10 @@
 .editorial-art__image{background-color:#d8ddd9;background-repeat:no-repeat;background-position:center;background-size:cover}
 
+/* Los masters MP4 son la capa cinematográfica principal; el still WebP queda como fallback. */
+.editorial-art__video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;display:block;background:#d8ddd9}
+.editorial-art__image{position:relative;z-index:1}
+.editorial-art__video[hidden]{display:none}
+
 /* Local stills are optional: the existing CSS art remains the fallback. */
 .editorial-art--hero .editorial-art__image{background-image:linear-gradient(120deg,rgba(244,239,229,.18),rgba(205,220,215,.08)),url("/home-editorial/hero.webp")}
 .editorial-art--sales .editorial-art__image{background-image:linear-gradient(120deg,rgba(238,228,212,.18),rgba(198,216,211,.08)),url("/home-editorial/sales.webp")}
@@ -32,4 +37,5 @@
 
 @media (prefers-reduced-motion:reduce){
   .editorial-art{transform:none}
+  .editorial-art__video{display:none}
 }
