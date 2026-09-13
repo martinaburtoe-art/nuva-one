@@ -55,6 +55,7 @@ async function inlineImage(relativePath) {
 
 async function generate(scene, fallbackFirstFrame) {
   const firstFrame = scene.firstFrame || fallbackFirstFrame;
+  const hasImageInput = Boolean(firstFrame || scene.references?.length);
   const prompt = [
     manifest.continuityLock,
     "CONTINUITY RULE: if a start frame is supplied, preserve its location, subject identity, wardrobe, camera direction, lighting and physical objects. Begin from that exact visual state and continue the action naturally; do not redesign the scene.",
@@ -75,13 +76,21 @@ async function generate(scene, fallbackFirstFrame) {
     }
   }
 
+  const requestedDuration = scene.durationSeconds ?? manifest.defaults.durationSeconds;
+  const durationSeconds = String(requestedDuration);
+  const resolution = scene.resolution ?? manifest.defaults.resolution;
+
+  if (resolution === "1080p" && durationSeconds !== "8") {
+    throw new Error(`Invalid Veo configuration for ${scene.id}: 1080p requires 8 seconds.`);
+  }
+
   const body = {
     instances: [instance],
     parameters: {
       aspectRatio: scene.aspectRatio ?? manifest.defaults.aspectRatio,
-      durationSeconds: scene.durationSeconds ?? manifest.defaults.durationSeconds,
-      resolution: scene.resolution ?? manifest.defaults.resolution,
-      personGeneration: manifest.defaults.personGeneration ?? "allow_adult",
+      durationSeconds,
+      resolution,
+      personGeneration: hasImageInput ? "allow_adult" : (manifest.defaults.personGeneration ?? "allow_all"),
     },
   };
 
