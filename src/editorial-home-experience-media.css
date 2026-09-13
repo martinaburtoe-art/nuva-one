@@ -1,7 +1,7 @@
 .editorial-art__image{background-color:#d8ddd9;background-repeat:no-repeat;background-position:center;background-size:cover}
 
 /* Los masters MP4 son la capa cinematográfica principal; el still WebP queda como fallback. */
-.editorial-art__video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;display:block;background:#d8ddd9}
+.editorial-art__video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:2;display:block;background:#d8ddd9}
 .editorial-art__image{position:relative;z-index:1}
 .editorial-art__video[hidden]{display:none}
 
