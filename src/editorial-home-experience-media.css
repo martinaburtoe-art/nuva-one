@@ -1,0 +1,35 @@
+.editorial-art__image{background-color:#d8ddd9;background-repeat:no-repeat;background-position:center;background-size:cover}
+
+/* Local stills are optional: the existing CSS art remains the fallback. */
+.editorial-art--hero .editorial-art__image{background-image:linear-gradient(120deg,rgba(244,239,229,.18),rgba(205,220,215,.08)),url("/home-editorial/hero.webp")}
+.editorial-art--sales .editorial-art__image{background-image:linear-gradient(120deg,rgba(238,228,212,.18),rgba(198,216,211,.08)),url("/home-editorial/sales.webp")}
+.editorial-art--customers .editorial-art__image{background-image:linear-gradient(120deg,rgba(238,231,218,.16),rgba(197,214,208,.08)),url("/home-editorial/customers.webp")}
+.editorial-art--inventory .editorial-art__image{background-image:linear-gradient(120deg,rgba(232,226,211,.16),rgba(188,207,199,.08)),url("/home-editorial/inventory.webp")}
+.editorial-art--scanner .editorial-art__image{background-image:linear-gradient(120deg,rgba(225,231,224,.14),rgba(185,202,197,.08)),url("/home-editorial/scanner.webp")}
+.editorial-art--purchases .editorial-art__image{background-image:linear-gradient(120deg,rgba(235,228,211,.16),rgba(195,211,202,.08)),url("/home-editorial/purchases.webp")}
+.editorial-art--cash .editorial-art__image{background-image:linear-gradient(120deg,rgba(233,224,209,.16),rgba(190,209,202,.08)),url("/home-editorial/cash.webp")}
+.editorial-art--shipping .editorial-art__image{background-image:linear-gradient(120deg,rgba(222,232,228,.16),rgba(186,205,199,.08)),url("/home-editorial/shipping.webp")}
+.editorial-art--finance .editorial-art__image{background-image:linear-gradient(120deg,rgba(233,229,219,.16),rgba(190,210,202,.08)),url("/home-editorial/finance.webp")}
+.editorial-art--score .editorial-art__image{background-image:linear-gradient(120deg,rgba(229,229,235,.14),rgba(193,199,211,.08)),url("/home-editorial/score.webp")}
+.editorial-art--automation .editorial-art__image{background-image:linear-gradient(120deg,rgba(235,228,212,.16),rgba(202,211,202,.08)),url("/home-editorial/automation.webp")}
+.editorial-art--studio .editorial-art__image{background-image:linear-gradient(120deg,rgba(229,228,236,.14),rgba(194,199,211,.08)),url("/home-editorial/studio.webp")}
+.editorial-art--connections .editorial-art__image{background-image:linear-gradient(120deg,rgba(222,232,227,.16),rgba(192,208,202,.08)),url("/home-editorial/connections.webp")}
+.editorial-art--final .editorial-art__image{background-image:linear-gradient(120deg,rgba(236,228,211,.18),rgba(194,210,201,.08)),url("/home-editorial/final.webp")}
+
+/* The horizontal module gallery uses the same stills, keeping one visual language. */
+.editorial-gallery__visual{background-color:#202526;background-repeat:no-repeat;background-position:center;background-size:cover}
+.editorial-gallery__visual--1{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/sales.webp")}
+.editorial-gallery__visual--2{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/customers.webp")}
+.editorial-gallery__visual--3{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/inventory.webp")}
+.editorial-gallery__visual--4{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/scanner.webp")}
+.editorial-gallery__visual--5{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/purchases.webp")}
+.editorial-gallery__visual--6{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/cash.webp")}
+.editorial-gallery__visual--7{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/shipping.webp")}
+.editorial-gallery__visual--8{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/finance.webp")}
+.editorial-gallery__visual--9{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/score.webp")}
+.editorial-gallery__visual--10{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/studio.webp")}
+.editorial-gallery__visual--11{background-image:linear-gradient(135deg,rgba(16,20,22,.12),rgba(230,198,135,.08)),url("/home-editorial/automation.webp")}
+
+@media (prefers-reduced-motion:reduce){
+  .editorial-art{transform:none}
+}

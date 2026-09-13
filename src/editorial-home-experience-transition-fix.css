@@ -1,0 +1,39 @@
+/* El contenedor raíz no puede convertirse en scroll-container: rompe el sticky del relato. */
+.editorial-home{
+  overflow-x:clip;
+  overflow-y:visible;
+}
+
+/* Las capas deben quedar sobre el fondo para que el crossfade sea visible. */
+.editorial-story__background{z-index:0!important}
+.editorial-story__art-wrap{
+  z-index:1!important;
+  pointer-events:none;
+  will-change:opacity,transform,filter;
+  transition:none!important;
+}
+
+/* El keyframe de entrada estaba reteniendo transform/opacity y anulaba la cámara scroll-driven. */
+.editorial-story__art-wrap.editorial-scene-enter{
+  animation:none!important;
+}
+
+.editorial-story__veil{z-index:2!important}
+.editorial-story__copy,
+.editorial-story__metric,
+.editorial-story__topline,
+.editorial-story__progress-readout{z-index:10}
+.editorial-chapters{z-index:20}
+.editorial-progress{z-index:30}
+
+/* Cámara editorial: ambas capas terminan en el mismo encuadre para evitar un salto al cambiar de capítulo. */
+.editorial-story__art-wrap[data-editorial-layer="0"]{
+  transform:scale(calc(1.045 - var(--transition-progress) * .045)) translate3d(calc(var(--transition-progress) * -1%),0,0);
+}
+.editorial-story__art-wrap[data-editorial-layer="1"]{
+  transform:scale(calc(1.09 - var(--transition-progress) * .045)) translate3d(calc((1 - var(--transition-progress)) * 1%),0,0);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .editorial-story__art-wrap{transform:none!important;filter:none!important}
+}
