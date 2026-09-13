@@ -1,6 +1,10 @@
 name: Home cinematic — generate Veo masters
 
 on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       scenes:
@@ -21,13 +25,14 @@ concurrency:
 
 jobs:
   generate:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.ref == 'automation/home-veo-masters' && !contains(github.event.pull_request.title, 'generated cinematic masters')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 360
     steps:
-      - name: Checkout main
+      - name: Checkout automation branch
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: automation/home-veo-masters
           fetch-depth: 1
 
       - name: Setup Node
@@ -41,8 +46,8 @@ jobs:
       - name: Generate Veo masters
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          VEO_MODEL: ${{ inputs.model }}
-          VEO_SCENES: ${{ inputs.scenes }}
+          VEO_MODEL: ${{ inputs.model || 'veo-3.1-generate-preview' }}
+          VEO_SCENES: ${{ inputs.scenes || '' }}
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then
             echo "GEMINI_API_KEY GitHub Actions secret is required."
@@ -57,7 +62,7 @@ jobs:
 
       - name: Verify generated media
         env:
-          VEO_SCENES: ${{ inputs.scenes }}
+          VEO_SCENES: ${{ inputs.scenes || '' }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
@@ -96,4 +101,4 @@ jobs:
             exit 0
           fi
           git commit -m "feat(home): add generated cinematic Veo masters"
-          git push origin main
+          git push origin HEAD:automation/home-veo-masters
