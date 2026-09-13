@@ -4,6 +4,11 @@
   overflow-y:visible;
 }
 
+/* El relato puede recortar el desplazamiento lateral de la cámara sin crear otro scroll-container. */
+.editorial-story{
+  overflow:clip;
+}
+
 /* Las capas deben quedar sobre el fondo para que el crossfade sea visible. */
 .editorial-story__background{z-index:0!important}
 .editorial-story__art-wrap{
@@ -26,7 +31,22 @@
 .editorial-chapters{z-index:20}
 .editorial-progress{z-index:30}
 
-/* Cámara editorial: ambas capas terminan en el mismo encuadre para evitar un salto al cambiar de capítulo. */
+/* Mantener la cámara dentro del lienzo evita barras horizontales durante el zoom/pan. */
+.editorial-story__sticky{
+  overflow:clip;
+}
+
+/* Foco visible para navegación por teclado sin romper la estética editorial. */
+.editorial-chapters button:focus-visible,
+.editorial-nav a:focus-visible,
+.editorial-nav button:focus-visible,
+.editorial-capabilities a:focus-visible,
+.editorial-faq summary:focus-visible{
+  outline:2px solid #e6c687;
+  outline-offset:4px;
+}
+
+/* Cámara editorial: la capa entrante llega desde un encuadre ligeramente abierto y se aproxima al corte. */
 .editorial-story__art-wrap[data-editorial-layer="0"]{
   transform:scale(calc(1.045 - var(--transition-progress) * .045)) translate3d(calc(var(--transition-progress) * -1%),0,0);
 }
