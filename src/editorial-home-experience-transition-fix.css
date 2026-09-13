@@ -46,9 +46,11 @@
   outline-offset:4px;
 }
 
-/* Cámara editorial: la capa entrante llega desde un encuadre ligeramente abierto y se aproxima al corte. */
+/* Cámara continua: los extremos del crossfade comparten el mismo encuadre.
+   Así, cuando React cambia el contenido de las dos capas en el corte,
+   la capa que queda visible no salta de escala ni de posición. */
 .editorial-story__art-wrap[data-editorial-layer="0"]{
-  transform:scale(calc(1.045 - var(--transition-progress) * .045)) translate3d(calc(var(--transition-progress) * -1%),0,0);
+  transform:scale(calc(1.045 + sin(var(--transition-progress) * 180deg) * .015)) translate3d(calc(sin(var(--transition-progress) * 180deg) * -.5%),0,0);
 }
 .editorial-story__art-wrap[data-editorial-layer="1"]{
   transform:scale(calc(1.09 - var(--transition-progress) * .045)) translate3d(calc((1 - var(--transition-progress)) * 1%),0,0);
