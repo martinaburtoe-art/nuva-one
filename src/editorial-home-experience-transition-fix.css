@@ -26,12 +26,12 @@
 .editorial-chapters{z-index:20}
 .editorial-progress{z-index:30}
 
-/* Cámara editorial: salida se aleja, entrada se acerca mientras se funden. */
+/* Cámara editorial: ambas capas terminan en el mismo encuadre para evitar un salto al cambiar de capítulo. */
 .editorial-story__art-wrap[data-editorial-layer="0"]{
-  transform:scale(calc(1.045 - var(--transition-progress) * .035)) translate3d(calc(var(--transition-progress) * -1.2%),0,0);
+  transform:scale(calc(1.045 - var(--transition-progress) * .045)) translate3d(calc(var(--transition-progress) * -1%),0,0);
 }
 .editorial-story__art-wrap[data-editorial-layer="1"]{
-  transform:scale(calc(1.085 - var(--transition-progress) * .04)) translate3d(calc((1 - var(--transition-progress)) * 1.2%),0,0);
+  transform:scale(calc(1.09 - var(--transition-progress) * .045)) translate3d(calc((1 - var(--transition-progress)) * 1%),0,0);
 }
 
 @media (prefers-reduced-motion:reduce){
