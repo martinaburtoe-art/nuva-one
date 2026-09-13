@@ -3,6 +3,7 @@ import { ArrowDown, ArrowRight, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
 import { installEditorialGallery } from "@/editorial-home-experience-gallery";
+import { installEditorialScrollTransition } from "@/editorial-home-experience-transition";
 
 type Chapter = {
   id: string; label: string; kicker: string; title: string; text: string; visual: string; metric: string;
@@ -96,6 +97,7 @@ export function EditorialHomeExperience() {
   }, [progress, chapters.length]);
 
   useEffect(() => installEditorialGallery(), []);
+  useEffect(() => installEditorialScrollTransition(), []);
 
   const chapter = chapters[active];
   const chapterPosition = progress * chapters.length;
