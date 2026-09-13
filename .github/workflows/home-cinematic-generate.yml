@@ -1,10 +1,6 @@
 name: Home cinematic — generate Veo masters
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       scenes:
@@ -25,15 +21,13 @@ concurrency:
 
 jobs:
   generate:
-    if: ${{ github.event_name == 'workflow_dispatch' || (startsWith(github.event.pull_request.head.ref, 'automation/home-veo-') && !contains(github.event.pull_request.title, 'generated cinematic masters')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - name: Checkout automation branch
+      - name: Checkout selected generation branch
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 1
 
       - name: Setup Node
@@ -102,4 +96,4 @@ jobs:
             exit 0
           fi
           git commit -m "feat(home): add generated cinematic Veo masters"
-          git push origin HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }}
