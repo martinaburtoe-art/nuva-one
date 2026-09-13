@@ -1,7 +1,26 @@
 const CHAPTER_COUNT = 14;
 
+export type EditorialTransitionState = {
+  activeChapter: number;
+  localProgress: number;
+  transitionProgress: number;
+};
+
 function clamp(value: number) {
   return Math.min(1, Math.max(0, value));
+}
+
+export function getEditorialTransitionState(progress: number, reducedMotion = false): EditorialTransitionState {
+  const safeProgress = clamp(progress);
+  const chapterPosition = safeProgress * CHAPTER_COUNT;
+  const activeChapter = Math.min(CHAPTER_COUNT - 1, Math.floor(chapterPosition));
+  const localProgress = activeChapter === CHAPTER_COUNT - 1 ? 1 : chapterPosition - activeChapter;
+
+  return {
+    activeChapter,
+    localProgress,
+    transitionProgress: reducedMotion ? 0 : clamp(localProgress),
+  };
 }
 
 export function installEditorialScrollTransition() {
@@ -32,17 +51,14 @@ export function installEditorialScrollTransition() {
     frame = requestAnimationFrame(() => {
       const range = Math.max(story.offsetHeight - window.innerHeight, 1);
       const progress = clamp(-story.getBoundingClientRect().top / range);
-      const chapterPosition = progress * CHAPTER_COUNT;
-      const active = Math.min(CHAPTER_COUNT - 1, Math.floor(chapterPosition));
-      const localProgress = active === CHAPTER_COUNT - 1 ? 1 : chapterPosition - active;
-      const transition = reducedMotion.matches ? 0 : clamp(localProgress);
+      const state = getEditorialTransitionState(progress, reducedMotion.matches);
 
       if (window.scrollY > previousY + 1) direction = "forward";
       if (window.scrollY < previousY - 1) direction = "backward";
       previousY = window.scrollY;
 
       story.dataset.transitionDirection = direction;
-      story.style.setProperty("--transition-progress", String(transition));
+      story.style.setProperty("--transition-progress", String(state.transitionProgress));
       story.style.setProperty("--story-progress", String(progress));
       progressBar?.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
     });
