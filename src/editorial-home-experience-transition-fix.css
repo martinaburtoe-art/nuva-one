@@ -12,6 +12,12 @@
   will-change:opacity,transform,filter;
   transition:none!important;
 }
+
+/* El keyframe de entrada estaba reteniendo transform/opacity y anulaba la cámara scroll-driven. */
+.editorial-story__art-wrap.editorial-scene-enter{
+  animation:none!important;
+}
+
 .editorial-story__veil{z-index:2!important}
 .editorial-story__copy,
 .editorial-story__metric,
