@@ -55,7 +55,6 @@ function SceneArt({ kind, progress }: { kind: string; progress: number }) {
     <div className="editorial-art__image"><div className="editorial-art__grain" /><div className="editorial-art__architecture editorial-art__architecture--one" /><div className="editorial-art__architecture editorial-art__architecture--two" /><div className="editorial-art__architecture editorial-art__architecture--three" /></div>
     <div className="editorial-art__light" /><div className="editorial-art__subject"><span /><i /></div><div className="editorial-art__surface" />
     <div className="editorial-art__object editorial-art__object--a" /><div className="editorial-art__object editorial-art__object--b" />
-    <div className="editorial-art__ui"><span className="editorial-art__ui-label">NÜVA ONE / {chapter?.kicker}</span><strong>{chapter?.metric}</strong><small>contexto actualizado</small></div>
     <div className="editorial-art__line" /><div className="editorial-art__caption"><span>{String(CHAPTERS.findIndex((item) => item.visual === kind) + 1).padStart(2, "0")}</span><small>{chapter?.label}</small></div>
   </div>;
 }
@@ -130,7 +129,7 @@ export function EditorialHomeExperience() {
         <div className="editorial-story__topline"><span>EXPERIENCIA / NÜVA ONE</span><span>{String(active + 1).padStart(2, "0")} — {String(chapters.length).padStart(2, "0")}</span></div>
         <div key={`copy-${chapter.id}`} className="editorial-story__copy editorial-scene-copy-enter"><span className="editorial-kicker">{chapter.kicker}</span><h1>{chapter.title}</h1><p>{chapter.text}</p><span className="editorial-scroll-note"><ArrowDown size={14} /> Desplaza para continuar</span></div>
         <div key={`metric-${chapter.id}`} className="editorial-story__metric editorial-scene-metric-enter"><span>{chapter.metric}</span><small>SEÑAL DEL NEGOCIO</small></div>
-        <aside className="editorial-chapters" aria-label="Capítulos">{chapters.map((item, index) => <button key={item.id} className={index === active ? "is-active" : ""} onClick={() => go(index)} aria-label={`Ir a ${item.label}`}><i /><span>{item.label}</span></button>)}</aside>
+        <aside className="editorial-chapters" aria-label="Capítulos">{chapters.map((item, index) => <button key={item.id} className={index === active ? "is-active" : ""} onClick={() => go(index)} aria-label={`Ir a ${item.label}`} aria-current={index === active ? "step" : undefined}><i /><span>{item.label}</span></button>)}</aside>
         <div className="editorial-progress" aria-label={`Progreso de la experiencia: ${Math.round(progress * 100)}%`}><span style={{ transform: `scaleX(${progress})` }} /></div>
       </div></section>
       <section className="editorial-intro"><div><span className="editorial-kicker">UN SOLO CONTEXTO</span><h2>Tu negocio no vive en módulos separados.</h2></div><p>Cuando una venta cambia el stock, el cliente, la caja y las finanzas también deberían enterarse. Nüva One conecta ese movimiento para que puedas operar, entender y decidir desde el mismo contexto.</p></section>
