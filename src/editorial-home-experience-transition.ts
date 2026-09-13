@@ -10,6 +10,12 @@ function clamp(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
+/** Suaviza entrada y salida para que el crossfade se sienta cinematográfico, no mecánico. */
+function smoothstep(value: number) {
+  const t = clamp(value);
+  return t * t * (3 - 2 * t);
+}
+
 export function getEditorialTransitionState(progress: number, reducedMotion = false): EditorialTransitionState {
   const safeProgress = clamp(progress);
   const chapterPosition = safeProgress * CHAPTER_COUNT;
@@ -19,7 +25,7 @@ export function getEditorialTransitionState(progress: number, reducedMotion = fa
   return {
     activeChapter,
     localProgress,
-    transitionProgress: reducedMotion ? 0 : clamp(localProgress),
+    transitionProgress: reducedMotion ? 0 : smoothstep(localProgress),
   };
 }
 
