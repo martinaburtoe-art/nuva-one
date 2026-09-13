@@ -6,11 +6,12 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const MODEL = process.env.VEO_MODEL || "veo-3.1-generate-preview";
+const MODEL = process.env.VEO_MODEL || "veo-3.1-lite-generate-preview";
 const API_KEY = process.env.GEMINI_API_KEY;
 const ROOT = process.cwd();
 const OUTPUT_DIR = path.join(ROOT, "public/home-cinematic");
 const MANIFEST_PATH = path.join(ROOT, "docs/home-cinematic-veo-manifest.json");
+const LITE_MODEL = MODEL.includes("veo-3.1-lite");
 
 if (!API_KEY) {
   console.error("Missing GEMINI_API_KEY. Set it in the environment; never commit the key to the repository.");
@@ -66,7 +67,8 @@ async function generate(scene, fallbackFirstFrame) {
   if (firstFrame) instance.image = await inlineImage(firstFrame);
   if (scene.lastFrame) instance.lastFrame = await inlineImage(scene.lastFrame);
 
-  if (scene.references?.length) {
+  // Veo 3.1 Lite supports first/last-frame interpolation but not referenceImages.
+  if (!LITE_MODEL && scene.references?.length) {
     instance.referenceImages = [];
     for (const reference of scene.references.slice(0, 3)) {
       instance.referenceImages.push({
@@ -108,7 +110,10 @@ async function generate(scene, fallbackFirstFrame) {
 
   const startJson = await start.json();
   if (!start.ok || !startJson.name) {
-    throw new Error(`Veo start failed (${start.status}): ${JSON.stringify(startJson)}`);
+    const quotaHint = start.status === 429
+      ? " Check Gemini API billing/quota; Veo has no free API tier."
+      : "";
+    throw new Error(`Veo start failed (${start.status}): ${JSON.stringify(startJson)}${quotaHint}`);
   }
 
   let operation = startJson;
