@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { EditorialHomeExperience } from "@/components/editorial-home-experience";
-import { installEditorialScrollTransition } from "@/editorial-home-experience-transition";
 import "@/editorial-home-experience.css";
 import "@/editorial-home-experience-transition.css";
 import "@/editorial-home-experience-reference.css";
@@ -9,14 +7,6 @@ import "@/editorial-home-experience-story.css";
 import "@/editorial-home-experience-reference-2.css";
 import "@/editorial-home-experience-media.css";
 import "@/editorial-home-experience-transition-fix.css";
-
-function EditorialExperienceRoute() {
-  useEffect(() => {
-    const cleanup = installEditorialScrollTransition();
-    return cleanup;
-  }, []);
-  return <EditorialHomeExperience />;
-}
 
 export const Route = createFileRoute("/experience")({
   head: () => ({
@@ -28,5 +18,5 @@ export const Route = createFileRoute("/experience")({
       { property: "og:description", content: "Tu negocio. Todo conectado." },
     ],
   }),
-  component: EditorialExperienceRoute,
+  component: EditorialHomeExperience,
 });
