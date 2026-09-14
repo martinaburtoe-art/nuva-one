@@ -1,10 +1,10 @@
 {
-  "model": "veo-3.1-generate-preview",
+  "model": "veo-3.1-lite-generate-preview",
   "defaults": {
     "aspectRatio": "16:9",
     "durationSeconds": 8,
     "resolution": "1080p",
-    "personGeneration": "allow_all"
+    "personGeneration": "allow_adult"
   },
   "continuityLock": "Same Chilean neighborhood retail business, same owner in early 30s with consistent neutral contemporary wardrobe and appearance, same recurring customer, pale oak, warm white plaster, soft concrete, large front window, natural daylight, bright airy premium editorial documentary photography, restrained contrast, subtle film grain, no baked-in text, logos, UI or watermarks, no cyberpunk, neon, holograms, floating dashboards or CGI/3D-render appearance.",
   "scenes": [
@@ -21,6 +21,6 @@
     {"id":"automation","number":"11","firstFrame":null,"lastFrame":null,"prompt":"The same owner continues a normal shop task while a small operational event resolves in the background: a discreet notification appears on a physical phone or laptop, the owner notices it briefly and continues working. The business keeps moving instead of stopping for administration. Subtle time compression in background activity, controlled camera, no holograms or floating dashboards."},
     {"id":"studio","number":"12","firstFrame":null,"lastFrame":null,"prompt":"Over-the-shoulder view of the same owner asking a question on a laptop in the same shop. Continue naturally from the previous device notification. Screen is intentionally soft and abstract with no readable generated text; the website supplies the actual interface. The owner looks focused, then relaxed. Slow over-shoulder push toward the laptop with shallow depth of field."},
     {"id":"connections","number":"13","firstFrame":null,"lastFrame":null,"prompt":"Pull back from the laptop into a wide editorial composition of the same business environment: owner, phone, laptop, payment terminal and packaged order are ordinary physical objects within one coherent workspace. Nothing floats. The sense of connection comes from composition and continuity. Controlled pull-back reveals the whole operational ecosystem in one frame."},
-    {"id":"final","number":"14","firstFrame":null,"lastFrame":null,"prompt":"Return to the exact visual world of scene 01: same shop, same camera family, same owner and location cues. The space now feels subtly more ordered and calm. Soft daylight and generous negative space for the final Nüva One CTA. Slow pull-back and hold on a clean stable final frame. It must feel like returning to the beginning after the business has changed."}
+    {"id":"final","number":"14","firstFrame":"public/home-cinematic/hero-last.webp","lastFrame":null,"prompt":"Return to the exact visual world of scene 01: same shop, same camera family, same owner and location cues. The space now feels subtly more ordered and calm. Soft daylight and generous negative space for the final Nüva One CTA. Slow pull-back and hold on a clean stable final frame. It must feel like returning to the beginning after the business has changed."}
   ]
 }
