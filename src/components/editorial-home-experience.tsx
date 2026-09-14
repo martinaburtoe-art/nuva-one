@@ -55,7 +55,8 @@ function SceneArt({ kind, progress }: { kind: string; progress: number }) {
   return <div className={`editorial-art editorial-art--${kind}`} style={style} aria-hidden="true">
     <video
       className="editorial-art__video"
-      src={`/home-editorial/${kind}.mp4`}
+      src={`/home-cinematic/${kind}.mp4`}
+      poster={`/home-cinematic/${kind}-poster.webp`}
       autoPlay
       muted
       loop
