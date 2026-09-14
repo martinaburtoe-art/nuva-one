@@ -56,6 +56,17 @@
   transform:scale(calc(1.09 - var(--transition-progress) * .045)) translate3d(calc((1 - var(--transition-progress)) * 1%),0,0);
 }
 
+/* En pantallas pequeñas priorizamos el relato y evitamos que la navegación fija compita con el contenido. */
+@media (max-width:900px){
+  .editorial-nav{height:68px;grid-template-columns:1fr auto;padding:0 18px}
+  .editorial-nav nav{display:none}
+  .editorial-nav__actions{gap:4px}
+  .editorial-demo{display:none}
+  .editorial-cta{padding:10px 13px;font-size:11px}
+  .editorial-story__sticky{min-height:100svh}
+  .editorial-story__topline{top:84px}
+}
+
 @media (prefers-reduced-motion:reduce){
   .editorial-story__art-wrap{transform:none!important;filter:none!important}
 }
