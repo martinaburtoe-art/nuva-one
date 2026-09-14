@@ -10,7 +10,7 @@ on:
       model:
         description: "Veo model"
         required: false
-        default: "veo-3.1-generate-preview"
+        default: "veo-3.1-lite-generate-preview"
 
 permissions:
   contents: write
@@ -84,6 +84,8 @@ jobs:
         run: node scripts/wire-home-cinematic-assets.mjs
 
       - name: Run cinematic integrity gate
+        env:
+          REQUIRE_COMPLETE: "true"
         run: node scripts/verify-home-cinematic-assets.mjs
 
       - name: Commit generated masters to experimental branch
