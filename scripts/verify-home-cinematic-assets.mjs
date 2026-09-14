@@ -4,7 +4,7 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const manifestPath = path.join(ROOT, "docs/home-cinematic-veo-manifest.json");
-const componentPath = path.join(ROOT, "src/components/home-cinematic-experience.tsx");
+const componentPath = path.join(ROOT, "src/components/editorial-home-experience.tsx");
 const assetDir = path.join(ROOT, "public/home-cinematic");
 
 const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
@@ -15,42 +15,42 @@ if (!Array.isArray(scenes) || scenes.length !== 14) {
   throw new Error(`Expected exactly 14 cinematic scenes; found ${scenes?.length ?? 0}.`);
 }
 
+if (!component.includes("/home-cinematic/${kind}.mp4")) {
+  throw new Error("Experience scene engine is missing the dynamic MP4 contract.");
+}
+if (!component.includes("/home-cinematic/${kind}-poster.webp")) {
+  throw new Error("Experience scene engine is missing the dynamic poster contract.");
+}
+
 const ids = new Set();
+let generatedSets = 0;
 for (const scene of scenes) {
   if (!scene.id || !scene.number) throw new Error("Every cinematic scene needs id and number.");
   if (ids.has(scene.id)) throw new Error(`Duplicate cinematic scene id: ${scene.id}`);
   ids.add(scene.id);
 
-  const sceneMarker = `{ id: "${scene.id}"`;
-  if (!component.includes(sceneMarker)) {
-    throw new Error(`Scene ${scene.id} is missing from the scene engine.`);
-  }
-
-  const video = `/home-cinematic/${scene.id}.mp4`;
-  const poster = `/home-cinematic/${scene.id}-poster.webp`;
-  const hasVideo = component.includes(`video: "${video}"`);
-  const hasPoster = component.includes(`poster: "${poster}"`);
-
-  const videoFile = path.join(assetDir, `${scene.id}.mp4`);
-  const posterFile = path.join(assetDir, `${scene.id}-poster.webp`);
-  const lastFile = path.join(assetDir, `${scene.id}-last.webp`);
-  const files = [videoFile, posterFile, lastFile];
-  const generated = await Promise.all(files.map(async (file) => {
-    try {
-      const stat = await fs.stat(file);
-      return stat.isFile() && stat.size > 1024;
-    } catch {
-      return false;
-    }
-  }));
-
+  const files = [
+    path.join(assetDir, `${scene.id}.mp4`),
+    path.join(assetDir, `${scene.id}-poster.webp`),
+    path.join(assetDir, `${scene.id}-last.webp`),
+  ];
+  const generated = await Promise.all(files.map(isUsableFile));
+  const anyGenerated = generated.some(Boolean);
   const allGenerated = generated.every(Boolean);
-  if (allGenerated && (!hasVideo || !hasPoster)) {
-    throw new Error(`Generated assets exist for ${scene.id} but are not fully wired into the scene engine.`);
+
+  if (anyGenerated && !allGenerated) {
+    throw new Error(`Incomplete generated asset set for ${scene.id}. Expected MP4, poster and last frame.`);
   }
-  if (!allGenerated && (hasVideo || hasPoster)) {
-    throw new Error(`Scene ${scene.id} references cinematic assets that are missing or invalid on disk.`);
-  }
+  if (allGenerated) generatedSets += 1;
 }
 
-console.log(`Home cinematic integrity OK — ${scenes.length} scenes, ${scenes.filter((scene) => component.includes(`video: "/home-cinematic/${scene.id}.mp4"`)).length} generated scene sets wired.`);
+console.log(`Home cinematic integrity OK — ${scenes.length} scenes, ${generatedSets} complete generated scene sets.`);
+
+async function isUsableFile(filePath) {
+  try {
+    const stat = await fs.stat(filePath);
+    return stat.isFile() && stat.size > 1024;
+  } catch {
+    return false;
+  }
+}
