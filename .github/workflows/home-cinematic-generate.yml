@@ -30,11 +30,6 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
       - name: Verify production manifest
         run: node -e "const m=require('./docs/home-cinematic-veo-manifest.json'); if(m.scenes.length!==14) throw new Error('Expected 14 scenes'); console.log('Veo manifest OK:', m.scenes.length)"
 
@@ -95,19 +90,19 @@ jobs:
           console.log(`Verified ${scenes.length} cinematic scene asset sets.`);
           NODE
 
-      - name: Wire generated assets into the scene engine
+      - name: Verify cinematic scene engine contract
         run: node scripts/wire-home-cinematic-assets.mjs
 
       - name: Run cinematic integrity gate
         run: node scripts/verify-home-cinematic-assets.mjs
 
-      - name: Commit generated masters and wiring
+      - name: Commit generated masters
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp public/home-cinematic/*-last.webp src/components/home-cinematic-experience.tsx
+          git add public/home-cinematic/*.mp4 public/home-cinematic/*-poster.webp public/home-cinematic/*-last.webp
           if git diff --cached --quiet; then
-            echo "No generated assets or wiring changes to commit."
+            echo "No generated assets to commit."
             exit 0
           fi
           git commit -m "feat(home): add generated cinematic Veo masters"
