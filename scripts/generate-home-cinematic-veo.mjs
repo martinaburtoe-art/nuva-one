@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const MODEL = process.env.VEO_MODEL || "veo-3.1-generate-preview";
+const MODEL = process.env.VEO_MODEL || "veo-3.1-lite-generate-preview";
 const API_KEY = process.env.GEMINI_API_KEY;
 const ROOT = process.cwd();
 const OUTPUT_DIR = path.join(ROOT, "public/home-cinematic");
@@ -65,7 +65,7 @@ async function generate(scene, fallbackFirstFrame) {
   if (firstFrame) instance.image = await inlineImage(firstFrame);
   if (scene.lastFrame) instance.lastFrame = await inlineImage(scene.lastFrame);
 
-  if (scene.references?.length) {
+  if (scene.references?.length && !MODEL.includes("lite")) {
     instance.referenceImages = [];
     for (const reference of scene.references.slice(0, 3)) {
       instance.referenceImages.push({
