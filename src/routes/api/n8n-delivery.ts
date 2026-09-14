@@ -65,7 +65,6 @@ export const Route = createFileRoute("/api/n8n-delivery")({
             continue;
           }
 
-          const payload = row.payload;
           const event = {
             id: row.id,
             business_id: row.business_id,
@@ -77,10 +76,7 @@ export const Route = createFileRoute("/api/n8n-delivery")({
             event_type: row.event_type,
             occurred_at: row.occurred_at,
             idempotency_key: row.idempotency_key,
-            payload:
-              payload && typeof payload === "object" && !Array.isArray(payload)
-                ? (payload as Record<string, unknown>)
-                : {},
+            payload: row.payload ?? {},
           };
 
           const result = await emitN8nEvent(event);
