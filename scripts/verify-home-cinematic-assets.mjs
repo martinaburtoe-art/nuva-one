@@ -9,6 +9,7 @@ const ROOT = process.cwd();
 const manifestPath = path.join(ROOT, "docs/home-cinematic-veo-manifest.json");
 const componentPath = path.join(ROOT, "src/components/editorial-home-experience.tsx");
 const assetDir = path.join(ROOT, "public/home-cinematic");
+const requireComplete = process.env.REQUIRE_COMPLETE === "true";
 
 const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
 const component = await fs.readFile(componentPath, "utf8");
@@ -40,6 +41,10 @@ for (const scene of scenes) {
     await verifyVideo(files[0], scene.id);
     generatedSets += 1;
   }
+}
+
+if (requireComplete && generatedSets !== scenes.length) {
+  throw new Error(`Release media gate failed: ${generatedSets}/${scenes.length} complete cinematic scene sets are present.`);
 }
 
 console.log(`Home cinematic integrity OK — ${scenes.length} scenes, ${generatedSets} complete generated scene sets.`);
