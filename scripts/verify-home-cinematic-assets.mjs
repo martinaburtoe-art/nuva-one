@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
+const execFileAsync = promisify(execFile);
 const ROOT = process.cwd();
 const manifestPath = path.join(ROOT, "docs/home-cinematic-veo-manifest.json");
 const componentPath = path.join(ROOT, "src/components/editorial-home-experience.tsx");
@@ -14,13 +17,8 @@ const scenes = manifest.scenes;
 if (!Array.isArray(scenes) || scenes.length !== 14) {
   throw new Error(`Expected exactly 14 cinematic scenes; found ${scenes?.length ?? 0}.`);
 }
-
-if (!component.includes("/home-cinematic/${kind}.mp4")) {
-  throw new Error("Experience scene engine is missing the dynamic MP4 contract.");
-}
-if (!component.includes("/home-cinematic/${kind}-poster.webp")) {
-  throw new Error("Experience scene engine is missing the dynamic poster contract.");
-}
+if (!component.includes("/home-cinematic/${kind}.mp4")) throw new Error("Experience scene engine is missing the dynamic MP4 contract.");
+if (!component.includes("/home-cinematic/${kind}-poster.webp")) throw new Error("Experience scene engine is missing the dynamic poster contract.");
 
 const ids = new Set();
 let generatedSets = 0;
@@ -37,11 +35,11 @@ for (const scene of scenes) {
   const generated = await Promise.all(files.map(isUsableFile));
   const anyGenerated = generated.some(Boolean);
   const allGenerated = generated.every(Boolean);
-
-  if (anyGenerated && !allGenerated) {
-    throw new Error(`Incomplete generated asset set for ${scene.id}. Expected MP4, poster and last frame.`);
+  if (anyGenerated && !allGenerated) throw new Error(`Incomplete generated asset set for ${scene.id}. Expected MP4, poster and last frame.`);
+  if (allGenerated) {
+    await verifyVideo(files[0], scene.id);
+    generatedSets += 1;
   }
-  if (allGenerated) generatedSets += 1;
 }
 
 console.log(`Home cinematic integrity OK — ${scenes.length} scenes, ${generatedSets} complete generated scene sets.`);
@@ -53,4 +51,17 @@ async function isUsableFile(filePath) {
   } catch {
     return false;
   }
+}
+
+async function verifyVideo(filePath, sceneId) {
+  const { stdout } = await execFileAsync("ffprobe", [
+    "-v", "error", "-select_streams", "v:0", "-show_entries",
+    "stream=width,height,duration", "-of", "json", filePath,
+  ]);
+  const stream = JSON.parse(stdout).streams?.[0];
+  const width = Number(stream?.width);
+  const height = Number(stream?.height);
+  const duration = Number(stream?.duration);
+  if (width !== 1920 || height !== 1080) throw new Error(`${sceneId} must be 1920x1080; found ${width}x${height}.`);
+  if (!Number.isFinite(duration) || duration < 7.5 || duration > 8.5) throw new Error(`${sceneId} must be approximately 8 seconds; found ${duration}s.`);
 }
