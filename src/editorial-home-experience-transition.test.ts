@@ -20,16 +20,14 @@ describe("getEditorialTransitionState", () => {
     expect(afterBoundary.transitionProgress).toBeLessThan(0.0001);
   });
 
-  it("uses a smooth interpolation instead of a mechanical linear crossfade", () => {
-    const state = getEditorialTransitionState(0.5 / 14);
+  it("holds each scene before starting the cinematic crossfade", () => {
+    const held = getEditorialTransitionState(0.5 / 14);
+    const transitionStart = getEditorialTransitionState(0.55 / 14);
+    const transitionEnd = getEditorialTransitionState(0.9 / 14);
 
-    expect(state.localProgress).toBe(0.5);
-    expect(state.transitionProgress).toBeCloseTo(0.5, 5);
-
-    const early = getEditorialTransitionState(0.25 / 14).transitionProgress;
-    const late = getEditorialTransitionState(0.75 / 14).transitionProgress;
-    expect(early).toBeLessThan(0.25);
-    expect(late).toBeGreaterThan(0.75);
+    expect(held.transitionProgress).toBe(0);
+    expect(transitionStart.transitionProgress).toBe(0);
+    expect(transitionEnd.transitionProgress).toBeGreaterThan(0.99);
   });
 
   it("clamps progress outside the story range", () => {
