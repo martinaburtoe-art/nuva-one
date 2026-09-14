@@ -135,7 +135,7 @@ export function EditorialHomeExperience() {
     </header>
     <main>
       <section ref={storyRef} className="editorial-story" aria-label="Nüva One, una historia de negocio"><div className="editorial-story__sticky">
-        <div className="editorial-story__progress-readout" aria-live="polite"><span>PROGRESO</span><strong>{Math.round(progress * 100)}%</strong><i><b style={{ transform: `scaleX(${progress})` }} /></i></div>
+        <div className="editorial-story__progress-readout" aria-live="off"><span>PROGRESO</span><strong>{Math.round(progress * 100)}%</strong><i><b style={{ transform: `scaleX(${progress})` }} /></i></div>
         <div className={`editorial-story__background editorial-story__background--${chapter.visual}`} style={{ "--scene-progress": chapterProgress } as React.CSSProperties} />
         <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: 1 - chapterProgress, filter: `blur(${(1 - chapterProgress) * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}><SceneArt kind={outgoingChapter.visual} progress={isBackward ? 0.5 : chapterProgress} /></div>
         <div className="editorial-story__art-wrap editorial-scene-enter" style={{ opacity: chapterProgress, filter: `blur(${(1 - chapterProgress) * 2}px)`, transition: "opacity .18s linear, filter .18s linear" }}><SceneArt kind={incomingChapter.visual} progress={isBackward ? chapterProgress : 0} /></div>
