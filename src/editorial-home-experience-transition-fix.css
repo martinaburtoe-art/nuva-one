@@ -46,14 +46,17 @@
   outline-offset:4px;
 }
 
-/* Cámara continua: los extremos del crossfade comparten el mismo encuadre.
-   La función polinómica evita depender de funciones trigonométricas CSS.
-   Así, al cambiar de capítulo no existe un salto de escala o posición. */
+/*
+ * Cámara continua: al cruzar un límite, la escena que acaba de entrar termina
+ * con exactamente el mismo encuadre que adopta la misma escena en la capa
+ * saliente del siguiente intervalo. Esto elimina el salto de escala/posición
+ * que ocurría cuando React intercambiaba las dos capas en el boundary.
+ */
 .editorial-story__art-wrap[data-editorial-layer="0"]{
-  transform:scale(calc(1.045 + var(--transition-progress) * (1 - var(--transition-progress)) * .06)) translate3d(calc(var(--transition-progress) * (1 - var(--transition-progress)) * -2%),0,0);
+  transform:scale(calc(1.045 + var(--transition-progress) * .035)) translate3d(calc(var(--transition-progress) * -1%),0,0);
 }
 .editorial-story__art-wrap[data-editorial-layer="1"]{
-  transform:scale(calc(1.09 - var(--transition-progress) * .045)) translate3d(calc((1 - var(--transition-progress)) * 1%),0,0);
+  transform:scale(calc(1.045 + (1 - var(--transition-progress)) * .035)) translate3d(calc((1 - var(--transition-progress)) * -1%),0,0);
 }
 
 /* En pantallas pequeñas priorizamos el relato y evitamos que la navegación fija compita con el contenido. */
