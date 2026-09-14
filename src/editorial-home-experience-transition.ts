@@ -16,6 +16,11 @@ function smoothstep(value: number) {
   return t * t * (3 - 2 * t);
 }
 
+/** Mantiene cada plano estable y concentra el crossfade cerca del cambio de capítulo. */
+function cinematicTransition(value: number) {
+  return smoothstep(clamp((value - 0.55) / 0.35));
+}
+
 export function getEditorialTransitionState(progress: number, reducedMotion = false): EditorialTransitionState {
   const safeProgress = clamp(progress);
   const chapterPosition = safeProgress * CHAPTER_COUNT;
@@ -25,7 +30,7 @@ export function getEditorialTransitionState(progress: number, reducedMotion = fa
   return {
     activeChapter,
     localProgress,
-    transitionProgress: reducedMotion ? 0 : smoothstep(localProgress),
+    transitionProgress: reducedMotion ? 0 : cinematicTransition(localProgress),
   };
 }
 
