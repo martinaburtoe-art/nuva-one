@@ -19,6 +19,7 @@ import { NuvaInventoryIntelligence } from "@/components/nuva-inventory-intellige
 import { InventoryActionCenter } from "@/components/inventory-action-center";
 import { InventoryScannerOperations } from "@/components/inventory-scanner-operations";
 import { InventoryCountPanel } from "@/components/inventory-count-panel";
+import { InventoryClarityHeader } from "@/components/inventory-clarity-header";
 import { getInventoryMetrics, type InventoryStatus } from "@/lib/inventory-metrics";
 import { adjustInventoryStock } from "@/lib/inventory-transactions";
 
@@ -42,6 +43,7 @@ export function InventoryWorkspace() {
   function exportData() { downloadCsv("nuva-inventario.csv", products.map(p => { const m = getInventoryMetrics(p); return { SKU: p.sku || "", Producto: p.name || "", Stock: Number(p.stock || 0), Disponible: m.available, Proyectado: m.projected, Estado: statusText[m.status], Reposicion: m.suggestedReplenishment, Costo: Number(p.cost || 0), Precio: Number(p.price || 0), ValorCosto: Number(p.stock || 0) * Number(p.cost || 0) }; })); }
   function exportReplenishment() { downloadCsv("nuva-abastecimiento.csv", replenishment.map(({ product: p, metrics: m }) => ({ SKU: p.sku || "", Producto: p.name || "", Proyectado: m.projected, Reposicion: m.suggestedReplenishment, CostoUnitario: Number(p.cost || 0), InversionEstimada: m.suggestedReplenishment * Number(p.cost || 0), Estado: statusText[m.status] }))); }
   return <ModuleGuard module="inventory"><div className="space-y-5"><PageHeader title="Inventario" description="Un solo espacio para stock, productos, movimientos, conteo y abastecimiento." actions={<div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportData} disabled={!products.length}><Download className="mr-2 h-4 w-4" />Exportar</Button>{canWrite && <Button onClick={create}><Plus className="mr-2 h-4 w-4" />Nuevo producto</Button>}</div>} />
+    <InventoryClarityHeader productCount={products.length} availableUnits={available} criticalCount={critical} replenishmentCount={replenishment.length} />
     <Card className="overflow-hidden"><div className="grid md:grid-cols-3 lg:grid-cols-6">{views.map(([id, label, desc, Icon]) => <button key={id} type="button" onClick={() => setView(id)} className={`min-h-[82px] border-b p-4 text-left lg:border-b-0 lg:border-r ${view === id ? "bg-primary/[0.06] text-primary" : "hover:bg-muted/50"}`}><div className="flex items-center gap-2 text-sm font-semibold"><Icon className="h-4 w-4" />{label}</div><p className="mt-1 text-xs text-muted-foreground">{desc}</p></button>)}</div></Card>
     <div className="grid gap-3 sm:grid-cols-3"><Stat label="Productos" value={String(products.length)} /><Stat label="Disponibles" value={String(available)} /><Stat label="Atención" value={String(critical)} danger={critical > 0} /></div>
     {view === "intelligence" && <><NuvaInventoryIntelligence products={products} /><InventoryActionCenter products={products} canWrite={canWrite} /></>}
