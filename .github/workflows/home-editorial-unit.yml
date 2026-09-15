@@ -1,0 +1,27 @@
+name: Home editorial — focused unit tests
+
+on:
+  pull_request:
+    paths:
+      - "src/editorial-home-experience-engine.ts"
+      - "src/editorial-home-experience-engine.test.ts"
+      - "src/components/editorial-home-experience-v2.tsx"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx vitest run src/editorial-home-experience-engine.test.ts

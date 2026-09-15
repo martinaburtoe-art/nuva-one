@@ -18,6 +18,8 @@ export const EDITORIAL_CHAPTERS:readonly EditorialChapter[]=[
 ];
 export function clamp(value:number){return Math.min(1,Math.max(0,value))}
 export function smoothstep(value:number){const t=clamp(value);return t*t*(3-2*t)}
+/** Returns opacity for the two visual layers while preserving reverse-scroll continuity. */
+export function getLayerOpacity(transition:number,backward:boolean,layer:0|1){const t=clamp(transition);if(backward)return layer===0?t:1-t;return layer===0?1-t:t}
 /** Scroll is the single source of truth for chapter transitions. */
 export function getChapterState(progress:number,reducedMotion=false):EditorialChapterState{
  const safe=clamp(progress);const count=EDITORIAL_CHAPTERS.length;const position=safe*count;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EDITORIAL_CHAPTERS, getChapterState, smoothstep } from "./editorial-home-experience-engine";
+import { EDITORIAL_CHAPTERS, getChapterState, getLayerOpacity, smoothstep } from "./editorial-home-experience-engine";
 
 describe("editorial home engine",()=>{
  it("keeps the 14-scene story",()=>expect(EDITORIAL_CHAPTERS).toHaveLength(14));
@@ -14,4 +14,12 @@ describe("editorial home engine",()=>{
  });
  it("keeps the first chapter stable",()=>{const state=getChapterState(.05);expect(state.activeChapter).toBe(0);expect(state.outgoingChapter).toBe(0);expect(state.incomingChapter).toBe(0);expect(state.transitionProgress).toBe(0)});
  it("honors reduced motion",()=>expect(getChapterState(.42,true).transitionProgress).toBe(0));
+ it("reverses visual layer ownership without a jump when scrolling backward",()=>{
+  expect(getLayerOpacity(0,true,0)).toBe(0);
+  expect(getLayerOpacity(0,true,1)).toBe(1);
+  expect(getLayerOpacity(1,true,0)).toBe(1);
+  expect(getLayerOpacity(1,true,1)).toBe(0);
+  expect(getLayerOpacity(.5,true,0)).toBe(.5);
+  expect(getLayerOpacity(.5,true,1)).toBe(.5);
+ });
 });
