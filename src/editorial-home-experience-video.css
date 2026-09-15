@@ -1,0 +1,6 @@
+.editorial-art{isolation:isolate}
+.editorial-art__image{z-index:0}
+.editorial-art__video{z-index:1;display:block;object-fit:cover;object-position:center;pointer-events:none;background:#0b0d0d}
+.editorial-art__light,.editorial-art__subject,.editorial-art__surface,.editorial-art__object,.editorial-art__line,.editorial-art__caption{z-index:2}
+.editorial-art__video[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.editorial-art__video{display:none!important}}
