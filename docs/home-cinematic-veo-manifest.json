@@ -1,5 +1,5 @@
 {
-  "model": "veo-3.1-generate-preview",
+  "model": "veo-3.1-lite-generate-preview",
   "defaults": {
     "aspectRatio": "16:9",
     "durationSeconds": 8,
