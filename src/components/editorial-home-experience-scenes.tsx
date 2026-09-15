@@ -1,6 +1,13 @@
 import type { CSSProperties } from "react";
 import { EDITORIAL_CHAPTERS } from "@/editorial-home-experience-engine";
-type SceneArtProps={kind:string;progress:number;reducedMotion?:boolean};
-export function SceneArt({kind,progress,reducedMotion=false}:SceneArtProps){const style={"--art-progress":progress} as CSSProperties;const index=EDITORIAL_CHAPTERS.findIndex(item=>item.visual===kind);const chapter=EDITORIAL_CHAPTERS[index];return <div className={`editorial-art editorial-art--${kind}`} style={style} aria-hidden="true">
-{!reducedMotion&&<video className="editorial-art__video" src={`/home-cinematic/${kind}.mp4`} poster={`/home-cinematic/${kind}-poster.webp`} autoPlay muted loop playsInline preload="metadata" disablePictureInPicture onError={event=>{event.currentTarget.hidden=true}}/>}
-<div className="editorial-art__image"><div className="editorial-art__grain"/><div className="editorial-art__architecture editorial-art__architecture--one"/><div className="editorial-art__architecture editorial-art__architecture--two"/><div className="editorial-art__architecture editorial-art__architecture--three"/></div><div className="editorial-art__light"/><div className="editorial-art__subject"><span/><i/></div><div className="editorial-art__surface"/><div className="editorial-art__object editorial-art__object--a"/><div className="editorial-art__object editorial-art__object--b"/><div className="editorial-art__line"/><div className="editorial-art__caption"><span>{String(index+1).padStart(2,"0")}</span><small>{chapter?.label}</small></div></div>}
+type SceneArtProps={kind:string;progress:number;reducedMotion?:boolean;mediaMode?:"video"|"css"};
+export function SceneArt({kind,progress,reducedMotion=false,mediaMode="video"}:SceneArtProps){
+ const style={"--art-progress":progress} as CSSProperties;
+ const index=EDITORIAL_CHAPTERS.findIndex(item=>item.visual===kind);
+ const chapter=EDITORIAL_CHAPTERS[index];
+ const showVideo=mediaMode==="video"&&!reducedMotion;
+ return <div className={`editorial-art editorial-art--${kind}`} style={style} aria-hidden="true">
+  {showVideo&&<video className="editorial-art__video" src={`/home-cinematic/${kind}.mp4`} poster={`/home-cinematic/${kind}-poster.webp`} autoPlay muted loop playsInline preload="metadata" disablePictureInPicture onError={event=>{event.currentTarget.hidden=true}}/>}
+  <div className="editorial-art__image"><div className="editorial-art__grain"/><div className="editorial-art__architecture editorial-art__architecture--one"/><div className="editorial-art__architecture editorial-art__architecture--two"/><div className="editorial-art__architecture editorial-art__architecture--three"/></div><div className="editorial-art__light"/><div className="editorial-art__subject"><span/><i/></div><div className="editorial-art__surface"/><div className="editorial-art__object editorial-art__object--a"/><div className="editorial-art__object editorial-art__object--b"/><div className="editorial-art__line"/><div className="editorial-art__caption"><span>{String(index+1).padStart(2,"0")}</span><small>{chapter?.label}</small></div>
+ </div>;
+}
