@@ -90,6 +90,11 @@ jobs:
           console.log(`Verified ${scenes.length} cinematic scene asset sets.`);
           NODE
 
+      - name: Verify cinematic video specifications
+        env:
+          VEO_SCENES: ${{ inputs.scenes || '' }}
+        run: node scripts/verify-home-cinematic-media.mjs
+
       - name: Verify cinematic scene engine contract
         run: node scripts/wire-home-cinematic-assets.mjs
 
