@@ -5,6 +5,7 @@ import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
 import { EditorialLowerSections } from "@/components/editorial-home-experience-sections";
 import { SceneArt } from "@/components/editorial-home-experience-scenes";
 import { EDITORIAL_CHAPTERS, clamp, getChapterState } from "@/editorial-home-experience-engine";
+import "@/editorial-home-experience-video.css";
 
 type ExperienceMediaMode="video"|"css";
 function useProgress(ref:{current:HTMLElement|null}){const[progress,setProgress]=useState(0);useEffect(()=>{let frame=0;const update=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{const element=ref.current;if(!element)return;const range=Math.max(element.offsetHeight-window.innerHeight,1);setProgress(clamp(-element.getBoundingClientRect().top/range))})};update();window.addEventListener("scroll",update,{passive:true});window.addEventListener("resize",update);return()=>{cancelAnimationFrame(frame);window.removeEventListener("scroll",update);window.removeEventListener("resize",update)}},[ref]);return progress}
