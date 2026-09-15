@@ -1,4 +1,5 @@
 export type EditorialChapter={id:string;label:string;kicker:string;title:string;text:string;visual:string;metric:string};
+export type EditorialChapterState={activeChapter:number;outgoingChapter:number;incomingChapter:number;localProgress:number;transitionProgress:number};
 export const EDITORIAL_CHAPTERS:readonly EditorialChapter[]=[
 {id:"hero",label:"Inicio",kicker:"EL NEGOCIO REAL",title:"Todo empieza aquí.",text:"Una sola mirada para entender lo que ocurre detrás de cada decisión.",visual:"hero",metric:"01"},
 {id:"sales",label:"Ventas",kicker:"VENTAS",title:"Cada oportunidad cuenta.",text:"Registra ventas y convierte cada interacción en contexto para el resto del negocio.",visual:"sales",metric:"$48.990"},
@@ -17,4 +18,12 @@ export const EDITORIAL_CHAPTERS:readonly EditorialChapter[]=[
 ];
 export function clamp(value:number){return Math.min(1,Math.max(0,value))}
 export function smoothstep(value:number){const t=clamp(value);return t*t*(3-2*t)}
-export function getChapterState(progress:number,reducedMotion=false){const safe=clamp(progress);const position=safe*EDITORIAL_CHAPTERS.length;const activeChapter=Math.min(EDITORIAL_CHAPTERS.length-1,Math.floor(position));const localProgress=activeChapter===EDITORIAL_CHAPTERS.length-1?1:position-activeChapter;return{activeChapter,localProgress,transitionProgress:reducedMotion?0:smoothstep(localProgress)}}
+/** Scroll is the single source of truth for chapter transitions. */
+export function getChapterState(progress:number,reducedMotion=false):EditorialChapterState{
+ const safe=clamp(progress);const count=EDITORIAL_CHAPTERS.length;const position=safe*count;
+ const activeChapter=Math.min(count-1,Math.floor(position));
+ const localProgress=activeChapter===count-1?1:position-activeChapter;
+ const transitionWindow=activeChapter===0?0:0.24;
+ const transitionProgress=reducedMotion||transitionWindow===0?0:smoothstep(clamp(localProgress/transitionWindow));
+ return{activeChapter,outgoingChapter:activeChapter===0?0:activeChapter-1,incomingChapter:activeChapter,localProgress,transitionProgress};
+}
