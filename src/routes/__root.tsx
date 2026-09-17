@@ -19,7 +19,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
 import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
-import { NuvaLaunchExperience } from "@/components/nuva-launch-experience";
 import { PosBarcodeScanner } from "@/components/pos-barcode-scanner";
 import { NuvaInfoCenter } from "@/components/nuva-info-center";
 import { FloatingActionPillar } from "@/components/nuva/FloatingActionPillar";
@@ -181,9 +180,6 @@ function RootComponent() {
   const router = useRouter();
   const location = useLocation();
   const isLanding = location.pathname === "/";
-  const [launchComplete, setLaunchComplete] = useState(() => !isLanding);
-  const completeLaunch = useCallback(() => setLaunchComplete(true), []);
-  useEffect(() => { if (isLanding) setLaunchComplete(false); else setLaunchComplete(true); }, [isLanding]);
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
@@ -202,12 +198,11 @@ function RootComponent() {
     window.addEventListener("unhandledrejection", onUnhandledRejection);
     return () => { sub.subscription.unsubscribe(); window.removeEventListener("unhandledrejection", onUnhandledRejection); };
   }, [router, queryClient]);
-  const showLanding = !isLanding || launchComplete;
+  const showLanding = true;
   return (
     <QueryClientProvider client={queryClient}>
       <OfflineBanner />
       <LegacyFloatingAiCleanup />
-      {isLanding && !launchComplete ? <NuvaLaunchExperience onComplete={completeLaunch} /> : null}
       {showLanding ? <RouteEnhancements /> : null}
       {showLanding ? <Outlet /> : null}
       {showLanding ? <NuvaInfoCenter hideTrigger /> : null}
