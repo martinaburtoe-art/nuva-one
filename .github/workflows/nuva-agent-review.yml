@@ -1,0 +1,75 @@
+name: Nüva One — Autonomous PR Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+concurrency:
+  group: nuva-agent-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Run Gemini review in read-only mode
+        id: gemini
+        uses: google-github-actions/run-gemini-cli@a3bf79042542528e91937b3a3a6fbc496ee3c31
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3-flash-preview' }}
+          github_pr_number: ${{ github.event.pull_request.number }}
+          prompt: |
+            Act as the independent Nüva One PR reviewer.
+
+            Read GEMINI.md. Review ONLY the current pull request diff and the surrounding code needed to validate it. Do not edit files.
+
+            Check:
+            - correctness and regression risk;
+            - TypeScript/React/TanStack Router consistency;
+            - Supabase/RLS/tenant-isolation implications when relevant;
+            - tests and whether the changed behavior is actually covered;
+            - build/lint/type safety;
+            - accessibility/responsive behavior for UI changes;
+            - whether the change is focused and avoids unrelated architecture churn.
+
+            Distinguish blocking defects from non-blocking suggestions. Do not invent issues without evidence.
+
+            End with one of: READY, CHANGES_REQUESTED, or NEEDS_EVIDENCE, followed by concise findings and exact file references where possible.
+          settings: |
+            {
+              "general": {
+                "defaultApprovalMode": "plan"
+              },
+              "model": {
+                "maxSessionTurns": 20
+              },
+              "telemetry": {
+                "enabled": false
+              }
+            }
+
+      - name: Publish review
+        if: github.event_name == 'pull_request' && steps.gemini.outputs.summary != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW: ${{ steps.gemini.outputs.summary }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "## 🤖 Nüva One autonomous review\n\n${REVIEW}"
