@@ -93,9 +93,6 @@ jobs:
           delete-branch: true
           title: 'fix(agent): repair verified CI failure'
           commit-message: 'fix(agent): repair verified CI failure'
-          labels: |
-            ai-agent
-            ci-repair
           body: |
             ## Autonomous CI repair
 
