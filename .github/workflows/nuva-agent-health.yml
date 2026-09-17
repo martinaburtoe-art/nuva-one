@@ -61,5 +61,4 @@ jobs:
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --title "🤖 Autonomous health report — $(date -u +%Y-%m-%d)" \
-            --label "ai-agent" \
             --body "## Nüva One daily autonomous health report\n\n${REPORT}"
