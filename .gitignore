@@ -20,7 +20,7 @@ dist-ssr
 .wrangler/
 .dev.vars
 
-# Environment variables (secrets live here locally / in Vercel project settings)
+# Environment variables (secrets live here / in Vercel project settings)
 .env
 .env.local
 .env.*.local
@@ -38,3 +38,7 @@ dist-ssr
 .vercel
 .vercel-redeploy-trigger
 coverage
+
+# Gemini CLI local state and credentials
+.gemini/
+gha-creds-*.json
