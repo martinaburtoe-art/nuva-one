@@ -1,0 +1,122 @@
+name: Nüva One — Autonomous Builder
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+  actions: read
+
+concurrency:
+  group: nuva-agent-builder
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Autonomous engineering cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check for existing autonomous PR
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --search 'label:ai-agent' --json number --jq 'length')
+          echo "open_agent_prs=$count"
+          if [ "$count" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Gemini autonomous engineer
+        if: steps.gate.outputs.skip != 'true'
+        id: gemini
+        uses: google-github-actions/run-gemini-cli@a3bf79042542528e91937b3a3a6fbc496ee3c31
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3-flash-preview' }}
+          prompt: |
+            You are the autonomous builder for Nüva One.
+
+            Read GEMINI.md and docs/AGENT_BACKLOG.md first. Then inspect the current repository state, recent commits, open issues and pull requests, and current CI status. Do not start a generic audit from scratch.
+
+            Select exactly ONE highest-priority, evidence-backed task that can be completed safely in this run. Prefer a current production/CI blocker, regression, missing core product flow, or a focused quality/security improvement over speculative redesign.
+
+            Implement the task in the real repository. Preserve existing architecture and working modules. Do not touch secrets. Do not generate expensive media. Do not make broad refactors.
+
+            Validate the change with the most relevant tests. For code changes, run at minimum the relevant lint/typecheck/unit/build commands available in package.json; run migration verification for database-related changes. Diagnose failures rather than hiding them.
+
+            Stop after one coherent task. Do not make unrelated improvements just to fill the run.
+
+            At the end, print a concise summary containing: task selected, files changed, validation performed, result, and remaining risk. Leave the workspace changes uncommitted so the next step can create the PR.
+          settings: |
+            {
+              "model": {
+                "maxSessionTurns": 25
+              },
+              "telemetry": {
+                "enabled": false
+              }
+            }
+
+      - name: Run focused verification
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No code changes produced; nothing to verify."
+            exit 0
+          fi
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run lint
+          npm run typecheck
+          npm run test
+          npm run build
+
+      - name: Create autonomous pull request
+        if: steps.gate.outputs.skip != 'true'
+        id: cpr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
+          branch: agent/autonomous-cycle
+          delete-branch: true
+          title: 'feat(agent): autonomous Nüva One improvement'
+          commit-message: 'feat(agent): autonomous Nüva One improvement'
+          labels: |
+            ai-agent
+            autonomous
+          body: |
+            ## Nüva One autonomous engineering cycle
+
+            This PR was produced by the scheduled autonomous builder.
+
+            ### Agent summary
+            ${{ steps.gemini.outputs.summary || 'No summary returned; inspect the workflow logs.' }}
+
+            ### Validation
+            The workflow ran focused lint, typecheck, unit tests, and production build after the agent edits.
+
+            ### Merge policy
+            Review the diff and CI evidence before merging. The autonomous system does not bypass failing checks or security controls.
+
+      - name: Report result
+        if: always()
+        run: |
+          echo "### Autonomous cycle" >> "$GITHUB_STEP_SUMMARY"
+          echo "Builder gate: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "PR: ${{ steps.cpr.outputs.pull-request-url || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
