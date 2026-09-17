@@ -1,0 +1,65 @@
+name: Nüva One — Autonomous Health Auditor
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 50
+
+      - name: Run Gemini health audit
+        id: gemini
+        uses: google-github-actions/run-gemini-cli@a3bf79042542528e91937b3a3a6fbc496ee3c31
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3-flash-preview' }}
+          prompt: |
+            Perform a read-only daily health audit of Nüva One.
+
+            Read GEMINI.md and docs/AGENT_BACKLOG.md. Inspect recent commits, open PRs/issues, workflow status, package scripts, and the relevant repository documentation. Do not edit code.
+
+            Identify only evidence-backed blockers, regressions, security risks, broken user flows, or high-value unfinished work. Do not repeat historical audits that already have current passing evidence.
+
+            Produce a concise report with: HEALTH, verified findings, evidence, priority, and the single most useful next autonomous task.
+
+            If there are no actionable findings, explicitly say NO_ACTIONABLE_FINDINGS.
+          settings: |
+            {
+              "general": {
+                "defaultApprovalMode": "plan"
+              },
+              "model": {
+                "maxSessionTurns": 20
+              },
+              "telemetry": {
+                "enabled": false
+              }
+            }
+
+      - name: Create daily health issue when actionable
+        if: contains(steps.gemini.outputs.summary, 'NO_ACTIONABLE_FINDINGS') == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.gemini.outputs.summary }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "🤖 Autonomous health report — $(date -u +%Y-%m-%d)" \
+            --label "ai-agent" \
+            --body "## Nüva One daily autonomous health report\n\n${REPORT}"
