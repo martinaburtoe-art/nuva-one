@@ -1,0 +1,113 @@
+name: Nüva One — Autonomous CI Repairer
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+  actions: read
+
+concurrency:
+  group: nuva-agent-ci-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout failed branch when available
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_branch || 'main' }}
+
+      - name: Inspect failed CI run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          if [ -n "$RUN_ID" ]; then
+            gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/ci-failure.log || true
+          else
+            echo 'Manual run: no workflow_run id supplied.' > /tmp/ci-failure.log
+          fi
+          sed -n '1,500p' /tmp/ci-failure.log
+
+      - name: Run Gemini repair engineer
+        id: gemini
+        uses: google-github-actions/run-gemini-cli@a3bf79042542528e91937b3a3a6fbc496ee3c31
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3-flash-preview' }}
+          prompt: |
+            You are the Nüva One CI repair engineer.
+
+            Read GEMINI.md. Inspect /tmp/ci-failure.log and the current repository. Identify the verified root cause of the failure. Do not guess.
+
+            If the failure is caused by infrastructure/transient service instability rather than repository code, do not modify application code. Produce a concise diagnosis and stop.
+
+            If a repository change is required, implement the smallest safe fix. Preserve existing architecture, database security, tenant isolation, and working functionality. Do not weaken tests, remove checks, or bypass quality gates.
+
+            Re-run the most relevant failing test and any adjacent validation needed to prove the fix. Leave edits uncommitted for PR creation.
+
+            At the end, summarize root cause, files changed, validation, and residual risk.
+          settings: |
+            {
+              "model": {
+                "maxSessionTurns": 25
+              },
+              "telemetry": {
+                "enabled": false
+              }
+            }
+
+      - name: Run verification when changes exist
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No repair changes produced."
+            exit 0
+          fi
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run lint
+          npm run typecheck
+          npm run test
+          npm run build
+
+      - name: Create repair pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
+          branch: agent/ci-repair
+          delete-branch: true
+          title: 'fix(agent): repair verified CI failure'
+          commit-message: 'fix(agent): repair verified CI failure'
+          labels: |
+            ai-agent
+            ci-repair
+          body: |
+            ## Autonomous CI repair
+
+            The CI repairer was triggered by a failed CI run and was instructed to modify code only when a repository-level root cause was verified.
+
+            ### Agent summary
+            ${{ steps.gemini.outputs.summary || 'No summary returned; inspect workflow logs.' }}
+
+            Review the original failed CI run and this diff before merging.
+
+      - name: Report result
+        if: always()
+        run: |
+          echo "### CI repair cycle" >> "$GITHUB_STEP_SUMMARY"
+          echo "PR: ${{ steps.cpr.outputs.pull-request-url || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
