@@ -3,23 +3,26 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const manifestPath = path.join(ROOT, "docs/home-cinematic-veo-manifest.json");
-const componentPath = path.join(ROOT, "src/components/editorial-home-experience.tsx");
+const routePath = path.join(ROOT, "src/routes/experience.tsx");
+const scenesPath = path.join(ROOT, "src/components/editorial-home-experience-scenes.tsx");
 const assetDir = path.join(ROOT, "public/home-cinematic");
 
-const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
-const component = await fs.readFile(componentPath, "utf8");
+const route = await fs.readFile(routePath, "utf8");
+const scenesComponent = await fs.readFile(scenesPath, "utf8");
+const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "docs/home-cinematic-veo-manifest.json"), "utf8"));
 const scenes = manifest.scenes;
 
 if (!Array.isArray(scenes) || scenes.length !== 14) {
   throw new Error(`Expected exactly 14 cinematic scenes; found ${scenes?.length ?? 0}.`);
 }
-
-if (!component.includes("/home-cinematic/${kind}.mp4")) {
-  throw new Error("Experience scene engine is missing the dynamic MP4 contract.");
+if (!route.includes("EditorialHomeExperienceV2")) {
+  throw new Error("/experience is not using the current editorial V2 scene engine.");
 }
-if (!component.includes("/home-cinematic/${kind}-poster.webp")) {
-  throw new Error("Experience scene engine is missing the dynamic poster contract.");
+if (!scenesComponent.includes("/home-cinematic/${kind}.mp4")) {
+  throw new Error("SceneArt is missing the dynamic MP4 contract.");
+}
+if (!scenesComponent.includes("/home-cinematic/${kind}-poster.webp")) {
+  throw new Error("SceneArt is missing the dynamic poster contract.");
 }
 
 const ids = new Set();

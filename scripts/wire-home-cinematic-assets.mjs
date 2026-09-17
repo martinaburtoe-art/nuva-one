@@ -3,18 +3,18 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const componentPath = path.join(ROOT, "src/components/editorial-home-experience.tsx");
+const routePath = path.join(ROOT, "src/routes/experience.tsx");
+const scenesPath = path.join(ROOT, "src/components/editorial-home-experience-scenes.tsx");
 const assetDir = path.join(ROOT, "public/home-cinematic");
-const source = await fs.readFile(componentPath, "utf8");
-const manifest = JSON.parse(
-  await fs.readFile(path.join(ROOT, "docs/home-cinematic-veo-manifest.json"), "utf8"),
-);
+const route = await fs.readFile(routePath, "utf8");
+const scenesComponent = await fs.readFile(scenesPath, "utf8");
+const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "docs/home-cinematic-veo-manifest.json"), "utf8"));
 
-const hasDynamicVideoContract = source.includes("/home-cinematic/${kind}.mp4");
-const hasDynamicPosterContract = source.includes("/home-cinematic/${kind}-poster.webp");
-
-if (!hasDynamicVideoContract || !hasDynamicPosterContract) {
-  throw new Error("Editorial experience is missing the dynamic cinematic media contract.");
+if (!route.includes("EditorialHomeExperienceV2")) {
+  throw new Error("/experience is not using the current editorial V2 scene engine.");
+}
+if (!scenesComponent.includes("/home-cinematic/${kind}.mp4") || !scenesComponent.includes("/home-cinematic/${kind}-poster.webp")) {
+  throw new Error("Editorial scene engine is missing the dynamic cinematic media contract.");
 }
 
 let generated = 0;
