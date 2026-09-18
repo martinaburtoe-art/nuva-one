@@ -128,6 +128,67 @@ export function HomeFixedExperience() {
           </div>
         </div>
       </section>
+
+      <section aria-label="Comparativa Nüva One" className="relative overflow-hidden bg-[#080809] px-5 py-24 text-white md:px-10 md:py-36">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#E6C687]/50 to-transparent" />
+        <div className="absolute -left-40 top-24 h-96 w-96 rounded-full bg-[#6366F1]/10 blur-3xl" />
+        <div className="absolute -right-40 bottom-10 h-96 w-96 rounded-full bg-[#E6C687]/10 blur-3xl" />
+        <div className="relative mx-auto max-w-7xl">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#E6C687]">NÜVA ONE · FRENTE A LA FRAGMENTACIÓN</p>
+            <h2 className="mt-5 text-4xl font-semibold leading-[0.98] tracking-[-0.04em] sm:text-6xl">Todo lo que tu negocio necesita. <span className="text-[#E6C687]">Sin fragmentarlo.</span></h2>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">Mientras otras soluciones resuelven una parte de la operación, Nüva One conecta el contexto para que ventas, inventario, clientes, caja e inteligencia trabajen juntos.</p>
+          </div>
+
+          <div className="mt-14 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20">
+            <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 bg-white/[0.025] text-sm">
+              <div className="px-5 py-5 font-semibold text-white/55 md:px-7">Lo que necesita tu negocio</div>
+              <div className="border-l border-white/10 px-4 py-5 text-center font-bold text-[#E6C687]">Nüva One</div>
+              <div className="border-l border-white/10 px-4 py-5 text-center font-semibold text-white/55">ERP / Contabilidad</div>
+              <div className="border-l border-white/10 px-4 py-5 text-center font-semibold text-white/55">POS / Inventario</div>
+            </div>
+                          <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
+                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Ventas + inventario conectados</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
+                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Caja y finanzas en contexto</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
+                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Clientes + CRM</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
+                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Reportes para decidir</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
+                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Inteligencia sobre tu operación</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
+                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Una sola experiencia</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+              </div>
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-[#E6C687]/20 bg-[#E6C687]/[0.06] px-6 py-5 md:px-8">
+            <div>
+              <p className="text-sm font-semibold text-white">Una plataforma. Un contexto. Una operación conectada.</p>
+              <p className="mt-1 text-sm text-white/50">Nüva One está diseñada para que no tengas que saltar entre herramientas para entender tu negocio.</p>
+            </div>
+            <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#E6C687] px-5 py-2.5 text-sm font-bold text-[#080809]">Empezar gratis <ArrowRight size={15} /></Link>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
