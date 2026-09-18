@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ExternalLink, Landmark, Newspaper, Scale, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,16 @@ const NEWS: NewsItem[] = [
     href: "https://www.sii.cl/noticias/2026/150926noti01srm.htm",
     source: "Servicio de Impuestos Internos",
   },
+  {
+    category: "Financiamiento",
+    date: "7 sep 2026",
+    title: "ProPyme pone el financiamiento y la liquidez en el centro",
+    summary: "La agenda ProPyme incorpora acceso al financiamiento y liquidez entre los desafíos abordados junto a representantes de las MiPymes.",
+    detail: "El foco permite seguir futuras medidas, instrumentos y cambios que puedan incidir en las condiciones financieras de pequeños y medianos negocios.",
+    impact: "Revisar necesidades de capital de trabajo y mantener identificadas las alternativas de financiamiento disponibles.",
+    href: "https://www.economia.gob.cl/2026/09/07/ministro-mas-compromete-avances-en-agenda-legislativa-para-fortalecer-a-las-mipymes.htm",
+    source: "Ministerio de Economía",
+  },
 ];
 
 const SOURCES = [
@@ -99,6 +110,13 @@ const SOURCES = [
 const CATEGORIES = ["Todas", "Economía", "PyMEs", "Impuestos", "Tributación", "Empresas", "Innovación", "Financiamiento"];
 
 function Noticias() {
+  const [activeCategory, setActiveCategory] = useState("Todas");
+
+  const filteredNews = useMemo(
+    () => activeCategory === "Todas" ? NEWS : NEWS.filter((item) => item.category === activeCategory),
+    [activeCategory],
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
@@ -146,29 +164,51 @@ function Noticias() {
           </div>
         </section>
 
-        <div className="mt-12 flex flex-wrap gap-2" aria-label="Categorías de noticias">
-          {CATEGORIES.map((item, index) => <Badge key={item} variant={index === 0 ? "default" : "outline"} className="px-4 py-2">{item}</Badge>)}
-        </div>
+        <section className="mt-14" aria-label="Más noticias que pueden importar a tu empresa">
+          <div>
+            <p className="text-sm font-medium text-primary">Actualidad verificada</p>
+            <h2 className="mt-1 text-2xl font-bold">Más noticias que pueden importar a tu empresa</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Filtra por tema y revisa las novedades que pueden tener relación con tu operación.
+            </p>
+          </div>
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_.65fr]" aria-label="Noticias destacadas">
-          <Card className="overflow-hidden border-primary/20">
-            <CardHeader className="bg-primary/5 p-7">
-              <div className="flex items-center justify-between gap-4"><Badge>Destacada · {NEWS[0].category}</Badge><span className="text-xs text-muted-foreground">{NEWS[0].date}</span></div>
-              <CardTitle className="mt-4 text-2xl sm:text-3xl">{NEWS[0].title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5 p-7">
-              <p className="leading-7 text-muted-foreground">{NEWS[0].summary}</p>
-              <div><p className="text-sm font-semibold">En detalle</p><p className="mt-2 text-sm leading-6 text-muted-foreground">{NEWS[0].detail}</p></div>
-              <div className="rounded-xl border bg-muted/30 p-5"><p className="text-sm font-semibold">Qué significa para un negocio</p><p className="mt-2 text-sm leading-6 text-muted-foreground">{NEWS[0].impact}</p></div>
-              <a href={NEWS[0].href} target="_blank" rel="noreferrer"><Button>Leer fuente oficial <ExternalLink className="ml-2 h-4 w-4" /></Button></a>
-            </CardContent>
-          </Card>
-          <div className="grid gap-6">{NEWS.slice(1, 3).map((item) => <NewsCard key={item.title} item={item} />)}</div>
-        </section>
+          <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="Filtrar noticias por categoría">
+            {CATEGORIES.map((category) => {
+              const active = activeCategory === category;
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setActiveCategory(category)}
+                  className={`rounded-full border px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 ${active ? "border-primary bg-primary text-primary-foreground shadow-sm" : "bg-background text-muted-foreground"}`}
+                >
+                  {category}
+                </button>
+              );
+            })}
+          </div>
 
-        <section className="mt-14" aria-label="Noticias recientes">
-          <div className="flex items-end justify-between gap-4"><div><p className="text-sm font-medium text-primary">Actualidad verificada</p><h2 className="mt-1 text-2xl font-bold">Más noticias que pueden importar a tu empresa</h2></div><span className="text-sm text-muted-foreground">18 sep 2026</span></div>
-          <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{NEWS.slice(3).map((item) => <NewsCard key={item.title} item={item} />)}</div>
+          <div className="mt-7 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {filteredNews.length} {filteredNews.length === 1 ? "noticia encontrada" : "noticias encontradas"}
+              {activeCategory !== "Todas" ? ` · ${activeCategory}` : ""}
+            </p>
+            {activeCategory !== "Todas" && (
+              <button type="button" onClick={() => setActiveCategory("Todas")} className="text-sm font-medium text-primary hover:underline">
+                Ver todas
+              </button>
+            )}
+          </div>
+
+          {filteredNews.length > 0 ? (
+            <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {filteredNews.map((item) => <NewsCard key={item.title} item={item} />)}
+            </div>
+          ) : (
+            <Card className="mt-5"><CardContent className="p-8 text-center"><p className="font-semibold">No hay noticias en esta categoría todavía.</p><p className="mt-2 text-sm text-muted-foreground">Vuelve a “Todas” para revisar la cobertura disponible.</p></CardContent></Card>
+          )}
         </section>
 
         <section className="mt-14" aria-label="Cómo leer las noticias">
