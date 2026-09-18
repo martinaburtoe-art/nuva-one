@@ -273,3 +273,72 @@
 .cinematic-story__sticky:not([data-scene="hero"]) .cinematic-progress i { background: #55bfd0; }
 .cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__nav button span { background: rgba(18,61,64,.18); }
 .cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__nav button.is-active span { background: #55bfd0; }
+
+
+/* Hero launch treatment: the real retail film is the visual, not a washed-out background. */
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__stage {
+  background: #080909;
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__wash {
+  background:
+    linear-gradient(90deg, rgba(8,9,9,.48) 0%, rgba(8,9,9,.20) 30%, rgba(8,9,9,0) 66%),
+    linear-gradient(180deg, rgba(8,9,9,.18) 0%, rgba(8,9,9,0) 30%, rgba(8,9,9,.16) 100%);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-visual__media {
+  filter: saturate(.98) contrast(1.04) brightness(.96);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__copy h1 {
+  color: #f7f4ed;
+  text-shadow: 0 3px 32px rgba(0,0,0,.32);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__copy p {
+  color: rgba(247,244,237,.84);
+  text-shadow: 0 2px 18px rgba(0,0,0,.25);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-copy__eyebrow {
+  color: rgba(247,244,237,.86);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-copy__eyebrow span:first-child {
+  border-color: rgba(247,244,237,.34);
+  background: rgba(8,9,9,.20);
+  color: #f7f4ed;
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-hero-proof {
+  color: rgba(247,244,237,.86);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__scroll-hint,
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__caption {
+  color: rgba(247,244,237,.74);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__chrome {
+  color: #f7f4ed;
+  background: linear-gradient(180deg, rgba(8,9,9,.34), rgba(8,9,9,0));
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-wordmark,
+.cinematic-story__sticky[data-scene="hero"] .cinematic-start {
+  color: #f7f4ed;
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-start {
+  border-color: rgba(247,244,237,.28);
+  background: rgba(8,9,9,.20);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-progress > div {
+  background: rgba(247,244,237,.28);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-progress i {
+  background: #e6c687;
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__nav button span {
+  background: rgba(247,244,237,.32);
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-story__nav button.is-active span {
+  background: #e6c687;
+}
+
+@media (max-width: 640px) {
+  .cinematic-story__sticky[data-scene="hero"] .cinematic-story__wash {
+    background:
+      linear-gradient(90deg, rgba(8,9,9,.55) 0%, rgba(8,9,9,.22) 56%, rgba(8,9,9,0) 100%),
+      linear-gradient(180deg, rgba(8,9,9,.16), rgba(8,9,9,.20));
+  }
+}
