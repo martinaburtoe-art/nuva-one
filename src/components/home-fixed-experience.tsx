@@ -150,33 +150,33 @@ export function HomeFixedExperience() {
                           <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
                 <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Ventas + inventario conectados</div>
                 <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
               </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
                 <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Caja y finanzas en contexto</div>
                 <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
               </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
                 <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Clientes + CRM</div>
                 <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
               </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
                 <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Reportes para decidir</div>
                 <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
               </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
                 <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Inteligencia sobre tu operación</div>
                 <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
               </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
                 <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Una sola experiencia</div>
                 <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i < 2 ? "Parcial" : "—"}</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">{i === 0 || i === 1 ? "Parcial" : "—"}</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
+                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
               </div>
           </div>
 
