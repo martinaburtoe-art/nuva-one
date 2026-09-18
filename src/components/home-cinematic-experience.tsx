@@ -96,7 +96,7 @@ function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: num
       poster={scene.poster}
       muted
       playsInline
-      preload="metadata"
+      preload={scene.id === "hero" ? "auto" : "metadata"}
       aria-hidden="true"
       onLoadedMetadata={(event) => {
         const video = event.currentTarget;
@@ -115,7 +115,7 @@ function SceneVisual({ scene, sceneProgress }: { scene: Scene; sceneProgress: nu
 
   return (
     <div
-      className={`cinematic-visual cinematic-visual--${scene.visual}`}
+      className={`cinematic-visual cinematic-visual--${scene.visual}${scene.video ? " cinematic-visual--has-media" : ""}`}
       data-scene={scene.id}
       style={{
         transform: `translate3d(0, ${shift}, 0) scale(${scale})`,
