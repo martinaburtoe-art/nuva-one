@@ -83,9 +83,17 @@ export function HomeFixedExperience() {
                     <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm backdrop-blur">
                       <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Escáner activo</p>
                       <div className="relative mt-3 aspect-square overflow-hidden rounded-xl bg-slate-200">
-                        <div className="absolute inset-[18%] rounded-xl border-2 border-[#6366F1]/70 bg-white/35" />
-                        <div className="absolute left-[12%] right-[12%] top-1/2 h-0.5 animate-[scan_2.2s_ease-in-out_infinite] bg-fuchsia-500 shadow-[0_0_12px_rgba(217,70,239,0.9)] motion-reduce:animate-none" />
-                        <div className="absolute inset-x-7 bottom-6 h-12 rounded-lg bg-white/90 p-2 text-[8px] shadow-lg">
+                        <div className="absolute inset-[12%] rounded-xl border-2 border-[#6366F1]/70 bg-white/30 shadow-inner" />
+                        <div className="absolute inset-x-[18%] top-[24%] h-[34%] rounded-md bg-white/85 p-3 shadow-sm">
+                          <div className="flex h-full items-stretch justify-center gap-[3px] overflow-hidden rounded bg-white px-3 py-2">
+                            {[3,1,2,1,4,2,1,3,2,1,4,1,2,3,1,2,4,1,3,2,1,4,2,1,3].map((w, i) => (
+                              <span key={i} style={{ width: `${w}px` }} className="h-full shrink-0 bg-[#11131a]" />
+                            ))}
+                          </div>
+                          <p className="mt-1 text-center font-mono text-[7px] tracking-[0.22em] text-slate-500">7801234567890</p>
+                        </div>
+                        <div className="absolute left-[10%] right-[10%] top-[18%] h-0.5 animate-[scan_1.8s_ease-in-out_infinite] bg-fuchsia-500 shadow-[0_0_14px_rgba(217,70,239,0.95)] motion-reduce:animate-none" />
+                        <div className="absolute inset-x-7 bottom-5 h-12 rounded-lg bg-white/95 p-2 text-[8px] shadow-lg transition-all duration-500">
                           <p className="font-bold">Café Molido 250g</p><p className="mt-1 text-slate-500">$5.990 · Stock 24</p>
                         </div>
                       </div>
@@ -98,8 +106,13 @@ export function HomeFixedExperience() {
                   </div>
                 </div>
               </div>
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#6366F1] shadow-xl backdrop-blur animate-bounce motion-reduce:animate-none">
-                <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> Live Scan
+              <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2">
+                <div className="rounded-full border border-white/80 bg-white/95 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6366F1] shadow-xl backdrop-blur">
+                  <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none" /> CELULAR
+                </div>
+                <div className="rounded-full border border-white/70 bg-[#11131a]/90 px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-lg backdrop-blur">
+                  Live Scan
+                </div>
               </div>
             </div>
           </div>
