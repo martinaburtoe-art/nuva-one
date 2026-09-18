@@ -193,7 +193,7 @@ export function HomeCinematicExperience() {
 
   return (
     <section ref={storyRef} className="cinematic-story" aria-label="Experiencia cinematográfica de Nüva One">
-      <div className="cinematic-story__sticky">
+      <div className="cinematic-story__sticky" data-scene={scene.id}>
         <div className="cinematic-story__stage" aria-hidden="true">
           <SceneVisual scene={scene} sceneProgress={sceneProgress} />
           {nextScene.id !== scene.id && <div className="cinematic-story__next" style={{ opacity: sceneProgress }}><SceneVisual scene={nextScene} sceneProgress={0} /></div>}
