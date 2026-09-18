@@ -342,3 +342,15 @@
       linear-gradient(180deg, rgba(8,9,9,.16), rgba(8,9,9,.20));
   }
 }
+
+.cinematic-story__sticky[data-scene="hero"] .cinematic-visual--has-media::before {
+  display: block;
+  background:
+    linear-gradient(90deg, rgba(8,9,9,.38) 0%, rgba(8,9,9,.10) 34%, rgba(8,9,9,0) 70%),
+    linear-gradient(180deg, rgba(8,9,9,.06), transparent 42%, rgba(8,9,9,.10));
+}
+.cinematic-story__sticky[data-scene="hero"] .cinematic-visual--has-media::after {
+  display: block;
+  background: linear-gradient(105deg, transparent 0 48%, rgba(255,255,255,.12) 60%, transparent 72%);
+  opacity: .28;
+}
