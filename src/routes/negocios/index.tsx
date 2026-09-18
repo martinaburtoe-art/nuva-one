@@ -60,11 +60,18 @@ function DirectoryIndex() {
             </div>
             <span className="font-semibold tracking-tight">Nüva One</span>
           </Link>
-          <Link to="/foro">
-            <Button variant="ghost" size="sm">
-              Ir al foro
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                Volver a Nüva One
+              </Button>
+            </Link>
+            <Link to="/foro">
+              <Button variant="ghost" size="sm">
+                Ir al foro
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
