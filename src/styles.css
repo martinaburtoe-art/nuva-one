@@ -30,3 +30,4 @@
 @media (min-width: 1280px) {
   header.sticky > div > div:last-child { margin-right: 195px !important; }
 }
+\n@keyframes scan { 0%, 100% { transform: translateY(-42px); opacity: .35; } 50% { transform: translateY(42px); opacity: 1; } }\n
