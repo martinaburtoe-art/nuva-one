@@ -233,3 +233,37 @@
       linear-gradient(180deg, rgba(8,9,9,.16), rgba(8,9,9,.18));
   }
 }
+
+
+/* Later chapters return to the light editorial palette used by the CSS fallback art. */
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__copy h1 {
+  color: #102020;
+  text-shadow: none;
+}
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__copy p {
+  color: rgba(16,32,32,.7);
+  text-shadow: none;
+}
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-copy__eyebrow { color: #28656a; }
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-copy__eyebrow span:first-child {
+  border-color: rgba(40,101,106,.2);
+  background: rgba(255,255,255,.5);
+  color: #28656a;
+}
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-hero-proof { color: #315c60; }
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__scroll-hint,
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__caption { color: rgba(18,61,64,.65); }
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__chrome {
+  color: #123d40;
+  background: transparent;
+}
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-wordmark,
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-start { color: #123d40; }
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-start {
+  border-color: rgba(18,61,64,.15);
+  background: rgba(255,255,255,.46);
+}
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-progress > div { background: rgba(18,61,64,.18); }
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-progress i { background: #55bfd0; }
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__nav button span { background: rgba(18,61,64,.18); }
+.cinematic-story__sticky:not([data-scene="hero"]) .cinematic-story__nav button.is-active span { background: #55bfd0; }
