@@ -80,6 +80,7 @@ function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: num
     const video = videoRef.current;
     if (!video || !scene.video || !Number.isFinite(video.duration) || video.duration <= 0) return;
     const target = clamp(sceneProgress) * Math.max(video.duration - 0.04, 0);
+    if (scene.id === "hero") return;
     if (Math.abs(video.currentTime - target) > 0.02) video.currentTime = target;
   }, [scene.video, sceneProgress]);
 
@@ -89,6 +90,8 @@ function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: num
     <video
       ref={videoRef}
       className="cinematic-visual__media"
+      autoPlay={scene.id === "hero"}
+      loop={scene.id === "hero"}
       src={scene.video}
       poster={scene.poster}
       muted
@@ -97,9 +100,10 @@ function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: num
       aria-hidden="true"
       onLoadedMetadata={(event) => {
         const video = event.currentTarget;
-        if (Number.isFinite(video.duration) && video.duration > 0) {
+        if (Number.isFinite(video.duration) && video.duration > 0 && scene.id !== "hero") {
           video.currentTime = clamp(sceneProgress) * Math.max(video.duration - 0.04, 0);
         }
+        if (scene.id === "hero") void video.play().catch(() => undefined);
       }}
     />
   );
@@ -120,22 +124,24 @@ function SceneVisual({ scene, sceneProgress }: { scene: Scene; sceneProgress: nu
     >
       <SceneVideo scene={scene} sceneProgress={sceneProgress} />
       <div className="cinematic-visual__grain" />
-      <div className="cinematic-visual__window" />
-      <div className="cinematic-visual__light" />
-      <div className="cinematic-visual__floor" />
-      <div className="cinematic-visual__shelf" />
-      <div className="cinematic-visual__boxes" aria-hidden="true"><i /><i /><i /><i /><i /></div>
-      <div className="cinematic-visual__subject"><div className="cinematic-visual__subject-head" /><div className="cinematic-visual__subject-body" /></div>
-      <div className="cinematic-visual__customer" aria-hidden="true"><span /><i /></div>
-      <div className="cinematic-visual__counter" />
-      <div className="cinematic-visual__device"><div className="cinematic-screen"><span>{scene.screen ?? "NÜVA ONE"}</span><div className="cinematic-screen__lines" /></div></div>
-      <div className="cinematic-visual__scanner" aria-hidden="true"><span /><i /></div>
-      <div className="cinematic-visual__package" aria-hidden="true"><span /><i /><b /></div>
-      <div className="cinematic-visual__object" />
-      <div className="cinematic-visual__signal" aria-hidden="true"><i /><i /><i /></div>
-      <div className="cinematic-visual__network" aria-hidden="true"><i /><i /><i /><i /></div>
-      <div className="cinematic-visual__accent" />
-      {scene.metric && <div className="cinematic-visual__metric"><strong>{scene.metric}</strong><span>{scene.metricLabel}</span></div>}
+      {!scene.video && <>
+        <div className="cinematic-visual__window" />
+        <div className="cinematic-visual__light" />
+        <div className="cinematic-visual__floor" />
+        <div className="cinematic-visual__shelf" />
+        <div className="cinematic-visual__boxes" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+        <div className="cinematic-visual__subject"><div className="cinematic-visual__subject-head" /><div className="cinematic-visual__subject-body" /></div>
+        <div className="cinematic-visual__customer" aria-hidden="true"><span /><i /></div>
+        <div className="cinematic-visual__counter" />
+        <div className="cinematic-visual__device"><div className="cinematic-screen"><span>{scene.screen ?? "NÜVA ONE"}</span><div className="cinematic-screen__lines" /></div></div>
+        <div className="cinematic-visual__scanner" aria-hidden="true"><span /><i /></div>
+        <div className="cinematic-visual__package" aria-hidden="true"><span /><i /><b /></div>
+        <div className="cinematic-visual__object" />
+        <div className="cinematic-visual__signal" aria-hidden="true"><i /><i /><i /></div>
+        <div className="cinematic-visual__network" aria-hidden="true"><i /><i /><i /><i /></div>
+        <div className="cinematic-visual__accent" />
+        {scene.metric && <div className="cinematic-visual__metric"><strong>{scene.metric}</strong><span>{scene.metricLabel}</span></div>}
+      </>}
     </div>
   );
 }
