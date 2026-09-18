@@ -52,6 +52,7 @@ function Nav() {
           <a href="#demo">Demo</a>
           <Link to="/foro" className="transition-colors hover:text-white">Foro</Link>
           <Link to="/negocios" className="transition-colors hover:text-white">Conecta con más Pymes/Negocios</Link>
+          <Link to="/noticias" className="transition-colors hover:text-white">Noticias para Negocios</Link>
           <Link to="/pricing">Precios</Link>
           <a href="#faq">FAQ</a>
         </nav>
