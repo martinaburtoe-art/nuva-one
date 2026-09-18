@@ -3,12 +3,12 @@ import { useEffect } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
-import { HomeCinematicExperience } from "@/components/home-cinematic-experience";
+import { HomeFixedExperience } from "@/components/home-fixed-experience";
 import "@/home-cinematic-editorial-v2.css";
 import "@/home-cinematic-media.css";
 import "@/home-cinematic-performance.css";
 import "@/home-cinematic-transition.css";
-import { Sparkles } from "lucide-react";
+
 
 const FAQ_ITEMS = [
   { q: "¿Mis datos están seguros?", a: "Sí. Usamos cifrado en tránsito y en reposo, aislamiento por negocio con Row-Level Security, y cumplimos con la Ley 19.628 y Ley 21.719 de protección de datos personales en Chile." },
@@ -45,21 +45,13 @@ export const Route = createFileRoute("/")({
 
 function Nav() {
   return (
-    <header className="cinematic-site-nav">
-      <div className="cinematic-site-nav__inner">
-        <Link to="/" className="cinematic-site-nav__brand">Nüva One</Link>
-        <nav aria-label="Navegación principal">
-          <a href="#cinematic-sales">Ventas</a>
-          <a href="#cinematic-inventory">Inventario</a>
-          <a href="#cinematic-score">Inteligencia</a>
-          <a href="#cinematic-studio">IA</a>
-          <Link to="/pricing">Precios</Link>
-          <a href="#faq">FAQ</a>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#080809]/85 text-white backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-8">
+        <Link to="/" className="text-lg font-semibold tracking-tight">Nüva One</Link>
+        <nav className="hidden items-center gap-6 text-sm text-white/65 md:flex" aria-label="Navegación principal">
+          <a href="#demo">Demo</a><Link to="/pricing">Precios</Link><a href="#faq">FAQ</a>
         </nav>
-        <div className="cinematic-site-nav__actions">
-          <Link to="/demo" className="cinematic-site-nav__demo"><Sparkles size={13} /> Demo</Link>
-          <Link to="/auth" search={{ mode: "signup" }} className="cinematic-site-nav__cta">Empezar gratis</Link>
-        </div>
+        <Link to="/auth" search={{ mode: "signup" }} className="rounded-full bg-[#E6C687] px-4 py-2 text-xs font-bold text-[#080809]">Empezar gratis</Link>
       </div>
     </header>
   );
@@ -125,7 +117,7 @@ function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <main>
-        <HomeCinematicExperience />
+        <HomeFixedExperience />
         <FAQ />
         <FinalCta />
       </main>
