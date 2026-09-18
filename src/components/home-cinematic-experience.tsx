@@ -81,6 +81,7 @@ function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: num
     if (!video || !scene.video || !Number.isFinite(video.duration) || video.duration <= 0) return;
     const target = clamp(sceneProgress) * Math.max(video.duration - 0.04, 0);
     if (scene.id === "hero") return;
+    if (scene.id === "hero") return;
     if (Math.abs(video.currentTime - target) > 0.02) video.currentTime = target;
   }, [scene.video, sceneProgress]);
 
@@ -93,6 +94,8 @@ function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: num
       autoPlay={scene.id === "hero"}
       loop={scene.id === "hero"}
       src={scene.video}
+      autoPlay={scene.id === "hero"}
+      loop={scene.id === "hero"}
       poster={scene.poster}
       muted
       playsInline
