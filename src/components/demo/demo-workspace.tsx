@@ -123,13 +123,13 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="fixed inset-x-0 top-0 z-[70] flex items-center justify-center gap-2 border-b bg-primary px-3 py-2 text-xs text-primary-foreground shadow-sm">
+      <div className="absolute inset-x-0 top-0 z-[70] flex items-center justify-center gap-2 border-b bg-primary px-3 py-2 text-xs text-primary-foreground shadow-sm">
         <Sparkles className="h-3.5 w-3.5" />
         <span><strong>Modo demo:</strong> estás explorando una copia segura de Nüva One con datos ficticios. Nada aquí afecta un negocio real.</span>
         <button className="ml-2 hidden font-semibold underline sm:inline" onClick={onExit}>Salir del demo</button>
       </div>
 
-      <aside className={`fixed left-0 top-8 z-50 hidden h-[calc(100vh-2rem)] flex-col border-r bg-sidebar md:flex ${collapsed ? "w-16" : "w-60"}`}>
+      <aside className={`absolute left-0 top-8 z-50 hidden h-[calc(100vh-2rem)] flex-col border-r bg-sidebar md:flex ${collapsed ? "w-16" : "w-60"}`}>
         <div className="flex h-14 items-center justify-between border-b px-3">
           <button className="flex items-center gap-2" onClick={() => setCollapsed((v) => !v)} aria-label="Colapsar menú">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span>
