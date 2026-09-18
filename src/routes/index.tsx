@@ -49,7 +49,11 @@ function Nav() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-8">
         <Link to="/" className="text-lg font-semibold tracking-tight">Nüva One</Link>
         <nav className="hidden items-center gap-6 text-sm text-white/65 md:flex" aria-label="Navegación principal">
-          <a href="#demo">Demo</a><Link to="/pricing">Precios</Link><a href="#faq">FAQ</a>
+          <a href="#demo">Demo</a>
+          <Link to="/foro" className="transition-colors hover:text-white">Foro</Link>
+          <Link to="/negocios" className="transition-colors hover:text-white">Conecta con más Pymes/Negocios</Link>
+          <Link to="/pricing">Precios</Link>
+          <a href="#faq">FAQ</a>
         </nav>
         <Link to="/auth" search={{ mode: "signup" }} className="rounded-full bg-[#E6C687] px-4 py-2 text-xs font-bold text-[#080809]">Empezar gratis</Link>
       </div>
