@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, BarChart3, Boxes, Brain, CircleDollarSign, ShoppingCart, Users } from "lucide-react";
+import { ArrowRight, BarChart3, Boxes, Brain, CheckCircle2, CircleDollarSign, ScanLine, ShoppingCart, Smartphone, Users } from "lucide-react";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
 import { DemoStateProvider } from "@/lib/demo/demo-state";
 
@@ -47,6 +47,57 @@ export function HomeFixedExperience() {
                   <p className="mt-2 text-sm leading-6 text-white/55">{text}</p>
                 </article>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-label="Smart Scan de Nüva One" className="relative overflow-hidden bg-[#f4f7ff] px-5 py-24 text-[#11131a] md:px-10 md:py-36">
+        <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-[#6366F1]/15 blur-3xl" />
+        <div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-fuchsia-300/20 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="order-2 lg:order-1">
+            <div className="relative mx-auto w-full max-w-[520px]">
+              <div className="absolute left-1/2 top-1/2 h-[82%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-[3rem] bg-[#6366F1]/20 blur-3xl" />
+              <div className="relative mx-auto w-[260px] rotate-[-8deg] rounded-[3rem] border-[10px] border-[#171923] bg-[#0b0c11] p-2 shadow-[0_40px_90px_rgba(30,32,55,0.35)] sm:w-[300px]">
+                <div className="relative aspect-[9/18.5] overflow-hidden rounded-[2.25rem] bg-[#e9eef8]">
+                  <div className="absolute left-1/2 top-3 z-20 h-6 w-24 -translate-x-1/2 rounded-full bg-[#0b0c11]" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#dce5f5] via-white to-[#eef1f8]" />
+                  <div className="absolute inset-x-5 top-12">
+                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      <span>NÜVA ONE</span><Smartphone size={13} />
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm backdrop-blur">
+                      <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Escáner activo</p>
+                      <div className="relative mt-3 aspect-square overflow-hidden rounded-xl bg-slate-200">
+                        <div className="absolute inset-[18%] rounded-xl border-2 border-[#6366F1]/70 bg-white/35" />
+                        <div className="absolute left-[12%] right-[12%] top-1/2 h-0.5 animate-pulse bg-fuchsia-500 shadow-[0_0_12px_rgba(217,70,239,0.9)]" />
+                        <div className="absolute inset-x-7 bottom-6 h-12 rounded-lg bg-white/90 p-2 text-[8px] shadow-lg">
+                          <p className="font-bold">Café Molido 250g</p><p className="mt-1 text-slate-500">$5.990 · Stock 24</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-2xl bg-[#11131a] p-3 text-white shadow-lg">
+                      <div className="flex items-center gap-2 text-[9px] font-semibold"><CheckCircle2 size={12} className="text-emerald-400" /> Producto identificado</div>
+                      <div className="mt-2 flex justify-between text-[9px] text-white/60"><span>Stock</span><span className="font-bold text-white">24 → 23</span></div>
+                      <div className="mt-1 flex justify-between text-[9px] text-white/60"><span>Venta</span><span className="font-bold text-white">+$5.990</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#6366F1] shadow-xl backdrop-blur">
+                <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> Live Scan
+              </div>
+            </div>
+          </div>
+
+          <div className="order-1 lg:order-2">
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#6366F1]">NÜVA ONE · SMART SCAN</p>
+            <h2 className="mt-5 max-w-xl text-5xl font-semibold leading-[0.95] tracking-[-0.045em] sm:text-7xl">Escanea.<br />Vende.<br /><span className="text-[#6366F1]">Controla.</span></h2>
+            <p className="mt-7 max-w-xl text-lg leading-8 text-black/60">Tu teléfono puede convertirse en una herramienta de punto de venta e inventario. Escanea un producto y deja que Nüva One conecte la venta con el stock en segundos.</p>
+            <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-[#11131a]"><ScanLine size={18} className="text-[#6366F1]" /> Sin hardware complejo. Sin equipos adicionales.</div>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#6366F1] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Probar Nüva One <ArrowRight size={15} /></Link>
             </div>
           </div>
         </div>
