@@ -145,59 +145,6 @@ export function HomeFixedExperience() {
                 <p className="mt-1 text-sm leading-6 text-black/60">Cada movimiento puede alimentar la visión de ventas, inventario y resultados del negocio.</p>
               </div>
             </div>
-            <div className="mt-8 rounded-[24px] border border-black/10 bg-white/70 p-5 shadow-sm backdrop-blur">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/45">¿Qué queda registrado?</p>
-                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-700">EN TIEMPO REAL</span>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {[
-                  { label: "Producto", value: "Café Molido 250g" },
-                  { label: "Movimiento", value: "Venta · 1 unidad" },
-                  { label: "Stock", value: "24 → 23" },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-xl bg-black/[0.035] p-3">
-                    <p className="text-[10px] uppercase tracking-wider text-black/40">{item.label}</p>
-                    <p className="mt-1 text-xs font-bold text-black/75">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-black/10 bg-white/60 p-4">
-                <p className="text-xs font-bold text-black/70">Pensado para el día a día</p>
-                <p className="mt-1 text-xs leading-5 text-black/50">Ideal para tiendas, comercios y negocios que necesitan vender y controlar stock mientras atienden.</p>
-              </div>
-              <div className="rounded-2xl border border-[#E6C687]/25 bg-[#E6C687]/10 p-4">
-                <p className="text-xs font-bold text-black/70">Menos fricción operativa</p>
-                <p className="mt-1 text-xs leading-5 text-black/50">Menos pasos, menos dispositivos y una misma fuente de información para la operación.</p>
-              </div>
-            </div>
-            <div className="mt-8 rounded-[24px] border border-[#6366F1]/15 bg-[#11131a] p-5 text-white shadow-xl shadow-indigo-900/10">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/45">Así fluye una venta</p>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">5 pasos conectados</span>
-              </div>
-              <div className="mt-5 grid gap-2 sm:grid-cols-5">
-                {[
-                  { n: "01", t: "Escanea", d: "Código" },
-                  { n: "02", t: "Identifica", d: "Producto" },
-                  { n: "03", t: "Vende", d: "$5.990" },
-                  { n: "04", t: "Actualiza", d: "24 → 23" },
-                  { n: "05", t: "Registra", d: "Movimiento" },
-                ].map((item) => (
-                  <div key={item.n} className="relative rounded-xl border border-white/10 bg-white/[0.045] p-3">
-                    <p className="text-[9px] font-bold tracking-[0.18em] text-[#E6C687]">{item.n}</p>
-                    <p className="mt-2 text-xs font-bold">{item.t}</p>
-                    <p className="mt-1 text-[10px] text-white/45">{item.d}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 flex items-center justify-between rounded-xl bg-white/[0.045] px-4 py-3">
-                <span className="text-xs text-white/55">Resultado</span>
-                <span className="text-xs font-bold text-emerald-400">Venta registrada · stock sincronizado</span>
-              </div>
-            </div>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#6366F1] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Probar Nüva One <ArrowRight size={15} /></Link>
             </div>
