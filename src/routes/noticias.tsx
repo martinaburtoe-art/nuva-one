@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ExternalLink, Landmark, Newspaper, Scale, TrendingUp } from "lucide-react";
+import { ArrowRight, ExternalLink, Landmark, Newspaper, Search, Scale, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -111,11 +111,16 @@ const CATEGORIES = ["Todas", "Economía", "PyMEs", "Impuestos", "Tributación", 
 
 function Noticias() {
   const [activeCategory, setActiveCategory] = useState("Todas");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredNews = useMemo(
-    () => activeCategory === "Todas" ? NEWS : NEWS.filter((item) => item.category === activeCategory),
-    [activeCategory],
-  );
+  const filteredNews = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return NEWS.filter((item) => {
+      const matchesCategory = activeCategory === "Todas" || item.category === activeCategory;
+      const matchesSearch = !term || `${item.title} ${item.summary} ${item.detail} ${item.impact} ${item.source}`.toLowerCase().includes(term);
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategory, searchTerm]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,7 +178,15 @@ function Noticias() {
             </p>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="Filtrar noticias por categoría">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <label className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Buscar noticias, temas o fuentes..." aria-label="Buscar noticias" className="h-11 w-full rounded-full border bg-background pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            </label>
+            {(searchTerm || activeCategory !== "Todas") && <button type="button" onClick={() => { setSearchTerm(""); setActiveCategory("Todas"); }} className="h-11 rounded-full border px-4 text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-foreground">Limpiar filtros</button>}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filtrar noticias por categoría">
             {CATEGORIES.map((category) => {
               const active = activeCategory === category;
               return (
