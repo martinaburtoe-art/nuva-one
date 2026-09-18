@@ -8,7 +8,7 @@ export const Route = createFileRoute("/noticias")({
   head: () => ({
     meta: [
       { title: "Noticias para Negocios — Nüva One" },
-      { name: "description", content: "Actualidad económica, tributaria y empresarial para negocios y PyMEs chilenas, con fuentes oficiales y contexto práctico." },
+      { name: "description", content: "Actualidad económica, tributaria, regulatoria y empresarial para negocios y PyMEs chilenas, con fuentes oficiales y contexto práctico." },
     ],
   }),
   component: Noticias,
@@ -19,6 +19,7 @@ type NewsItem = {
   date: string;
   title: string;
   summary: string;
+  detail: string;
   impact: string;
   href: string;
   source: string;
@@ -29,26 +30,59 @@ const NEWS: NewsItem[] = [
     category: "Economía",
     date: "9 sep 2026",
     title: "Banco Central publica el IPoM de septiembre",
-    summary: "El escenario central reduce la proyección de crecimiento del PIB 2026 a 0,25%-0,75%. El informe también aborda inflación, demanda interna, inversión y condiciones financieras.",
-    impact: "Para tu negocio: revisar precios, costos, inversión y caja con un escenario de crecimiento más débil durante 2026.",
+    summary: "El escenario central proyecta un crecimiento del PIB 2026 de 0,25%-0,75% y mantiene el foco en la evolución de la inflación y la demanda interna.",
+    detail: "El informe reúne antecedentes de actividad, consumo, inversión, inflación y condiciones financieras. Es una referencia para contextualizar decisiones de presupuesto y caja.",
+    impact: "Revisar precios, costos, inventario, inversión y liquidez bajo distintos escenarios de demanda.",
     href: "https://www.bcentral.cl/es/web/banco-central/contenido/-/details/prensa/nota-de-prensa/bcch-publica-ipom-septiembre-2026",
     source: "Banco Central de Chile",
+  },
+  {
+    category: "PyMEs",
+    date: "7 sep 2026",
+    title: "Agenda ProPyme aborda trámites, financiamiento y liquidez",
+    summary: "El Ministerio de Economía informó avances de una agenda orientada a desafíos de las MiPymes, incluyendo acceso al financiamiento y problemas de liquidez.",
+    detail: "La instancia reúne al sector público y gremios para trabajar propuestas en materias tributarias, regulatorias e institucionales.",
+    impact: "Seguir cambios que puedan modificar costos de cumplimiento, acceso a financiamiento o condiciones para operar.",
+    href: "https://www.economia.gob.cl/2026/09/07/ministro-mas-compromete-avances-en-agenda-legislativa-para-fortalecer-a-las-mipymes.htm",
+    source: "Ministerio de Economía",
   },
   {
     category: "Impuestos",
     date: "1 sep 2026",
     title: "Nueva Declaración Jurada N.º 1965 para contenido digital",
     summary: "El SII creó una nueva DJ anual para personas y empresas con domicilio o residencia en Chile que operan plataformas de contenido digital. Aplicará desde Operación Renta 2027.",
-    impact: "Para tu negocio: si generas o intermedias ingresos por contenido digital, conviene revisar desde ahora las obligaciones y registros necesarios.",
+    detail: "La obligación alcanza a entidades que gestionen, administren o intermedien ingresos o contraprestaciones mediante sitios web, aplicaciones u otros medios digitales.",
+    impact: "Si tu negocio participa en este tipo de actividad, revisar desde ahora registros, ingresos y documentación tributaria.",
     href: "https://www.sii.cl/noticias/2026/010926noti02pcr.htm",
     source: "Servicio de Impuestos Internos",
+  },
+  {
+    category: "Empresas",
+    date: "28 ago 2026",
+    title: "Más de 140 mil empresas constituidas entre enero y julio",
+    summary: "El Ministerio de Economía informó 140.412 constituciones acumuladas durante los primeros siete meses de 2026, el mayor nivel para ese período en la serie.",
+    detail: "El 91,9% de las constituciones de julio utilizó el Registro de Empresas y Sociedades. Comercio y servicios aparecen entre los principales giros declarados.",
+    impact: "Más empresas también significa más competencia, nuevos proveedores y potenciales clientes dentro del ecosistema empresarial.",
+    href: "https://www.economia.gob.cl/2026/08/28/informe-de-creacion-de-empresas-y-cooperativas-julio-2026.htm",
+    source: "Ministerio de Economía",
+  },
+  {
+    category: "Innovación",
+    date: "11 sep 2026",
+    title: "Corfo impulsa soluciones de IA para agilizar patentes municipales",
+    summary: "El Ministerio de Economía informó un programa de Bienes Públicos de Corfo orientado a desarrollar soluciones de inteligencia artificial para agilizar procesos de patentes municipales.",
+    detail: "La iniciativa aborda un proceso relevante para la formalización y operación de negocios, utilizando tecnología para reducir fricciones administrativas.",
+    impact: "La digitalización de trámites puede abrir oportunidades para proveedores tecnológicos y reducir costos de gestión empresarial.",
+    href: "https://www.economia.gob.cl/2026/09/11/corfo-lanza-programa-de-bienes-publicos-para-el-desarrollo-de-soluciones-de-ia-que-agilicen-patentes-municipales.htm",
+    source: "Ministerio de Economía",
   },
   {
     category: "Tributación",
     date: "15 sep 2026",
     title: "SII fortalece colaboración en materia tributaria",
     summary: "El SII informó un convenio con el Instituto Chileno de Derecho Tributario para desarrollar estudio, capacitación, investigación y educación continua.",
-    impact: "Para tu negocio: mantener una fuente tributaria oficial y actualizada ayuda a interpretar cambios antes de tomar decisiones administrativas.",
+    detail: "La colaboración busca fortalecer el conocimiento técnico en Derecho Tributario y la formación continua.",
+    impact: "Para decisiones tributarias, priorizar siempre la normativa y comunicaciones oficiales por sobre interpretaciones informales.",
     href: "https://www.sii.cl/noticias/2026/150926noti01srm.htm",
     source: "Servicio de Impuestos Internos",
   },
@@ -57,10 +91,12 @@ const NEWS: NewsItem[] = [
 const SOURCES = [
   { name: "SII", category: "Impuestos", description: "Noticias tributarias, declaraciones, facturación y obligaciones.", href: "https://www.sii.cl/noticias/", icon: Scale },
   { name: "Banco Central", category: "Mercado", description: "Inflación, TPM, actividad, inversión y entorno financiero.", href: "https://www.bcentral.cl/", icon: TrendingUp },
-  { name: "Ministerio de Economía", category: "Economía", description: "Medidas, programas y políticas públicas para empresas.", href: "https://www.economia.gob.cl/", icon: Landmark },
-  { name: "CORFO", category: "Oportunidades", description: "Innovación, convocatorias y programas de apoyo empresarial.", href: "https://www.corfo.cl/", icon: Newspaper },
-  { name: "SERCOTEC", category: "PyMEs", description: "Programas, capacitación y apoyo para emprendedores y PyMEs.", href: "https://www.sercotec.cl/", icon: Newspaper },
+  { name: "Ministerio de Economía", category: "Economía", description: "Medidas, programas y novedades para empresas.", href: "https://www.economia.gob.cl/", icon: Landmark },
+  { name: "CORFO", category: "Innovación", description: "Programas, convocatorias y oportunidades de innovación.", href: "https://www.corfo.cl/", icon: Newspaper },
+  { name: "SERCOTEC", category: "PyMEs", description: "Programas, capacitación y apoyo para emprendedores.", href: "https://www.sercotec.cl/", icon: Newspaper },
 ];
+
+const CATEGORIES = ["Todas", "Economía", "PyMEs", "Impuestos", "Tributación", "Empresas", "Innovación", "Financiamiento"];
 
 function Noticias() {
   return (
@@ -83,63 +119,74 @@ function Noticias() {
           </h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">
             Un centro de actualidad empresarial para seguir economía, impuestos, regulación, financiamiento,
-            oportunidades y cambios que pueden impactar la operación de tu negocio.
+            innovación y oportunidades que pueden impactar la operación de tu negocio.
           </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Badge variant="outline">Actualizado: 18 sep 2026</Badge>
+            <Badge variant="outline">Fuentes oficiales</Badge>
+            <Badge variant="outline">Contexto para PyMEs</Badge>
+          </div>
         </section>
 
         <section className="mt-10 grid gap-4 sm:grid-cols-3" aria-label="Contexto económico">
-          <Card><CardContent className="p-5"><p className="text-xs uppercase tracking-widest text-muted-foreground">Crecimiento 2026</p><p className="mt-2 text-3xl font-bold">0,25%-0,75%</p><p className="mt-1 text-sm text-muted-foreground">Rango central proyectado por el Banco Central.</p></CardContent></Card>
-          <Card><CardContent className="p-5"><p className="text-xs uppercase tracking-widest text-muted-foreground">Inflación anual</p><p className="mt-2 text-3xl font-bold">≈ 4%</p><p className="mt-1 text-sm text-muted-foreground">IPC observado en los últimos meses según IPoM septiembre.</p></CardContent></Card>
-          <Card><CardContent className="p-5"><p className="text-xs uppercase tracking-widest text-muted-foreground">Meta inflación</p><p className="mt-2 text-3xl font-bold">3%</p><p className="mt-1 text-sm text-muted-foreground">Convergencia proyectada hacia el 2.º trimestre de 2027.</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-xs uppercase tracking-widest text-muted-foreground">Crecimiento 2026</p><p className="mt-2 text-3xl font-bold">0,25%-0,75%</p><p className="mt-1 text-sm text-muted-foreground">Rango central del IPoM de septiembre.</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-xs uppercase tracking-widest text-muted-foreground">Inflación</p><p className="mt-2 text-3xl font-bold">≈ 4%</p><p className="mt-1 text-sm text-muted-foreground">Entorno descrito por el Banco Central en septiembre.</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-xs uppercase tracking-widest text-muted-foreground">Empresas 2026</p><p className="mt-2 text-3xl font-bold">140.412</p><p className="mt-1 text-sm text-muted-foreground">Constituciones acumuladas entre enero y julio.</p></CardContent></Card>
+        </section>
+
+        <section className="mt-12 rounded-2xl border bg-card p-6 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div><p className="text-sm font-medium text-primary">Briefing ejecutivo</p><h2 className="mt-1 text-2xl font-bold">Lo que conviene mirar esta semana</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">No todas las noticias tienen el mismo impacto. Aquí las agrupamos por el tipo de decisión empresarial que pueden afectar.</p></div>
+            <Link to="/dashboard"><Button variant="outline">Ver mi operación <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <Briefing title="Caja y costos" text="El escenario macro importa para demanda, precios, inversión y planificación de liquidez." />
+            <Briefing title="Cumplimiento" text="Las novedades tributarias deben contrastarse con la fuente oficial antes de actuar." />
+            <Briefing title="Crecimiento" text="La creación de empresas, innovación y programas públicos pueden abrir nuevos mercados y oportunidades." />
+          </div>
         </section>
 
         <div className="mt-12 flex flex-wrap gap-2" aria-label="Categorías de noticias">
-          {["Todas", "Economía", "Impuestos", "Tributación", "Financiamiento", "PyMEs", "Oportunidades"].map((item, index) => (
-            <Badge key={item} variant={index === 0 ? "default" : "outline"} className="px-4 py-2">{item}</Badge>
-          ))}
+          {CATEGORIES.map((item, index) => <Badge key={item} variant={index === 0 ? "default" : "outline"} className="px-4 py-2">{item}</Badge>)}
         </div>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_.65fr]" aria-label="Noticias destacadas">
           <Card className="overflow-hidden border-primary/20">
             <CardHeader className="bg-primary/5 p-7">
-              <div className="flex items-center justify-between gap-4">
-                <Badge>Destacada · Economía</Badge><span className="text-xs text-muted-foreground">9 sep 2026</span>
-              </div>
-              <CardTitle className="mt-4 text-2xl sm:text-3xl">IPoM septiembre 2026: menor crecimiento esperado y foco en inflación</CardTitle>
+              <div className="flex items-center justify-between gap-4"><Badge>Destacada · {NEWS[0].category}</Badge><span className="text-xs text-muted-foreground">{NEWS[0].date}</span></div>
+              <CardTitle className="mt-4 text-2xl sm:text-3xl">{NEWS[0].title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 p-7">
               <p className="leading-7 text-muted-foreground">{NEWS[0].summary}</p>
+              <div><p className="text-sm font-semibold">En detalle</p><p className="mt-2 text-sm leading-6 text-muted-foreground">{NEWS[0].detail}</p></div>
               <div className="rounded-xl border bg-muted/30 p-5"><p className="text-sm font-semibold">Qué significa para un negocio</p><p className="mt-2 text-sm leading-6 text-muted-foreground">{NEWS[0].impact}</p></div>
               <a href={NEWS[0].href} target="_blank" rel="noreferrer"><Button>Leer fuente oficial <ExternalLink className="ml-2 h-4 w-4" /></Button></a>
             </CardContent>
           </Card>
+          <div className="grid gap-6">{NEWS.slice(1, 3).map((item) => <NewsCard key={item.title} item={item} />)}</div>
+        </section>
 
-          <div className="grid gap-6">
-            {NEWS.slice(1).map((item) => <NewsCard key={item.title} item={item} />)}
+        <section className="mt-14" aria-label="Noticias recientes">
+          <div className="flex items-end justify-between gap-4"><div><p className="text-sm font-medium text-primary">Actualidad verificada</p><h2 className="mt-1 text-2xl font-bold">Más noticias que pueden importar a tu empresa</h2></div><span className="text-sm text-muted-foreground">18 sep 2026</span></div>
+          <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{NEWS.slice(3).map((item) => <NewsCard key={item.title} item={item} />)}</div>
+        </section>
+
+        <section className="mt-14" aria-label="Cómo leer las noticias">
+          <div><p className="text-sm font-medium text-primary">Lectura empresarial</p><h2 className="mt-1 text-2xl font-bold">De la noticia a la decisión</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Cada noticia puede mirarse desde cuatro dimensiones operativas antes de tomar una decisión.</p></div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Lens number="01" title="Ventas" text="¿Puede cambiar la demanda, los precios o el comportamiento del cliente?" />
+            <Lens number="02" title="Caja" text="¿Afecta costos, financiamiento, pagos o necesidades de liquidez?" />
+            <Lens number="03" title="Operación" text="¿Cambia procesos, inventario, proveedores o cumplimiento?" />
+            <Lens number="04" title="Estrategia" text="¿Aparece una oportunidad, riesgo o nuevo escenario competitivo?" />
           </div>
         </section>
 
-        <section className="mt-12" aria-label="Últimas noticias">
-          <div className="flex items-end justify-between gap-4"><div><p className="text-sm font-medium text-primary">Actualidad verificada</p><h2 className="mt-1 text-2xl font-bold">Más información para seguir tu negocio</h2></div><span className="text-sm text-muted-foreground">Fuentes oficiales</span></div>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {[
-              ["Economía", "Revisa el escenario macro y cómo puede afectar demanda, costos e inversión.", "https://www.bcentral.cl/"],
-              ["Impuestos", "Consulta novedades tributarias directamente desde el SII.", "https://www.sii.cl/noticias/"],
-              ["Oportunidades", "Explora programas y convocatorias para empresas e innovación.", "https://www.corfo.cl/"],
-            ].map(([title, text, href]) => (
-              <Card key={title} className="transition-shadow hover:shadow-elegant"><CardContent className="p-6"><Badge variant="outline">{title}</Badge><p className="mt-4 text-sm leading-6 text-muted-foreground">{text}</p><a href={href} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center text-sm font-medium text-primary">Explorar fuente <ArrowRight className="ml-2 h-4 w-4" /></a></CardContent></Card>
-            ))}
-          </div>
+        <section className="mt-14">
+          <div><p className="text-sm font-medium text-primary">Fuentes que importan</p><h2 className="mt-1 text-2xl font-bold">Un punto de entrada a la información oficial</h2></div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">{SOURCES.map(({ name, category, description, href, icon: Icon }) => <Card key={name}><CardContent className="p-5"><Icon className="h-5 w-5 text-primary" /><Badge variant="outline" className="mt-4">{category}</Badge><h3 className="mt-3 font-semibold">{name}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p><a href={href} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm font-medium">Visitar fuente <ExternalLink className="ml-2 h-4 w-4" /></a></CardContent></Card>)}</div>
         </section>
 
-        <section className="mt-12">
-          <div className="flex items-end justify-between gap-4"><div><p className="text-sm font-medium text-primary">Fuentes que importan</p><h2 className="mt-1 text-2xl font-bold">Un punto de entrada a la información oficial</h2></div></div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {SOURCES.map(({ name, category, description, href, icon: Icon }) => <Card key={name}><CardContent className="p-5"><Icon className="h-5 w-5 text-primary" /><Badge variant="outline" className="mt-4">{category}</Badge><h3 className="mt-3 font-semibold">{name}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p><a href={href} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm font-medium">Visitar fuente <ExternalLink className="ml-2 h-4 w-4" /></a></CardContent></Card>)}
-          </div>
-        </section>
-
-        <section className="mt-12 rounded-2xl border bg-card p-7">
+        <section className="mt-14 rounded-2xl border bg-card p-7 sm:p-9">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div><p className="text-sm font-medium text-primary">De la información a la acción</p><h2 className="mt-1 text-xl font-semibold">Conecta las noticias con la realidad de tu negocio.</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Después de revisar una novedad, vuelve a Nüva One para analizar ventas, caja, inventario, clientes y resultados con el contexto de tu propia operación.</p></div>
             <Link to="/dashboard"><Button>Ir al dashboard <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
@@ -151,5 +198,13 @@ function Noticias() {
 }
 
 function NewsCard({ item }: { item: NewsItem }) {
-  return <Card><CardContent className="p-6"><div className="flex items-center justify-between gap-3"><Badge variant="outline">{item.category}</Badge><span className="text-xs text-muted-foreground">{item.date}</span></div><h3 className="mt-4 text-xl font-semibold leading-tight">{item.title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{item.summary}</p><div className="mt-4 border-l-2 border-primary/50 pl-4"><p className="text-xs font-semibold uppercase tracking-wide">Para tu negocio</p><p className="mt-1 text-sm leading-6 text-muted-foreground">{item.impact}</p></div><a href={item.href} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center text-sm font-medium text-primary">Leer en {item.source} <ExternalLink className="ml-2 h-4 w-4" /></a></CardContent></Card>;
+  return <Card className="h-full transition-shadow hover:shadow-elegant"><CardContent className="flex h-full flex-col p-6"><div className="flex items-center justify-between gap-3"><Badge variant="outline">{item.category}</Badge><span className="text-xs text-muted-foreground">{item.date}</span></div><h3 className="mt-4 text-xl font-semibold leading-tight">{item.title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{item.summary}</p><div className="mt-4"><p className="text-xs font-semibold uppercase tracking-wide">En detalle</p><p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p></div><div className="mt-4 border-l-2 border-primary/50 pl-4"><p className="text-xs font-semibold uppercase tracking-wide">Para tu negocio</p><p className="mt-1 text-sm leading-6 text-muted-foreground">{item.impact}</p></div><a href={item.href} target="_blank" rel="noreferrer" className="mt-auto pt-5 inline-flex items-center text-sm font-medium text-primary">Leer en {item.source} <ExternalLink className="ml-2 h-4 w-4" /></a></CardContent></Card>;
+}
+
+function Briefing({ title, text }: { title: string; text: string }) {
+  return <div className="rounded-xl border p-5"><p className="font-semibold">{title}</p><p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p></div>;
+}
+
+function Lens({ number, title, text }: { number: string; title: string; text: string }) {
+  return <Card><CardContent className="p-5"><span className="text-xs font-semibold text-primary">{number}</span><h3 className="mt-3 font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p></CardContent></Card>;
 }
