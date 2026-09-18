@@ -31,7 +31,39 @@ export function HomeFixedExperience() {
         </div>
       </section>
 
- 
+      <section className="bg-[#080809] px-6 py-24 text-white md:px-10 md:py-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#E6C687]">¿QUÉ ES NÜVA ONE?</p>
+              <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Todo lo que tu negocio necesita. Sin fragmentarlo.</h2>
+              <p className="mt-6 max-w-xl text-base leading-7 text-white/65">Nüva One reúne la operación de tu empresa en una sola plataforma. Menos información dispersa, menos trabajo duplicado y más contexto para decidir.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {BENEFITS.map(({ icon: Icon, title, text }) => (
+                <article key={title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
+                  <Icon className="h-5 w-5 text-[#E6C687]" />
+                  <h3 className="mt-5 text-lg font-semibold">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/55">{text}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="demo" className="bg-[#f5f3ee] px-4 py-20 text-[#080809] md:px-8 md:py-28">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#6366F1]">DEMO INTERACTIVA</p>
+            <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Ahora pruébalo aquí mismo.</h2>
+            <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación completa de Nüva One con datos ficticios. Navega por los módulos y entiende cómo se conecta la operación, sin salir de la homepage.</p>
+          </div>
+          <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
+            <DemoStateProvider><DemoWorkspace onExit={() => undefined} /></DemoStateProvider>
+          </div>
+        </div>
+      </section>
 
       <section aria-label="Smart Scan de Nüva One" className="relative overflow-hidden bg-[#f4f7ff] px-5 py-24 text-[#11131a] md:px-10 md:py-36">
         <div className="absolute -left-32 top-20 h-96 w-96 animate-pulse rounded-full bg-[#6366F1]/15 blur-3xl motion-reduce:animate-none" />
@@ -40,7 +72,7 @@ export function HomeFixedExperience() {
           <div className="order-2 lg:order-1">
             <div className="relative mx-auto w-full max-w-[520px]">
               <div className="absolute left-1/2 top-1/2 h-[82%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-[3rem] bg-[#6366F1]/20 blur-3xl" />
-              <div className="relative mx-auto w-[260px] rotate-[-8deg] rounded-[3rem] border-[10px] transition-transform duration-700 hover:rotate-[-5deg] hover:scale-[1.025] border-[#171923] bg-[#0b0c11] p-2 shadow-[0_40px_90px_rgba(30,32,55,0.35)] sm:w-[300px]">
+              <div className="relative mx-auto w-[260px] rotate-[-8deg] rounded-[3rem] border-[10px] border-[#171923] bg-[#0b0c11] p-2 shadow-[0_40px_90px_rgba(30,32,55,0.35)] transition-transform duration-700 hover:rotate-[-5deg] hover:scale-[1.025] sm:w-[300px]">
                 <div className="relative aspect-[9/18.5] overflow-hidden rounded-[2.25rem] bg-[#e9eef8]">
                   <div className="absolute left-1/2 top-3 z-20 h-6 w-24 -translate-x-1/2 rounded-full bg-[#0b0c11]" />
                   <div className="absolute inset-0 bg-gradient-to-b from-[#dce5f5] via-white to-[#eef1f8]" />
@@ -52,7 +84,7 @@ export function HomeFixedExperience() {
                       <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Escáner activo</p>
                       <div className="relative mt-3 aspect-square overflow-hidden rounded-xl bg-slate-200">
                         <div className="absolute inset-[18%] rounded-xl border-2 border-[#6366F1]/70 bg-white/35" />
-                        <div className="absolute left-[12%] right-[12%] top-1/2 h-0.5 animate-[scan_2.2s_ease-in-out_infinite] motion-reduce:animate-none bg-fuchsia-500 shadow-[0_0_12px_rgba(217,70,239,0.9)]" />
+                        <div className="absolute left-[12%] right-[12%] top-1/2 h-0.5 animate-[scan_2.2s_ease-in-out_infinite] bg-fuchsia-500 shadow-[0_0_12px_rgba(217,70,239,0.9)] motion-reduce:animate-none" />
                         <div className="absolute inset-x-7 bottom-6 h-12 rounded-lg bg-white/90 p-2 text-[8px] shadow-lg">
                           <p className="font-bold">Café Molido 250g</p><p className="mt-1 text-slate-500">$5.990 · Stock 24</p>
                         </div>
@@ -80,40 +112,6 @@ export function HomeFixedExperience() {
             <div className="mt-10 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#6366F1] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Probar Nüva One <ArrowRight size={15} /></Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[#080809] px-6 py-24 text-white md:px-10 md:py-32">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#E6C687]">¿QUÉ ES NÜVA ONE?</p>
-              <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Todo lo que tu negocio necesita. Sin fragmentarlo.</h2>
-              <p className="mt-6 max-w-xl text-base leading-7 text-white/65">Nüva One reúne la operación de tu empresa en una sola plataforma. Menos información dispersa, menos trabajo duplicado y más contexto para decidir.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {BENEFITS.map(({ icon: Icon, title, text }) => (
-                <article key={title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
-                  <Icon className="h-5 w-5 text-[#E6C687]" />
-                  <h3 className="mt-5 text-lg font-semibold">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-white/55">{text}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-     <section id="demo" className="bg-[#f5f3ee] px-4 py-20 text-[#080809] md:px-8 md:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-10 max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#6366F1]">DEMO INTERACTIVA</p>
-            <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Ahora pruébalo aquí mismo.</h2>
-            <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación completa de Nüva One con datos ficticios. Navega por los módulos y entiende cómo se conecta la operación, sin salir de la homepage.</p>
-          </div>
-          <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
-            <DemoStateProvider><DemoWorkspace onExit={() => undefined} /></DemoStateProvider>
           </div>
         </div>
       </section>
