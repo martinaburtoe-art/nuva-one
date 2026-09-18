@@ -122,7 +122,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-background text-foreground">
       <div className="absolute inset-x-0 top-0 z-[70] flex items-center justify-center gap-2 border-b bg-primary px-3 py-2 text-xs text-primary-foreground shadow-sm">
         <Sparkles className="h-3.5 w-3.5" />
         <span><strong>Modo demo:</strong> estás explorando una copia segura de Nüva One con datos ficticios. Nada aquí afecta un negocio real.</span>
