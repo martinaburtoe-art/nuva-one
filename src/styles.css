@@ -100,3 +100,13 @@
   .cinematic-final-cta__actions a { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
   .cinematic-footer { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 }
+@media (max-width: 390px) {
+  .home-hero h1 { font-size: clamp(2.65rem, 13.6vw, 3.55rem); }
+  .home-hero .mt-8 { flex-direction: column; }
+  .home-hero .mt-8 > a { width: 100%; }
+  .home-hero > div.relative { padding-top: 6.75rem; padding-bottom: 4.5rem; }
+  [aria-label="Smart Scan de Nüva One"] .relative.mx-auto.w-\\[260px\\] { width: min(210px, 66vw); }
+  [aria-label="Smart Scan de Nüva One"] .mt-8.grid.max-w-xl { grid-template-columns: 1fr; }
+  [aria-label="Smart Scan de Nüva One"] .mt-6.grid.max-w-xl { grid-template-columns: 1fr; }
+  .cinematic-final-cta__actions { grid-template-columns: 1fr; }
+}
