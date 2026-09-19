@@ -16,7 +16,7 @@ export function HomeFixedExperience() {
   return (
     <>
       <section className="home-hero relative isolate min-h-[100svh] overflow-hidden bg-[#080809] text-white">
-        <video className="absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" autoPlay loop muted playsInline preload="metadata" />
+        <video className="absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" aria-hidden="true" autoPlay loop muted playsInline preload="metadata" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 mx-auto flex min-h-[min(860px,100vh)] max-w-7xl items-end px-6 pb-16 pt-32 md:px-10 md:pb-20">
           <div className="max-w-4xl">
@@ -72,7 +72,7 @@ export function HomeFixedExperience() {
           <div className="order-2 lg:order-1">
             <div className="relative mx-auto w-full max-w-[520px]">
               <div className="absolute left-1/2 top-1/2 h-[82%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-[3rem] bg-[#6366F1]/20 blur-3xl" />
-              <div className="relative mx-auto w-[260px] rotate-[-8deg] rounded-[3rem] border-[10px] border-[#171923] bg-[#0b0c11] p-2 shadow-[0_40px_90px_rgba(30,32,55,0.35)] transition-transform duration-700 hover:rotate-[-5deg] hover:scale-[1.025] sm:w-[300px]">
+              <div className="smart-scan-phone relative mx-auto w-[260px] rotate-[-8deg] rounded-[3rem] border-[10px] border-[#171923] bg-[#0b0c11] p-2 shadow-[0_40px_90px_rgba(30,32,55,0.35)] transition-transform duration-700 hover:rotate-[-5deg] hover:scale-[1.025] sm:w-[300px]">
                 <div className="relative aspect-[9/18.5] overflow-hidden rounded-[2.25rem] bg-[#e9eef8]">
                   <div className="absolute left-1/2 top-3 z-20 h-6 w-24 -translate-x-1/2 rounded-full bg-[#0b0c11]" />
                   <div className="absolute inset-0 bg-gradient-to-b from-[#dce5f5] via-white to-[#eef1f8]" />
