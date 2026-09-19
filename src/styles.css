@@ -43,3 +43,23 @@
 @media (max-width: 480px) {
   .cinematic-final-cta { padding-bottom: max(3rem, env(safe-area-inset-bottom)); }
 }
+
+@media (max-width: 640px) {
+  .home-hero > video { object-position: 62% center; }
+  .home-hero > div.relative { min-height: 100svh; padding: 7.25rem 1.25rem 5.5rem; align-items: end; }
+  .home-hero h1 { font-size: clamp(2.9rem, 12.8vw, 4.6rem); line-height: .91; letter-spacing: -.055em; }
+  .home-hero p.mt-7 { max-width: 21rem; font-size: .95rem; line-height: 1.55; }
+  .home-hero .mt-8 { width: 100%; }
+  .home-hero .mt-8 > a { min-height: 46px; justify-content: center; padding-inline: 1rem; }
+  .home-hero .mt-8 > a:first-child { flex: 1 1 0; }
+  .home-hero .mt-8 > a:last-child { flex: 1 1 0; }
+  .cinematic-story__copy, .cinematic-story__chrome { padding-bottom: max(68px, env(safe-area-inset-bottom)); }
+  .cinematic-story__copy h1 { max-width: 8.8ch; }
+  .cinematic-cta-row a, .cinematic-final-cta__actions a { min-height: 46px; }
+  #demo { scroll-margin-top: 72px; }
+  #demo > div > div.overflow-hidden { border-radius: 20px; }
+  #demo > div > div.overflow-hidden { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  [aria-label="Comparativa Nüva One"] .overflow-hidden { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  [aria-label="Comparativa Nüva One"] .overflow-hidden::-webkit-scrollbar,
+  #demo > div > div.overflow-hidden::-webkit-scrollbar { height: 4px; }
+}
