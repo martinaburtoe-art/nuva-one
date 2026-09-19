@@ -63,3 +63,21 @@
   [aria-label="Comparativa Nüva One"] .overflow-hidden::-webkit-scrollbar,
   #demo > div > div.overflow-hidden::-webkit-scrollbar { height: 4px; }
 }
+
+/* Smart Scan mobile: preserve hierarchy without forcing the phone or copy beyond the viewport. */
+@media (max-width: 640px) {
+  [aria-label="Smart Scan de Nüva One"] { padding-top: 5.5rem; padding-bottom: 5.5rem; }
+  [aria-label="Smart Scan de Nüva One"] h2 { font-size: clamp(2.8rem, 15vw, 4.1rem); line-height: .9; }
+  [aria-label="Smart Scan de Nüva One"] .relative.mx-auto.w-full.max-w-\[520px\] { min-height: 430px; }
+  [aria-label="Smart Scan de Nüva One"] .relative.mx-auto.w-\[260px\] { width: min(230px, 68vw); }
+  [aria-label="Smart Scan de Nüva One"] .absolute.bottom-5.left-1\/2 { bottom: 0.75rem; }
+  [aria-label="Smart Scan de Nüva One"] .mt-8.flex.items-center { align-items: flex-start; line-height: 1.45; }
+  [aria-label="Smart Scan de Nüva One"] .mt-8.grid.max-w-xl { margin-top: 1.5rem; }
+  [aria-label="Smart Scan de Nüva One"] .mt-6.grid.max-w-xl { margin-top: 0.75rem; }
+}
+
+/* Horizontal workspaces keep their full desktop information architecture while remaining usable on narrow screens. */
+@media (max-width: 640px) {
+  #demo > div > div.overflow-hidden { overscroll-behavior-x: contain; scrollbar-width: thin; }
+  [aria-label="Comparativa Nüva One"] .overflow-hidden { overscroll-behavior-x: contain; scrollbar-width: thin; }
+}
