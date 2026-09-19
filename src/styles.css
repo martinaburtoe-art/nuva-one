@@ -31,3 +31,15 @@
   header.sticky > div > div:last-child { margin-right: 195px !important; }
 }
 \n@keyframes scan { 0% { transform: translateY(-18px); opacity: .45; } 50% { transform: translateY(42px); opacity: 1; } 100% { transform: translateY(-18px); opacity: .45; } }\n
+/* Mobile browser polish: safe areas, touch targets, and horizontal content that must not squeeze the viewport. */
+@media (max-width: 767px) {
+  html { scroll-padding-top: 72px; overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  a, button { -webkit-tap-highlight-color: transparent; }
+  button, a { touch-action: manipulation; }
+  video { max-width: 100%; }
+  .cinematic-faq__inner, .cinematic-final-cta { padding-left: max(1.25rem, env(safe-area-inset-left)); padding-right: max(1.25rem, env(safe-area-inset-right)); }
+}
+@media (max-width: 480px) {
+  .cinematic-final-cta { padding-bottom: max(3rem, env(safe-area-inset-bottom)); }
+}
