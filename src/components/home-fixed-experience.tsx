@@ -87,7 +87,7 @@ export function HomeFixedExperience() {
                         <div className="absolute inset-x-[18%] top-[24%] h-[34%] rounded-md bg-white/85 p-3 shadow-sm">
                           <div className="flex h-full items-stretch justify-center gap-[3px] overflow-hidden rounded bg-white px-3 py-2">
                             {[3,1,2,1,4,2,1,3,2,1,4,1,2,3,1,2,4,1,3,2,1,4,2,1,3] .map((w, index) => (
-                              <span key={index} style={{ width: `${w}px` }}} className="h-full shrink-0 bg-[#11131a]" />
+                              <span key={index} style={{ width: `${w}px` }} className="h-full shrink-0 bg-[#11131a]" />
                             ))}
                           </div>
                           <p className="mt-1 text-center font-mono text-[7px] tracking-[0.22em] text-slate-500">7801234567890</p>
