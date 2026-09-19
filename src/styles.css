@@ -81,3 +81,22 @@
   #demo > div > div.overflow-hidden { overscroll-behavior-x: contain; scrollbar-width: thin; }
   [aria-label="Comparativa Nüva One"] .overflow-hidden { overscroll-behavior-x: contain; scrollbar-width: thin; }
 }
+
+/* Final mobile pass: navigation, FAQ and launch CTA stay readable on compact browsers. */
+@media (max-width: 640px) {
+  header.sticky { padding-top: env(safe-area-inset-top); }
+  header.sticky > div { min-height: 64px; }
+  header.sticky nav[aria-label="Menú móvil"] { max-height: calc(100svh - 64px); overflow-y: auto; overscroll-behavior: contain; padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  header.sticky nav[aria-label="Menú móvil"] a { min-height: 46px; display: flex; align-items: center; }
+  .cinematic-faq { overflow: clip; }
+  .cinematic-faq__inner { width: 100%; box-sizing: border-box; }
+  .cinematic-faq__intro h2 { text-wrap: balance; }
+  .cinematic-faq .accordion-trigger { min-height: 52px; text-align: left; }
+  .cinematic-final-cta { min-height: min(680px, 92svh); display: flex; align-items: center; }
+  .cinematic-final-cta > div { width: 100%; }
+  .cinematic-final-cta h2 { font-size: clamp(3rem, 14vw, 5rem); line-height: .9; text-wrap: balance; }
+  .cinematic-final-cta p { max-width: 29rem; font-size: .95rem; line-height: 1.6; }
+  .cinematic-final-cta__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .cinematic-final-cta__actions a { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
+  .cinematic-footer { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+}
