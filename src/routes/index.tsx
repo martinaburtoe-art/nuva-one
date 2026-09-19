@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
 import { HomeFixedExperience } from "@/components/home-fixed-experience";
 import "@/home-cinematic-editorial-v2.css";
 import "@/home-cinematic-media.css";
@@ -148,7 +147,6 @@ function Landing() {
         <FinalCta />
       </main>
       <Footer />
-      <PublicAiChatWidget />
     </div>
   );
 }
