@@ -30,7 +30,8 @@
 @media (min-width: 1280px) {
   header.sticky > div > div:last-child { margin-right: 195px !important; }
 }
-\n@keyframes scan { 0% { transform: translateY(-18px); opacity: .45; } 50% { transform: translateY(42px); opacity: 1; } 100% { transform: translateY(-18px); opacity: .45; } }\n
+@keyframes scan { 0% { transform: translateY(-18px); opacity: .45; } 50% { transform: translateY(42px); opacity: 1; } 100% { transform: translateY(-18px); opacity: .45; } }
+
 /* Mobile browser polish: safe areas, touch targets, and horizontal content that must not squeeze the viewport. */
 @media (max-width: 767px) {
   html { scroll-padding-top: 72px; overflow-x: hidden; }
@@ -105,7 +106,7 @@
   .home-hero .mt-8 { flex-direction: column; }
   .home-hero .mt-8 > a { width: 100%; }
   .home-hero > div.relative { padding-top: 6.75rem; padding-bottom: 4.5rem; }
-  [aria-label="Smart Scan de Nüva One"] .relative.mx-auto.w-\\[260px\\] { width: min(210px, 66vw); }
+  .smart-scan-phone { width: min(210px, 66vw); }
   [aria-label="Smart Scan de Nüva One"] .mt-8.grid.max-w-xl { grid-template-columns: 1fr; }
   [aria-label="Smart Scan de Nüva One"] .mt-6.grid.max-w-xl { grid-template-columns: 1fr; }
   .cinematic-final-cta__actions { grid-template-columns: 1fr; }
