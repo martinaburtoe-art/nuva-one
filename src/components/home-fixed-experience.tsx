@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, BarChart3, Boxes, Brain, CheckCircle2, CircleDollarSign, ScanLine, ShoppingCart, Smartphone, Users } from "lucide-react";
+import { ArrowRight, CheckCircle2, ScanLine, Smartphone } from "lucide-react";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
 import { DemoStateProvider } from "@/lib/demo/demo-state";
 
@@ -45,27 +45,6 @@ export function HomeFixedExperience() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#E6C687] px-6 py-3 text-sm font-bold text-[#080809]">Empezar gratis <ArrowRight size={15} /></Link>
               <a href="#demo" className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold backdrop-blur">Probar Nüva One</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[#080809] px-6 py-24 text-white md:px-10 md:py-32">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#E6C687]">¿QUÉ ES NÜVA ONE?</p>
-              <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Todo lo que tu negocio necesita. Sin fragmentarlo.</h2>
-              <p className="mt-6 max-w-xl text-base leading-7 text-white/65">Nüva One reúne la operación de tu empresa en una sola plataforma. Menos información dispersa, menos trabajo duplicado y más contexto para decidir.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {BENEFITS.map(({ icon: Icon, title, text }) => (
-                <article key={title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
-                  <Icon className="h-5 w-5 text-[#E6C687]" />
-                  <h3 className="mt-5 text-lg font-semibold">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-white/55">{text}</p>
-                </article>
-              ))}
             </div>
           </div>
         </div>
