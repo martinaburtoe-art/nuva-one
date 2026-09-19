@@ -206,7 +206,7 @@ function RootComponent() {
       {showLanding ? <RouteEnhancements /> : null}
       {showLanding ? <Outlet /> : null}
       {showLanding ? <NuvaInfoCenter hideTrigger /> : null}
-      {showLanding ? <FloatingActions /> : null}
+      {!isLanding ? <FloatingActions /> : null}
       <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
   );
