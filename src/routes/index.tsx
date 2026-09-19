@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { PublicAiChatWidget } from "@/components/public-ai-chat-widget";
@@ -44,6 +44,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Nav() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#080809]/85 text-white backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-8">
@@ -56,8 +59,26 @@ function Nav() {
           <Link to="/pricing">Precios</Link>
           <a href="#faq">FAQ</a>
         </nav>
-        <Link to="/auth" search={{ mode: "signup" }} className="rounded-full bg-[#E6C687] px-4 py-2 text-xs font-bold text-[#080809]">Empezar gratis</Link>
+        <div className="flex items-center gap-2">
+          <Link to="/auth" search={{ mode: "signup" }} className="rounded-full bg-[#E6C687] px-4 py-2 text-xs font-bold text-[#080809]">Empezar gratis</Link>
+          <button type="button" aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 md:hidden">
+            <span className="sr-only">{menuOpen ? "Cerrar menú" : "Abrir menú"}</span>
+            <span className="text-lg">{menuOpen ? "×" : "☰"}</span>
+          </button>
+        </div>
       </div>
+      {menuOpen && (
+        <nav className="border-t border-white/10 bg-[#080809]/95 px-5 py-4 backdrop-blur-xl md:hidden" aria-label="Menú móvil">
+          <div className="mx-auto flex max-w-7xl flex-col gap-1 text-sm">
+            <a href="#demo" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">Demo</a>
+            <Link to="/foro" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">Foro</Link>
+            <Link to="/negocios" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">Conecta con más Pymes/Negocios</Link>
+            <Link to="/noticias" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">Noticias para Negocios</Link>
+            <Link to="/pricing" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">Precios</Link>
+            <a href="#faq" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">FAQ</a>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
