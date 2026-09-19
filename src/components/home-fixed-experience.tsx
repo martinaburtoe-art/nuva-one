@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, CheckCircle2, ScanLine, Smartphone } from "lucide-react";
+import { ArrowRight, BarChart3, Boxes, Brain, CheckCircle2, CircleDollarSign, ScanLine, ShoppingCart, Smartphone, Users } from "lucide-react";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
 import { DemoStateProvider } from "@/lib/demo/demo-state";
 
