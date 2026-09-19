@@ -15,8 +15,8 @@ const BENEFITS = [
 export function HomeFixedExperience() {
   return (
     <>
-      <section className="relative isolate min-h-[min(860px,100vh)] overflow-hidden bg-[#080809] text-white">
-        <video className="absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" autoPlay loop muted playsInline preload="auto" />
+      <section className="home-hero relative isolate min-h-[100svh] overflow-hidden bg-[#080809] text-white">
+        <video className="absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" autoPlay loop muted playsInline preload="metadata" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 mx-auto flex min-h-[min(860px,100vh)] max-w-7xl items-end px-6 pb-16 pt-32 md:px-10 md:pb-20">
           <div className="max-w-4xl">
