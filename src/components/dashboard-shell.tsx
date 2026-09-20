@@ -102,7 +102,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     : 15;
   const trialExpired = plan !== "pro" && trialDaysLeft <= 0;
   const isSettingsRoute = pathname.startsWith("/settings");
-  const showModuleInfo = MODULE_INFO_PATHS.has(pathname as never);
+  const showModuleInfo = MODULE_INFO_PATHS.has(pathname);
 
   async function logout() {
     await supabase.auth.signOut();
