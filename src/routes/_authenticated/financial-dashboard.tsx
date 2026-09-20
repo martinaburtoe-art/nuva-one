@@ -59,10 +59,27 @@ function FinancialDashboard() {
     <ModuleGuard module="finance">
       <PageHeader
         title="Centro Financiero"
-        description={`Fuente financiera centralizada · ${active?.name ?? "Negocio"}`}
+        description={`Tu centro financiero: resultado, caja, impuestos e integridad contable · ${active?.name ?? "Negocio"}`}
       />
       <div className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="overflow-hidden rounded-2xl border-border/70 bg-gradient-to-br from-card via-card to-primary/5 shadow-sm">
+          <div className="grid gap-5 p-5 lg:grid-cols-[1fr_2fr] lg:items-center">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1em] text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" /> Visión financiera
+              </div>
+              <div className="mt-2 text-3xl font-semibold tracking-tight">{fmtCLP(result)}</div>
+              <p className="mt-1 text-sm text-muted-foreground">Resultado acumulado en los datos publicados.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <MiniStat label="Ingresos" value={fmtCLP(revenue)} />
+              <MiniStat label="Costos y gastos" value={fmtCLP(costs)} />
+              <MiniStat label="Flujo neto" value={fmtCLP(cashNet)} />
+              <MiniStat label="Balanza" value={Math.abs(balanceDifference) <= 0.01 ? "Cuadrada" : "Revisar"} />
+            </div>
+          </div>
+        </Card>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric title="Ingresos" value={fmtCLP(revenue)} icon={<ArrowUpRight />} />
           <Metric title="Costos y gastos" value={fmtCLP(costs)} icon={<ArrowDownRight />} />
           <Metric title="Resultado" value={fmtCLP(result)} icon={<Calculator />} />
@@ -70,7 +87,7 @@ function FinancialDashboard() {
         </div>
 
         <div className="grid gap-5 lg:grid-cols-2">
-          <Card className="p-5">
+          <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="font-semibold">Estado de Resultados</h2>
@@ -87,7 +104,7 @@ function FinancialDashboard() {
                 {pnl.slice(0, 12).map((x: any) => (
                   <div
                     key={`${x.year}-${x.month}-${x.account_type}`}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex items-center justify-between rounded-xl border border-border/70 bg-card/70 p-3 transition-colors hover:bg-muted/30"
                   >
                     <div>
                       <div className="font-medium">{x.account_type}</div>
@@ -119,7 +136,7 @@ function FinancialDashboard() {
               <Loading />
             ) : (
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <div className="rounded-lg border p-3">
+                <div className="rounded-xl border border-border/70 bg-muted/10 p-3">
                   <div className="text-xs text-muted-foreground">Entradas</div>
                   <div className="mt-1 font-semibold">{fmtCLP(cashIn)}</div>
                 </div>
@@ -138,7 +155,7 @@ function FinancialDashboard() {
                 {cash.slice(0, 7).map((x: any) => (
                   <div
                     key={x.flow_date}
-                    className="flex items-center justify-between border-b py-2 text-sm"
+                    className="flex items-center justify-between border-b border-border/70 py-2.5 text-sm"
                   >
                     <span>{new Date(x.flow_date).toLocaleDateString("es-CL")}</span>
                     <span>{fmtCLP(Number(x.net_cash || 0))}</span>
@@ -204,7 +221,7 @@ function FinancialDashboard() {
               <Loading />
             ) : (
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg border p-4">
+                <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
                   <div className="text-xs text-muted-foreground">Cuentas con movimientos</div>
                   <div className="mt-1 text-2xl font-bold">{trial.length}</div>
                 </div>
@@ -231,7 +248,7 @@ function FinancialDashboard() {
 
 function Metric({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
   return (
-    <Card className="p-4">
+    <Card className="rounded-2xl border-border/70 p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{title}</span>
         {icon}
@@ -242,14 +259,18 @@ function Metric({ title, value, icon }: { title: string; value: string; icon: Re
 }
 function Loading() {
   return (
-    <div className="mt-4 animate-pulse rounded-lg border p-6 text-sm text-muted-foreground">
-      Cargando información financiera…
+    <div className="mt-4 animate-pulse space-y-2 rounded-xl border border-border/70 p-5" aria-label="Cargando información financiera">
+      <div className="h-4 w-1/3 rounded bg-muted" /><div className="h-8 w-2/3 rounded bg-muted" /><div className="h-3 w-full rounded bg-muted" />
     </div>
   );
 }
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border border-border/70 bg-background/70 p-3"><div className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</div><div className="mt-1 truncate text-sm font-semibold">{value}</div></div>;
+}
+
 function Empty({ text }: { text: string }) {
   return (
-    <div className="mt-4 rounded-lg border p-6 text-center text-sm text-muted-foreground">
+    <div className="mt-4 rounded-xl border border-dashed border-border/70 bg-muted/10 p-8 text-center text-sm text-muted-foreground">
       {text}
     </div>
   );
