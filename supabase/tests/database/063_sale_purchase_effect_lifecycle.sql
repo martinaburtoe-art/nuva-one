@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(13);
 
 insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000a1');
 insert into public.businesses (id, name, owner_id, plan)
@@ -61,7 +61,7 @@ select is(
 select lives_ok(
   $$ update public.sales
      set status = 'paid', total = 4000
-     where id = '00000000-0000-0000-0000-0000000000d1 $$,
+     where id = '00000000-0000-0000-0000-0000000000d1' $,
   'reactivating a sale reapplies current effects'
 );
 
