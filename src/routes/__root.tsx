@@ -20,8 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
 import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
 import { PosBarcodeScanner } from "@/components/pos-barcode-scanner";
-import { NuvaInfoCenter } from "@/components/nuva-info-center";
-import { FloatingActionPillar } from "@/components/nuva/FloatingActionPillar";
 
 function NotFoundComponent() {
   return (
@@ -152,12 +150,6 @@ function RouteEnhancements() {
   if (!mount) return null;
   return createPortal(location.pathname === "/pos" ? <PosScannerEnhancement /> : <NuvaOperatingPulse />, mount);
 }
-function FloatingActions() {
-  const router = useRouter();
-  const handleInfo = useCallback(() => { window.dispatchEvent(new CustomEvent("nuva:open-info")); }, []);
-  const handleAi = useCallback(() => { void router.navigate({ to: "/ai" }); }, [router]);
-  return <FloatingActionPillar onAiClick={handleAi} onInfoClick={handleInfo} />;
-}
 function LegacyFloatingAiCleanup() {
   useEffect(() => {
     const isLegacyAiButton = (element: Element) => {
@@ -205,8 +197,6 @@ function RootComponent() {
       <LegacyFloatingAiCleanup />
       {showLanding ? <RouteEnhancements /> : null}
       {showLanding ? <Outlet /> : null}
-      {showLanding ? <NuvaInfoCenter hideTrigger /> : null}
-      {!isLanding ? <FloatingActions /> : null}
       <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
   );
