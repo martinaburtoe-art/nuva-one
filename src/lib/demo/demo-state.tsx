@@ -16,7 +16,7 @@ type DemoState = {
   emittedDtes: number;
   convertedQuotes: number;
   emitDte: () => void;
-  convertQuote: () => void;
+  convertQuote: () => boolean;
   purchase: (productId: string, quantity?: number) => void;
   sell: (productId: string) => boolean;
   reset: () => void;
