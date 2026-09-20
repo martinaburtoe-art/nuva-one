@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Users } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { PageHeader, EmptyState } from "@/components/page-utils";
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/customer-intelligence")({
 });
 
 function CustomerIntelligence() {
+  const navigate = useNavigate();
   const { data: customers, isLoading: customersLoading } = useBizList<Customer>("customers", {
     order: "name",
     ascending: true,
@@ -75,8 +76,8 @@ function CustomerIntelligence() {
               customers={customers ?? []}
               sales={sales ?? []}
               quotes={quotes ?? []}
-              onViewCustomers={() => window.location.assign("/customers")}
-              onAskAI={() => window.location.assign("/chat")}
+              onViewCustomers={() => navigate({ to: "/customers" })}
+              onAskAI={() => navigate({ to: "/chat" })}
             />
             <div className="rounded-xl border bg-muted/20 p-5 text-sm text-muted-foreground">
               <strong className="text-foreground">Próxima evolución:</strong> Customer 360 con
