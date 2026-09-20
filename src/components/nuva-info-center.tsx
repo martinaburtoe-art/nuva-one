@@ -2,6 +2,16 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Info, X } from "lucide-react";
 import { useLocation } from "@tanstack/react-router";
 
+export const MODULE_INFO_PATHS = new Set([
+  "/dashboard","/pos","/sales","/customers","/billing","/purchases","/inventory","/shipments",
+  "/finance","/analytics","/quotes","/pricing-calculator","/nuva-intelligence",
+  "/executive-command-center","/ai","/studio","/shifts","/automations","/catalog","/conexiones",
+  "/business-health","/caja-control","/customer-action-center","/customer-intelligence",
+  "/customers-intelligence","/finance-accounting","/finance-professional","/financial-control",
+  "/financial-dashboard","/financial-integrity","/inventario-conteo","/inventario-operaciones",
+  "/mobile-scanner",
+] as const);
+
 const INFO: Record<string, { title: string; description: string; tips: string[] }> = {
   "/dashboard": {
     title: "Resumen",
@@ -105,31 +115,11 @@ const INFO: Record<string, { title: string; description: string; tips: string[] 
       "Puedes pedir explicaciones, análisis, recomendaciones y próximos pasos.",
     ],
   },
-  "/foro": {
-    title: "Comunidad",
-    description:
-      "Espacio para compartir experiencias, preguntas y aprendizajes relacionados con la gestión de negocios.",
-    tips: ["Comparte información útil y evita publicar datos privados."],
-  },
   "/shifts": {
     title: "Turnos",
     description:
       "Organiza turnos y horarios de trabajo cuando tu operación necesita coordinación de personas.",
     tips: ["Mantén horarios actualizados.", "Revisa cambios antes de comenzar una jornada."],
-  },
-  "/settings": {
-    title: "Configuración",
-    description: "Personaliza tu negocio, preferencias y opciones de Nüva One desde un solo lugar.",
-    tips: ["Revisa la configuración del negocio activo.", "No compartas credenciales de acceso."],
-  },
-  "/owner": {
-    title: "Nüva Owner · Command Center",
-    description:
-      "Consola privada para administrar la plataforma, accesos especiales, cuentas de cortesía y controles operativos.",
-    tips: [
-      "Los accesos otorgados desde aquí deben reservarse para personas autorizadas.",
-      "Los grants de cortesía no sustituyen los controles de seguridad del sistema.",
-    ],
   },
 };
 
@@ -158,6 +148,22 @@ const DETAILS: Record<string, ModuleDetails> = {
   "/ai": { purpose: "Consultar y explicar información del negocio mediante lenguaje natural.", capabilities: ["Hacer preguntas", "Pedir explicaciones", "Solicitar análisis"], data: "Contexto y datos autorizados para tu usuario.", outcome: "Respuestas contextualizadas para apoyar la operación." },
   "/studio": { purpose: "Crear y gestionar flujos, automatizaciones y trabajos asistidos.", capabilities: ["Crear flujos", "Gestionar trabajos", "Revisar resultados"], data: "Configuraciones, entradas y resultados de Studio.", outcome: "Procesos repetibles y trazables." },
   "/shifts": { purpose: "Planificar jornadas y coordinación de personas.", capabilities: ["Crear turnos", "Consultar horarios", "Gestionar cambios"], data: "Personas, jornadas y asignaciones autorizadas.", outcome: "Mayor claridad sobre la planificación operativa." },
+  "/automations": { purpose: "Diseñar procesos repetibles para reducir tareas manuales.", capabilities: ["Crear automatizaciones", "Definir condiciones y acciones", "Revisar ejecuciones"], data: "Flujos, reglas, eventos y resultados autorizados.", outcome: "Procesos más consistentes y menos trabajo repetitivo." },
+  "/catalog": { purpose: "Administrar el catálogo comercial que alimenta ventas e inventario.", capabilities: ["Gestionar productos", "Definir precios y atributos", "Mantener información comercial"], data: "Productos, categorías, precios, SKU y atributos.", outcome: "Un catálogo coherente para toda la operación." },
+  "/conexiones": { purpose: "Gestionar conexiones e integraciones con servicios externos.", capabilities: ["Consultar conexiones", "Configurar integraciones disponibles", "Revisar estados"], data: "Configuraciones y estados de integraciones autorizadas.", outcome: "Mayor continuidad entre Nüva One y tus herramientas." },
+  "/business-health": { purpose: "Obtener una lectura transversal del estado del negocio.", capabilities: ["Revisar señales", "Detectar áreas que requieren atención", "Profundizar en el origen"], data: "Indicadores consolidados de operación, finanzas y clientes.", outcome: "Contexto para investigar riesgos y oportunidades." },
+  "/caja-control": { purpose: "Controlar y cuadrar los movimientos de caja.", capabilities: ["Revisar movimientos", "Comparar entradas y salidas", "Detectar diferencias"], data: "Aperturas, cierres, ventas, pagos y movimientos de caja.", outcome: "Trazabilidad de caja y apoyo al cierre diario." },
+  "/customer-action-center": { purpose: "Priorizar acciones relacionadas con clientes.", capabilities: ["Revisar pendientes", "Identificar seguimientos", "Acceder al contexto del cliente"], data: "Clientes, actividad, oportunidades y tareas autorizadas.", outcome: "Una cola de acciones comerciales más clara." },
+  "/customer-intelligence": { purpose: "Analizar patrones y señales de comportamiento de clientes.", capabilities: ["Segmentar", "Revisar señales", "Explorar oportunidades"], data: "Actividad comercial y atributos autorizados de clientes.", outcome: "Mayor contexto para decisiones de relación comercial." },
+  "/customers-intelligence": { purpose: "Profundizar en inteligencia y análisis de la cartera de clientes.", capabilities: ["Comparar segmentos", "Analizar actividad", "Detectar cambios"], data: "Clientes, ventas, actividad e indicadores relacionados.", outcome: "Una visión más completa de la cartera." },
+  "/finance-accounting": { purpose: "Organizar información financiera y contable para su revisión.", capabilities: ["Consultar movimientos", "Revisar categorías", "Preparar información para análisis"], data: "Ingresos, egresos, cuentas y registros disponibles.", outcome: "Mayor orden y trazabilidad financiera." },
+  "/finance-professional": { purpose: "Trabajar con herramientas financieras de mayor profundidad.", capabilities: ["Analizar escenarios", "Revisar métricas", "Profundizar en movimientos"], data: "Información financiera autorizada y consolidada.", outcome: "Una lectura financiera más detallada." },
+  "/financial-control": { purpose: "Controlar consistencia y disciplina financiera.", capabilities: ["Revisar desviaciones", "Detectar inconsistencias", "Consultar movimientos de origen"], data: "Movimientos, categorías, presupuestos y registros relacionados.", outcome: "Mayor control sobre la calidad de la información financiera." },
+  "/financial-dashboard": { purpose: "Visualizar el estado financiero mediante indicadores.", capabilities: ["Consultar KPIs", "Comparar períodos", "Profundizar en variaciones"], data: "Ingresos, egresos, caja y métricas financieras.", outcome: "Una lectura rápida del desempeño financiero." },
+  "/financial-integrity": { purpose: "Revisar la consistencia e integridad de la información financiera.", capabilities: ["Detectar anomalías", "Revisar conciliaciones", "Seguir incidencias"], data: "Registros financieros y controles disponibles.", outcome: "Mayor confianza en la información utilizada para gestionar." },
+  "/inventario-conteo": { purpose: "Realizar conteos físicos y contrastarlos con el inventario registrado.", capabilities: ["Crear conteos", "Registrar cantidades", "Revisar diferencias"], data: "Productos, ubicaciones, existencias y conteos.", outcome: "Diferencias de inventario identificables y trazables." },
+  "/inventario-operaciones": { purpose: "Gestionar movimientos operacionales de inventario.", capabilities: ["Registrar movimientos", "Consultar historial", "Revisar ajustes"], data: "Productos, movimientos, cantidades, costos y ubicaciones.", outcome: "Trazabilidad de entradas, salidas y ajustes." },
+  "/mobile-scanner": { purpose: "Capturar códigos desde dispositivos móviles para acelerar tareas operativas.", capabilities: ["Escanear códigos", "Buscar productos", "Apoyar conteos y operaciones"], data: "Códigos, SKU y productos autorizados.", outcome: "Menos digitación manual y mayor velocidad operativa." },
 };
 
 const FALLBACK = {
@@ -172,6 +178,7 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  if (!inline || !MODULE_INFO_PATHS.has(location.pathname as never)) return null;
   const info = useMemo(() => ({ ...(INFO[location.pathname] ?? FALLBACK), ...(DETAILS[location.pathname] ?? { purpose: "Consulta el propósito de esta sección dentro de la operación.", capabilities: ["Revisar las funciones disponibles"], data: "Información del negocio activo a la que tu cuenta tiene acceso.", outcome: "Una visión más clara de cómo utilizar este espacio." }) }), [location.pathname]);
 
   useEffect(() => {
@@ -207,10 +214,10 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className={inline ? "inline-flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 print:hidden" : "hidden print:hidden"}
+        className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 print:hidden"
       >
         <Info className="h-4 w-4" aria-hidden="true" />
-        {inline && <span>Información del módulo</span>}
+        <span>Información del módulo</span>
       </button>
 
       {open && (
