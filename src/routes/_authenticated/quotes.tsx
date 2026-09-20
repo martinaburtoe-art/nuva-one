@@ -59,7 +59,8 @@ import { useMyRole, canWriteOperations } from "@/lib/use-business";
 function Quotes() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
-  const { active } = useActiveBusiness();\n  const qc = useQueryClient();
+  const { active } = useActiveBusiness();
+  const qc = useQueryClient();
   const { data, isLoading } = useBizList<any>("quotes", { order: "created_at" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
@@ -141,7 +142,22 @@ function Quotes() {
     toast.info("Cotización duplicada como borrador, revisa y guarda");
   }
 
-  async function convertToSale(quote: any) {\n    setConvertingId(quote.id);\n    try {\n      const { error } = await supabase.rpc("convert_quote_to_sale", { p_quote_id: quote.id });\n      if (error) throw error;\n      await qc.invalidateQueries({ queryKey: ["sales"] });\n      await qc.invalidateQueries({ queryKey: ["quotes"] });\n      toast.success("Venta creada a partir de la cotización");\n    } catch (e: any) {\n      toast.error(e.message ?? "No se pudo convertir a venta");\n    } finally {\n      setConvertingId(null);\n    }\n  }\n\n  async function downloadPdf(quote: any) {
+  async function convertToSale(quote: any) {
+    setConvertingId(quote.id);
+    try {
+      const { error } = await supabase.rpc("convert_quote_to_sale", { p_quote_id: quote.id });
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["sales"] });
+      await qc.invalidateQueries({ queryKey: ["quotes"] });
+      toast.success("Venta creada a partir de la cotización");
+    } catch (e: any) {
+      toast.error(e.message ?? "No se pudo convertir a venta");
+    } finally {
+      setConvertingId(null);
+    }
+  }
+
+  async function downloadPdf(quote: any) {
     const { generateQuotePdf } = await import("@/lib/quote-pdf");
     await generateQuotePdf(quote, {
       name: active?.name ?? "Nüva One",
