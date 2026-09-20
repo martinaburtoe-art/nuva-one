@@ -240,7 +240,7 @@ function ForoIndex() {
           <div className="relative aspect-video w-full bg-black">
             <video
               className="h-full w-full object-cover"
-              src="/foro-community/nuva-one-comunidad.mp4"
+              src="/foro-community/Data_pulses_traveling_network_di…_20260920193246.mp4"
               autoPlay
               muted
               loop
