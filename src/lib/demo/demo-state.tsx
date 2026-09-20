@@ -16,7 +16,7 @@ type DemoState = {
   emittedDtes: number;
   convertedQuotes: number;
   purchase: (productId: string, quantity?: number) => void;
-  sell: (productId: string) => void;
+  sell: (productId: string) => boolean;
   reset: () => void;
 };
 
@@ -41,7 +41,7 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
 
   const sell = useCallback((productId: string, customerId = "c1") => {
     const product = products.find((item) => item.id === productId);
-    if (!product || product.stock <= 0) return;
+    if (!product || product.stock <= 0) return false;
 
     setProducts((current) =>
       current.map((item) => item.id === productId ? { ...item, stock: item.stock - 1 } : item),
@@ -56,6 +56,7 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     setRevenueDelta((value) => value + product.price);
     setCashDelta((value) => value + product.price);
     setCostDelta((value) => value + product.cost);
+    return true;
   }, [products]);
 
   const purchase = useCallback((productId: string, quantity = 5) => {
@@ -73,10 +74,8 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const convertQuote = useCallback(() => {
-    const before = simulatedSales;
-    sell("beans");
-    if (simulatedSales > before) setConvertedQuotes((value) => value + 1);
-  }, [sell, simulatedSales]);
+    if (sell("beans")) setConvertedQuotes((value) => value + 1);
+  }, [sell]);
 
   const reset = useCallback(() => {
     setProducts(DEMO_PRODUCTS);
