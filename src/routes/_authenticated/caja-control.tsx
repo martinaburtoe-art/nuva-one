@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/caja-control")({
   component: CashControl,
 });
 
-type Register = Database["public"]["Tables"]["cash_registers"]["Row"];
+type Register = Pick<Database["public"]["Tables"]["cash_registers"]["Row"],\n  "id" | "business_id" | "opening_amount" | "counted_cash" | "status" | "opened_at" | "closed_at" | "closed_by" | "opened_by"\n>;
 type Movement = Database["public"]["Tables"]["cash_register_movements"]["Row"];
 type Summary = Database["public"]["Functions"]["get_cash_register_summary"]["Returns"][number];
 type MovementType = "deposit" | "withdrawal";
