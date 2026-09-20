@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,7 +59,7 @@ import { useMyRole, canWriteOperations } from "@/lib/use-business";
 function Quotes() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
-  const { active } = useActiveBusiness();
+  const { active } = useActiveBusiness();\n  const qc = useQueryClient();
   const { data, isLoading } = useBizList<any>("quotes", { order: "created_at" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
@@ -65,7 +67,6 @@ function Quotes() {
   const insert = useBizInsert("quotes");
   const upd = useBizUpdate("quotes");
   const del = useBizDelete("quotes");
-  const insertSale = useBizInsert("sales");
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Item[]>([{ product_id: null, name: "", qty: 1, price: 0 }]);
   const [customer, setCustomer] = useState("");
@@ -140,34 +141,7 @@ function Quotes() {
     toast.info("Cotización duplicada como borrador, revisa y guarda");
   }
 
-  async function convertToSale(quote: any) {
-    setConvertingId(quote.id);
-    try {
-      const saleItems = (quote.items ?? []).map((it: any) => ({
-        product_id: it.product_id ?? null,
-        name: it.name,
-        qty: Number(it.qty) || 0,
-        price: Number(it.price) || 0,
-      }));
-      await insertSale.mutateAsync({
-        customer_name: quote.customer_name,
-        channel: "tienda",
-        status: "paid",
-        total: quote.total,
-        items: saleItems as any,
-        quote_id: quote.id,
-        notes: `Generada desde cotización`,
-      });
-      await upd.mutateAsync({ id: quote.id, patch: { status: "accepted" } });
-      toast.success("Venta creada a partir de la cotización");
-    } catch (e: any) {
-      toast.error(e.message ?? "No se pudo convertir a venta");
-    } finally {
-      setConvertingId(null);
-    }
-  }
-
-  async function downloadPdf(quote: any) {
+  async function convertToSale(quote: any) {\n    setConvertingId(quote.id);\n    try {\n      const { error } = await supabase.rpc("convert_quote_to_sale", { p_quote_id: quote.id });\n      if (error) throw error;\n      await qc.invalidateQueries({ queryKey: ["sales"] });\n      await qc.invalidateQueries({ queryKey: ["quotes"] });\n      toast.success("Venta creada a partir de la cotización");\n    } catch (e: any) {\n      toast.error(e.message ?? "No se pudo convertir a venta");\n    } finally {\n      setConvertingId(null);\n    }\n  }\n\n  async function downloadPdf(quote: any) {
     const { generateQuotePdf } = await import("@/lib/quote-pdf");
     await generateQuotePdf(quote, {
       name: active?.name ?? "Nüva One",
