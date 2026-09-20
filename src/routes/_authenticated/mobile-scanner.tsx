@@ -216,7 +216,7 @@ function MobileScanner() {
             <div className="text-xs text-muted-foreground">Sesión</div>
             <div className="font-mono text-xs">{session.sessionId.slice(0, 8)}…</div>
           </div>
-          <Button variant="outline" size="sm" onClick={disconnect}>
+          <Button variant="outline" size="sm" aria-label="Desconectar escáner móvil" onClick={disconnect}>
             Desconectar
           </Button>
         </div>
@@ -251,7 +251,7 @@ function MobileScanner() {
           <strong className="text-2xl">{sent}</strong>
         </div>
         {lastCode && (
-          <div className="mt-2 truncate rounded-lg bg-muted/50 p-2 font-mono text-xs">
+          <div className="mt-2 truncate rounded-lg bg-muted/50 p-2 font-mono text-xs" aria-live="polite">
             {lastCode}
           </div>
         )}
