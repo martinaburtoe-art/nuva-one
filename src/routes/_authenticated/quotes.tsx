@@ -439,14 +439,6 @@ function Quotes() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          title="Compartir por WhatsApp"
-                          onClick={() => shareWhatsApp(q)}
-                        >
-                          <MessageCircle className="h-4 w-4 text-success" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
                           title="Duplicar cotización"
                           onClick={() => duplicateQuote(q)}
                         >
