@@ -16,28 +16,28 @@ Convertir Nüva One en un sistema operativo para pymes: operaciones simples como
 ## Backlog competitivo
 
 ### P0 — Operación
-- [ ] Venta rápida y flujo POS consistente.
-- [ ] Inventario con variantes, stock crítico y reposición.
-- [ ] Caja y gastos conectados a ventas.
-- [ ] Clientes, proveedores y cuentas por cobrar.
+- [x] Venta rápida y flujo POS consistente (RPC transaccional, control de stock disponible y UI).
+- [ ] Inventario con variantes; [x] stock crítico/reorden base y control de disponibilidad.
+- [x] Caja/gastos conectados a ventas y costos mediante triggers/ledger existentes.
+- [x] Clientes, proveedores y cuentas por cobrar base; pagos y recordatorios existentes.
 - [ ] Cotización → pedido → venta.
 - [x] Catálogo conectado directamente al inventario.
 - [x] Catálogo público compartible por URL.
-- [ ] Compartir comprobantes/cotizaciones por WhatsApp.
+- [x] Compartir catálogo por WhatsApp y consultas de producto; comprobante/cotización por WhatsApp pendiente.
 
 ### P1 — Integración
 - [ ] Catálogo → pedido → reserva de stock.
-- [ ] Venta → descuento de stock → caja → CRM.
-- [ ] Compra → costo → margen → reposición.
+- [x] Venta → descuento de stock → caja/ledger → CRM base.
+- [x] Compra → stock/costo/caja/contabilidad; [ ] margen y reposición inteligente end-to-end.
 - [x] Auditoría de movimientos críticos existente y preservada.
 - [ ] Multiusuario, roles y permisos operativos end-to-end.
 
 ### P2 — Diferenciación Nüva
 - [x] Nüva Score existente.
 - [x] Nüva Intelligence existente.
-- [ ] Predicción de demanda, quiebres y flujo de caja.
+- [ ] Predicción de demanda, quiebres y flujo de caja (bases de datos disponibles; modelo accionable pendiente).
 - [ ] Detección de anomalías.
-- [ ] Recomendaciones de precio, compra, cobranza y clientes.
+- [ ] Recomendaciones de precio, compra, cobranza y clientes (Nüva Intelligence/Score existentes; acciones específicas pendientes).
 - [ ] Simulación de escenarios.
 - [ ] Acciones asistidas/automatizadas con confirmación del usuario.
 
@@ -54,3 +54,8 @@ El revisor autónomo falló antes de ejecutar por una referencia inexistente de 
 ## Regla competitiva
 
 Treinta y otros gestores SMB sirven como referencia de **simplicidad operacional**, no como especificación para copiar. Nüva One implementa patrones de producto probados sin copiar código, textos, marca, diseño propietario ni implementación específica de terceros.
+
+
+## Investigación competitiva — septiembre 2026
+
+La revisión de fuentes públicas actuales de Treinta confirma como patrones operacionales relevantes: registro de ventas/gastos en segundos, inventario en tiempo real con alertas y variantes, catálogo compartible, estadísticas/reportes, control de clientes/proveedores, ventas a crédito, comprobantes compartibles por WhatsApp, descuentos y gestión de empleados. Nüva One ya cubre varias bases con una arquitectura financiera/contable más profunda; esta hoja de ruta prioriza cerrar las brechas operacionales sin copiar implementación, textos ni diseño propietario. Fuentes revisadas: Treinta Web/App Store/Google Play.
