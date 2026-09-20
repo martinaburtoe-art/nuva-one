@@ -77,7 +77,7 @@ export function NuvaOperatingPulse() {
       ["draft", "sent", "pending", "open"].includes(String(q.status ?? "").toLowerCase()),
     ).length;
     const revenue = (sales ?? [])
-      .filter((s: any) => !!s.customer_id)
+      .filter((s: any) => !!s.customer_id && s.status === "paid")
       .reduce((sum: number, s: any) => sum + (Number(s.total) || 0), 0);
     return {
       total: list.length,
