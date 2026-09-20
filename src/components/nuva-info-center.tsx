@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Info, X } from "lucide-react";
 import { useLocation } from "@tanstack/react-router";
 
@@ -279,5 +279,15 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
         </div>
       )}
     </>
+  );
+}
+
+
+function InfoSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4 text-sm leading-5 text-muted-foreground">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-foreground/75">{title}</p>
+      {children}
+    </div>
   );
 }
