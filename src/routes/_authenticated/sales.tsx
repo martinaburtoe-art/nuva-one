@@ -143,7 +143,7 @@ function Sales() {
       <>
         <PageHeader
           title="Ventas"
-          description="Pedidos y transacciones — se conecta automáticamente con Inventario y Finanzas"
+          description="Convierte cada pedido en operación: cliente, stock, cobro y trazabilidad."
           action={
             !canWrite ? undefined : (
               <Dialog open={open} onOpenChange={setOpen}>
@@ -153,11 +153,11 @@ function Sales() {
                     Nueva venta
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-3xl rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>Registrar venta</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={onSubmit} className="space-y-4">
+                  <form onSubmit={onSubmit} className="space-y-5">
                     <div>
                       <Label htmlFor="customer_name">Cliente</Label>
                       <Input
@@ -193,7 +193,7 @@ function Sales() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="flex items-center justify-between rounded-xl border border-primary/15 bg-primary/5 p-4">
                       <div>
                         <Label htmlFor="is_credit" className="cursor-pointer">
                           Venta a crédito / fiado
@@ -363,7 +363,7 @@ function Sales() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 rounded-lg bg-secondary/40 p-4">
+                    <div className="sticky bottom-0 flex items-center gap-3 rounded-xl border border-border/70 bg-background/95 p-4 shadow-lg backdrop-blur-xl">
                       <Label htmlFor="total" className="shrink-0">
                         Total (CLP)
                       </Label>
