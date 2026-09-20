@@ -18,7 +18,7 @@ const labels: Record<string, string> = {
 export function NuvaActionQueue() {
   const { active } = useActiveBusiness();
   const { data: role } = useMyRole();
-  const canApprove = canManageBusiness(role?.role);
+  const canApprove = canManageBusiness(role);
   const query = useQuery({
     enabled: !!active?.id,
     queryKey: ["nuva-action-queue", active?.id],
