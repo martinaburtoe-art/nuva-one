@@ -57,7 +57,7 @@ function CashControl() {
     queryFn: async (): Promise<Register | null> => {
       const { data, error } = await supabase
         .from("cash_registers")
-        .select("id,business_id,opening_amount,counted_cash,status,opened_at,closed_at,closed_by,closing_note,created_at,opened_by")
+        .select("id,business_id,opening_amount,counted_cash,status,opened_at,closed_at,closed_by,opened_by")
         .eq("business_id", active!.id)
         .eq("status", "open")
         .maybeSingle();
