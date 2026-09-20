@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
@@ -43,7 +43,7 @@ function InventoryCount() {
     setProducts(data ?? []);
   }
 
-  useEffect(() => {\n    void refreshProducts();\n  }, [active?.id]);
+  useEffect(() => {\n    void refreshProducts();\n  }, [refreshProducts]);
 
   const matched = useMemo(() => products.find((product) => String(product.barcode ?? "").trim().toLowerCase() === barcode.trim().toLowerCase() || String(product.sku ?? "").trim().toLowerCase() === barcode.trim().toLowerCase()), [products, barcode]);
 
