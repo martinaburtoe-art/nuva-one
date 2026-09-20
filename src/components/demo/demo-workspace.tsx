@@ -80,7 +80,7 @@ const NAV: NavItem[] = [
 
 const productNames = [
   ["Café de especialidad 250 g", "Café", 18, 12, 8990],
-  ["Granos Colombia 1 kg", "Café", 7, 10, 15990],
+  ["Granos Colombia 1 kg", "Café", 6, 10, 18990],
   ["Té verde premium", "Té", 24, 8, 6990],
   ["Brownie artesanal", "Pastelería", 9, 6, 4490],
   ["Taza Nüva edición", "Merchandising", 31, 10, 11990],
