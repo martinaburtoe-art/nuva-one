@@ -49,7 +49,7 @@ function NuvaIntelligence() {
 
   return (
     <ModuleGuard module="dashboard">
-      <div className="space-y-6">
+      <div className="space-y-5">
         <ModuleInformation
           title="Nüva Intelligence"
           summary="Capa analítica que interpreta los datos del negocio, detecta señales y explica oportunidades sin ejecutar operaciones."
@@ -58,11 +58,11 @@ function NuvaIntelligence() {
           data="Cruza ventas, transacciones, productos, cotizaciones y actividades disponibles para el negocio activo. Los resultados dependen de la calidad y cantidad de datos registrados."
           actions={["Entender cambios relevantes", "Revisar señales y evidencia", "Evaluar oportunidades", "Abrir el módulo operativo correspondiente para actuar"]}
         />
-        <PageHeader title="Nüva Intelligence" description="El analista de Nüva: interpreta datos, detecta patrones y explica qué está cambiando en tu negocio. No ejecuta operaciones." />
+        <PageHeader title="Nüva Intelligence" description="Interpreta datos, detecta señales y explica qué está cambiando. Las acciones se ejecutan en los módulos operativos." />
 
         {!activeView ? (
           <>
-            <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/[0.07] via-background to-background p-5 md:p-6">
+            <Card className="overflow-hidden rounded-2xl border-violet-500/20 bg-gradient-to-br from-violet-500/[0.07] via-background to-background p-5 shadow-sm md:p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400"><Brain className="h-4 w-4" /> Capa analítica</div>
@@ -75,7 +75,7 @@ function NuvaIntelligence() {
             <div>
               <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">Herramientas de Intelligence</p><h2 className="mt-1 text-xl font-semibold">Elige qué quieres entender</h2></div><span className="hidden text-xs text-muted-foreground md:block">4 herramientas</span></div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {views.map((view) => <button key={view.id} type="button" onClick={() => setActiveView(view.id)} className="group rounded-2xl border bg-background/70 p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-md"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><div className="flex items-center justify-between gap-2"><p className="font-semibold">{view.title}</p><span title={view.info} aria-label={`Información: ${view.title}`} className="rounded-full p-1 text-muted-foreground"><Info className="h-4 w-4" /></span></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{view.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
+                {views.map((view) => <button key={view.id} type="button" onClick={() => setActiveView(view.id)} className="group rounded-2xl border border-border/70 bg-background/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-md"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><div className="flex items-center justify-between gap-2"><p className="font-semibold">{view.title}</p><span title={view.info} aria-label={`Información: ${view.title}`} className="rounded-full p-1 text-muted-foreground"><Info className="h-4 w-4" /></span></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{view.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
               </div>
             </div>
           </>
