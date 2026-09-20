@@ -196,7 +196,7 @@ function CashControl() {
       <div className="space-y-6">
         <PageHeader
           title="Gestión de Caja"
-          description="Apertura, control de efectivo, movimientos, arqueo e historial de jornadas"
+          description="Apertura, efectivo, movimientos y arqueo de cada jornada desde un solo centro de control."
           action={
             <div className="flex items-center gap-2">
               <Badge variant={registerQuery.data ? "default" : "secondary"}>{registerQuery.data ? "Caja abierta" : "Caja cerrada"}</Badge>
@@ -207,7 +207,7 @@ function CashControl() {
         {registerQuery.isLoading ? (
           <Card className="p-6">Cargando estado de caja…</Card>
         ) : !registerQuery.data ? (
-          <Card className="border-dashed p-8 text-center">
+          <Card className="rounded-2xl border-dashed bg-muted/10 p-10 text-center">
             <WalletCards className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <h2 className="text-xl font-semibold">Inicia la jornada</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Define el fondo inicial para comenzar a controlar el efectivo de esta jornada.</p>
@@ -215,15 +215,15 @@ function CashControl() {
           </Card>
         ) : (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
               <Metric title="Fondo inicial" value={fmtCLP(Number(s?.opening_amount ?? registerQuery.data.opening_amount))} icon={<WalletCards className="h-4 w-4" />} />
               <Metric title="Ventas efectivo" value={fmtCLP(Number(s?.cash_sales ?? 0))} icon={<Banknote className="h-4 w-4" />} />
               <Metric title="Ingresos" value={fmtCLP(Number(s?.cash_income ?? 0))} icon={<ArrowDownToLine className="h-4 w-4" />} />
               <Metric title="Retiros" value={fmtCLP(Number(s?.cash_withdrawals ?? 0))} icon={<ArrowUpFromLine className="h-4 w-4" />} />
               <Metric title="Efectivo esperado" value={fmtCLP(expected)} icon={<CircleDollarSign className="h-4 w-4" />} />
             </div>
-            <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-              <Card className="p-5">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+              <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div><h2 className="text-lg font-semibold">Control de jornada</h2><p className="text-sm text-muted-foreground">El resumen usa exclusivamente el contrato real de get_cash_register_summary.</p></div>
                   <div className="flex gap-2">
@@ -274,7 +274,7 @@ function CashControl() {
             </div>
           </>
         )}
-        <Card className="p-5">
+        <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
           <div className="flex items-center gap-2"><History className="h-5 w-5" /><div><h2 className="text-lg font-semibold">Historial de cierres</h2><p className="text-sm text-muted-foreground">Consulta las últimas jornadas y sus arqueos.</p></div></div>
           <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[680px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Apertura</th><th className="px-3 py-2">Cierre</th><th className="px-3 py-2 text-right">Fondo</th><th className="px-3 py-2 text-right">Contado</th><th className="px-3 py-2">Estado</th></tr></thead><tbody>{(historyQuery.data ?? []).map((r) => <tr key={r.id} className="border-t"><td className="px-3 py-3">{new Date(r.opened_at).toLocaleString("es-CL")}</td><td className="px-3 py-3">{r.closed_at ? new Date(r.closed_at).toLocaleString("es-CL") : "—"}</td><td className="px-3 py-3 text-right">{fmtCLP(Number(r.opening_amount))}</td><td className="px-3 py-3 text-right">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</td><td className="px-3 py-3"><Badge variant="secondary">Cerrada</Badge></td></tr>)}</tbody></table>{(historyQuery.data ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay jornadas cerradas.</p>}</div>
         </Card>
