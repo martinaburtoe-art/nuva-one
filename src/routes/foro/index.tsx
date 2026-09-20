@@ -233,6 +233,34 @@ function ForoIndex() {
           </p>
         </header>
 
+        <section
+          className="mt-10 overflow-hidden rounded-2xl border bg-black shadow-soft"
+          aria-labelledby="video-comunidad"
+        >
+          <div className="relative aspect-video w-full bg-black">
+            <video
+              className="h-full w-full object-cover"
+              src="/foro-community/nuva-one-comunidad.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster="/foro-community/nuva-one-comunidad-poster.jpg"
+              aria-label="Nüva One · Comunidad"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">
+                Nüva One · Comunidad
+              </p>
+              <h2 id="video-comunidad" className="mt-2 max-w-2xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                Ideas, respuestas y herramientas para hacer crecer tu pyme.
+              </h2>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-10 rounded-2xl border bg-card/70 p-6 shadow-soft" aria-labelledby="recursos-pyme">
           <div className="max-w-3xl">
             <h2 id="recursos-pyme" className="text-xl font-semibold">
