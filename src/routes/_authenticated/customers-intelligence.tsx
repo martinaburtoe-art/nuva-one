@@ -37,7 +37,7 @@ function CustomersIntelligence() {
               navigate({ to: "/customers" });
             }}
             onAskAI={() => {
-              navigate({ to: "/chat" });
+              navigate({ to: "/ai" });
             }}
           />}
         </div>
