@@ -19,10 +19,10 @@ const items: HelpItem[] = [
   { title: "Finanzas", description: "Tesorería, cuentas, contabilidad, costos y control financiero.", category: "Finanzas", href: "/finance-professional" },
   { title: "Nüva Intelligence", description: "Aprende a interpretar alertas, señales y recomendaciones.", category: "Inteligencia", href: "/ai" },
   { title: "Centro Ejecutivo", description: "Convierte información del negocio en decisiones y acciones.", category: "Inteligencia", href: "/executive-command-center" },
-  { title: "Clientes y CRM", description: "Gestiona clientes, seguimiento y oportunidades comerciales.", category: "Clientes", href: "/crm" },
+  { title: "Clientes y CRM", description: "Gestiona clientes, seguimiento y oportunidades comerciales.", category: "Clientes", href: "/customers" },
   { title: "Conexiones", description: "Conoce cómo conectar y mantener tus fuentes de información.", category: "Configuración", href: "/conexiones" },
   { title: "Privacidad y seguridad", description: "Protección de datos, permisos y acceso por negocio.", category: "Seguridad" },
-  { title: "Suscripción y facturación", description: "Planes, límites, pagos y administración de la cuenta.", category: "Cuenta", href: "/billing" },
+  { title: "Suscripción y facturación", description: "Planes, límites, pagos y administración de la cuenta.", category: "Cuenta", href: "/settings" },
 ];
 
 const categories = ["Todo", "Comenzar", "Operaciones", "Finanzas", "Inteligencia", "Clientes", "Configuración", "Seguridad", "Cuenta"];
