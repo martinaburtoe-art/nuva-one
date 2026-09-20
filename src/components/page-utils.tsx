@@ -14,6 +14,7 @@ export function PageHeader({
   description?: string;
   action?: ReactNode;
   actions?: ReactNode;
+  showOperatingPulse?: boolean;
 }) {
   const resolvedAction = actions ?? action;
 
