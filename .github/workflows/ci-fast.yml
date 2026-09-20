@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-fast-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integrity:
     name: Repository integrity
