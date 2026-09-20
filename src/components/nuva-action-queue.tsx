@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Clock3, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveBusiness } from "@/lib/use-business";
+import { canManageBusiness, useActiveBusiness, useMyRole } from "@/lib/use-business";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -17,6 +17,8 @@ const labels: Record<string, string> = {
 
 export function NuvaActionQueue() {
   const { active } = useActiveBusiness();
+  const { data: role } = useMyRole();
+  const canApprove = canManageBusiness(role?.role);
   const query = useQuery({
     enabled: !!active?.id,
     queryKey: ["nuva-action-queue", active?.id],
@@ -30,6 +32,7 @@ export function NuvaActionQueue() {
   });
 
   const updateStatus = async (id: string, status: "approved" | "dismissed") => {
+    if (!canApprove) return;
     const { error } = await supabase.from("nuva_action_queue").update({ status }).eq("id", id).eq("business_id", active!.id);
     if (!error) await query.refetch();
   };
@@ -51,7 +54,7 @@ export function NuvaActionQueue() {
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>Impacto {item.impact}/100</span><span>•</span><span>{item.priority}</span>
-              {item.status === "pending" && <><Button size="sm" onClick={() => updateStatus(item.id, "approved")}><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprobar</Button><Button size="sm" variant="outline" onClick={() => updateStatus(item.id, "dismissed")}><XCircle className="mr-1 h-3.5 w-3.5" /> Descartar</Button></>}
+              {item.status === "pending" && canApprove && <><Button size="sm" onClick={() => updateStatus(item.id, "approved")}><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprobar</Button><Button size="sm" variant="outline" onClick={() => updateStatus(item.id, "dismissed")}><XCircle className="mr-1 h-3.5 w-3.5" /> Descartar</Button></>}
               {item.status === "approved" && <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1"><Clock3 className="h-3.5 w-3.5" /> Lista para ejecución</span>}
             </div>
           </div>
