@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CalendarClock, CircleDollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { fmtCLP } from "@/lib/biz-data";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,20 +46,13 @@ export function CollectionPriorityPanel() {
           {data.length} pendientes
         </Badge>
       </div>
-
       <div className="p-5">
         {isLoading ? (
-          <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-            Cargando cartera priorizada…
-          </div>
+          <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Cargando cartera priorizada…</div>
         ) : error ? (
-          <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No fue posible cargar la cobranza priorizada.
-          </div>
+          <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">No fue posible cargar la cobranza priorizada.</div>
         ) : !data.length ? (
-          <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No hay cuentas por cobrar pendientes.
-          </div>
+          <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">No hay cuentas por cobrar pendientes.</div>
         ) : (
           <div className="space-y-2">
             {data.slice(0, 10).map((row) => (
@@ -68,29 +60,14 @@ export function CollectionPriorityPanel() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{row.customer_name || "Cliente"}</span>
-                    <Badge variant={row.priority === "overdue" ? "destructive" : "outline"}>
-                      {priorityLabel(row.priority)}
-                    </Badge>
+                    <Badge variant={row.priority === "overdue" ? "destructive" : "outline"}>{priorityLabel(row.priority)}</Badge>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span>{fmtCLP(Number(row.balance || 0))} pendiente</span>
-                    {row.due_date && (
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarClock className="h-3.5 w-3.5" />
-                        {new Date(row.due_date).toLocaleDateString("es-CL")}
-                      </span>
-                    )}
-                    {row.days_overdue > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        {row.days_overdue} días de atraso
-                      </span>
-                    )}
+                    {row.due_date && <span className="inline-flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />{new Date(row.due_date).toLocaleDateString("es-CL")}</span>}
+                    {row.days_overdue > 0 && <span className="inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />{row.days_overdue} días de atraso</span>}
                   </div>
                 </div>
-                <Button type="button" variant="outline" size="sm" disabled>
-                  Registrar cobro
-                </Button>
               </div>
             ))}
           </div>
