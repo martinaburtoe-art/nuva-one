@@ -24,7 +24,7 @@ type Connection = {
   title: string;
   description: string;
   status: "Disponible" | "Próximamente";
-  href?: "/automations" | "/billing" | "/analytics" | "/settings";
+  href?: "/automations" | "/analytics" | "/settings";
   icon: typeof MessageCircle;
 };
 
@@ -56,9 +56,9 @@ const CONNECTIONS: Connection[] = [
   {
     title: "Cobros y suscripción",
     description:
-      "Gestiona el plan y la facturación de Nüva One desde el espacio de billing de tu cuenta.",
+      "Gestiona la configuración y los datos de tu cuenta desde Configuración.",
     status: "Disponible",
-    href: "/billing",
+    href: "/settings",
     icon: CreditCard,
   },
   {
