@@ -13,6 +13,7 @@ import { NuvaDecisionOutcomes } from "@/components/nuva-decision-outcomes";
 import { NuvaDecisionMemory } from "@/components/nuva-decision-memory";
 import { NuvaDecisionTimeline } from "@/components/nuva-decision-timeline";
 import { NuvaActionCenter } from "@/components/nuva-action-center";
+import { NuvaActionQueue } from "@/components/nuva-action-queue";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { buildNuvaDecision } from "@/lib/nuva-decision-engine";
@@ -105,6 +106,7 @@ function ExecutiveCommandCenter() {
               <div className="space-y-5">
                 <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-accent/20 p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Decisión prioritaria</p><h2 className="mt-1 text-xl font-bold">{decision.headline}</h2><p className="mt-1 text-sm text-muted-foreground">Prioridad <strong className="text-foreground">{decision.score}/100</strong> · Estado <strong className="text-foreground">{decision.status}</strong></p></div><div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold"><DecisionIcon status={decision.status} /> {decision.topSignal.title}</div></div><p className="mt-4 text-sm leading-6 text-muted-foreground">Aquí termina el análisis y comienza la dirección. Elige qué mover primero, ejecuta la acción y deja que Nüva mida el resultado.</p><div className="mt-4 grid gap-3 md:grid-cols-2">{decision.actions.slice(0, 4).map((item) => <Link key={item.id} to={decisionDestinationRoute(item.destination)} className="rounded-xl border bg-background/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{item.title}</p><p className="mt-1 text-xs text-muted-foreground">Impacto {item.impact}/100 · {item.mode === "prepare" ? "Preparar" : "Revisar"}</p></div><span className="text-xs font-medium text-primary">{item.cta} →</span></div></Link>)}</div></Card>
                 <NuvaActionCenter />
+                <NuvaActionQueue />
               </div>
             )}
             {activeSection === "timeline" && <NuvaDecisionTimeline activities={activities ?? []} />}
