@@ -31,9 +31,7 @@ export function useBusinesses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("businesses")
-        .select(
-          "id, name, industry, logo_url, tax_id, giro, address, comuna, owner_id, webhook_url, public_enabled, public_slug, public_description, public_photos, public_social_links, public_contact_email, public_contact_phone, plan",
-        )
+        .select("id, name, industry, logo_url, tax_id, giro, address, comuna, owner_id, webhook_url, public_enabled, public_slug, public_description, public_photos, public_social_links, public_contact_email, public_contact_phone, plan")
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as Business[];
@@ -68,7 +66,6 @@ export function useActiveBusiness() {
   const { data: businesses, isLoading } = useBusinesses();
   const active = businesses?.find((b) => b.id === activeId) ?? businesses?.[0] ?? null;
 
-  // Auto-select first if none chosen
   useEffect(() => {
     if (!activeId && businesses && businesses.length > 0) {
       setActiveId(businesses[0].id);
@@ -80,37 +77,18 @@ export function useActiveBusiness() {
 
 export type MemberRole = "owner" | "admin" | "staff" | "viewer";
 
-/**
- * Centralizes the "can this role manage the business" rule instead of
- * repeating `role === 'owner' || role === 'admin'` inline at every call
- * site (it was duplicated twice in settings.tsx before this). This is a
- * UI-only convenience, same as useMyRole's own doc comment says -- RLS is
- * still the real enforcement boundary, this only decides what buttons to
- * show.
- */
 export function canManageBusiness(role: MemberRole | null | undefined): boolean {
   return role === "owner" || role === "admin";
 }
 
-/** Only the owner can do owner-only things: delete the business, transfer ownership, etc. */
 export function isBusinessOwner(role: MemberRole | null | undefined): boolean {
   return role === "owner";
 }
 
-/**
- * Mirrors the RLS policy on operational tables (sales, customers, products,
- * purchases, quotes, suppliers, transactions, automations, marketing_posts,
- * audit_log): owner/admin/staff can write, viewer is read-only. UI-only
- * convenience -- RLS is still the real enforcement boundary.
- */
 export function canWriteOperations(role: MemberRole | null | undefined): boolean {
   return role === "owner" || role === "admin" || role === "staff";
 }
 
-// Returns the current user's role within the active business, so the UI can
-// hide/disable actions (e.g. deleting the business, managing members) that
-// the database would reject anyway. RLS remains the real security boundary;
-// this is purely so the interface doesn't show buttons that will just fail.
 export function useMyRole() {
   const { active } = useActiveBusiness();
   return useQuery({
@@ -131,10 +109,6 @@ export function useMyRole() {
   });
 }
 
-// --- Módulos y permisos por miembro ---------------------------------------
-
-/** Cada módulo visible en la barra lateral. Se usa tanto para el checklist de
- * permisos al invitar/editar a un miembro como para filtrar la navegación. */
 export const MODULES = [
   { key: "dashboard", label: "Resumen" },
   { key: "pos", label: "Caja (POS)" },
@@ -143,6 +117,7 @@ export const MODULES = [
   { key: "billing", label: "Facturación SII" },
   { key: "purchases", label: "Compras" },
   { key: "inventory", label: "Inventario" },
+  { key: "catalog", label: "Catálogo" },
   { key: "finance", label: "Finanzas" },
   { key: "analytics", label: "Indicadores" },
   { key: "quotes", label: "Cotizaciones" },
@@ -153,23 +128,11 @@ export const MODULES = [
 export type ModuleKey = (typeof MODULES)[number]["key"];
 export type ModulePermissions = Partial<Record<ModuleKey, boolean>>;
 
-/** Permisos por defecto al invitar a alguien: todo activado salvo que el
- * dueño/admin decida restringir algo puntual (ej. "solo Caja"). */
 export function defaultPermissionsForRole(role: MemberRole): ModulePermissions {
   if (role === "viewer") return Object.fromEntries(MODULES.map((m) => [m.key, true]));
   return Object.fromEntries(MODULES.map((m) => [m.key, true]));
 }
 
-/**
- * Un miembro puede ver/usar un módulo si:
- * - es owner o admin (siempre tienen acceso completo), o
- * - su rol permite escribir/ver y no se le restringió explícitamente ese módulo.
- * Esta es una capa de VISIBILIDAD en la interfaz (qué se muestra en el menú y
- * qué pantallas se pueden abrir). La barrera de seguridad real para escribir
- * datos sigue siendo el rol vía RLS -- varias pantallas comparten las mismas
- * tablas (ej. Caja y Ventas ambas escriben en "sales"), por lo que no es
- * posible separar ese permiso a nivel de fila sin romper una de las dos.
- */
 export function hasModulePermission(
   role: MemberRole | null | undefined,
   permissions: ModulePermissions | null | undefined,
@@ -177,8 +140,7 @@ export function hasModulePermission(
 ): boolean {
   if (role === "owner" || role === "admin") return true;
   if (!role) return false;
-  const explicit = permissions?.[moduleKey];
-  return explicit !== false; // ausencia de la clave = permitido por defecto
+  return permissions?.[moduleKey] !== false;
 }
 
 export type MyMembership = {
@@ -187,8 +149,6 @@ export type MyMembership = {
   permissions: ModulePermissions;
 } | null;
 
-/** Igual que useMyRole pero además trae el puesto y el mapa de permisos por
- * módulo del miembro actual, para gatear la navegación y las pantallas. */
 export function useMyMembership() {
   const { active } = useActiveBusiness();
   return useQuery({
