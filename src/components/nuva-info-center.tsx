@@ -140,18 +140,12 @@ const FALLBACK = {
   tips: ["Si tienes dudas, abre este botón para conocer el propósito de la sección."],
 };
 
-export function NuvaInfoCenter({ hideTrigger = false }: { hideTrigger?: boolean }) {
+export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const info = useMemo(() => INFO[location.pathname] ?? FALLBACK, [location.pathname]);
-
-  useEffect(() => {
-    const openFromPillar = () => setOpen(true);
-    window.addEventListener("nuva:open-info", openFromPillar);
-    return () => window.removeEventListener("nuva:open-info", openFromPillar);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -178,24 +172,23 @@ export function NuvaInfoCenter({ hideTrigger = false }: { hideTrigger?: boolean 
 
   return (
     <>
-      {!hideTrigger && (
-        <button
-          ref={triggerRef}
-          type="button"
-          aria-label={`Información sobre ${info.title}`}
-          title={`¿Qué es ${info.title}?`}
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-[80] flex h-11 w-11 items-center justify-center rounded-full border border-primary/20 bg-background/95 text-primary shadow-lg backdrop-blur transition-all hover:scale-105 hover:bg-primary hover:text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
-        >
-          <Info className="h-5 w-5" aria-hidden="true" />
-        </button>
-      )}
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label={"Información sobre " + info.title}
+        title={"Información sobre " + info.title}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+        className={inline ? "inline-flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 print:hidden" : "hidden print:hidden"}
+      >
+        <Info className="h-4 w-4" aria-hidden="true" />
+        {inline && <span>Información del módulo</span>}
+      </button>
 
       {open && (
         <div
-          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/30 p-4 backdrop-blur-[2px] sm:items-center"
+          className="fixed inset-0 z-[90] print:hidden flex items-end justify-center bg-black/30 p-4 backdrop-blur-[2px] sm:items-center"
           role="presentation"
         >
           <button
