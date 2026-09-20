@@ -246,7 +246,6 @@ function ForoIndex() {
               loop
               playsInline
               preload="metadata"
-              poster="/foro-community/nuva-one-comunidad-poster.jpg"
               aria-label="Nüva One · Comunidad"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
