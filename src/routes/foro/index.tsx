@@ -397,6 +397,7 @@ function ForoIndex() {
             ))}
           </div>
         </section>
+        </div>
       </main>
     </div>
   );
