@@ -1,0 +1,52 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ExternalLink, Package, Search, ShoppingBag } from "lucide-react";
+import { useMemo, useState } from "react";
+import { PageHeader } from "@/components/page-utils";
+import { ModuleGuard } from "@/components/module-guard";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useBizList, fmtCLP } from "@/lib/biz-data";
+
+export const Route = createFileRoute("/_authenticated/catalog")({
+  head: () => ({ meta: [{ title: "Catálogo — Nüva One" }] }),
+  component: CatalogPage,
+});
+
+function CatalogPage() {
+  const { data: products, isLoading } = useBizList<any>("products", { order: "name", ascending: true });
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return products ?? [];
+    return (products ?? []).filter((p: any) => `${p.name ?? ""} ${p.sku ?? ""} ${p.category ?? ""}`.toLowerCase().includes(q));
+  }, [products, query]);
+
+  return (
+    <ModuleGuard module="catalog">
+      <div className="space-y-5">
+        <PageHeader
+          title="Catálogo digital"
+          description="Tu catálogo nace del mismo inventario: precio, disponibilidad y producto se mantienen sincronizados."
+          actions={<Button variant="outline" disabled><ExternalLink className="mr-2 h-4 w-4" />Compartir catálogo</Button>}
+        />
+        <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.07] via-background to-accent/20 p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><ShoppingBag className="h-4 w-4" /> Venta conectada</div>
+              <h2 className="mt-1 text-lg font-semibold">Inventario → catálogo → pedido → venta</h2>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">La base ya está conectada al inventario. El siguiente paso es habilitar una URL pública y convertir pedidos del catálogo en operaciones Nüva.</p>
+            </div>
+            <Link to="/inventory"><Button variant="outline">Administrar inventario</Button></Link>
+          </div>
+        </Card>
+        <div className="flex items-center gap-2">
+          <div className="relative max-w-md flex-1"><Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar producto, SKU o categoría…" className="pl-9" /></div>
+          <Badge variant="outline">{filtered.length} productos</Badge>
+        </div>
+        {isLoading ? <Card className="p-6 text-sm text-muted-foreground">Cargando catálogo…</Card> : filtered.length === 0 ? <Card className="p-10 text-center text-sm text-muted-foreground">No hay productos para mostrar.</Card> : <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{filtered.map((p: any) => { const stock = Number(p.stock ?? 0); const available = Math.max(0, stock - Number(p.reserved_stock ?? 0) - Number(p.blocked_stock ?? 0)); return <Card key={p.id} className="overflow-hidden"><div className="aspect-[4/3] bg-muted/30">{p.image_url ? <img src={p.image_url} alt={p.name ?? "Producto"} className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full place-items-center text-muted-foreground"><Package className="h-10 w-10" /></div>}</div><div className="space-y-2 p-4"><div className="flex items-start justify-between gap-2"><h3 className="font-semibold leading-tight">{p.name || "Producto sin nombre"}</h3>{p.category && <Badge variant="secondary" className="shrink-0">{p.category}</Badge>}</div><p className="text-lg font-bold">{fmtCLP(Number(p.price ?? 0))}</p><p className="text-xs text-muted-foreground">{available > 0 ? `${available} disponibles` : "Sin disponibilidad"}{p.sku ? ` · SKU ${p.sku}` : ""}</p></div></Card>; })}</div>}
+      </div>
+    </ModuleGuard>
+  );
+}
