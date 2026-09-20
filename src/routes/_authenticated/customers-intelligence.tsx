@@ -39,7 +39,7 @@ function CustomersIntelligence() {
             onAskAI={() => {
               navigate({ to: "/chat" });
             }}
-          />
+          />}
         </div>
       </div>
     </ModuleGuard>
