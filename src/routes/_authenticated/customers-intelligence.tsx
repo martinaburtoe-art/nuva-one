@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { CustomerIntelligenceCard } from "@/components/customer-intelligence-card";
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/customers-intelligence")({
   component: CustomersIntelligence,
 });
 
-function CustomersIntelligence() {
+function CustomersIntelligence() {\n  const navigate = useNavigate();
   const { data: customers = [] } = useBizList<any>("customers", { order: "name", ascending: true });
   const { data: sales = [] } = useBizList<any>("sales", { order: "sale_date", ascending: false });
   const { data: quotes = [] } = useBizList<any>("quotes", {
@@ -30,10 +30,10 @@ function CustomersIntelligence() {
             sales={sales}
             quotes={quotes}
             onViewCustomers={() => {
-              window.location.href = "/customers";
+              navigate({ to: "/customers" });
             }}
             onAskAI={() => {
-              window.location.href = "/chat";
+              navigate({ to: "/chat" });
             }}
           />
         </div>
