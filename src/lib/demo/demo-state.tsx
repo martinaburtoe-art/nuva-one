@@ -9,6 +9,8 @@ type DemoState = {
   sales: typeof DEMO_SALES;
   simulatedSales: number;
   revenueDelta: number;
+  cashDelta: number;
+  costDelta: number;
   sell: (productId: string) => void;
   reset: () => void;
 };
@@ -20,6 +22,8 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
   const [sales, setSales] = useState(DEMO_SALES);
   const [simulatedSales, setSimulatedSales] = useState(0);
   const [revenueDelta, setRevenueDelta] = useState(0);
+  const [cashDelta, setCashDelta] = useState(0);
+  const [costDelta, setCostDelta] = useState(0);
 
   useEffect(() => {
     setDemoAiState(products, DEMO_BUSINESS.monthlyRevenue + revenueDelta);
@@ -37,6 +41,8 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     ]);
     setSimulatedSales((value) => value + 1);
     setRevenueDelta((value) => value + product.price);
+    setCashDelta((value) => value + product.price);
+    setCostDelta((value) => value + product.cost);
   }, []);
 
   const reset = useCallback(() => {
@@ -44,6 +50,8 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     setSales(DEMO_SALES);
     setSimulatedSales(0);
     setRevenueDelta(0);
+    setCashDelta(0);
+    setCostDelta(0);
   }, []);
 
   const value = useMemo(() => ({
@@ -53,9 +61,11 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     sales,
     simulatedSales,
     revenueDelta,
+    cashDelta,
+    costDelta,
     sell,
     reset,
-  }), [products, sales, simulatedSales, revenueDelta, sell, reset]);
+  }), [products, sales, simulatedSales, revenueDelta, cashDelta, costDelta, sell, reset]);
 
   return <DemoStateContext.Provider value={value}>{children}</DemoStateContext.Provider>;
 }
