@@ -53,26 +53,26 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const nav = [
-  { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard" },
-  { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain },
-  { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles },
-  { to: "/pricing-calculator", label: "Precios", icon: Calculator },
-  { to: "/pos", label: "Caja", icon: Calculator, module: "pos" },
-  { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales" },
-  { to: "/customers", label: "Clientes", icon: Users, module: "customers" },
-  { to: "/purchases", label: "Compras", icon: Package, module: "purchases" },
-  { to: "/inventory", label: "Inventario", icon: Boxes, module: "inventory" },
-  { to: "/shipments", label: "Envíos & Entregas", icon: Truck },
-  { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance" },
-  { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics" },
-  { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes" },
+  { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard", section: "Operación" },
+  { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain, section: "Inteligencia" },
+  { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles, section: "Inteligencia" },
+  { to: "/pricing-calculator", label: "Precios", icon: Calculator, section: "Finanzas" },
+  { to: "/pos", label: "Caja", icon: Calculator, module: "pos", section: "Operación" },
+  { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales", section: "Operación" },
+  { to: "/customers", label: "Clientes", icon: Users, module: "customers", section: "Operación" },
+  { to: "/purchases", label: "Compras", icon: Package, module: "purchases", section: "Operación" },
+  { to: "/inventory", label: "Inventario", icon: Boxes, module: "inventory", section: "Operación" },
+  { to: "/shipments", label: "Envíos & Entregas", icon: Truck, section: "Operación" },
+  { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance", section: "Finanzas" },
+  { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics", section: "Finanzas" },
+  { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes", section: "Finanzas" },
   // "Vinculación WhatsApp" permanece fuera del menú; el módulo y backend siguen disponibles.
   // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
-  { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai" },
-  { to: "/studio", label: "Nüva Studio", icon: Sparkles },
-  { to: "/foro", label: "Comunidad", icon: MessagesSquare },
-  { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true },
-  { to: "/settings", label: "Configuración", icon: Settings },
+  { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai", section: "Inteligencia" },
+  { to: "/studio", label: "Nüva Studio", icon: Sparkles, section: "Inteligencia" },
+  { to: "/foro", label: "Comunidad", icon: MessagesSquare, section: "Espacio" },
+  { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true, section: "Espacio" },
+  { to: "/settings", label: "Configuración", icon: Settings, section: "Espacio" },
 ] as const;
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -174,22 +174,31 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         )}
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
-          {visibleNav.map((item) => {
+          {visibleNav.map((item, index) => {
             const isActive = pathname === item.to;
+            const previous = visibleNav[index - 1];
+            const showSection = !collapsed && item.section && item.section !== previous?.section;
             return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+              <div key={item.to}>
+                {showSection && (
+                  <p className={cn("px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/40", index === 0 && "pt-1")}>
+                    {item.section}
+                  </p>
                 )}
-              >
-                <item.icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </Link>
+                <Link
+                  to={item.to}
+                  className={cn(
+                    "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-[background-color,color,transform] duration-200",
+                    "motion-safe:hover:translate-x-px",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                  )}
+                >
+                  <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-sidebar-foreground/55 group-hover:text-sidebar-foreground")} />
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </Link>
+              </div>
             );
           })}
           {myRole === "owner" && (
