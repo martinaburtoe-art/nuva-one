@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ExternalLink, Package, Search, ShoppingBag, Copy, Check } from "lucide-react";
+import { ExternalLink, Package, Search, ShoppingBag, Copy, Check, MessageCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
@@ -27,6 +27,12 @@ function CatalogPage() {
   }, [products, query]);
   const publicUrl = active?.public_enabled && active?.public_slug ? `${window.location.origin}/public-catalog/${active.public_slug}` : null;
 
+  function shareCatalogWhatsApp() {
+    if (!publicUrl) return;
+    const text = encodeURIComponent(`Hola, te comparto nuestro catálogo de Nüva One: ${publicUrl}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  }
+
   async function shareCatalog() {
     if (!publicUrl) return;
     try { await navigator.clipboard.writeText(publicUrl); setCopied(true); setTimeout(() => setCopied(false), 1800); }
@@ -36,7 +42,7 @@ function CatalogPage() {
   return (
     <ModuleGuard module="catalog">
       <div className="space-y-5">
-        <PageHeader title="Catálogo digital" description="Tu catálogo nace del mismo inventario: precio, disponibilidad y producto se mantienen sincronizados." actions={<div className="flex gap-2">{publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline"><ExternalLink className="mr-2 h-4 w-4" />Abrir público</Button></a>}<Button variant="outline" disabled={!publicUrl} onClick={shareCatalog}>{copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}{copied ? "Enlace copiado" : "Compartir catálogo"}</Button></div>} />
+        <PageHeader title="Catálogo digital" description="Tu catálogo nace del mismo inventario: precio, disponibilidad y producto se mantienen sincronizados." actions={<div className="flex gap-2">{publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline"><ExternalLink className="mr-2 h-4 w-4" />Abrir público</Button></a>}<div className="flex gap-2"><Button variant="outline" disabled={!publicUrl} onClick={shareCatalogWhatsApp}><MessageCircle className="mr-2 h-4 w-4" />WhatsApp</Button><Button variant="outline" disabled={!publicUrl} onClick={shareCatalog}>{copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}{copied ? "Enlace copiado" : "Copiar enlace"}</Button></div></div>} />
         <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.07] via-background to-accent/20 p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><ShoppingBag className="h-4 w-4" /> Venta conectada</div><h2 className="mt-1 text-lg font-semibold">Inventario → catálogo → venta</h2><p className="mt-1 max-w-2xl text-sm text-muted-foreground">La base está conectada al inventario. Cuando el catálogo público está habilitado, los clientes ven disponibilidad real y pueden contactar al negocio directamente.</p></div><Link to="/inventory"><Button variant="outline">Administrar inventario</Button></Link></div>
         </Card>
