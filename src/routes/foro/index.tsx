@@ -220,82 +220,47 @@ function ForoIndex() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-12">
-        <header>
-          <p className="text-sm font-medium text-primary">Comunidad Nüva One</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            Foro para PyMEs en Chile: gestión, ventas, finanzas e inventario
-          </h1>
-          <p className="mt-3 max-w-3xl text-muted-foreground">
-            Un espacio para encontrar respuestas prácticas sobre cómo gestionar una pyme, ordenar
-            las ventas, controlar inventario, entender el flujo de caja, reducir tareas manuales y
-            usar tecnología e inteligencia artificial para tomar mejores decisiones.
-          </p>
-        </header>
-
-        <section
-          className="group relative mt-10 min-h-[430px] overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-2xl sm:min-h-[520px]"
-          aria-labelledby="video-comunidad"
-        >
+      <main>
+        <section className="relative isolate min-h-[min(720px,82vh)] overflow-hidden bg-[#080809] text-white" aria-labelledby="video-comunidad">
           <video
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1800ms] ease-out motion-safe:group-hover:scale-[1.035]"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1800ms] ease-out motion-safe:hover:scale-[1.015]"
             src="/foro-community/Data_pulses_traveling_network_di…_20260920193246.mp4"
             autoPlay
-            muted
             loop
+            muted
             playsInline
-            preload="auto"
-            aria-label="Video de Nüva One · Comunidad"
+            preload="metadata"
+            aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-black/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-
-          <div className="relative flex min-h-[430px] flex-col justify-between p-6 sm:min-h-[520px] sm:p-10 lg:p-12">
-            <div className="flex items-center justify-between gap-4">
-              <span className="inline-flex w-fit items-center rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/80 backdrop-blur-md">
-                Nüva One · Comunidad
-              </span>
-              <span className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white/50 backdrop-blur-md sm:inline-flex">
-                Pymes · Chile · Gestión
-              </span>
-            </div>
-
-            <div className="max-w-2xl">
-              <p className="mb-3 text-sm font-medium text-white/70">
-                Un espacio para aprender, preguntar y compartir.
-              </p>
-              <h2
+          <div className="absolute inset-0 bg-gradient-to-r from-[#080809]/90 via-[#080809]/55 to-[#080809]/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080809] via-transparent to-[#080809]/20" />
+          <div className="relative z-10 mx-auto flex min-h-[min(720px,82vh)] max-w-7xl items-end px-6 pb-14 pt-32 md:px-10 md:pb-20">
+            <div className="max-w-4xl">
+              <Badge variant="outline" className="border-white/25 bg-white/10 text-white backdrop-blur">
+                COMUNIDAD NÜVA ONE · PYME · CHILE
+              </Badge>
+              <h1
                 id="video-comunidad"
-                className="max-w-xl text-4xl font-semibold leading-[0.98] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl"
+                className="mt-5 max-w-4xl text-5xl font-semibold leading-[.94] tracking-[-.045em] sm:text-7xl lg:text-[clamp(4.5rem,7vw,7.5rem)]"
               >
-                Las ideas de una comunidad también hacen crecer un negocio.
-              </h2>
-              <p className="mt-5 max-w-xl text-sm leading-6 text-white/65 sm:text-base">
-                Conversa sobre ventas, inventario, finanzas, compras, tecnología e IA con una
-                comunidad enfocada en los desafíos reales de las PyMEs.
+                Un lugar donde las preguntas <span className="text-[#E6C687]">se convierten en conocimiento.</span>
+              </h1>
+              <p className="mt-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
+                Comparte experiencias y encuentra respuestas sobre ventas, inventario, finanzas,
+                compras, marketing, tecnología e inteligencia artificial para PyMEs chilenas.
               </p>
-              <a
-                href="#conversaciones"
-                className="mt-6 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/15"
-              >
-                Explorar conversaciones
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-2">
-              {["Ventas", "Inventario", "Finanzas", "Compras", "IA"].map((topic) => (
-                <span
-                  key={topic}
-                  className="rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-xs text-white/60 backdrop-blur-md"
-                >
-                  {topic}
-                </span>
-              ))}
+              <div className="mt-7 flex flex-wrap gap-2">
+                {["VENTAS", "INVENTARIO", "FINANZAS", "COMPRAS", "MARKETING", "IA"].map((x) => (
+                  <span key={x} className="rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[10px] font-bold tracking-[.16em] text-white/75 backdrop-blur">
+                    {x}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </section>
+
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:py-14">
         <section className="mt-10 rounded-2xl border bg-card/70 p-6 shadow-soft" aria-labelledby="recursos-pyme">
           <div className="max-w-3xl">
             <h2 id="recursos-pyme" className="text-xl font-semibold">
