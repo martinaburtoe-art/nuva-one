@@ -39,7 +39,9 @@ function FinancialDashboard() {
     { order: "code", ascending: true },
   );
 
-  const financialLoading = pnlLoading || cashLoading || taxLoading || trialLoading;\n\n  const revenue = pnl
+  const financialLoading = pnlLoading || cashLoading || taxLoading || trialLoading;
+
+  const revenue = pnl
     .filter((x: any) => ["revenue", "other_income"].includes(x.account_type))
     .reduce((s: number, x: any) => s + Number(x.signed_amount || 0), 0);
   const costs = pnl
