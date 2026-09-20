@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ArrowUpRight, Boxes, CircleAlert, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Boxes, CircleAlert, Sparkles, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fmtCLP } from "@/lib/biz-data";
@@ -42,7 +42,7 @@ export function BusinessInsightCard({ income, expense, inventoryValue, productsC
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Pulso operativo</span>
                 <span className="rounded-full border bg-background/70 px-2.5 py-1 text-[11px] font-semibold">{state.label}</span>
               </div>
-              <h2 className="mt-4 max-w-3xl text-2xl font-bold tracking-tight md:text-3xl">{state.title}</h2>
+              <h2 className="mt-4 max-w-3xl text-xl font-semibold tracking-tight md:text-2xl">{state.title}</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{state.description}</p>
             </div>
             <Link to={state.href} className="shrink-0"><Button size="lg">{state.action}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
@@ -55,13 +55,6 @@ export function BusinessInsightCard({ income, expense, inventoryValue, productsC
             <PulseMetric label="Operación" value={`${salesCount} ventas`} hint={`${productsCount} productos · ${fmtCLP(inventoryValue)} inventario`} />
           </div>
 
-          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
-            <div className="rounded-2xl border bg-background/70 px-4 py-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Rol del Resumen</p>
-              <p className="mt-1 text-sm font-medium">Aquí ves qué está pasando ahora. El Resumen está diseñado para orientarte rápidamente sobre la operación del día.</p>
-            </div>
-            <Link to="/executive-command-center" className="shrink-0"><Button variant="outline">Tomar una decisión<ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
-          </div>
         </div>
       </Card>
       <NuvaOperatingPulse />
