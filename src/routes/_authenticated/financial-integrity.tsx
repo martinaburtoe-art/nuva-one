@@ -55,7 +55,7 @@ function FinancialIntegrity() {
         description={`Control transversal de contabilidad, tesorería, tributación y cierre${active ? ` · ${active.name}` : ""}`}
       />
       <div className="space-y-5">
-        <Card className="p-5">
+        <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-lg font-semibold">
@@ -154,7 +154,7 @@ function FinancialIntegrity() {
           </div>
         </Card>
 
-        <Card className="border-primary/20 bg-primary/5 p-5">
+        <Card className="rounded-2xl border-primary/20 bg-primary/5 p-5 shadow-sm">
           <div className="flex gap-3">
             <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" />
             <div>
