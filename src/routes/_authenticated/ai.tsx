@@ -214,9 +214,9 @@ function AiPage() {
           title="Nüva Agent"
           description="Un agente especializado que entiende tu negocio y conecta sus áreas."
         />
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-          <Card className="p-3 lg:h-[calc(100dvh-13rem)] lg:overflow-y-auto">
-            <div className="mb-3 px-2">
+        <div className="grid gap-3 lg:grid-cols-[248px_minmax(0,1fr)]">
+          <Card className="p-2.5 lg:h-[calc(100dvh-13rem)] lg:overflow-y-auto">
+            <div className="mb-2 px-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Especialistas
               </p>
@@ -234,14 +234,14 @@ function AiPage() {
                     type="button"
                     onClick={() => setSpecialist(item.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all",
-                      selected ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent",
+                      "flex w-full items-center gap-2.5 rounded-lg p-2.5 text-left transition-[background-color,color,box-shadow,transform] duration-150 motion-safe:hover:translate-x-px",
+                      selected ? "bg-primary/10 text-foreground shadow-sm ring-1 ring-primary/15" : "hover:bg-accent",
                     )}
                   >
                     <span
                       className={cn(
                         "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                        selected ? "bg-primary-foreground/15" : "bg-secondary",
+                        selected ? "bg-primary text-primary-foreground" : "bg-secondary",
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -251,7 +251,7 @@ function AiPage() {
                       <span
                         className={cn(
                           "block truncate text-[11px]",
-                          selected ? "text-primary-foreground/75" : "text-muted-foreground",
+                          selected ? "text-muted-foreground" : "text-muted-foreground",
                         )}
                       >
                         {item.description}
@@ -261,7 +261,7 @@ function AiPage() {
                 );
               })}
             </div>
-            <div className="mt-4 rounded-xl border bg-secondary/30 p-3 text-xs text-muted-foreground">
+            <div className="mt-3 rounded-lg border border-border/60 bg-secondary/25 p-3 text-xs text-muted-foreground">
               <p className="font-semibold text-foreground">Contexto empresarial</p>
               <p className="mt-1">
                 Nüva Agent utiliza los datos del negocio activo y su memoria de conversación. Cada
@@ -272,7 +272,7 @@ function AiPage() {
 
           <Card className="flex h-[calc(100dvh-13rem)] flex-col overflow-hidden p-0 md:h-[calc(100vh-12rem)]">
             <div className="flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-glow">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
@@ -289,18 +289,18 @@ function AiPage() {
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow">
                       <BrainCircuit className="h-7 w-7 text-primary-foreground" />
                     </div>
-                    <h2 className="mt-5 text-2xl font-bold">Tu agente empresarial</h2>
+                    <h2 className="mt-4 text-xl font-semibold tracking-tight">Tu agente empresarial</h2>
                     <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
                       Pregunta, analiza y entiende lo que está pasando en tu negocio. Nüva
                       selecciona el enfoque adecuado o puedes elegir un especialista.
                     </p>
                   </div>
-                  <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                  <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
                     {suggestions[specialist].map((s) => (
                       <button
                         key={s}
                         onClick={() => setInput(s)}
-                        className="rounded-xl border border-border/60 bg-secondary/30 p-4 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-accent"
+                        className="rounded-lg border border-border/60 bg-secondary/20 p-3.5 text-left text-sm transition-[background-color,border-color,box-shadow,transform] duration-150 motion-safe:hover:-translate-y-px motion-safe:hover:border-primary/50 hover:bg-accent"
                       >
                         {s}
                       </button>
@@ -320,7 +320,7 @@ function AiPage() {
                   )}
                   <div
                     className={cn(
-                      "max-w-2xl whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                      "max-w-2xl whitespace-pre-wrap rounded-xl px-4 py-3 text-sm leading-relaxed shadow-sm",
                       m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary",
                     )}
                   >
@@ -337,7 +337,7 @@ function AiPage() {
               )}
             </div>
             {limitReached && (
-              <div className="mx-4 mb-2 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-accent/40 px-4 py-3 text-sm">
+              <div className="mx-3 mb-2 flex items-center justify-between gap-3 rounded-lg border border-primary/25 bg-accent/40 px-3 py-2.5 text-sm">
                 <span>Alcanzaste el límite de IA de tu plan este mes.</span>
                 <Link
                   to="/settings"
@@ -347,7 +347,7 @@ function AiPage() {
                 </Link>
               </div>
             )}
-            <form onSubmit={handleSend} className="flex gap-2 border-t bg-background/60 p-3 md:p-4">
+            <form onSubmit={handleSend} className="flex gap-2 border-t bg-background/80 p-3 md:p-3.5">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -355,13 +355,13 @@ function AiPage() {
                   sessionReady ? `Pregunta a ${activeSpecialist.label}...` : "Cargando sesión..."
                 }
                 disabled={loading || !sessionReady || limitReached}
-                className="h-11"
+                className="h-10"
               />
               <Button
                 type="submit"
                 size="lg"
                 disabled={loading || !sessionReady || !input.trim() || limitReached}
-                className="shadow-elegant"
+                className="shadow-sm"
               >
                 <Send className="h-4 w-4" />
               </Button>
