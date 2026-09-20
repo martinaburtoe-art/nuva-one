@@ -8,10 +8,10 @@ select ok(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
       and p.proname = 'get_public_catalog'
-      and p.prosecdef
+      and not p.prosecdef
       and p.proconfig @> array['search_path=""']
   ),
-  'public catalog RPC pins an empty search_path'
+  'public catalog RPC uses an invoker security model with an empty search_path'
 );
 
 select ok(
