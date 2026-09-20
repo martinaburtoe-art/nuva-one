@@ -234,32 +234,68 @@ function ForoIndex() {
         </header>
 
         <section
-          className="mt-10 overflow-hidden rounded-2xl border bg-black shadow-soft"
+          className="group relative mt-10 min-h-[430px] overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-2xl sm:min-h-[520px]"
           aria-labelledby="video-comunidad"
         >
-          <div className="relative aspect-video w-full bg-black">
-            <video
-              className="h-full w-full object-cover"
-              src="/foro-community/Data_pulses_traveling_network_di…_20260920193246.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label="Nüva One · Comunidad"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">
+          <video
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1800ms] ease-out motion-safe:group-hover:scale-[1.035]"
+            src="/foro-community/Data_pulses_traveling_network_di…_20260920193246.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-label="Video de Nüva One · Comunidad"
+          />
+          <div className="absolute inset-0 bg-black/35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+
+          <div className="relative flex min-h-[430px] flex-col justify-between p-6 sm:min-h-[520px] sm:p-10 lg:p-12">
+            <div className="flex items-center justify-between gap-4">
+              <span className="inline-flex w-fit items-center rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/80 backdrop-blur-md">
                 Nüva One · Comunidad
+              </span>
+              <span className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white/50 backdrop-blur-md sm:inline-flex">
+                Pymes · Chile · Gestión
+              </span>
+            </div>
+
+            <div className="max-w-2xl">
+              <p className="mb-3 text-sm font-medium text-white/70">
+                Un espacio para aprender, preguntar y compartir.
               </p>
-              <h2 id="video-comunidad" className="mt-2 max-w-2xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Ideas, respuestas y herramientas para hacer crecer tu pyme.
+              <h2
+                id="video-comunidad"
+                className="max-w-xl text-4xl font-semibold leading-[0.98] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl"
+              >
+                Las ideas de una comunidad también hacen crecer un negocio.
               </h2>
+              <p className="mt-5 max-w-xl text-sm leading-6 text-white/65 sm:text-base">
+                Conversa sobre ventas, inventario, finanzas, compras, tecnología e IA con una
+                comunidad enfocada en los desafíos reales de las PyMEs.
+              </p>
+              <a
+                href="#conversaciones"
+                className="mt-6 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/15"
+              >
+                Explorar conversaciones
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-2">
+              {["Ventas", "Inventario", "Finanzas", "Compras", "IA"].map((topic) => (
+                <span
+                  key={topic}
+                  className="rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-xs text-white/60 backdrop-blur-md"
+                >
+                  {topic}
+                </span>
+              ))}
             </div>
           </div>
         </section>
-
         <section className="mt-10 rounded-2xl border bg-card/70 p-6 shadow-soft" aria-labelledby="recursos-pyme">
           <div className="max-w-3xl">
             <h2 id="recursos-pyme" className="text-xl font-semibold">
@@ -323,8 +359,8 @@ function ForoIndex() {
           <NewTopicForm />
         </div>
 
-        <section className="mt-8" aria-labelledby="conversaciones">
-          <h2 id="conversaciones" className="sr-only">Conversaciones de la comunidad</h2>
+        <section id="conversaciones" className="mt-8 scroll-mt-24" aria-labelledby="conversaciones-title">
+          <h2 id="conversaciones-title" className="sr-only">Conversaciones de la comunidad</h2>
           <div className="space-y-3">
             {isLoading && <p className="text-sm text-muted-foreground">Cargando temas...</p>}
             {!isLoading && topics?.length === 0 && (
