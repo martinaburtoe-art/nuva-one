@@ -9,7 +9,8 @@ export const Route = createFileRoute("/_authenticated/customers-intelligence")({
   component: CustomersIntelligence,
 });
 
-function CustomersIntelligence() {\n  const navigate = useNavigate();
+function CustomersIntelligence() {
+  const navigate = useNavigate();
   const { data: customers = [] } = useBizList<any>("customers", { order: "name", ascending: true });
   const { data: sales = [] } = useBizList<any>("sales", { order: "sale_date", ascending: false });
   const { data: quotes = [] } = useBizList<any>("quotes", {
