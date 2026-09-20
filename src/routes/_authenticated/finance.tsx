@@ -15,8 +15,8 @@ export const Route = createFileRoute("/_authenticated/finance")({
 });
 
 function Finance() {
-  const { data: transactions = [] } = useBizList<any>("transactions", { order: "tx_date", ascending: false });
-  const { data: products = [] } = useBizList<any>("products");
+  const { data: transactions = [], isLoading: transactionsLoading } = useBizList<any>("transactions", { order: "tx_date", ascending: false });
+  const { data: products = [], isLoading: productsLoading } = useBizList<any>("products");
 
   const control = useMemo(() => {
     const income = transactions.filter((row: any) => row.type === "income").reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
@@ -36,7 +36,7 @@ function Finance() {
           data="Utiliza los movimientos, ventas, compras, obligaciones tributarias, productos y registros financieros disponibles para tu negocio. Las cifras dependen de los datos registrados."
           actions={["Revisar la situación financiera actual", "Detectar obligaciones y riesgos de liquidez", "Analizar cartera y pendientes contables", "Emitir, revisar o respaldar información tributaria cuando corresponda"]}
         />
-        <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} />
+        <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} loading={transactionsLoading || productsLoading} />
         <CollectionPriorityPanel />
         <FinanceSiiWorkspace />
         <FinanceAdvancedTools />
