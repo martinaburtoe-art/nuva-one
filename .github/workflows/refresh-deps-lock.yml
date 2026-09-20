@@ -1,0 +1,36 @@
+name: Refresh dependency lockfile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "package.json"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Refresh package-lock without scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Commit refreshed lockfile and remove bootstrap workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/refresh-deps-lock.yml
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "No lockfile changes detected"
+            exit 0
+          fi
+          git commit -m "chore(deps): refresh lockfile after security upgrades"
+          git push
