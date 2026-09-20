@@ -4,7 +4,9 @@ export type DemoEvent =
   | "simulated_sale"
   | "cta_clicked"
   | "module_opened"
-  | "ai_question";
+  | "ai_question"
+  | "simulated_purchase"
+  | "quote_converted_to_sale";
 
 export function trackDemoEvent(event: DemoEvent, metadata: Record<string, string | number> = {}) {
   if (typeof window === "undefined") return;
