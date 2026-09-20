@@ -11,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/inventory")({
 function InventoryPage() {
   return (
     <div className="space-y-5">
+      <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm text-muted-foreground"><span className="font-medium text-foreground">Inventario conectado.</span> Stock, ventas y abastecimiento trabajan sobre la misma operación.</div>
       <ModuleInformation
         title="Inventario"
         summary="Controla existencias, disponibilidad, movimientos y abastecimiento sin perder trazabilidad."
