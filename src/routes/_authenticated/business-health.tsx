@@ -70,9 +70,9 @@ function BusinessHealth() {
           description="Lectura ejecutiva basada en datos reales de operación, finanzas, clientes y ejecución."
         />
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-4" role="status" aria-label="Cargando Nüva Intelligence">
             <Skeleton className="h-64 w-full" />
-            <Card className="p-6">
+            <Card className="rounded-2xl border-border/70 p-6 shadow-sm">
               <Skeleton className="h-20 w-full" />
             </Card>
           </div>
@@ -86,7 +86,7 @@ function BusinessHealth() {
               overdueTasks={overdueTasks}
               intelligence={intelligence}
             />
-            <Card className="p-5">
+            <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
               <p className="text-sm font-semibold">Cómo funciona Nüva Intelligence</p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 El indicador combina señales observables de ventas, caja, calidad de datos,
