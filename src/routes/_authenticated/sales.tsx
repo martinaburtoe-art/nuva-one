@@ -57,7 +57,7 @@ function Sales() {
     mutationFn: async () => {
       const validItems = items.filter((i) => i.product_id && i.qty > 0).map((i) => ({ product_id: i.product_id, qty: i.qty }));
       if (!validItems.length) throw new Error("Agrega al menos un producto del inventario");
-      const { data, error } = await supabase.rpc("create_fast_sale", { p_customer_id: customerId, p_customer_name: customerName || null, p_channel: channel, p_payment_method: paymentMethod, p_is_credit: isCredit, p_due_date: isCredit && dueDate ? dueDate : null, p_items: validItems, p_notes: null });
+      const { data, error } = await supabase.rpc("create_fast_sale", { p_customer_id: customerId ?? undefined, p_customer_name: customerName || undefined, p_channel: channel, p_payment_method: paymentMethod, p_is_credit: isCredit, p_due_date: isCredit && dueDate ? dueDate : undefined, p_items: validItems, p_notes: undefined });
       if (error) throw error;
       return data;
     },
