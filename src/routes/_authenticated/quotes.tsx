@@ -181,7 +181,7 @@ function Quotes() {
                     Nueva cotización
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-3xl rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>Nueva cotización</DialogTitle>
                   </DialogHeader>
@@ -397,7 +397,7 @@ function Quotes() {
               description="Crea tu primera cotización profesional."
             />
           ) : (
-            <Table>
+            <div className="overflow-x-auto"><Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>N°</TableHead>
@@ -479,7 +479,7 @@ function Quotes() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </Table></div>
           )}
         </Card>
       </>
