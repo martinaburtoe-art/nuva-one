@@ -14,19 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, MessageSquare, Plus } from "lucide-react";
+import { Sparkles, MessageSquare, Plus, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/foro/")({
   head: () => ({
     meta: [
       {
-        title: "Foro de negocios PyME — Nüva One",
+        title: "Foro para PyMEs en Chile | Ventas, Inventario, Finanzas y Gestión — Nüva One",
       },
       {
         name: "description",
         content:
-          "Comunidad de dueños de PyMEs en Chile: preguntas y respuestas sobre ventas, marketing, finanzas y gestión de negocio.",
+          "Foro para dueños y equipos de PyMEs en Chile. Aprende sobre gestión empresarial, ventas, inventario, flujo de caja, costos, compras, marketing, tecnología e IA para negocios.",
       },
     ],
   }),
@@ -54,6 +54,39 @@ type Topic = {
   views: number;
   created_at: string;
 };
+
+const SEO_TOPICS = [
+  {
+    title: "Cómo ordenar las ventas de una pyme",
+    text: "Conversaciones sobre ventas, clientes, cotizaciones, seguimiento comercial y CRM para pequeñas y medianas empresas.",
+    category: "ventas",
+  },
+  {
+    title: "Control de inventario y stock",
+    text: "Ideas para reducir quiebres de stock, ordenar productos, controlar existencias y conectar inventario con las ventas.",
+    category: "operaciones",
+  },
+  {
+    title: "Flujo de caja y finanzas para pymes",
+    text: "Preguntas prácticas sobre caja, ingresos, egresos, costos, márgenes, compras y decisiones financieras del negocio.",
+    category: "finanzas",
+  },
+  {
+    title: "Cómo gestionar una pyme sin depender de Excel",
+    text: "Experiencias sobre digitalización, automatización y sistemas de gestión empresarial para centralizar la operación.",
+    category: "tecnologia",
+  },
+  {
+    title: "Marketing y crecimiento de negocios",
+    text: "Estrategias para atraer clientes, mejorar la presencia digital, convertir oportunidades y hacer crecer una pyme.",
+    category: "marketing",
+  },
+  {
+    title: "IA para negocios y gestión empresarial",
+    text: "Casos de uso de inteligencia artificial para analizar información, detectar oportunidades y tomar mejores decisiones.",
+    category: "tecnologia",
+  },
+] as const;
 
 function useTopics(category: string | "all") {
   return useQuery({
@@ -188,11 +221,48 @@ function ForoIndex() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-12">
-        <h1 className="text-3xl font-bold tracking-tight">Foro de negocios PyME</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Preguntas y conversación entre dueños de negocio sobre ventas, marketing, finanzas y
-          operación. Abierto para leer sin cuenta — para publicar necesitas una cuenta de Nüva One.
-        </p>
+        <header>
+          <p className="text-sm font-medium text-primary">Comunidad Nüva One</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            Foro para PyMEs en Chile: gestión, ventas, finanzas e inventario
+          </h1>
+          <p className="mt-3 max-w-3xl text-muted-foreground">
+            Un espacio para encontrar respuestas prácticas sobre cómo gestionar una pyme, ordenar
+            las ventas, controlar inventario, entender el flujo de caja, reducir tareas manuales y
+            usar tecnología e inteligencia artificial para tomar mejores decisiones.
+          </p>
+        </header>
+
+        <section className="mt-10 rounded-2xl border bg-card/70 p-6 shadow-soft" aria-labelledby="recursos-pyme">
+          <div className="max-w-3xl">
+            <h2 id="recursos-pyme" className="text-xl font-semibold">
+              Recursos para administrar y hacer crecer tu pyme
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Las dudas reales de una empresa suelen estar conectadas: una venta afecta el stock,
+              una compra afecta la caja y los costos, y toda esa información ayuda a decidir. Por
+              eso este foro reúne conocimiento sobre <strong>gestión empresarial para pymes</strong>,
+              software de gestión, digitalización, operaciones y crecimiento en un mismo lugar.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {SEO_TOPICS.map((topic) => (
+              <button
+                key={topic.title}
+                type="button"
+                onClick={() => setCategory(topic.category)}
+                className="group rounded-xl border bg-background/60 p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+              >
+                <h3 className="text-sm font-semibold group-hover:text-primary">{topic.title}</h3>
+                <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{topic.text}</p>
+                <span className="mt-3 inline-flex items-center text-xs font-medium text-primary">
+                  Ver conversaciones <ArrowRight className="ml-1 h-3 w-3" />
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-1.5">
@@ -226,44 +296,79 @@ function ForoIndex() {
           <NewTopicForm />
         </div>
 
-        <div className="mt-8 space-y-3">
-          {isLoading && <p className="text-sm text-muted-foreground">Cargando temas...</p>}
-          {!isLoading && topics?.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Todavía no hay temas en esta categoría. ¡Sé el primero en publicar!
-            </p>
-          )}
-          {topics?.map((t) => (
-            <Link
-              key={t.id}
-              to="/foro/$topicId"
-              params={{ topicId: t.id }}
-              className="block rounded-xl border bg-card p-5 shadow-soft transition-shadow hover:shadow-elegant"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px]">
-                      {CATEGORIES.find((c) => c.value === t.category)?.label ?? t.category}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {t.business_name}
-                      {t.business_industry ? ` · ${t.business_industry}` : ""}
-                    </span>
+        <section className="mt-8" aria-labelledby="conversaciones">
+          <h2 id="conversaciones" className="sr-only">Conversaciones de la comunidad</h2>
+          <div className="space-y-3">
+            {isLoading && <p className="text-sm text-muted-foreground">Cargando temas...</p>}
+            {!isLoading && topics?.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Todavía no hay temas en esta categoría. ¡Sé el primero en publicar!
+              </p>
+            )}
+            {topics?.map((t) => (
+              <Link
+                key={t.id}
+                to="/foro/$topicId"
+                params={{ topicId: t.id }}
+                className="block rounded-xl border bg-card p-5 shadow-soft transition-shadow hover:shadow-elegant"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {CATEGORIES.find((c) => c.value === t.category)?.label ?? t.category}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {t.business_name}
+                        {t.business_industry ? ` · ${t.business_industry}` : ""}
+                      </span>
+                    </div>
+                    <h2 className="truncate text-base font-semibold">{t.title}</h2>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{t.body}</p>
                   </div>
-                  <h2 className="truncate text-base font-semibold">{t.title}</h2>
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{t.body}</p>
+                  <div className="flex shrink-0 flex-col items-end gap-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <MessageSquare className="h-4 w-4" /> {t.reply_count}
+                    </span>
+                    <span className="text-xs">{t.views} vistas</span>
+                  </div>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <MessageSquare className="h-4 w-4" /> {t.reply_count}
-                  </span>
-                  <span className="text-xs">{t.views} vistas</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-12 border-t pt-8" aria-labelledby="que-resuelve">
+          <h2 id="que-resuelve" className="text-xl font-semibold">
+            Problemas habituales que puedes resolver con una gestión conectada
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            Si tu negocio lleva ventas, compras, inventario, gastos y clientes en herramientas
+            separadas, es fácil perder tiempo buscando información o tomar decisiones con datos
+            desactualizados. Nüva One está orientado a centralizar la operación de la pyme para
+            tener una visión más clara del negocio y convertir los datos en acciones.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2 text-xs text-muted-foreground">
+            {[
+              "software para pymes en Chile",
+              "sistema de gestión para pymes",
+              "ERP para pymes Chile",
+              "control de inventario",
+              "gestión de ventas",
+              "flujo de caja",
+              "control de gastos",
+              "gestión de compras",
+              "CRM para pymes",
+              "dashboard empresarial",
+              "automatización de negocios",
+              "IA para empresas",
+            ].map((keyword) => (
+              <span key={keyword} className="rounded-full border bg-muted/40 px-3 py-1.5">
+                {keyword}
+              </span>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );
