@@ -272,7 +272,7 @@ function Customers() {
       <div className="p-4 md:p-6">
         <PageHeader
           title="Clientes"
-          description="CRM: pipeline, historial de compras y seguimiento con tareas y actividades."
+          description="Tu cartera, su actividad y la próxima acción. Todo el contexto en una sola vista."
           action={
             <>
               {openTasksCount > 0 && (
@@ -371,12 +371,35 @@ function Customers() {
           }
         />
 
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+          <Card className="border-border/70 bg-card/80 p-3.5">
+            <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Cartera</div>
+            <div className="mt-1 text-2xl font-semibold tracking-tight">{counts.all}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">clientes registrados</div>
+          </Card>
+          <Card className="border-success/20 bg-success/5 p-3.5">
+            <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-success">Activos</div>
+            <div className="mt-1 text-2xl font-semibold tracking-tight">{counts.active}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">relación vigente</div>
+          </Card>
+          <Card className="border-warning/20 bg-warning/5 p-3.5">
+            <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-warning">Prospectos</div>
+            <div className="mt-1 text-2xl font-semibold tracking-tight">{counts.lead}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">en desarrollo</div>
+          </Card>
+          <Card className="border-primary/20 bg-primary/5 p-3.5">
+            <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-primary">Seguimiento</div>
+            <div className="mt-1 text-2xl font-semibold tracking-tight">{openTasksCount}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">tareas pendientes</div>
+          </Card>
+        </div>
+
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/70 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nombre, teléfono, email o RUT"
-              className="pl-8"
+              className="h-10 rounded-xl border-border/70 bg-background pl-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -410,7 +433,15 @@ function Customers() {
             description="Agrega tu primer cliente para empezar a llevar su historial."
           />
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
+            <div className="flex items-center justify-between border-b border-border/70 bg-muted/20 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold">Cartera de clientes</p>
+                <p className="text-[11px] text-muted-foreground">{filtered.length} resultados · selecciona una fila para abrir su ficha</p>
+              </div>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -484,16 +515,23 @@ function Customers() {
                 })}
               </TableBody>
             </Table>
+            </div>
           </Card>
         )}
 
         {/* Ficha del cliente: contacto, notas e historial real de compras/cotizaciones */}
         <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
-          <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+          <SheetContent className="w-full overflow-y-auto border-l-border/70 bg-background/95 backdrop-blur-xl sm:max-w-xl">
             {detail && (
               <>
-                <SheetHeader>
-                  <SheetTitle>{detail.name}</SheetTitle>
+                <SheetHeader className="rounded-2xl border border-border/70 bg-card/70 p-4 text-left">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-[0.08em] text-primary">Ficha de cliente</p>
+                      <SheetTitle className="mt-1 text-xl tracking-tight">{detail.name}</SheetTitle>
+                    </div>
+                    <Badge className={statusLabel[detail.status].c}>{statusLabel[detail.status].l}</Badge>
+                  </div>
                 </SheetHeader>
                 <div className="mt-4 space-y-4">
                   <div>
@@ -547,14 +585,14 @@ function Customers() {
                     <Card className="p-3 text-sm text-muted-foreground">{detail.notes}</Card>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <Card className="p-3">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <Card className="border-border/70 bg-card/70 p-3.5">
                       <p className="text-xs text-muted-foreground">Total comprado</p>
                       <p className="text-lg font-semibold">
                         {fmtCLP(statsByCustomer.get(detail.id)?.total ?? 0)}
                       </p>
                     </Card>
-                    <Card className="p-3">
+                    <Card className="border-border/70 bg-card/70 p-3.5">
                       <p className="text-xs text-muted-foreground">N° de compras</p>
                       <p className="text-lg font-semibold">
                         {statsByCustomer.get(detail.id)?.count ?? 0}
