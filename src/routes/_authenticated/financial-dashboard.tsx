@@ -237,9 +237,9 @@ function FinancialDashboard() {
                 </div>
               </div>
             )}
-            <div className="mt-4 flex items-center gap-2 text-sm">
+            <div className="mt-4 flex items-center gap-2 text-sm" aria-live="polite">
               <Activity className="h-4 w-4" />
-              {Math.abs(balanceDifference) <= 0.01 ? "Balanza cuadrada" : "Requiere revisión"}
+              {trialLoading ? "Verificando balanza…" : Math.abs(balanceDifference) <= 0.01 ? "Balanza cuadrada" : "Requiere revisión"}
             </div>
           </Card>
         </div>
