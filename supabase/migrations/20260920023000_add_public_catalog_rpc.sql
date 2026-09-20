@@ -29,7 +29,7 @@ as $$
     p.name,
     p.category,
     p.price,
-    p.image_url,
+    null::text,
     greatest(0, p.stock - coalesce(p.reserved_stock, 0) - coalesce(p.blocked_stock, 0))
   from public.businesses b
   join public.products p on p.business_id = b.id
