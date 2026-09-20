@@ -133,6 +133,33 @@ const INFO: Record<string, { title: string; description: string; tips: string[] 
   },
 };
 
+type ModuleDetails = {
+  purpose: string;
+  capabilities: string[];
+  data: string;
+  outcome: string;
+};
+
+const DETAILS: Record<string, ModuleDetails> = {
+  "/dashboard": { purpose: "Supervisar el estado general del negocio y decidir qué revisar primero.", capabilities: ["Ver indicadores clave", "Detectar variaciones", "Entrar al módulo de origen"], data: "Ventas, compras, caja, inventario y actividad reciente autorizada.", outcome: "Una lectura ejecutiva y contextual de la operación." },
+  "/pos": { purpose: "Registrar ventas y movimientos de caja con rapidez.", capabilities: ["Buscar productos", "Cobrar y registrar medios de pago", "Consultar stock durante la venta"], data: "Productos, precios, stock, clientes y operaciones de caja.", outcome: "Ventas registradas y conectadas con stock, caja y reportes." },
+  "/sales": { purpose: "Analizar el desempeño comercial y la trazabilidad de las ventas.", capabilities: ["Filtrar períodos", "Revisar operaciones", "Analizar productos y clientes"], data: "Ventas, productos, cantidades, precios, descuentos y clientes.", outcome: "Control del rendimiento comercial y de su evolución." },
+  "/customers": { purpose: "Centralizar la relación e historial de clientes.", capabilities: ["Gestionar fichas", "Consultar actividad", "Dar seguimiento"], data: "Datos de contacto e interacciones comerciales autorizadas.", outcome: "Información ordenada para atención y seguimiento." },
+  "/billing": { purpose: "Controlar documentos tributarios y su estado.", capabilities: ["Revisar documentos", "Validar datos", "Seguir estados"], data: "Datos tributarios, clientes, montos y documentos electrónicos.", outcome: "Mayor trazabilidad del ciclo de facturación." },
+  "/purchases": { purpose: "Gestionar abastecimiento, proveedores y costos.", capabilities: ["Registrar compras", "Controlar proveedores", "Relacionar compras con inventario"], data: "Proveedores, productos, cantidades, costos y fechas.", outcome: "Abastecimiento trazable y mejor información de costos." },
+  "/inventory": { purpose: "Mantener control de productos, existencias y movimientos.", capabilities: ["Gestionar catálogo", "Consultar stock", "Realizar conteos y ajustes"], data: "Productos, SKU, códigos, existencias, movimientos y costos.", outcome: "Una fuente confiable para ventas, compras y reposición." },
+  "/shipments": { purpose: "Seguir pedidos desde el despacho hasta la entrega.", capabilities: ["Crear envíos", "Actualizar estados", "Detectar pendientes"], data: "Pedidos, clientes, direcciones, transportistas y estados.", outcome: "Trazabilidad logística y visibilidad de entregas." },
+  "/finance": { purpose: "Entender ingresos, egresos, liquidez y flujo de caja.", capabilities: ["Revisar movimientos", "Analizar flujo", "Detectar variaciones"], data: "Ventas, compras, gastos, caja y movimientos financieros.", outcome: "Una lectura financiera para planificar compromisos." },
+  "/analytics": { purpose: "Convertir datos operacionales en indicadores comparables.", capabilities: ["Comparar períodos", "Analizar métricas", "Investigar variaciones"], data: "Datos consolidados de las áreas habilitadas.", outcome: "Métricas para encontrar tendencias y señales." },
+  "/quotes": { purpose: "Gestionar oportunidades antes de convertirlas en ventas.", capabilities: ["Crear cotizaciones", "Definir condiciones", "Dar seguimiento y convertir"], data: "Clientes, productos, precios, descuentos y estados.", outcome: "Un flujo comercial previo a la venta más ordenado." },
+  "/pricing-calculator": { purpose: "Evaluar precios y márgenes antes de aplicarlos.", capabilities: ["Calcular precios", "Explorar márgenes", "Comparar escenarios"], data: "Costos y parámetros del producto o escenario.", outcome: "Una referencia cuantitativa para decisiones de precio." },
+  "/nuva-intelligence": { purpose: "Interpretar información del negocio y convertirla en contexto.", capabilities: ["Consultar señales", "Relacionar áreas", "Explorar próximos pasos"], data: "Información autorizada del negocio activo.", outcome: "Contexto para entender qué está pasando." },
+  "/executive-command-center": { purpose: "Priorizar asuntos relevantes para la gestión ejecutiva.", capabilities: ["Revisar prioridades", "Consultar señales", "Abrir acciones relacionadas"], data: "Indicadores y eventos consolidados.", outcome: "Una agenda ejecutiva basada en señales operacionales." },
+  "/ai": { purpose: "Consultar y explicar información del negocio mediante lenguaje natural.", capabilities: ["Hacer preguntas", "Pedir explicaciones", "Solicitar análisis"], data: "Contexto y datos autorizados para tu usuario.", outcome: "Respuestas contextualizadas para apoyar la operación." },
+  "/studio": { purpose: "Crear y gestionar flujos, automatizaciones y trabajos asistidos.", capabilities: ["Crear flujos", "Gestionar trabajos", "Revisar resultados"], data: "Configuraciones, entradas y resultados de Studio.", outcome: "Procesos repetibles y trazables." },
+  "/shifts": { purpose: "Planificar jornadas y coordinación de personas.", capabilities: ["Crear turnos", "Consultar horarios", "Gestionar cambios"], data: "Personas, jornadas y asignaciones autorizadas.", outcome: "Mayor claridad sobre la planificación operativa." },
+};
+
 const FALLBACK = {
   title: "Nüva One",
   description:
@@ -145,7 +172,7 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const info = useMemo(() => INFO[location.pathname] ?? FALLBACK, [location.pathname]);
+  const info = useMemo(() => ({ ...(INFO[location.pathname] ?? FALLBACK), ...(DETAILS[location.pathname] ?? { purpose: "Consulta el propósito de esta sección dentro de la operación.", capabilities: ["Revisar las funciones disponibles"], data: "Información del negocio activo a la que tu cuenta tiene acceso.", outcome: "Una visión más clara de cómo utilizar este espacio." }) }), [location.pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -230,24 +257,16 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
                 </h2>
               </div>
             </div>
-            <p id="nuva-info-description" className="text-sm leading-6 text-muted-foreground">
-              {info.description}
-            </p>
-            <div className="mt-4 rounded-xl bg-muted/50 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground">
-                Cómo aprovecharlo
-              </p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {info.tips.map((tip) => (
-                  <li key={tip} className="flex gap-2">
-                    <span
-                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                      aria-hidden="true"
-                    />
-                    {tip}
-                  </li>
-                ))}
-              </ul>
+            <p id="nuva-info-description" className="text-sm leading-6 text-muted-foreground">{info.description}</p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <InfoSection title="Para qué sirve"><p>{info.purpose}</p></InfoSection>
+              <InfoSection title="Qué puedes hacer"><ul className="space-y-1.5">{info.capabilities.map((item) => <li key={item} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />{item}</li>)}</ul></InfoSection>
+              <InfoSection title="Qué información utiliza"><p>{info.data}</p></InfoSection>
+              <InfoSection title="Qué obtienes"><p>{info.outcome}</p></InfoSection>
+            </div>
+            <div className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary">Buenas prácticas</p>
+              <ul className="space-y-2 text-sm text-muted-foreground">{info.tips.map((tip) => <li key={tip} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />{tip}</li>)}</ul>
             </div>
             <button
               type="button"
