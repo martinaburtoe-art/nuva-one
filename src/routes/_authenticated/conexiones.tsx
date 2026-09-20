@@ -50,7 +50,7 @@ const CONNECTIONS: Connection[] = [
     description:
       "Accede al flujo tributario integrado en Finanzas sin separar la facturación del resto de la gestión financiera.",
     status: "Disponible",
-    href: "/billing",
+    href: "/settings",
     icon: Receipt,
   },
   {
