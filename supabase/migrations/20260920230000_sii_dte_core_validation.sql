@@ -40,7 +40,8 @@ begin
     errors := array_append(errors, 'total_does_not_match_components');
   end if;
 
-  if p_document_type in (33, 39, 43, 46, 110, 111, 112) and p_net_amount > 0
+  -- Export DTEs (110/111/112) are not forced through the domestic 19% VAT check.
+  if p_document_type in (33, 39, 43, 46) and p_net_amount > 0
      and round(p_vat_amount, 0) <> round(p_net_amount * 0.19, 0) then
     errors := array_append(errors, 'vat_does_not_match_19_percent_net');
   end if;
