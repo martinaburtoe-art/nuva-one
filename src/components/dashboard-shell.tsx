@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AiChatBubble } from "@/components/ai-chat-bubble";
+import { NuvaInfoCenter } from "@/components/nuva-info-center";
 import { GlobalSearch } from "@/components/global-search";
 import { ModuleSearch } from "@/components/module-search";
 import { cn } from "@/lib/utils";
@@ -101,6 +102,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     : 15;
   const trialExpired = plan !== "pro" && trialDaysLeft <= 0;
   const isSettingsRoute = pathname.startsWith("/settings");
+  const showModuleInfo = new Set(["/dashboard","/pos","/sales","/customers","/billing","/purchases","/inventory","/shipments","/finance","/analytics","/quotes","/pricing-calculator","/nuva-intelligence","/executive-command-center","/ai","/studio","/shifts","/caja-control","/business-health","/customer-action-center","/customer-intelligence","/customers-intelligence","/finance-accounting","/finance-professional","/financial-control","/financial-dashboard","/financial-integrity","/inventario-conteo","/inventario-operaciones","/mobile-scanner"]).has(pathname);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -258,6 +260,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="min-w-0 flex-1 truncate text-sm font-medium md:hidden">
             {active?.name ?? "Nüva One"}
           </div>
+          {showModuleInfo && <NuvaInfoCenter inline />}
           <Button
             variant="ghost"
             size="icon"
