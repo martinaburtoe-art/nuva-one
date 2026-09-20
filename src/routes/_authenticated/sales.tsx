@@ -61,7 +61,17 @@ function Sales() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sales", active?.id] }); qc.invalidateQueries({ queryKey: ["products", active?.id] }); }
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sales", active?.id] });
+      qc.invalidateQueries({ queryKey: ["products", active?.id] });
+      setOpen(false);
+      setCustomerName("");
+      setCustomerId(null);
+      setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
+      setManualTotal(null);
+      setIsCredit(false);
+      setDueDate("");
+    }
   });
   const insert = useBizInsert("sales");
   const del = useBizDelete("sales");
