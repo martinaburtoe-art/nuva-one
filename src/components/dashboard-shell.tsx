@@ -54,9 +54,6 @@ import { toast } from "sonner";
 
 const nav = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard", section: "Operación" },
-  { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain, section: "Inteligencia" },
-  { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles, section: "Inteligencia" },
-  { to: "/pricing-calculator", label: "Precios", icon: Calculator, section: "Finanzas" },
   { to: "/pos", label: "Caja", icon: Calculator, module: "pos", section: "Operación" },
   { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales", section: "Operación" },
   { to: "/customers", label: "Clientes", icon: Users, module: "customers", section: "Operación" },
@@ -66,8 +63,9 @@ const nav = [
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance", section: "Finanzas" },
   { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics", section: "Finanzas" },
   { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes", section: "Finanzas" },
-  // "Vinculación WhatsApp" permanece fuera del menú; el módulo y backend siguen disponibles.
-  // { to: "/automations", label: "Vinculación WhatsApp", icon: Workflow, module: "automations" },
+  { to: "/pricing-calculator", label: "Precios", icon: Calculator, section: "Finanzas" },
+  { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain, section: "Inteligencia" },
+  { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles, section: "Inteligencia" },
   { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai", section: "Inteligencia" },
   { to: "/studio", label: "Nüva Studio", icon: Sparkles, section: "Inteligencia" },
   { to: "/foro", label: "Comunidad", icon: MessagesSquare, section: "Espacio" },
