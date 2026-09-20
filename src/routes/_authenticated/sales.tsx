@@ -33,7 +33,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, ShoppingCart, X, Clock } from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
-import { useMyRole, canWriteOperations, useActiveBusiness } from "@/lib/use-business";\nimport { useQueryClient, useMutation } from "@tanstack/react-query";\nimport { supabase } from "@/integrations/supabase/client";
+import { useMyRole, canWriteOperations, useActiveBusiness } from "@/lib/use-business";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { SalesProductAnalytics } from "@/components/sales-product-analytics";
 
 export const Route = createFileRoute("/_authenticated/sales")({
@@ -44,11 +46,23 @@ export const Route = createFileRoute("/_authenticated/sales")({
 type LineItem = { product_id: string | null; name: string; qty: number; price: number };
 
 function Sales() {
-  const { data: myRole } = useMyRole();\n  const { active } = useActiveBusiness();\n  const qc = useQueryClient();
+  const { data: myRole } = useMyRole();
+  const { active } = useActiveBusiness();
+  const qc = useQueryClient();
   const canWrite = canWriteOperations(myRole);
   const { data: sales, isLoading } = useBizList<any>("sales", { order: "sale_date" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
-  const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });\n  const fastSale = useMutation({\n    mutationFn: async () => {\n      const validItems = items.filter((i) => i.product_id && i.qty > 0).map((i) => ({ product_id: i.product_id, qty: i.qty }));\n      if (!validItems.length) throw new Error("Agrega al menos un producto del inventario");\n      const { data, error } = await supabase.rpc("create_fast_sale", { p_customer_id: customerId, p_customer_name: customerName || null, p_channel: channel, p_payment_method: paymentMethod, p_is_credit: isCredit, p_due_date: isCredit && dueDate ? dueDate : null, p_items: validItems, p_notes: null });\n      if (error) throw error;\n      return data;\n    },\n    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sales", active?.id] }); qc.invalidateQueries({ queryKey: ["products", active?.id] }); }\n  });
+  const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
+  const fastSale = useMutation({
+    mutationFn: async () => {
+      const validItems = items.filter((i) => i.product_id && i.qty > 0).map((i) => ({ product_id: i.product_id, qty: i.qty }));
+      if (!validItems.length) throw new Error("Agrega al menos un producto del inventario");
+      const { data, error } = await supabase.rpc("create_fast_sale", { p_customer_id: customerId, p_customer_name: customerName || null, p_channel: channel, p_payment_method: paymentMethod, p_is_credit: isCredit, p_due_date: isCredit && dueDate ? dueDate : null, p_items: validItems, p_notes: null });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sales", active?.id] }); qc.invalidateQueries({ queryKey: ["products", active?.id] }); }
+  });
   const insert = useBizInsert("sales");
   const del = useBizDelete("sales");
   const upd = useBizUpdate("sales");
@@ -356,9 +370,24 @@ function Sales() {
                       <Label htmlFor="notes">Notas</Label>
                       <Input id="notes" name="notes" />
                     </div>
-                    <Button type="submit" className="w-full" disabled={insert.isPending}>
-                      Guardar venta
-                    </Button>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <Button type="submit" disabled={insert.isPending || fastSale.isPending}>
+                        Guardar venta
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={insert.isPending || fastSale.isPending}
+                        onClick={() => fastSale.mutate()}
+                      >
+                        {fastSale.isPending ? "Procesando…" : "Venta rápida"}
+                      </Button>
+                    </div>
+                    {fastSale.isError && (
+                      <p className="text-sm text-destructive">
+                        {fastSale.error instanceof Error ? fastSale.error.message : "No se pudo registrar la venta rápida."}
+                      </p>
+                    )}
                   </form>
                 </DialogContent>
               </Dialog>
