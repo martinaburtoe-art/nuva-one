@@ -86,17 +86,17 @@ function Settings() {
           <TabsTrigger value="billing">Facturación</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="business" className="space-y-6">
-          <Card className="p-6">
+        <TabsContent value="business" className="space-y-4">
+          <Card className="p-4 sm:p-5">
             <h3 className="font-semibold">Perfil del negocio</h3>
-            <div className="mt-4 space-y-4">
-              <div><Label htmlFor="bname">Nombre</Label><Input id="bname" value={name} onChange={(e) => setName(e.target.value)} disabled={!canManage} /></div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2"><Label htmlFor="bname">Nombre</Label><Input id="bname" value={name} onChange={(e) => setName(e.target.value)} disabled={!canManage} /></div>
               <div><Label htmlFor="tax">RUT / Tax ID</Label><Input id="tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="76.123.456-7" disabled={!canManage} /></div>
               <div><Label htmlFor="giro">Giro</Label><Input id="giro" value={giro} onChange={(e) => setGiro(e.target.value)} placeholder="Venta al por menor de artículos deportivos" disabled={!canManage} /></div>
               <div><Label htmlFor="address">Dirección</Label><Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Av. Siempre Viva 123" disabled={!canManage} /></div>
               <div><Label htmlFor="comuna">Comuna</Label><Input id="comuna" value={comuna} onChange={(e) => setComuna(e.target.value)} placeholder="Talca" disabled={!canManage} /></div>
-              <p className="text-xs text-muted-foreground">Estos datos aparecen en la boleta/comprobante impreso de Caja, igual que en el retail: úsalos exactamente como están registrados ante el SII.</p>
-              <Button onClick={save} disabled={!canManage}>Guardar cambios</Button>
+              <p className="sm:col-span-2 text-xs text-muted-foreground">Estos datos aparecen en la boleta/comprobante impreso de Caja, igual que en el retail: úsalos exactamente como están registrados ante el SII.</p>
+              <div className="sm:col-span-2"><Button onClick={save} disabled={!canManage}>Guardar cambios</Button></div>
               {!canManage && <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Lock className="h-3 w-3" /> Solo el propietario o administradores pueden editar el perfil del negocio.</p>}
             </div>
           </Card>
@@ -104,7 +104,7 @@ function Settings() {
           <PublicProfileCard canManage={canManage} />
 
           {isOwner && (
-            <Card className="border-destructive/30 p-6">
+            <Card className="border-destructive/30 p-4 sm:p-5">
               <h3 className="font-semibold text-destructive">Zona peligrosa</h3>
               <p className="mt-1 text-sm text-muted-foreground">Eliminar este negocio borra todos sus datos. No se puede revertir.</p>
               <Button variant="destructive" className="mt-4" onClick={deleteBusiness}><Trash2 className="mr-1.5 h-4 w-4" />Eliminar negocio</Button>
@@ -114,7 +114,7 @@ function Settings() {
 
         <TabsContent value="team">{active && <TeamManagement businessId={active.id} canManage={canManage} />}</TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
+        <TabsContent value="security" className="space-y-4">
           <Card className="p-6"><div className="flex items-start gap-3"><Shield className="h-5 w-5 text-primary" /><div className="flex-1"><h3 className="font-semibold">Autenticación de dos factores (2FA)</h3><p className="mt-1 text-sm text-muted-foreground">Añade una capa extra de seguridad a tu cuenta con una app autenticadora (TOTP).</p><div className="mt-4"><MfaSetup /></div></div></div></Card>
           <Card className="border-destructive/30 p-6"><div className="flex items-start gap-3"><AlertTriangle className="h-5 w-5 text-destructive" /><div className="flex-1"><h3 className="font-semibold text-destructive">Eliminar mi cuenta</h3><p className="mt-1 text-sm text-muted-foreground">Esto es distinto a eliminar un negocio: elimina tu cuenta personal de Nüva One (tu acceso, tu perfil y tu membresía en cualquier negocio). Si eres propietario de un negocio con datos contables sujetos a retención tributaria (SII), primero te contactaremos para coordinar la transferencia o cierre correspondiente.</p><Button variant="destructive" className="mt-4" onClick={requestAccountDeletion}><Trash2 className="mr-1.5 h-4 w-4" />Solicitar eliminación de mi cuenta</Button><p className="mt-2 text-xs text-muted-foreground">Procesamos las solicitudes dentro de un plazo razonable. También puedes escribir directamente a <a href="mailto:privacidad@nuvaone.cl" className="underline">privacidad@nuvaone.cl</a>.</p></div></div></Card>
         </TabsContent>
@@ -152,10 +152,10 @@ function BillingTab() {
   }
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center gap-2"><h3 className="font-semibold">Plan actual: {isPro ? "Pro" : "Prueba gratuita"}</h3><span className={isPro ? "rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground" : trialExpired ? "rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive" : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"}>{isPro ? status === "active" ? "Activo" : status : trialExpired ? "Vencida" : `${trialDaysLeft} días restantes`}</span></div>
+    <Card className="p-4 sm:p-5">
+      <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Plan actual: {isPro ? "Pro" : "Prueba gratuita"}</h3><span className={isPro ? "rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground" : trialExpired ? "rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive" : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"}>{isPro ? status === "active" ? "Activo" : status : trialExpired ? "Vencida" : `${trialDaysLeft} días restantes`}</span></div>
       <p className="mt-1 text-sm text-muted-foreground">{isPro ? "Tienes acceso completo a todas las funciones de Nüva One." : trialExpired ? "Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One." : "Prueba gratuita de 15 días con acceso completo — sin tarjeta. Al terminar, necesitas el plan Pro para seguir usando la app."}</p>
-      <ul className="mt-4 space-y-2 text-sm"><li className="flex items-center gap-2">✅ {isPro ? "Productos ilimitados" : "Hasta 50 productos (ilimitados en Pro)"}</li><li className="flex items-center gap-2">✅ Negocios ilimitados</li><li className="flex items-center gap-2">✅ Ventas, compras, inventario y Caja</li><li className="flex items-center gap-2">✅ Asistente IA</li><li className="flex items-center gap-2">✅ Automatizaciones y bot de WhatsApp</li><li className="flex items-center gap-2">✅ Cotizaciones en PDF</li><li className="flex items-center gap-2">✅ Roles de equipo y auditoría</li></ul>
+      <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2"><li className="flex items-center gap-2">✅ {isPro ? "Productos ilimitados" : "Hasta 50 productos (ilimitados en Pro)"}</li><li className="flex items-center gap-2">✅ Negocios ilimitados</li><li className="flex items-center gap-2">✅ Ventas, compras, inventario y Caja</li><li className="flex items-center gap-2">✅ Asistente IA</li><li className="flex items-center gap-2">✅ Automatizaciones y bot de WhatsApp</li><li className="flex items-center gap-2">✅ Cotizaciones en PDF</li><li className="flex items-center gap-2">✅ Roles de equipo y auditoría</li></ul>
       <p className="mt-2 text-xs text-muted-foreground">Todo Nüva One tiene el mismo set de funciones. Las únicas diferencias entre Prueba gratuita y Pro son el tiempo de acceso y el tope de 50 productos.</p>
       {!canManage ? <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground"><Lock className="h-3 w-3" /> Solo el propietario o administradores pueden gestionar el plan.</p> : isPro ? <Button className="mt-4" variant="outline" disabled={loading} onClick={async () => { if (!active) return; setLoading(true); try { const { data: sessionData } = await supabase.auth.getSession(); const token = sessionData.session?.access_token; const res = await fetch("/api/billing/subscribe/cancel", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ business_id: active.id }) }); const json = await res.json(); if (json.ok) { toast.success("Suscripción cancelada — volviste al plan Starter"); window.location.reload(); } else toast.error(json.error ?? "No se pudo cancelar"); } catch { toast.error("Error de conexión"); } finally { setLoading(false); } }}>Cancelar suscripción</Button> : <Button className="mt-4" disabled={loading} onClick={() => callBillingEndpoint("register")}>Actualizar a Pro — $29.990/mes</Button>}
       {!isPro && <p className="mt-2 text-xs text-muted-foreground">El pago se procesa con Flow. Te pediremos registrar una tarjeta para el cargo automático mensual — el cobro se realiza de inmediato al confirmar.</p>}
@@ -248,7 +248,7 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
   function updateSocial(key: string, value: string) { setSocial((prev) => ({ ...prev, [key]: value })); }
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <Globe className="h-5 w-5 text-primary" />
         <div className="flex-1">
