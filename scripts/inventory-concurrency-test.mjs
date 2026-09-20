@@ -68,7 +68,7 @@ async function createSale(accessToken, businessId, product, sequence) {
 function isExpectedInsufficientStock(result) {
   if (result.transport_error || result.ok) return false;
   const bodyText = JSON.stringify(result.body ?? "").toLowerCase();
-  return result.status === 400 && String(result.body?.code ?? "") === "23514" && bodyText.includes("stock insuficiente");
+  return result.status === 400 && String(result.body?.code ?? "") === "23514" && bodyText.includes("stock insuficiente") || bodyText.includes("stock disponible insuficiente");
 }
 
 function serializeFailure(result) {
