@@ -39,7 +39,7 @@ function FinancialDashboard() {
     { order: "code", ascending: true },
   );
 
-  const revenue = pnl
+  const financialLoading = pnlLoading || cashLoading || taxLoading || trialLoading;\n\n  const revenue = pnl
     .filter((x: any) => ["revenue", "other_income"].includes(x.account_type))
     .reduce((s: number, x: any) => s + Number(x.signed_amount || 0), 0);
   const costs = pnl
@@ -68,22 +68,22 @@ function FinancialDashboard() {
               <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1em] text-primary">
                 <ShieldCheck className="h-3.5 w-3.5" /> Visión financiera
               </div>
-              <div className="mt-2 text-3xl font-semibold tracking-tight">{fmtCLP(result)}</div>
+              <div className="mt-2 text-3xl font-semibold tracking-tight" aria-live="polite">{financialLoading ? "—" : fmtCLP(result)}</div>
               <p className="mt-1 text-sm text-muted-foreground">Resultado acumulado en los datos publicados.</p>
             </div>
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <MiniStat label="Ingresos" value={fmtCLP(revenue)} />
-              <MiniStat label="Costos y gastos" value={fmtCLP(costs)} />
-              <MiniStat label="Flujo neto" value={fmtCLP(cashNet)} />
-              <MiniStat label="Balanza" value={Math.abs(balanceDifference) <= 0.01 ? "Cuadrada" : "Revisar"} />
+              <MiniStat label="Ingresos" value={financialLoading ? "—" : fmtCLP(revenue)} />
+              <MiniStat label="Costos y gastos" value={financialLoading ? "—" : fmtCLP(costs)} />
+              <MiniStat label="Flujo neto" value={financialLoading ? "—" : fmtCLP(cashNet)} />
+              <MiniStat label="Balanza" value={financialLoading ? "—" : Math.abs(balanceDifference) <= 0.01 ? "Cuadrada" : "Revisar"} />
             </div>
           </div>
         </Card>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric title="Ingresos" value={fmtCLP(revenue)} icon={<ArrowUpRight />} />
-          <Metric title="Costos y gastos" value={fmtCLP(costs)} icon={<ArrowDownRight />} />
-          <Metric title="Resultado" value={fmtCLP(result)} icon={<Calculator />} />
-          <Metric title="Flujo neto" value={fmtCLP(cashNet)} icon={<Banknote />} />
+          <Metric title="Ingresos" value={financialLoading ? "—" : fmtCLP(revenue)} icon={<ArrowUpRight />} />
+          <Metric title="Costos y gastos" value={financialLoading ? "—" : fmtCLP(costs)} icon={<ArrowDownRight />} />
+          <Metric title="Resultado" value={financialLoading ? "—" : fmtCLP(result)} icon={<Calculator />} />
+          <Metric title="Flujo neto" value={financialLoading ? "—" : fmtCLP(cashNet)} icon={<Banknote />} />
         </div>
 
         <div className="grid gap-5 lg:grid-cols-2">
