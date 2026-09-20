@@ -17,9 +17,10 @@ type Props = {
   income: number;
   expense: number;
   inventoryValue: number;
+  loading?: boolean;
 };
 
-export function NuvaFinancialControl({ income, expense, inventoryValue }: Props) {
+export function NuvaFinancialControl({ income, expense, inventoryValue, loading = false }: Props) {
   const control = useMemo(() => {
     const net = income - expense;
     const expenseRatio = income > 0 ? (expense / income) * 100 : 0;
@@ -46,7 +47,7 @@ export function NuvaFinancialControl({ income, expense, inventoryValue }: Props)
             <Badge className="bg-primary text-primary-foreground">Control financiero inteligente</Badge>
           </div>
           <h2 className="mt-3 text-lg font-bold">Nüva interpreta tus números, no solo los muestra.</h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{signalCopy}</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{loading ? "Estamos consolidando tus movimientos para mostrar una lectura financiera fiable." : signalCopy}</p>
         </div>
         <Link
           to="/finance"
@@ -57,14 +58,14 @@ export function NuvaFinancialControl({ income, expense, inventoryValue }: Props)
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ControlMetric icon={<Wallet />} label="Resultado acumulado" value={fmtCLP(control.net)} />
+        <ControlMetric icon={<Wallet />} label="Resultado acumulado" value={loading ? "—" : fmtCLP(control.net)} />
         <ControlMetric
           icon={control.net >= 0 ? <TrendingUp /> : <TrendingDown />}
           label="Margen estimado"
           value={`${control.margin.toFixed(1)}%`}
         />
-        <ControlMetric icon={<TrendingDown />} label="Gasto / ingreso" value={`${control.expenseRatio.toFixed(1)}%`} />
-        <ControlMetric icon={<Wallet />} label="Capital en inventario" value={fmtCLP(inventoryValue)} />
+        <ControlMetric icon={<TrendingDown />} label="Gasto / ingreso" value={loading ? "—" : `${control.expenseRatio.toFixed(1)}%`} />
+        <ControlMetric icon={<Wallet />} label="Capital en inventario" value={loading ? "—" : fmtCLP(inventoryValue)} />
       </div>
 
       <div className="mt-4 flex flex-col gap-3 rounded-xl border bg-background/70 p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -75,10 +76,12 @@ export function NuvaFinancialControl({ income, expense, inventoryValue }: Props)
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           )}
           <div>
-            <p className="text-sm font-medium">Lectura inteligente</p>
+            <p className="text-sm font-medium">{loading ? "Preparando lectura" : "Lectura inteligente"}</p>
             <p className="text-xs text-muted-foreground">
-              {control.signal === "good"
-                ? "Sin alerta financiera prioritaria."
+              {loading
+                ? "Los indicadores se actualizarán cuando termine la carga."
+                : control.signal === "good"
+                  ? "Sin alerta financiera prioritaria."
                 : control.signal === "setup"
                   ? "Registra ingresos y egresos para activar más señales."
                   : "Hay una señal que conviene revisar."}
