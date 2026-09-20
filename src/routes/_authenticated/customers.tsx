@@ -272,6 +272,7 @@ function Customers() {
       <div className="p-4 md:p-6">
         <PageHeader
           title="Clientes"
+          showOperatingPulse
           description="Tu cartera, su actividad y la próxima acción. Todo el contexto en una sola vista."
           action={
             <>
