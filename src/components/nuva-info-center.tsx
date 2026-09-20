@@ -270,7 +270,7 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
 
       {open && (
         <div
-          className="fixed inset-0 z-[90] print:hidden flex items-end justify-center bg-black/30 p-4 backdrop-blur-[2px] sm:items-center"
+          className="fixed inset-0 z-[90] print:hidden bg-black/20 backdrop-blur-[1px]"
           role="presentation"
         >
           <button
@@ -284,8 +284,9 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
             aria-modal="true"
             aria-labelledby="nuva-info-title"
             aria-describedby="nuva-info-description"
-            className="relative max-h-[min(82vh,760px)] w-full max-w-xl overflow-y-auto rounded-2xl border bg-background p-5 shadow-2xl"
+            className="absolute right-3 top-[4.25rem] flex max-h-[calc(100vh-5.25rem)] w-[calc(100vw-1.5rem)] max-w-2xl flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl sm:right-6 sm:w-[min(42rem,calc(100vw-3rem))]"
           >
+            <div className="shrink-0 border-b bg-background/95 px-5 py-4 backdrop-blur">
             <button
               ref={closeRef}
               type="button"
@@ -296,7 +297,7 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
-            <div className="mb-4 flex items-start gap-3 pr-8">
+              <div className="flex items-start gap-3 pr-8">
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
                 aria-hidden="true"
@@ -311,7 +312,9 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
                   {info.title}
                 </h2>
               </div>
+              </div>
             </div>
+            <div className="min-h-0 overflow-y-auto px-5 py-4 overscroll-contain">
             <p id="nuva-info-description" className="text-sm leading-6 text-muted-foreground">{info.description}</p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <InfoSection title="Para qué sirve"><p>{info.purpose}</p></InfoSection>
@@ -330,6 +333,7 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
             >
               Entendido
             </button>
+            </div>
           </section>
         </div>
       )}
