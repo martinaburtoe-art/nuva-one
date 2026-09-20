@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, MessageCircle } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -165,6 +165,21 @@ function Quotes() {
     } finally {
       setConvertingId(null);
     }
+  }
+
+  function shareWhatsApp(quote: any) {
+    const customerRecord = (customers ?? []).find((c: any) => c.id === quote.customer_id);
+    const phone = String(customerRecord?.phone ?? "").replace(/\\D/g, "");
+    const number = phone.startsWith("56") ? phone : phone ? `56${phone.replace(/^0+/, "")}` : "";
+    const quoteNumber = quote.quote_number ? `#${String(quote.quote_number).padStart(4, "0")}` : quote.id.slice(0, 8);
+    const message = [
+      `Hola ${quote.customer_name ?? ""}, te compartimos la cotización ${quoteNumber} de ${active?.name ?? "Nüva One"}.`,
+      `Total: ${fmtCLP(Number(quote.total))}.`,
+      quote.valid_until ? `Válida hasta: ${new Date(quote.valid_until).toLocaleDateString("es-CL")}.` : "",
+      "Si quieres, podemos coordinar los siguientes pasos por aquí.",
+    ].filter(Boolean).join("\\n");
+    const url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   async function downloadPdf(quote: any) {
@@ -461,6 +476,14 @@ function Quotes() {
                           onClick={() => downloadPdf(q)}
                         >
                           <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Compartir por WhatsApp"
+                          onClick={() => shareWhatsApp(q)}
+                        >
+                          <MessageCircle className="h-4 w-4 text-success" />
                         </Button>
                         <Button
                           variant="ghost"
