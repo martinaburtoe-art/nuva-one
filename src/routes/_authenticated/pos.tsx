@@ -376,7 +376,7 @@ function POS() {
       <>
         <PageHeader
           title="Caja"
-          description="Punto de venta rápido — escanea, agrega y cobra"
+          description="Vende, cobra y controla tu operación en un solo flujo."
           action={
             <div className="flex items-center gap-2">
               <Button
@@ -405,27 +405,36 @@ function POS() {
             </div>
           }
         />
-        <Card className="mb-4 border-primary/20 bg-primary/5 p-3">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <ScanBarcode className="h-4 w-4 text-primary" />
-            <span className="font-medium">Nüva Live:</span>
-            <span className="text-muted-foreground">
-              cámara en vivo + celular como lector + resolución segura. No se toman fotografías.
-            </span>
-            <Button variant="link" className="h-auto p-0" onClick={() => openLiveScanner("cart")}>
-              Abrir lector
+        <div className="mb-5 grid grid-cols-3 gap-2 sm:gap-3">
+          <Card className="border-border/70 bg-card/80 p-3 sm:p-4">
+            <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Ventas hoy</div>
+            <div className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{todaySales.length}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">transacciones</div>
+          </Card>
+          <Card className="border-border/70 bg-card/80 p-3 sm:p-4">
+            <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Recaudación</div>
+            <div className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{fmtCLP(todayTotal)}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">acumulado del día</div>
+          </Card>
+          <Card className="border-primary/20 bg-primary/5 p-3 sm:p-4">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-primary">
+              <ScanBarcode className="h-3.5 w-3.5" /> Nüva Live
+            </div>
+            <div className="mt-1 text-sm font-semibold sm:text-base">Escanea y vende</div>
+            <Button variant="link" className="mt-0.5 h-auto p-0 text-xs" onClick={() => openLiveScanner("cart")}>
+              Abrir lector →
             </Button>
-          </div>
-        </Card>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
+          </Card>
+        </div>
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
           <div className="space-y-4">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar por nombre, SKU, código de barras o categoría…"
-                className="h-12 pl-10 text-base"
+                placeholder="Buscar producto, SKU o código…"
+                className="h-12 rounded-xl border-border/70 bg-card pl-10 text-base shadow-sm"
                 autoFocus
               />
             </div>
@@ -435,7 +444,7 @@ function POS() {
                   <Star className="h-3.5 w-3.5" />
                   Favoritos
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
                   {favorites.map((p: any) => (
                     <button
                       key={p.id}
@@ -474,8 +483,8 @@ function POS() {
                         onClick={() => addToCart(p)}
                         disabled={stock <= 0}
                         className={cn(
-                          "flex h-full w-full flex-col items-start gap-1 rounded-xl border bg-card p-3 text-left transition active:scale-[0.98]",
-                          stock <= 0 ? "opacity-50" : "hover:border-primary hover:shadow-elegant",
+                          "flex min-h-[118px] h-full w-full flex-col items-start gap-1.5 rounded-2xl border border-border/70 bg-card p-3.5 text-left shadow-sm transition-[border-color,box-shadow,transform] duration-200 active:scale-[0.98]",
+                          stock <= 0 ? "opacity-50" : "hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-elegant",
                         )}
                       >
                         <div className="flex w-full items-start justify-between gap-1">
@@ -553,8 +562,9 @@ function POS() {
               </Card>
             )}
           </div>
-          <Card className="sticky top-16 flex h-fit max-h-[calc(100vh-6rem)] flex-col p-4">
-            <div className="mb-3 flex items-center justify-between">
+          <Card className="sticky top-20 flex h-fit max-h-[calc(100vh-6.5rem)] flex-col overflow-hidden rounded-2xl border-border/70 p-0 shadow-lg shadow-black/5">
+            <div className="border-b border-border/70 bg-muted/20 px-4 py-3.5">
+              <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold">
                 <ShoppingCart className="h-4 w-4" />
                 Carrito{cart.length > 0 && <Badge variant="secondary">{cart.length}</Badge>}
@@ -564,8 +574,10 @@ function POS() {
                   Vaciar
                 </Button>
               )}
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">Revisa el pedido antes de cobrar</div>
             </div>
-            <div className="flex-1 space-y-2 overflow-y-auto">
+            <div className="min-h-[180px] flex-1 space-y-2 overflow-y-auto px-4 py-3">
               {cart.length === 0 ? (
                 <div className="py-10 text-center text-sm text-muted-foreground">
                   Escanea un producto o selecciónalo para comenzar
@@ -619,7 +631,7 @@ function POS() {
                 ))
               )}
             </div>
-            <div className="mt-3 space-y-3 border-t pt-3">
+            <div className="space-y-3 border-t bg-card px-4 py-3">
               <div>
                 <Label className="mb-1.5 block text-xs">RUT del cliente (opcional)</Label>
                 {matchedCustomer ? (
