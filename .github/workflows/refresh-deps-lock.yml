@@ -21,6 +21,8 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+      - name: Upgrade npm resolver
+        run: npm install --global npm@11
       - name: Refresh package-lock without scripts
         run: npm install --package-lock-only --force --legacy-peer-deps --ignore-scripts --no-audit --no-fund
       - name: Commit refreshed lockfile and remove bootstrap workflow
