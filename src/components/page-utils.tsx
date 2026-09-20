@@ -8,6 +8,7 @@ export function PageHeader({
   description,
   action,
   actions,
+  showOperatingPulse = false,
 }: {
   title: string;
   description?: string;
@@ -33,7 +34,7 @@ export function PageHeader({
           </div>
         )}
       </header>
-      {title === "Clientes" && <NuvaOperatingPulse />}
+      {showOperatingPulse && <NuvaOperatingPulse />}
     </>
   );
 }
