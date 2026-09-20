@@ -178,7 +178,7 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  if (!inline || !MODULE_INFO_PATHS.has(location.pathname as never)) return null;
+  const isModuleInfoRoute = inline && MODULE_INFO_PATHS.has(location.pathname);
   const info = useMemo(() => ({ ...(INFO[location.pathname] ?? FALLBACK), ...(DETAILS[location.pathname] ?? { purpose: "Consulta el propósito de esta sección dentro de la operación.", capabilities: ["Revisar las funciones disponibles"], data: "Información del negocio activo a la que tu cuenta tiene acceso.", outcome: "Una visión más clara de cómo utilizar este espacio." }) }), [location.pathname]);
 
   useEffect(() => {
@@ -203,6 +203,8 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
   useEffect(() => {
     if (!open) triggerRef.current?.focus();
   }, [open]);
+
+  if (!isModuleInfoRoute) return null;
 
   return (
     <>
