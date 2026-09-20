@@ -110,7 +110,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }
 
   function openHelp() {
-    window.dispatchEvent(new CustomEvent("nuva:open-info"));
+    navigate({ to: "/help-center" });
   }
 
   return (
