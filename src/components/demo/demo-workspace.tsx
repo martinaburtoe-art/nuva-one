@@ -108,7 +108,10 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
   };
 
   const simulateSale = () => {
-    sell("coffee");
+    if (!sell("coffee")) {
+      setNotice("No hay stock disponible para registrar esta venta simulada. Repón inventario antes de continuar.");
+      return;
+    }
     setNotice("Venta simulada registrada: el stock, ingresos e indicadores cambiaron dentro de esta demo.");
     trackDemoEvent("simulated_sale", { product: "coffee", module: active });
   };
