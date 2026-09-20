@@ -41,7 +41,7 @@ select throws_ok(
      values ('00000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000b1', 'paid', 10000,
        jsonb_build_array(jsonb_build_object('product_id', '00000000-0000-0000-0000-0000000000c1', 'qty', 10, 'name', 'Widget'))) $$,
   '23514',
-  'Stock insuficiente para "Widget": no hay 10 unidades disponibles',
+  'Stock disponible insuficiente para "Widget": no hay 10 unidades disponibles',
   'overselling beyond available stock raises check_violation'
 );
 
