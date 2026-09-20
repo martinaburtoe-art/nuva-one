@@ -28,36 +28,51 @@ export function HomeFixedExperience() {
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
-    if (reducedMotion) {
-      video.pause();
-      return;
-    }
 
-    const start = () => {
-      video.muted = true;
-      video.play().catch(() => undefined);
+    // Autoplay robusto: algunos navegadores no reproducen el video hasta
+    // que el elemento tiene metadata/buffer suficiente.
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+
+    const play = () => {
+      if (video.paused) {
+        void video.play().catch(() => {
+          // Reintentos adicionales en eventos de carga/visibilidad.
+        });
+      }
     };
 
-    start();
-    video.addEventListener("loadeddata", start, { once: true });
-    return () => video.removeEventListener("loadeddata", start);
-  }, [reducedMotion]);
+    const events = ["loadedmetadata", "loadeddata", "canplay", "canplaythrough"];
+    events.forEach((event) => video.addEventListener(event, play));
+    document.addEventListener("visibilitychange", play);
+    window.addEventListener("pageshow", play);
+    play();
+
+    return () => {
+      events.forEach((event) => video.removeEventListener(event, play));
+      document.removeEventListener("visibilitychange", play);
+      window.removeEventListener("pageshow", play);
+    };
+  }, []);
 
   useEffect(() => {
     const video = heroVideoRef.current;
-    if (!video || reducedMotion) return;
+    if (!video) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) video.play().catch(() => undefined);
-        else video.pause();
+        if (entry.isIntersecting) {
+          video.muted = true;
+          void video.play().catch(() => undefined);
+        }
       },
-      { threshold: 0.05 },
+      { threshold: 0.01 },
     );
 
     observer.observe(video);
     return () => observer.disconnect();
-  }, [reducedMotion]);
+  }, []);
 
   return (
     <>
