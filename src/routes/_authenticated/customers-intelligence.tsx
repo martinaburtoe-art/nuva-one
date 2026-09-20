@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { CustomerIntelligenceCard } from "@/components/customer-intelligence-card";
 import { useBizList } from "@/lib/biz-data";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/customers-intelligence")({
   head: () => ({ meta: [{ title: "CRM Intelligence — Nüva One" }] }),
