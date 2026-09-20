@@ -77,7 +77,7 @@ function CustomerIntelligence() {
               sales={sales ?? []}
               quotes={quotes ?? []}
               onViewCustomers={() => navigate({ to: "/customers" })}
-              onAskAI={() => navigate({ to: "/chat" })}
+              onAskAI={() => navigate({ to: "/ai" })}
             />
             <div className="rounded-xl border bg-muted/20 p-5 text-sm text-muted-foreground">
               <strong className="text-foreground">Próxima evolución:</strong> Customer 360 con
