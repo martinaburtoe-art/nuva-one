@@ -117,7 +117,7 @@ export const Route = createFileRoute("/api/n8n")({
               event_type: event.event_type,
               occurred_at: event.occurred_at,
               idempotency_key: event.idempotency_key,
-              payload: event.payload,
+              payload: event.payload as Database["public"]["Tables"]["n8n_event_outbox"]["Insert"]["payload"],
               status: "pending",
               attempts: 0,
               updated_at: new Date().toISOString(),
