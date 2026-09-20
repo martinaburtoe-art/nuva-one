@@ -117,11 +117,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen w-full bg-background">
       <aside
         className={cn(
-          "sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 md:flex",
+          "sticky top-0 hidden h-screen flex-col border-r border-sidebar-border/70 bg-sidebar/95 backdrop-blur transition-all duration-300 md:flex",
           collapsed ? "w-16" : "w-60",
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
+        <div className="flex h-14 items-center justify-between border-b border-sidebar-border/70 px-3">
           <Link to="/dashboard" className="flex items-center gap-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
@@ -300,7 +300,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </DropdownMenu>
         </header>
 
-        <main className="flex-1 animate-fade-in-up p-4 pb-24 md:p-8 md:pb-8">
+        <main className="flex-1 motion-safe:animate-fade-in-up p-4 pb-24 md:p-8 md:pb-8">
           {trialExpired && !isSettingsRoute ? <TrialExpiredScreen navigate={navigate} /> : children}
         </main>
       </div>
