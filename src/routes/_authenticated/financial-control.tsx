@@ -110,10 +110,36 @@ function FinancialControl() {
   return (
     <ModuleGuard module="finance">
       <PageHeader
-        title="Control Financiero Profesional"
-        description={`Contabilidad, resultados, caja, conciliación, cierre y obligaciones tributarias${active ? ` · ${active.name}` : ""}`}
+        title="Control Financiero"
+        description={`La salud financiera de ${active?.name ?? "tu negocio"}: resultado, caja, obligaciones y cierre en una sola vista.`}
       />
       <div className="space-y-5">
+        <Card className="overflow-hidden rounded-2xl border-border/70 bg-gradient-to-br from-card via-card to-primary/5 shadow-sm">
+          <div className="grid gap-5 p-5 lg:grid-cols-[1.2fr_2fr] lg:items-center lg:p-6">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1em] text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" /> Estado financiero
+              </div>
+              <div className="mt-2 flex items-end gap-2">
+                <span className="text-4xl font-semibold tracking-tight">{readiness}%</span>
+                <span className="pb-1 text-sm text-muted-foreground">preparado</span>
+              </div>
+              <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                {critical > 0 ? `${critical} punto(s) crítico(s) requieren revisión.` : exceptions > 0 ? `${exceptions} excepción(es) siguen abiertas.` : "Sin excepciones críticas en los registros disponibles."}
+              </p>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${readiness}%` }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <MiniStat label="Resultado" value={fmtCLP(Number(latest?.net_result || 0))} />
+              <MiniStat label="Caja 30 días" value={fmtCLP(cashNet)} />
+              <MiniStat label="Pendiente" value={fmtCLP(dueTaxes)} />
+              <MiniStat label="Cierre" value={`${closePct}%`} />
+            </div>
+          </div>
+        </Card>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Kpi
             title="Resultado último período"
@@ -149,7 +175,7 @@ function FinancialControl() {
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 rounded-xl border bg-card p-2">
+        <div className="sticky top-16 z-10 flex flex-wrap gap-1.5 rounded-2xl border border-border/70 bg-background/90 p-1.5 shadow-sm backdrop-blur-xl">
           {(
             [
               ["overview", "Resumen"],
@@ -163,7 +189,7 @@ function FinancialControl() {
               key={key}
               type="button"
               onClick={() => setTab(key)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${tab === key ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+              className={`rounded-xl px-3 py-2 text-sm font-medium transition-all ${tab === key ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
             >
               {label}
             </button>
@@ -188,17 +214,12 @@ function FinancialControl() {
           <CloseControl close={close} recon={recon} bank={bank} journals={journals} />
         )}
 
-        <Card className="border-primary/20 bg-primary/5 p-5">
+        <Card className="rounded-2xl border-primary/20 bg-primary/5 p-4">
           <div className="flex gap-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
             <div>
               <h2 className="font-semibold">Capa contable-auditora activa</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Nüva separa dato operacional, evidencia, conciliación, ajuste, cierre y papeles
-                tributarios. Los cálculos son preparación y control interno; la declaración o
-                presentación oficial ante SII siempre requiere la validación y autenticación
-                correspondiente.
-              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Nüva separa operación, evidencia, conciliación, ajuste, cierre y papeles tributarios. La presentación oficial ante SII requiere validación y autenticación correspondiente.</p>
             </div>
           </div>
         </Card>
@@ -530,6 +551,15 @@ function CloseControl({ close, recon, bank, journals }: any) {
           <Control label="Integridad" ok text="RLS por negocio" />
         </div>
       </Card>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border/70 bg-background/70 p-3">
+      <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
+      <div className="mt-1 truncate text-sm font-semibold sm:text-base">{value}</div>
     </div>
   );
 }
