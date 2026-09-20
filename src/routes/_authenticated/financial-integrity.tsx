@@ -32,7 +32,7 @@ function FinancialIntegrity() {
   const current = health[0];
   const status = current?.overall_status ?? "not_started";
   const statusLabel =
-    status === "healthy"
+    healthLoading ? "Verificando" : status === "healthy"
       ? "Saludable"
       : status === "blocked"
         ? "Bloqueado"
@@ -54,7 +54,7 @@ function FinancialIntegrity() {
         title="Integridad Financiera"
         description={`Control transversal de contabilidad, tesorería, tributación y cierre${active ? ` · ${active.name}` : ""}`}
       />
-      <div className="space-y-5">
+      <div className="space-y-5" aria-live="polite">
         <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -65,7 +65,7 @@ function FinancialIntegrity() {
                 Una vista única para detectar inconsistencias antes del cierre.
               </p>
             </div>
-            <Badge variant={status === "blocked" ? "destructive" : "outline"}>{statusLabel}</Badge>
+            <Badge variant={status === "blocked" && !healthLoading ? "destructive" : "outline"}>{statusLabel}</Badge>
           </div>
         </Card>
 
