@@ -1,11 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { DEMO_BUSINESS, DEMO_CUSTOMERS, DEMO_PRODUCTS, DEMO_SALES, type DemoProduct } from "./demo-data";
+import { DEMO_BUSINESS, DEMO_CUSTOMERS, DEMO_PRODUCTS, DEMO_SALES, type DemoCustomer, type DemoProduct } from "./demo-data";
 import { setDemoAiState } from "./demo-ai";
 
 type DemoState = {
   business: typeof DEMO_BUSINESS;
   products: DemoProduct[];
-  customers: typeof DEMO_CUSTOMERS;
+  customers: DemoCustomer[];
   sales: typeof DEMO_SALES;
   simulatedSales: number;
   revenueDelta: number;
@@ -22,6 +22,7 @@ const DemoStateContext = createContext<DemoState | null>(null);
 
 export function DemoStateProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState(DEMO_PRODUCTS);
+  const [customers, setCustomers] = useState<DemoCustomer[]>(DEMO_CUSTOMERS);
   const [sales, setSales] = useState(DEMO_SALES);
   const [simulatedSales, setSimulatedSales] = useState(0);
   const [revenueDelta, setRevenueDelta] = useState(0);
@@ -34,14 +35,16 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     setDemoAiState(products, DEMO_BUSINESS.monthlyRevenue + revenueDelta);
   }, [products, revenueDelta]);
 
-  const sell = useCallback((productId: string) => {
+  const sell = useCallback((productId: string, customerId = "c1") => {
     setProducts((current) =>
       current.map((product) => product.id === productId ? { ...product, stock: Math.max(0, product.stock - 1) } : product),
     );
     const product = DEMO_PRODUCTS.find((item) => item.id === productId);
     if (!product) return;
+    const customer = DEMO_CUSTOMERS.find((item) => item.id === customerId) ?? DEMO_CUSTOMERS[0];
+    setCustomers((current) => current.map((item) => item.id === customer.id ? { ...item, lastPurchase: "Ahora", value: item.value + product.price } : item));
     setSales((current) => [
-      { id: `demo-${Date.now()}`, customer: "Cliente demo", product: product.name, total: product.price, status: "Pagada" },
+      { id: `demo-${Date.now()}`, customer: customer.name, product: product.name, total: product.price, status: "Pagada" },
       ...current,
     ]);
     setSimulatedSales((value) => value + 1);
@@ -62,6 +65,7 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(() => {
     setProducts(DEMO_PRODUCTS);
+    setCustomers(DEMO_CUSTOMERS);
     setSales(DEMO_SALES);
     setSimulatedSales(0);
     setRevenueDelta(0);
@@ -74,7 +78,7 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({
     business: DEMO_BUSINESS,
     products,
-    customers: DEMO_CUSTOMERS,
+    customers,
     sales,
     simulatedSales,
     revenueDelta,
@@ -85,7 +89,7 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     purchase,
     sell,
     reset,
-  }), [products, sales, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, purchase, sell, reset]);
+  }), [products, customers, sales, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, purchase, sell, reset]);
 
   return <DemoStateContext.Provider value={value}>{children}</DemoStateContext.Provider>;
 }
