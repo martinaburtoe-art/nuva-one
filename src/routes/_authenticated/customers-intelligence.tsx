@@ -11,12 +11,14 @@ export const Route = createFileRoute("/_authenticated/customers-intelligence")({
 
 function CustomersIntelligence() {
   const navigate = useNavigate();
-  const { data: customers = [] } = useBizList<any>("customers", { order: "name", ascending: true });
-  const { data: sales = [] } = useBizList<any>("sales", { order: "sale_date", ascending: false });
-  const { data: quotes = [] } = useBizList<any>("quotes", {
+  const { data: customers = [], isLoading: customersLoading } = useBizList<any>("customers", { order: "name", ascending: true });
+  const { data: sales = [], isLoading: salesLoading } = useBizList<any>("sales", { order: "sale_date", ascending: false });
+  const { data: quotes = [], isLoading: quotesLoading } = useBizList<any>("quotes", {
     order: "created_at",
     ascending: false,
   });
+
+  const loading = customersLoading || salesLoading || quotesLoading;
 
   return (
     <ModuleGuard module="customers">
@@ -25,8 +27,8 @@ function CustomersIntelligence() {
           title="CRM Intelligence"
           description="Prioridades, valor de cartera y señales comerciales detectadas por Nüva."
         />
-        <div className="mt-6">
-          <CustomerIntelligenceCard
+        <div className="mt-6" aria-live="polite">
+          {loading ? <div className="space-y-3"><Skeleton className="h-64 w-full" /></div> : <CustomerIntelligenceCard
             customers={customers}
             sales={sales}
             quotes={quotes}
