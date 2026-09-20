@@ -86,7 +86,7 @@ export function NuvaActionCenter() {
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
             <Lightbulb className="h-4 w-4" aria-hidden="true" /> Nüva Intelligence
           </div>
-          <h2 className="mt-1 text-xl font-bold">¿Qué debería hacer hoy?</h2>
+          <h2 className="mt-1 text-xl font-bold">Decisiones y acciones prioritarias</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             {decision?.headline ?? "Nüva analiza tu negocio y prioriza las decisiones por impacto."}
           </p>
@@ -134,7 +134,7 @@ export function NuvaActionCenter() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
-            <span>Datos operacionales consolidados · ventas · compras · caja · inventario</span>
+            <span>Datos conectados · ventas · compras · caja · inventario · clientes</span>
             <span className="rounded-full bg-secondary px-2.5 py-1">Calidad de datos: {quality === "high" ? "alta" : quality === "medium" ? "media" : "baja"}</span>
           </div>
         </>
