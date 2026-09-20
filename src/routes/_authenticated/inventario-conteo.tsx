@@ -36,14 +36,16 @@ function InventoryCount() {
   const [newProduct, setNewProduct] = useState({ name: "", sku: "", barcode: "", category: "", cost: "0", price: "0" });
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function refreshProducts() {
+  const refreshProducts = useCallback(async () => {
     if (!active?.id) return;
     const { data, error } = await supabase.from("products").select("*").eq("business_id", active.id).order("name", { ascending: true });
     if (error) throw error;
     setProducts(data ?? []);
-  }
+  }, [active?.id]);
 
-  useEffect(() => {\n    void refreshProducts();\n  }, [refreshProducts]);
+  useEffect(() => {
+    void refreshProducts();
+  }, [refreshProducts]);
 
   const matched = useMemo(() => products.find((product) => String(product.barcode ?? "").trim().toLowerCase() === barcode.trim().toLowerCase() || String(product.sku ?? "").trim().toLowerCase() === barcode.trim().toLowerCase()), [products, barcode]);
 
