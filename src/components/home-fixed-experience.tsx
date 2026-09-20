@@ -28,8 +28,35 @@ export function HomeFixedExperience() {
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
-    if (reducedMotion) video.pause();
-    else video.play().catch(() => undefined);
+    if (reducedMotion) {
+      video.pause();
+      return;
+    }
+
+    const start = () => {
+      video.muted = true;
+      video.play().catch(() => undefined);
+    };
+
+    start();
+    video.addEventListener("loadeddata", start, { once: true });
+    return () => video.removeEventListener("loadeddata", start);
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video || reducedMotion) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) video.play().catch(() => undefined);
+        else video.pause();
+      },
+      { threshold: 0.05 },
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
   }, [reducedMotion]);
 
   return (
