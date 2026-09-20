@@ -15,16 +15,6 @@ const BENEFITS = [
 
 export function HomeFixedExperience() {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReducedMotion(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
-
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
@@ -47,12 +37,35 @@ export function HomeFixedExperience() {
     events.forEach((event) => video.addEventListener(event, play));
     document.addEventListener("visibilitychange", play);
     window.addEventListener("pageshow", play);
+
+    let lastTime = video.currentTime;
+    let stalledTicks = 0;
+    const watchdog = window.setInterval(() => {
+      if (video.paused || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+        play();
+        return;
+      }
+
+      if (video.currentTime === lastTime) {
+        stalledTicks += 1;
+        if (stalledTicks >= 3) {
+          stalledTicks = 0;
+          video.load();
+          play();
+        }
+      } else {
+        stalledTicks = 0;
+        lastTime = video.currentTime;
+      }
+    }, 1000);
+
     play();
 
     return () => {
       events.forEach((event) => video.removeEventListener(event, play));
       document.removeEventListener("visibilitychange", play);
       window.removeEventListener("pageshow", play);
+      window.clearInterval(watchdog);
     };
   }, []);
 
