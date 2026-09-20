@@ -30,7 +30,7 @@ export function SceneArt({kind,progress,reducedMotion=false,mediaMode="video"}:S
     const safeProgress=Math.min(1,Math.max(0,progress));
     const target=safeProgress*Math.max(0,video.duration-0.04);
     if(Math.abs(video.currentTime-target)>0.02){
-      try{video.currentTime=target}catch{}
+      try{video.currentTime=target}catch{ /* El navegador puede rechazar seeks fuera del rango mientras carga el video. */ }
     }
    });
   };
@@ -63,7 +63,7 @@ export function SceneArt({kind,progress,reducedMotion=false,mediaMode="video"}:S
       const video=videoRef.current;
       if(video){
         video.pause();
-        try{video.currentTime=Math.min(1,Math.max(0,progress))*Math.max(0,video.duration-0.04)}catch{}
+        try{video.currentTime=Math.min(1,Math.max(0,progress))*Math.max(0,video.duration-0.04)}catch{ /* El video aún puede no aceptar seeks durante la inicialización. */ }
       }
     }}
     onError={()=>setVideoFailed(true)}
