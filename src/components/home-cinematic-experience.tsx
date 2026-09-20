@@ -94,8 +94,6 @@ function SceneVideo({ scene, sceneProgress }: { scene: Scene; sceneProgress: num
       autoPlay={scene.id === "hero"}
       loop={scene.id === "hero"}
       src={scene.video}
-      autoPlay={scene.id === "hero"}
-      loop={scene.id === "hero"}
       poster={scene.poster}
       muted
       playsInline
