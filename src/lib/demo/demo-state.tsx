@@ -36,11 +36,12 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
   }, [products, revenueDelta]);
 
   const sell = useCallback((productId: string, customerId = "c1") => {
+    const product = products.find((item) => item.id === productId);
+    if (!product || product.stock <= 0) return;
+
     setProducts((current) =>
-      current.map((product) => product.id === productId ? { ...product, stock: Math.max(0, product.stock - 1) } : product),
+      current.map((item) => item.id === productId ? { ...item, stock: item.stock - 1 } : item),
     );
-    const product = DEMO_PRODUCTS.find((item) => item.id === productId);
-    if (!product) return;
     const customer = DEMO_CUSTOMERS.find((item) => item.id === customerId) ?? DEMO_CUSTOMERS[0];
     setCustomers((current) => current.map((item) => item.id === customer.id ? { ...item, lastPurchase: "Ahora", value: item.value + product.price } : item));
     setSales((current) => [
@@ -51,7 +52,7 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     setRevenueDelta((value) => value + product.price);
     setCashDelta((value) => value + product.price);
     setCostDelta((value) => value + product.cost);
-  }, []);
+  }, [products]);
 
   const purchase = useCallback((productId: string, quantity = 5) => {
     const product = DEMO_PRODUCTS.find((item) => item.id === productId);
