@@ -77,11 +77,11 @@ function HelpCenter() {
         {categories.map((c) => <Button key={c} variant={category === c ? "default" : "outline"} size="sm" className="shrink-0 rounded-full" onClick={() => setCategory(c)}>{c}</Button>)}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" aria-live="polite">
         {filtered.map((item) => <button key={item.title} type="button" onClick={() => setOpen(item)} className="text-left"><Card className="h-full p-5 transition-all hover:-translate-y-0.5 hover:bg-muted/30 hover:shadow-md"><div className="flex items-start justify-between gap-4"><span className="grid h-10 w-10 place-items-center rounded-xl bg-muted text-primary"><HelpIcon category={item.category} /></span><ChevronRight className="h-4 w-4 text-muted-foreground" /></div><p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{item.category}</p><h3 className="mt-1 font-semibold">{item.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p><p className="mt-4 text-xs font-semibold text-primary">Abrir ayuda →</p></Card></button>)}
       </div>
 
-      {filtered.length === 0 && <Card className="p-10 text-center"><CircleHelp className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">No encontramos esa ayuda</h3><p className="mt-1 text-sm text-muted-foreground">Prueba con otra palabra o cambia la categoría.</p></Card>}
+      {filtered.length === 0 && <Card className="rounded-2xl border-dashed p-10 text-center"><CircleHelp className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">No encontramos esa ayuda</h3><p className="mt-1 text-sm text-muted-foreground">Prueba con otra palabra o cambia la categoría.</p></Card>}
 
       <div className="grid gap-4 md:grid-cols-3">
         <SupportCard icon={<Bot className="h-5 w-5" />} title="Pregunta a Nüva" text="Describe tu problema y obtén orientación contextual." href="/ai" />
