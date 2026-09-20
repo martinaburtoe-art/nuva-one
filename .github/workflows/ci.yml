@@ -36,11 +36,13 @@ jobs:
       - name: Start lean Supabase database test stack
         run: |
           set -o pipefail
+          started=false
           for attempt in 1 2 3; do
             echo "Starting lean Supabase stack (attempt ${attempt}/3)"
             if timeout 120s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started"
-              exit 0
+              started=true
+              break
             fi
             echo "Supabase start failed; collecting diagnostics before retry"
             supabase status || true
@@ -50,9 +52,12 @@ jobs:
               sleep 10
             fi
           done
-          echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
-          supabase stop --no-backup || true
-          timeout 180s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+          if [ "$started" != "true" ]; then
+            echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
+            supabase stop --no-backup || true
+            timeout 180s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+          fi
+          echo "Resetting the local database from the repository migrations"
           supabase db reset --local
       - name: Generate database types from clean schema
         run: |
