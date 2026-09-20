@@ -32,6 +32,8 @@ function MfaRequiredPage() {
         navigate({ to: "/", replace: true });
       }
     }
+
+    void checkAndLeave();
     window.addEventListener("focus", checkAndLeave);
     return () => window.removeEventListener("focus", checkAndLeave);
   }, [navigate]);
