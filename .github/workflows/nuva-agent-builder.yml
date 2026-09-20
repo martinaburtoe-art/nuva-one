@@ -33,11 +33,13 @@ jobs:
         run: |
           count=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json headRefName --jq '[.[] | select(.headRefName == "agent/autonomous-cycle" or .headRefName == "agent/ci-repair")] | length')
           echo "open_agent_prs=$count"
-          if [ "$count" -gt 0 ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
+          skip=false
+          if [ "$count" -gt 0 ]; then skip=true; fi
+          # Ahorro de cuota: si el CI de main está en rojo, el CI Repairer lo atiende; el Builder no compite.
+          ci=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status completed --limit 1 --json conclusion --jq '.[0].conclusion // ""')
+          echo "main_ci=$ci"
+          if [ "$ci" = "failure" ]; then skip=true; fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
 
       - name: Run Gemini autonomous engineer
         if: steps.gate.outputs.skip != 'true'
