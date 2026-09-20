@@ -2,6 +2,42 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Info, X } from "lucide-react";
 import { useLocation } from "@tanstack/react-router";
 
+const MODULE_LABELS: Record<string, string> = {
+  "/dashboard": "Resumen",
+  "/pos": "Caja",
+  "/sales": "Ventas",
+  "/customers": "Clientes",
+  "/billing": "Facturación SII",
+  "/purchases": "Compras",
+  "/inventory": "Inventario",
+  "/shipments": "Envíos & Entregas",
+  "/finance": "Finanzas",
+  "/analytics": "Indicadores",
+  "/quotes": "Cotizaciones",
+  "/pricing-calculator": "Calculadora de precios",
+  "/nuva-intelligence": "Nüva Intelligence",
+  "/executive-command-center": "Centro Ejecutivo",
+  "/ai": "Asistente IA",
+  "/studio": "Nüva Studio",
+  "/shifts": "Turnos",
+  "/automations": "Automatizaciones",
+  "/catalog": "Catálogo",
+  "/conexiones": "Conexiones",
+  "/business-health": "Salud del negocio",
+  "/caja-control": "Control de caja",
+  "/customer-action-center": "Centro de acciones de clientes",
+  "/customer-intelligence": "Inteligencia de clientes",
+  "/customers-intelligence": "Inteligencia de clientes",
+  "/finance-accounting": "Finanzas y contabilidad",
+  "/finance-professional": "Finanzas profesional",
+  "/financial-control": "Control financiero",
+  "/financial-dashboard": "Panel financiero",
+  "/financial-integrity": "Integridad financiera",
+  "/inventario-conteo": "Conteo de inventario",
+  "/inventario-operaciones": "Operaciones de inventario",
+  "/mobile-scanner": "Escáner móvil",
+};
+
 export const MODULE_INFO_PATHS = new Set([
   "/dashboard","/pos","/sales","/customers","/billing","/purchases","/inventory","/shipments",
   "/finance","/analytics","/quotes","/pricing-calculator","/nuva-intelligence",
@@ -179,7 +215,17 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const isModuleInfoRoute = inline && MODULE_INFO_PATHS.has(location.pathname);
-  const info = useMemo(() => ({ ...(INFO[location.pathname] ?? FALLBACK), ...(DETAILS[location.pathname] ?? { purpose: "Consulta el propósito de esta sección dentro de la operación.", capabilities: ["Revisar las funciones disponibles"], data: "Información del negocio activo a la que tu cuenta tiene acceso.", outcome: "Una visión más clara de cómo utilizar este espacio." }) }), [location.pathname]);
+  const info = useMemo(() => {
+    const path = location.pathname;
+    const base = INFO[path] ?? { ...FALLBACK, title: MODULE_LABELS[path] ?? FALLBACK.title };
+    const details = DETAILS[path] ?? {
+      purpose: "Consulta el propósito de esta sección dentro de la operación.",
+      capabilities: ["Revisar las funciones disponibles"],
+      data: "Información del negocio activo a la que tu cuenta tiene acceso.",
+      outcome: "Una visión más clara de cómo utilizar este espacio.",
+    };
+    return { ...base, ...details };
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -216,10 +262,10 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 print:hidden"
+        className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 print:hidden"
       >
         <Info className="h-4 w-4" aria-hidden="true" />
-        <span>Información del módulo</span>
+        <span className="hidden sm:inline">Información del módulo</span>
       </button>
 
       {open && (
@@ -238,7 +284,7 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
             aria-modal="true"
             aria-labelledby="nuva-info-title"
             aria-describedby="nuva-info-description"
-            className="relative w-full max-w-md rounded-2xl border bg-background p-5 shadow-2xl"
+            className="relative max-h-[min(82vh,760px)] w-full max-w-xl overflow-y-auto rounded-2xl border bg-background p-5 shadow-2xl"
           >
             <button
               ref={closeRef}
