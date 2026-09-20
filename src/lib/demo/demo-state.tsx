@@ -13,6 +13,8 @@ type DemoState = {
   costDelta: number;
   purchaseCashDelta: number;
   simulatedPurchases: number;
+  emittedDtes: number;
+  convertedQuotes: number;
   purchase: (productId: string, quantity?: number) => void;
   sell: (productId: string) => void;
   reset: () => void;
@@ -30,6 +32,8 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
   const [costDelta, setCostDelta] = useState(0);
   const [purchaseCashDelta, setPurchaseCashDelta] = useState(0);
   const [simulatedPurchases, setSimulatedPurchases] = useState(0);
+  const [emittedDtes, setEmittedDtes] = useState(0);
+  const [convertedQuotes, setConvertedQuotes] = useState(0);
 
   useEffect(() => {
     setDemoAiState(products, DEMO_BUSINESS.monthlyRevenue + revenueDelta);
@@ -64,6 +68,16 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     setSimulatedPurchases((value) => value + 1);
   }, []);
 
+  const emitDte = useCallback(() => {
+    setEmittedDtes((value) => value + 1);
+  }, []);
+
+  const convertQuote = useCallback(() => {
+    const before = simulatedSales;
+    sell("beans");
+    if (simulatedSales > before) setConvertedQuotes((value) => value + 1);
+  }, [sell, simulatedSales]);
+
   const reset = useCallback(() => {
     setProducts(DEMO_PRODUCTS);
     setCustomers(DEMO_CUSTOMERS);
@@ -74,6 +88,8 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     setCostDelta(0);
     setPurchaseCashDelta(0);
     setSimulatedPurchases(0);
+    setEmittedDtes(0);
+    setConvertedQuotes(0);
   }, []);
 
   const value = useMemo(() => ({
@@ -87,10 +103,14 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
     costDelta,
     purchaseCashDelta,
     simulatedPurchases,
+    emittedDtes,
+    convertedQuotes,
+    emitDte,
+    convertQuote,
     purchase,
     sell,
     reset,
-  }), [products, customers, sales, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, purchase, sell, reset]);
+  }), [products, customers, sales, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, emittedDtes, convertedQuotes, emitDte, convertQuote, purchase, sell, reset]);
 
   return <DemoStateContext.Provider value={value}>{children}</DemoStateContext.Provider>;
 }
