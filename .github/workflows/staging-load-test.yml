@@ -49,7 +49,14 @@ jobs:
           # Excluding Studio, Storage, Realtime, Edge Runtime, Mailpit,
           # analytics/logging and the local pooler removes unnecessary image
           # pulls and containers while preserving the API/auth test surface.
-          supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+          if timeout 120s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+            echo "Lean Supabase stack started normally"
+          else
+            echo "Supabase health startup timed out; retrying with health checks bypassed"
+            supabase stop --no-backup || true
+            timeout 180s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta
+            supabase db reset --local
+          fi
           supabase status
 
       - name: Verify clean migration rebuild
