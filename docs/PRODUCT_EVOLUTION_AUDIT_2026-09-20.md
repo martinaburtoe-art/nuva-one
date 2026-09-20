@@ -138,3 +138,13 @@ Una capacidad se considera terminada sólo cuando:
 
 ## Principio rector
 Nüva One no debe ganar por tener más menús. Debe ganar por conectar mejor los datos del negocio y convertirlos en decisiones y acciones verificables.
+
+
+## 2026-09-20 QA hardening update
+
+- Corrected malformed dollar quoting in `20260920043000_harden_catalog_and_agent_history.sql`; clean local migration rebuild now completes through the full migration set.
+- Added bounded Supabase startup fallback to CI/load-test workflows so health-check stalls fail fast and retry with health checks bypassed.
+- Certified `nuva_action_queue` RLS, manager-only mutation, transition validation, audit trigger, tenant isolation and idempotency indexes with pgTAP.
+- Fixed the oversell pgTAP expectation to match the current atomic stock guard error contract. The full database suite subsequently passed: 22 files / 181 tests.
+- Patched development dependency vulnerabilities: Vitest `4.1.11` / coordinated `@vitest/*` `4.1.11`, and js-yaml `4.3.2`.
+- Production deployments for the hardened commits reached READY on Vercel.
