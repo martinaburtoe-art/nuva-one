@@ -76,7 +76,7 @@ export const Route = createFileRoute("/api/n8n-delivery")({
             event_type: row.event_type,
             occurred_at: row.occurred_at,
             idempotency_key: row.idempotency_key,
-            payload: row.payload ?? {},
+            payload: (row.payload ?? {}) as Record<string, unknown>,
           };
 
           const result = await emitN8nEvent(event);
