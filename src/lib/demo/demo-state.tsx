@@ -76,7 +76,9 @@ export function DemoStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const convertQuote = useCallback(() => {
-    if (sell("beans")) setConvertedQuotes((value) => value + 1);
+    const converted = sell("beans");
+    if (converted) setConvertedQuotes((value) => value + 1);
+    return converted;
   }, [sell]);
 
   const reset = useCallback(() => {
