@@ -59,9 +59,9 @@ select is(
 
 -- Reactivating the sale applies its current values again.
 select lives_ok(
-  $$ update public.sales
+  $q$ update public.sales
      set status = 'paid', total = 4000
-     where id = '00000000-0000-0000-0000-0000000000d1' $,
+     where id = '00000000-0000-0000-0000-0000000000d1' $q$,
   'reactivating a sale reapplies current effects'
 );
 
