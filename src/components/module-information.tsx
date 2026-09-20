@@ -47,7 +47,7 @@ export function ModuleInformation({
         >
           {open ? "Ocultar" : "Cómo funciona"}
           <ChevronDown
-            className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            className={`h-3.5 w-3.5 motion-safe:transition-transform motion-safe:duration-200 ${open ? "rotate-180" : ""}`}
             aria-hidden="true"
           />
         </button>
