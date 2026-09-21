@@ -114,6 +114,7 @@ export function NuvaActionCenter() {
         </div>
       ) : (
         <>
+          {queueError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert">No se pudo preparar la acción: {queueError}</div>}
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {actions.map((item) => {
               const meta = priorityMeta[item.priority];
