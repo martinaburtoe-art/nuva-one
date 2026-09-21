@@ -44,7 +44,13 @@ export function NuvaActionQueue() {
         <div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Nüva Action Layer</p><h3 className="mt-1 text-lg font-semibold">Acciones preparadas</h3></div>
         <span className="text-xs text-muted-foreground">{query.data?.length ?? 0} recientes</span>
       </div>
-      {query.isLoading ? <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p> : !query.data?.length ? (
+      {query.isLoading ? <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p> : query.isError ? (
+        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4" role="alert">
+          <p className="text-sm font-medium">No se pudo cargar la cola de acciones.</p>
+          <p className="mt-1 text-xs text-muted-foreground">{query.error instanceof Error ? query.error.message : "Comprueba tu conexión y vuelve a intentarlo."}</p>
+          <Button className="mt-3" size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className={`mr-1 h-3.5 w-3.5 ${query.isFetching ? "animate-spin" : ""}`} /> Reintentar</Button>
+        </div>
+      ) : !query.data?.length ? (
         <p className="mt-4 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">Todavía no hay acciones preparadas. Usa “Preparar acción” desde Nüva Action Center.</p>
       ) : (
         <div className="mt-4 space-y-3">{query.data.map((item) => (
