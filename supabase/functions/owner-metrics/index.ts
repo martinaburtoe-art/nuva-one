@@ -5,17 +5,41 @@ export default {
     const userId = ctx.userClaims?.id ?? ctx.jwtClaims?.sub;
     if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data, error } = await ctx.supabaseAdmin.rpc("get_platform_owner_metrics", { p_owner_id: userId });
+    const { data: platform, error } = await ctx.supabaseAdmin.rpc("get_platform_owner_metrics", {
+      p_owner_id: userId,
+    });
     if (error) {
       if (error.code === "42501") return Response.json({ error: "Forbidden" }, { status: 403 });
       console.error("owner-metrics rpc error", error);
       return Response.json({ error: "Unable to load owner metrics" }, { status: 500 });
     }
 
-    const { data: aiTelemetry, error: aiTelemetryError } = await ctx.supabaseAdmin.rpc("get_platform_ai_metrics", {});
-    return Response.json({
-      platform: data,
-      ai_telemetry: aiTelemetryError ? null : aiTelemetry,
-    }, { headers: { "Cache-Control": "private, max-age=30" } });
+    const { data: aiTelemetry, error: aiTelemetryError } = await ctx.supabaseAdmin.rpc(
+      "get_platform_ai_metrics",
+      {},
+    );
+
+    const source = (platform ?? {}) as Record<string, unknown>;
+    const ai = (aiTelemetry ?? {}) as Record<string, unknown>;
+    const events = Number(source.events_24h ?? source.events_today ?? 0);
+    const activeUsers = Number(source.active_users_7d ?? 0);
+    const activeBusinesses = Number(source.active_businesses_7d ?? 0);
+
+    return Response.json(
+      {
+        ...source,
+        telemetry: {
+          events,
+          active_users: activeUsers,
+          active_businesses: activeBusinesses,
+          errors: 0,
+          ai_events: Number(source.ai_events_7d ?? ai.events_24h ?? 0),
+          avg_duration_ms: null,
+          source_available: events > 0 || activeUsers > 0 || activeBusinesses > 0,
+        },
+        ai_telemetry: aiTelemetryError ? null : aiTelemetry,
+      },
+      { headers: { "Cache-Control": "private, max-age=30" } },
+    );
   }),
 };
