@@ -76,7 +76,11 @@ export function NuvaActionCenter() {
       payload: { action: item.action, cta: item.cta },
       idempotency_key: `${item.id}:${new Date().toISOString().slice(0, 10)}`,
     });
-    if (!insertError) setQueued((current) => ({ ...current, [item.id]: true }));
+    if (insertError) {
+      setQueueError(insertError.message);
+      return;
+    }
+    setQueued((current) => ({ ...current, [item.id]: true }));
   };
 
   const decision = result?.decision;
