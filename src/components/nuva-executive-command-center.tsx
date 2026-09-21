@@ -18,10 +18,10 @@ import { Card } from "@/components/ui/card";
 import type { NuvaDecision } from "@/lib/nuva-decision-engine";
 
 type Customer = { id?: string; name?: string; status?: string | null };
-type Sale = { total?: number | string | null };
+type Sale = { total?: number | string | null; status?: string | null };
 type Activity = { type?: string | null; completed?: boolean | null; due_date?: string | null };
 type Quote = { total?: number | string | null; status?: string | null };
-type Product = { stock?: number | string | null; min_stock?: number | string | null };
+type Product = { stock?: number | string | null; min_stock?: number | string | null; reorder_point?: number | string | null };
 type Props = {
   customers?: Customer[];
   sales?: Sale[];
@@ -59,14 +59,16 @@ export function NuvaExecutiveCommandCenter({
   dataSources = 0,
   totalDataSources = 7,
 }: Props) {
-  const revenue = sales.reduce((sum, s) => sum + Number(s.total ?? 0), 0);
+  const revenue = sales
+    .filter((s) => !["cancelled", "canceled"].includes(String(s.status ?? "").toLowerCase()))
+    .reduce((sum, s) => sum + Number(s.total ?? 0), 0);
   const activeCustomers = customers.filter((c) => c.status !== "inactive").length;
   const tasks = activities.filter((a) => a.type === "task");
   const overdue = tasks.filter(
     (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
   ).length;
   const lowStock = products.filter(
-    (p) => Number(p.stock ?? 0) <= Number(p.min_stock ?? 0) && Number(p.min_stock ?? 0) > 0,
+    (p) => Number(p.stock ?? 0) <= Number(p.reorder_point ?? p.min_stock ?? 0) && Number(p.reorder_point ?? p.min_stock ?? 0) > 0,
   ).length;
   const pendingQuoteValue = quotes
     .filter((q) => !["won", "lost", "cancelled"].includes(String(q.status ?? "").toLowerCase()))
