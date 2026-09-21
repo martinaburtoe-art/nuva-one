@@ -114,6 +114,14 @@ async function notify(text) {
 const icon = { critical: '🔴', warning: '🟠', info: 'ℹ️' };
 
 async function main() {
+  // Config incompleta = checks omitidos en silencio: falla en rojo para no dar falsa seguridad.
+  const missing = [['OPS_SITE_URL', SITE], ['SUPABASE_URL', SB_URL], ['SUPABASE_PUBLISHABLE_KEY', SB_ANON],
+    ['SUPABASE_SERVICE_ROLE_KEY', SB_KEY], ['TELEGRAM_BOT_TOKEN', TG_TOKEN], ['TELEGRAM_CHAT_ID', TG_CHAT]]
+    .filter(([, v]) => !v).map(([k]) => k);
+  if (missing.length) {
+    console.log(`::error title=Configuracion incompleta::Faltan valores (secrets/variables): ${missing.join(', ')}`);
+    if (!DRY) process.exitCode = 1;
+  }
   const results = [];
   for (const c of checks) results.push(await runCheck(c));
   for (const r of results) console.log(`${r.ok ? 'OK  ' : 'FAIL'} ${r.name} — ${r.summary}`);
