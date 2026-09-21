@@ -50,6 +50,7 @@ export function NuvaActionQueue() {
         <div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Nüva Action Layer</p><h3 className="mt-1 text-lg font-semibold">Acciones preparadas</h3></div>
         <span className="text-xs text-muted-foreground">{query.data?.length ?? 0} recientes</span>
       </div>
+      {actionError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert">No se pudo actualizar la acción: {actionError}</div>}
       {query.isLoading ? <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p> : query.isError ? (
         <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4" role="alert">
           <p className="text-sm font-medium">No se pudo cargar la cola de acciones.</p>
