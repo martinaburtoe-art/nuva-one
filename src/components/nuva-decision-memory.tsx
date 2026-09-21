@@ -47,7 +47,7 @@ export function NuvaDecisionMemory({ activities = [] }: Props) {
             </p>
           </div>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric
             icon={<History className="h-4 w-4" />}
             label="Decisiones registradas"
