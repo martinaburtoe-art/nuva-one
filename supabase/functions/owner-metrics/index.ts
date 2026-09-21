@@ -19,9 +19,6 @@ export default {
     }
 
     const source = (telemetry ?? {}) as Record<string, unknown>;
-    const services = (source.services ?? {}) as Record<string, unknown>;
-    const vitals = (source.vitals ?? {}) as Record<string, unknown>;
-
     return json({
       generated_at: source.generated_at ?? new Date().toISOString(),
       environment: "production",
@@ -32,8 +29,9 @@ export default {
         error_events_24h: Number(source.error_events ?? 0),
         distinct_errors_24h: Number(source.distinct_errors ?? 0),
       },
-      services,
-      vitals,
+      services: source.services ?? {},
+      vitals: source.vitals ?? {},
+      top_errors: Array.isArray(source.top_errors) ? source.top_errors : [],
       policy: {
         stores_personal_data: false,
         stores_request_bodies: false,
