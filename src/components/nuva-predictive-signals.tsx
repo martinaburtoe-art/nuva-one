@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-type Sale = { total?: number | string | null; sale_date?: string | null };
+type Sale = { total?: number | string | null; sale_date?: string | null; status?: string | null };
 type Quote = { total?: number | string | null; created_at?: string | null; status?: string | null };
 type Activity = {
   completed?: boolean | null;
