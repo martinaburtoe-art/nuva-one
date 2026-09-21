@@ -35,8 +35,12 @@ export function NuvaActionQueue() {
 
   const updateStatus = async (id: string, status: "approved" | "dismissed") => {
     if (!canApprove || !active?.id) return;
+    setActionError(null);
     const { error } = await supabase.from("nuva_action_queue").update({ status }).eq("id", id).eq("business_id", active.id);
-    if (error) throw error;
+    if (error) {
+      setActionError(error.message);
+      return;
+    }
     await query.refetch();
   };
 
