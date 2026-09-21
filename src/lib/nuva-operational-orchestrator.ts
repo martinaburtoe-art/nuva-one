@@ -37,7 +37,7 @@ export function buildNuvaOperationalResult(input: NuvaOperationalInput): NuvaOpe
     grossMargin: null,
     taxMismatchAmount: 0,
     complianceReadiness: 100,
-    dataSources: [input.sales.length ? "ventas" : "", input.purchases.length ? "compras" : "", input.transactions.length ? "caja-finanzas" : "", input.products.length ? "inventario" : "", activeSales.length ? "cobranza" : ""],
+    dataSources: [input.sales.length ? "ventas" : "", input.purchases.length ? "compras" : "", input.transactions.length ? "caja-finanzas" : "", input.products.length ? "inventario" : ""],
   };
 
   const decision = buildNuvaDecision({
