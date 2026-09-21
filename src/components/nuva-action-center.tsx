@@ -135,7 +135,7 @@ export function NuvaActionCenter() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
-            <span>Datos conectados · ventas · compras · caja · inventario · clientes</span>
+            <span>Datos conectados · ventas · compras · caja · inventario</span>
             <span className="rounded-full bg-secondary px-2.5 py-1">Calidad de datos: {quality === "high" ? "alta" : quality === "medium" ? "media" : "baja"}</span>
           </div>
         </>
