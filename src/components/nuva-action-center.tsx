@@ -29,6 +29,7 @@ type QueryResult<T> = { data: T[] | null; error: { message: string } | null };
 export function NuvaActionCenter() {
   const { active } = useActiveBusiness();
   const [queued, setQueued] = useState<Record<string, boolean>>({});
+  const [queueError, setQueueError] = useState<string | null>(null);
   const { data: result, isLoading, isFetching, isError, error, refetch } = useQuery({
     enabled: !!active?.id,
     queryKey: ["nuva-operational-result", active?.id],
