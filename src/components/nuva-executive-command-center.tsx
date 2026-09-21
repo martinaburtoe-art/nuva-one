@@ -60,7 +60,7 @@ export function NuvaExecutiveCommandCenter({
   totalDataSources = 7,
 }: Props) {
   const revenue = sales
-    .filter((s) => !["won", "lost", "cancelled", "canceled"].includes(String(s.status ?? "").toLowerCase()))
+    .filter((s) => !["cancelled", "canceled"].includes(String(s.status ?? "").toLowerCase()))
     .reduce((sum, s) => sum + Number(s.total ?? 0), 0);
   const activeCustomers = customers.filter((c) => c.status !== "inactive").length;
   const tasks = activities.filter((a) => a.type === "task");
