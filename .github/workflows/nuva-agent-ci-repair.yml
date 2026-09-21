@@ -42,7 +42,7 @@ jobs:
 
       - name: Run Gemini repair engineer
         id: gemini
-        uses: google-github-actions/run-gemini-cli@a3bf79042542528e91937b3a3a6fbc496ee3c31
+        uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
