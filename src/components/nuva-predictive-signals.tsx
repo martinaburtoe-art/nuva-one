@@ -26,8 +26,11 @@ const money = (n: number) =>
     currency: "CLP",
     maximumFractionDigits: 0,
   }).format(n);
-const inDays = (value: string | null | undefined, days: number) =>
-  !!value && Date.now() - new Date(value).getTime() <= days * 86400000;
+const inDays = (value: string | null | undefined, days: number) => {
+  if (!value) return false;
+  const age = Date.now() - new Date(value).getTime();
+  return age >= 0 && age <= days * 86400000;
+};
 const priorityLabel = (score: number) =>
   score >= 80 ? "Crítica" : score >= 60 ? "Alta" : score >= 35 ? "Moderada" : "Baja";
 
