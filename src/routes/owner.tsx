@@ -4,78 +4,20 @@ import { Activity, AlertTriangle, CheckCircle2, Clock3, Gauge, HeartPulse, LockK
 import { supabase } from "@/integrations/supabase/client";
 
 type Health = { name: string; status: "ok" | "error" | "slow"; code: number | null; duration: number | null; detail: string };
-type Metrics = {
-  generated_at: string;
-  environment: string;
-  privacy_mode: string;
-  telemetry: { source_available: boolean; events_24h: number; error_events_24h: number; distinct_errors_24h: number };
-  services: Record<string, { requests?: number; errors?: number; avg_duration_ms?: number | null }>;
-  vitals: { lcp_ms?: number | null; inp_ms?: number | null; cls?: number | null; fcp_ms?: number | null; ttfb_ms?: number | null };
-  top_errors: Array<{ fingerprint: string; route: string | null; service: string | null; count: number }>;
-  policy: { stores_personal_data: boolean; stores_request_bodies: boolean; stores_tokens: boolean; stores_cookies: boolean; stores_ip_addresses: boolean; retention_days: number };
-};
+type Metrics = { generated_at: string; environment: string; privacy_mode: string; telemetry: { source_available: boolean; events_24h: number; error_events_24h: number; distinct_errors_24h: number }; services: Record<string, { requests?: number; errors?: number; avg_duration_ms?: number | null }>; vitals: { lcp_ms?: number | null; inp_ms?: number | null; cls?: number | null; fcp_ms?: number | null; ttfb_ms?: number | null }; top_errors: Array<{ fingerprint: string; route: string | null; service: string | null; count: number }>; policy: { stores_personal_data: boolean; stores_request_bodies: boolean; stores_tokens: boolean; stores_cookies: boolean; stores_ip_addresses: boolean; retention_days: number } };
 
-export const Route = createFileRoute("/owner")({
-  ssr: false,
-  beforeLoad: async () => {
-    await supabase.auth.refreshSession();
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
-    if (data.user.app_metadata?.platform_role !== "owner") throw redirect({ to: "/" });
-  },
-  component: OwnerConsole,
-});
+export const Route = createFileRoute("/owner")({ ssr: false, beforeLoad: async () => { await supabase.auth.refreshSession(); const { data } = await supabase.auth.getUser(); if (!data.user) throw redirect({ to: "/auth" }); if (data.user.app_metadata?.platform_role !== "owner") throw redirect({ to: "/" }); }, component: OwnerConsole });
 
-async function loadMetrics(): Promise<Metrics> {
-  const { data, error } = await supabase.functions.invoke("owner-metrics", { body: {} });
-  if (error || !data) throw new Error("No se pudo consultar el centro de operaciones.");
-  return data as Metrics;
-}
-
-async function probe(name: string, url: string): Promise<Health> {
-  const started = performance.now();
-  try {
-    const response = await fetch(url, { method: "GET", cache: "no-store", credentials: "same-origin" });
-    const duration = Math.round(performance.now() - started);
-    return { name, status: !response.ok ? "error" : duration > 1500 ? "slow" : "ok", code: response.status, duration, detail: response.ok ? `${response.status} · ${duration} ms` : `HTTP ${response.status}` };
-  } catch {
-    return { name, status: "error", code: null, duration: Math.round(performance.now() - started), detail: "Sin respuesta" };
-  }
-}
+async function loadMetrics(): Promise<Metrics> { const { data, error } = await supabase.functions.invoke("owner-operational-metrics", { body: {} }); if (error || !data) throw new Error("No se pudo consultar el centro de operaciones."); return data as Metrics; }
+async function probe(name: string, url: string): Promise<Health> { const started = performance.now(); try { const response = await fetch(url, { method: "GET", cache: "no-store", credentials: "same-origin" }); const duration = Math.round(performance.now() - started); return { name, status: !response.ok ? "error" : duration > 1500 ? "slow" : "ok", code: response.status, duration, detail: response.ok ? `${response.status} · ${duration} ms` : `HTTP ${response.status}` }; } catch { return { name, status: "error", code: null, duration: Math.round(performance.now() - started), detail: "Sin respuesta" }; } }
 
 function OwnerConsole() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [health, setHealth] = useState<Health[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-
-  const refresh = async () => {
-    setLoading(true); setError(null);
-    try {
-      const [nextMetrics, ...checks] = await Promise.all([loadMetrics(), probe("Sitio público", "/"), probe("Autenticación", "/auth"), probe("Health API", "/api/health")]);
-      setMetrics(nextMetrics); setHealth(checks); setLastRefresh(new Date());
-    } catch (e) { setError(e instanceof Error ? e.message : "Error inesperado"); }
-    finally { setLoading(false); }
-  };
-
-  useEffect(() => {
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const operationalState = useMemo(() => {
-    if (health.some((item) => item.status === "error")) return "critical" as const;
-    if (health.some((item) => item.status === "slow") || (metrics?.telemetry.error_events_24h ?? 0) > 0) return "attention" as const;
-    return "healthy" as const;
-  }, [health, metrics]);
-
+  const [metrics, setMetrics] = useState<Metrics | null>(null); const [health, setHealth] = useState<Health[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null); const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const refresh = async () => { setLoading(true); setError(null); try { const [nextMetrics, ...checks] = await Promise.all([loadMetrics(), probe("Sitio público", "/"), probe("Autenticación", "/auth"), probe("Health API", "/api/health")]); setMetrics(nextMetrics); setHealth(checks); setLastRefresh(new Date()); } catch (e) { setError(e instanceof Error ? e.message : "Error inesperado"); } finally { setLoading(false); } };
+  useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 30_000); return () => window.clearInterval(timer); }, []);
+  const operationalState = useMemo(() => { if (health.some((item) => item.status === "error")) return "critical" as const; if (health.some((item) => item.status === "slow") || (metrics?.telemetry.error_events_24h ?? 0) > 0) return "attention" as const; return "healthy" as const; }, [health, metrics]);
   return <div className="min-h-screen bg-[#07070c] px-4 py-6 text-white sm:px-8"><div className="mx-auto max-w-[1480px]">
-    <header className="rounded-[30px] border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.035] to-transparent p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between"><div><div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-200/70"><LockKeyhole className="h-4 w-4"/>Private Owner Console</div><h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">Nüva Command Center</h1><p className="mt-3 max-w-3xl text-sm leading-6 text-white/50">Centro operativo privado para saber si Nüva One está funcionando, detectar errores, medir rendimiento y reaccionar antes de que un problema escale.</p></div><div className="flex items-center gap-2"><StateBadge state={operationalState}/><button onClick={() => void refresh()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-50"><RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"}/>Actualizar</button><button onClick={() => void supabase.auth.signOut()} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm hover:bg-white/10">Salir</button></div></div>
-      <div className="mt-6 flex flex-wrap gap-2 border-t border-white/8 pt-4 text-xs text-white/35"><span>Producción</span><span>·</span><span>Monitoreo agregado</span><span>·</span><span>Auto-refresh 30 s</span><span>·</span><span>{lastRefresh ? `Última lectura ${lastRefresh.toLocaleTimeString("es-CL")}` : "Inicializando"}</span></div>
-    </header>
+    <header className="rounded-[30px] border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.035] to-transparent p-6 shadow-2xl backdrop-blur-xl sm:p-8"><div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between"><div><div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-200/70"><LockKeyhole className="h-4 w-4"/>Private Owner Console</div><h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">Nüva Command Center</h1><p className="mt-3 max-w-3xl text-sm leading-6 text-white/50">Centro operativo privado para saber si Nüva One está funcionando, detectar errores, medir rendimiento y reaccionar antes de que un problema escale.</p></div><div className="flex items-center gap-2"><StateBadge state={operationalState}/><button onClick={() => void refresh()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-50"><RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"}/>Actualizar</button><button onClick={() => void supabase.auth.signOut()} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm hover:bg-white/10">Salir</button></div></div><div className="mt-6 flex flex-wrap gap-2 border-t border-white/8 pt-4 text-xs text-white/35"><span>Producción</span><span>·</span><span>Monitoreo agregado</span><span>·</span><span>Auto-refresh 30 s</span><span>·</span><span>{lastRefresh ? `Última lectura ${lastRefresh.toLocaleTimeString("es-CL")}` : "Inicializando"}</span></div></header>
     {error ? <div className="mt-5 flex items-center gap-3 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100"><XCircle className="h-5 w-5"/>{error}</div> : null}
     <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Kpi title="Estado web" value={operationalState === "healthy" ? "Operativo" : operationalState === "attention" ? "Atención" : "Incidente"} icon={HeartPulse}/><Kpi title="Errores 24 h" value={metrics ? String(metrics.telemetry.error_events_24h) : "—"} icon={TriangleAlert}/><Kpi title="Errores distintos" value={metrics ? String(metrics.telemetry.distinct_errors_24h) : "—"} icon={AlertTriangle}/><Kpi title="Eventos 24 h" value={metrics ? String(metrics.telemetry.events_24h) : "—"} icon={Activity}/></section>
     <section className="mt-5 grid gap-5 lg:grid-cols-[1.4fr_1fr]"><Panel title="Live Health" icon={Wifi} subtitle="Pruebas activas contra la aplicación publicada"><div className="grid gap-3 sm:grid-cols-3">{health.map((item) => <HealthRow key={item.name} item={item}/>)}</div></Panel><Panel title="Privacidad del monitoreo" icon={ShieldCheck} subtitle="Observa el sistema, no a las personas"><div className="space-y-2">{["Sin nombres, emails ni identificadores de usuarios","Sin IPs almacenadas","Sin cookies, tokens ni cuerpos de solicitudes","Errores reducidos a fingerprint técnico",`Retención operacional: ${metrics?.policy.retention_days ?? 30} días`].map((text) => <div key={text} className="flex items-center gap-3 rounded-xl border border-white/7 bg-black/10 px-3 py-2.5 text-xs text-white/60"><CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-200"/>{text}</div>)}</div></Panel></section>
@@ -84,7 +26,6 @@ function OwnerConsole() {
     <footer className="mt-8 flex flex-col gap-2 border-t border-white/8 pt-5 text-xs text-white/30 sm:flex-row sm:justify-between"><span>Nüva One · Private Owner Console · observabilidad operacional agregada</span><span>{metrics ? `Servidor: ${new Date(metrics.generated_at).toLocaleString("es-CL")}` : "Sin lectura"}</span></footer>
   </div></div>;
 }
-
 function Kpi({title,value,icon:Icon}:{title:string;value:string;icon:ComponentType<{className?:string}>}){return <div className="rounded-2xl border border-white/9 bg-white/[0.035] p-5"><div className="flex items-center justify-between text-xs text-white/40"><span>{title}</span><Icon className="h-4 w-4 text-cyan-200/60"/></div><div className="mt-3 text-2xl font-semibold">{value}</div></div>}
 function Panel({title,subtitle,icon:Icon,children}:{title:string;subtitle:string;icon:ComponentType<{className?:string}>;children:ReactNode}){return <section className="rounded-[26px] border border-white/9 bg-white/[0.035] p-5 shadow-2xl backdrop-blur-xl sm:p-6"><div className="flex items-start gap-3"><Icon className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200/70"/><div><h2 className="text-base font-semibold">{title}</h2><p className="mt-1 text-xs text-white/35">{subtitle}</p></div></div><div className="mt-5">{children}</div></section>}
 function HealthRow({item}:{item:Health}){const Icon=item.status === "ok" ? CheckCircle2 : item.status === "slow" ? Clock3 : XCircle; return <div className="rounded-2xl border border-white/7 bg-black/10 p-4"><div className="flex items-center justify-between"><span className="text-sm text-white/65">{item.name}</span><Icon className={`h-5 w-5 ${item.status === "ok" ? "text-emerald-200" : item.status === "slow" ? "text-amber-200" : "text-red-200"}`}/></div><div className="mt-3 text-xs text-white/35">{item.detail}</div></div>}
