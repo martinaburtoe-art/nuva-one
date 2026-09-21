@@ -56,7 +56,7 @@ function ExecutiveCommandCenter() {
   }, [loading, sales, purchases, transactions, products]);
   const section = executiveSections.find((item) => item.id === activeSection);
   const dataSources = [customers, sales, activities, quotes, products, purchases, transactions];
-  const connectedSources = dataSources.filter((source) => source !== undefined).length;
+  const connectedSources = dataSources.filter((source) => Array.isArray(source) && source.length > 0).length;
 
   return (
     <ModuleGuard module="customers">
