@@ -20,6 +20,7 @@ export function NuvaActionQueue() {
   const { active } = useActiveBusiness();
   const { data: role } = useMyRole();
   const canApprove = canManageBusiness(role);
+  const [actionError, setActionError] = useState<string | null>(null);
   const query = useQuery({
     enabled: !!active?.id,
     queryKey: ["nuva-action-queue", active?.id],
