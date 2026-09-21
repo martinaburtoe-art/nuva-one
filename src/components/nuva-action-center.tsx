@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import type { ActionDestination } from "@/lib/nuva-action-center";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -123,9 +124,9 @@ export function NuvaActionCenter() {
                         <Button size="sm" variant={queued[item.id] ? "secondary" : "default"} onClick={() => queueAction(item)} disabled={queued[item.id]}>
                           {queued[item.id] ? <><Check className="mr-1 h-3.5 w-3.5" /> Preparada</> : "Preparar acción"}
                         </Button>
-                        <a href={`/${item.destination}`} className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted">
+                        <Link to={actionDestinationRoute(item.destination)} className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted">
                           {item.cta}<ArrowUpRight className="ml-1 h-3.5 w-3.5" />
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -141,4 +142,16 @@ export function NuvaActionCenter() {
       )}
     </Card>
   );
+}
+
+function actionDestinationRoute(destination: ActionDestination) {
+  switch (destination) {
+    case "inventory": return "/inventory";
+    case "crm":
+    case "customers": return "/customers";
+    case "purchases": return "/purchases";
+    case "finance": return "/finance";
+    case "dashboard":
+    default: return "/dashboard";
+  }
 }
