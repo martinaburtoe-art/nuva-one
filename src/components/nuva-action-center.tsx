@@ -29,6 +29,7 @@ type QueryResult<T> = { data: T[] | null; error: { message: string } | null };
 export function NuvaActionCenter() {
   const { active } = useActiveBusiness();
   const [queued, setQueued] = useState<Record<string, boolean>>({});
+  const [queueError, setQueueError] = useState<string | null>(null);
   const { data: result, isLoading, isFetching, isError, error, refetch } = useQuery({
     enabled: !!active?.id,
     queryKey: ["nuva-operational-result", active?.id],
@@ -59,6 +60,7 @@ export function NuvaActionCenter() {
 
   const queueAction = async (item: NonNullable<typeof result>["decision"]["actions"][number]) => {
     if (!active?.id || queued[item.id]) return;
+    setQueueError(null);
     const client = supabase as any;
     const { error: insertError } = await client.from("nuva_action_queue").insert({
       business_id: active.id,
@@ -74,7 +76,11 @@ export function NuvaActionCenter() {
       payload: { action: item.action, cta: item.cta },
       idempotency_key: `${item.id}:${new Date().toISOString().slice(0, 10)}`,
     });
-    if (!insertError) setQueued((current) => ({ ...current, [item.id]: true }));
+    if (insertError) {
+      setQueueError(insertError.message);
+      return;
+    }
+    setQueued((current) => ({ ...current, [item.id]: true }));
   };
 
   const decision = result?.decision;
@@ -108,6 +114,7 @@ export function NuvaActionCenter() {
         </div>
       ) : (
         <>
+          {queueError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert">No se pudo preparar la acción: {queueError}</div>}
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {actions.map((item) => {
               const meta = priorityMeta[item.priority];
@@ -135,7 +142,7 @@ export function NuvaActionCenter() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
-            <span>Datos conectados · ventas · compras · caja · inventario · clientes</span>
+            <span>Datos conectados · ventas · compras · caja · inventario</span>
             <span className="rounded-full bg-secondary px-2.5 py-1">Calidad de datos: {quality === "high" ? "alta" : quality === "medium" ? "media" : "baja"}</span>
           </div>
         </>

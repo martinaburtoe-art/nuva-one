@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-type Sale = { total?: number | string | null; sale_date?: string | null };
+type Sale = { total?: number | string | null; sale_date?: string | null; status?: string | null };
 type Quote = { total?: number | string | null; created_at?: string | null; status?: string | null };
 type Activity = {
   completed?: boolean | null;
@@ -26,14 +26,18 @@ const money = (n: number) =>
     currency: "CLP",
     maximumFractionDigits: 0,
   }).format(n);
-const inDays = (value: string | null | undefined, days: number) =>
-  !!value && Date.now() - new Date(value).getTime() <= days * 86400000;
+const inDays = (value: string | null | undefined, days: number) => {
+  if (!value) return false;
+  const age = Date.now() - new Date(value).getTime();
+  return age >= 0 && age <= days * 86400000;
+};
 const priorityLabel = (score: number) =>
   score >= 80 ? "Crítica" : score >= 60 ? "Alta" : score >= 35 ? "Moderada" : "Baja";
 
 export function NuvaPredictiveSignals({ sales = [], quotes = [], activities = [] }: Props) {
-  const recentSales = sales.filter((s) => inDays(s.sale_date, 30));
-  const previousSales = sales.filter((s) => {
+  const activeSales = sales.filter((s) => !["cancelled", "canceled"].includes(String(s.status ?? "").toLowerCase()));
+  const recentSales = activeSales.filter((s) => inDays(s.sale_date, 30));
+  const previousSales = activeSales.filter((s) => {
     if (!s.sale_date) return false;
     const age = (Date.now() - new Date(s.sale_date).getTime()) / 86400000;
     return age > 30 && age <= 60;

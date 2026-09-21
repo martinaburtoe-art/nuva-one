@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Clock3, XCircle } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, Clock3, XCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { canManageBusiness, useActiveBusiness, useMyRole } from "@/lib/use-business";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export function NuvaActionQueue() {
   const { active } = useActiveBusiness();
   const { data: role } = useMyRole();
   const canApprove = canManageBusiness(role);
+  const [actionError, setActionError] = useState<string | null>(null);
   const query = useQuery({
     enabled: !!active?.id,
     queryKey: ["nuva-action-queue", active?.id],
@@ -32,9 +34,14 @@ export function NuvaActionQueue() {
   });
 
   const updateStatus = async (id: string, status: "approved" | "dismissed") => {
-    if (!canApprove) return;
-    const { error } = await supabase.from("nuva_action_queue").update({ status }).eq("id", id).eq("business_id", active!.id);
-    if (!error) await query.refetch();
+    if (!canApprove || !active?.id) return;
+    setActionError(null);
+    const { error } = await supabase.from("nuva_action_queue").update({ status }).eq("id", id).eq("business_id", active.id);
+    if (error) {
+      setActionError(error.message);
+      return;
+    }
+    await query.refetch();
   };
 
   return (
@@ -43,7 +50,14 @@ export function NuvaActionQueue() {
         <div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Nüva Action Layer</p><h3 className="mt-1 text-lg font-semibold">Acciones preparadas</h3></div>
         <span className="text-xs text-muted-foreground">{query.data?.length ?? 0} recientes</span>
       </div>
-      {query.isLoading ? <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p> : !query.data?.length ? (
+      {actionError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert">No se pudo actualizar la acción: {actionError}</div>}
+      {query.isLoading ? <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p> : query.isError ? (
+        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4" role="alert">
+          <p className="text-sm font-medium">No se pudo cargar la cola de acciones.</p>
+          <p className="mt-1 text-xs text-muted-foreground">{query.error instanceof Error ? query.error.message : "Comprueba tu conexión y vuelve a intentarlo."}</p>
+          <Button className="mt-3" size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className={`mr-1 h-3.5 w-3.5 ${query.isFetching ? "animate-spin" : ""}`} /> Reintentar</Button>
+        </div>
+      ) : !query.data?.length ? (
         <p className="mt-4 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">Todavía no hay acciones preparadas. Usa “Preparar acción” desde Nüva Action Center.</p>
       ) : (
         <div className="mt-4 space-y-3">{query.data.map((item) => (
