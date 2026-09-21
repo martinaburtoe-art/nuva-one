@@ -35,8 +35,9 @@ const priorityLabel = (score: number) =>
   score >= 80 ? "Crítica" : score >= 60 ? "Alta" : score >= 35 ? "Moderada" : "Baja";
 
 export function NuvaPredictiveSignals({ sales = [], quotes = [], activities = [] }: Props) {
-  const recentSales = sales.filter((s) => inDays(s.sale_date, 30));
-  const previousSales = sales.filter((s) => {
+  const activeSales = sales.filter((s) => !["cancelled", "canceled"].includes(String(s.status ?? "").toLowerCase()));
+  const recentSales = activeSales.filter((s) => inDays(s.sale_date, 30));
+  const previousSales = activeSales.filter((s) => {
     if (!s.sale_date) return false;
     const age = (Date.now() - new Date(s.sale_date).getTime()) / 86400000;
     return age > 30 && age <= 60;
