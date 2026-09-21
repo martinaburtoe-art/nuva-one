@@ -38,7 +38,7 @@ const MODULE_LABELS: Record<string, string> = {
   "/mobile-scanner": "Escáner móvil",
 };
 
-export const MODULE_INFO_PATHS = new Set([
+export const MODULE_INFO_PATHS: ReadonlySet<string> = new Set<string>([
   "/dashboard","/pos","/sales","/customers","/billing","/purchases","/inventory","/shipments",
   "/finance","/analytics","/quotes","/pricing-calculator","/nuva-intelligence",
   "/executive-command-center","/ai","/studio","/shifts","/automations","/catalog","/conexiones",
