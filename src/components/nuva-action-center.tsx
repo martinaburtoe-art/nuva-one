@@ -60,6 +60,7 @@ export function NuvaActionCenter() {
 
   const queueAction = async (item: NonNullable<typeof result>["decision"]["actions"][number]) => {
     if (!active?.id || queued[item.id]) return;
+    setQueueError(null);
     const client = supabase as any;
     const { error: insertError } = await client.from("nuva_action_queue").insert({
       business_id: active.id,
