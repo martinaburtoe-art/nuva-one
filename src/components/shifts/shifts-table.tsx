@@ -40,12 +40,19 @@ type Shift = {
   week_start: string;
 };
 
+function toLocalISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getWeekStart(offsetWeeks = 0): string {
   const now = new Date();
   const day = now.getDay() === 0 ? 7 : now.getDay(); // Monday-based week
   const monday = new Date(now);
   monday.setDate(now.getDate() - day + 1 + offsetWeeks * 7);
-  return monday.toISOString().slice(0, 10);
+  return toLocalISODate(monday);
 }
 
 // Todas las semanas (lunes de inicio) cuyo rango toca el mes de weekStartISO.
@@ -62,7 +69,7 @@ function getWeekStartsInMonth(weekStartISO: string): string[] {
   cur.setDate(cur.getDate() - dow + 1);
   const result: string[] = [];
   while (cur <= lastDay) {
-    result.push(cur.toISOString().slice(0, 10));
+    result.push(toLocalISODate(cur));
     cur.setDate(cur.getDate() + 7);
   }
   return result;
@@ -298,7 +305,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setWeekOffset((w) => w - 1)}>
+          <Button variant="outline" size="icon" onClick={() => setWeekOffset((w) => w - 1)} aria-label="Semana anterior">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium">
@@ -308,7 +315,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
               month: "long",
             })}
           </span>
-          <Button variant="outline" size="icon" onClick={() => setWeekOffset((w) => w + 1)}>
+          <Button variant="outline" size="icon" onClick={() => setWeekOffset((w) => w + 1)} aria-label="Semana siguiente">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -490,6 +497,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
                       size="icon"
                       onClick={() => deleteShift(s.id)}
                       title="Eliminar"
+                      aria-label={`Eliminar turno de ${s.employee_name}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
