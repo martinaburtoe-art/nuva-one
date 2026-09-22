@@ -20,6 +20,11 @@ alter table public.owner_operational_events enable row level security;
 revoke all on public.owner_operational_events from anon, authenticated;
 grant select, insert, update, delete, truncate on public.owner_operational_events to service_role;
 
+create policy owner_operational_events_deny_anon on public.owner_operational_events
+  for all to anon using (false) with check (false);
+create policy owner_operational_events_deny_authenticated on public.owner_operational_events
+  for all to authenticated using (false) with check (false);
+
 create index if not exists owner_operational_events_created_at_idx
   on public.owner_operational_events (created_at desc);
 
