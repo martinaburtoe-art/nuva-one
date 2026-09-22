@@ -61,15 +61,24 @@ as $function$
     from windowed
   ),
   one_hour as (
-    select count(*) filter (
-      where event_type in ('client_error','unhandled_rejection','route_error','api_error')
-    )::numeric as errors,
-    count(*)::numeric as total
+    select
+      count(*) filter (where event_type in ('client_error','unhandled_rejection','route_error','api_error'))::numeric as errors,
+      count(*) filter (where event_type in ('client_error','unhandled_rejection','route_error','api_error','web_vital'))::numeric as total
     from public.owner_operational_events
     where created_at >= now() - interval '1 hour'
   ),
+  five_minutes as (
+    select
+      count(*) filter (where event_type in ('client_error','unhandled_rejection','route_error','api_error'))::numeric as errors,
+      count(*) filter (where event_type in ('client_error','unhandled_rejection','route_error','api_error','web_vital'))::numeric as total
+    from public.owner_operational_events
+    where created_at >= now() - interval '5 minutes'
+  ),
   performance as (
-    select percentile_cont(0.95) within group (order by duration_ms)::numeric as latency_p95_ms
+    select
+      percentile_cont(0.50) within group (order by duration_ms)::numeric as latency_p50_ms,
+      percentile_cont(0.95) within group (order by duration_ms)::numeric as latency_p95_ms,
+      percentile_cont(0.99) within group (order by duration_ms)::numeric as latency_p99_ms
     from windowed
     where duration_ms is not null
   ),
@@ -127,9 +136,13 @@ as $function$
     'events', (select total from errors),
     'error_events', (select error_events from errors),
     'distinct_errors', (select distinct_errors from errors),
+    'error_rate_5m', case when (select total from five_minutes) = 0 then 0
+      else round(((select errors from five_minutes) / (select total from five_minutes) * 100)::numeric, 2) end,
     'error_rate_1h', case when (select total from one_hour) = 0 then 0
       else round(((select errors from one_hour) / (select total from one_hour) * 100)::numeric, 2) end,
+    'latency_p50_ms', (select latency_p50_ms from performance),
     'latency_p95_ms', (select latency_p95_ms from performance),
+    'latency_p99_ms', (select latency_p99_ms from performance),
     'vitals', (select row_to_json(vitals)::jsonb from vitals),
     'services', (select data from services),
     'top_errors', (select data from top_errors),
