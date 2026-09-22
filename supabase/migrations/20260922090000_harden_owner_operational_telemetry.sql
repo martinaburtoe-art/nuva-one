@@ -146,7 +146,7 @@ as $function$
     'vitals', (select row_to_json(vitals)::jsonb from vitals),
     'services', (select data from services),
     'top_errors', (select data from top_errors),
-    'source_available', exists(select 1 from windowed),
+    'source_available', true,
     'generated_at', now()
   );
 $function$;
