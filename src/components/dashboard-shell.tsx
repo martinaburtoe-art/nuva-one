@@ -28,6 +28,7 @@ import {
   Truck,
   ShieldCheck,
   HelpCircle,
+  UserRoundCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +72,7 @@ const nav = [
   { to: "/studio", label: "Nüva Studio", icon: Sparkles, section: "Inteligencia" },
   { to: "/foro", label: "Comunidad", icon: MessagesSquare, section: "Espacio" },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true, section: "Espacio" },
+  { to: "/people", label: "Nüva People", icon: UserRoundCog, module: "people", section: "Personas" },
   { to: "/settings", label: "Configuración", icon: Settings, section: "Espacio" },
 ] as const;
 
@@ -136,7 +138,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
         {!collapsed && (
           <>
-            <div className="border-b border-sidebar-border p-3">
+            <div className="border-b border-sidebar-border/70 p-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent">
@@ -238,181 +240,67 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             {collapsed ? (
               <ChevronsRight className="h-4 w-4" />
             ) : (
-              <>
-                <ChevronsLeft className="h-4 w-4" />
-                <span>Colapsar</span>
-              </>
+              <ChevronsLeft className="h-4 w-4" />
             )}
+            {!collapsed && <span>Colapsar</span>}
           </button>
+          {!collapsed && (
+            <button
+              onClick={logout}
+              className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Cerrar sesión</span>
+            </button>
+          )}
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur md:gap-3 md:px-6">
-          <Link to="/dashboard" className="flex shrink-0 items-center gap-2 md:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
-            </div>
-          </Link>
-          <div className="hidden max-w-md flex-1 md:block">
-            <GlobalSearch visibleNav={visibleNav} />
-          </div>
-          <div className="min-w-0 flex-1 truncate text-sm font-medium md:hidden">
-            {active?.name ?? "Nüva One"}
-          </div>
-          {showModuleInfo && <NuvaInfoCenter inline />}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Abrir centro de ayuda"
-            title="Centro de ayuda"
-            onClick={openHelp}
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Notificaciones"
-            onClick={() => toast.info("No tienes notificaciones nuevas")}
-          >
-            <Bell className="h-4 w-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-sm font-semibold text-primary-foreground">
-                U
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
-                <Settings className="mr-2 h-4 w-4" /> Configuración
-              </DropdownMenuItem>
-              {myRole === "owner" && (
-                <DropdownMenuItem onClick={() => navigate({ to: "/owner" })}>
-                  <ShieldCheck className="mr-2 h-4 w-4" /> Command Center
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
-
-        <main className="flex-1 motion-safe:animate-fade-in-up p-4 pb-24 md:p-8 md:pb-8">
-          {trialExpired && !isSettingsRoute ? <TrialExpiredScreen navigate={navigate} /> : children}
-        </main>
-      </div>
-
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center border-t bg-background/95 backdrop-blur md:hidden">
-        {mobilePrimaryNav.map((item) => {
-          const isActive = pathname === item.to;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]",
-                isActive ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Link>
-          );
-        })}
-        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetTrigger asChild>
-            <button className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground">
-              <Menu className="h-5 w-5" />
-              Más
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-2xl">
-            <div className="mb-2 mt-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex w-full items-center gap-2 rounded-lg border p-3 text-left">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-primary text-primary-foreground">
-                      <Building2 className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">
-                        {active?.name ?? "Sin negocio"}
-                      </div>
-                      <div className="truncate text-xs text-muted-foreground">{active?.industry}</div>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Tus negocios</DropdownMenuLabel>
-                  {businesses.map((b) => (
-                    <DropdownMenuItem key={b.id} onClick={() => setActiveId(b.id)}>
-                      <Building2 className="mr-2 h-4 w-4" /> {b.name}
-                    </DropdownMenuItem>
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border/70 bg-background/90 px-3 backdrop-blur md:px-5">
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Abrir menú">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-0">
+                <div className="p-3">
+                  <p className="font-semibold">Nüva One</p>
+                  <p className="text-xs text-muted-foreground">Gestión integral de tu negocio</p>
+                </div>
+                <nav className="space-y-1 px-2 pb-4">
+                  {mobileMoreNav.map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm",
+                        pathname === item.to ? "bg-accent font-medium" : "text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
                   ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
-                    <Plus className="mr-2 h-4 w-4" /> Crear nuevo negocio
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate({ to: "/select-business" })}>
-                    Ver todos
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="space-y-1 pb-6">
-              {mobileMoreNav.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setMoreOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-3 text-sm",
-                    pathname === item.to
-                      ? "bg-secondary font-medium text-foreground"
-                      : "text-muted-foreground hover:bg-secondary/60",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              ))}
-              {myRole === "owner" && (
-                <Link
-                  to="/owner"
-                  onClick={() => setMoreOpen(false)}
-                  className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3 text-sm text-primary"
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Nüva Owner · Command Center
-                </Link>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
-      </nav>
-
-      <AiChatBubble />
-    </div>
-  );
-}
-
-function TrialExpiredScreen({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="max-w-md rounded-2xl border bg-card p-8 text-center shadow-sm">
-        <Lock className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h2 className="mt-4 text-xl font-semibold">Tu prueba gratuita terminó</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Elige un plan para continuar usando todas las herramientas de Nüva One.
-        </p>
-        <Button className="mt-6" onClick={() => navigate({ to: "/pricing" })}>
-          Ver planes
-        </Button>
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+          <GlobalSearch />
+          <div className="ml-auto flex items-center gap-1">
+            <Button variant="ghost" size="icon" aria-label="Notificaciones" onClick={() => toast.info("Centro de notificaciones próximamente")}> 
+              <Bell className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Ayuda" onClick={openHelp}>
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          </div>
+        </header>
+        <main className="min-w-0 flex-1">{children}</main>
+        {showModuleInfo && <NuvaInfoCenter pathname={pathname} />}
+        {!isSettingsRoute && <AiChatBubble />}
       </div>
     </div>
   );
