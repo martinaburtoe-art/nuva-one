@@ -246,16 +246,6 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
     toast.success("Planilla PDF descargada y lista para compartir con el equipo.");
   }
 
-  function sendAllWhatsApp() {
-    if (!shifts || shifts.length === 0) return;
-    const withPhone = shifts.filter((s) => s.employee_phone);
-    if (withPhone.length === 0) {
-      toast.error("Ningún empleado tiene teléfono registrado");
-      return;
-    }
-    withPhone.forEach((s, i) => setTimeout(() => sendWhatsApp(s), i * 400));
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
