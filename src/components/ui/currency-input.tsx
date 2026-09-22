@@ -42,20 +42,22 @@ export function CurrencyInput({
   };
 
   return (
-    <div className={wrapperClassName}><div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-      <Input
-        inputMode="numeric"
-        autoComplete="off"
-        className={`pl-6 tabular-nums ${className ?? ""}`}
-        placeholder={placeholder?.replace(/^\s*\$\s*/, "")}
-        value={formatCLP(currentValue)}
-        onChange={(e) => handleChange(e.target.value)}
-        required={required}
-        disabled={disabled}
-        aria-label={name}
-      />
-      {name && <input type="hidden" name={name} value={currentValue} disabled={disabled} />}
+    <div className={wrapperClassName}>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+        <Input
+          inputMode="numeric"
+          autoComplete="off"
+          className={`pl-6 tabular-nums ${className ?? ""}`}
+          placeholder={placeholder?.replace(/^\s*\$\s*/, "")}
+          value={formatCLP(currentValue)}
+          onChange={(e) => handleChange(e.target.value)}
+          required={required}
+          disabled={disabled}
+          aria-label={name}
+        />
+        {name && <input type="hidden" name={name} value={currentValue} disabled={disabled} />}
+      </div>
     </div>
   );
 }
