@@ -48,7 +48,7 @@ export function CurrencyInput({
         inputMode="numeric"
         autoComplete="off"
         className={`pl-6 tabular-nums ${className ?? ""}`}
-        placeholder={placeholder}
+        placeholder={placeholder?.replace(/^\s*\$\s*/, "")}
         value={formatCLP(currentValue)}
         onChange={(e) => handleChange(e.target.value)}
         required={required}
