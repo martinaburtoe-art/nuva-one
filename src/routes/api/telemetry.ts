@@ -19,14 +19,28 @@ function json(data: Record<string, unknown>, status = 200) {
 
 function validPath(value: unknown) {
   if (typeof value !== "string") return "/";
-  const path = value.split("?")[0].slice(0, 240);
-  return path.startsWith("/") ? path : "/";
+  const raw = value.split("?")[0].slice(0, 240);
+  if (!raw.startsWith("/")) return "/";
+  return raw.split("/").map((segment) => {
+    if (!segment) return "";
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)) return ":id";
+    if (/^\\d+$/.test(segment)) return ":n";
+    if (segment.length > 24 && /^[a-zA-Z0-9_-]+$/.test(segment)) return ":segment";
+    return segment.slice(0, 48);
+  }).join("/") || "/";
 }
 
+const allowedFingerprints = new Set([
+  "unknown_client_error",
+  "stale_or_failed_chunk",
+  "network_error",
+  "type_error",
+  "reference_error",
+  "syntax_error",
+]);
+
 function fingerprint(value: unknown) {
-  if (typeof value !== "string") return null;
-  const normalized = value.replace(/[^a-zA-Z0-9._:-]/g, "").slice(0, 96);
-  return normalized || null;
+  return typeof value === "string" && allowedFingerprints.has(value) ? value : null;
 }
 
 export const Route = createFileRoute("/api/telemetry")({
@@ -35,6 +49,8 @@ export const Route = createFileRoute("/api/telemetry")({
       POST: async ({ request }) => {
         const origin = request.headers.get("origin");
         if (origin && !allowedOrigins.has(origin)) return json({ ok: false }, 403);
+        const fetchSite = request.headers.get("sec-fetch-site");
+        if (fetchSite === "cross-site") return json({ ok: false }, 403);
 
         const key = origin ?? "same-origin";
         const now = Date.now();
