@@ -334,7 +334,7 @@ function Sales() {
                               }}
                             />
                             <CurrencyInput
-                              className="col-span-3"
+                              wrapperClassName="col-span-3"
                               value={it.price}
                               onValueChange={(value) => {
                                 const c = [...items];
