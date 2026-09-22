@@ -1,0 +1,15 @@
+BEGIN;
+SELECT plan(12);
+SELECT has_table('public','people_payroll_inputs','payroll inputs exists');
+SELECT has_function('public','calculate_people_payroll_period(uuid)','payroll calculation function exists');
+SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.people_payroll_inputs'::regclass),'payroll inputs have RLS');
+SELECT ok((SELECT value_numeric=90 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='pension_income_cap_uf' AND effective_from='2026-02-01'),'2026 pension cap is 90 UF');
+SELECT ok((SELECT value_numeric=135.2 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='unemployment_income_cap_uf' AND effective_from='2026-02-01'),'2026 unemployment cap is 135.2 UF');
+SELECT ok((SELECT value_numeric=0.0162 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='sis_rate' AND effective_from='2026-04-01'),'2026 SIS rate is versioned');
+SELECT ok((SELECT value_numeric=0.009 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='ssp_protected_return_rate' AND effective_from='2026-08-01'),'2026 SSP protected-return rate is versioned');
+SELECT ok((SELECT value_numeric=0.07 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='health_rate' AND effective_from='2026-01-01'),'health rate is versioned');
+SELECT ok((SELECT value_numeric=0.50 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='overtime_surcharge' AND effective_from='2026-01-01'),'overtime surcharge is versioned');
+SELECT ok((SELECT value_numeric=41057.20 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='uf_value_clp' AND effective_from='2026-09-30'),'September 2026 UF snapshot is versioned');
+SELECT ok((SELECT has_column('public','people_employees','afp_name') AND has_column('public','people_employees','health_system')),'employee pension and health configuration exists');
+SELECT * FROM finish();
+ROLLBACK;
