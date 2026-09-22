@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
+const LAST_UPDATED = "22 de septiembre de 2026";
+
 export const Route = createFileRoute("/privacy")({
   head: () => ({ meta: [{ title: "Política de Privacidad — Nüva One" }] }),
   component: Privacy,
@@ -10,7 +12,7 @@ function Privacy() {
   return (
     <div className="min-h-screen">
       <header className="border-b">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
@@ -19,178 +21,151 @@ function Privacy() {
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl px-6 py-16 prose prose-slate dark:prose-invert">
-        <h1>Política de Privacidad</h1>
-        <p className="text-sm text-muted-foreground">
-          <em>Última actualización: {new Date().toLocaleDateString("es-CL")}</em>
-        </p>
-        <p className="rounded-lg border bg-warning/10 p-4 text-sm">
-          <strong>Aviso:</strong> Este texto es un borrador orientativo redactado con IA en base a
-          la Ley N.º 19.628 y la Ley N.º 21.719 sobre Protección de Datos Personales (que crea la
-          Agencia de Protección de Datos Personales y entra en vigor en diciembre de 2026). No
-          reemplaza la revisión de un abogado y debe completarse con los datos reales de la empresa
-          antes de operar comercialmente.
-        </p>
+      <main className="mx-auto max-w-4xl px-6 py-14 prose prose-slate dark:prose-invert">
+        <h1>Política de Privacidad y Protección de Datos Personales</h1>
+        <p className="text-sm text-muted-foreground"><strong>Versión:</strong> 2.0 · <strong>Última actualización:</strong> {LAST_UPDATED}</p>
 
-        <h2>1. Responsable del tratamiento de datos</h2>
+        <div className="rounded-lg border bg-warning/10 p-4 text-sm">
+          <strong>Marco de aplicación:</strong> esta política está diseñada para Nüva One considerando la normativa chilena vigente y la preparación para la Ley N.º 21.719, cuya entrada en vigor está prevista para el 1 de diciembre de 2026. La aplicación concreta depende de la calidad de las partes, el tratamiento efectuado y la normativa sectorial correspondiente.
+        </div>
+
+        <h2>1. Responsable y contacto</h2>
         <p>
-          El responsable del tratamiento de los datos personales recolectados a través de Nüva One
-          es Martín Ariel Aburto Espinoza, RUT 21.553.180-5, operando como persona natural con
-          domicilio en Talca, Región del Maule, Chile. Contacto para materias de privacidad:
-          privacidad@nuvaone.cl. Si el volumen o sensibilidad de los datos tratados lo requiere en
-          el futuro conforme a la Ley N.º 21.719, se designará e informará aquí un Delegado de
-          Protección de Datos (DPO).
+          El responsable del tratamiento es Martín Ariel Aburto Espinoza, RUT 21.553.180-5, con domicilio en Talca, Región del Maule, Chile. Contacto de privacidad: <strong>privacidad@nuvaone.cl</strong>. Si la explotación del servicio cambia a una persona jurídica, esta identificación deberá actualizarse antes de operar bajo la nueva entidad.
         </p>
 
-        <h2>2. Qué información recolectamos</h2>
+        <h2>2. Principios de tratamiento</h2>
+        <p>
+          Nüva One procura tratar datos personales de manera lícita, leal y transparente, para finalidades determinadas, explícitas y legítimas, limitando la información a la necesaria, manteniéndola exacta y actualizada cuando corresponda, conservándola solo durante el tiempo necesario y aplicando medidas de seguridad proporcionales al riesgo.
+        </p>
+
+        <h2>3. Categorías de datos</h2>
         <ul>
-          <li>
-            <strong>Datos de la cuenta:</strong> nombre, correo electrónico, teléfono, contraseña
-            (cifrada) y rol dentro de tu negocio.
-          </li>
-          <li>
-            <strong>Datos del negocio:</strong> nombre comercial, rubro, productos, precios, stock,
-            ventas, compras, clientes, proveedores, cotizaciones y movimientos financieros que tú o
-            tu equipo ingresan.
-          </li>
-          <li>
-            <strong>Datos de clientes finales de tu negocio:</strong> si activas el bot de WhatsApp,
-            procesamos los mensajes que los clientes de tu negocio te envían (número de teléfono,
-            contenido del mensaje) únicamente para responder consultas de stock/precio y dejar un
-            registro de la conversación.
-          </li>
-          <li>
-            <strong>Datos de pago:</strong> gestionados directamente por Stripe; no almacenamos el
-            número completo de tu tarjeta en nuestros servidores.
-          </li>
-          <li>
-            <strong>Datos de uso:</strong> registros técnicos (IP, dispositivo, acciones dentro de
-            la plataforma) para seguridad y auditoría.
-          </li>
+          <li><strong>Cuenta y autenticación:</strong> nombre, correo electrónico, datos de contacto, rol y credenciales protegidas. Las contraseñas no se almacenan en texto plano por Nüva One.</li>
+          <li><strong>Datos del negocio:</strong> catálogo, precios, stock, ventas, compras, cotizaciones, gastos, proveedores y demás información que el usuario incorpore.</li>
+          <li><strong>Datos de terceros incorporados por el cliente:</strong> información de clientes, trabajadores, proveedores o contactos. El cliente debe contar con una base jurídica válida para incorporarlos y utilizar el servicio.</li>
+          <li><strong>Integraciones:</strong> información necesaria para conectar servicios activados por el usuario, según la integración concreta.</li>
+          <li><strong>Pagos:</strong> los datos completos de tarjeta son procesados por el proveedor de pagos correspondiente; Nüva One no pretende almacenar el número completo de la tarjeta.</li>
+          <li><strong>Datos técnicos y de seguridad:</strong> información mínima necesaria para autenticación, seguridad, diagnóstico y disponibilidad. La telemetría operacional de Nüva One se diseña para minimizar identificadores y no registrar contenidos de clientes.</li>
         </ul>
 
-        <h2>3. Base legal del tratamiento</h2>
-        <p>Tratamos tus datos conforme a las siguientes bases legales, según corresponda:</p>
+        <h2>4. Finalidades y bases jurídicas</h2>
+        <p>Según el tratamiento concreto, Nüva One puede tratar información para:</p>
         <ul>
-          <li>
-            <strong>Ejecución del contrato:</strong> para proveerte el servicio que contrataste
-            (gestión de tu negocio, facturación).
-          </li>
-          <li>
-            <strong>Consentimiento:</strong> para comunicaciones de marketing, que puedes retirar en
-            cualquier momento.
-          </li>
-          <li>
-            <strong>Interés legítimo:</strong> para seguridad de la plataforma, prevención de fraude
-            y el registro de auditoría interno de tu negocio (ver sección 7).
-          </li>
-          <li>
-            <strong>Obligación legal:</strong> para cumplir requerimientos tributarios, contables o
-            de autoridades competentes.
-          </li>
+          <li>crear y administrar la cuenta y prestar el servicio contratado;</li>
+          <li>procesar pagos, facturación y obligaciones contractuales;</li>
+          <li>proteger la seguridad, prevenir fraude, abuso y accesos no autorizados;</li>
+          <li>mantener registros técnicos y resolver incidentes;</li>
+          <li>ejecutar integraciones solicitadas por el usuario;</li>
+          <li>generar funciones de IA solicitadas por el usuario;</li>
+          <li>cumplir obligaciones legales o atender requerimientos válidos de autoridad;</li>
+          <li>enviar comunicaciones comerciales cuando exista una base jurídica y se respeten las preferencias del destinatario.</li>
         </ul>
-
-        <h2>4. Cómo usamos tu información</h2>
         <p>
-          Usamos tu información para proveer, mantener y mejorar la plataforma; procesar pagos;
-          enviar comunicaciones operativas y, si lo autorizas, de marketing; generar respuestas del
-          asistente de IA y del bot de WhatsApp a partir de los datos de tu propio negocio; y
-          cumplir obligaciones legales y contables.
+          La base jurídica no se presume de manera genérica: se determinará según la finalidad y la relación jurídica aplicable. Cuando el consentimiento sea la base utilizada, podrá retirarse conforme a la ley; la retirada no invalida retroactivamente tratamientos lícitos realizados antes de ella.
         </p>
 
-        <h2>5. Con quién compartimos información</h2>
+        <h2>5. Rol de Nüva One y clientes empresariales</h2>
         <p>
-          No vendemos tus datos personales ni los de tus clientes. Los compartimos únicamente con:
+          En determinados tratamientos Nüva One actúa como responsable de sus propios datos operacionales. Cuando una empresa cliente utiliza Nüva One para gestionar datos personales de sus clientes, trabajadores o contactos, la asignación entre responsable, encargado u otra figura legal se determinará según quién decide los fines y medios del tratamiento. Nüva One no asumirá automáticamente la condición de responsable respecto de tratamientos cuyo propósito y decisiones correspondan al cliente.
         </p>
-        <ul>
-          <li>
-            <strong>Proveedores de infraestructura y base de datos</strong> (hosting en la nube)
-            necesarios para operar la plataforma.
-          </li>
-          <li>
-            <strong>Stripe</strong>, para procesar pagos de suscripción.
-          </li>
-          <li>
-            <strong>Meta Platforms, Inc.</strong>, al usar la integración de WhatsApp Business,
-            conforme a las propias políticas de privacidad de Meta.
-          </li>
-          <li>
-            <strong>Proveedores de modelos de inteligencia artificial</strong>, a quienes se envía
-            el contexto mínimo necesario (catálogo, resúmenes de negocio) para generar respuestas;
-            no se comparten datos de tarjetas de pago con estos proveedores.
-          </li>
-          <li>
-            Autoridades públicas, cuando exista una obligación legal o un requerimiento judicial
-            válido.
-          </li>
-        </ul>
-
-        <h2>6. Transferencias internacionales de datos</h2>
         <p>
-          Parte de nuestros proveedores (hosting, IA, Stripe, Meta) puede procesar datos en
-          servidores ubicados fuera de Chile. Cuando esto ocurra, exigimos a dichos proveedores
-          estándares de protección de datos adecuados (cláusulas contractuales, certificaciones de
-          seguridad) conforme a lo exigido por la Ley N.º 21.719 para transferencias internacionales
-          de datos personales.
+          El cliente es responsable de definir finalidades lícitas, informar a los titulares cuando corresponda y utilizar únicamente datos respecto de los cuales tenga una base jurídica suficiente.
         </p>
 
-        <h2>7. Registro de auditoría interno</h2>
+        <h2>6. Inteligencia artificial</h2>
         <p>
-          Si tu negocio tiene más de un usuario, Nüva One registra automáticamente qué usuario
-          realizó ciertas acciones relevantes (ventas, cambios de inventario, movimientos
-          financieros, cotizaciones) y a qué hora, con el fin de proteger al propietario del negocio
-          frente a errores o mal uso interno. Este registro es visible solo para el propietario y
-          administradores del negocio, no puede ser editado ni eliminado desde la aplicación, y se
-          trata como información confidencial del negocio.
+          Algunas funciones pueden enviar a proveedores de modelos de IA el contexto mínimo necesario para ejecutar una solicitud del usuario. Nüva One procurará minimizar los datos enviados y evitar datos innecesarios. Las salidas de IA pueden ser incorrectas y no constituyen asesoría legal, tributaria, contable, financiera, laboral ni profesional.
+        </p>
+        <p>
+          No se utilizarán datos personales para entrenar modelos de terceros fuera de las condiciones contractuales y políticas aplicables al servicio concreto. Cuando una integración específica tenga condiciones distintas, se informarán antes de activarla cuando sea exigible.
         </p>
 
-        <h2>8. Tus derechos (ARCO+)</h2>
+        <h2>7. Proveedores y destinatarios</h2>
         <p>
-          Conforme a la Ley N.º 19.628 y la Ley N.º 21.719, tienes derecho a:{" "}
-          <strong>acceder</strong> a tus datos personales, <strong>rectificarlos</strong> si son
-          inexactos, <strong>cancelarlos/eliminarlos</strong> cuando ya no sean necesarios o retires
-          tu consentimiento, <strong>oponerte</strong> a determinados tratamientos, y solicitar la{" "}
-          <strong>portabilidad</strong> de tus datos en un formato estructurado. Para ejercer estos
-          derechos, escríbenos a [correo de privacidad]; responderemos dentro del plazo legal
-          aplicable. Si no quedas conforme con nuestra respuesta, puedes reclamar ante la Agencia de
-          Protección de Datos Personales una vez que se encuentre en funcionamiento.
+          Nüva One puede utilizar proveedores de infraestructura, autenticación, almacenamiento, pagos, mensajería, IA, analítica técnica y otras herramientas necesarias para prestar el servicio. El acceso de estos proveedores se limitará a lo necesario para la función contratada y estará sujeto a obligaciones de seguridad y confidencialidad según corresponda.
+        </p>
+        <p>
+          También podremos comunicar información a autoridades cuando exista una obligación legal, orden judicial o facultad legalmente habilitante.
         </p>
 
-        <h2>9. Conservación de datos</h2>
+        <h2>8. Transferencias internacionales</h2>
         <p>
-          Conservamos tus datos mientras tu cuenta esté activa. Si cancelas tu cuenta, conservamos
-          una copia por el plazo mínimo exigido por obligaciones legales, tributarias o contables, y
-          luego la eliminamos o anonimizamos de forma segura.
+          Algunos proveedores pueden tratar información fuera de Chile. Nüva One evaluará las condiciones legales aplicables a cada transferencia y procurará utilizar mecanismos que otorguen un nivel de protección adecuado, además de medidas contractuales, técnicas u organizativas apropiadas cuando corresponda.
+        </p>
+        <p>
+          La ubicación concreta de cada tratamiento puede depender del proveedor y de la configuración vigente del servicio. No se declara que todos los proveedores utilicen una única ubicación geográfica permanente.
         </p>
 
-        <h2>10. Seguridad de la información</h2>
+        <h2>9. Registro de auditoría del negocio</h2>
         <p>
-          Aplicamos cifrado en tránsito y en reposo, control de acceso por roles, aislamiento de
-          datos por negocio mediante Row-Level Security a nivel de base de datos, verificación de
-          firma en las integraciones con terceros (Meta, Stripe), y el registro de auditoría
-          descrito en la sección 7. Ante un incidente de seguridad que afecte tus datos personales,
-          te notificaremos conforme a los plazos y condiciones que establezca la normativa vigente.
+          En cuentas empresariales, la plataforma puede registrar eventos operacionales asociados a usuarios autorizados —por ejemplo, cambios relevantes— para seguridad, trazabilidad y administración interna. Estos registros se limitan a lo necesario, tienen controles de acceso y se conservan conforme a las necesidades operacionales y obligaciones legales aplicables.
         </p>
 
-        <h2>11. Menores de edad</h2>
+        <h2>10. Telemetría técnica de Nüva One</h2>
         <p>
-          Nüva One está dirigido a personas naturales y jurídicas que operan un negocio y no está
-          destinado a menores de 18 años.
+          Para proteger la plataforma, Nüva One puede recopilar métricas agregadas de errores, rendimiento y disponibilidad, como latencia, Web Vitals y huellas técnicas sanitizadas. El diseño del sistema de observabilidad evita almacenar intencionalmente contenidos de conversaciones, registros comerciales, números de tarjeta, tokens, cookies o identificadores directos de clientes en la telemetría operacional.
         </p>
 
-        <h2>12. Cambios a esta política</h2>
+        <h2>11. Seguridad</h2>
         <p>
-          Podemos actualizar esta Política. Los cambios sustanciales serán notificados por correo
-          electrónico o dentro de la plataforma con anticipación razonable.
+          Aplicamos medidas técnicas y organizativas proporcionales al riesgo, incluyendo controles de acceso, autenticación, aislamiento de datos entre negocios, Row-Level Security en la base de datos, protección de secretos, monitoreo técnico, recuperación y mecanismos de prevención y respuesta a incidentes. Ningún sistema conectado a Internet puede garantizar seguridad absoluta.
         </p>
 
-        <h2>13. Contacto</h2>
+        <h2>12. Conservación</h2>
         <p>
-          Para consultas sobre privacidad, para ejercer tus derechos ARCO (acceso, rectificación,
-          cancelación, oposición) o para solicitar la eliminación de tu cuenta y datos, escribe a
-          privacidad@nuvaone.cl. Responderemos dentro de un plazo razonable conforme a la Ley N.º
-          21.719.
+          Conservamos los datos mientras sean necesarios para la finalidad correspondiente, mientras exista la relación contractual o mientras una obligación legal exija conservarlos. Los períodos concretos pueden variar según el tipo de dato. Una vez cumplida la finalidad y agotadas las obligaciones de conservación, los datos serán eliminados, anonimizados o sometidos a medidas equivalentes cuando corresponda.
         </p>
+
+        <h2>13. Derechos de los titulares</h2>
+        <p>
+          Los titulares podrán ejercer los derechos que reconozca la normativa aplicable, incluyendo acceso, rectificación, eliminación o cancelación cuando proceda, oposición, bloqueo o limitación cuando corresponda, portabilidad y demás derechos reconocidos por la legislación vigente o futura aplicable al tratamiento.
+        </p>
+        <p>
+          Las solicitudes pueden enviarse a <strong>privacidad@nuvaone.cl</strong>. Se podrán solicitar antecedentes razonables para verificar la identidad del solicitante y evitar entregas indebidas. Nüva One responderá dentro de los plazos y bajo el procedimiento establecidos por la legislación aplicable.
+        </p>
+
+        <h2>14. Menores de edad</h2>
+        <p>
+          Nüva One es un servicio empresarial y no está dirigido específicamente a menores. Si un tratamiento concreto involucra datos de menores, se aplicarán las reglas especiales que correspondan y se evitará recopilar información innecesaria.
+        </p>
+
+        <h2>15. Cookies y tecnologías similares</h2>
+        <p>
+          Nüva One puede utilizar cookies o tecnologías equivalentes necesarias para autenticación, seguridad, funcionamiento y preferencias. Las tecnologías no esenciales destinadas a finalidades que requieran consentimiento solo deberán activarse cuando exista una base jurídica válida y, cuando corresponda, consentimiento previo.
+        </p>
+        <p>
+          Los detalles de cada cookie o tecnología se informarán en el mecanismo de gestión de preferencias correspondiente cuando resulte aplicable.
+        </p>
+
+        <h2>16. Comunicaciones comerciales</h2>
+        <p>
+          Las comunicaciones estrictamente necesarias para prestar el servicio —por ejemplo, seguridad, recuperación de cuenta o facturación— pueden enviarse cuando sean necesarias para la relación contractual. Las comunicaciones promocionales estarán sujetas a las reglas legales aplicables y deberán permitir ejercer la opción de dejar de recibirlas cuando corresponda.
+        </p>
+
+        <h2>17. Incidentes y brechas</h2>
+        <p>
+          Nüva One mantiene procedimientos de detección, contención, investigación y recuperación de incidentes. Cuando una brecha de seguridad genere obligaciones de comunicación o notificación conforme a la legislación aplicable, se realizarán las comunicaciones a las autoridades, titulares o clientes que correspondan, dentro de los plazos y condiciones legalmente exigibles.
+        </p>
+
+        <h2>18. Cambios de esta política</h2>
+        <p>
+          Esta Política puede actualizarse por cambios legales, tecnológicos, contractuales o del servicio. Las modificaciones relevantes se comunicarán mediante mecanismos razonables y, cuando la ley lo exija, se solicitará el consentimiento correspondiente.
+        </p>
+
+        <h2>19. Contacto y reclamaciones</h2>
+        <p>
+          Para consultas o solicitudes de privacidad: <strong>privacidad@nuvaone.cl</strong>. Cuando corresponda, el titular podrá utilizar los mecanismos administrativos o judiciales reconocidos por la normativa chilena, incluida la autoridad de protección de datos que tenga competencia al momento de la solicitud.
+        </p>
+
+        <h2>20. Marco normativo</h2>
+        <p>
+          Esta política considera, según corresponda al tratamiento: Ley N.º 19.628 y sus modificaciones; Ley N.º 21.719 sobre protección de datos personales; Ley N.º 19.496 y normativa de consumo cuando exista una relación de consumo; Reglamento de Comercio Electrónico, Decreto N.º 6 de 2021; Ley N.º 21.459 sobre delitos informáticos; Ley N.º 21.663 Marco de Ciberseguridad cuando su ámbito resulte aplicable; y demás normativa chilena sectorial que corresponda.
+        </p>
+
+        <div className="mt-10 rounded-lg border bg-muted/40 p-4 text-sm">
+          <strong>Nota de cumplimiento:</strong> este documento está diseñado para servir como base de cumplimiento y contratación, no constituye una certificación legal. La revisión final debe contrastarse con la estructura jurídica, proveedores, flujos de datos y contratos reales de Nüva One.
+        </div>
       </main>
     </div>
   );
