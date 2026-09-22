@@ -11085,6 +11085,10 @@ export type Database = {
         Args: { p_business_id: string; p_days?: number }
         Returns: Json
       }
+      get_nuva_operating_snapshot: {
+        Args: { p_business_id: string; p_days?: number }
+        Returns: Json
+      }
       get_owner_operational_metrics: {
         Args: { p_window_hours?: number }
         Returns: Json
