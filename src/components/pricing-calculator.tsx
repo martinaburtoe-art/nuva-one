@@ -1,8 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Info, Save, Search, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, HelpCircle, Info, Save, Search, Sparkles, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useActiveBusiness } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,21 +14,34 @@ const money = (v: number) => Number.isFinite(v) ? `$${Math.round(v).toLocaleStri
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 const num = (v: string) => Math.max(0, Number(v) || 0);
 
+const EXAMPLE_PRODUCT = "Café de especialidad 250 g";
+const EXAMPLE = {
+  directCost: "$5.200: precio de compra del café.", laborCost: "$600: tiempo directo para preparar y dejar listo el producto.", packagingCost: "$300: bolsa, etiqueta y sello.",
+  logisticsCost: "$500: costo promedio de traslado o despacho por unidad.", otherVariableCost: "$100: cualquier otro costo que aparece solo cuando vendes una unidad.",
+  wasteRate: "2%: de cada 100 unidades compradas, aproximadamente 2 se pierden o quedan inutilizables.", fixedCostsMonthly: "$450.000: arriendo, internet, software, servicios y otros gastos que existen aunque vendas poco.",
+  expectedUnitsMonthly: "180 unidades: cuántos cafés esperas vender en un mes normal.", targetMargin: "30%: margen que quieres conservar después de costos variables y comisiones.",
+  paymentFeeRate: "3%: comisión total de tu medio de pago por cobrar.", salesCommissionRate: "0% si no pagas comisión a un vendedor; si pagas, ingresa el porcentaje.",
+  marketplaceFeeRate: "0% si vendes directamente; por ejemplo, 15% si una plataforma cobra 15% por venta.", returnRate: "1%: estimación de ventas que terminan en devolución o reversa.",
+  warrantyRate: "0,5%: costo esperado de fallas, reposiciones o garantías.", ownerHourlyCost: "$5.000 por hora: cuánto vale razonablemente una hora de tu trabajo.",
+  ownerHoursPerUnit: "0,10 horas: unos 6 minutos de trabajo tuyo por cada café vendido.", sharedCosts: "$0 o $50.000: parte de gastos compartidos que quieres asignar a este producto.",
+  competitors: "$8.990, $9.490 y $9.990: precios de cafés comparables que realmente compiten contigo.", elasticity: "Déjala vacía si no tienes un dato calculado. No inventes este número.",
+  currentPrice: "$8.990: precio al que hoy vendes el café, si ya lo comercializas.", discountRate: "10%: descuento habitual que realmente aplicas.", vatRate: "19% como referencia general para operaciones afectas a IVA en Chile.",
+};
+
 type FormState = Omit<PricingInput, "competitorPrices" | "elasticity"> & { competitorPricesText: string; elasticityText: string };
 
 const initial: FormState = {
-  productType: "resale", directCost: 10000, laborCost: 0, packagingCost: 0, logisticsCost: 0, otherVariableCost: 0,
-  wasteRate: 0.02, fixedCostsMonthly: 500000, expectedUnitsMonthly: 100, targetMargin: 0.3,
-  paymentFeeRate: 0.03, salesCommissionRate: 0, marketplaceFeeRate: 0, returnRate: 0, warrantyRate: 0,
-  ownerHourlyCost: 0, ownerHoursPerUnit: 0, abcMonthlyAllocation: 0, competitorPricesText: "", differentiationScore: 5,
-  valueScore: 5, referenceValue: 0, differentiatedValue: 0, valueCaptureRate: 0.2, elasticityText: "",
-  currentPrice: 0, discountRate: 0, vatRate: 0.19, vatIncluded: false, psychologicalPricing: true,
+  productType: "resale", directCost: 5200, laborCost: 600, packagingCost: 300, logisticsCost: 500, otherVariableCost: 100,
+  wasteRate: 0.02, fixedCostsMonthly: 450000, expectedUnitsMonthly: 180, targetMargin: 0.3, paymentFeeRate: 0.03,
+  salesCommissionRate: 0, marketplaceFeeRate: 0, returnRate: 0.01, warrantyRate: 0.005, ownerHourlyCost: 5000, ownerHoursPerUnit: 0.1,
+  abcMonthlyAllocation: 0, competitorPricesText: "8990 9490 9990", elasticityText: "", currentPrice: 8990, discountRate: 0.1,
+  vatRate: 0.19, vatIncluded: false, psychologicalPricing: true,
 };
 
 export function PricingCalculator() {
   const { active } = useActiveBusiness();
   const [form, setForm] = useState<FormState>(initial);
-  const [calculationName, setCalculationName] = useState("Cálculo de precio");
+  const [calculationName, setCalculationName] = useState(`Precio · ${EXAMPLE_PRODUCT}`);
   const [productCode, setProductCode] = useState("");
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [selectedProductName, setSelectedProductName] = useState<string | null>(null);
@@ -44,54 +58,115 @@ export function PricingCalculator() {
       const resolution = await resolveProductCode(productCode);
       if (resolution.status === "FOUND" && resolution.product) {
         const product = resolution.product;
-        setSelectedProductId(product.product_id);
-        setSelectedProductName(product.name);
-        if (product.cost !== null) set("directCost", product.cost);
-        if (product.price !== null) set("currentPrice", product.price);
+        setSelectedProductId(product.product_id); setSelectedProductName(product.name);
+        if (product.cost !== null) set("directCost", product.cost); if (product.price !== null) set("currentPrice", product.price);
         toast.success(`Producto cargado: ${product.name ?? product.sku ?? product.barcode ?? "producto"}.`);
       } else if (resolution.status === "DUPLICATE") toast.error("El código corresponde a más de un producto.");
       else if (resolution.status === "UNAUTHORIZED") toast.error("No tienes acceso a ese producto en la empresa activa.");
-      else if (resolution.status === "NOT_FOUND") toast.error("No encontré un producto con ese código.");
-      else toast.error("El código ingresado no es válido.");
-    } catch { toast.error("No pude consultar el producto."); }
-    finally { setResolvingProduct(false); }
+      else if (resolution.status === "NOT_FOUND") toast.error("No encontré un producto con ese código."); else toast.error("El código ingresado no es válido.");
+    } catch { toast.error("No pude consultar el producto."); } finally { setResolvingProduct(false); }
   }
 
   async function saveCalculation() {
     if (!active?.id) { toast.error("Selecciona una empresa activa."); return; }
     if (!Number.isFinite(result.recommendedPrice) || result.recommendedPrice <= 0) { toast.error("Corrige los datos antes de guardar el cálculo."); return; }
     setSaving(true);
-    const { error } = await supabase.from("pricing_calculations" as any).insert({ business_id: active.id, product_id: selectedProductId, name: calculationName.trim() || "Cálculo de precio", product_type: input.productType, input_data: input, result_data: result, calculation_version: "1.0.0" });
+    const { error } = await supabase.from("pricing_calculations" as any).insert({ business_id: active.id, product_id: selectedProductId, name: calculationName.trim() || "Cálculo de precio", product_type: input.productType, input_data: input, result_data: result, calculation_version: "2.0.0" });
     setSaving(false);
     if (error) toast.error("No pude guardar el cálculo."); else toast.success("Cálculo guardado en Nüva.");
   }
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div><p className="text-sm font-medium text-primary">Nüva Pricing Intelligence</p><h1 className="text-2xl font-semibold tracking-tight">Calculadora de precio de venta</h1><p className="mt-1 max-w-2xl text-sm text-muted-foreground">Combina costos, margen, mercado y valor. Nüva te explica por qué un precio puede ser sostenible.</p></div>
-        <div className="flex gap-2"><Input className="w-52" value={calculationName} onChange={(e) => setCalculationName(e.target.value)} aria-label="Nombre del cálculo" /><Button onClick={saveCalculation} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "Guardando…" : "Guardar cálculo"}</Button></div>
-      </header>
-      <Card className="border-primary/20 bg-primary/[0.03]"><CardContent className="space-y-4 p-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end"><Field label="Cargar producto existente"><Input placeholder="SKU, código o código de barras" value={productCode} onChange={(e) => setProductCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void loadProduct(); }} /></Field><Button variant="outline" onClick={() => void loadProduct()} disabled={resolvingProduct}><Search className="mr-2 h-4 w-4" />{resolvingProduct ? "Buscando…" : "Cargar"}</Button>{selectedProductName && <p className="pb-2 text-sm text-muted-foreground">Producto: <strong>{selectedProductName}</strong></p>}</div>
-        <div className="grid gap-4 md:grid-cols-4"><Field label="Tipo de negocio"><select value={form.productType} onChange={(e) => set("productType", e.target.value as PricingBusinessType)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="manufactured">Fabricado</option><option value="resale">Reventa / importado</option><option value="service">Servicio</option><option value="digital">Digital</option></select></Field><Field label="Unidades al mes"><Input type="number" min="1" value={form.expectedUnitsMonthly} onChange={(e) => set("expectedUnitsMonthly", num(e.target.value))} /></Field><Field label="Margen objetivo (%)"><Input type="number" min="0" max="95" value={Math.round(form.targetMargin * 100)} onChange={(e) => set("targetMargin", num(e.target.value) / 100)} /></Field><Field label="Precio actual (opcional)"><Input type="number" min="0" value={form.currentPrice} onChange={(e) => set("currentPrice", num(e.target.value))} /></Field></div>
-      </CardContent></Card>
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]"><div className="space-y-5">
-        <Card><CardHeader><CardTitle>Costos por unidad</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><Field label="Costo directo"><Input type="number" value={form.directCost} onChange={(e) => set("directCost", num(e.target.value))} /><Hint>Compra, materia prima o insumos principales.</Hint></Field><Field label="Mano de obra directa"><Input type="number" value={form.laborCost} onChange={(e) => set("laborCost", num(e.target.value))} /></Field><Field label="Empaque"><Input type="number" value={form.packagingCost} onChange={(e) => set("packagingCost", num(e.target.value))} /></Field><Field label="Logística / delivery"><Input type="number" value={form.logisticsCost} onChange={(e) => set("logisticsCost", num(e.target.value))} /></Field><Field label="Otros variables"><Input type="number" value={form.otherVariableCost} onChange={(e) => set("otherVariableCost", num(e.target.value))} /></Field><Field label="Merma (%)"><Input type="number" min="0" max="99" value={Math.round(form.wasteRate * 100)} onChange={(e) => set("wasteRate", num(e.target.value) / 100)} /><Hint>Se corrige por rendimiento, no con un simple +x%.</Hint></Field></CardContent></Card>
-        <Card><CardHeader><CardTitle>Costos mensuales y tiempo del dueño</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><Field label="Costos fijos mensuales"><Input type="number" value={form.fixedCostsMonthly} onChange={(e) => set("fixedCostsMonthly", num(e.target.value))} /><Hint>Arriendo, administración, software, servicios, etc.</Hint></Field><Field label="Asignación ABC mensual"><Input type="number" value={form.abcMonthlyAllocation} onChange={(e) => set("abcMonthlyAllocation", num(e.target.value))} /><Hint>Costos de actividades que quieres asignar a este producto.</Hint></Field><Field label="Valor hora del dueño"><Input type="number" value={form.ownerHourlyCost} onChange={(e) => set("ownerHourlyCost", num(e.target.value))} /><Hint>Evita considerar gratis el trabajo del propietario.</Hint></Field><Field label="Horas del dueño por unidad"><Input type="number" step="0.01" value={form.ownerHoursPerUnit} onChange={(e) => set("ownerHoursPerUnit", num(e.target.value))} /></Field></CardContent></Card>
-        <Card><CardHeader><CardTitle>Comisiones y riesgos</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><PercentField label="Pasarela de pago" value={form.paymentFeeRate} onChange={(v) => set("paymentFeeRate", v)} /><PercentField label="Comisión de venta" value={form.salesCommissionRate} onChange={(v) => set("salesCommissionRate", v)} /><PercentField label="Marketplace" value={form.marketplaceFeeRate} onChange={(v) => set("marketplaceFeeRate", v)} /><PercentField label="Devoluciones" value={form.returnRate} onChange={(v) => set("returnRate", v)} /><PercentField label="Garantías / fallas" value={form.warrantyRate} onChange={(v) => set("warrantyRate", v)} /><PercentField label="Descuento habitual" value={form.discountRate} onChange={(v) => set("discountRate", v)} /></CardContent></Card>
-        <Card><CardHeader><CardTitle>Mercado, valor y demanda</CardTitle></CardHeader><CardContent className="space-y-4"><Field label="Precios de competidores"><Input placeholder="Ej: 17990 18990 19990" value={form.competitorPricesText} onChange={(e) => set("competitorPricesText", e.target.value)} /><Hint>Usa precios comparables. Nüva calcula mediana y posición competitiva.</Hint></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Diferenciación (0–10)"><Input type="number" min="0" max="10" value={form.differentiationScore} onChange={(e) => set("differentiationScore", num(e.target.value))} /></Field><Field label="Valor percibido (0–10)"><Input type="number" min="0" max="10" value={form.valueScore} onChange={(e) => set("valueScore", num(e.target.value))} /></Field><Field label="Valor de referencia"><Input type="number" value={form.referenceValue} onChange={(e) => set("referenceValue", num(e.target.value))} /><Hint>Valor de la alternativa que tendría el cliente.</Hint></Field><Field label="Valor adicional generado"><Input type="number" value={form.differentiatedValue} onChange={(e) => set("differentiatedValue", num(e.target.value))} /></Field><Field label="Elasticidad estimada"><Input type="number" step="0.1" placeholder="Ej: 1.5" value={form.elasticityText} onChange={(e) => set("elasticityText", e.target.value)} /><Hint>Déjala vacía si no la conoces.</Hint></Field></div></CardContent></Card>
-        <Card><CardHeader><CardTitle>IVA y presentación</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><Field label="IVA (%)"><Input type="number" min="0" max="100" value={Math.round(form.vatRate * 100)} onChange={(e) => set("vatRate", num(e.target.value) / 100)} /><Hint>Referencia general Chile: 19%.</Hint></Field><Field label="Precio psicológico"><select value={form.psychologicalPricing ? "yes" : "no"} onChange={(e) => set("psychologicalPricing", e.target.value === "yes")} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="yes">Sí, usar terminaciones comerciales</option><option value="no">No, mantener precio exacto</option></select><Hint>En servicios B2B o premium suele ser preferible un precio redondo.</Hint></Field></CardContent></Card>
-      </div><div className="space-y-5 xl:sticky xl:top-5 xl:self-start">
-        <Card className="border-primary/30"><CardHeader><div className="flex items-center justify-between"><CardTitle>Precio recomendado</CardTitle><Sparkles className="h-5 w-5 text-primary" /></div></CardHeader><CardContent><div className="text-4xl font-bold tracking-tight">{money(result.recommendedPrice)}</div><p className="mt-1 text-sm text-muted-foreground">Precio final estimado con IVA ({pct(input.vatRate)}): {money(priceWithVat(result.recommendedPrice, input.vatRate))}</p><div className="mt-5 grid grid-cols-3 gap-2"><Metric label="Piso operativo" value={money(result.operatingFloor)} /><Metric label="Piso económico" value={money(result.economicFloor)} /><Metric label="Aspiracional" value={result.aspirationalPrice ? money(result.aspirationalPrice) : "—"} /></div></CardContent></Card>
-        <Card><CardHeader><CardTitle>Rentabilidad</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2"><Metric label="Costo variable / unidad" value={money(result.variableUnitCost)} /><Metric label="Costo completo / unidad" value={money(result.fullUnitCost)} /><Metric label="Margen de contribución" value={pct(result.contributionMarginRate)} /><Metric label="Contribución / unidad" value={money(result.contributionMargin)} /><Metric label="Punto de equilibrio" value={result.breakEvenUnits ? `${result.breakEvenUnits} unidades` : "No alcanzable"} /><Metric label="Utilidad mensual" value={money(result.projectedProfit)} /></CardContent></Card>
-        <Card><CardHeader><div className="flex items-center justify-between"><CardTitle>Escenarios</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></div></CardHeader><CardContent className="space-y-2">{result.scenarios.map((s) => <div key={s.label} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"><span className="text-muted-foreground">{s.label}</span><span className="font-semibold">{money(s.price)} <span className={s.profit >= 0 ? "text-emerald-600" : "text-destructive"}>· {money(s.profit)}</span></span></div>)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Diagnóstico de Nüva</CardTitle></CardHeader><CardContent className="space-y-3">{result.warnings.length === 0 && result.recommendations.length === 0 && <p className="text-sm text-muted-foreground">Completa más datos para generar recomendaciones.</p>}{result.warnings.map((w, i) => <div key={`w-${i}`} className="flex gap-2 rounded-lg bg-muted/50 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span>{w.message}</span></div>)}{result.recommendations.map((r, i) => <div key={`r-${i}`} className="flex gap-2 rounded-lg border p-3 text-sm"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /><div><p className="font-medium">{r.title}</p><p className="text-muted-foreground">{r.message}</p></div></div>)}<div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground"><Info className="h-3.5 w-3.5" />Confianza del cálculo: <strong>{result.confidenceScore}/100</strong></div></CardContent></Card>
-      </div></div>
-    </div>
+    <TooltipProvider delayDuration={180}>
+      <div className="space-y-5">
+        <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div><p className="text-sm font-medium text-primary">Nüva Pricing</p><h1 className="text-2xl font-semibold tracking-tight">Calculadora de precio de venta</h1><p className="mt-1 max-w-3xl text-sm text-muted-foreground">Pensada para comerciantes: parte de lo que realmente sabes —costos, ventas, comisiones y precios del mercado— y evita pedirte evaluaciones subjetivas.</p></div>
+          <div className="flex flex-col gap-2 sm:flex-row"><Input className="w-full sm:w-60" value={calculationName} onChange={(e) => setCalculationName(e.target.value)} aria-label="Nombre del cálculo" /><Button onClick={saveCalculation} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "Guardando…" : "Guardar cálculo"}</Button></div>
+        </header>
+
+        <Card className="border-primary/20 bg-primary/[0.03]"><CardContent className="space-y-4 p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end"><Field label="Cargar producto existente" help="Busca un producto que ya tengas en Nüva por SKU, código o código de barras. Nüva puede tomar su costo y precio actual para no escribirlos otra vez." example={`Ejemplo: ${EXAMPLE_PRODUCT} · SKU CAFE250.`}><Input placeholder="SKU, código o código de barras" value={productCode} onChange={(e) => setProductCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void loadProduct(); }} /></Field><Button variant="outline" onClick={() => void loadProduct()} disabled={resolvingProduct}><Search className="mr-2 h-4 w-4" />{resolvingProduct ? "Buscando…" : "Cargar"}</Button>{selectedProductName && <p className="pb-2 text-sm text-muted-foreground">Producto: <strong>{selectedProductName}</strong></p>}</div>
+          <div className="rounded-xl border bg-background/60 p-4 text-sm"><div className="flex items-start gap-3"><Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><div><p className="font-medium">Ejemplo guía: {EXAMPLE_PRODUCT}</p><p className="mt-1 text-muted-foreground">Los valores iniciales usan este mismo producto para que entiendas cada campo sin cambiar de ejemplo. Modifica los números cuando calcules tu propio precio.</p></div></div></div>
+          <div className="grid gap-4 md:grid-cols-4">
+            <Field label="Qué vendes" help="Indica si compras y revendes, fabricas, prestas un servicio o vendes algo digital." example={`Para ${EXAMPLE_PRODUCT}: Reventa / importado.`}><select value={form.productType} onChange={(e) => set("productType", e.target.value as PricingBusinessType)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="manufactured">Fabricado</option><option value="resale">Reventa / importado</option><option value="service">Servicio</option><option value="digital">Digital</option></select></Field>
+            <Field label="Ventas esperadas al mes" help="Cuántas unidades crees que venderás en un mes normal. Si no sabes, usa un promedio de tus últimos meses." example={EXAMPLE.expectedUnitsMonthly}><Input type="number" min="1" value={form.expectedUnitsMonthly} onChange={(e) => set("expectedUnitsMonthly", num(e.target.value))} /></Field>
+            <Field label="Margen que quieres ganar (%)" help="Es el porcentaje que quieres conservar de la venta después de costos variables y comisiones. No es lo mismo que recargar el costo un 30%." example={EXAMPLE.targetMargin}><Input type="number" min="0" max="95" value={Math.round(form.targetMargin * 100)} onChange={(e) => set("targetMargin", num(e.target.value) / 100)} /></Field>
+            <Field label="Precio actual (opcional)" help="Si ya vendes este producto, escribe el precio que cobras hoy. Nüva lo compara con el piso calculado y con el nuevo precio." example={EXAMPLE.currentPrice}><Input type="number" min="0" value={form.currentPrice} onChange={(e) => set("currentPrice", num(e.target.value))} /></Field>
+          </div>
+        </CardContent></Card>
+
+        <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-5">
+            <Card><CardHeader><CardTitle>1. ¿Cuánto te cuesta vender una unidad?</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field label="Costo de compra / materia prima" help="Lo que pagas por el producto o por los insumos principales de una unidad." example={EXAMPLE.directCost}><Input type="number" value={form.directCost} onChange={(e) => set("directCost", num(e.target.value))} /></Field>
+              <Field label="Mano de obra por unidad" help="Cuánto cuesta el trabajo directamente necesario para dejar una unidad vendible. Si no existe, usa $0." example={EXAMPLE.laborCost}><Input type="number" value={form.laborCost} onChange={(e) => set("laborCost", num(e.target.value))} /></Field>
+              <Field label="Empaque por unidad" help="Bolsa, caja, etiqueta, cinta, sello u otro material que usas para entregar una unidad." example={EXAMPLE.packagingCost}><Input type="number" value={form.packagingCost} onChange={(e) => set("packagingCost", num(e.target.value))} /></Field>
+              <Field label="Despacho / logística por unidad" help="Costo promedio que te genera llevar el producto al cliente o moverlo para venderlo. Si el cliente paga completamente el despacho, puedes usar $0." example={EXAMPLE.logisticsCost}><Input type="number" value={form.logisticsCost} onChange={(e) => set("logisticsCost", num(e.target.value))} /></Field>
+              <Field label="Otros costos por unidad" help="Costos variables que no entran en los campos anteriores y que aparecen o aumentan cuando vendes más unidades." example={EXAMPLE.otherVariableCost}><Input type="number" value={form.otherVariableCost} onChange={(e) => set("otherVariableCost", num(e.target.value))} /></Field>
+              <Field label="Merma (%)" help="Parte del producto que compras o produces pero no puedes vender. Nüva ajusta el costo para que las unidades buenas recuperen también esa pérdida." example={EXAMPLE.wasteRate}><Input type="number" min="0" max="99" value={Math.round(form.wasteRate * 100)} onChange={(e) => set("wasteRate", num(e.target.value) / 100)} /></Field>
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>2. Gastos del negocio que también deben pagarse</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field label="Gastos fijos mensuales" help="Gastos que tienes aunque vendas poco: arriendo, internet, software, administración, servicios, etc. Si tienes varios, súmalos." example={EXAMPLE.fixedCostsMonthly}><Input type="number" value={form.fixedCostsMonthly} onChange={(e) => set("fixedCostsMonthly", num(e.target.value))} /></Field>
+              <Field label="Gastos compartidos asignados al producto" help="Opcional. Si quieres repartir parte de un gasto entre productos, escribe solo la parte mensual que quieres cargar a este producto. Si no sabes hacerlo, deja $0." example={EXAMPLE.sharedCosts}><Input type="number" value={form.abcMonthlyAllocation} onChange={(e) => set("abcMonthlyAllocation", num(e.target.value))} /></Field>
+              <Field label="Valor de tu hora de trabajo" help="Sirve para que tu propio trabajo no quede escondido como si fuera gratis. Si quieres incluirlo, estima cuánto debería valer una hora de tu trabajo." example={EXAMPLE.ownerHourlyCost}><Input type="number" value={form.ownerHourlyCost} onChange={(e) => set("ownerHourlyCost", num(e.target.value))} /></Field>
+              <Field label="Horas tuyas por unidad" help="Tiempo promedio que tú dedicas a una unidad. Puedes usar decimales: 0,10 horas son aproximadamente 6 minutos." example={EXAMPLE.ownerHoursPerUnit}><Input type="number" step="0.01" value={form.ownerHoursPerUnit} onChange={(e) => set("ownerHoursPerUnit", num(e.target.value))} /></Field>
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>3. Comisiones, pagos y pérdidas de venta</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
+              <PercentField label="Comisión por cobrar con tarjeta / pasarela" value={form.paymentFeeRate} onChange={(v) => set("paymentFeeRate", v)} help="Porcentaje que te cobra el medio de pago por recibir el dinero. Revisa la comisión real de tu proveedor." example={EXAMPLE.paymentFeeRate} />
+              <PercentField label="Comisión a vendedor" value={form.salesCommissionRate} onChange={(v) => set("salesCommissionRate", v)} help="Porcentaje que pagas a una persona por concretar la venta. Si vendes tú y no existe comisión, usa 0%." example={EXAMPLE.salesCommissionRate} />
+              <PercentField label="Comisión de marketplace" value={form.marketplaceFeeRate} onChange={(v) => set("marketplaceFeeRate", v)} help="Porcentaje que cobra una plataforma por cada venta. Si vendes directo, usa 0%." example={EXAMPLE.marketplaceFeeRate} />
+              <PercentField label="Devoluciones / reversas" value={form.returnRate} onChange={(v) => set("returnRate", v)} help="Estimación de ventas que finalmente se devuelven, anulan o revierten. Si no tienes historial, usa 0% en vez de inventar." example={EXAMPLE.returnRate} />
+              <PercentField label="Garantías / fallas" value={form.warrantyRate} onChange={(v) => set("warrantyRate", v)} help="Porcentaje que estimas perder por reposiciones, fallas o garantías. Si tu producto no tiene este costo, usa 0%." example={EXAMPLE.warrantyRate} />
+              <PercentField label="Descuento habitual" value={form.discountRate} onChange={(v) => set("discountRate", v)} help="Descuento que realmente sueles aplicar. Nüva lo usa para mostrar cuánto cambia tu utilidad cuando haces una promoción." example={EXAMPLE.discountRate} />
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>4. Precios que ves en el mercado</CardTitle></CardHeader><CardContent className="space-y-4">
+              <Field label="Precios de productos comparables" help="Escribe precios de productos realmente comparables. Puedes separarlos con espacios, comas o punto y coma. Nüva usa la mediana para evitar que un precio extremo distorsione el cálculo." example={EXAMPLE.competitors}><Input placeholder="Ej: 8990 9490 9990" value={form.competitorPricesText} onChange={(e) => set("competitorPricesText", e.target.value)} /></Field>
+              <div className="rounded-xl border bg-muted/30 p-4 text-sm text-muted-foreground"><p><strong className="text-foreground">Qué comparar:</strong> el mismo formato, tamaño, calidad y condición de venta. Para {EXAMPLE_PRODUCT}, no mezcles un café de 250 g con uno de 1 kg.</p><p className="mt-1"><strong className="text-foreground">Si no sabes los precios:</strong> deja el campo vacío. Nüva seguirá calculando desde tus costos y margen.</p></div>
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>5. Demanda: solo si tienes un dato real</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field label="Elasticidad estimada (opcional)" help="Mide cuánto cambia la cantidad vendida cuando cambia el precio. Es un dato técnico que normalmente se estima con historial de ventas. Si no lo conoces, déjalo completamente vacío: Nüva no lo inventará ni lo supondrá." example={EXAMPLE.elasticity}><Input type="number" step="0.1" placeholder="Déjala vacía si no la conoces" value={form.elasticityText} onChange={(e) => set("elasticityText", e.target.value)} /></Field>
+              <div className="rounded-xl border border-dashed p-4 text-sm"><p className="font-medium">Regla simple</p><p className="mt-1 text-muted-foreground">No necesitas saber elasticidad para calcular un precio útil. Primero trabaja con costos, margen, volumen y mercado.</p></div>
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>6. IVA y forma de mostrar el precio</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field label="IVA (%)" help="Tasa que corresponde a tu operación. Para una operación afecta a IVA en Chile, 19% es la referencia general. Si tu situación tributaria es distinta, usa la tasa que corresponda." example={EXAMPLE.vatRate}><Input type="number" min="0" max="100" value={Math.round(form.vatRate * 100)} onChange={(e) => set("vatRate", num(e.target.value) / 100)} /></Field>
+              <Field label="Terminación comercial" help="Permite que Nüva redondee el resultado a una terminación habitual de comercio. No cambia el costo; cambia la presentación." example={`Para ${EXAMPLE_PRODUCT}: si el cálculo da $10.034, puedes mostrar una terminación comercial cercana.`}><select value={form.psychologicalPricing ? "yes" : "no"} onChange={(e) => set("psychologicalPricing", e.target.value === "yes")} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="yes">Sí, usar terminación comercial</option><option value="no">No, mantener cálculo exacto</option></select></Field>
+            </CardContent></Card>
+          </div>
+
+          <div className="space-y-5 xl:sticky xl:top-5 xl:self-start">
+            <Card className="border-primary/30 shadow-sm"><CardHeader><div className="flex items-center justify-between"><CardTitle>Precio recomendado</CardTitle><Sparkles className="h-5 w-5 text-primary" /></div></CardHeader><CardContent>
+              <div className="text-4xl font-bold tracking-tight">{money(result.recommendedPrice)}</div><p className="mt-1 text-sm text-muted-foreground">Precio con IVA ({pct(input.vatRate)}): {money(priceWithVat(result.recommendedPrice, input.vatRate))}</p>
+              <div className="mt-5 grid grid-cols-3 gap-2"><Metric label="Piso operativo" value={money(result.operatingFloor)} /><Metric label="Piso económico" value={money(result.economicFloor)} /><Metric label="Referencia alta" value={result.aspirationalPrice ? money(result.aspirationalPrice) : "—"} /></div>
+              <div className="mt-4 rounded-lg bg-primary/5 p-3 text-sm"><p className="font-medium">¿Cómo se llegó aquí?</p><p className="mt-1 text-muted-foreground">Nüva combina el costo completo, tu margen objetivo, las comisiones y —si ingresaste precios— la referencia de mercado. No utiliza puntuaciones subjetivas de valor.</p></div>
+            </CardContent></Card>
+            <Card><CardHeader><CardTitle>Rentabilidad del producto</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2"><Metric label="Costo variable / unidad" value={money(result.variableUnitCost)} /><Metric label="Costo completo / unidad" value={money(result.fullUnitCost)} /><Metric label="Margen de contribución" value={pct(result.contributionMarginRate)} /><Metric label="Ganancia antes de gastos fijos / unidad" value={money(result.contributionMargin)} /><Metric label="Punto de equilibrio" value={result.breakEvenUnits ? `${result.breakEvenUnits} unidades` : "No alcanzable"} /><Metric label="Utilidad mensual estimada" value={money(result.projectedProfit)} /></CardContent></Card>
+            <Card><CardHeader><div className="flex items-center justify-between"><CardTitle>Prueba rápida de precios</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></div></CardHeader><CardContent className="space-y-2">{result.scenarios.map((s) => <div key={s.label} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"><span className="text-muted-foreground">{s.label}</span><span className="font-semibold">{money(s.price)} · utilidad {money(s.profit)}</span></div>)}</CardContent></Card>
+            <Card><CardHeader><CardTitle>Qué revisar antes de publicar el precio</CardTitle></CardHeader><CardContent className="space-y-3">{result.warnings.map((w, i) => <div key={`${w.message}-${i}`} className="flex gap-2 text-sm"><AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${w.severity === "critical" ? "text-destructive" : "text-amber-500"}`} /><span>{w.message}</span></div>)}{result.recommendations.map((r) => <div key={r.title} className="rounded-lg border p-3 text-sm"><p className="font-medium">{r.title}</p><p className="mt-1 text-muted-foreground">{r.message}</p></div>)}{result.warnings.length === 0 && result.recommendations.length === 0 && <div className="flex gap-2 text-sm text-muted-foreground"><CheckCircle2 className="h-4 w-4 text-primary" />No hay observaciones adicionales con los datos actuales.</div>}</CardContent></Card>
+            <Card className="bg-muted/20"><CardContent className="p-4"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Confianza del cálculo</p><div className="mt-2 flex items-end justify-between"><span className="text-2xl font-semibold">{result.confidenceScore}%</span><span className="text-xs text-muted-foreground">basada solo en datos ingresados</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${result.confidenceScore}%` }} /></div></CardContent></Card>
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 }
-function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="block space-y-1.5 text-sm"><span className="font-medium">{label}</span>{children}</label>; }
-function Hint({ children }: { children: ReactNode }) { return <span className="block text-[11px] leading-4 text-muted-foreground">{children}</span>; }
-function PercentField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) { return <Field label={`${label} (%)`}><Input type="number" min="0" max="99" value={Math.round(value * 100)} onChange={(e) => onChange(num(e.target.value) / 100)} /></Field>; }
-function Metric({ label, value }: { label: string; value: string }) { return <div className="rounded-lg bg-muted/40 p-3"><p className="text-[11px] text-muted-foreground">{label}</p><p className="mt-1 font-semibold">{value}</p></div>; }
+
+function Help({ text, example }: { text: string; example?: string }) {
+  return <Tooltip><TooltipTrigger asChild><button type="button" aria-label="Ayuda de este campo" className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"><HelpCircle className="h-3.5 w-3.5" /></button></TooltipTrigger><TooltipContent side="top" className="max-w-xs whitespace-normal"><p>{text}</p>{example && <p className="mt-2 border-t border-primary-foreground/20 pt-2"><strong>Ejemplo:</strong> {example}</p>}</TooltipContent></Tooltip>;
+}
+
+function Field({ label, help, example, children }: { label: string; help: string; example?: string; children: ReactNode }) {
+  return <div className="space-y-1.5"><div className="flex items-center gap-1.5"><label className="text-sm font-medium leading-5">{label}</label><Help text={help} example={example} /></div>{children}</div>;
+}
+
+function PercentField({ label, value, onChange, help, example }: { label: string; value: number; onChange: (v: number) => void; help: string; example: string }) {
+  return <Field label={label} help={help} example={example}><div className="relative"><Input type="number" min="0" max="100" step="0.1" value={Math.round(value * 1000) / 10} onChange={(e) => onChange(num(e.target.value) / 100)} className="pr-8" /><span className="absolute right-3 top-2 text-sm text-muted-foreground">%</span></div></Field>;
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-lg border bg-card p-3"><div className="text-[11px] text-muted-foreground">{label}</div><div className="mt-1 text-sm font-semibold">{value}</div></div>;
+}
