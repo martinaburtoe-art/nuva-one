@@ -15,6 +15,7 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPassword() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -23,15 +24,25 @@ function ResetPassword() {
     // Supabase emits PASSWORD_RECOVERY after parsing the token from the
     // email link's URL hash. Until that fires, there's no valid session
     // to update the password against.
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setReady(true);
+    let mounted = true;
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        setReady(true);
+        setChecking(false);
+      }
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
+      if (!mounted) return;
+      setReady(Boolean(data.session));
+      setChecking(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -72,10 +83,15 @@ function ResetPassword() {
           Elige una contraseña nueva para tu cuenta.
         </p>
 
-        {!ready ? (
+        {checking ? (
+          <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Verificando el enlace de recuperación…
+          </div>
+        ) : !ready ? (
           <p className="mt-8 text-sm text-muted-foreground">
-            Verificando enlace de recuperación… Si llegaste aquí sin venir desde el correo, este
-            enlace puede haber expirado.{" "}
+            Este enlace no es válido o ya expiró. Solicita uno nuevo desde recuperar contraseña.
+            {" "}
             <Link to="/auth" className="underline">
               Volver a iniciar sesión
             </Link>
