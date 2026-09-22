@@ -11081,6 +11081,10 @@ export type Database = {
           sales_count: number
         }[]
       }
+      get_nuva_business_baseline: {
+        Args: { p_business_id: string; p_days?: number }
+        Returns: Json
+      }
       get_owner_operational_metrics: {
         Args: { p_window_hours?: number }
         Returns: Json
