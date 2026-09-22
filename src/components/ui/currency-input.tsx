@@ -15,6 +15,7 @@ export function CurrencyInput({
   defaultValue = 0,
   onValueChange,
   className,
+  wrapperClassName,
   placeholder,
   name,
   required,
@@ -24,6 +25,7 @@ export function CurrencyInput({
   defaultValue?: number;
   onValueChange?: (n: number) => void;
   className?: string;
+  wrapperClassName?: string;
   placeholder?: string;
   name?: string;
   required?: boolean;
@@ -40,7 +42,7 @@ export function CurrencyInput({
   };
 
   return (
-    <div className="relative">
+    <div className={wrapperClassName}><div className="relative">
       <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">$</span>
       <Input
         inputMode="numeric"
