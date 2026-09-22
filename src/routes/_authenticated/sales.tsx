@@ -4,6 +4,7 @@ import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ModuleGuard } from "@/components/module-guard";
@@ -332,17 +333,15 @@ function Sales() {
                                 setItems(c);
                               }}
                             />
-                            <Input
+                            <CurrencyInput
                               className="col-span-3"
-                              type="number"
-                              min={0}
-                              placeholder="Precio"
                               value={it.price}
-                              onChange={(e) => {
+                              onValueChange={(value) => {
                                 const c = [...items];
-                                c[idx].price = Number(e.target.value);
+                                c[idx].price = value;
                                 setItems(c);
                               }}
+                              placeholder="Precio"
                             />
                             <Button
                               type="button"
@@ -367,13 +366,11 @@ function Sales() {
                       <Label htmlFor="total" className="shrink-0">
                         Total (CLP)
                       </Label>
-                      <Input
-                        id="total"
-                        type="number"
-                        min={0}
+                      <CurrencyInput
                         value={total}
-                        onChange={(e) => setManualTotal(Number(e.target.value))}
+                        onValueChange={setManualTotal}
                         className="text-right text-base font-semibold"
+                        placeholder="$0"
                       />
                     </div>
                     <div>
