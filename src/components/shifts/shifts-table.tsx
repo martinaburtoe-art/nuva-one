@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  FileSpreadsheet,
   FileText,
   MessageCircle,
   Plus,
@@ -228,6 +229,118 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   }
 
+  async function downloadShiftExcel() {
+    if (!shifts?.length) return;
+    try {
+      const ExcelJS = await import("exceljs");
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "Nüva One";
+      workbook.title = `Planilla de turnos · ${weekStart}`;
+      workbook.subject = "Planificación de turnos del equipo";
+      workbook.company = "Nüva One";
+
+      const sheet = workbook.addWorksheet("Turnos", {
+        views: [{ showGridLines: false }],
+        pageSetup: { orientation: "landscape", paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+      });
+
+      const orderedShifts = [...shifts].sort((a, b) =>
+        a.day_of_week - b.day_of_week ||
+        a.start_time.localeCompare(b.start_time) ||
+        a.employee_name.localeCompare(b.employee_name),
+      );
+      const weekLabel = new Date(weekStart + "T00:00:00").toLocaleDateString("es-CL", {
+        day: "2-digit", month: "long", year: "numeric",
+      });
+
+      sheet.mergeCells("A1:E1");
+      sheet.getCell("A1").value = "NÜVA ONE";
+      sheet.getCell("A1").font = { name: "Aptos Display", size: 20, bold: true, color: { argb: "FFE6C687" } };
+      sheet.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF080809" } };
+      sheet.getCell("A1").alignment = { vertical: "middle" };
+      sheet.getRow(1).height = 30;
+
+      sheet.mergeCells("A2:E2");
+      sheet.getCell("A2").value = `Planilla de turnos · Semana del ${weekLabel}`;
+      sheet.getCell("A2").font = { name: "Aptos", size: 11, color: { argb: "FF374151" }, bold: true };
+      sheet.getRow(2).height = 22;
+
+      sheet.mergeCells("A3:C3");
+      sheet.getCell("A3").value = `${orderedShifts.length} asignaciones · ${new Set(orderedShifts.map((s) => s.employee_name)).size} colaboradores`;
+      sheet.getCell("A3").font = { name: "Aptos", size: 9, color: { argb: "FF6B7280" } };
+      sheet.mergeCells("D3:E3");
+      sheet.getCell("D3").value = "Generado por Nüva One";
+      sheet.getCell("D3").alignment = { horizontal: "right" };
+      sheet.getCell("D3").font = { name: "Aptos", size: 9, color: { argb: "FF6B7280" } };
+
+      const header = sheet.getRow(5);
+      ["COLABORADOR", "DÍA", "FECHA", "INICIO", "TÉRMINO"].forEach((value, i) => {
+        const cell = header.getCell(i + 1);
+        cell.value = value;
+        cell.font = { name: "Aptos", size: 9, bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF6366F1" } };
+        cell.alignment = { vertical: "middle", horizontal: i === 0 ? "left" : "center" };
+      });
+      header.height = 22;
+      sheet.autoFilter = { from: "A5", to: `E${orderedShifts.length + 5}` };
+      sheet.views = [{ state: "frozen", ySplit: 5, showGridLines: false }];
+
+      orderedShifts.forEach((shift, index) => {
+        const row = sheet.getRow(index + 6);
+        const date = getWeekDates(shift.week_start)[shift.day_of_week];
+        const values = [
+          shift.employee_name,
+          DAYS[shift.day_of_week],
+          date.toLocaleDateString("es-CL", { day: "2-digit", month: "short" }).replace(".", ""),
+          shift.start_time.slice(0, 5),
+          shift.end_time.slice(0, 5),
+        ];
+        values.forEach((value, i) => {
+          const cell = row.getCell(i + 1);
+          cell.value = value;
+          cell.font = { name: "Aptos", size: 10, color: { argb: "FF1F2937" } };
+          cell.alignment = { vertical: "middle", horizontal: i === 0 ? "left" : "center" };
+          cell.border = { bottom: { style: "hair", color: { argb: "FFE5E7EB" } } };
+          if (index % 2 === 0) {
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF6F7FA" } };
+          }
+        });
+        row.height = 21;
+      });
+
+      sheet.columns = [
+        { width: 30 },
+        { width: 18 },
+        { width: 18 },
+        { width: 14 },
+        { width: 14 },
+      ];
+      sheet.getColumn(1).alignment = { horizontal: "left" };
+      for (let i = 2; i <= 5; i += 1) sheet.getColumn(i).alignment = { horizontal: "center" };
+
+      const footerRow = orderedShifts.length + 8;
+      sheet.mergeCells(`A${footerRow}:E${footerRow}`);
+      sheet.getCell(`A${footerRow}`).value = "Documento generado desde Nüva One · Planificación interna de turnos";
+      sheet.getCell(`A${footerRow}`).font = { name: "Aptos", size: 8, italic: true, color: { argb: "FF6B7280" } };
+      sheet.getCell(`A${footerRow}`).alignment = { horizontal: "center" };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `turnos-${weekStart}.xlsx`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Planilla Excel descargada correctamente. Ya puedes editarla o compartirla.");
+    } catch (error) {
+      console.error("Error al generar planilla Excel:", error);
+      toast.error("No se pudo generar la planilla Excel");
+    }
+  }
+
   function downloadShiftPlan() {
     if (!shifts?.length) return;
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -338,9 +451,14 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
               <List className="h-3.5 w-3.5 mr-1" /> Tabla
             </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={downloadShiftPlan} disabled={!shifts?.length}>
-            <FileText className="h-4 w-4 mr-2" /> Descargar planilla PDF
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={downloadShiftPlan} disabled={!shifts?.length}>
+              <FileText className="h-4 w-4 mr-2" /> PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={downloadShiftExcel} disabled={!shifts?.length}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel
+            </Button>
+          </div>
         </div>
       </div>
 
