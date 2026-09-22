@@ -30,6 +30,7 @@ function AuthPage() {
   const [otp, setOtp] = useState("");
   const [forgotMode, setForgotMode] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -44,6 +45,10 @@ function AuthPage() {
     const email = String(fd.get("email") ?? "").trim();
     const password = String(fd.get("password") ?? "");
     const full_name = String(fd.get("full_name") ?? "").trim();
+    if (tab === "signup" && !acceptedLegal) {
+      toast.error("Debes aceptar los Términos y la Política de Privacidad para crear tu cuenta.");
+      return;
+    }
     setLoading(true);
     try {
       if (tab === "signup") {
@@ -98,6 +103,10 @@ function AuthPage() {
   }
 
   async function handleGoogle() {
+    if (tab === "signup" && !acceptedLegal) {
+      toast.error("Debes aceptar los Términos y la Política de Privacidad para crear tu cuenta.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -114,6 +123,10 @@ function AuthPage() {
 
   async function handlePhone(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (tab === "signup" && !acceptedLegal) {
+      toast.error("Debes aceptar los Términos y la Política de Privacidad para crear tu cuenta.");
+      return;
+    }
     setLoading(true);
     try {
       if (phoneStep === "input") {
@@ -365,16 +378,30 @@ function AuthPage() {
             </TabsContent>
           </Tabs>
 
+          {tab === "signup" && (
+            <label className="mt-5 flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={acceptedLegal}
+                onChange={(e) => setAcceptedLegal(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-input"
+              />
+              <span>
+                Declaro que he leído y acepto los{" "}
+                <Link to="/terms" className="font-medium text-foreground underline">
+                  Términos y Condiciones
+                </Link>{" "}
+                y la{" "}
+                <Link to="/privacy" className="font-medium text-foreground underline">
+                  Política de Privacidad
+                </Link>
+                .
+              </span>
+            </label>
+          )}
+
           <p className="mt-8 text-center text-xs text-muted-foreground">
-            Al continuar aceptas nuestros{" "}
-            <Link to="/terms" className="underline">
-              Términos
-            </Link>{" "}
-            y{" "}
-            <Link to="/privacy" className="underline">
-              Política de Privacidad
-            </Link>
-            .
+            Para iniciar sesión, el acceso se rige por los términos vigentes. En el registro, la aceptación expresa se solicita mediante la casilla anterior.
           </p>
         </div>
       </div>
