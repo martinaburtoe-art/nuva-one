@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Input } from "@/components/ui/input";
 
 function formatCLP(n: number): string {
@@ -10,32 +11,46 @@ function parseCLP(raw: string): number {
   return digits ? Number(digits) : 0;
 }
 
-// Input de texto que se ve como "$39.990" mientras el usuario escribe, pero
-// entrega/recibe siempre un number plano. Reemplaza los <Input type="number">
-// de precios, que mostraban "39990" sin formato ni separador de miles.
 export function CurrencyInput({
   value,
-  onChange,
+  defaultValue = 0,
+  onValueChange,
   className,
   placeholder,
+  name,
+  required,
 }: {
-  value: number;
-  onChange: (n: number) => void;
+  value?: number;
+  defaultValue?: number;
+  onValueChange?: (n: number) => void;
   className?: string;
   placeholder?: string;
+  name?: string;
+  required?: boolean;
 }) {
+  const controlled = value !== undefined;
+  const [internalValue, setInternalValue] = React.useState(defaultValue);
+  const currentValue = controlled ? Number(value) || 0 : internalValue;
+
+  const handleChange = (raw: string) => {
+    const next = parseCLP(raw);
+    if (!controlled) setInternalValue(next);
+    onValueChange?.(next);
+  };
+
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-        $
-      </span>
+      <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">$</span>
       <Input
         inputMode="numeric"
-        className={`pl-6 ${className ?? ""}`}
+        className={`pl-6 tabular-nums ${className ?? ""}`}
         placeholder={placeholder}
-        value={formatCLP(value)}
-        onChange={(e) => onChange(parseCLP(e.target.value))}
+        value={formatCLP(currentValue)}
+        onChange={(e) => handleChange(e.target.value)}
+        required={required}
+        aria-label={name}
       />
+      {name && <input type="hidden" name={name} value={currentValue} />}
     </div>
   );
 }
