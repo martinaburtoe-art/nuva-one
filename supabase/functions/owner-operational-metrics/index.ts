@@ -50,9 +50,11 @@ Deno.serve(async (req) => {
       events_24h: Number(source.events ?? 0),
       error_events_24h: Number(source.error_events ?? 0),
       distinct_errors_24h: Number(source.distinct_errors ?? 0),
+      error_rate_5m: Number(source.error_rate_5m ?? 0),
       error_rate_1h: Number(source.error_rate_1h ?? 0),
-      latency_p95_ms:
-        source.latency_p95_ms == null ? null : Number(source.latency_p95_ms),
+      latency_p50_ms: source.latency_p50_ms == null ? null : Number(source.latency_p50_ms),
+      latency_p95_ms: source.latency_p95_ms == null ? null : Number(source.latency_p95_ms),
+      latency_p99_ms: source.latency_p99_ms == null ? null : Number(source.latency_p99_ms),
     },
     services: source.services ?? {},
     vitals: source.vitals ?? {},
