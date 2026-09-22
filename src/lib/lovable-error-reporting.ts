@@ -66,3 +66,4 @@ if (typeof window !== "undefined" && !window.__nuvaOwnerTelemetryInstalled) {
 
   window.addEventListener("pagehide", flushVitals, { once: true });
   window.setTimeout(flushVitals, 10_000);
+}
