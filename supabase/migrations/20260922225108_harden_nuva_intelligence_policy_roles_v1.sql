@@ -43,3 +43,12 @@ alter policy "nuva benchmarks manager delete" on public.nuva_benchmarks to authe
 alter policy "nuva benchmarks manager insert" on public.nuva_benchmarks to authenticated;
 alter policy "nuva benchmarks manager update" on public.nuva_benchmarks to authenticated;
 alter policy "nuva benchmarks member select" on public.nuva_benchmarks to authenticated;
+
+-- Performance hardening for remaining HR foreign keys and auth initplans.
+create index if not exists people_absences_business_id_idx on public.people_absences(business_id);
+create index if not exists people_lre_rows_business_id_idx on public.people_lre_rows(business_id);
+create index if not exists people_lre_rows_employee_id_idx on public.people_lre_rows(employee_id);
+create index if not exists people_payroll_liquidations_business_id_idx on public.people_payroll_liquidations(business_id);
+create index if not exists people_payroll_liquidations_employee_id_idx on public.people_payroll_liquidations(employee_id);
+create index if not exists people_payroll_liquidations_payroll_item_id_idx on public.people_payroll_liquidations(payroll_item_id);
+create index if not exists people_terminations_business_id_idx on public.people_terminations(business_id);
