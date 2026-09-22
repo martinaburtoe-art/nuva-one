@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -45,10 +46,10 @@ function CashControl() {
   const [openDialog, setOpenDialog] = useState(false);
   const [movementDialog, setMovementDialog] = useState<MovementType | null>(null);
   const [closeDialog, setCloseDialog] = useState(false);
-  const [openingAmount, setOpeningAmount] = useState("0");
-  const [movementAmount, setMovementAmount] = useState("");
+  const [openingAmount, setOpeningAmount] = useState(0);
+  const [movementAmount, setMovementAmount] = useState(0);
   const [movementReason, setMovementReason] = useState("");
-  const [countedCash, setCountedCash] = useState("");
+  const [countedCash, setCountedCash] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
 
   const registerQuery = useQuery({
@@ -110,7 +111,7 @@ function CashControl() {
 
   const s = summaryQuery.data;
   const expected = Number(s?.expected_cash ?? 0);
-  const counted = countedCash === "" ? null : Number(countedCash);
+  const counted = countedCash;
   const difference = counted === null ? null : counted - expected;
 
   async function refresh() {
@@ -160,7 +161,7 @@ function CashControl() {
       if (error) throw error;
       toast.success(movementDialog === "deposit" ? "Ingreso registrado" : "Retiro registrado");
       setMovementDialog(null);
-      setMovementAmount("");
+      setMovementAmount(0);
       setMovementReason("");
       await refresh();
     } catch (error) {
@@ -184,7 +185,7 @@ function CashControl() {
       if (error) throw error;
       toast.success("Caja cerrada correctamente");
       setCloseDialog(false);
-      setCountedCash("");
+      setCountedCash(null);
       await refresh();
     } catch {
       toast.error("No se pudo cerrar la caja");
@@ -280,9 +281,9 @@ function CashControl() {
           <div className="flex items-center gap-2"><History className="h-5 w-5" /><div><h2 className="text-lg font-semibold">Historial de cierres</h2><p className="text-sm text-muted-foreground">Consulta las últimas jornadas y sus arqueos.</p></div></div>
           <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[680px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Apertura</th><th className="px-3 py-2">Cierre</th><th className="px-3 py-2 text-right">Fondo</th><th className="px-3 py-2 text-right">Contado</th><th className="px-3 py-2">Estado</th></tr></thead><tbody>{(historyQuery.data ?? []).map((r) => <tr key={r.id} className="border-t"><td className="px-3 py-3">{new Date(r.opened_at).toLocaleString("es-CL")}</td><td className="px-3 py-3">{r.closed_at ? new Date(r.closed_at).toLocaleString("es-CL") : "—"}</td><td className="px-3 py-3 text-right">{fmtCLP(Number(r.opening_amount))}</td><td className="px-3 py-3 text-right">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</td><td className="px-3 py-3"><Badge variant="secondary">Cerrada</Badge></td></tr>)}</tbody></table>{(historyQuery.data ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay jornadas cerradas.</p>}</div>
         </Card>
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}><DialogContent><DialogHeader><DialogTitle>Abrir caja</DialogTitle></DialogHeader><div className="space-y-4"><Label>Fondo inicial</Label><Input type="number" min="0" value={openingAmount} onChange={(e) => setOpeningAmount(e.target.value)} /><Button className="w-full" disabled={busy} onClick={openRegister}>Confirmar apertura</Button></div></DialogContent></Dialog>
-        <Dialog open={movementDialog !== null} onOpenChange={(open) => !open && setMovementDialog(null)}><DialogContent><DialogHeader><DialogTitle>{movementDialog === "deposit" ? "Registrar ingreso" : "Registrar retiro"}</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>Monto</Label><Input type="number" min="0.01" value={movementAmount} onChange={(e) => setMovementAmount(e.target.value)} /></div><div><Label>Motivo</Label><Input value={movementReason} onChange={(e) => setMovementReason(e.target.value)} placeholder="Ej. depósito bancario" /></div><Button className="w-full" disabled={busy} onClick={addMovement}>Registrar movimiento</Button></div></DialogContent></Dialog>
-        <Dialog open={closeDialog} onOpenChange={setCloseDialog}><DialogContent><DialogHeader><DialogTitle>Cierre y arqueo</DialogTitle></DialogHeader><div className="space-y-4"><div className="rounded-lg border p-3 text-sm">Efectivo esperado: <strong>{fmtCLP(expected)}</strong></div><div><Label>Efectivo contado</Label><Input type="number" min="0" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} /></div>{counted !== null && <div className="rounded-lg border p-3 text-sm">Diferencia: <strong>{fmtCLP(difference ?? 0)}</strong></div>}<Button className="w-full" disabled={busy} onClick={closeRegister}>Confirmar cierre</Button></div></DialogContent></Dialog>
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}><DialogContent><DialogHeader><DialogTitle>Abrir caja</DialogTitle></DialogHeader><div className="space-y-4"><Label>Fondo inicial</Label><CurrencyInput value={openingAmount} onValueChange={setOpeningAmount} placeholder="$0" /><Button className="w-full" disabled={busy} onClick={openRegister}>Confirmar apertura</Button></div></DialogContent></Dialog>
+        <Dialog open={movementDialog !== null} onOpenChange={(open) => !open && setMovementDialog(null)}><DialogContent><DialogHeader><DialogTitle>{movementDialog === "deposit" ? "Registrar ingreso" : "Registrar retiro"}</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>Monto</Label><CurrencyInput value={movementAmount} onValueChange={setMovementAmount} placeholder="$0" /></div><div><Label>Motivo</Label><Input value={movementReason} onChange={(e) => setMovementReason(e.target.value)} placeholder="Ej. depósito bancario" /></div><Button className="w-full" disabled={busy} onClick={addMovement}>Registrar movimiento</Button></div></DialogContent></Dialog>
+        <Dialog open={closeDialog} onOpenChange={setCloseDialog}><DialogContent><DialogHeader><DialogTitle>Cierre y arqueo</DialogTitle></DialogHeader><div className="space-y-4"><div className="rounded-lg border p-3 text-sm">Efectivo esperado: <strong>{fmtCLP(expected)}</strong></div><div><Label>Efectivo contado</Label><CurrencyInput value={countedCash ?? 0} onValueChange={setCountedCash} placeholder="$0" /></div>{counted !== null && <div className="rounded-lg border p-3 text-sm">Diferencia: <strong>{fmtCLP(difference ?? 0)}</strong></div>}<Button className="w-full" disabled={busy} onClick={closeRegister}>Confirmar cierre</Button></div></DialogContent></Dialog>
       </div>
     </ModuleGuard>
   );
