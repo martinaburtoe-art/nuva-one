@@ -11,7 +11,7 @@ BEGIN
    SELECT * INTO e FROM public.people_employees WHERE id=i.employee_id;
    warnings:='[]'::jsonb;
    IF NULLIF(btrim(e.national_id),'') IS NULL THEN warnings:=warnings||jsonb_build_array('RUT faltante'); END IF;
-   IF min_wage IS NOT NULL AND i.gross_taxable < min_wage AND p.period_start IS NULL THEN warnings:=warnings||jsonb_build_array('Remuneración imponible bajo IMM vigente; revisar jornada/causal'); END IF;
+   IF min_wage IS NOT NULL AND i.gross_taxable < min_wage THEN warnings:=warnings||jsonb_build_array('Remuneración imponible bajo IMM vigente; revisar jornada/causal'); END IF;
    IF jsonb_array_length(i.warnings)>0 THEN warnings:=warnings||i.warnings; END IF;
    total:=total+1; IF jsonb_array_length(warnings)>0 THEN invalid:=invalid+1; END IF;
  END LOOP;
