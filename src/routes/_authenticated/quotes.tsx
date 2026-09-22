@@ -282,10 +282,10 @@ function Quotes() {
                               }}
                             />
                             <CurrencyInput
-                              className="col-span-3"
+                              wrapperClassName="col-span-3"
                               placeholder="Precio"
                               value={it.price}
-                              onChange={(n) => {
+                              onValueChange={(n) => {
                                 const c = [...items];
                                 c[idx].price = n;
                                 setItems(c);
