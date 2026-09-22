@@ -63,6 +63,9 @@ export const Route = createFileRoute("/api/telemetry")({
           bucket.count += 1;
         }
 
+        const contentLength = Number(request.headers.get("content-length") ?? 0);
+        if (contentLength > 4096) return json({ ok: false }, 413);
+
         let body: Record<string, unknown>;
         try {
           body = (await request.json()) as Record<string, unknown>;
