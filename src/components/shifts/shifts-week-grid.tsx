@@ -45,6 +45,29 @@ function dateForDay(weekStartISO: string, dayIdx: number): string {
   return d.toLocaleDateString("es-CL", { day: "numeric", month: "short" }).replace(".", "");
 }
 
+function layoutDayShifts(dayShifts: Shift[]) {
+  const lanes: number[] = [];
+  return [...dayShifts]
+    .sort(
+      (a, b) =>
+        toMinutes(a.start_time) - toMinutes(b.start_time) ||
+        toMinutes(a.end_time) - toMinutes(b.end_time) ||
+        a.employee_name.localeCompare(b.employee_name),
+    )
+    .map((shift) => {
+      const start = toMinutes(shift.start_time);
+      const end = toMinutes(shift.end_time);
+      let lane = lanes.findIndex((lastEnd) => lastEnd <= start);
+      if (lane === -1) {
+        lane = lanes.length;
+        lanes.push(end);
+      } else {
+        lanes[lane] = end;
+      }
+      return { shift, lane, laneCount: lanes.length };
+    });
+}
+
 export function ShiftsWeekGrid({
   shifts,
   onDelete,
