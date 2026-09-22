@@ -4,6 +4,7 @@ import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ModuleGuard } from "@/components/module-guard";
@@ -13,11 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useBizDelete, useBizInsert, useBizList, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
 
-const TYPES = [
-  ["operacional", "Operacional"], ["inventario", "Inventario"], ["laboral", "Laboral"],
-  ["financiero", "Financiero"], ["tributario", "Tributario"], ["produccion", "Producción"],
-  ["comercial", "Comercial"], ["logistico", "Logístico"], ["administrativo", "Administrativo"], ["otro", "Otro"],
-] as const;
+const TYPES = [["operacional", "Operacional"], ["inventario", "Inventario"], ["laboral", "Laboral"], ["financiero", "Financiero"], ["tributario", "Tributario"], ["produccion", "Producción"], ["comercial", "Comercial"], ["logistico", "Logístico"], ["administrativo", "Administrativo"], ["otro", "Otro"]] as const;
 const BEHAVIOR = [["fijo", "Fijo"], ["variable", "Variable"], ["semivariable", "Semivariable"], ["extraordinario", "Extraordinario"]] as const;
 const DOCS = [["factura", "Factura"], ["factura_exenta", "Factura exenta"], ["boleta", "Boleta"], ["nota_credito", "Nota de crédito"], ["nota_debito", "Nota de débito"], ["honorario", "Honorario"], ["recibo", "Recibo"], ["sin_documento", "Sin documento"], ["otro", "Otro"]] as const;
 const STATUS = [["pending", "Pendiente"], ["partial", "Parcial"], ["paid", "Pagado"], ["cancelled", "Anulado"]] as const;
@@ -30,7 +27,7 @@ export function CostsWorkspace() {
   const insert = useBizInsert("costs");
   const del = useBizDelete("costs");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ description: "", category: "Operación", cost_type: "operacional", behavior: "variable", allocation: "indirecto", amount_net: "", vat_rate: "19", incurred_at: new Date().toISOString().slice(0, 10), due_date: "", payment_status: "pending", payment_method: "transferencia", document_type: "sin_documento", document_number: "", tax_treatment: "pending", cost_center: "", recurring: false, recurring_frequency: "monthly", notes: "" });
+  const [form, setForm] = useState({ description: "", category: "Operación", cost_type: "operacional", behavior: "variable", allocation: "indirecto", amount_net: 0, vat_rate: "19", incurred_at: new Date().toISOString().slice(0, 10), due_date: "", payment_status: "pending", payment_method: "transferencia", document_type: "sin_documento", document_number: "", tax_treatment: "pending", cost_center: "", recurring: false, recurring_frequency: "monthly", notes: "" });
 
   const totals = useMemo(() => {
     const rows = costs ?? [];
@@ -50,7 +47,7 @@ export function CostsWorkspace() {
     const vat = Math.round(net * rate / 100);
     await insert.mutateAsync({ ...form, amount_net: net, vat_rate: rate, vat_amount: vat, total_amount: net + vat, recurring: form.recurring });
     setOpen(false);
-    setForm((f) => ({ ...f, description: "", amount_net: "", document_number: "", notes: "" }));
+    setForm((f) => ({ ...f, description: "", amount_net: 0, document_number: "", notes: "" }));
   };
 
   return <ModuleGuard module="purchases"><div className="space-y-6">
@@ -60,7 +57,7 @@ export function CostsWorkspace() {
       <div><Label>Naturaleza</Label><Select value={form.cost_type} onValueChange={v => update("cost_type", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TYPES.map(([v,l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></div>
       <div><Label>Comportamiento</Label><Select value={form.behavior} onValueChange={v => update("behavior", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{BEHAVIOR.map(([v,l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></div>
       <div><Label>Asignación</Label><Select value={form.allocation} onValueChange={v => update("allocation", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="directo">Directo</SelectItem><SelectItem value="indirecto">Indirecto</SelectItem></SelectContent></Select></div>
-      <div><Label>Neto (CLP)</Label><Input type="number" min="0" value={form.amount_net} onChange={e => update("amount_net", e.target.value)} required /></div>
+      <div><Label>Neto (CLP)</Label><CurrencyInput value={form.amount_net} onValueChange={(value) => update("amount_net", value)} placeholder="$0" required /></div>
       <div><Label>IVA %</Label><Input type="number" min="0" max="100" value={form.vat_rate} onChange={e => update("vat_rate", e.target.value)} /></div>
       <div><Label>Fecha del costo</Label><Input type="date" value={form.incurred_at} onChange={e => update("incurred_at", e.target.value)} required /></div>
       <div><Label>Vencimiento</Label><Input type="date" value={form.due_date} onChange={e => update("due_date", e.target.value)} /></div>
