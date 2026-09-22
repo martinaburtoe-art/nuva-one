@@ -6,8 +6,7 @@ const base: PricingInput = {
   otherVariableCost: 0, wasteRate: 0, fixedCostsMonthly: 1000000, expectedUnitsMonthly: 100,
   targetMargin: 0.3, paymentFeeRate: 0.05, salesCommissionRate: 0, marketplaceFeeRate: 0,
   returnRate: 0, warrantyRate: 0, ownerHourlyCost: 0, ownerHoursPerUnit: 0, abcMonthlyAllocation: 0,
-  competitorPrices: [17000, 18000, 19000], differentiationScore: 5, valueScore: 5,
-  referenceValue: 0, differentiatedValue: 0, valueCaptureRate: 0.2, elasticity: null,
+  competitorPrices: [17000, 18000, 19000], elasticity: null,
   currentPrice: 0, discountRate: 0, vatRate: 0.19, vatIncluded: false, psychologicalPricing: false,
 };
 
