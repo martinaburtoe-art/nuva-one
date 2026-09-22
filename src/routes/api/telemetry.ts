@@ -25,9 +25,9 @@ function validPath(value: unknown) {
     if (!segment) return "";
     if (segment.includes("@") || /^(mailto:|tel:)/i.test(segment)) return ":redacted";
     if (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)) return ":id";
-    if (/^\\d+$/.test(segment)) return ":n";
+    if (/^\d+$/.test(segment)) return ":n";
     if (segment.length > 24 && /^[a-zA-Z0-9_-]+$/.test(segment)) return ":segment";
-    if (!/^[a-zA-Z0-9._~!if (!/^[a-zA-Z0-9._~!if (segment.length > 24 && /^[a-zA-Z0-9_-]+$/.test(segment)) return ":segment";()*+,;=:@%-]+$/.test(segment)) return ":redacted";\'()*+,;=:@%-]+$/.test(segment)) return ":redacted";
+    if (!/^[a-zA-Z0-9._~!$&()*+,;=:@%-]+$/.test(segment)) return ":redacted";
     return segment.slice(0, 48);
   }).join("/") || "/";
 }
