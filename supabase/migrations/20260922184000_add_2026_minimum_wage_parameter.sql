@@ -1,0 +1,3 @@
+INSERT INTO public.people_legal_parameters(country_code,parameter_key,value_numeric,effective_from,source_url,source_reference,notes)
+VALUES('CL','minimum_monthly_wage',553553,'2026-05-01','https://www.bcn.cl/leychile/navegar?idNorma=1225354','Ley 21.830 — IMM mayo 2026','Ingreso mínimo mensual para trabajadores de 18 a 65 años.')
+ON CONFLICT(country_code,parameter_key,effective_from) DO UPDATE SET value_numeric=EXCLUDED.value_numeric,source_url=EXCLUDED.source_url,source_reference=EXCLUDED.source_reference,notes=EXCLUDED.notes;
