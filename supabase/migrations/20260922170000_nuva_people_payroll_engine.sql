@@ -46,18 +46,16 @@ INSERT INTO public.people_legal_parameters(country_code,parameter_key,value_nume
 ('CL','ssp_protected_return_rate',0.009,'2026-08-01','https://www71.spensiones.cl/portal/institucional/594/w3-article-16981.html','SP NCG 361','Cotización con rentabilidad protegida, cargo empleador'),
 ('CL','health_rate',0.07,'2026-01-01','https://www.superdesalud.gob.cl/tax-temas-de-orientacion/exceso-de-cotizacion-4015/','Superintendencia de Salud','Cotización legal de salud'),
 ('CL','overtime_surcharge',0.50,'2026-01-01','https://www.dt.gob.cl/portal/1628/w3-article-60191.html','Dirección del Trabajo, art. 32','Recargo legal mínimo de horas extraordinarias'),
-('CL','uf_value_clp',41057.20,'2026-09-30','https://www.sii.cl/valores_y_fechas/uf/uf2026.htm','SII — UF 30 septiembre 2026','Valor diario; el período debe snapshotear el valor aplicable antes del cierre')
+('CL','uf_value_clp',41057.20,'2026-09-30','https://www.sii.cl/valores_y_fechas/uf/uf2026.htm','SII — UF 30 septiembre 2026','Valor diario; debe quedar en el snapshot del período antes del cierre')
 ON CONFLICT (country_code,parameter_key,effective_from) DO UPDATE SET value_numeric=EXCLUDED.value_numeric,source_url=EXCLUDED.source_url,source_reference=EXCLUDED.source_reference,notes=EXCLUDED.notes;
 
 CREATE OR REPLACE FUNCTION public.calculate_people_payroll_period(p_payroll_period_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, private
-AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,private AS $$
 DECLARE
   v_period public.people_payroll_periods%ROWTYPE;
   v_user uuid := auth.uid();
+  v_period_start date;
+  v_period_end date;
   v_param jsonb := '{}'::jsonb;
   v_uf numeric;
   v_pension_cap numeric;
@@ -69,49 +67,58 @@ DECLARE
   v_employee record;
   v_contract record;
   v_input record;
+  v_input_found boolean;
   v_taxable numeric;
   v_non_taxable numeric;
   v_pension_base numeric;
   v_unemployment_base numeric;
-  v_afp_commission numeric := 0;
-  v_afp_employee numeric := 0;
-  v_health_deduction numeric := 0;
-  v_afc_employee numeric := 0;
-  v_afc_employer numeric := 0;
-  v_sis_amount numeric := 0;
-  v_ssp_amount numeric := 0;
-  v_overtime numeric := 0;
-  v_income_tax numeric := 0;
-  v_deductions numeric := 0;
-  v_net numeric := 0;
-  v_employer_cost numeric := 0;
-  v_hourly numeric := 0;
-  v_warnings jsonb := '[]'::jsonb;
+  v_afp_commission numeric;
+  v_afp_employee numeric;
+  v_health_deduction numeric;
+  v_afc_employee numeric;
+  v_afc_employer numeric;
+  v_sis_amount numeric;
+  v_ssp_amount numeric;
+  v_overtime numeric;
+  v_income_tax numeric;
+  v_deductions numeric;
+  v_net numeric;
+  v_employer_cost numeric;
+  v_hourly numeric;
+  v_warnings jsonb;
   v_components jsonb;
   v_bracket record;
+  v_bracket_found boolean;
 BEGIN
   IF v_user IS NULL THEN RAISE EXCEPTION 'authentication required'; END IF;
 
-  SELECT * INTO v_period FROM public.people_payroll_periods WHERE id = p_payroll_period_id;
+  SELECT * INTO v_period FROM public.people_payroll_periods WHERE id=p_payroll_period_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'payroll period not found'; END IF;
   IF NOT private.has_business_role(v_period.business_id,v_user,ARRAY['owner','admin']::public.member_role[]) THEN
     RAISE EXCEPTION 'owner/admin role required';
   END IF;
   IF v_period.status IN ('approved','closed','void') THEN
-    RAISE EXCEPTION 'payroll period is immutable in status %', v_period.status;
+    RAISE EXCEPTION 'payroll period is immutable in status %',v_period.status;
   END IF;
+
+  v_period_start := make_date(v_period.period_year,v_period.period_month,1);
+  v_period_end := (v_period_start + interval '1 month - 1 day')::date;
 
   SELECT COALESCE(jsonb_object_agg(parameter_key,COALESCE(to_jsonb(value_numeric),to_jsonb(value_text))),'{}'::jsonb)
   INTO v_param
-  FROM public.people_legal_parameters
-  WHERE country_code='CL' AND effective_from <= make_date(v_period.period_year,v_period.period_month,1)
-    AND (effective_to IS NULL OR effective_to >= make_date(v_period.period_year,v_period.period_month,1));
+  FROM (
+    SELECT DISTINCT ON (parameter_key) parameter_key,value_numeric,value_text
+    FROM public.people_legal_parameters
+    WHERE country_code='CL' AND effective_from <= v_period_end
+      AND (effective_to IS NULL OR effective_to >= v_period_start)
+    ORDER BY parameter_key,effective_from DESC
+  ) p;
 
   v_uf := NULLIF(v_param->>'uf_value_clp','')::numeric;
   v_pension_cap := NULLIF(v_param->>'pension_income_cap_uf','')::numeric * v_uf;
   v_unemployment_cap := NULLIF(v_param->>'unemployment_income_cap_uf','')::numeric * v_uf;
   v_sis := COALESCE(NULLIF(v_param->>'sis_rate','')::numeric,0.0162);
-  v_ssp := CASE WHEN make_date(v_period.period_year,v_period.period_month,1) >= DATE '2026-08-01'
+  v_ssp := CASE WHEN v_period_start >= DATE '2026-08-01'
                 THEN COALESCE(NULLIF(v_param->>'ssp_protected_return_rate','')::numeric,0.009) ELSE 0 END;
   v_health := COALESCE(NULLIF(v_param->>'health_rate','')::numeric,0.07);
   v_ot := COALESCE(NULLIF(v_param->>'overtime_surcharge','')::numeric,0.50);
@@ -129,38 +136,52 @@ BEGIN
     SELECT c.* INTO v_contract
     FROM public.people_contracts c
     WHERE c.employee_id=v_employee.id AND c.business_id=v_period.business_id
-      AND c.status='active' AND c.start_date <= make_date(v_period.period_year,v_period.period_month,28)
-      AND (c.end_date IS NULL OR c.end_date >= make_date(v_period.period_year,v_period.period_month,1))
+      AND c.status='active' AND c.start_date <= v_period_end
+      AND (c.end_date IS NULL OR c.end_date >= v_period_start)
     ORDER BY c.start_date DESC LIMIT 1;
+    IF NOT FOUND THEN CONTINUE; END IF;
 
-    IF NOT FOUND THEN
-      CONTINUE;
-    END IF;
-
+    v_input_found := false;
     SELECT * INTO v_input FROM public.people_payroll_inputs
     WHERE payroll_period_id=p_payroll_period_id AND employee_id=v_employee.id;
+    v_input_found := FOUND;
 
-    v_input.overtime_hours := COALESCE(v_input.overtime_hours,v_employee.overtime_hours,0);
-    v_input.taxable_bonus := COALESCE(v_input.taxable_bonus,v_employee.taxable_bonus,0);
-    v_input.non_taxable_bonus := COALESCE(v_input.non_taxable_bonus,v_employee.non_taxable_bonus,0);
-    v_input.other_deductions := COALESCE(v_input.other_deductions,v_employee.other_deductions,0);
-    v_input.gratification_amount := COALESCE(v_input.gratification_amount,0);
+    v_warnings := '[]'::jsonb;
+    v_afp_commission := 0;
+    v_afp_employee := 0;
+    v_health_deduction := 0;
+    v_afc_employee := 0;
+    v_afc_employer := 0;
+    v_sis_amount := 0;
+    v_ssp_amount := 0;
+    v_income_tax := 0;
 
     v_hourly := CASE WHEN COALESCE(v_contract.weekly_hours,42) > 0
-      THEN (v_contract.salary_amount / 30 * 28 / (v_contract.weekly_hours * 4)) ELSE 0 END;
-    v_overtime := round(v_hourly * (1 + v_ot) * v_input.overtime_hours,0);
+      THEN (v_contract.salary_amount / 30 * 28 / v_contract.weekly_hours) ELSE 0 END;
 
-    v_taxable := greatest(0,COALESCE(v_contract.salary_amount,0) + v_overtime + v_input.taxable_bonus + v_input.gratification_amount);
-    v_non_taxable := greatest(0,v_input.non_taxable_bonus);
+    v_overtime := round(v_hourly * (1 + v_ot) *
+      CASE WHEN v_input_found THEN COALESCE(v_input.overtime_hours,0) ELSE COALESCE(v_employee.overtime_hours,0) END,0);
+
+    v_taxable := greatest(0,COALESCE(v_contract.salary_amount,0) + v_overtime +
+      CASE WHEN v_input_found THEN COALESCE(v_input.taxable_bonus,0) ELSE COALESCE(v_employee.taxable_bonus,0) END +
+      CASE WHEN v_input_found THEN COALESCE(v_input.gratification_amount,0) ELSE 0 END);
+
+    v_non_taxable := greatest(0,
+      CASE WHEN v_input_found THEN COALESCE(v_input.non_taxable_bonus,0) ELSE COALESCE(v_employee.non_taxable_bonus,0) END);
+
     v_pension_base := least(v_taxable,v_pension_cap);
     v_unemployment_base := least(v_taxable,v_unemployment_cap);
 
     SELECT COALESCE(worker_commission,0) INTO v_afp_commission
     FROM public.people_afp_rates
     WHERE country_code='CL' AND afp_name=COALESCE(v_employee.afp_name,'')
-      AND effective_from <= make_date(v_period.period_year,v_period.period_month,1)
-      AND (effective_to IS NULL OR effective_to >= make_date(v_period.period_year,v_period.period_month,1))
+      AND effective_from <= v_period_end
+      AND (effective_to IS NULL OR effective_to >= v_period_start)
     ORDER BY effective_from DESC LIMIT 1;
+
+    IF COALESCE(v_employee.pension_status,'active')='active' AND NULLIF(v_employee.afp_name,'') IS NULL THEN
+      v_warnings := v_warnings || jsonb_build_array('AFP no configurada');
+    END IF;
 
     v_afp_employee := CASE WHEN COALESCE(v_employee.pension_status,'active')='active'
       THEN round(v_pension_base * (0.10 + COALESCE(v_afp_commission,0)),0) ELSE 0 END;
@@ -192,25 +213,28 @@ BEGIN
     FROM public.people_tax_brackets b
     WHERE b.country_code='CL' AND b.tax_type='IUSC'
       AND b.period_year=v_period.period_year AND b.period_month=v_period.period_month
-      AND v_taxable - v_afp_employee - v_health_deduction - v_afc_employee >= b.min_income
-      AND (b.max_income IS NULL OR v_taxable - v_afp_employee - v_health_deduction - v_afc_employee <= b.max_income)
+      AND v_taxable-v_afp_employee-v_health_deduction-v_afc_employee >= b.min_income
+      AND (b.max_income IS NULL OR v_taxable-v_afp_employee-v_health_deduction-v_afc_employee <= b.max_income)
     ORDER BY b.min_income DESC LIMIT 1;
+    v_bracket_found := FOUND;
 
-    v_income_tax := CASE WHEN FOUND
-      THEN greatest(0,round((v_taxable-v_afp_employee-v_health_deduction-v_afc_employee)*v_bracket.factor-v_bracket.rebate,0))
-      ELSE 0 END;
-
-    IF NOT FOUND THEN
+    IF v_bracket_found THEN
+      v_income_tax := greatest(0,round((v_taxable-v_afp_employee-v_health_deduction-v_afc_employee)*v_bracket.factor-v_bracket.rebate,0));
+    ELSE
       v_warnings := v_warnings || jsonb_build_array('Tabla IUSC no cargada para el período');
     END IF;
 
-    v_deductions := v_afp_employee + v_health_deduction + v_afc_employee + v_income_tax + COALESCE(v_input.other_deductions,0) + COALESCE(v_input.advance_payment,0);
+    v_deductions := v_afp_employee + v_health_deduction + v_afc_employee + v_income_tax +
+      CASE WHEN v_input_found THEN COALESCE(v_input.other_deductions,0)+COALESCE(v_input.advance_payment,0)
+           ELSE COALESCE(v_employee.other_deductions,0) END;
+
     v_net := greatest(0,round(v_taxable+v_non_taxable-v_deductions,0));
-    v_employer_cost := round(v_taxable + v_afc_employer + v_sis_amount + v_ssp_amount,0);
+    v_employer_cost := round(v_taxable+v_afc_employer+v_sis_amount+v_ssp_amount,0);
 
     v_components := jsonb_build_object(
-      'salary',v_contract.salary_amount,'overtime',v_overtime,'taxable_bonus',v_input.taxable_bonus,
-      'non_taxable_bonus',v_non_taxable,'gratification',v_input.gratification_amount,
+      'salary',v_contract.salary_amount,'overtime',v_overtime,
+      'taxable_bonus',CASE WHEN v_input_found THEN v_input.taxable_bonus ELSE v_employee.taxable_bonus END,
+      'non_taxable_bonus',v_non_taxable,'gratification',CASE WHEN v_input_found THEN v_input.gratification_amount ELSE 0 END,
       'afp_employee',v_afp_employee,'health',v_health_deduction,'afc_employee',v_afc_employee,
       'afc_employer',v_afc_employer,'sis_employer',v_sis_amount,'ssp_employer',v_ssp_amount,
       'pension_base',v_pension_base,'unemployment_base',v_unemployment_base,'uf_value',v_uf,
