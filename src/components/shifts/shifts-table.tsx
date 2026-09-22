@@ -211,13 +211,26 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
     const msg = encodeURIComponent(
       `Hola ${shift.employee_name}, tu turno es el ${shiftDateLabel(shift.week_start, shift.day_of_week)} de ${shift.start_time.slice(0, 5)} a ${shift.end_time.slice(0, 5)}.`,
     );
-    const phone = shift.employee_phone.replace(/\D/g, "");
+    let phone = shift.employee_phone.replace(/\D/g, "");
+    if (phone.startsWith("0")) phone = phone.slice(1);
+    if (phone.length === 9 && phone.startsWith("9")) phone = `56${phone}`;
+    if (phone.length < 10) {
+      toast.error("El teléfono no tiene un formato válido para WhatsApp");
+      return;
+    }
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   }
 
   function downloadShiftPlan() {
     if (!shifts?.length) return;
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    doc.setProperties({
+      title: `Planilla de turnos Nüva One · ${weekStart}`,
+      subject: "Planificación de turnos del equipo",
+      author: "Nüva One",
+      creator: "Nüva One",
+      keywords: "turnos, planificación, Nüva One",
+    });
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 16;
