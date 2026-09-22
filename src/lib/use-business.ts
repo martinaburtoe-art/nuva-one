@@ -123,6 +123,7 @@ export const MODULES = [
   { key: "quotes", label: "Cotizaciones" },
   { key: "automations", label: "Vinculación WhatsApp" },
   { key: "ai", label: "Asistente IA" },
+  { key: "people", label: "Nüva People" },
 ] as const;
 
 export type ModuleKey = (typeof MODULES)[number]["key"];
