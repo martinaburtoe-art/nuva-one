@@ -167,9 +167,9 @@ export function ShiftsWeekGrid({
                   const top = ((start - startHour * 60) / 60) * hourHeight;
                   const height = Math.max(((end - start) / 60) * hourHeight, 32);
                   const color = colorFor(s.employee_name);
-                  const laneGap = 4;
-                  const width = `calc((100% - 8px - ${laneGap * (laneCount - 1)}px) / ${laneCount})`;
-                  const left = `calc(4px + ${lane} * ((100% - 8px - ${laneGap * (laneCount - 1)}px) / ${laneCount} + ${laneGap}px))`;
+                  const laneWidth = 100 / laneCount;
+                  const left = `calc(${lane * laneWidth}% + 2px)`;
+                  const width = `calc(${laneWidth}% - 4px)`;
                   return (
                     <div
                       key={s.id}
