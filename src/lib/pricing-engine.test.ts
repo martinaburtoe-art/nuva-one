@@ -31,9 +31,10 @@ describe("pricing-engine", () => {
     expect(result.breakEvenUnits!).toBeGreaterThan(0);
   });
 
-  it("returns null break-even when contribution is not positive", () => {
+  it("keeps break-even computable from the economic floor when target margin is infeasible", () => {
     const result = calculatePricing({ ...base, targetMargin: 0.9, paymentFeeRate: 0.2 });
-    expect(result.breakEvenUnits).toBeNull();
+    expect(result.breakEvenUnits).toBe(100);
+    expect(result.recommendedPrice).toBe(result.economicFloor);
     expect(result.warnings.some((w) => w.severity === "critical")).toBe(true);
   });
 
