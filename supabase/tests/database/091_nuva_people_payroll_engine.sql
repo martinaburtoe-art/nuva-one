@@ -15,7 +15,7 @@ SELECT has_function('public','generate_people_liquidations(uuid)','liquidation f
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.people_payroll_inputs'::regclass),'payroll inputs have RLS');
 SELECT ok((SELECT value_numeric=90 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='pension_income_cap_uf' AND effective_from='2026-02-01'),'2026 pension cap is 90 UF');
 SELECT ok((SELECT value_numeric=135.2 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='unemployment_income_cap_uf' AND effective_from='2026-02-01'),'2026 unemployment cap is 135.2 UF');
-SELECT ok((SELECT value_numeric=0.0154 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='sis_rate' AND effective_from='2026-04-01' AND effective_to IS NULL),'2026 SIS rate is 1.54%');
+SELECT ok((SELECT value_numeric=0.0162 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='sis_rate' AND effective_from='2026-04-01' AND effective_to IS NULL),'2026 SIS rate is 1.62% from April');
 SELECT ok((SELECT value_numeric=0.009 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='crp_rate' AND effective_from='2026-08-01'),'2026 CRP rate is 0.9%');
 SELECT ok((SELECT value_numeric=0.50 FROM public.people_legal_parameters WHERE country_code='CL' AND parameter_key='overtime_surcharge' AND effective_from='2026-01-01'),'overtime surcharge is versioned');
 SELECT * FROM finish();
