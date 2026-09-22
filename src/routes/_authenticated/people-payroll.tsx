@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBizInsert, useBizList } from "@/lib/biz-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/people-payroll")({ component: PeoplePayroll });
 
@@ -15,15 +17,13 @@ function PeoplePayroll() {
   const { data: employees = [] } = useBizList<any>("people_employees", { order: "last_name" });
   const { data: contracts = [] } = useBizList<any>("people_contracts", { order: "start_date" });
   const { data: periods = [] } = useBizList<any>("people_payroll_periods", { order: "period_year" });
-  const { data: params = [] } = useBizList<any>("people_legal_parameters", { enabled: true });
+  const { data: params = [] } = useQuery({ queryKey: ["people_legal_parameters"], queryFn: async () => { const { data, error } = await supabase.from("people_legal_parameters" as any).select("*").eq("country_code", "CL").order("effective_from", { ascending: false }); if (error) throw error; return data ?? []; } });
   const insertPeriod = useBizInsert("people_payroll_periods");
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const latestParams = useMemo(() => params.filter((p: any) => p.country_code === 'CL').slice(0, 6), [params]);
+  const latestParams = useMemo(() => params.slice(0, 6), [params]);
 
-  async function createPeriod() {
-    await insertPeriod.mutateAsync({ period_year: year, period_month: month, status: 'draft', calculation_version: 'cl-2026.1' });
-  }
+  async function createPeriod() { await insertPeriod.mutateAsync({ period_year: year, period_month: month, status: "draft", calculation_version: "cl-2026.1" }); }
 
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
     <PageHeader title="Remuneraciones" description="Ciclo mensual, simulación y control del costo laboral. El cierre productivo requiere validación legal independiente." />
