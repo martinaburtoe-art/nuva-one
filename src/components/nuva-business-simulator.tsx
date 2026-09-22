@@ -19,7 +19,35 @@ export function NuvaBusinessSimulator() {
   const [volumeChangePct, setVolumeChangePct] = useState(0);
   const [variableCostChangePct, setVariableCostChangePct] = useState(0);
   const [fixedCostChangePct, setFixedCostChangePct] = useState(0);
-  const [saved, setSaved] = useState(false);\n  const [baselineLoading, setBaselineLoading] = useState(false);\n  const [baselineSource, setBaselineSource] = useState<"real" | "manual">("manual");\n  const [baselineSnapshot, setBaselineSnapshot] = useState<Record<string, any> | null>(null);\n  const [signals, setSignals] = useState<Array<{ kind: string; severity: string; title: string; description: string; metric: number }>>([]);\n\n  useEffect(() => {\n    let cancelled = false;\n    async function loadBaseline() {\n      if (!active?.id) return;\n      setBaselineLoading(true);\n      const { data, error } = await supabase.rpc("get_nuva_operating_snapshot", { p_business_id: active.id, p_days: 90 });\n      if (!cancelled && !error && data) {\n        const snapshot = data as Record<string, any>;\n        const baseline = (snapshot.baseline ?? {}) as Record<string, any>;\n        setRevenue(Number(baseline.revenue) || 0);\n        setVariableCosts(Number(baseline.variableCosts) || 0);\n        setFixedCosts(Number(baseline.fixedCosts) || 0);\n        setVolume(Number(baseline.volume) || 0);\n        setPrice(Number(baseline.unitPrice) || 0);\n        setBaselineSnapshot(baseline);\n        setSignals(Array.isArray(snapshot.signals) ? snapshot.signals : []);\n        setBaselineSource("real");\n      }\n      if (!cancelled) setBaselineLoading(false);\n    }\n    void loadBaseline();\n    return () => { cancelled = true; };\n  }, [active?.id]);
+  const [saved, setSaved] = useState(false);
+  const [baselineLoading, setBaselineLoading] = useState(false);
+  const [baselineSource, setBaselineSource] = useState<"real" | "manual">("manual");
+  const [baselineSnapshot, setBaselineSnapshot] = useState<Record<string, any> | null>(null);
+  const [signals, setSignals] = useState<Array<{ kind: string; severity: string; title: string; description: string; metric: number }>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBaseline() {
+      if (!active?.id) return;
+      setBaselineLoading(true);
+      const { data, error } = await supabase.rpc("get_nuva_operating_snapshot", { p_business_id: active.id, p_days: 90 });
+      if (!cancelled && !error && data) {
+        const snapshot = data as Record<string, any>;
+        const baseline = (snapshot.baseline ?? {}) as Record<string, any>;
+        setRevenue(Number(baseline.revenue) || 0);
+        setVariableCosts(Number(baseline.variableCosts) || 0);
+        setFixedCosts(Number(baseline.fixedCosts) || 0);
+        setVolume(Number(baseline.volume) || 0);
+        setPrice(Number(baseline.unitPrice) || 0);
+        setBaselineSnapshot(baseline);
+        setSignals(Array.isArray(snapshot.signals) ? snapshot.signals : []);
+        setBaselineSource("real");
+      }
+      if (!cancelled) setBaselineLoading(false);
+    }
+    void loadBaseline();
+    return () => { cancelled = true; };
+  }, [active?.id]);
 
   const result = useMemo(() => simulateBusiness({
     revenue, variableCosts, fixedCosts, volume, price,
@@ -37,7 +65,8 @@ export function NuvaBusinessSimulator() {
       scenario_type: "commercial",
       inputs: { revenue, variableCosts, fixedCosts, volume, price, priceChangePct, volumeChangePct, variableCostChangePct, fixedCostChangePct },
       outputs: result,
-      assumptions: { note: "Escenario calculado por el usuario; no modifica datos operacionales.", baselineSource },\n      baseline_snapshot: baselineSnapshot,
+      assumptions: { note: "Escenario calculado por el usuario; no modifica datos operacionales.", baselineSource },
+      baseline_snapshot: baselineSnapshot,
       status: "saved",
     });
     if (!error) setSaved(true);
@@ -49,11 +78,26 @@ export function NuvaBusinessSimulator() {
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary"><Calculator className="h-4 w-4" /> Nüva Business Simulator</p>
           <h3 className="mt-1 text-xl font-semibold">¿Qué pasa si cambias una variable?</h3>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Prueba escenarios sin alterar ventas, inventario ni contabilidad. Nüva separa el escenario de los datos reales.</p>\n          <p className="mt-2 text-xs font-medium text-muted-foreground">{baselineLoading ? "Cargando línea base real de los últimos 90 días…" : baselineSource === "real" ? "Línea base conectada a datos operacionales reales · 90 días" : "Línea base manual · aún no hay datos operacionales suficientes"}</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Prueba escenarios sin alterar ventas, inventario ni contabilidad. Nüva separa el escenario de los datos reales.</p>
+          <p className="mt-2 text-xs font-medium text-muted-foreground">{baselineLoading ? "Cargando línea base real de los últimos 90 días…" : baselineSource === "real" ? "Línea base conectada a datos operacionales reales · 90 días" : "Línea base manual · aún no hay datos operacionales suficientes"}</p>
         </div>
         <Button variant="outline" size="sm" onClick={saveScenario} disabled={!active?.id}><Save className="mr-2 h-4 w-4" /> Guardar escenario</Button>
       </div>
-      {saved && <p className="mt-3 text-xs font-medium text-primary">Escenario guardado en la memoria de simulaciones.</p>}\n      {signals.length > 0 && (\n        <div className="mt-4 grid gap-3 md:grid-cols-3">\n          {signals.map((signal, index) => (\n            <div key={`${signal.title}-${index}`} className="rounded-xl border bg-background/70 p-3">\n              <div className="flex items-center justify-between gap-2">\n                <p className="text-sm font-semibold">{signal.title}</p>\n                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{signal.severity}</span>\n              </div>\n              <p className="mt-1 text-xs leading-5 text-muted-foreground">{signal.description}</p>\n              {signal.metric !== 0 && <p className="mt-2 text-xs font-semibold tabular-nums">{signal.metric > 0 ? "+" : ""}{signal.metric}{signal.title.includes("Inventario") ? " productos" : signal.title.includes("Cobranza") ? " CLP" : "%"}</p>}\n            </div>\n          ))}\n        </div>\n      )}
+      {saved && <p className="mt-3 text-xs font-medium text-primary">Escenario guardado en la memoria de simulaciones.</p>}
+      {signals.length > 0 && (
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {signals.map((signal, index) => (
+            <div key={`${signal.title}-${index}`} className="rounded-xl border bg-background/70 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">{signal.title}</p>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{signal.severity}</span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{signal.description}</p>
+              {signal.metric !== 0 && <p className="mt-2 text-xs font-semibold tabular-nums">{signal.metric > 0 ? "+" : ""}{signal.metric}{signal.title.includes("Inventario") ? " productos" : signal.title.includes("Cobranza") ? " CLP" : "%"}</p>}
+            </div>
+          ))}
+        </div>
+      )}
       <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Ingresos base" value={revenue} onChange={setRevenue} />
