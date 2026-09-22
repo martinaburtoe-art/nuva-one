@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActiveBusiness } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,7 @@ export function NuvaBusinessSimulator() {
   const [volumeChangePct, setVolumeChangePct] = useState(0);
   const [variableCostChangePct, setVariableCostChangePct] = useState(0);
   const [fixedCostChangePct, setFixedCostChangePct] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(false);\n  const [baselineLoading, setBaselineLoading] = useState(false);\n  const [baselineSource, setBaselineSource] = useState<"real" | "manual">("manual");\n  const [baselineSnapshot, setBaselineSnapshot] = useState<Record<string, unknown> | null>(null);\n\n  useEffect(() => {\n    let cancelled = false;\n    async function loadBaseline() {\n      if (!active?.id) return;\n      setBaselineLoading(true);\n      const { data, error } = await supabase.rpc("get_nuva_business_baseline", { p_business_id: active.id, p_days: 90 });\n      if (!cancelled && !error && data) {\n        const baseline = data as Record<string, any>;\n        setRevenue(Number(baseline.revenue) || 0);\n        setVariableCosts(Number(baseline.variableCosts) || 0);\n        setFixedCosts(Number(baseline.fixedCosts) || 0);\n        setVolume(Number(baseline.volume) || 0);\n        setPrice(Number(baseline.unitPrice) || 0);\n        setBaselineSnapshot(baseline);\n        setBaselineSource("real");\n      }\n      if (!cancelled) setBaselineLoading(false);\n    }\n    void loadBaseline();\n    return () => { cancelled = true; };\n  }, [active?.id]);
 
   const result = useMemo(() => simulateBusiness({
     revenue, variableCosts, fixedCosts, volume, price,
@@ -37,7 +37,7 @@ export function NuvaBusinessSimulator() {
       scenario_type: "commercial",
       inputs: { revenue, variableCosts, fixedCosts, volume, price, priceChangePct, volumeChangePct, variableCostChangePct, fixedCostChangePct },
       outputs: result,
-      assumptions: { note: "Escenario calculado por el usuario; no modifica datos operacionales." },
+      assumptions: { note: "Escenario calculado por el usuario; no modifica datos operacionales.", baselineSource },\n      baseline_snapshot: baselineSnapshot,
       status: "saved",
     });
     if (!error) setSaved(true);
@@ -49,7 +49,7 @@ export function NuvaBusinessSimulator() {
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary"><Calculator className="h-4 w-4" /> Nüva Business Simulator</p>
           <h3 className="mt-1 text-xl font-semibold">¿Qué pasa si cambias una variable?</h3>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Prueba escenarios sin alterar ventas, inventario ni contabilidad. Nüva separa el escenario de los datos reales.</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Prueba escenarios sin alterar ventas, inventario ni contabilidad. Nüva separa el escenario de los datos reales.</p>\n          <p className="mt-2 text-xs font-medium text-muted-foreground">{baselineLoading ? "Cargando línea base real de los últimos 90 días…" : baselineSource === "real" ? "Línea base conectada a datos operacionales reales · 90 días" : "Línea base manual · aún no hay datos operacionales suficientes"}</p>
         </div>
         <Button variant="outline" size="sm" onClick={saveScenario} disabled={!active?.id}><Save className="mr-2 h-4 w-4" /> Guardar escenario</Button>
       </div>
