@@ -1,4 +1,5 @@
 -- Owner operations telemetry is deliberately identifier-free.
+-- Deployment retry marker: schema remains unchanged.
 -- No user_id, business_id, session_id, IP, cookie, token or request body is stored.
 
 create table if not exists public.owner_operational_events (
