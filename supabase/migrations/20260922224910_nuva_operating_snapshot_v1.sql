@@ -43,8 +43,8 @@ begin
   select count(*)::integer into v_low_stock
   from public.products p
   where p.business_id=p_business_id
-    and coalesce(p.stock,0) <= coalesce(p.low_stock_threshold,0)
-    and coalesce(p.low_stock_threshold,0) > 0;
+    and coalesce(p.stock,0) <= greatest(coalesce(p.low_stock_threshold,0),coalesce(p.reorder_point,0))
+    and greatest(coalesce(p.low_stock_threshold,0),coalesce(p.reorder_point,0)) > 0;
 
   select coalesce(sum(greatest(coalesce(s.total,0)-coalesce(s.paid_amount,0),0)),0)
   into v_credit_outstanding
