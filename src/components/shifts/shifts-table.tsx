@@ -353,6 +353,9 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
             onChange={(e) => setDraft((d) => ({ ...d, employee_name: e.target.value }))}
           />
           <Input
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             placeholder="Teléfono (56912345678)"
             value={draft.employee_phone}
             onChange={(e) => setDraft((d) => ({ ...d, employee_phone: e.target.value }))}
@@ -413,6 +416,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
                     size="icon"
                     className="h-7 w-7"
                     onClick={() => removeBlock(i)}
+                    aria-label={`Eliminar bloque horario ${i + 1}`}
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>
@@ -489,6 +493,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
                       size="icon"
                       onClick={() => sendWhatsApp(s)}
                       title="Enviar por WhatsApp"
+                      aria-label={`Enviar turno de ${s.employee_name} por WhatsApp`}
                     >
                       <MessageCircle className="h-4 w-4" />
                     </Button>
