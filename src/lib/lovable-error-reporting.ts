@@ -17,17 +17,28 @@ if (typeof window !== "undefined" && !window.__nuvaOwnerTelemetryInstalled) {
   window.addEventListener("unhandledrejection", (event) => reportOwnerError(event.reason ?? new Error("unhandled_rejection"), "unhandled_rejection"));
 
   const observed = new Set<string>();
+  const pendingVitals = new Map<"LCP" | "INP" | "CLS" | "FCP" | "TTFB", number>();
+
   const once = (name: "LCP" | "INP" | "CLS" | "FCP" | "TTFB", value: number) => {
     if (observed.has(name) || !Number.isFinite(value)) return;
     observed.add(name);
     reportOwnerVital(name, value);
   };
 
+  const stageVital = (name: "LCP" | "INP" | "CLS" | "FCP" | "TTFB", value: number) => {
+    if (!Number.isFinite(value)) return;
+    pendingVitals.set(name, value);
+  };
+
+  const flushVitals = () => {
+    for (const [name, value] of pendingVitals) once(name, value);
+  };
+
   try {
     const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-    if (navigation?.responseStart) once("TTFB", navigation.responseStart - navigation.requestStart);
+    if (navigation?.responseStart) stageVital("TTFB", navigation.responseStart - navigation.requestStart);
     const paint = performance.getEntriesByType("paint").find((entry) => entry.name === "first-contentful-paint");
-    if (paint) once("FCP", paint.startTime);
+    if (paint) stageVital("FCP", paint.startTime);
   } catch { /* observability must never affect the application */ }
 
   try {
@@ -35,7 +46,7 @@ if (typeof window !== "undefined" && !window.__nuvaOwnerTelemetryInstalled) {
       new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const last = entries[entries.length - 1] as PerformanceEntry & { startTime?: number } | undefined;
-        if (last) once("LCP", last.startTime ?? 0);
+        if (last) stageVital("LCP", last.startTime ?? 0);
       }).observe({ type: "largest-contentful-paint", buffered: true });
 
       let cls = 0;
@@ -43,13 +54,15 @@ if (typeof window !== "undefined" && !window.__nuvaOwnerTelemetryInstalled) {
         for (const entry of list.getEntries() as Array<PerformanceEntry & { value?: number; hadRecentInput?: boolean }>) {
           if (!entry.hadRecentInput) cls += entry.value ?? 0;
         }
-        once("CLS", cls);
+        stageVital("CLS", cls);
       }).observe({ type: "layout-shift", buffered: true });
 
       new PerformanceObserver((list) => {
         const last = list.getEntries().at(-1) as PerformanceEntry & { duration?: number } | undefined;
-        if (last) once("INP", last.duration ?? 0);
+        if (last) stageVital("INP", last.duration ?? 0);
       }).observe({ type: "event", buffered: true, durationThreshold: 40 } as PerformanceObserverInit);
     }
   } catch { /* unsupported browsers are simply not instrumented */ }
-}
+
+  window.addEventListener("pagehide", flushVitals, { once: true });
+  window.setTimeout(flushVitals, 10_000);
