@@ -64,7 +64,7 @@ const nav = [
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance", section: "Finanzas" },
   { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics", section: "Finanzas" },
   { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes", section: "Finanzas" },
-  { to: "/pricing-calculator", label: "Precios", icon: Calculator, section: "Finanzas" },
+  { to: "/pricing-calculator", label: "Calculadora de precios", icon: Calculator, section: "Finanzas" },
   { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain, section: "Inteligencia" },
   { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles, section: "Inteligencia" },
   { to: "/ai", label: "Asistente IA", icon: Sparkles, module: "ai", section: "Inteligencia" },
