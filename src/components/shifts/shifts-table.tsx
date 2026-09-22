@@ -220,30 +220,64 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 16;
-    doc.setFillColor(8, 8, 9); doc.rect(0, 0, pageW, 30, "F");
-    doc.setTextColor(230, 198, 135); doc.setFontSize(22); doc.setFont("helvetica", "bold");
-    doc.text("NÜVA ONE", margin, 14);
-    doc.setTextColor(255, 255, 255); doc.setFontSize(11); doc.setFont("helvetica", "normal");
-    doc.text("Planilla de turnos", margin, 22);
-    doc.setFontSize(10); doc.text(`Semana del ${new Date(weekStart + "T00:00:00").toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" })}`, pageW - margin, 17, { align: "right" });
-    doc.setTextColor(55, 65, 81); doc.setFontSize(9); doc.text(`${shifts.length} asignaciones · ${new Set(shifts.map((s) => s.employee_name)).size} colaboradores`, margin, 39);
-    const cols = [margin, 72, 128, 174, 222];
-    doc.setFillColor(99, 102, 241); doc.roundedRect(margin, 44, pageW - margin * 2, 9, 2, 2, "F");
-    doc.setTextColor(255, 255, 255); doc.setFontSize(8); doc.setFont("helvetica", "bold");
-    ["COLABORADOR", "DÍA", "FECHA", "INICIO", "TÉRMINO"].forEach((h, i) => doc.text(h, cols[i], 50));
-    let y = 61; doc.setFont("helvetica", "normal");
-    shifts.forEach((s, i) => {
-      if (y > pageH - 22) { doc.addPage(); y = 20; }
-      if (i % 2 === 0) { doc.setFillColor(246, 247, 250); doc.rect(margin, y - 5, pageW - margin * 2, 9, "F"); }
-      doc.setTextColor(31, 41, 55); doc.text(s.employee_name.slice(0, 26), cols[0], y);
-      doc.text(DAYS[s.day_of_week], cols[1], y); doc.text(getWeekDates(s.week_start)[s.day_of_week].toLocaleDateString("es-CL", { day: "2-digit", month: "short" }).replace(".", ""), cols[2], y);
-      doc.text(s.start_time.slice(0, 5), cols[3], y); doc.text(s.end_time.slice(0, 5), cols[4], y); y += 9;
+    const orderedShifts = [...shifts].sort((a, b) =>
+      a.day_of_week - b.day_of_week ||
+      a.start_time.localeCompare(b.start_time) ||
+      a.employee_name.localeCompare(b.employee_name),
+    );
+    const weekLabel = new Date(weekStart + "T00:00:00").toLocaleDateString("es-CL", {
+      day: "2-digit", month: "long", year: "numeric",
     });
-    doc.setDrawColor(220, 224, 230); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
-    doc.setFontSize(7); doc.setTextColor(107, 114, 128); doc.text("Documento generado desde Nüva One · Planificación interna de turnos", margin, pageH - 9);
-    doc.text(new Date().toLocaleDateString("es-CL"), pageW - margin, pageH - 9, { align: "right" });
+    const drawPageHeader = (pageNumber: number) => {
+      doc.setFillColor(8, 8, 9); doc.rect(0, 0, pageW, 30, "F");
+      doc.setTextColor(230, 198, 135); doc.setFontSize(22); doc.setFont("helvetica", "bold");
+      doc.text("NÜVA ONE", margin, 14);
+      doc.setTextColor(255, 255, 255); doc.setFontSize(11); doc.setFont("helvetica", "normal");
+      doc.text("Planilla de turnos", margin, 22);
+      doc.setFontSize(10); doc.text(`Semana del ${weekLabel}`, pageW - margin, 17, { align: "right" });
+      doc.setTextColor(55, 65, 81); doc.setFontSize(8);
+      doc.text(`Página ${pageNumber}`, pageW - margin, 26, { align: "right" });
+    };
+    const drawTableHeader = () => {
+      doc.setFillColor(99, 102, 241); doc.roundedRect(margin, 44, pageW - margin * 2, 9, 2, 2, "F");
+      doc.setTextColor(255, 255, 255); doc.setFontSize(8); doc.setFont("helvetica", "bold");
+      const cols = [margin, 72, 128, 174, 222];
+      ["COLABORADOR", "DÍA", "FECHA", "INICIO", "TÉRMINO"].forEach((h, i) => doc.text(h, cols[i], 50));
+    };
+    drawPageHeader(1);
+    doc.setTextColor(55, 65, 81); doc.setFontSize(9);
+    doc.text(`${orderedShifts.length} asignaciones · ${new Set(orderedShifts.map((s) => s.employee_name)).size} colaboradores`, margin, 39);
+    drawTableHeader();
+    const cols = [margin, 72, 128, 174, 222];
+    let y = 61;
+    orderedShifts.forEach((s, i) => {
+      if (y > pageH - 22) {
+        doc.addPage();
+        drawPageHeader(doc.getNumberOfPages());
+        drawTableHeader();
+        y = 61;
+      }
+      if (i % 2 === 0) {
+        doc.setFillColor(246, 247, 250);
+        doc.rect(margin, y - 5, pageW - margin * 2, 9, "F");
+      }
+      doc.setTextColor(31, 41, 55); doc.setFont("helvetica", "normal");
+      doc.text(s.employee_name.slice(0, 26), cols[0], y);
+      doc.text(DAYS[s.day_of_week], cols[1], y);
+      doc.text(getWeekDates(s.week_start)[s.day_of_week].toLocaleDateString("es-CL", { day: "2-digit", month: "short" }).replace(".", ""), cols[2], y);
+      doc.text(s.start_time.slice(0, 5), cols[3], y);
+      doc.text(s.end_time.slice(0, 5), cols[4], y);
+      y += 9;
+    });
+    for (let page = 1; page <= doc.getNumberOfPages(); page += 1) {
+      doc.setPage(page);
+      doc.setDrawColor(220, 224, 230); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+      doc.setFontSize(7); doc.setTextColor(107, 114, 128);
+      doc.text("Documento generado desde Nüva One · Planificación interna de turnos", margin, pageH - 9);
+      doc.text(new Date().toLocaleDateString("es-CL"), pageW - margin, pageH - 9, { align: "right" });
+    }
     doc.save(`turnos-${weekStart}.pdf`);
-    toast.success("Planilla PDF descargada y lista para compartir con el equipo.");
+    toast.success("Planilla PDF descargada correctamente. Ya puedes compartirla con tu equipo.");
   }
 
   return (
@@ -284,7 +318,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
             </Button>
           </div>
           <Button variant="outline" size="sm" onClick={downloadShiftPlan} disabled={!shifts?.length}>
-            <List className="h-4 w-4 mr-2" /> Descargar planilla PDF
+            <FileText className="h-4 w-4 mr-2" /> Descargar planilla PDF
           </Button>
         </div>
       </div>
