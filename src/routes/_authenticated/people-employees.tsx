@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Search, Users, BriefcaseBusiness } from "lucide-react";
 import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
 import { Button } from "@/components/ui/button";
@@ -11,28 +11,30 @@ import { useBizInsert, useBizList } from "@/lib/biz-data";
 
 export const Route = createFileRoute("/_authenticated/people-employees")({ component: PeopleEmployees });
 
-function PeopleEmployees() {
-  const { data: employees = [], isLoading } = useBizList<any>("people_employees", { order: "last_name" });
-  const insert = useBizInsert("people_employees");
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ first_name: "", last_name: "", national_id: "", email: "", job_title: "", hire_date: new Date().toISOString().slice(0, 10) });
+const blankEmployee = { first_name:"", last_name:"", national_id:"", email:"", phone:"", job_title:"", department:"", hire_date:new Date().toISOString().slice(0,10), afp_name:"Uno", health_system:"fonasa", health_plan_uf:0, health_additional_clp:0, dependents_count:0, pension_status:"active", gratification_mode:"legal" };
+const blankContract = { employee_id:"", contract_type:"indefinite", start_date:new Date().toISOString().slice(0,10), end_date:"", weekly_hours:42, work_days:"lunes a viernes", salary_amount:0, salary_type:"monthly", status:"active" };
 
-  async function save() {
-    if (!form.first_name || !form.last_name) return;
-    await insert.mutateAsync(form);
-    setForm({ first_name: "", last_name: "", national_id: "", email: "", job_title: "", hire_date: new Date().toISOString().slice(0, 10) });
-    setOpen(false);
-  }
+function PeopleEmployees() {
+  const { data: employees=[], isLoading } = useBizList<any>("people_employees",{order:"last_name"});
+  const { data: contracts=[] } = useBizList<any>("people_contracts",{order:"start_date"});
+  const insertEmployee=useBizInsert("people_employees");
+  const insertContract=useBizInsert("people_contracts");
+  const [open,setOpen]=useState(false);
+  const [contractOpen,setContractOpen]=useState(false);
+  const [form,setForm]=useState(blankEmployee);
+  const [contract,setContract]=useState(blankContract);
+
+  async function saveEmployee(){if(!form.first_name||!form.last_name||!form.national_id)return;const e=await insertEmployee.mutateAsync(form);setContract(v=>({...v,employee_id:e.id}));setForm(blankEmployee);setOpen(false);setContractOpen(true);}
+  async function saveContract(){if(!contract.employee_id||Number(contract.salary_amount)<=0)return;await insertContract({...contract,end_date:contract.end_date||null,weekly_hours:Number(contract.weekly_hours),salary_amount:Number(contract.salary_amount)});setContract(blankContract);setContractOpen(false);}
 
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
-    <PageHeader title="Colaboradores" description="Ficha laboral, estructura y estado de cada persona de tu empresa." />
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <div className="relative w-full max-w-sm"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar colaborador..." /></div>
-      <Button onClick={() => setOpen((v) => !v)}><Plus className="mr-2 h-4 w-4" />Nuevo colaborador</Button>
-    </div>
-    {open && <Card className="mb-5 rounded-2xl p-5"><div className="grid gap-4 md:grid-cols-3">
-      {[['first_name','Nombre'],['last_name','Apellidos'],['national_id','RUT'],['email','Correo'],['job_title','Cargo'],['hire_date','Fecha ingreso']].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type={key === 'hire_date' ? 'date' : 'text'} value={(form as any)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} /></div>)}
-    </div><div className="mt-4 flex justify-end"><Button onClick={save} disabled={insert.isPending}>{insert.isPending ? 'Guardando...' : 'Guardar colaborador'}</Button></div></Card>}
-    {isLoading ? <p className="text-sm text-muted-foreground">Cargando colaboradores...</p> : employees.length === 0 ? <Card className="rounded-2xl border-dashed p-10 text-center"><Users className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-medium">Aún no hay colaboradores</p><p className="mt-1 text-sm text-muted-foreground">Agrega el equipo para activar contratos, asistencia y remuneraciones.</p></Card> : <div className="grid gap-3">{employees.map((e: any) => <Card key={e.id} className="rounded-2xl p-4"><div className="flex items-center justify-between gap-4"><div><p className="font-semibold">{e.first_name} {e.last_name}</p><p className="text-sm text-muted-foreground">{e.job_title || 'Sin cargo'} · {e.email || 'Sin correo'}</p></div><span className="rounded-full bg-muted px-3 py-1 text-xs">{e.employment_status}</span></div></Card>)}</div>}
+    <PageHeader title="Colaboradores" description="Ficha laboral completa: identidad, previsión, salud y contrato. Estos datos alimentan remuneraciones." />
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div className="relative w-full max-w-sm"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground"/><Input className="pl-9" placeholder="Buscar colaborador..."/></div><div className="flex gap-2"><Button variant="outline" onClick={()=>setContractOpen(v=>!v)}><BriefcaseBusiness className="mr-2 h-4 w-4"/>Nuevo contrato</Button><Button onClick={()=>setOpen(v=>!v)}><Plus className="mr-2 h-4 w-4"/>Nuevo colaborador</Button></div></div>
+
+    {open&&<Card className="mb-5 rounded-2xl p-5"><h2 className="font-semibold">Alta de colaborador</h2><div className="mt-4 grid gap-3 md:grid-cols-3">{[["first_name","Nombre"],["last_name","Apellidos"],["national_id","RUT"],["email","Correo"],["phone","Teléfono"],["job_title","Cargo"],["department","Área"],["hire_date","Fecha ingreso"]].map(([key,label])=><div key={key}><Label>{label}</Label><Input className="mt-1" type={key==="hire_date"?"date":"text"} value={(form as any)[key]} onChange={e=>setForm(v=>({...v,[key]:e.target.value}))}/></div>)}<div><Label>AFP</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={form.afp_name} onChange={e=>setForm(v=>({...v,afp_name:e.target.value}))}>{["Capital","Cuprum","Habitat","Modelo","PlanVital","Provida","Uno"].map(x=><option key={x}>{x}</option>)}</select></div><div><Label>Salud</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={form.health_system} onChange={e=>setForm(v=>({...v,health_system:e.target.value}))}><option value="fonasa">Fonasa</option><option value="isapre">Isapre</option></select></div><div><Label>Plan Isapre (UF)</Label><Input type="number" min="0" step="0.01" value={form.health_plan_uf} onChange={e=>setForm(v=>({...v,health_plan_uf:Number(e.target.value)}))}/></div><div><Label>Adicional salud (CLP)</Label><Input type="number" min="0" value={form.health_additional_clp} onChange={e=>setForm(v=>({...v,health_additional_clp:Number(e.target.value)}))}/></div><div><Label>Cargas familiares</Label><Input type="number" min="0" value={form.dependents_count} onChange={e=>setForm(v=>({...v,dependents_count:Number(e.target.value)}))}/></div></div><div className="mt-4 flex justify-end"><Button onClick={saveEmployee} disabled={insertEmployee.isPending}>{insertEmployee.isPending?"Guardando...":"Guardar colaborador"}</Button></div></Card>}
+
+    {contractOpen&&<Card className="mb-5 rounded-2xl p-5"><h2 className="font-semibold">Contrato remuneracional</h2><p className="mt-1 text-sm text-muted-foreground">Es obligatorio antes de calcular una nómina.</p><div className="mt-4 grid gap-3 md:grid-cols-3"><div className="md:col-span-2"><Label>Colaborador</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={contract.employee_id} onChange={e=>setContract(v=>({...v,employee_id:e.target.value}))}><option value="">Seleccionar...</option>{employees.map((e:any)=><option key={e.id} value={e.id}>{e.first_name} {e.last_name} · {e.national_id}</option>)}</select></div><div><Label>Tipo</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={contract.contract_type} onChange={e=>setContract(v=>({...v,contract_type:e.target.value}))}><option value="indefinite">Indefinido</option><option value="fixed_term">Plazo fijo</option><option value="project">Obra/faena</option></select></div><div><Label>Inicio</Label><Input type="date" value={contract.start_date} onChange={e=>setContract(v=>({...v,start_date:e.target.value}))}/></div><div><Label>Término</Label><Input type="date" value={contract.end_date} onChange={e=>setContract(v=>({...v,end_date:e.target.value}))}/></div><div><Label>Horas semanales</Label><Input type="number" min="1" max="45" value={contract.weekly_hours} onChange={e=>setContract(v=>({...v,weekly_hours:Number(e.target.value)}))}/></div><div><Label>Días de trabajo</Label><Input value={contract.work_days} onChange={e=>setContract(v=>({...v,work_days:e.target.value}))}/></div><div><Label>Sueldo base mensual (CLP)</Label><Input type="number" min="0" value={contract.salary_amount} onChange={e=>setContract(v=>({...v,salary_amount:Number(e.target.value)}))}/></div><div><Label>Tipo sueldo</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={contract.salary_type} onChange={e=>setContract(v=>({...v,salary_type:e.target.value}))}><option value="monthly">Mensual</option><option value="daily">Diario</option><option value="hourly">Hora</option></select></div></div><div className="mt-4 flex justify-end"><Button onClick={saveContract} disabled={insertContract.isPending||!contract.employee_id||Number(contract.salary_amount)<=0}>Guardar contrato</Button></div></Card>}
+
+    {isLoading?<p className="text-sm text-muted-foreground">Cargando colaboradores...</p>:employees.length===0?<Card className="rounded-2xl border-dashed p-10 text-center"><Users className="mx-auto h-8 w-8 text-muted-foreground"/><p className="mt-3 font-medium">Aún no hay colaboradores</p><p className="mt-1 text-sm text-muted-foreground">Agrega el equipo para activar contratos, asistencia y remuneraciones.</p></Card>:<div className="grid gap-3">{employees.map((e:any)=>{const cs=contracts.filter((c:any)=>c.employee_id===e.id&&c.status==="active");return <Card key={e.id} className="rounded-2xl p-4"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="font-semibold">{e.first_name} {e.last_name}</p><p className="text-sm text-muted-foreground">{e.national_id} · {e.job_title||"Sin cargo"} · {e.afp_name||"AFP pendiente"} · {e.health_system||"salud pendiente"}</p></div><div className="text-right"><span className="rounded-full bg-muted px-3 py-1 text-xs">{e.employment_status}</span><p className="mt-2 text-xs text-muted-foreground">{cs.length ? cs.length + " contrato(s) activo(s)" : "Contrato pendiente"}</p></div></div></Card>})}</div>}
   </div></ModuleGuard>;
 }
