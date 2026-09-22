@@ -7,6 +7,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { ModuleInformation } from "@/components/module-information";
 import { NuvaExecutiveCommandCenter } from "@/components/nuva-executive-command-center";
 import { NuvaExecutionScore } from "@/components/nuva-execution-score";
+import { NuvaBusinessSimulator } from "@/components/nuva-business-simulator";
 import { NuvaTrendIntelligence } from "@/components/nuva-trend-intelligence";
 import { NuvaPredictiveSignals } from "@/components/nuva-predictive-signals";
 import { NuvaDecisionOutcomes } from "@/components/nuva-decision-outcomes";
@@ -112,7 +113,7 @@ function ExecutiveCommandCenter() {
               </div>
             )}
             {activeSection === "timeline" && <NuvaDecisionTimeline activities={activities ?? []} />}
-            {activeSection === "scenarios" && <NuvaPredictiveSignals sales={sales ?? []} quotes={quotes ?? []} activities={activities ?? []} />}
+            {activeSection === "scenarios" && <div className="space-y-5"><NuvaBusinessSimulator /><NuvaPredictiveSignals sales={sales ?? []} quotes={quotes ?? []} activities={activities ?? []} /></div>}
             {activeSection === "context" && <NuvaTrendIntelligence sales={sales ?? []} activities={activities ?? []} quotes={quotes ?? []} />}
             {activeSection === "outcomes" && <NuvaDecisionOutcomes activities={activities ?? []} />}
             {activeSection === "memory" && <NuvaDecisionMemory activities={activities ?? []} />}
