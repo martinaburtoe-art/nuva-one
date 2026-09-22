@@ -47,7 +47,7 @@ function dateForDay(weekStartISO: string, dayIdx: number): string {
 
 function layoutDayShifts(dayShifts: Shift[]) {
   const lanes: number[] = [];
-  return [...dayShifts]
+  const placed = [...dayShifts]
     .sort(
       (a, b) =>
         toMinutes(a.start_time) - toMinutes(b.start_time) ||
@@ -64,8 +64,10 @@ function layoutDayShifts(dayShifts: Shift[]) {
       } else {
         lanes[lane] = end;
       }
-      return { shift, lane, laneCount: lanes.length };
+      return { shift, lane };
     });
+
+  return placed.map((item) => ({ ...item, laneCount: lanes.length }));
 }
 
 export function ShiftsWeekGrid({
@@ -159,17 +161,20 @@ export function ShiftsWeekGrid({
                 ))}
 
                 {/* Bloques de turno */}
-                {(byDay.get(dayIdx) ?? []).map((s) => {
+                {layoutDayShifts(byDay.get(dayIdx) ?? []).map(({ shift: s, lane, laneCount }) => {
                   const start = toMinutes(s.start_time);
                   const end = toMinutes(s.end_time);
                   const top = ((start - startHour * 60) / 60) * hourHeight;
                   const height = Math.max(((end - start) / 60) * hourHeight, 32);
                   const color = colorFor(s.employee_name);
+                  const laneGap = 4;
+                  const width = `calc((100% - 8px - ${laneGap * (laneCount - 1)}px) / ${laneCount})`;
+                  const left = `calc(4px + ${lane} * ((100% - 8px - ${laneGap * (laneCount - 1)}px) / ${laneCount} + ${laneGap}px))`;
                   return (
                     <div
                       key={s.id}
-                      className={`absolute left-1 right-1 rounded-md px-2 py-1 shadow-sm ${color.bg} ${color.text} group cursor-default overflow-hidden`}
-                      style={{ top, height }}
+                      className={`absolute rounded-md px-2 py-1 shadow-sm ${color.bg} ${color.text} group cursor-default overflow-hidden`}
+                      style={{ top, height, left, width }}
                       title={`${s.employee_name}: ${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)}`}
                     >
                       <p className="text-xs font-semibold truncate leading-tight">
@@ -184,6 +189,7 @@ export function ShiftsWeekGrid({
                             onClick={() => onWhatsApp(s)}
                             className="rounded bg-black/20 p-0.5 hover:bg-black/40"
                             title="Enviar por WhatsApp"
+                            aria-label={`Enviar turno de ${s.employee_name} por WhatsApp`}
                           >
                             <MessageCircle className="h-3 w-3" />
                           </button>
@@ -192,6 +198,7 @@ export function ShiftsWeekGrid({
                           onClick={() => onDelete(s.id)}
                           className="rounded bg-black/20 p-0.5 hover:bg-black/40"
                           title="Eliminar"
+                          aria-label={`Eliminar turno de ${s.employee_name}`}
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
