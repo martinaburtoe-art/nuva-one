@@ -3932,6 +3932,92 @@ export type Database = {
           },
         ]
       }
+      nuva_action_outcomes: {
+        Row: {
+          action_id: string | null
+          actual_impact: number | null
+          business_id: string
+          created_at: string
+          evidence: Json
+          expected_impact: number | null
+          id: string
+          observed_at: string
+          outcome_type: string
+        }
+        Insert: {
+          action_id?: string | null
+          actual_impact?: number | null
+          business_id: string
+          created_at?: string
+          evidence?: Json
+          expected_impact?: number | null
+          id?: string
+          observed_at?: string
+          outcome_type: string
+        }
+        Update: {
+          action_id?: string | null
+          actual_impact?: number | null
+          business_id?: string
+          created_at?: string
+          evidence?: Json
+          expected_impact?: number | null
+          id?: string
+          observed_at?: string
+          outcome_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_action_outcomes_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "nuva_action_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_action_outcomes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_action_outcomes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_action_outcomes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_action_outcomes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_action_outcomes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_action_outcomes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       nuva_action_queue: {
         Row: {
           action_type: string
@@ -4031,6 +4117,656 @@ export type Database = {
           },
           {
             foreignKeyName: "nuva_action_queue_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      nuva_autopilot_policies: {
+        Row: {
+          action_type: string
+          approval_required: boolean
+          business_id: string
+          constraints: Json
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          execution_count: number
+          id: string
+          last_evaluated_at: string | null
+          last_executed_at: string | null
+          mode: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          approval_required?: boolean
+          business_id: string
+          constraints?: Json
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          execution_count?: number
+          id?: string
+          last_evaluated_at?: string | null
+          last_executed_at?: string | null
+          mode?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          approval_required?: boolean
+          business_id?: string
+          constraints?: Json
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          execution_count?: number
+          id?: string
+          last_evaluated_at?: string | null
+          last_executed_at?: string | null
+          mode?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_autopilot_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_autopilot_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_autopilot_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_autopilot_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_autopilot_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_autopilot_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      nuva_benchmarks: {
+        Row: {
+          business_id: string
+          cohort_key: string
+          cohort_size: number | null
+          created_at: string
+          evidence: Json
+          id: string
+          methodology_version: string
+          metric_key: string
+          metric_value: number | null
+          percentile: number | null
+          period_end: string | null
+          period_start: string | null
+        }
+        Insert: {
+          business_id: string
+          cohort_key: string
+          cohort_size?: number | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          methodology_version?: string
+          metric_key: string
+          metric_value?: number | null
+          percentile?: number | null
+          period_end?: string | null
+          period_start?: string | null
+        }
+        Update: {
+          business_id?: string
+          cohort_key?: string
+          cohort_size?: number | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          methodology_version?: string
+          metric_key?: string
+          metric_value?: number | null
+          percentile?: number | null
+          period_end?: string | null
+          period_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_benchmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_benchmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_benchmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_benchmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_benchmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_benchmarks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      nuva_business_memory: {
+        Row: {
+          business_id: string
+          confidence: number | null
+          content: string
+          created_at: string
+          created_by: string | null
+          evidence: Json
+          id: string
+          memory_type: string
+          source_id: string | null
+          source_type: string | null
+          supersedes_id: string | null
+          title: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          business_id: string
+          confidence?: number | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          id?: string
+          memory_type: string
+          source_id?: string | null
+          source_type?: string | null
+          supersedes_id?: string | null
+          title: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          business_id?: string
+          confidence?: number | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          id?: string
+          memory_type?: string
+          source_id?: string | null
+          source_type?: string | null
+          supersedes_id?: string | null
+          title?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_business_memory_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_business_memory_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_business_memory_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_business_memory_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_business_memory_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_business_memory_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_business_memory_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "nuva_business_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuva_intelligence_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          event_type: string
+          evidence: Json
+          id: string
+          occurred_at: string
+          severity: string
+          source_id: string | null
+          source_table: string | null
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          event_type: string
+          evidence?: Json
+          id?: string
+          occurred_at?: string
+          severity?: string
+          source_id?: string | null
+          source_table?: string | null
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          event_type?: string
+          evidence?: Json
+          id?: string
+          occurred_at?: string
+          severity?: string
+          source_id?: string | null
+          source_table?: string | null
+          summary?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_intelligence_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_intelligence_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_intelligence_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_intelligence_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_intelligence_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_intelligence_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      nuva_opportunities: {
+        Row: {
+          business_id: string
+          confidence: number | null
+          created_at: string
+          description: string | null
+          detected_at: string
+          evidence: Json
+          id: string
+          opportunity_type: string
+          potential_impact: number | null
+          recommended_action: Json
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          evidence?: Json
+          id?: string
+          opportunity_type: string
+          potential_impact?: number | null
+          recommended_action?: Json
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          evidence?: Json
+          id?: string
+          opportunity_type?: string
+          potential_impact?: number | null
+          recommended_action?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      nuva_risks: {
+        Row: {
+          business_id: string
+          confidence: number | null
+          created_at: string
+          description: string | null
+          detected_at: string
+          evidence: Json
+          id: string
+          impact: number | null
+          probability: number | null
+          recommended_action: Json
+          resolved_at: string | null
+          risk_type: string
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          evidence?: Json
+          id?: string
+          impact?: number | null
+          probability?: number | null
+          recommended_action?: Json
+          resolved_at?: string | null
+          risk_type: string
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          evidence?: Json
+          id?: string
+          impact?: number | null
+          probability?: number | null
+          recommended_action?: Json
+          resolved_at?: string | null
+          risk_type?: string
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_risks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_risks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_risks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_risks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_risks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_risks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      nuva_simulation_scenarios: {
+        Row: {
+          assumptions: Json
+          baseline_snapshot: Json
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          inputs: Json
+          name: string
+          outputs: Json
+          scenario_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assumptions?: Json
+          baseline_snapshot?: Json
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inputs?: Json
+          name: string
+          outputs?: Json
+          scenario_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assumptions?: Json
+          baseline_snapshot?: Json
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inputs?: Json
+          name?: string
+          outputs?: Json
+          scenario_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_simulation_scenarios_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_simulation_scenarios_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_simulation_scenarios_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_simulation_scenarios_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_simulation_scenarios_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_simulation_scenarios_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "v_financial_management_summary"
@@ -4732,6 +5468,48 @@ export type Database = {
           },
         ]
       }
+      owner_operational_events: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          environment: string
+          error_fingerprint: string | null
+          event_type: string
+          id: string
+          metric_name: string | null
+          metric_value: number | null
+          route: string | null
+          service: string | null
+          status_code: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          environment?: string
+          error_fingerprint?: string | null
+          event_type: string
+          id?: string
+          metric_name?: string | null
+          metric_value?: number | null
+          route?: string | null
+          service?: string | null
+          status_code?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          environment?: string
+          error_fingerprint?: string | null
+          event_type?: string
+          id?: string
+          metric_name?: string | null
+          metric_value?: number | null
+          route?: string | null
+          service?: string | null
+          status_code?: number | null
+        }
+        Relationships: []
+      }
       payment_intents: {
         Row: {
           amount: number
@@ -4931,6 +5709,1525 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_afp_rates: {
+        Row: {
+          afp_name: string
+          country_code: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          mandatory_rate: number
+          source_reference: string
+          source_url: string
+          worker_commission: number
+        }
+        Insert: {
+          afp_name: string
+          country_code?: string
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          id?: string
+          mandatory_rate?: number
+          source_reference: string
+          source_url: string
+          worker_commission: number
+        }
+        Update: {
+          afp_name?: string
+          country_code?: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          mandatory_rate?: number
+          source_reference?: string
+          source_url?: string
+          worker_commission?: number
+        }
+        Relationships: []
+      }
+      people_attendance_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          employee_id: string
+          event_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          source: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          employee_id: string
+          event_at: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          source?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          employee_id?: string
+          event_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_attendance_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_attendance_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_attendance_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_attendance_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_attendance_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_attendance_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_attendance_events_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_compliance_items: {
+        Row: {
+          business_id: string
+          category: string
+          created_at: string
+          due_date: string | null
+          employee_id: string | null
+          evidence_document_id: string | null
+          id: string
+          metadata: Json
+          source_reference: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          category: string
+          created_at?: string
+          due_date?: string | null
+          employee_id?: string | null
+          evidence_document_id?: string | null
+          id?: string
+          metadata?: Json
+          source_reference?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          category?: string
+          created_at?: string
+          due_date?: string | null
+          employee_id?: string | null
+          evidence_document_id?: string | null
+          id?: string
+          metadata?: Json
+          source_reference?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_compliance_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_compliance_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_compliance_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_compliance_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_compliance_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_compliance_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_compliance_items_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_compliance_items_evidence_document_id_fkey"
+            columns: ["evidence_document_id"]
+            isOneToOne: false
+            referencedRelation: "people_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_contracts: {
+        Row: {
+          business_id: string
+          contract_type: string
+          created_at: string
+          document_id: string | null
+          employee_id: string
+          end_date: string | null
+          id: string
+          salary_amount: number
+          salary_type: string
+          signed_at: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          weekly_hours: number
+          work_days: number
+        }
+        Insert: {
+          business_id: string
+          contract_type: string
+          created_at?: string
+          document_id?: string | null
+          employee_id: string
+          end_date?: string | null
+          id?: string
+          salary_amount?: number
+          salary_type?: string
+          signed_at?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          weekly_hours?: number
+          work_days?: number
+        }
+        Update: {
+          business_id?: string
+          contract_type?: string
+          created_at?: string
+          document_id?: string | null
+          employee_id?: string
+          end_date?: string | null
+          id?: string
+          salary_amount?: number
+          salary_type?: string
+          signed_at?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          weekly_hours?: number
+          work_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_contracts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_documents: {
+        Row: {
+          business_id: string
+          created_at: string
+          document_type: string
+          employee_id: string
+          expiry_date: string | null
+          id: string
+          issue_date: string | null
+          metadata: Json
+          status: string
+          storage_path: string | null
+          title: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          document_type: string
+          employee_id: string
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          metadata?: Json
+          status?: string
+          storage_path?: string | null
+          title: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          document_type?: string
+          employee_id?: string
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          metadata?: Json
+          status?: string
+          storage_path?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_employees: {
+        Row: {
+          afp_name: string | null
+          bank_account_last4: string | null
+          bank_account_type: string | null
+          bank_name: string | null
+          birth_date: string | null
+          business_id: string
+          cost_center_id: string | null
+          created_at: string
+          department: string | null
+          dependents_count: number
+          email: string | null
+          employment_status: string
+          employment_type: string
+          first_name: string
+          gratification_mode: string
+          health_additional_clp: number
+          health_plan_uf: number | null
+          health_system: string
+          hire_date: string
+          id: string
+          job_title: string | null
+          last_name: string
+          manager_id: string | null
+          national_id: string | null
+          non_taxable_bonus: number
+          other_deductions: number
+          overtime_hours: number
+          pension_status: string
+          phone: string | null
+          taxable_bonus: number
+          termination_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          afp_name?: string | null
+          bank_account_last4?: string | null
+          bank_account_type?: string | null
+          bank_name?: string | null
+          birth_date?: string | null
+          business_id: string
+          cost_center_id?: string | null
+          created_at?: string
+          department?: string | null
+          dependents_count?: number
+          email?: string | null
+          employment_status?: string
+          employment_type?: string
+          first_name: string
+          gratification_mode?: string
+          health_additional_clp?: number
+          health_plan_uf?: number | null
+          health_system?: string
+          hire_date?: string
+          id?: string
+          job_title?: string | null
+          last_name: string
+          manager_id?: string | null
+          national_id?: string | null
+          non_taxable_bonus?: number
+          other_deductions?: number
+          overtime_hours?: number
+          pension_status?: string
+          phone?: string | null
+          taxable_bonus?: number
+          termination_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          afp_name?: string | null
+          bank_account_last4?: string | null
+          bank_account_type?: string | null
+          bank_name?: string | null
+          birth_date?: string | null
+          business_id?: string
+          cost_center_id?: string | null
+          created_at?: string
+          department?: string | null
+          dependents_count?: number
+          email?: string | null
+          employment_status?: string
+          employment_type?: string
+          first_name?: string
+          gratification_mode?: string
+          health_additional_clp?: number
+          health_plan_uf?: number | null
+          health_system?: string
+          hire_date?: string
+          id?: string
+          job_title?: string | null
+          last_name?: string
+          manager_id?: string | null
+          national_id?: string | null
+          non_taxable_bonus?: number
+          other_deductions?: number
+          overtime_hours?: number
+          pension_status?: string
+          phone?: string | null
+          taxable_bonus?: number
+          termination_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_karin_cases: {
+        Row: {
+          accused_employee_id: string | null
+          business_id: string
+          case_type: string
+          closed_at: string | null
+          created_at: string
+          id: string
+          measures: Json
+          received_at: string
+          reporter_employee_id: string | null
+          resolution: string | null
+          restricted_notes: string | null
+          status: string
+        }
+        Insert: {
+          accused_employee_id?: string | null
+          business_id: string
+          case_type: string
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          measures?: Json
+          received_at?: string
+          reporter_employee_id?: string | null
+          resolution?: string | null
+          restricted_notes?: string | null
+          status?: string
+        }
+        Update: {
+          accused_employee_id?: string | null
+          business_id?: string
+          case_type?: string
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          measures?: Json
+          received_at?: string
+          reporter_employee_id?: string | null
+          resolution?: string | null
+          restricted_notes?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_karin_cases_accused_employee_id_fkey"
+            columns: ["accused_employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_karin_cases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_karin_cases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_karin_cases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_karin_cases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_karin_cases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_karin_cases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_karin_cases_reporter_employee_id_fkey"
+            columns: ["reporter_employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_leave_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          created_at: string
+          days: number
+          employee_id: string
+          end_date: string
+          id: string
+          leave_type: string
+          reason: string | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          created_at?: string
+          days?: number
+          employee_id: string
+          end_date: string
+          id?: string
+          leave_type: string
+          reason?: string | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          created_at?: string
+          days?: number
+          employee_id?: string
+          end_date?: string
+          id?: string
+          leave_type?: string
+          reason?: string | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_legal_parameters: {
+        Row: {
+          country_code: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          notes: string | null
+          parameter_key: string
+          source_reference: string
+          source_url: string
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          id?: string
+          notes?: string | null
+          parameter_key: string
+          source_reference: string
+          source_url: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          notes?: string | null
+          parameter_key?: string
+          source_reference?: string
+          source_url?: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: []
+      }
+      people_lre_exports: {
+        Row: {
+          business_id: string
+          created_at: string
+          file_hash: string | null
+          generated_at: string | null
+          generated_by: string | null
+          id: string
+          payload: Json
+          payroll_period_id: string
+          status: string
+          validation_errors: Json
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          file_hash?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          payload?: Json
+          payroll_period_id: string
+          status?: string
+          validation_errors?: Json
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          file_hash?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          payload?: Json
+          payroll_period_id?: string
+          status?: string
+          validation_errors?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_lre_exports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_lre_exports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_lre_exports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_lre_exports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_lre_exports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_lre_exports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_lre_exports_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: true
+            referencedRelation: "people_payroll_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_payroll_inputs: {
+        Row: {
+          absences_days: number
+          advance_payment: number
+          business_id: string
+          created_at: string
+          employee_id: string
+          gratification_amount: number
+          id: string
+          non_taxable_bonus: number
+          notes: string | null
+          other_deductions: number
+          overtime_hours: number
+          payroll_period_id: string
+          taxable_bonus: number
+          updated_at: string
+        }
+        Insert: {
+          absences_days?: number
+          advance_payment?: number
+          business_id: string
+          created_at?: string
+          employee_id: string
+          gratification_amount?: number
+          id?: string
+          non_taxable_bonus?: number
+          notes?: string | null
+          other_deductions?: number
+          overtime_hours?: number
+          payroll_period_id: string
+          taxable_bonus?: number
+          updated_at?: string
+        }
+        Update: {
+          absences_days?: number
+          advance_payment?: number
+          business_id?: string
+          created_at?: string
+          employee_id?: string
+          gratification_amount?: number
+          id?: string
+          non_taxable_bonus?: number
+          notes?: string | null
+          other_deductions?: number
+          overtime_hours?: number
+          payroll_period_id?: string
+          taxable_bonus?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_payroll_inputs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_inputs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_inputs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_inputs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_inputs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_inputs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_inputs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_inputs_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "people_payroll_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_payroll_items: {
+        Row: {
+          business_id: string
+          calculation_version: string
+          components: Json
+          created_at: string
+          deductions: number
+          employee_id: string
+          employer_cost_amount: number
+          gross_non_taxable: number
+          gross_taxable: number
+          id: string
+          income_tax: number
+          net_pay: number
+          overtime_amount: number
+          parameter_snapshot: Json
+          payroll_period_id: string
+          social_security: number
+          vacation_amount: number
+          warnings: Json
+        }
+        Insert: {
+          business_id: string
+          calculation_version?: string
+          components?: Json
+          created_at?: string
+          deductions?: number
+          employee_id: string
+          employer_cost_amount?: number
+          gross_non_taxable?: number
+          gross_taxable?: number
+          id?: string
+          income_tax?: number
+          net_pay?: number
+          overtime_amount?: number
+          parameter_snapshot?: Json
+          payroll_period_id: string
+          social_security?: number
+          vacation_amount?: number
+          warnings?: Json
+        }
+        Update: {
+          business_id?: string
+          calculation_version?: string
+          components?: Json
+          created_at?: string
+          deductions?: number
+          employee_id?: string
+          employer_cost_amount?: number
+          gross_non_taxable?: number
+          gross_taxable?: number
+          id?: string
+          income_tax?: number
+          net_pay?: number
+          overtime_amount?: number
+          parameter_snapshot?: Json
+          payroll_period_id?: string
+          social_security?: number
+          vacation_amount?: number
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_payroll_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_items_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_items_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "people_payroll_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_payroll_periods: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          calculated_at: string | null
+          calculation_version: string
+          closed_at: string | null
+          created_at: string
+          id: string
+          parameter_snapshot: Json
+          period_month: number
+          period_year: number
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          calculated_at?: string | null
+          calculation_version?: string
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          parameter_snapshot?: Json
+          period_month: number
+          period_year: number
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          calculated_at?: string | null
+          calculation_version?: string
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          parameter_snapshot?: Json
+          period_month?: number
+          period_year?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_payroll_periods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_periods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_periods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_periods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_periods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_periods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      people_payroll_postings: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          finance_reference: string | null
+          id: string
+          payroll_period_id: string
+          posting_key: string
+          status: string
+          total_amount: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          finance_reference?: string | null
+          id?: string
+          payroll_period_id: string
+          posting_key: string
+          status?: string
+          total_amount?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          finance_reference?: string | null
+          id?: string
+          payroll_period_id?: string
+          posting_key?: string
+          status?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_payroll_postings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_postings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_postings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_postings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_postings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_postings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_postings_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "people_payroll_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_payroll_runs: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          idempotency_key: string
+          payroll_period_id: string
+          result_summary: Json
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          idempotency_key: string
+          payroll_period_id: string
+          result_summary?: Json
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          idempotency_key?: string
+          payroll_period_id?: string
+          result_summary?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_payroll_runs_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "people_payroll_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_tax_brackets: {
+        Row: {
+          country_code: string
+          created_at: string
+          factor: number
+          id: string
+          max_income: number | null
+          min_income: number
+          period_month: number
+          period_year: number
+          rebate: number
+          source_reference: string
+          source_url: string
+          tax_type: string
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          factor: number
+          id?: string
+          max_income?: number | null
+          min_income: number
+          period_month: number
+          period_year: number
+          rebate?: number
+          source_reference: string
+          source_url: string
+          tax_type: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          factor?: number
+          id?: string
+          max_income?: number | null
+          min_income?: number
+          period_month?: number
+          period_year?: number
+          rebate?: number
+          source_reference?: string
+          source_url?: string
+          tax_type?: string
+        }
+        Relationships: []
+      }
+      people_vacation_balances: {
+        Row: {
+          accrued_days: number
+          as_of_date: string
+          available_days: number
+          business_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          progressive_days: number
+          used_days: number
+        }
+        Insert: {
+          accrued_days?: number
+          as_of_date: string
+          available_days?: number
+          business_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          progressive_days?: number
+          used_days?: number
+        }
+        Update: {
+          accrued_days?: number
+          as_of_date?: string
+          available_days?: number
+          business_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          progressive_days?: number
+          used_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_vacation_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_vacation_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_vacation_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_vacation_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_vacation_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_vacation_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "people_vacation_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people_employees"
             referencedColumns: ["id"]
           },
         ]
@@ -8624,6 +10921,10 @@ export type Database = {
           stock_before: number
         }[]
       }
+      calculate_people_payroll_period: {
+        Args: { p_payroll_period_id: string }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_bucket_key: string
@@ -8780,6 +11081,10 @@ export type Database = {
           sales_count: number
         }[]
       }
+      get_owner_operational_metrics: {
+        Args: { p_window_hours?: number }
+        Returns: Json
+      }
       get_platform_ai_metrics: { Args: never; Returns: Json }
       get_platform_owner_metrics:
         | { Args: never; Returns: Json }
@@ -8915,6 +11220,10 @@ export type Database = {
       post_sale_payment_accounting: {
         Args: { p_payment_id: string }
         Returns: string
+      }
+      purge_owner_operational_telemetry: {
+        Args: { p_retention_days?: number }
+        Returns: number
       }
       queue_financial_source: {
         Args: {
