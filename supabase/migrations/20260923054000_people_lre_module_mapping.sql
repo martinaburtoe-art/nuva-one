@@ -1,0 +1,13 @@
+-- LRE preparation: preserve the five DT modules in the internal row payload.
+-- The final CSV/TXT exporter must map these fields to the current DT Supplement schema.
+DO $$
+DECLARE v_def text; v_new text;
+BEGIN
+ SELECT pg_get_functiondef('public.prepare_people_lre(uuid)'::regprocedure) INTO v_def;
+ v_new:=replace(v_def,
+ 'jsonb_build_object(''employee_id'',i.employee_id,''national_id'',e.national_id,''gross_taxable'',i.gross_taxable,''gross_non_taxable'',i.gross_non_taxable,''deductions'',i.deductions,''net_pay'',i.net_pay,''employer_cost'',i.employer_cost_amount,''calculation_version'',i.calculation_version)',
+ 'jsonb_build_object(''employee_id'',i.employee_id,''national_id'',e.national_id,''gross_taxable'',i.gross_taxable,''gross_non_taxable'',i.gross_non_taxable,''deductions'',i.deductions,''net_pay'',i.net_pay,''employer_cost'',i.employer_cost_amount,''calculation_version'',i.calculation_version,''lre_modules'',jsonb_build_object(''haberes'',jsonb_build_object(''2101_sueldo'',coalesce((i.components->>''salary'')::numeric,0),''2102_sobresueldo'',i.overtime_amount,''2106_gratificacion'',coalesce((i.components->>''gratification'')::numeric,0),''2111_bonos_fijos'',coalesce((i.components->>''taxable_bonus'')::numeric,0),''2113_bonos_variables'',coalesce((i.components->>''taxable_bonus'')::numeric,0)),''descuentos'',jsonb_build_object(''3141_prevision'',coalesce((i.components->>''afp_employee'')::numeric,0),''3143_salud_7pct'',coalesce((i.components->>''health'')::numeric,0),''3151_afc_trabajador'',coalesce((i.components->>''afc_employee'')::numeric,0),''3161_iusc'',i.income_tax),''aportes_empleador'',jsonb_build_object(''afc_employer'',coalesce((i.components->>''afc_employer'')::numeric,0),''sis_employer'',coalesce((i.components->>''sis_employer'')::numeric,0),''crp_employer'',coalesce((i.components->>''crp_employer'')::numeric,0),''additional_individual'',coalesce((i.components->>''employer_individual_additional'')::numeric,0),''ssp_employer'',coalesce((i.components->>''employer_ssp'')::numeric,0)),''totales'',jsonb_build_object(''bruto'',i.gross_taxable+i.gross_non_taxable,''liquido'',i.net_pay,''impuestos'',i.income_tax,''descuentos'',i.deductions,''aportes_empleador'',i.employer_cost_amount-i.gross_taxable)))');
+ v_new:=replace(v_new,'''period_id'',p_payroll_period_id,''rows'',count_rows', '''period_id'',p_payroll_period_id,''rows'',count_rows,''format'', ''LRE-2026.1''');
+ IF v_new=v_def THEN RAISE EXCEPTION 'Expected LRE mapping was not found'; END IF;
+ EXECUTE v_new;
+END $$;
