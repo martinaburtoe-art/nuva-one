@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(19);
+SELECT plan(18);
 SELECT has_table('public','people_payroll_inputs','payroll inputs exists');
 SELECT has_table('public','people_absences','absences exists');
 SELECT has_table('public','people_vacation_balances','vacation balances exists');
