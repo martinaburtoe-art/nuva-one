@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBizInsert, useBizList, useBizDelete } from "@/lib/biz-data";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/people-payroll")({ component: PeoplePayroll });
 const emptyInput = { overtime_hours: 0, taxable_bonus: 0, non_taxable_bonus: 0, absences_days: 0, other_deductions: 0, advance_payment: 0, gratification_amount: 0, notes: "" };
@@ -22,6 +22,7 @@ function PeoplePayroll() {
   const { data: items = [] } = useBizList<any>("people_payroll_items");
   const { data: liquidations = [] } = useBizList<any>("people_payroll_liquidations");
   const { data: lre = [] } = useBizList<any>("people_lre_rows");
+  const queryClient = useQueryClient();
   const { data: params = [] } = useQuery({ queryKey: ["people_legal_parameters"], queryFn: async () => { const { data, error } = await supabase.from("people_legal_parameters" as any).select("*").eq("country_code", "CL").order("effective_from", { ascending: false }); if (error) throw error; return data ?? []; } });
   const insertPeriod = useBizInsert("people_payroll_periods");
   const insertInput = useBizInsert("people_payroll_inputs");
@@ -42,7 +43,16 @@ function PeoplePayroll() {
   async function saveInput() { if (!selectedPeriod || !selectedEmployee) return; try { await insertInput.mutateAsync({ payroll_period_id: selectedPeriod, employee_id: selectedEmployee, ...Object.fromEntries(Object.entries(input).map(([k, v]) => [k, typeof v === "number" ? Number(v) || 0 : v])) }); setInput(emptyInput); setEngineMessage("Datos variables guardados."); } catch (error) { setEngineMessage(error instanceof Error ? error.message : "No fue posible guardar los datos."); } }
   async function periodAction(periodId: string, action: "calculate" | "approve" | "lre" | "liquidate" | "finance" | "close") {
     setBusyId(periodId + action); setSelectedPeriod(periodId); setEngineMessage(null);
-    try { const rpc = { calculate: "calculate_people_payroll_period", approve: "approve_people_payroll_period", lre: "prepare_people_lre", liquidate: "generate_people_liquidations", finance: "post_people_payroll_to_finance", close: "close_people_payroll_period" }[action]; const { data, error } = await supabase.rpc(rpc as any, { p_payroll_period_id: periodId }); if (error) throw error; const result = data as any; setEngineMessage(action === "calculate" ? `Nómina calculada: ${result?.items ?? 0} colaboradores.` : action === "lre" ? `LRE preparado: ${result?.valid ?? 0} válidos / ${result?.invalid ?? 0} con observaciones.` : action === "liquidate" ? `Liquidaciones generadas: ${result?.liquidations ?? 0}.` : action === "finance" ? `Nómina enviada a revisión financiera: ${result?.employer_cost ?? 0} CLP.` : action === "approve" ? "Período aprobado." : action === "close" ? "Período cerrado y validado." : "Operación completada."); }
+    try { const rpc = { calculate: "calculate_people_payroll_period", approve: "approve_people_payroll_period", lre: "prepare_people_lre", liquidate: "generate_people_liquidations", finance: "post_people_payroll_to_finance", close: "close_people_payroll_period" }[action]; const { data, error } = await supabase.rpc(rpc as any, { p_payroll_period_id: periodId }); if (error) throw error; const result = data as any;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["people_payroll_periods"] }),
+        queryClient.invalidateQueries({ queryKey: ["people_payroll_inputs"] }),
+        queryClient.invalidateQueries({ queryKey: ["people_payroll_items"] }),
+        queryClient.invalidateQueries({ queryKey: ["people_payroll_liquidations"] }),
+        queryClient.invalidateQueries({ queryKey: ["people_lre_rows"] }),
+        queryClient.invalidateQueries({ queryKey: ["people_payroll_postings"] }),
+      ]);
+      setEngineMessage(action === "calculate" ? `Nómina calculada: ${result?.items ?? 0} colaboradores.` : action === "lre" ? `LRE preparado: ${result?.valid ?? 0} válidos / ${result?.invalid ?? 0} con observaciones.` : action === "liquidate" ? `Liquidaciones generadas: ${result?.liquidations ?? 0}.` : action === "finance" ? `Nómina enviada a revisión financiera: ${result?.employer_cost ?? 0} CLP.` : action === "approve" ? "Período aprobado." : action === "close" ? "Período cerrado y validado." : "Operación completada."); }
     catch (error) { setEngineMessage(error instanceof Error ? error.message : "No fue posible completar la operación."); } finally { setBusyId(null); }
   }
   const selectedInputs = inputs.filter((x: any) => x.payroll_period_id === selectedPeriod);
