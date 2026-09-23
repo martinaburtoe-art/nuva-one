@@ -1,6 +1,15 @@
 -- Nüva People — el motor vigente calcula remuneraciones con sueldo base mensual.
-alter table public.people_contracts
-  add constraint people_contracts_salary_type_monthly_ck check (salary_type = 'monthly');
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid='public.people_contracts'::regclass
+      and conname='people_contracts_salary_type_monthly_ck'
+  ) then
+    alter table public.people_contracts
+      add constraint people_contracts_salary_type_monthly_ck check (salary_type = 'monthly');
+  end if;
+end $$;
 
 create or replace function public.people_validate_contract_hours()
 returns trigger
