@@ -34,8 +34,15 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
       if (readError) return json({ error: "No se pudo leer la acción" }, 500);
       if (!action) return json({ error: "Acción no encontrada" }, 404);
       if (action.status !== "approved") return json({ error: `La acción debe estar aprobada. Estado actual: ${action.status}` }, 409);
-      const { error: startError } = await session.supabase.from("nuva_action_queue").update({ status: "executing", error_message: null, updated_at: new Date().toISOString() }).eq("id", action.id).eq("business_id", businessId).eq("status", "approved");
-      if (startError) return json({ error: "No se pudo iniciar la ejecución" }, 409);
+      const { data: claimedAction, error: startError } = await session.supabase
+        .from("nuva_action_queue")
+        .update({ status: "executing", error_message: null, updated_at: new Date().toISOString() })
+        .eq("id", action.id)
+        .eq("business_id", businessId)
+        .eq("status", "approved")
+        .select("id")
+        .maybeSingle();
+      if (startError || !claimedAction) return json({ error: "La acción ya fue tomada por otra ejecución o no sigue aprobada" }, 409);
       try {
         let result: Record<string, unknown>;
         if (["low-stock", "purchase-pressure"].includes(action.action_type)) {
