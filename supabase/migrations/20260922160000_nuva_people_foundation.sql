@@ -100,7 +100,6 @@ create index if not exists idx_people_attendance_business_employee_time on publi
 create index if not exists idx_people_leave_business_status on public.people_leave_requests(business_id, status, start_date);
 create index if not exists idx_people_payroll_business_period on public.people_payroll_periods(business_id, period_year desc, period_month desc);
 create index if not exists idx_people_payroll_items_business_employee on public.people_payroll_items(business_id, employee_id);
-create index if not exists idx_people_documents_business_expiry on public.people_documents(business_id, expires_at);
 create index if not exists idx_people_compliance_business_due on public.people_compliance_items(business_id, status, due_date);
 
 -- Tenant isolation plus the existing owner/admin/staff write model.
