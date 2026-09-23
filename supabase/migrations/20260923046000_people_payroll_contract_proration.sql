@@ -37,5 +37,6 @@ begin
   d:=replace(d,'v_absence_deduction:=round((greatest(0,v_contract.salary_amount)/30.0)*coalesce(v_unpaid_absence_days,0),0);','v_period_salary:=public.people_monthly_salary_for_period(v_contract.salary_amount,v_period_start,v_period_end,v_contract.start_date,v_contract.end_date); v_absence_deduction:=round((greatest(0,v_contract.salary_amount)/30.0)*coalesce(v_unpaid_absence_days,0),0);');
   d:=replace(d,'v_taxable:=greatest(0,coalesce(v_contract.salary_amount,0)-v_absence_deduction+','v_taxable:=greatest(0,coalesce(v_period_salary,0)-v_absence_deduction+');
   d:=replace(d,'''salary'',v_contract.salary_amount,','''salary'',v_period_salary,');
+  d:=replace(d,'and afp_name=coalesce(v_employee.afp_name,'''')','and lower(trim(afp_name))=lower(trim(coalesce(v_employee.afp_name,'''')))');
   execute d;
 end $$;
