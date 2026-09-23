@@ -1,0 +1,12 @@
+begin;
+select plan(8);
+select ok(exists(select 1 from pg_constraint where conname='people_contracts_employee_business_fk'),'contracts tenant guard');
+select ok(exists(select 1 from pg_constraint where conname='people_absences_employee_business_fk'),'absences tenant guard');
+select ok(exists(select 1 from pg_constraint where conname='people_payroll_inputs_period_business_fk'),'payroll inputs period tenant guard');
+select ok(exists(select 1 from pg_constraint where conname='people_payroll_items_period_business_fk'),'payroll items period tenant guard');
+select ok(exists(select 1 from pg_constraint where conname='people_payroll_liquidations_employee_business_fk'),'liquidations employee tenant guard');
+select ok(exists(select 1 from pg_constraint where conname='people_lre_rows_period_business_fk'),'LRE period tenant guard');
+select ok(exists(select 1 from pg_constraint where conname='people_payroll_runs_period_business_fk') AND exists(select 1 from pg_constraint where conname='people_payroll_postings_period_business_fk'),'payroll run/posting tenant guards');
+select ok(exists(select 1 from pg_constraint where conname='people_employees_business_id_id_key') AND exists(select 1 from pg_constraint where conname='people_payroll_periods_business_id_id_key'),'composite parent keys');
+select * from finish();
+rollback;
