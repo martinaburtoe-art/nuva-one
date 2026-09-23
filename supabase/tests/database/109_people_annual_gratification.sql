@@ -1,0 +1,10 @@
+begin;
+select plan(6);
+select ok(to_regprocedure('public.calculate_people_annual_gratification(uuid,integer)') is not null,'annual gratification helper exists');
+select ok(position('least(v_total*0.25,v_cap)' in pg_get_functiondef('public.calculate_people_annual_gratification(uuid,integer)'))>0,'uses 25 percent rule and cap');
+select ok(position('4.75' in pg_get_functiondef('public.calculate_people_annual_gratification(uuid,integer)'))>0,'uses 4.75 IMM cap');
+select ok(position('components->>''gratification''' in pg_get_functiondef('public.calculate_people_annual_gratification(uuid,integer)'))>0,'excludes prior gratification advances from base');
+select ok(has_function_privilege('anon','public.calculate_people_annual_gratification(uuid,integer)','EXECUTE')=false,'helper is not executable by anon');
+select ok(has_function_privilege('authenticated','public.calculate_people_annual_gratification(uuid,integer)','EXECUTE')=false,'helper is not executable by authenticated');
+select * from finish();
+rollback;
