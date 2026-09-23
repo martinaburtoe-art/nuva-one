@@ -1,0 +1,11 @@
+begin;
+select plan(7);
+select ok(position('v_license_ssp:=case when v_medical_leave_days' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,'license contribution is calculated before reform totals');
+select ok(position('v_sis_amount:=case when v_period_start<date ''2026-08-01'' then round(v_pension_base*v_sis,0) else 0 end' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,'SIS is zero as a separate component after August 2026');
+select ok(position('v_employer_ssp:=case when v_period_start>=date ''2026-08-01'' then round(v_pension_base*coalesce(nullif(v_param->>''employer_ssp_rate'','''')::numeric,0.025),0)+v_license_ssp' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,'post-reform SSP includes medical-leave contribution');
+select ok(position('cl-2026.10' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,'payroll engine version is 10');
+select ok(position('''afc_employer'',v_afc_employer' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,'AFC employer total remains represented');
+select is((select value_numeric from public.people_legal_parameters where parameter_key='employer_ssp_rate' and effective_from<=date '2026-08-01' and (effective_to is null or effective_to>=date '2026-08-01') order by effective_from desc limit 1),0.025::numeric,'SSP parameter is 2.5 percent from reform');
+select is((select value_numeric from public.people_legal_parameters where parameter_key='employer_individual_additional_rate' and effective_from<=date '2026-08-01' and (effective_to is null or effective_to>=date '2026-08-01') order by effective_from desc limit 1),0.001::numeric,'additional individual contribution is 0.1 percent');
+select * from finish();
+rollback;
