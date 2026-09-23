@@ -35,6 +35,7 @@ function People() {
     ["Colaboradores", "Directorio y fichas laborales", "/people-employees"],
     ["Asistencia", "Jornada y eventos", "/people-attendance"],
     ["Remuneraciones", "Períodos y control de nómina", "/people-payroll"],
+    ["Vacaciones y finiquitos", "Solicitudes, saldos y terminaciones", "/people-lifecycle"],
     ["Cumplimiento", "Obligaciones y vencimientos", "/people-compliance"],
   ];
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
