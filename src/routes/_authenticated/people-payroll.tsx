@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Calculator, FileCheck2, FileText, LockKeyhole, Play, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
-import { Button } from "@/components/ui/button";
+import { PeopleBackLink } from "@/components/people-back-link";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,7 +58,7 @@ function PeoplePayroll() {
   const selectedInputs = inputs.filter((x: any) => x.payroll_period_id === selectedPeriod);
   const selectedItems = items.filter((x: any) => x.payroll_period_id === selectedPeriod);
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
-    <PageHeader title="Remuneraciones" description="Carga los datos del mes, calcula, valida, aprueba, genera liquidaciones/LRE y cierra el período." />
+    <PageHeader title="Remuneraciones" description="Carga los datos del mes, calcula, valida, aprueba, genera liquidaciones/LRE y cierra el período." actions={<PeopleBackLink />} />
     <Card className="mb-5 rounded-2xl border-amber-500/30 bg-amber-500/5 p-4"><div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5" /><div><p className="font-semibold">Flujo operativo</p><p className="text-sm text-muted-foreground">Colaborador → contrato → datos del mes → cálculo → validación → aprobación → liquidaciones/LRE → cierre.</p></div></div></Card>
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="rounded-2xl p-5"><Calculator className="h-5 w-5" /><h2 className="mt-3 font-semibold">1. Nuevo período</h2><div className="mt-4 grid grid-cols-2 gap-3"><div><Label>Año</Label><Input type="number" value={year} onChange={e => setYear(Number(e.target.value))} /></div><div><Label>Mes</Label><Input type="number" min={1} max={12} value={month} onChange={e => setMonth(Number(e.target.value))} /></div></div><Button className="mt-4 w-full" onClick={createPeriod} disabled={insertPeriod.isPending}><Play className="mr-2 h-4 w-4" />Crear período</Button></Card>
