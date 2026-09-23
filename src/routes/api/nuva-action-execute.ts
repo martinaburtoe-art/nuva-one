@@ -58,7 +58,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           result = { operation: "execution_acknowledged", destination: action.destination };
         }
         await session.supabase.from("nuva_action_queue").update({ status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), error_message: null }).eq("id", action.id).eq("business_id", businessId);
-        await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: result, observed_at: new Date().toISOString() });
+        await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: JSON.parse(JSON.stringify(result)), observed_at: new Date().toISOString() });
         return json({ ok: true, action_id: action.id, result });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Error de ejecución";
