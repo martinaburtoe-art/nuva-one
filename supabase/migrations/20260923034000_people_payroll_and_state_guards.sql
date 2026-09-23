@@ -1,0 +1,19 @@
+-- Nüva People — payroll/state guards.
+-- Mantiene estados y ecuaciones financieras válidas en la frontera de datos.
+
+DO $$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_legal_parameters_effectivity_range_ck') THEN ALTER TABLE public.people_legal_parameters ADD CONSTRAINT people_legal_parameters_effectivity_range_ck CHECK (effective_to IS NULL OR effective_to >= effective_from); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_legal_parameters_numeric_nonnegative_ck') THEN ALTER TABLE public.people_legal_parameters ADD CONSTRAINT people_legal_parameters_numeric_nonnegative_ck CHECK (value_numeric IS NULL OR value_numeric >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_lre_rows_validation_status_ck') THEN ALTER TABLE public.people_lre_rows ADD CONSTRAINT people_lre_rows_validation_status_ck CHECK (validation_status IN ('valid','invalid','pending')); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_lre_exports_status_ck') THEN ALTER TABLE public.people_lre_exports ADD CONSTRAINT people_lre_exports_status_ck CHECK (status IN ('draft','valid','invalid','generated','submitted')); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_compliance_items_status_ck') THEN ALTER TABLE public.people_compliance_items ADD CONSTRAINT people_compliance_items_status_ck CHECK (status IN ('pending','in_progress','completed','overdue','cancelled')); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_karin_cases_status_ck') THEN ALTER TABLE public.people_karin_cases ADD CONSTRAINT people_karin_cases_status_ck CHECK (status IN ('received','investigating','measures','resolved','closed','cancelled')); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_runs_status_ck') THEN ALTER TABLE public.people_payroll_runs ADD CONSTRAINT people_payroll_runs_status_ck CHECK (status IN ('created','running','completed','failed','cancelled')); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_postings_status_ck') THEN ALTER TABLE public.people_payroll_postings ADD CONSTRAINT people_payroll_postings_status_ck CHECK (status IN ('pending','posted','failed','cancelled')); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_liquidations_status_ck') THEN ALTER TABLE public.people_payroll_liquidations ADD CONSTRAINT people_payroll_liquidations_status_ck CHECK (status IN ('draft','issued','void')); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_items_deductions_nonnegative_ck') THEN ALTER TABLE public.people_payroll_items ADD CONSTRAINT people_payroll_items_deductions_nonnegative_ck CHECK (deductions >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_items_income_tax_nonnegative_ck') THEN ALTER TABLE public.people_payroll_items ADD CONSTRAINT people_payroll_items_income_tax_nonnegative_ck CHECK (income_tax >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_items_social_security_nonnegative_ck') THEN ALTER TABLE public.people_payroll_items ADD CONSTRAINT people_payroll_items_social_security_nonnegative_ck CHECK (social_security >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_items_net_equation_ck') THEN ALTER TABLE public.people_payroll_items ADD CONSTRAINT people_payroll_items_net_equation_ck CHECK (abs(net_pay - greatest(gross_taxable + gross_non_taxable - deductions, 0)) <= 0.02); END IF;
+END $$;
