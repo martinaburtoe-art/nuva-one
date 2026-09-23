@@ -1,0 +1,11 @@
+begin;
+select plan(7);
+select ok(exists(select 1 from pg_constraint where conname='people_employees_gratification_mode_ck'),'gratification regime constraint exists');
+select ok(pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure) like '%v_gratification_base%','payroll uses explicit gratification base');
+select ok(pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure) like '%period_month=12%','December annual cap logic exists');
+select ok(pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure) like '%cl-2026.12%','payroll engine version is current');
+select ok(pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure) like '%''gratification'',v_gratification,%','component stores calculated gratification');
+select ok(has_function_privilege('anon','public.calculate_people_annual_gratification(uuid,integer)','EXECUTE') is false,'annual helper blocked for anon');
+select ok(has_function_privilege('authenticated','public.calculate_people_annual_gratification(uuid,integer)','EXECUTE') is false,'annual helper blocked for authenticated');
+select * from finish();
+rollback;
