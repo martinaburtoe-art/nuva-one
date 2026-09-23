@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { buildNuvaOperationalResult } from "@/lib/nuva-operational-orchestrator";
 import { runNuvaAgentCouncil } from "@/lib/nuva-intelligence-agent-council";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
+import { reasonAboutCouncil } from "@/lib/nuva-agent-reasoning.server";
 import type { Database } from "@/integrations/supabase/types";
 
 function json(data: Record<string, unknown>, status = 200) {
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/api/cron/nuva-intelligence-worker")({
     let actionProposals = 0;
     let memoryWrites = 0;
     let dataQualityWarnings = 0;
+    let reasoningPasses = 0;
     const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const dayKey = new Date().toISOString().slice(0, 10);
 
@@ -231,6 +233,34 @@ export const Route = createFileRoute("/api/cron/nuva-intelligence-worker")({
       }
 
       const priority = council.consensus.priority;
+      const reasoning = await reasonAboutCouncil(council, {
+        revenue: result.snapshot.revenue,
+        cashAvailable: result.snapshot.cashAvailable,
+        projectedCash30d: result.snapshot.projectedCash30d,
+        overdueReceivables: result.snapshot.overdueReceivables,
+        lowStockSkus: result.snapshot.lowStockSkus,
+        stockoutRisk: result.snapshot.stockoutRisk,
+        complianceReadiness: result.snapshot.complianceReadiness,
+      });
+      if (reasoning) {
+        reasoningPasses++;
+        await db.from("nuva_intelligence_events").insert({
+          business_id: bid,
+          event_type: `agent:reasoning:${priority?.signalKey ?? "none"}`,
+          source_table: "nuva_agent_reasoning",
+          severity: "info",
+          title: "Segunda capa de razonamiento Nüva",
+          summary: reasoning.rationale,
+          evidence: {
+            conflictResolution: reasoning.conflictResolution,
+            missingData: reasoning.missingData,
+            recommendedNextStep: reasoning.recommendedNextStep,
+            deterministicPriority: priority,
+          },
+          occurred_at: now,
+        });
+      }
+
       if (priority?.proposal) {
         const idempotencyKey = `agent-council:${priority.signalKey}:${dayKey}`;
         const { data: existingAction } = await db.from("nuva_action_queue").select("id").eq("business_id", bid).eq("idempotency_key", idempotencyKey).maybeSingle();
@@ -255,6 +285,7 @@ export const Route = createFileRoute("/api/cron/nuva-intelligence-worker")({
               evidenceQuality: priority.evidenceQuality,
               decisionScore: priority.decisionScore,
               consensus: council.consensus,
+              reasoning,
             },
             idempotency_key: idempotencyKey,
           });
@@ -305,6 +336,8 @@ export const Route = createFileRoute("/api/cron/nuva-intelligence-worker")({
       actionProposals,
       memoryWrites,
       dataQualityWarnings,
+      reasoningPasses,
+      reasoningEnabled: process.env.NUVA_AGENT_REASONING_ENABLED?.trim().toLowerCase() === "true",
       businessLimit: 100,
     });
   } } },
