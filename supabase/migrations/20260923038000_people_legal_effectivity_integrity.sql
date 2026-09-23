@@ -2,10 +2,10 @@
 -- Corrige la parametrización 2026-2028 de jornada ordinaria y protege nuevas cargas.
 
 update public.people_legal_parameters set effective_to='2026-04-25'
-where id='604ed187-d84c-4c8d-88f4-8dc17f236645';
+where country_code='CL' and parameter_key='ordinary_weekly_hours' and effective_from='2026-04-01';
 
 update public.people_legal_parameters set effective_to='2028-04-25'
-where id='b7628925-643e-43bf-9efe-ee1516ee6509';
+where country_code='CL' and parameter_key='ordinary_weekly_hours' and effective_from='2026-04-26';
 
 create or replace function public.people_validate_legal_parameter_overlap()
 returns trigger language plpgsql security invoker set search_path=public as $$
