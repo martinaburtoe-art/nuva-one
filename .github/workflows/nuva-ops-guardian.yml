@@ -1,0 +1,45 @@
+name: Nüva One — Security Guardian
+
+on:
+  schedule:
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nuva-ops-guardian
+  cancel-in-progress: false
+
+jobs:
+  guardian:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout (historial completo, gitleaks escanea commits)
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: npm audit (no bloqueante, produce reporte)
+        run: npm audit --omit=dev --json > npm-audit.json || true
+
+      - name: gitleaks (escaneo de secretos, reporte JSON nativo)
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json --redact --exit-code 0
+
+      - name: Registrar hallazgos y alertar
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITLEAKS_REPORT_PATH: gitleaks-report.json
+        run: node scripts/ops-guardian.mjs
