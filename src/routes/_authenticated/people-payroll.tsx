@@ -4,6 +4,7 @@ import { Calculator, FileCheck2, FileText, LockKeyhole, Play, Plus, ShieldCheck,
 import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
 import { PeopleBackLink } from "@/components/people-back-link";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
