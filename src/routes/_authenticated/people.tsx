@@ -1,3 +1,4 @@
+// Build marker: keeps Vercel deployment synchronized with the repaired npm lockfile.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { CalendarDays, Clock3, FileText, ShieldCheck, Users, WalletCards } from "lucide-react";
