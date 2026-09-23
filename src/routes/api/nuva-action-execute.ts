@@ -55,9 +55,15 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           if (error) throw error;
           result = { operation: "customer_task_created", record_id: data.id };
         } else {
-          result = { operation: "execution_acknowledged", destination: action.destination };
+          throw new Error(`Acción no ejecutable: ${action.action_type}`);
         }
-        await session.supabase.from("nuva_action_queue").update({ status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), error_message: null }).eq("id", action.id).eq("business_id", businessId);
+        const { error: completeError } = await session.supabase
+          .from("nuva_action_queue")
+          .update({ status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), error_message: null })
+          .eq("id", action.id)
+          .eq("business_id", businessId)
+          .eq("status", "executing");
+        if (completeError) throw completeError;
         await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: JSON.parse(JSON.stringify(result)), observed_at: new Date().toISOString() });
         return json({ ok: true, action_id: action.id, result });
       } catch (error) {
