@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Check, FileCheck2, LogOut, Plus, X } from "lucide-react";
 import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/people-lifecycle")({ component: PeopleLifecycle });
 
 function PeopleLifecycle() {
+  const queryClient = useQueryClient();
   const { data: employees=[] }=useBizList<any>("people_employees",{order:"last_name"});
   const { data: leaves=[] }=useBizList<any>("people_leave_requests",{order:"start_date"});
   const { data: terminations=[] }=useBizList<any>("people_terminations",{order:"termination_date"});
@@ -23,9 +25,9 @@ function PeopleLifecycle() {
   const [paid,setPaid]=useState(true); const [busy,setBusy]=useState<string|null>(null); const [message,setMessage]=useState("");
 
   async function saveLeave(){if(!leave.employee_id)return;try{await insertLeave.mutateAsync({...leave,days:Number(leave.days),status:"pending"});setMessage("Solicitud registrada y pendiente de revisión.");}catch(e){setMessage(e instanceof Error?e.message:"No fue posible registrar la solicitud.");}}
-  async function reviewLeave(id:string,action:"approve"|"reject"){setBusy(id+action);setMessage("");try{const {error}=await supabase.rpc("review_people_leave_request",{p_leave_request_id:id,p_action:action,p_paid:paid} as any);if(error)throw error;setMessage(action==="approve"?"Solicitud aprobada. La ausencia efectiva ya alimenta vacaciones y remuneraciones.":"Solicitud rechazada.");}catch(e){setMessage(e instanceof Error?e.message:"No fue posible revisar la solicitud.");}finally{setBusy(null);}}
-  async function calculateVacation(employeeId:string){setBusy("vac-"+employeeId);const {data,error}=await supabase.rpc("calculate_people_vacation_balance",{p_employee_id:employeeId,p_as_of_date:new Date().toISOString().slice(0,10)} as any);setMessage(error?error.message:"Saldo actualizado: "+Number((data as any)?.available_days||0).toFixed(2)+" días disponibles.");setBusy(null);}
-  async function calculateTermination(){if(!termination.employee_id)return;setBusy("termination");const {data,error}=await supabase.rpc("calculate_people_termination",{p_employee_id:termination.employee_id,p_termination_date:termination.termination_date,p_termination_cause:termination.cause,p_notice_given:termination.notice_given} as any);setMessage(error?error.message:"Finiquito calculado: CLP "+Number((data as any)?.total_amount||0).toLocaleString("es-CL")+".");setBusy(null);}
+  async function reviewLeave(id:string,action:"approve"|"reject"){setBusy(id+action);setMessage("");try{const {error}=await supabase.rpc("review_people_leave_request",{p_leave_request_id:id,p_action:action,p_paid:paid} as any);if(error)throw error;await Promise.all([queryClient.invalidateQueries({queryKey:["people_leave_requests"]}),queryClient.invalidateQueries({queryKey:["people_absences"]}),queryClient.invalidateQueries({queryKey:["people_vacation_balances"]})]);setMessage(action==="approve"?"Solicitud aprobada. La ausencia efectiva ya alimenta vacaciones y remuneraciones.":"Solicitud rechazada.");}catch(e){setMessage(e instanceof Error?e.message:"No fue posible revisar la solicitud.");}finally{setBusy(null);}}
+  async function calculateVacation(employeeId:string){setBusy("vac-"+employeeId);const {data,error}=await supabase.rpc("calculate_people_vacation_balance",{p_employee_id:employeeId,p_as_of_date:new Date().toISOString().slice(0,10)} as any);await queryClient.invalidateQueries({queryKey:["people_vacation_balances"]});setMessage(error?error.message:"Saldo actualizado: "+Number((data as any)?.available_days||0).toFixed(2)+" días disponibles.");setBusy(null);}
+  async function calculateTermination(){if(!termination.employee_id)return;setBusy("termination");const {data,error}=await supabase.rpc("calculate_people_termination",{p_employee_id:termination.employee_id,p_termination_date:termination.termination_date,p_termination_cause:termination.cause,p_notice_given:termination.notice_given} as any);await queryClient.invalidateQueries({queryKey:["people_terminations"]});setMessage(error?error.message:"Finiquito calculado: CLP "+Number((data as any)?.total_amount||0).toLocaleString("es-CL")+".");setBusy(null);}
 
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
     <PageHeader title="Vacaciones, permisos y finiquitos" description="Gestiona solicitudes, saldos, ausencias efectivas y terminaciones desde el mismo espacio operativo." />
