@@ -34,6 +34,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
       if (readError) return json({ error: "No se pudo leer la acción" }, 500);
       if (!action) return json({ error: "Acción no encontrada" }, 404);
       if (action.status !== "approved") return json({ error: `La acción debe estar aprobada. Estado actual: ${action.status}` }, 409);
+      if (action.mode === "review") return json({ error: "Esta acción requiere revisión en el módulo correspondiente y no admite ejecución automática." }, 409);
       const { data: claimedAction, error: startError } = await session.supabase
         .from("nuva_action_queue")
         .update({ status: "executing", error_message: null, updated_at: new Date().toISOString() })
