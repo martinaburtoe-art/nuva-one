@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Calculator, FileCheck2, FileText, LockKeyhole, Play, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { ModuleGuard } from "@/components/module-guard";
+import { PeopleLegalParameters } from "@/components/people-legal-parameters";
+
 import { PageHeader } from "@/components/page-utils";
 import { PeopleBackLink } from "@/components/people-back-link";
 import { Button } from "@/components/ui/button";
@@ -84,6 +86,6 @@ function PeoplePayroll() {
     </div></div></div>; })}</div></Card>
     {engineMessage && <Card className="mt-5 rounded-2xl border-indigo-500/30 bg-indigo-500/5 p-4 text-sm">{engineMessage}</Card>}
     {selectedPeriod && <div className="mt-5 grid gap-4 md:grid-cols-3"><Card className="rounded-2xl p-5"><p className="text-sm text-muted-foreground">Cálculos</p><p className="mt-2 text-2xl font-semibold">{selectedItems.length}</p></Card><Card className="rounded-2xl p-5"><p className="text-sm text-muted-foreground">Liquidaciones</p><p className="mt-2 text-2xl font-semibold">{liquidations.filter((x: any) => x.payroll_period_id === selectedPeriod).length}</p></Card><Card className="rounded-2xl p-5"><p className="text-sm text-muted-foreground">LRE</p><p className="mt-2 text-2xl font-semibold">{lre.filter((x: any) => x.payroll_period_id === selectedPeriod).length}</p></Card></div>}
-    <Card className="mt-5 rounded-2xl p-5"><h2 className="font-semibold">Parámetros legales cargados</h2><div className="mt-4 grid gap-2 md:grid-cols-2">{latestParams.map((p: any) => <div key={p.id} className="rounded-xl border p-3"><div className="flex justify-between gap-3 text-sm"><span>{p.parameter_key}</span><span>{p.value_numeric ?? p.value_text ?? "—"}</span></div><p className="mt-1 text-xs text-muted-foreground">Vigente desde {p.effective_from}</p></div>)}</div></Card>
+    <PeopleLegalParameters params={latestParams} />
   </div></ModuleGuard>;
 }
