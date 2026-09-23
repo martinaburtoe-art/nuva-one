@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Check, FileCheck2, LogOut, Plus, X } from "lucide-react";
 import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
-import { Button } from "@/components/ui/button";
+import { PeopleBackLink } from "@/components/people-back-link";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,7 @@ function PeopleLifecycle() {
   async function calculateTermination(){if(!termination.employee_id)return;setBusy("termination");const {data,error}=await supabase.rpc("calculate_people_termination",{p_employee_id:termination.employee_id,p_termination_date:termination.termination_date,p_termination_cause:termination.cause,p_notice_given:termination.notice_given} as any);await queryClient.invalidateQueries({queryKey:["people_terminations"]});setMessage(error?error.message:"Finiquito calculado: CLP "+Number((data as any)?.total_amount||0).toLocaleString("es-CL")+".");setBusy(null);}
 
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
-    <PageHeader title="Vacaciones, permisos y finiquitos" description="Gestiona solicitudes, saldos, ausencias efectivas y terminaciones desde el mismo espacio operativo." />
+    <PageHeader title="Vacaciones, permisos y finiquitos" description="Gestiona solicitudes, saldos, ausencias efectivas y terminaciones desde el mismo espacio operativo." actions={<PeopleBackLink />} />
     <div className="grid gap-5 lg:grid-cols-2">
       <Card className="rounded-2xl p-5"><div className="flex items-center gap-3"><CalendarDays className="h-5 w-5"/><div><h2 className="font-semibold">Nueva solicitud</h2><p className="text-sm text-muted-foreground">Vacaciones, permiso, licencia médica u otra ausencia.</p></div></div>
         <div className="mt-4 grid gap-3 md:grid-cols-2"><div className="md:col-span-2"><Label>Colaborador</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={leave.employee_id} onChange={e=>setLeave(v=>({...v,employee_id:e.target.value}))}><option value="">Seleccionar...</option>{employees.map((e:any)=><option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}</select></div><div><Label>Tipo</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={leave.leave_type} onChange={e=>setLeave(v=>({...v,leave_type:e.target.value}))}><option value="vacation">Vacaciones</option><option value="permission">Permiso</option><option value="medical">Licencia médica</option><option value="other">Otro</option></select></div><div><Label>Días informados</Label><Input type="number" min="0.5" step="0.5" value={leave.days} onChange={e=>setLeave(v=>({...v,days:Number(e.target.value)}))}/></div><div><Label>Inicio</Label><Input type="date" value={leave.start_date} onChange={e=>setLeave(v=>({...v,start_date:e.target.value}))}/></div><div><Label>Término</Label><Input type="date" value={leave.end_date} onChange={e=>setLeave(v=>({...v,end_date:e.target.value}))}/></div><div className="md:col-span-2"><Label>Motivo / observación</Label><Input value={leave.reason} onChange={e=>setLeave(v=>({...v,reason:e.target.value}))}/></div></div>
