@@ -1,0 +1,39 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { CalendarDays, FileCheck2, LogOut, Plus } from "lucide-react";
+import { ModuleGuard } from "@/components/module-guard";
+import { PageHeader } from "@/components/page-utils";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useBizInsert, useBizList } from "@/lib/biz-data";
+import { supabase } from "@/integrations/supabase/client";
+
+export const Route = createFileRoute("/_authenticated/people-lifecycle")({ component: PeopleLifecycle });
+
+function PeopleLifecycle() {
+  const { data: employees=[] }=useBizList<any>("people_employees",{order:"last_name"});
+  const { data: leaves=[] }=useBizList<any>("people_leave_requests",{order:"start_date"});
+  const { data: terminations=[] }=useBizList<any>("people_terminations",{order:"termination_date"});
+  const { data: balances=[] }=useBizList<any>("people_vacation_balances",{order:"as_of_date"});
+  const insertLeave=useBizInsert("people_leave_requests");
+  const [leave,setLeave]=useState({employee_id:"",leave_type:"vacation",start_date:new Date().toISOString().slice(0,10),end_date:new Date().toISOString().slice(0,10),days:1,reason:""});
+  const [termination,setTermination]=useState({employee_id:"",termination_date:new Date().toISOString().slice(0,10),cause:"161_necesidades_empresa",notice_given:true});
+  const [message,setMessage]=useState("");
+
+  async function saveLeave(){if(!leave.employee_id)return;await insertLeave.mutateAsync({...leave,days:Number(leave.days),status:"pending"});setMessage("Solicitud registrada.");}
+  async function calculateVacation(employeeId:string){const {data,error}=await supabase.rpc("calculate_people_vacation_balance",{p_employee_id:employeeId,p_as_of_date:new Date().toISOString().slice(0,10)} as any);if(error) setMessage(error.message); else setMessage("Saldo de vacaciones actualizado: "+JSON.stringify(data));}
+  async function calculateTermination(){if(!termination.employee_id)return;const {data,error}=await supabase.rpc("calculate_people_termination",{p_employee_id:termination.employee_id,p_termination_date:termination.termination_date,p_termination_cause:termination.cause,p_notice_given:termination.notice_given} as any);if(error)setMessage(error.message);else setMessage("Finiquito calculado: "+JSON.stringify(data));}
+
+  return <ModuleGuard module="people"><div className="p-4 md:p-6">
+    <PageHeader title="Vacaciones, permisos y finiquitos" description="Gestiona solicitudes, saldos y terminaciones desde el mismo espacio operativo." />
+    <div className="grid gap-5 lg:grid-cols-2">
+      <Card className="rounded-2xl p-5"><div className="flex items-center gap-3"><CalendarDays className="h-5 w-5"/><div><h2 className="font-semibold">Nueva solicitud</h2><p className="text-sm text-muted-foreground">Vacaciones, permiso u otra ausencia.</p></div></div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="md:col-span-2"><Label>Colaborador</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={leave.employee_id} onChange={e=>setLeave(v=>({...v,employee_id:e.target.value}))}><option value="">Seleccionar...</option>{employees.map((e:any)=><option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}</select></div><div><Label>Tipo</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={leave.leave_type} onChange={e=>setLeave(v=>({...v,leave_type:e.target.value}))}><option value="vacation">Vacaciones</option><option value="permission">Permiso</option><option value="medical">Licencia médica</option><option value="other">Otro</option></select></div><div><Label>Días</Label><Input type="number" min="0.5" step="0.5" value={leave.days} onChange={e=>setLeave(v=>({...v,days:Number(e.target.value)}))}/></div><div><Label>Inicio</Label><Input type="date" value={leave.start_date} onChange={e=>setLeave(v=>({...v,start_date:e.target.value}))}/></div><div><Label>Término</Label><Input type="date" value={leave.end_date} onChange={e=>setLeave(v=>({...v,end_date:e.target.value}))}/></div><div className="md:col-span-2"><Label>Motivo / observación</Label><Input value={leave.reason} onChange={e=>setLeave(v=>({...v,reason:e.target.value}))}/></div></div><div className="mt-4 flex justify-end"><Button onClick={saveLeave} disabled={insertLeave.isPending||!leave.employee_id}><Plus className="mr-2 h-4 w-4"/>Registrar solicitud</Button></div></Card>
+      <Card className="rounded-2xl p-5"><div className="flex items-center gap-3"><LogOut className="h-5 w-5"/><div><h2 className="font-semibold">Finiquito</h2><p className="text-sm text-muted-foreground">Calcula indemnización por años, aviso y feriado proporcional.</p></div></div><div className="mt-4 space-y-3"><div><Label>Colaborador</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={termination.employee_id} onChange={e=>setTermination(v=>({...v,employee_id:e.target.value}))}><option value="">Seleccionar...</option>{employees.map((e:any)=><option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}</select></div><div><Label>Causal</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={termination.cause} onChange={e=>setTermination(v=>({...v,cause:e.target.value}))}><option value="161_necesidades_empresa">Art. 161 — necesidades de la empresa</option><option value="161_desahucio">Art. 161 — desahucio</option><option value="other">Otra causal</option></select></div><div><Label>Fecha término</Label><Input type="date" value={termination.termination_date} onChange={e=>setTermination(v=>({...v,termination_date:e.target.value}))}/></div><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={termination.notice_given} onChange={e=>setTermination(v=>({...v,notice_given:e.target.checked}))}/> Aviso previo entregado</label><Button className="w-full" onClick={calculateTermination} disabled={!termination.employee_id}><FileCheck2 className="mr-2 h-4 w-4"/>Calcular finiquito</Button></div></Card>
+    </div>
+    {message&&<Card className="mt-5 rounded-2xl border-indigo-500/30 bg-indigo-500/5 p-4 text-sm">{message}</Card>}
+    <Card className="mt-5 rounded-2xl p-5"><h2 className="font-semibold">Saldos de vacaciones</h2><div className="mt-4 space-y-2">{employees.map((e:any)=><div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"><span>{e.first_name} {e.last_name}</span><div className="flex items-center gap-2 text-sm"><span>{balances.find((b:any)=>b.employee_id===e.id)?.available_days ?? "—"} días disponibles</span><Button size="sm" variant="outline" onClick={()=>calculateVacation(e.id)}>Actualizar</Button></div></div>)}{employees.length===0&&<p className="text-sm text-muted-foreground">Primero registra colaboradores.</p>}</div></Card>
+    <div className="mt-5 grid gap-5 lg:grid-cols-2"><Card className="rounded-2xl p-5"><h2 className="font-semibold">Solicitudes recientes</h2><div className="mt-4 space-y-2">{leaves.slice(0,20).map((x:any)=><div key={x.id} className="rounded-xl border p-3 text-sm">{employees.find((e:any)=>e.id===x.employee_id)?.first_name} {employees.find((e:any)=>e.id===x.employee_id)?.last_name} · {x.leave_type} · {x.status}</div>)}</div></Card><Card className="rounded-2xl p-5"><h2 className="font-semibold">Finiquitos registrados</h2><div className="mt-4 space-y-2">{terminations.slice(0,20).map((x:any)=><div key={x.id} className="rounded-xl border p-3 text-sm">{employees.find((e:any)=>e.id===x.employee_id)?.first_name} {employees.find((e:any)=>e.id===x.employee_id)?.last_name} · {x.termination_date} · CLP {Number(x.total_amount||0).toLocaleString("es-CL")}</div>)}</div></Card></div>
+  </div></ModuleGuard>;
+}
