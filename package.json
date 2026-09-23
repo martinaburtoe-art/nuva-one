@@ -82,7 +82,9 @@
     "vite-tsconfig-paths": "^6.0.2",
     "zod": "^3.24.0",
     "@zxing/library": "^0.21.3",
-    "@radix-ui/react-select": "^2.2.6"
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-separator": "^1.1.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
