@@ -1,0 +1,28 @@
+-- Nüva People — additional domain guards.
+-- Refuerza fechas, rangos y relaciones matemáticas ya verificadas sin datos inválidos.
+
+DO $$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_employees_hire_before_termination_ck') THEN ALTER TABLE public.people_employees ADD CONSTRAINT people_employees_hire_before_termination_ck CHECK (termination_date IS NULL OR termination_date >= hire_date); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_employees_dependents_nonnegative_ck') THEN ALTER TABLE public.people_employees ADD CONSTRAINT people_employees_dependents_nonnegative_ck CHECK (dependents_count >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_employees_health_plan_nonnegative_ck') THEN ALTER TABLE public.people_employees ADD CONSTRAINT people_employees_health_plan_nonnegative_ck CHECK (health_plan_uf IS NULL OR health_plan_uf >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_employees_health_additional_nonnegative_ck') THEN ALTER TABLE public.people_employees ADD CONSTRAINT people_employees_health_additional_nonnegative_ck CHECK (health_additional_clp >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_contracts_end_after_start_ck') THEN ALTER TABLE public.people_contracts ADD CONSTRAINT people_contracts_end_after_start_ck CHECK (end_date IS NULL OR end_date >= start_date); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_contracts_work_days_max_ck') THEN ALTER TABLE public.people_contracts ADD CONSTRAINT people_contracts_work_days_max_ck CHECK (work_days BETWEEN 1 AND 7); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_documents_expiry_after_issue_ck') THEN ALTER TABLE public.people_documents ADD CONSTRAINT people_documents_expiry_after_issue_ck CHECK (expiry_date IS NULL OR issue_date IS NULL OR expiry_date >= issue_date); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_absences_employee_date_range_ck') THEN ALTER TABLE public.people_absences ADD CONSTRAINT people_absences_employee_date_range_ck CHECK (ends_on >= starts_on); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_payroll_periods_year_reasonable_ck') THEN ALTER TABLE public.people_payroll_periods ADD CONSTRAINT people_payroll_periods_year_reasonable_ck CHECK (period_year BETWEEN 2000 AND 2200); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_tax_brackets_month_ck') THEN ALTER TABLE public.people_tax_brackets ADD CONSTRAINT people_tax_brackets_month_ck CHECK (period_month BETWEEN 1 AND 12); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_tax_brackets_year_ck') THEN ALTER TABLE public.people_tax_brackets ADD CONSTRAINT people_tax_brackets_year_ck CHECK (period_year BETWEEN 2000 AND 2200); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_tax_brackets_min_nonnegative_ck') THEN ALTER TABLE public.people_tax_brackets ADD CONSTRAINT people_tax_brackets_min_nonnegative_ck CHECK (min_income >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_tax_brackets_max_after_min_ck') THEN ALTER TABLE public.people_tax_brackets ADD CONSTRAINT people_tax_brackets_max_after_min_ck CHECK (max_income IS NULL OR max_income >= min_income); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_tax_brackets_factor_range_ck') THEN ALTER TABLE public.people_tax_brackets ADD CONSTRAINT people_tax_brackets_factor_range_ck CHECK (factor BETWEEN 0 AND 1); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_afp_rates_commission_nonnegative_ck') THEN ALTER TABLE public.people_afp_rates ADD CONSTRAINT people_afp_rates_commission_nonnegative_ck CHECK (worker_commission >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_afp_rates_mandatory_rate_range_ck') THEN ALTER TABLE public.people_afp_rates ADD CONSTRAINT people_afp_rates_mandatory_rate_range_ck CHECK (mandatory_rate BETWEEN 0 AND 1); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_afp_rates_effectivity_range_ck') THEN ALTER TABLE public.people_afp_rates ADD CONSTRAINT people_afp_rates_effectivity_range_ck CHECK (effective_to IS NULL OR effective_to >= effective_from); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_vacation_balances_equation_ck') THEN ALTER TABLE public.people_vacation_balances ADD CONSTRAINT people_vacation_balances_equation_ck CHECK (available_days <= accrued_days + progressive_days AND available_days + used_days <= accrued_days + progressive_days); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_terminations_severance_years_nonnegative_ck') THEN ALTER TABLE public.people_terminations ADD CONSTRAINT people_terminations_severance_years_nonnegative_ck CHECK (severance_years >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_terminations_notice_nonnegative_ck') THEN ALTER TABLE public.people_terminations ADD CONSTRAINT people_terminations_notice_nonnegative_ck CHECK (notice_pay >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_terminations_vacation_nonnegative_ck') THEN ALTER TABLE public.people_terminations ADD CONSTRAINT people_terminations_vacation_nonnegative_ck CHECK (vacation_pay >= 0); END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='people_terminations_deductions_nonnegative_ck') THEN ALTER TABLE public.people_terminations ADD CONSTRAINT people_terminations_deductions_nonnegative_ck CHECK (deductions >= 0); END IF;
+END $$;
