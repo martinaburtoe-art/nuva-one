@@ -95,7 +95,6 @@ create table if not exists public.people_requests (
 );
 
 create index if not exists idx_people_employees_business_status on public.people_employees(business_id, employment_status);
-create index if not exists idx_people_employees_business_org on public.people_employees(business_id, org_unit_id);
 create index if not exists idx_people_contracts_business_employee on public.people_contracts(business_id, employee_id);
 create index if not exists idx_people_attendance_business_employee_time on public.people_attendance_events(business_id, employee_id, event_at desc);
 create index if not exists idx_people_leave_business_status on public.people_leave_requests(business_id, status, start_date);
