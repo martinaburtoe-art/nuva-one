@@ -7,7 +7,7 @@ describe("runNuvaAgentCouncil", () => {
       revenue: 1000000,
       cashAvailable: 100000,
       projectedCash30d: -250000,
-      overdueReceivables: 80000,
+      overdueReceivables: 0,
       inventoryValue: 300000,
       lowStockSkus: 2,
       stockoutRisk: 10,
