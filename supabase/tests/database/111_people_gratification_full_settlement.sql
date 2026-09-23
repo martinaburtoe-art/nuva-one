@@ -1,0 +1,13 @@
+begin;
+select plan(10);
+select ok(to_regclass('public.people_gratification_settings') is not null,'business gratification settings exists');
+select ok(to_regclass('public.people_gratification_ipc') is not null,'IPC factors table exists');
+select ok(to_regclass('public.people_gratification_settlements') is not null,'annual settlement table exists');
+select ok((select relrowsecurity from pg_class where oid='public.people_gratification_settings'::regclass),'settings RLS enabled');
+select ok((select relrowsecurity from pg_class where oid='public.people_gratification_ipc'::regclass),'IPC RLS enabled');
+select ok((select relrowsecurity from pg_class where oid='public.people_gratification_settlements'::regclass),'settlements RLS enabled');
+select ok(has_function_privilege('anon','public.calculate_people_gratification_settlement(uuid,integer)','EXECUTE') is false,'settlement helper blocked for anon');
+select ok(has_function_privilege('authenticated','public.calculate_people_gratification_settlement(uuid,integer)','EXECUTE') is false,'settlement helper blocked for authenticated');
+select ok(pg_get_functiondef('public.calculate_people_gratification_settlement(uuid,integer)'::regprocedure) like '%Faltan factores IPC%','Art. 50 blocks incomplete IPC data');
+select ok(pg_get_functiondef('public.calculate_people_gratification_settlement(uuid,integer)'::regprocedure) like '%v_profit*0.30%','Art. 47 distribution formula exists');
+select * from finish(); rollback;
