@@ -10925,6 +10925,22 @@ export type Database = {
         Args: { p_payroll_period_id: string }
         Returns: Json
       }
+      calculate_people_termination: {
+        Args: {
+          p_employee_id: string
+          p_notice_given?: boolean
+          p_termination_cause: string
+          p_termination_date: string
+        }
+        Returns: Json
+      }
+      calculate_people_vacation_balance: {
+        Args: {
+          p_as_of_date?: string
+          p_employee_id: string
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_bucket_key: string
