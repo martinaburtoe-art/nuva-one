@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/people-payroll")({ component: PeoplePayroll });
-const emptyInput = { overtime_hours: 0, taxable_bonus: 0, non_taxable_bonus: 0, absences_days: 0, other_deductions: 0, advance_payment: 0, gratification_amount: 0, notes: "" };
+const emptyInput = { overtime_hours: 0, taxable_bonus: 0, non_taxable_bonus: 0, absences_days: 0, other_deductions: 0, advance_payment: 0, gratification_amount: 0, medical_leave_days: 0, medical_leave_rima: 0, notes: "" };
 
 function PeoplePayroll() {
   const { data: employees = [] } = useBizList<any>("people_employees", { order: "last_name" });
@@ -37,7 +37,7 @@ function PeoplePayroll() {
   const latestParams = useMemo(() => params.slice(0, 12), [params]);
 
   async function createPeriod() {
-    try { const created = await insertPeriod.mutateAsync({ period_year: year, period_month: month, status: "draft", calculation_version: "cl-2026.3" }); setSelectedPeriod(created.id); setEngineMessage(`Período ${month}/${year} creado.`); }
+    try { const created = await insertPeriod.mutateAsync({ period_year: year, period_month: month, status: "draft", calculation_version: "cl-2026.12" }); setSelectedPeriod(created.id); setEngineMessage(`Período ${month}/${year} creado.`); }
     catch (error) { setEngineMessage(error instanceof Error ? error.message : "No fue posible crear el período."); }
   }
   async function saveInput() { if (!selectedPeriod || !selectedEmployee) return; try { await insertInput.mutateAsync({ payroll_period_id: selectedPeriod, employee_id: selectedEmployee, ...Object.fromEntries(Object.entries(input).map(([k, v]) => [k, typeof v === "number" ? Number(v) || 0 : v])) }); setInput(emptyInput); setEngineMessage("Datos variables guardados."); } catch (error) { setEngineMessage(error instanceof Error ? error.message : "No fue posible guardar los datos."); } }
@@ -68,7 +68,7 @@ function PeoplePayroll() {
     <Card className="mt-5 rounded-2xl p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">2. Datos variables del mes</h2><p className="text-sm text-muted-foreground">Horas extra, bonos, ausencias, anticipos, descuentos y gratificación.</p></div><span className="text-xs text-muted-foreground">{selectedInputs.length} entradas</span></div>
       {!selectedPeriod ? <p className="mt-4 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">Crea o selecciona un período para cargar datos.</p> : <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <div className="lg:col-span-2"><Label>Colaborador</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={selectedEmployee} onChange={e => setSelectedEmployee(e.target.value)}><option value="">Seleccionar...</option>{employees.map((e: any) => <option key={e.id} value={e.id}>{e.first_name} {e.last_name} · {e.national_id || "sin RUT"}</option>)}</select></div>
-        {Object.entries(input).filter(([k]) => k !== "notes").map(([key, value]) => <div key={key}><Label>{({ overtime_hours: "Horas extra", taxable_bonus: "Bono imponible", non_taxable_bonus: "Bono no imponible", absences_days: "Días ausencia", other_deductions: "Otros descuentos", advance_payment: "Anticipo", gratification_amount: "Gratificación" } as any)[key] || key}</Label><Input type="number" min={0} step="0.01" value={String(value)} onChange={e => setInput(v => ({ ...v, [key]: Number(e.target.value) }))} /></div>)}
+        {Object.entries(input).filter(([k]) => k !== "notes").map(([key, value]) => <div key={key}><Label>{({ overtime_hours: "Horas extra", taxable_bonus: "Bono imponible", non_taxable_bonus: "Bono no imponible", absences_days: "Días ausencia", other_deductions: "Otros descuentos", advance_payment: "Anticipo", gratification_amount: "Gratificación", medical_leave_days: "Días licencia médica", medical_leave_rima: "RIMA licencia médica" } as any)[key] || key}</Label><Input type="number" min={0} step="0.01" value={String(value)} onChange={e => setInput(v => ({ ...v, [key]: Number(e.target.value) }))} /></div>)}
         <div className="lg:col-span-4"><Label>Notas</Label><Input value={input.notes} onChange={e => setInput(v => ({ ...v, notes: e.target.value }))} placeholder="Observación opcional" /></div><div className="lg:col-span-4 flex justify-end"><Button onClick={saveInput} disabled={insertInput.isPending || !selectedEmployee}><Plus className="mr-2 h-4 w-4" />Guardar datos del mes</Button></div>
       </div>}
       {selectedPeriod && selectedInputs.length > 0 && <div className="mt-5 space-y-2">{selectedInputs.map((x: any) => <div key={x.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm"><span>{employees.find((e: any) => e.id === x.employee_id)?.first_name} {employees.find((e: any) => e.id === x.employee_id)?.last_name}</span><span>HE {x.overtime_hours} · Bono {x.taxable_bonus} · Ausencias {x.absences_days}</span><Button size="sm" variant="ghost" onClick={() => deleteInput.mutate(x.id)}><Trash2 className="h-4 w-4" /></Button></div>)}</div>}
