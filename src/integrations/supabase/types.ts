@@ -11283,6 +11283,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      review_people_leave_request: {
+        Args: {
+          p_action: string
+          p_leave_request_id: string
+          p_paid: boolean
+        }
+        Returns: Json
+      }
       release_ai_tool_quota: {
         Args: { p_business_id: string; p_tool_id: string; p_units?: number }
         Returns: undefined
