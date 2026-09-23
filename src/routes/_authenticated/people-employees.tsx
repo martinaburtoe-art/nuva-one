@@ -25,7 +25,7 @@ function PeopleEmployees() {
   const [contract,setContract]=useState(blankContract);
 
   async function saveEmployee(){if(!form.first_name||!form.last_name||!form.national_id)return;const e=await insertEmployee.mutateAsync(form);setContract(v=>({...v,employee_id:e.id}));setForm(blankEmployee);setOpen(false);setContractOpen(true);}
-  async function saveContract(){if(!contract.employee_id||Number(contract.salary_amount)<=0)return;await insertContract({...contract,end_date:contract.end_date||null,weekly_hours:Number(contract.weekly_hours),salary_amount:Number(contract.salary_amount)});setContract(blankContract);setContractOpen(false);}
+  async function saveContract(){if(!contract.employee_id||Number(contract.salary_amount)<=0)return;await insertContract.mutateAsync({...contract,end_date:contract.end_date||null,weekly_hours:Number(contract.weekly_hours),salary_amount:Number(contract.salary_amount)});setContract(blankContract);setContractOpen(false);}
 
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
     <PageHeader title="Colaboradores" description="Ficha laboral completa: identidad, previsión, salud y contrato. Estos datos alimentan remuneraciones." />
