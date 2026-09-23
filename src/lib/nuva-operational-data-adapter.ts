@@ -1,5 +1,5 @@
 import { buildBusinessBrain, type BusinessBrainInput, type BusinessBrainResult } from "./nuva-business-brain";
-import { normalizeSignals, type BusinessSignal } from "./nuva-data-contract";
+import { normalizeSignals, type BusinessModule, type BusinessSignal } from "./nuva-data-contract";
 export type OperationalSnapshot = { financialHealthScore: number; cashAvailable: number; projectedCash30d: number; overdueReceivables: number; revenue: number; inventoryValue: number; lowStockSkus: number; stockoutRisk: number; grossMargin: number | null; taxMismatchAmount: number | null; complianceReadiness: number | null; dataSources: string[] };
 export type OperationalIntelligence = { brainInput: BusinessBrainInput; brain: BusinessBrainResult; signals: BusinessSignal[]; dataQuality: "high" | "medium" | "low" };
 const finiteOr = (value: number | null | undefined, fallback: number) => Number.isFinite(value) ? Number(value) : fallback;
@@ -14,6 +14,15 @@ export function buildOperationalIntelligence(snapshot: OperationalSnapshot): Ope
     complianceReadiness: snapshot.complianceReadiness == null ? null : Math.max(0, Math.min(100, finiteOr(snapshot.complianceReadiness, 0))),
   };
   const brain = buildBusinessBrain(brainInput);
-  const signals = normalizeSignals(brain.signals.map((signal) => ({ id: signal.id, module: ["cashflow", "inventory", "crm", "sales", "purchases"].includes(signal.module) ? signal.module : "crm", title: signal.title, severity: signal.severity, confidence: signal.confidence, impact: signal.impact, action: signal.action })));
+  const isBusinessModule = (value: string): value is BusinessModule => ["cashflow", "inventory", "crm", "sales", "purchases"].includes(value);
+  const signals = normalizeSignals(brain.signals.map((signal) => ({
+    id: signal.id,
+    module: isBusinessModule(signal.module) ? signal.module : "crm",
+    title: signal.title,
+    severity: signal.severity,
+    confidence: signal.confidence,
+    impact: signal.impact,
+    action: signal.action,
+  })));
   return { brainInput, brain, signals, dataQuality: quality(snapshot) };
 }
