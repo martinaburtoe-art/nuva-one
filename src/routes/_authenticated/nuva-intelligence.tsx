@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowUpRight, Brain, CheckCircle2, Info, Lightbulb, ShieldAlert, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowUpRight, Brain, CheckCircle2, Info, Lightbulb, ShieldAlert, Sparkles, UsersRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
@@ -29,6 +29,8 @@ function NuvaIntelligence() {
   const { data: products } = useBizList<any>("products", { order: "name" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at" });
   const { data: activities } = useBizList<any>("customer_activities", { order: "created_at" });
+  const { data: councilMemory } = useBizList<any>("nuva_business_memory", { order: "created_at" });
+  const { data: actionQueue } = useBizList<any>("nuva_action_queue", { order: "created_at" });
 
   const intelligence = useMemo(() => {
     const income = (transactions ?? []).filter((t: any) => t.type === "income").reduce((sum: number, t: any) => sum + Number(t.amount ?? 0), 0);
@@ -46,6 +48,11 @@ function NuvaIntelligence() {
 
   const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
   const active = views.find((view) => view.id === activeView);
+  const latestCouncil = (councilMemory ?? []).find((memory: any) => memory.memory_type === "agent_consensus");
+  const councilEvidence = latestCouncil?.evidence && typeof latestCouncil.evidence === "object" ? latestCouncil.evidence : {};
+  const councilConfidence = typeof councilEvidence.confidence === "number" ? Math.round(councilEvidence.confidence * 100) : null;
+  const councilAgreement = typeof councilEvidence.agreement === "number" ? councilEvidence.agreement : null;
+  const pendingActions = (actionQueue ?? []).filter((action: any) => ["pending", "approved"].includes(String(action.status))).length;
 
   return (
     <ModuleGuard module="dashboard">
@@ -70,6 +77,27 @@ function NuvaIntelligence() {
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">Nüva cruza caja, ventas, inventario, cotizaciones y seguimiento para transformar datos operativos en contexto accionable.</p>
                 </div>
                 <div className="min-w-[150px] rounded-2xl border bg-background/80 p-5 text-center"><p className="text-xs text-muted-foreground">Índice analítico</p><p className="mt-1 text-3xl font-bold tabular-nums">{intelligence.health}</p><p className="text-xs">/100</p></div>
+              </div>
+            </Card>
+            <Card className="overflow-hidden border-violet-500/20 bg-background/70">
+              <div className="border-b border-violet-500/10 bg-violet-500/[0.04] p-5 md:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.08] p-2.5 text-violet-600 dark:text-violet-400"><UsersRound className="h-5 w-5" /></div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">Nüva Agent Council</p>
+                      <h2 className="mt-1 text-xl font-semibold">{latestCouncil?.title ?? "El consejo está construyendo contexto"}</h2>
+                      <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{latestCouncil?.content ?? "Los agentes especializados cruzan finanzas, ventas, abastecimiento, personas, cumplimiento y crecimiento antes de proponer una acción."}</p>
+                    </div>
+                  </div>
+                  <Link to="/executive-command-center" className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">Ver acciones <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+                </div>
+              </div>
+              <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-6">
+                <CouncilMetric label="Agentes consultados" value="7" detail="Un mismo contexto empresarial" />
+                <CouncilMetric label="Confianza" value={councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Evidencia disponible" />
+                <CouncilMetric label="Acuerdo" value={councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Coincidencia sobre la prioridad" />
+                <CouncilMetric label="Acciones abiertas" value={String(pendingActions)} detail="Siempre requieren control humano" />
               </div>
             </Card>
             <div>
@@ -102,5 +130,6 @@ function NuvaIntelligence() {
 
 function SectionIntro({ title, text }: { title: string; text: string }) { return <div><h2 className="text-xl font-semibold">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{text}</p></div>; }
 function Kpi({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border bg-background/70 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-lg font-bold tabular-nums">{value}</p></div>; }
+function CouncilMetric({ label, value, detail }: { label: string; value: string; detail: string }) { return <div className="rounded-xl border bg-background/60 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold tabular-nums">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div>; }
 function InsightTile({ title, value, detail, href }: { title: string; value: string; detail: string; href: "/inventory" | "/quotes" | "/customers" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full border-violet-500/10 p-5 transition-all hover:-translate-y-0.5 hover:border-violet-500/30"><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p><p className="mt-2 text-lg font-semibold">{value}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></Card></Link>; }
 function SignalCard({ icon, title, value, description, href }: { icon: React.ReactNode; title: string; value: number | string; description: string; href: "/inventory" | "/customers" | "/quotes" | "/finance" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full p-6 transition-all hover:-translate-y-0.5 hover:border-violet-500/30"><div className="flex items-start gap-3"><div className="rounded-xl border bg-violet-500/[0.08] p-2 text-violet-600 dark:text-violet-400">{icon}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p><p className="mt-1 text-sm text-muted-foreground">{description}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></div></div></Card></Link>; }
