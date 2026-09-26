@@ -38,7 +38,7 @@ REVOKE ALL ON FUNCTION public.people_unpaid_absence_days(uuid,date,date) FROM PU
 -- Complete the payroll-engine side of the medical-leave feature.
 -- The helper functions above are not sufficient for a clean migration reset:
 -- the payroll function must carry the RIMA/SSP inputs itself.
-DO $
+DO $nuva$
 DECLARE
   v_def text;
   v_new text;
@@ -99,7 +99,7 @@ BEGIN
   ELSE
     EXECUTE v_new;
   END IF;
-END $;
+END $nuva$;
 
 -- calculate_people_payroll_period(uuid) is updated in the deployed database to cl-2026.9:
 -- * excludes medical leave from unpaid-absence helper
