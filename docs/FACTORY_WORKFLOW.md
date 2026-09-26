@@ -1,0 +1,39 @@
+# Factory execution checklist
+
+## Before work
+- [ ] Objective and acceptance criteria recorded.
+- [ ] Relevant existing architecture inspected.
+- [ ] No deprecated Studio/WhatsApp scope reintroduced.
+- [ ] Sensitive data excluded from external tools.
+
+## Design
+- [ ] Existing design tokens/components reused.
+- [ ] OpenDesign exploration translated into implementation rules.
+- [ ] Responsive, accessibility, empty/error/loading states defined.
+
+## Engineering
+- [ ] OpenCode/Cline task is scoped.
+- [ ] Changes stay on a feature branch.
+- [ ] Tests cover changed behavior.
+- [ ] Security/RLS impact reviewed.
+- [ ] Database changes have migrations.
+
+## Media
+- [ ] Asset purpose documented.
+- [ ] Provider/model recorded when relevant.
+- [ ] License/commercial-use status checked.
+- [ ] Final asset exported into Nüva-controlled storage.
+
+## Release
+- [ ] Typecheck.
+- [ ] Lint.
+- [ ] Unit/integration tests.
+- [ ] pgTAP/recovery/security checks where relevant.
+- [ ] Production build.
+- [ ] Browser verification for UI changes.
+- [ ] Vercel deployment verified.
+
+## Learning
+- [ ] Decision or incident recorded.
+- [ ] Reusable rule added to Factory knowledge.
+- [ ] Dead experiments removed when no longer useful.
