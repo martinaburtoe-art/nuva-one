@@ -2,3 +2,6 @@
 DROP INDEX IF EXISTS public.idx_people_gratification_settings_business_year;
 DROP INDEX IF EXISTS public.idx_people_payroll_items_period_employee;
 DROP INDEX IF EXISTS public.idx_people_payroll_period_business;
+
+DROP INDEX IF EXISTS public.idx_people_contracts_business_employee;
+DROP INDEX IF EXISTS public.idx_people_payroll_items_business_employee;
