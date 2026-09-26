@@ -50,7 +50,16 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
         if (actionType === "low-stock" || actionType === "purchase-pressure") {
           const { data, error } = await session.supabase.from("purchases").insert({ business_id: businessId, supplier_name: "Nüva — sugerencia", status: "pending", total: 0, purchase_date: new Date().toISOString().slice(0, 10), notes: `Acción Nüva: ${action.title}. ${action.description ?? ""}`, items: action.payload ?? {} } as never).select("id").single();
           if (error) throw error;
-          result = { operation: "purchase_draft_created", record_id: data.id };
+          const purchasePayload = {
+            business_id: businessId,
+            supplier_name: "Nüva — sugerencia",
+            status: "pending",
+            total: 0,
+            purchase_date: new Date().toISOString().slice(0, 10),
+            notes: `Acción Nüva: ${action.title}. ${action.description ?? ""}`,
+            items: action.payload ?? {},
+          } as never;
+          const { data, error } = await session.supabase.from("purchases").insert(purchasePayload).select("id").single();
         } else if (actionType === "receivables-overdue" || actionType === "growth-opportunity") {
           const activityPayload = { business_id: businessId, type: "task", content: `Acción Nüva: ${action.title}. ${action.description ?? ""}`, completed: false, created_by: session.userId } as unknown as Database["public"]["Tables"]["customer_activities"]["Insert"];
           const { data, error } = await session.supabase.from("customer_activities").insert(activityPayload).select("id").single();
