@@ -94,7 +94,7 @@ export function buildNuvaIntelligence(input: {
 
   const lowStock = stock.filter((x) => {
     const qty = amount(x.quantity);
-    const threshold = amount(x.reorder_point || x.min_stock);
+    const threshold = Math.max(amount(x.reorder_point), amount(x.min_stock));
     return threshold > 0 && qty <= threshold;
   });
   if (lowStock.length) {
