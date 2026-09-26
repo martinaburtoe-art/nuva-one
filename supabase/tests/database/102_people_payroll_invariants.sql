@@ -31,8 +31,8 @@ select ok(
 );
 
 select ok(
-  position('cl-2026.6' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,
-  'payroll engine version is 6'
+  position('cl-2026.12' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,
+  'payroll engine version is current'
 );
 
 select is(
