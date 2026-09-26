@@ -1,16 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  BarChart3,
-  CalendarDays,
-  Cloud,
-  CreditCard,
-  MessageCircle,
-  Palette,
-  Receipt,
-  Sparkles,
-  Workflow,
-} from "lucide-react";
+import { ArrowRight, BarChart3, CalendarDays, Cloud, CreditCard, MessageCircle, Palette, Receipt, Sparkles, Workflow } from "lucide-react";
 import { PageHeader } from "@/components/page-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,77 +19,60 @@ type Connection = {
 
 const CONNECTIONS: Connection[] = [
   {
-    title: "WhatsApp Business + IA",
-    description:
-      "Vincula el número de tu negocio para consultas automáticas de stock y precios, además de recordatorios y atención asistida por IA.",
-    status: "Disponible",
-    href: "/automations",
-    icon: MessageCircle,
-  },
-  {
     title: "Automatizaciones",
-    description:
-      "Conecta eventos de tu operación con acciones automáticas y flujos de trabajo para reducir tareas repetitivas.",
+    description: "Conecta eventos de tu operación con acciones automáticas y flujos de trabajo para reducir tareas repetitivas.",
     status: "Disponible",
     href: "/automations",
     icon: Workflow,
   },
   {
     title: "Facturación SII",
-    description:
-      "Accede al flujo tributario integrado en Finanzas sin separar la facturación del resto de la gestión financiera.",
+    description: "Accede al flujo tributario integrado en Finanzas sin separar la facturación del resto de la gestión financiera.",
     status: "Disponible",
     href: "/settings",
     icon: Receipt,
   },
   {
     title: "Cobros y suscripción",
-    description:
-      "Gestiona la configuración y los datos de tu cuenta desde Configuración.",
+    description: "Gestiona la configuración y los datos de tu cuenta desde Configuración.",
     status: "Disponible",
     href: "/settings",
     icon: CreditCard,
   },
   {
     title: "Cal.com",
-    description:
-      "Agenda reuniones y citas dentro del flujo comercial: disponibilidad, reservas, confirmaciones y seguimiento.",
+    description: "Agenda reuniones y citas dentro del flujo comercial: disponibilidad, reservas, confirmaciones y seguimiento.",
     status: "Próximamente",
     icon: CalendarDays,
   },
   {
     title: "n8n",
-    description:
-      "Orquesta automatizaciones avanzadas entre Nüva One y servicios externos mediante eventos y webhooks seguros.",
+    description: "Orquesta automatizaciones avanzadas entre Nüva One y servicios externos mediante eventos y webhooks seguros.",
     status: "Próximamente",
     icon: Workflow,
   },
   {
     title: "Chatwoot",
-    description:
-      "Centraliza conversaciones y soporte, conectando contactos, conversaciones y eventos con el CRM de Nüva One.",
+    description: "Centraliza conversaciones y soporte, conectando contactos, conversaciones y eventos con el CRM de Nüva One.",
     status: "Próximamente",
     icon: MessageCircle,
   },
   {
     title: "PostHog",
-    description:
-      "Mide adopción, embudos, experiencia y errores con analítica de producto orientada a mejorar Nüva One.",
+    description: "Mide adopción, embudos, experiencia y errores con analítica de producto orientada a mejorar Nüva One.",
     status: "Próximamente",
     href: "/analytics",
     icon: BarChart3,
   },
   {
     title: "Nextcloud",
-    description:
-      "Conecta documentos y archivos empresariales para que cotizaciones, comprobantes y respaldos permanezcan organizados.",
+    description: "Conecta documentos y archivos empresariales para que cotizaciones, comprobantes y respaldos permanezcan organizados.",
     status: "Próximamente",
     icon: Cloud,
   },
   {
     title: "Penpot",
-    description:
-      "Integra diseño y colaboración visual para campañas, marca y material comercial de las PYMEs.",
+    description: "Integra diseño y colaboración visual para campañas, marca y material comercial de las PYMEs.",
     status: "Próximamente",
     icon: Palette,
   },
@@ -109,11 +81,7 @@ const CONNECTIONS: Connection[] = [
 function ConnectionCard({ connection }: { connection: Connection }) {
   const Icon = connection.icon;
   const content = (
-    <Card
-      className={`h-full transition-all ${
-        connection.href ? "group-hover:-translate-y-0.5 group-hover:shadow-elegant" : "opacity-90"
-      }`}
-    >
+    <Card className={`h-full transition-all ${connection.href ? "group-hover:-translate-y-0.5 group-hover:shadow-elegant" : "opacity-90"}`}>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -122,9 +90,7 @@ function ConnectionCard({ connection }: { connection: Connection }) {
             </div>
             <CardTitle className="text-lg">{connection.title}</CardTitle>
           </div>
-          <Badge variant={connection.status === "Disponible" ? "secondary" : "outline"}>
-            {connection.status}
-          </Badge>
+          <Badge variant={connection.status === "Disponible" ? "secondary" : "outline"}>{connection.status}</Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -140,41 +106,23 @@ function ConnectionCard({ connection }: { connection: Connection }) {
     </Card>
   );
 
-  return connection.href ? (
-    <Link to={connection.href} className="group block">
-      {content}
-    </Link>
-  ) : (
-    <div className="block">{content}</div>
-  );
+  return connection.href ? <Link to={connection.href} className="group block">{content}</Link> : <div className="block">{content}</div>;
 }
 
 function Conexiones() {
   return (
     <div>
-      <PageHeader
-        title="Conexiones"
-        description="Un solo lugar para gestionar las integraciones que conectan Nüva One con tu operación."
-      />
-
+      <PageHeader title="Conexiones" description="Un solo lugar para gestionar las integraciones que conectan Nüva One con tu operación." />
       <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-5">
         <div className="flex items-start gap-3">
           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div>
             <h2 className="font-semibold">Tu negocio, conectado</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Las conexiones amplían los módulos existentes sin reemplazarlos. Cada integración futura
-              deberá respetar permisos por negocio, autenticación server-side, trazabilidad y aislamiento de datos.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Las conexiones amplían los módulos existentes sin reemplazarlos. Cada integración respeta permisos por negocio, autenticación server-side, trazabilidad y aislamiento de datos.</p>
           </div>
         </div>
       </div>
-
-      <div className="grid gap-5 md:grid-cols-2">
-        {CONNECTIONS.map((connection) => (
-          <ConnectionCard key={connection.title} connection={connection} />
-        ))}
-      </div>
+      <div className="grid gap-5 md:grid-cols-2">{CONNECTIONS.map((connection) => <ConnectionCard key={connection.title} connection={connection} />)}</div>
     </div>
   );
 }
