@@ -180,7 +180,14 @@ export function runNuvaAgentCouncil(input: NuvaAgentCouncilInput): NuvaAgentCoun
   const quality: NuvaAgentFinding["evidenceQuality"] =
     consensusConfidence >= 0.9 ? "high" : consensusConfidence >= 0.75 ? "medium" : "low";
   const dissent = priority
-    ? nonOrchestratorFindings.filter((item) => item.decisionScore >= priority.decisionScore - 15 && item.signalKey !== priority.signalKey)
+    ? nonOrchestratorFindings.filter(
+        (item) =>
+          item.signalKey !== priority.signalKey &&
+          (item.decisionScore >= priority.decisionScore - 35 ||
+            item.severity === "high" ||
+            item.severity === "critical" ||
+            (priority.agentId === "finance" && item.agentId === "inventory")),
+      )
     : [];
 
   const headline = priority

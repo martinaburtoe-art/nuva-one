@@ -17,7 +17,10 @@ export function buildNuvaOperationalResult(input: NuvaOperationalInput): NuvaOpe
   const recentNet = input.transactions.filter((tx) => tx.tx_date && new Date(tx.tx_date).getTime() >= cutoff).reduce((sum, tx) => sum + (tx.type === "income" ? n(tx.amount) : tx.type === "expense" ? -n(tx.amount) : 0), 0);
   const projectedCash30d = cashAvailable + recentNet;
   const inventoryValue = input.products.reduce((sum, product) => sum + Math.max(0, n(product.stock)) * Math.max(0, n(product.price)), 0);
-  const lowStockSkus = input.products.filter((product) => n(product.stock) <= Math.max(n(product.low_stock_threshold), n(product.reorder_point))).length;
+  const lowStockSkus = input.products.filter((product) => {
+    const threshold = Math.max(n(product.low_stock_threshold), n(product.reorder_point));
+    return threshold > 0 && n(product.stock) <= threshold;
+  }).length;
   const stockoutRisk = input.products.length === 0 ? 0 : Math.round((input.products.filter((product) => n(product.stock) <= 0).length / input.products.length) * 100);
   const overdueReceivables = activeSales.filter((sale) => { const due = sale.due_date ? new Date(sale.due_date).getTime() : NaN; return Number.isFinite(due) && due < Date.now() && n(sale.paid_amount) < n(sale.total); }).reduce((sum, sale) => sum + Math.max(0, n(sale.total) - n(sale.paid_amount)), 0);
   const snapshot: OperationalSnapshot = {
@@ -30,7 +33,14 @@ export function buildNuvaOperationalResult(input: NuvaOperationalInput): NuvaOpe
     sales: input.sales.map((sale) => ({ total: n(sale.total), sale_date: sale.sale_date ?? undefined, status: sale.status ?? undefined, paid_amount: n(sale.paid_amount), due_date: sale.due_date ?? undefined })),
     purchases: input.purchases.map((purchase) => ({ total: n(purchase.total), purchase_date: purchase.purchase_date ?? undefined, status: purchase.status ?? undefined })),
     transactions: input.transactions.map((tx) => ({ amount: n(tx.amount), type: tx.type ?? undefined, tx_date: tx.tx_date ?? undefined })),
-    stock: input.products.map((product) => ({ quantity: n(product.stock), min_stock: n(product.low_stock_threshold), reorder_point: n(product.reorder_point), price: n(product.price), name: product.name ?? undefined, sku: product.sku ?? undefined })),
+    stock: input.products.map((product) => ({
+      quantity: n(product.stock),
+      min_stock: Math.max(n(product.low_stock_threshold), n(product.reorder_point)),
+      reorder_point: Math.max(n(product.reorder_point), n(product.low_stock_threshold)),
+      price: n(product.price),
+      name: product.name ?? undefined,
+      sku: product.sku ?? undefined,
+    })),
   });
   const intelligence = buildOperationalIntelligence(snapshot);
   return { decision, intelligence, snapshot };

@@ -13,7 +13,7 @@ const ReasoningSchema = z.object({
 export type NuvaAgentReasoning = z.infer<typeof ReasoningSchema>;
 
 function parseJson(text: string) {
-  const cleaned = text.trim().replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/i, "");
+  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
   return JSON.parse(cleaned) as unknown;
 }
 

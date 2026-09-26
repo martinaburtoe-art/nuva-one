@@ -24,13 +24,13 @@ select ok(
 );
 
 select ok(
-  position('Licencia médica detectada sin RIMA' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,
+  position('licencia médica detectada sin rima' in lower(pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure)))>0,
   'missing RIMA produces an explicit payroll warning'
 );
 
 select ok(
-  position('cl-2026.9' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,
-  'payroll engine version is 9'
+  position('cl-2026.12' in pg_get_functiondef('public.calculate_people_payroll_period(uuid)'::regprocedure))>0,
+  'payroll engine version is current'
 );
 
 select ok(

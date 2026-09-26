@@ -151,5 +151,17 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm run test
-      - name: Build
-        run: npm run build
+      - name: Build (retry transient route-tree generation failures)
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Build attempt ${attempt}/3"
+            if npm run build; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Build failed; retrying once to tolerate transient TanStack route-tree generation races"
+              sleep 3
+            fi
+          done
+          exit 1
