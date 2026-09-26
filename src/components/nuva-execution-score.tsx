@@ -8,6 +8,7 @@ export function NuvaExecutionScore({ activities = [], priorities = 0 }: Props) {
   const tasks = activities.filter((a) => a.type === "task");
   const completed = tasks.filter((a) => a.completed).length;
   const open = tasks.filter((a) => !a.completed).length;
+  const pending = tasks.filter((a) => !a.completed && !(a.due_date && new Date(a.due_date).getTime() < Date.now())).length;
   const overdue = tasks.filter(
     (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
   ).length;
@@ -47,7 +48,7 @@ export function NuvaExecutionScore({ activities = [], priorities = 0 }: Props) {
           </div>
         </div>
         <p className="mt-4 text-sm font-semibold">{label}</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-4">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-5">
           <Metric
             icon={<Target className="h-4 w-4" />}
             label="Prioridades"

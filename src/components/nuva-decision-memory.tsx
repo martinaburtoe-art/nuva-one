@@ -18,6 +18,7 @@ const ageDays = (value?: string | null) =>
 export function NuvaDecisionMemory({ activities = [] }: Props) {
   const decisions = activities
     .filter((a) => a.type === "task" && a.created_at)
+    .filter((a) => Date.now() - new Date(a.created_at!).getTime() >= 0)
     .sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
   const recent = decisions.filter((a) => ageDays(a.created_at) <= 30);
   const completed = recent.filter((a) => a.completed).length;
@@ -25,6 +26,7 @@ export function NuvaDecisionMemory({ activities = [] }: Props) {
     (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
   ).length;
   const rate = recent.length ? Math.round((completed / recent.length) * 100) : 0;
+  const memoryLabel = recent.length >= 5 ? "Memoria operativa activa" : recent.length ? "Memoria en construcción" : "Sin historial suficiente";
   const latest = recent.slice(0, 4);
 
   return (
@@ -45,7 +47,7 @@ export function NuvaDecisionMemory({ activities = [] }: Props) {
             </p>
           </div>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric
             icon={<History className="h-4 w-4" />}
             label="Decisiones registradas"
@@ -57,6 +59,12 @@ export function NuvaDecisionMemory({ activities = [] }: Props) {
             label="Ejecutadas"
             value={`${rate}%`}
             detail={`${completed}/${recent.length} acciones`}
+          />
+          <Metric
+            icon={<BrainCircuit className="h-4 w-4" />}
+            label="Estado de memoria"
+            value={memoryLabel}
+            detail="según actividad observable"
           />
           <Metric
             icon={<Clock3 className="h-4 w-4" />}
