@@ -1,15 +1,16 @@
 -- Remove deprecated product areas that are no longer part of Nüva One.
 -- Nüva Studio is superseded by Nüva Intelligence + Nüva Agent Council.
 -- WhatsApp integration is intentionally out of scope for the current product.
--- These objects contain no Studio rows; WhatsApp messages were legacy integration data.
+-- Legacy WhatsApp collection/quote reminder tables are removed as well.
 
 begin;
 
 drop view if exists public.whatsapp_connections_safe cascade;
-
 drop table if exists public.whatsapp_messages cascade;
 drop table if exists public.whatsapp_owner_links cascade;
 drop table if exists public.whatsapp_connections cascade;
+drop table if exists public.collection_reminders cascade;
+drop table if exists public.quote_followups cascade;
 
 drop table if exists public.nuva_studio_campaign_evaluations cascade;
 drop table if exists public.nuva_studio_campaign_metrics cascade;
