@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
         let result: Record<string, unknown>;
         const actionType = String(action.action_type ?? "");
         if (actionType === "low-stock" || actionType === "purchase-pressure") {
-          const { data, error } = await session.supabase.from("purchases").insert({ business_id: businessId, supplier_name: "Nüva — sugerencia", status: "pending", total: 0, purchase_date: new Date().toISOString().slice(0, 10), notes: `Acción Nüva: ${action.title}. ${action.description ?? ""}`, items: action.payload ?? {} }).select("id").single();
+          const { data, error } = await session.supabase.from("purchases").insert({ business_id: businessId, supplier_name: "Nüva — sugerencia", status: "pending", total: 0, purchase_date: new Date().toISOString().slice(0, 10), notes: `Acción Nüva: ${action.title}. ${action.description ?? ""}`, items: action.payload ?? {} } as never).select("id").single();
           if (error) throw error;
           result = { operation: "purchase_draft_created", record_id: data.id };
         } else if (actionType === "receivables-overdue" || actionType === "growth-opportunity") {
