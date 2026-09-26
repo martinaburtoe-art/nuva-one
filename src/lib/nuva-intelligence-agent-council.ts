@@ -183,7 +183,10 @@ export function runNuvaAgentCouncil(input: NuvaAgentCouncilInput): NuvaAgentCoun
     ? nonOrchestratorFindings.filter(
         (item) =>
           item.signalKey !== priority.signalKey &&
-          (item.decisionScore >= priority.decisionScore - 35 || item.severity === "high" || item.severity === "critical"),
+          (item.decisionScore >= priority.decisionScore - 35 ||
+            item.severity === "high" ||
+            item.severity === "critical" ||
+            (priority.agentId === "finance" && item.agentId === "inventory")),
       )
     : [];
 
