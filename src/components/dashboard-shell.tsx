@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
-import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, Sparkles, Brain, FileText, Settings, Bell, LogOut, ChevronsLeft, ChevronsRight, Building2, ChevronDown, Plus, Menu, Calculator, Lock, CalendarClock, Users, MessagesSquare, Truck, ShieldCheck, HelpCircle, UserRoundCog } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, Sparkles, Brain, FileText, Settings, Bell, LogOut, ChevronsLeft, ChevronsRight, Building2, ChevronDown, Plus, Menu, Calculator, Lock, CalendarClock, Users, MessagesSquare, Truck, ShieldCheck, HelpCircle, UserRoundCog, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness, useMyMembership, hasModulePermission, type ModuleKey } from "@/lib/use-business";
@@ -31,6 +31,7 @@ const nav = [
   { to: "/foro", label: "Comunidad", icon: MessagesSquare, section: "Espacio" },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true, section: "Espacio" },
   { to: "/people", label: "Nüva People", icon: UserRoundCog, module: "people", section: "Personas" },
+  { to: "/conexiones", label: "Nüva Connect", icon: Link2, section: "Espacio" },
   { to: "/settings", label: "Configuración", icon: Settings, section: "Espacio" },
 ] as const;
 
