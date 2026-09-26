@@ -1,19 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { CheckCircle2, Clock3, XCircle, RefreshCw } from "lucide-react";
+import { CheckCircle2, Clock3, XCircle, RefreshCw, Play, ArrowUpRight } from "lucide-react";
+import type { ActionDestination } from "@/lib/nuva-action-center";
 import { supabase } from "@/integrations/supabase/client";
 import { canManageBusiness, useActiveBusiness, useMyRole } from "@/lib/use-business";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 type QueueItem = {
-  id: string; title: string; description: string | null; priority: string;
-  status: string; impact: number; destination: string | null; created_at: string;
+  id: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  impact: number;
+  destination: ActionDestination | null;
+  mode: "review" | "prepare";
+  created_at: string;
 };
 
 const labels: Record<string, string> = {
-  pending: "Pendiente", approved: "Aprobada", executing: "Ejecutando",
-  completed: "Completada", dismissed: "Descartada", failed: "Fallida",
+  pending: "Pendiente",
+  approved: "Aprobada",
+  executing: "Ejecutando",
+  completed: "Completada",
+  dismissed: "Descartada",
+  failed: "Fallida",
 };
 
 export function NuvaActionQueue() {
@@ -21,13 +34,17 @@ export function NuvaActionQueue() {
   const { data: role } = useMyRole();
   const canApprove = canManageBusiness(role);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [executing, setExecuting] = useState<string | null>(null);
   const query = useQuery({
     enabled: !!active?.id,
     queryKey: ["nuva-action-queue", active?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("nuva_action_queue")
-        .select("id,title,description,priority,status,impact,destination,created_at")
-        .eq("business_id", active!.id).order("created_at", { ascending: false }).limit(20);
+      const { data, error } = await supabase
+        .from("nuva_action_queue")
+        .select("id,title,description,priority,status,impact,destination,mode,created_at")
+        .eq("business_id", active!.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
       if (error) throw error;
       return (data ?? []) as QueueItem[];
     },
@@ -37,43 +54,105 @@ export function NuvaActionQueue() {
     if (!canApprove || !active?.id) return;
     setActionError(null);
     const { error } = await supabase.from("nuva_action_queue").update({ status }).eq("id", id).eq("business_id", active.id);
-    if (error) {
-      setActionError(error.message);
-      return;
+    if (error) setActionError(error.message); else await query.refetch();
+  };
+
+  const execute = async (id: string) => {
+    if (!canApprove || !active?.id) return;
+    setActionError(null);
+    setExecuting(id);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await fetch("/api/nuva-action-execute", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.session?.access_token ?? ""}`,
+          "x-business-id": active.id,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ action_id: id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? "No se pudo ejecutar la acción");
+      await query.refetch();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "No se pudo ejecutar la acción");
+    } finally {
+      setExecuting(null);
     }
-    await query.refetch();
   };
 
   return (
     <Card className="border-primary/15 bg-background/70 p-5">
       <div className="flex items-center justify-between gap-3">
-        <div><p className="text-xs font-semibold uppercase tracking-wider text-primary">Nüva Action Layer</p><h3 className="mt-1 text-lg font-semibold">Acciones preparadas</h3></div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">Nüva Action Layer</p>
+          <h3 className="mt-1 text-lg font-semibold">Acciones preparadas</h3>
+        </div>
         <span className="text-xs text-muted-foreground">{query.data?.length ?? 0} recientes</span>
       </div>
-      {actionError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert">No se pudo actualizar la acción: {actionError}</div>}
-      {query.isLoading ? <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p> : query.isError ? (
+      {actionError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert">No se pudo procesar la acción: {actionError}</div>}
+      {query.isLoading ? (
+        <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p>
+      ) : query.isError ? (
         <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4" role="alert">
           <p className="text-sm font-medium">No se pudo cargar la cola de acciones.</p>
           <p className="mt-1 text-xs text-muted-foreground">{query.error instanceof Error ? query.error.message : "Comprueba tu conexión y vuelve a intentarlo."}</p>
-          <Button className="mt-3" size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className={`mr-1 h-3.5 w-3.5 ${query.isFetching ? "animate-spin" : ""}`} /> Reintentar</Button>
+          <Button className="mt-3" size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>
+            <RefreshCw className={`mr-1 h-3.5 w-3.5 ${query.isFetching ? "animate-spin" : ""}`} /> Reintentar
+          </Button>
         </div>
       ) : !query.data?.length ? (
         <p className="mt-4 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">Todavía no hay acciones preparadas. Usa “Preparar acción” desde Nüva Action Center.</p>
       ) : (
-        <div className="mt-4 space-y-3">{query.data.map((item) => (
-          <div key={item.id} className="rounded-xl border bg-background/80 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div><p className="font-medium">{item.title}</p><p className="mt-1 text-xs text-muted-foreground">{item.description}</p></div>
-              <span className="rounded-full bg-accent px-2 py-1 text-[11px] font-medium">{labels[item.status] ?? item.status}</span>
+        <div className="mt-4 space-y-3">
+          {query.data.map((item) => (
+            <div key={item.id} className="rounded-xl border bg-background/80 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{item.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
+                </div>
+                <span className="rounded-full bg-accent px-2 py-1 text-[11px] font-medium">{labels[item.status] ?? item.status}</span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span>Impacto {item.impact}/100</span><span>•</span><span>{item.priority}</span>
+                {item.status === "pending" && canApprove && (
+                  <>
+                    <Button size="sm" onClick={() => updateStatus(item.id, "approved")}><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprobar</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(item.id, "dismissed")}><XCircle className="mr-1 h-3.5 w-3.5" /> Descartar</Button>
+                  </>
+                )}
+                {item.status === "approved" && item.mode === "prepare" && canApprove && (
+                  <Button size="sm" onClick={() => execute(item.id)} disabled={executing === item.id}>
+                    <Play className="mr-1 h-3.5 w-3.5" /> {executing === item.id ? "Ejecutando…" : "Ejecutar"}
+                  </Button>
+                )}
+                {item.status === "approved" && item.mode === "review" && item.destination && (
+                  <Link to={destinationRoute(item.destination)} className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted">
+                    Revisar en módulo <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                  </Link>
+                )}
+                {item.status === "approved" && !canApprove && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1"><Clock3 className="h-3.5 w-3.5" /> Revisión autorizada</span>
+                )}
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span>Impacto {item.impact}/100</span><span>•</span><span>{item.priority}</span>
-              {item.status === "pending" && canApprove && <><Button size="sm" onClick={() => updateStatus(item.id, "approved")}><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprobar</Button><Button size="sm" variant="outline" onClick={() => updateStatus(item.id, "dismissed")}><XCircle className="mr-1 h-3.5 w-3.5" /> Descartar</Button></>}
-              {item.status === "approved" && <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1"><Clock3 className="h-3.5 w-3.5" /> Lista para ejecución</span>}
-            </div>
-          </div>
-        ))}</div>
+          ))}
+        </div>
       )}
     </Card>
   );
+}
+
+function destinationRoute(destination: ActionDestination) {
+  switch (destination) {
+    case "inventory": return "/inventory";
+    case "crm":
+    case "customers": return "/customers";
+    case "purchases": return "/purchases";
+    case "finance": return "/finance";
+    case "dashboard":
+    default: return "/dashboard";
+  }
 }
