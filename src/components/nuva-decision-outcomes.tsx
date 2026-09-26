@@ -16,9 +16,11 @@ export function NuvaDecisionOutcomes({ activities = [] }: Props) {
   const overdue = tasks.filter(
     (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
   ).length;
-  const recent = tasks.filter(
-    (a) => a.created_at && Date.now() - new Date(a.created_at).getTime() <= 30 * 86400000,
-  );
+  const recent = tasks.filter((a) => {
+    if (!a.created_at) return false;
+    const age = Date.now() - new Date(a.created_at).getTime();
+    return age >= 0 && age <= 30 * 86400000;
+  });
   const recentCompleted = recent.filter((a) => a.completed).length;
   const recentOverdue = recent.filter(
     (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
@@ -33,6 +35,7 @@ export function NuvaDecisionOutcomes({ activities = [] }: Props) {
   const recentRate = pct(recentCompleted, recent.length);
   const velocityDelta = recentRate - priorRate;
   const velocityPositive = velocityDelta >= 0;
+  const baselineAvailable = prior.length > 0;
   const headline =
     overdue > 0
       ? `${overdue} acción${overdue === 1 ? "" : "es"} necesita${overdue === 1 ? "" : "n"} cierre.`
@@ -85,19 +88,21 @@ export function NuvaDecisionOutcomes({ activities = [] }: Props) {
               )
             }
             label="Momentum"
-            value={`${velocityDelta > 0 ? "+" : ""}${velocityDelta} pp`}
-            detail={`${recentOverdue} vencidas recientes`}
+            value={baselineAvailable ? `${velocityDelta > 0 ? "+" : ""}${velocityDelta} pp` : "—"}
+            detail={baselineAvailable ? `${recentOverdue} vencidas recientes` : "sin período comparável"}
           />
         </div>
         <div className="mt-4 rounded-xl border bg-muted/30 p-4">
           <p className="text-sm font-semibold">Lectura Nüva</p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {headline}{" "}
-            {velocityDelta > 0
-              ? `La tasa de ejecución mejoró ${velocityDelta} puntos porcentuales frente al período anterior.`
-              : velocityDelta < 0
-                ? `La tasa de ejecución cayó ${Math.abs(velocityDelta)} puntos porcentuales frente al período anterior.`
-                : "La tasa de ejecución se mantiene estable frente al período anterior."}
+            {!baselineAvailable
+              ? "Todavía no existe un período anterior comparable; Nüva evita fabricar una tendencia con una base insuficiente."
+              : velocityDelta > 0
+                ? `La tasa de ejecución mejoró ${velocityDelta} puntos porcentuales frente al período anterior.`
+                : velocityDelta < 0
+                  ? `La tasa de ejecución cayó ${Math.abs(velocityDelta)} puntos porcentuales frente al período anterior.`
+                  : "La tasa de ejecución se mantiene estable frente al período anterior."}
           </p>
         </div>
       </div>
