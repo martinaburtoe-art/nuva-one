@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
+import { NUVA_CONNECT_INTEGRATIONS } from "@/lib/nuva-connect-ecosystem";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -45,13 +46,17 @@ export const Route = createFileRoute("/api/integrations")({
         if ("error" in auth) return auth.error;
         const businessId = request.headers.get("x-business-id")?.trim();
         if (!businessId) return json({ error: "Falta x-business-id" }, 400);
-        const { data: membership } = await auth.supabase.from("business_members").select("business_id").eq("business_id", businessId).eq("user_id", auth.userId).maybeSingle();
+        const { data: membership } = await auth.supabase.from("business_members").select("business_id,role").eq("business_id", businessId).eq("user_id", auth.userId).maybeSingle();
         if (!membership) return json({ error: "No tienes acceso a este negocio" }, 403);
+        if (!["owner", "admin"].includes(String(membership.role))) return json({ error: "Solo owner/admin puede configurar integraciones" }, 403);
         const body = await request.json().catch(() => null) as Record<string, unknown> | null;
         const provider = typeof body?.provider === "string" ? body.provider.trim().toLowerCase() : "";
         const authMode = typeof body?.auth_mode === "string" ? body.auth_mode.trim().toLowerCase() : "";
         if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(provider)) return json({ error: "Proveedor inválido" }, 400);
         if (!["oauth", "api_key", "webhook", "adapter"].includes(authMode)) return json({ error: "Modo de autenticación inválido" }, 400);
+        const integration = NUVA_CONNECT_INTEGRATIONS.find((item) => item.id === provider);
+        if (!integration) return json({ error: "Proveedor no soportado por Nüva Connect" }, 400);
+        if (!integration.modes.includes(authMode as typeof integration.modes[number])) return json({ error: "Modo de autenticación no compatible con este proveedor" }, 400);
         const { data, error } = await auth.supabase.from("nuva_integration_connections").upsert({
           business_id: businessId,
           provider,
