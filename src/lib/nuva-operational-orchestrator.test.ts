@@ -5,7 +5,7 @@ describe("buildNuvaOperationalResult", () => {
   it("uses the real low-stock threshold and reorder point fields", () => {
     const result = buildNuvaOperationalResult({ sales: [], purchases: [], transactions: [], products: [{ stock: 2, low_stock_threshold: 5, reorder_point: 8, price: 1000, name: "Producto", sku: "SKU-1" }] });
     expect(result.snapshot.lowStockSkus).toBe(1);
-    expect(result.decision.signals.some((signal) => signal.id === "stock")).toBe(true);
+    expect(result.decision.signals.some((signal) => signal.id === "low-stock")).toBe(true);
   });
 
   it("does not invent tax or compliance certainty when those datasets are unavailable", () => {
