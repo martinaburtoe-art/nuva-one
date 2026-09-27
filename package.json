@@ -18,7 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "verify:migrations": "node scripts/verify-migrations.mjs",
     "verify:factory": "node scripts/verify-factory-control-plane.mjs",
-    "factory:release-evidence": "node scripts/create-factory-release-evidence.mjs"
+    "factory:release-evidence": "node scripts/create-factory-release-evidence.mjs",
+    "factory:validate-learning": "node scripts/validate-factory-learning-record.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",
