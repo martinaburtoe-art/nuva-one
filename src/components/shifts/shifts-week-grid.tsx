@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { MessageCircle, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -73,13 +73,11 @@ function layoutDayShifts(dayShifts: Shift[]) {
 export function ShiftsWeekGrid({
   shifts,
   onDelete,
-  onWhatsApp,
   activeDays = 7,
   weekStart,
 }: {
   shifts: Shift[];
   onDelete: (id: string) => void;
-  onWhatsApp: (shift: Shift) => void;
   activeDays?: number;
   weekStart: string;
 }) {
@@ -184,16 +182,6 @@ export function ShiftsWeekGrid({
                         {s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}
                       </p>
                       <div className="absolute top-1 right-1 hidden group-hover:flex gap-1">
-                        {s.employee_phone && (
-                          <button
-                            onClick={() => onWhatsApp(s)}
-                            className="rounded bg-black/20 p-0.5 hover:bg-black/40"
-                            title="Enviar por WhatsApp"
-                            aria-label={`Enviar turno de ${s.employee_name} por WhatsApp`}
-                          >
-                            <MessageCircle className="h-3 w-3" />
-                          </button>
-                        )}
                         <button
                           onClick={() => onDelete(s.id)}
                           className="rounded bg-black/20 p-0.5 hover:bg-black/40"
