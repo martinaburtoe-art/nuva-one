@@ -137,12 +137,7 @@ function Dashboard() {
         <CompetitiveOpsHub />
         {kpis !== undefined && !hasActivity && (
           <Card className="mt-6 mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/[0.08] via-accent/40 to-background p-6 shadow-soft">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div className="max-w-2xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><Sparkles className="h-4 w-4" /> Activación de Nüva One</div><h2 className="mt-2 text-xl font-bold">Tu Nüva One está listo. Ahora hagamos que empiece a trabajar para ti.</h2><p className="mt-1 text-sm text-muted-foreground">Tu foco inicial es <strong className="text-foreground">{goalsLabel(onboardingFocus)}</strong>. Completa una primera operación y comenzaremos a construir tu visión del negocio.</p></div><div className="flex shrink-0 flex-wrap gap-2">
-              <Link to={focusAction.href}><Button size="lg">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
-              <Button variant="outline" size="lg" onClick={loadDemoBusiness} disabled={seedingDemo}>
-                {seedingDemo ? "Preparando…" : "Cargar negocio de prueba"}
-              </Button>
-            </div></div>
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div className="max-w-2xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><Sparkles className="h-4 w-4" /> Activación de Nüva One</div><h2 className="mt-2 text-xl font-bold">Tu Nüva One está listo. Ahora hagamos que empiece a trabajar para ti.</h2><p className="mt-1 text-sm text-muted-foreground">Tu foco inicial es <strong className="text-foreground">{goalsLabel(onboardingFocus)}</strong>. Completa una primera operación y comenzaremos a construir tu visión del negocio.</p></div><Link to={focusAction.href} className="shrink-0"><Button size="lg">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link></div>
             <div className="mt-6 grid gap-2 sm:grid-cols-4"><ActivationStep done title="Negocio creado" /><ActivationStep done={hasActivity} title="Primera operación" /><ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" /><ActivationStep done={false} title="Primer análisis" /></div>
           </Card>
         )}
