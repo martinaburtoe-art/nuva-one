@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planActionExecution } from "./nuva-action-execution";
+import { applyNuvaGuardianToExecution, planActionExecution } from "./nuva-action-execution";
 
 const action = {
   id: "cash-burn",
