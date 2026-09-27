@@ -200,7 +200,7 @@ function Sales() {
                           Venta a crédito / fiado
                         </Label>
                         <p className="text-xs text-muted-foreground">
-                          Activa seguimiento de cobranza y recordatorios automáticos por WhatsApp.
+                          Activa seguimiento de cobranza y vencimientos.
                         </p>
                       </div>
                       <Switch id="is_credit" checked={isCredit} onCheckedChange={setIsCredit} />
@@ -217,8 +217,7 @@ function Sales() {
                         />
                         {!selectedCustomerPhone && (
                           <p className="mt-1 text-xs text-warning">
-                            Este cliente no tiene teléfono registrado — no podremos enviarle
-                            recordatorios por WhatsApp.
+                            Este cliente no tiene teléfono registrado. Puedes agregarlo para mantener sus datos de contacto completos.
                           </p>
                         )}
                       </div>
@@ -234,7 +233,6 @@ function Sales() {
                           <SelectContent>
                             <SelectItem value="tienda">Tienda</SelectItem>
                             <SelectItem value="online">Online</SelectItem>
-                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
                             <SelectItem value="instagram">Instagram</SelectItem>
                           </SelectContent>
                         </Select>
