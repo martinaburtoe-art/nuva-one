@@ -17,7 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   FileSpreadsheet,
   FileText,
-  MessageCircle,
   Plus,
   Trash2,
   ChevronLeft,
@@ -209,24 +208,6 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
       return;
     }
     queryClient.invalidateQueries({ queryKey: ["shifts", businessId, weekStart] });
-  }
-
-  function sendWhatsApp(shift: Shift) {
-    if (!shift.employee_phone) {
-      toast.error("Este empleado no tiene teléfono registrado");
-      return;
-    }
-    const msg = encodeURIComponent(
-      `Hola ${shift.employee_name}, tu turno es el ${shiftDateLabel(shift.week_start, shift.day_of_week)} de ${shift.start_time.slice(0, 5)} a ${shift.end_time.slice(0, 5)}.`,
-    );
-    let phone = shift.employee_phone.replace(/\D/g, "");
-    if (phone.startsWith("0")) phone = phone.slice(1);
-    if (phone.length === 9 && phone.startsWith("9")) phone = `56${phone}`;
-    if (phone.length < 10) {
-      toast.error("El teléfono no tiene un formato válido para WhatsApp");
-      return;
-    }
-    window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   }
 
   async function downloadShiftExcel() {
@@ -583,7 +564,6 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
         <ShiftsWeekGrid
           shifts={shifts}
           onDelete={deleteShift}
-          onWhatsApp={sendWhatsApp}
           weekStart={weekStart}
         />
       ) : (
@@ -606,15 +586,6 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
                     {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
                   </TableCell>
                   <TableCell className="text-right space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => sendWhatsApp(s)}
-                      title="Enviar por WhatsApp"
-                      aria-label={`Enviar turno de ${s.employee_name} por WhatsApp`}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
