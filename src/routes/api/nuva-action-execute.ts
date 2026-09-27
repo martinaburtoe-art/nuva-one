@@ -82,6 +82,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
       } catch (error) {
         const message = error instanceof Error ? error.message : "Error de ejecución";
         await session.supabase.from("nuva_action_queue").update({ status: "failed", error_message: message.slice(0, 1000), updated_at: new Date().toISOString() }).eq("id", action.id).eq("business_id", businessId);
+        await learnFromNuvaActionOutcome(session.supabase, action, { error: message }, false);
         return json({ error: "La acción falló y quedó registrada", code: "NUVA_ACTION_EXECUTION_FAILED" }, 500);
       }
     },
