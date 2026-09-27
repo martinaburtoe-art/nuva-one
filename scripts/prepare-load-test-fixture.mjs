@@ -2,8 +2,10 @@ const baseUrl = (process.env.API_URL ?? process.env.SUPABASE_URL ?? "").replace(
 const serviceRoleKey = process.env.SERVICE_ROLE_KEY ?? "";
 const email = "loadtest@nuva.local";
 const password = "NüvaLoadTest-2026!";
+const secondaryEmail = process.env.LOAD_TEST_CROSS_TENANT_EMAIL ?? "";
+const secondaryPassword = process.env.LOAD_TEST_CROSS_TENANT_PASSWORD ?? "";
 
-if (!baseUrl || !serviceRoleKey) throw new Error("Missing local Supabase API_URL/SERVICE_ROLE_KEY.");
+if (!baseUrl || !serviceRoleKey || !secondaryEmail || !secondaryPassword) throw new Error("Missing local Supabase API_URL/SERVICE_ROLE_KEY or cross-tenant fixture credentials.");
 
 const headers = {
   apikey: serviceRoleKey,
@@ -34,6 +36,18 @@ try {
 }
 
 const userId = user.id;
+async function ensureUser(userEmail, userPassword, fullName) {
+  try {
+    return await api("/auth/v1/admin/users", { method: "POST", body: JSON.stringify({ email: userEmail, password: userPassword, email_confirm: true, user_metadata: { full_name: fullName } }) });
+  } catch (error) {
+    if (!String(error).includes("already been registered") && !String(error).includes("already exists")) throw error;
+    const users = await api("/auth/v1/admin/users?per_page=1000");
+    const existing = users.users?.find((candidate) => candidate.email === userEmail);
+    if (!existing) throw error;
+    return existing;
+  }
+}
+const secondaryUser = await ensureUser(secondaryEmail, secondaryPassword, "Nüva Secondary Tenant");
 const businesses = await api(`/rest/v1/businesses?select=id&owner_id=eq.${userId}&limit=1`);
 let businessId = businesses[0]?.id;
 if (!businessId) {
@@ -56,6 +70,13 @@ await api(`/rest/v1/business_members?on_conflict=business_id,user_id`, {
   body: JSON.stringify({ business_id: businessId, user_id: userId, role: "owner" }),
 });
 
+const secondaryBusinesses = await api(`/rest/v1/businesses?select=id&owner_id=eq.${secondaryUser.id}&limit=1`);
+let secondaryBusinessId = secondaryBusinesses[0]?.id;
+if (!secondaryBusinessId) {
+  const createdSecondary = await api("/rest/v1/businesses", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ name: "Nüva Synthetic Secondary", industry: "services", size: "small", owner_id: secondaryUser.id, tax_id: "TEST-NUVA-002" }) });
+  secondaryBusinessId = createdSecondary[0].id;
+}
+
 async function insertMany(table, rows) {
   if (!rows.length) return;
   await api(`/rest/v1/${table}`, {
@@ -68,6 +89,8 @@ async function insertMany(table, rows) {
 const customers = Array.from({ length: 100 }, (_, i) => ({ business_id: businessId, name: `Cliente Sintético ${i + 1}`, email: `cliente${i + 1}@nuva.local` }));
 const products = Array.from({ length: 100 }, (_, i) => ({ business_id: businessId, sku: `NUVA-${String(i + 1).padStart(4, "0")}`, name: `Producto Sintético ${i + 1}`, category: i % 5 === 0 ? "premium" : "general", cost: 1000 + i * 10, price: 1800 + i * 20, stock: 50 + (i % 20), low_stock_threshold: 5 }));
 await insertMany("customers", customers);
+const secondaryCustomers = await api(`/rest/v1/customers?select=id&business_id=eq.${secondaryBusinessId}&limit=1`);
+if (!secondaryCustomers.length) await insertMany("customers", [{ business_id: secondaryBusinessId, name: "Cliente Secundario", email: "secundario@nuva.local" }]);
 await insertMany("products", products);
 
 const customerRows = await api(`/rest/v1/customers?select=id&business_id=eq.${businessId}&limit=100`);
@@ -78,4 +101,4 @@ await insertMany("sales", sales);
 await insertMany("transactions", transactions);
 await insertMany("quotes", quotes);
 
-console.log(JSON.stringify({ email, userId, businessId, seeded: { customers: 100, products: 100, sales: 200, transactions: 200, quotes: 100 } }));
+console.log(JSON.stringify({ email, userId, businessId, secondaryEmail, seeded: { customers: 100, products: 100, sales: 200, transactions: 200, quotes: 100 } }));
