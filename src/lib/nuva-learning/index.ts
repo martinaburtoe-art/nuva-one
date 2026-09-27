@@ -5,3 +5,6 @@ export * from "./nuva-instincts";
 export * from "./nuva-evidence-pack";
 export * from "./nuva-decision-gate";
 export * from "./nuva-learning-flow";
+export * from "./nuva-persistence";
+export * from "./nuva-playbooks";
+export * from "./nuva-evaluation";
