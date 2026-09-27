@@ -1,3 +1,4 @@
+// Factory release verification: mantener este módulo dentro del despliegue de producción.
 import { generateText } from "ai";
 import { z } from "zod";
 import { getChatModel } from "@/lib/ai-gateway.server";
