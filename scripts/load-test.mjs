@@ -69,11 +69,11 @@ async function query(accessToken, table, businessId, select) {
   const { response, elapsed, body_text, transport_error } = await request(url, { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } });
   if (transport_error) {
     console.error(`Transport failure [${table}]: ${transport_error}`);
-    return { elapsed, ok: false, status: null, table, error: transport_error, failure_type: "transport" };
+    return { elapsed, ok: false, status: null, table, body_text: null, error: transport_error, failure_type: "transport" };
   }
   const error = response.ok ? null : body_text;
   if (error) console.error(`Request failure [${table}] HTTP ${response.status}: ${error}`);
-  return { elapsed, ok: response.ok, status: response.status, table, error, failure_type: response.ok ? null : "http" };
+  return { elapsed, ok: response.ok, status: response.status, table, body_text, error, failure_type: response.ok ? null : "http" };
 }
 
 async function runVirtualUser(accessToken, businessId) {
@@ -121,7 +121,7 @@ const businessId = await getBusinessId(session.access_token, session.user.id);
 if (!crossTenantEmail || !crossTenantPassword) throw new Error("Missing cross-tenant test credentials.");
 const crossTenantSession = await signIn(crossTenantEmail, crossTenantPassword);
 const crossTenantProbe = await query(crossTenantSession.access_token, "customers", businessId, "id,business_id");
-const crossTenantRows = crossTenantProbe.ok ? JSON.parse(crossTenantProbe.error ?? "[]") : [];
+const crossTenantRows = crossTenantProbe.ok ? JSON.parse(crossTenantProbe.body_text ?? "[]") : [];
 if (!crossTenantProbe.ok || crossTenantRows.length !== 0) throw new Error(`Cross-tenant isolation failure: expected 0 rows, received ${crossTenantRows.length}`);
 console.log("Cross-tenant isolation probe: PASS (0 rows visible to secondary tenant).");
 const results = [];
