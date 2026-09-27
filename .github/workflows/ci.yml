@@ -114,6 +114,8 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify Supabase migration integrity
         run: npm run verify:migrations
+      - name: Verify Nüva One Factory control plane
+        run: npm run verify:factory
       - name: Dependency security audit
         run: npm audit --audit-level=high
       - name: Download generated database types
