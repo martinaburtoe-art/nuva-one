@@ -7,7 +7,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * Uses timingSafeEqual instead of === specifically to avoid timing attacks
  * that could let an attacker guess the correct signature byte-by-byte.
  *
- * Extracted out of the whatsapp webhook route so it can be unit tested in
+ * Extracted from the external webhook route so it can be unit tested in
  * isolation and reused by any future webhook that signs payloads the same way.
  */
 export function verifyHmacSha256Signature(
