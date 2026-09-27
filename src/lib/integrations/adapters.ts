@@ -1,3 +1,4 @@
+import type { Json } from "@/integrations/supabase/types";
 import type { IntegrationContext, NuvaIntegrationAdapter } from "./nuva-integration-types";
 import { constantTimeEqual, hmacSha256Base64 } from "./webhook-crypto";
 
@@ -54,7 +55,7 @@ export function getNuvaIntegrationAdapter(provider: string) {
   return NUVA_INTEGRATION_ADAPTERS[provider];
 }
 
-export function buildIntegrationContext(connection: { id: string; business_id: string; provider: string; external_account_id?: string | null; scopes?: string[]; metadata?: Record<string, unknown> | null }): IntegrationContext {
+export function buildIntegrationContext(connection: { id: string; business_id: string; provider: string; external_account_id?: string | null; scopes?: string[]; metadata?: Json | null }): IntegrationContext {
   return {
     businessId: connection.business_id,
     connectionId: connection.id,
