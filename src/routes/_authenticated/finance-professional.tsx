@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { FinanceToolsHub } from "@/components/finance-tools-hub";
 import { FinanceSiiEntry } from "@/components/finance-sii-entry";
@@ -23,6 +24,10 @@ function FinanceProfessional() {
   return (
     <ModuleGuard module="finance">
       <div className="space-y-6">
+        <PageHeader
+          title="Centro Financiero Profesional"
+          description="Herramientas avanzadas para control financiero, tributación y gestión profesional."
+        />
         <NuvaFinancialControl
           income={control.income}
           expense={control.expense}
