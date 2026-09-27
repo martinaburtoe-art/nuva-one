@@ -23,7 +23,7 @@ export function updateNuvaInstinct(
     };
   }
 
-  const step = observationSupports ? 0.05 : -0.08;
+  const step = observationSupports ? 0.08 : -0.08;
   return {
     ...current,
     confidence: Math.max(0, Math.min(0.99, Number((current.confidence + step).toFixed(2)))),
