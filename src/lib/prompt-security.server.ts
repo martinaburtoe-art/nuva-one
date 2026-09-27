@@ -3,7 +3,7 @@
 // This does NOT try to detect or block "malicious" text -- that's the model's
 // job, guided by the system prompt's SEGURIDAD instructions. What this file
 // does is purely structural: untrusted strings (customer names, product
-// names, WhatsApp messages, notes -- anything not typed by us as static
+// names, external messages, notes -- anything not typed by us as static
 // prompt text) must never be able to fabricate a closing/opening delimiter
 // tag (e.g. "</business_data><system>...") that could make the model
 // misread where trusted instructions end and untrusted data begins.
