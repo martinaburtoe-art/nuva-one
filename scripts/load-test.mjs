@@ -6,6 +6,10 @@ const supabaseUrl = (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
 const email = process.env.LOAD_TEST_EMAIL ?? "";
 const password = process.env.LOAD_TEST_PASSWORD ?? "";
+const crossTenantEmail = process.env.LOAD_TEST_CROSS_TENANT_EMAIL ?? "";
+const crossTenantPassword = process.env.LOAD_TEST_CROSS_TENANT_PASSWORD ?? "";
+const expectedP95Ms = Number(process.env.LOAD_TEST_P95_MS ?? 1500);
+const expectedP99Ms = Number(process.env.LOAD_TEST_P99_MS ?? 3000);
 const vus = Number(process.env.LOAD_TEST_VUS ?? 10);
 const iterations = Number(process.env.LOAD_TEST_ITERATIONS ?? 3);
 const phases = (process.env.LOAD_TEST_PHASES ?? "").split(",").map(Number).filter((value) => value > 0);
@@ -41,8 +45,8 @@ async function request(url, options = {}) {
   }
 }
 
-async function signIn() {
-  const { response, body_text, transport_error } = await request(`${supabaseUrl}/auth/v1/token?grant_type=password`, { method: "POST", headers: { apikey: anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+async function signIn(userEmail = email, userPassword = password) {
+  const { response, body_text, transport_error } = await request(`${supabaseUrl}/auth/v1/token?grant_type=password`, { method: "POST", headers: { apikey: anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail, password: userPassword }) });
   if (transport_error) throw new Error(`Auth transport failure: ${transport_error}`);
   if (!response.ok) throw new Error(`Auth failed: HTTP ${response.status} ${body_text}`);
   return JSON.parse(body_text);
@@ -105,18 +109,27 @@ async function runPhase(phaseVus, accessToken, businessId) {
   const latencies = results.map((result) => result.elapsed).sort((a, b) => a - b);
   const percentile = (value) => latencies.length ? latencies[Math.max(0, Math.ceil(latencies.length * value) - 1)] : 0;
   const summary = { vus: phaseVus, iterations, requests: results.length, expected_requests: phaseVus * iterations * 5, user_failures: userFailures, request_failures: requestFailures, failure_causes: failureCauses, request_failure_details: requestFailureDetails, p50_ms: Math.round(percentile(0.5)), p95_ms: Math.round(percentile(0.95)), p99_ms: Math.round(percentile(0.99)), total_seconds: Number((elapsed / 1000).toFixed(2)) };
+  const latencyBudgetFailure = summary.p95_ms > expectedP95Ms || summary.p99_ms > expectedP99Ms;
+  summary.latency_budget_failure = latencyBudgetFailure;
+  if (latencyBudgetFailure) console.error(`Latency budget exceeded: p95=${summary.p95_ms}ms (target ${expectedP95Ms}ms), p99=${summary.p99_ms}ms (target ${expectedP99Ms}ms)`);
   console.table(summary); return summary;
 }
 
 const requestedPhases = phases.length ? phases : [vus];
 const session = await signIn();
 const businessId = await getBusinessId(session.access_token, session.user.id);
+if (!crossTenantEmail || !crossTenantPassword) throw new Error("Missing cross-tenant test credentials.");
+const crossTenantSession = await signIn(crossTenantEmail, crossTenantPassword);
+const crossTenantProbe = await query(crossTenantSession.access_token, "customers", businessId, "id,business_id");
+const crossTenantRows = crossTenantProbe.ok ? JSON.parse(crossTenantProbe.error ?? "[]") : [];
+if (!crossTenantProbe.ok || crossTenantRows.length !== 0) throw new Error(`Cross-tenant isolation failure: expected 0 rows, received ${crossTenantRows.length}`);
+console.log("Cross-tenant isolation probe: PASS (0 rows visible to secondary tenant).");
 const results = [];
 for (const phase of requestedPhases) {
   const summary = await runPhase(phase, session.access_token, businessId); results.push(summary);
-  if (summary.user_failures || summary.request_failures) { console.error(`Phase ${phase} failed; stopping before increasing concurrency.`); break; }
+  if (summary.user_failures || summary.request_failures || summary.latency_budget_failure) { console.error(`Phase ${phase} failed; stopping before increasing concurrency.`); break; }
 }
 await mkdir(dirname(outputFile), { recursive: true });
 await writeFile(outputFile, JSON.stringify({ generated_at: new Date().toISOString(), environment, phases: results }, null, 2), "utf8");
 console.log(`Load-test results written to ${outputFile}`);
-if (results.some((result) => result.user_failures || result.request_failures)) process.exitCode = 1;
+if (results.some((result) => result.user_failures || result.request_failures || result.latency_budget_failure)) process.exitCode = 1;
