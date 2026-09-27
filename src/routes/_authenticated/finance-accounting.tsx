@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { FinanceAccountingWorkspaceV2 } from "@/components/finance-accounting-workspace-v2";
 
@@ -11,11 +12,11 @@ function FinanceAccounting() {
   return (
     <ModuleGuard module="finance">
       <div className="space-y-5">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Finanzas · Herramienta</p>
-          <h1 className="mt-1 text-2xl font-semibold">Contabilidad y tributación</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Workspace profesional para contabilidad, IVA, documentos y cierre.</p>
-        </div>
+        <PageHeader
+          title="Contabilidad y tributación"
+          description="Workspace profesional para contabilidad, IVA, documentos y cierre."
+          actions={<span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Finanzas · Herramienta</span>}
+        />
         <FinanceAccountingWorkspaceV2 />
       </div>
     </ModuleGuard>
