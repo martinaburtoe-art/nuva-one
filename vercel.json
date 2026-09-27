@@ -20,7 +20,6 @@
   ],
   "crons": [
     { "path": "/api/billing/subscribe/run-charges", "schedule": "0 13 * * *" },
-    { "path": "/api/n8n-delivery", "schedule": "30 3 * * *" },
     { "path": "/api/cron/nuva-intelligence-worker", "schedule": "0 0 * * *" }
   ]
 }
