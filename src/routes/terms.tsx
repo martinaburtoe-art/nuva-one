@@ -230,7 +230,7 @@ function Terms() {
 
         <h2>15. Integraciones y servicios de terceros</h2>
         <p>
-          La Plataforma puede integrarse con proveedores como Stripe, Meta/WhatsApp, Google,
+          La Plataforma puede integrarse con proveedores como Stripe, Google,
           proveedores de infraestructura y modelos de IA, entre otros. Cada integración puede estar
           sujeta a sus propios términos, políticas, límites, disponibilidad y cambios técnicos.
         </p>
