@@ -98,7 +98,7 @@ begin
     channel, sale_date, items, tax_treatment, vat_rate, notes
   )
   values
-    (v_business,v_c1,'Camila Rojas','paid',44980,44980,'Débito','tienda',current_date-3,
+    (v_business,v_c1,'Camila Rojas','paid',48950,48950,'Débito','tienda',current_date-3,
       jsonb_build_array(
         jsonb_build_object('product_id',v_p3,'name','Torta de chocolate','qty',1,'price',24990),
         jsonb_build_object('product_id',v_p4,'name','Cookie chocolate','qty',2,'price',2990),
@@ -107,14 +107,14 @@ begin
     (v_business,v_c2,'Diego Muñoz','paid',17980,17980,'Transferencia','tienda',current_date-2,
       jsonb_build_array(
         jsonb_build_object('product_id',v_p1,'name','Café de especialidad 250 g','qty',1,'price',8990),
-        jsonb_build_object('product_id',v_p2,'name','Granos Colombia 1 kg','qty',1,'price',8990)
+        jsonb_build_object('product_id',v_p2,'name','Granos Colombia 1 kg','qty',1,'price',18990)
       ),'taxable',19,'Compra recurrente'),
-    (v_business,v_c3,'Sofía Pérez','paid',30980,30980,'Débito','tienda',current_date-1,
+    (v_business,v_c3,'Sofía Pérez','paid',30970,30970,'Débito','tienda',current_date-1,
       jsonb_build_array(
         jsonb_build_object('product_id',v_p3,'name','Torta de chocolate','qty',1,'price',24990),
         jsonb_build_object('product_id',v_p4,'name','Cookie chocolate','qty',2,'price',2990)
       ),'taxable',19,'Venta cliente oportunidad'),
-    (v_business,null,'Venta mostrador','paid',29960,29960,'Efectivo','pos',current_date,
+    (v_business,null,'Venta mostrador','paid',29940,29940,'Efectivo','pos',current_date,
       jsonb_build_array(
         jsonb_build_object('product_id',v_p1,'name','Café de especialidad 250 g','qty',2,'price',8990),
         jsonb_build_object('product_id',v_p4,'name','Cookie chocolate','qty',4,'price',2990)
