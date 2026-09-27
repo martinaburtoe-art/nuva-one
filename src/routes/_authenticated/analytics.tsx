@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ModuleInformation } from "@/components/module-information";
 import { useBizList, fmtCLP } from "@/lib/biz-data";
 import {
   Bar,
@@ -137,14 +136,6 @@ function Analytics() {
     <ModuleGuard module="analytics">
       <>
         <PageHeader title="Indicadores" description="Las métricas clave de tu negocio" />
-        <div className="mt-4"><ModuleInformation
-          title="Indicadores y analítica"
-          summary="Convierte ventas, caja e inventario en métricas comparables para detectar tendencias y tomar decisiones con datos."
-          purpose="Analizar rendimiento comercial y financiero sin alterar los datos operacionales."
-          includes={["Evolución de ventas", "Ventas por canal y medio de pago", "Margen bruto y margen de caja", "Ticket promedio y clientes únicos", "Filtros por fecha, producto y categoría"]}
-          data="Ventas, movimientos financieros y catálogo de productos del negocio activo; los filtros recalculan las métricas sobre el conjunto visible."
-          actions={["Comparar períodos", "Detectar cambios en ventas y margen", "Identificar canales relevantes", "Usar los resultados para priorizar acciones comerciales"]}
-        /></div>
         <Card className="mt-4 p-3 sm:p-4"><div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <div className="min-w-0 lg:flex-1"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /></div>
           <MultiSelectFilter label="Producto" options={productOptions} selected={productIds} onChange={setProductIds} />
