@@ -11,9 +11,10 @@
 - [x] Guarded multi-tenant load-test harness committed at `scripts/load-test.mjs`.
 - [x] Production `/dashboard` no longer renders Nüva Operating Pulse.
 - [x] Production `/customers` renders the CRM Operating Pulse through `PageHeader`.
+- [x] Nüva Action Queue execution loop supports `approved → executing → completed/failed` with an authenticated, tenant-scoped server route and outcome recording.
 - [ ] Run staged 10 → 25 → 50 → 100 VU load test with a dedicated test account.
 - [ ] Enable Supabase leaked-password protection in Auth settings.
-- [ ] Review intentional GraphQL exposure warnings or disable GraphQL if unused.
+- [x] Review intentional GraphQL exposure warnings; unused GraphQL surface was removed and the database has no public GraphQL-backed business tables requiring this gate.
 
 ## Load test
 
