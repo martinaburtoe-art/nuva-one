@@ -51,7 +51,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
       const lastReload = Number(sessionStorage.getItem(key) ?? 0);
       if (Date.now() - lastReload > 10_000) {
         sessionStorage.setItem(key, String(Date.now()));
-        window.location.reload();
+        window.location.href = `${window.location.pathname}?_nuva_refresh=${Date.now()}`;
       }
     }
   }, [error]);
