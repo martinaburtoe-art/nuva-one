@@ -150,23 +150,6 @@ function RouteEnhancements() {
   if (!mount) return null;
   return createPortal(location.pathname === "/pos" ? <PosScannerEnhancement /> : <NuvaOperatingPulse />, mount);
 }
-function LegacyFloatingAiCleanup() {
-  useEffect(() => {
-    const isLegacyAiButton = (element: Element) => {
-      if (!(element instanceof HTMLButtonElement)) return false;
-      if (element.closest('[aria-label="Acciones flotantes de Nüva"]')) return false;
-      const text = `${element.getAttribute("aria-label") ?? ""} ${element.getAttribute("title") ?? ""} ${element.textContent ?? ""}`.toLowerCase();
-      if (!/(nüva\s*ia|nuva\s*ia|nüva\s*intelligence|nuva\s*intelligence|abrir\s*ia|asistente\s*ia)/i.test(text)) return false;
-      return element.classList.contains("fixed") || element.closest("[class*='fixed']") !== null;
-    };
-    const removeLegacy = () => { document.querySelectorAll("button").forEach((button) => { if (isLegacyAiButton(button)) button.remove(); }); };
-    removeLegacy();
-    const observer = new MutationObserver(removeLegacy);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
-  return null;
-}
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -183,7 +166,7 @@ function RootComponent() {
       if (isStaleChunkError(err)) {
         const key = "nuva_stale_chunk_reload_at";
         const lastReload = Number(sessionStorage.getItem(key) ?? 0);
-        if (Date.now() - lastReload > 10_000) { sessionStorage.setItem(key, String(Date.now())); window.location.reload(); }
+        if (Date.now() - lastReload > 10_000) { sessionStorage.setItem(key, String(Date.now())); window.location.href = `${window.location.pathname}?_nuva_refresh=${Date.now()}`; }
       }
     }
     window.addEventListener("unhandledrejection", onUnhandledRejection);
@@ -193,7 +176,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <OfflineBanner />
-      <LegacyFloatingAiCleanup />
       {showLanding ? <RouteEnhancements /> : null}
       {showLanding ? <Outlet /> : null}
       <Toaster position="top-right" richColors closeButton />
