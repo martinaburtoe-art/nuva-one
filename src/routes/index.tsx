@@ -140,7 +140,7 @@ function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" data-release="factory-learning-loop-2026-09">
       <Nav />
       <main>
         <HomeFixedExperience />
