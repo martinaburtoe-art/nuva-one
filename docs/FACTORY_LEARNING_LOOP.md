@@ -4,6 +4,8 @@ La etapa **Learn** cierra el ciclo de release sin convertir la Factory en parte 
 
 ## Flujo completo
 
+> Estado de implementación: Learning Loop integrado en `main`.
+
 `Discover → Design → Build → Verify → Release Evidence → Ship → Production Verify → Learn → Knowledge`
 
 ## Qué registra Learn
