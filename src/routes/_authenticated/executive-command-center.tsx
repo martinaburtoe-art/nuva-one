@@ -4,7 +4,6 @@ import { ArrowLeft, AlertTriangle, CheckCircle2, Info, Lightbulb, ShieldAlert, A
 import { useBizList } from "@/lib/biz-data";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
-import { ModuleInformation } from "@/components/module-information";
 import { NuvaExecutiveCommandCenter } from "@/components/nuva-executive-command-center";
 import { NuvaExecutionScore } from "@/components/nuva-execution-score";
 import { NuvaBusinessSimulator } from "@/components/nuva-business-simulator";
@@ -62,26 +61,6 @@ function ExecutiveCommandCenter() {
   return (
     <ModuleGuard module="customers">
       <div className="space-y-5">
-        <ModuleInformation
-          title="Centro Ejecutivo"
-          summary="Capa de dirección para convertir información del negocio en prioridades, decisiones, ejecución y aprendizaje."
-          purpose="Ayudar a la persona responsable del negocio a decidir qué atender primero, ejecutar acciones, revisar escenarios y aprender de los resultados sin mezclar esta capa con la operación diaria."
-          includes={[
-            "Puesto de mando y decisión prioritaria",
-            "Centro de acciones y disciplina de ejecución",
-            "Seguimiento temporal de decisiones",
-            "Escenarios y señales predictivas",
-            "Factores de contexto, resultados y memoria de decisiones",
-          ]}
-          data="Cruza ventas, compras, transacciones, clientes, actividades, cotizaciones, inventario y resultados de ejecución disponibles para el negocio activo."
-          actions={[
-            "Identificar la prioridad ejecutiva más importante",
-            "Convertir una decisión en una acción concreta",
-            "Revisar escenarios y factores que pueden cambiar el resultado",
-            "Medir cumplimiento y resultados posteriores",
-            "Consultar la memoria para mejorar decisiones futuras",
-          ]}
-        />
         <PageHeader title="Centro Ejecutivo" description="Prioriza, ejecuta y mide decisiones. La interpretación vive en Nüva Intelligence; la operación, en sus módulos." />
         {loading ? (
           <div className="space-y-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-56 w-full" /></div>
