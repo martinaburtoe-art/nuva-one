@@ -4,7 +4,6 @@ import { AlertTriangle, ArrowLeft, ArrowUpRight, Brain, CheckCircle2, Info, Ligh
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
-import { ModuleInformation } from "@/components/module-information";
 import { useBizList } from "@/lib/biz-data";
 import { ExplainMyBusiness } from "@/components/explain-my-business";
 
@@ -57,14 +56,6 @@ function NuvaIntelligence() {
   return (
     <ModuleGuard module="dashboard">
       <div className="space-y-5">
-        <ModuleInformation
-          title="Nüva Intelligence"
-          summary="Capa analítica que interpreta los datos del negocio, detecta señales y explica oportunidades sin ejecutar operaciones."
-          purpose="Convertir datos operativos en contexto comprensible para que puedas entender qué está cambiando antes de tomar una decisión."
-          includes={["Lectura integrada del negocio", "Señales de riesgo y cambios", "Detección de oportunidades", "Explícame mi negocio y explicación de evidencia"]}
-          data="Cruza ventas, transacciones, productos, cotizaciones y actividades disponibles para el negocio activo. Los resultados dependen de la calidad y cantidad de datos registrados."
-          actions={["Entender cambios relevantes", "Revisar señales y evidencia", "Evaluar oportunidades", "Abrir el módulo operativo correspondiente para actuar"]}
-        />
         <PageHeader title="Nüva Intelligence" description="Interpreta datos, detecta señales y explica qué está cambiando. Las acciones se ejecutan en los módulos operativos." />
 
         {!activeView ? (
