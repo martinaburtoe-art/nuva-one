@@ -1,0 +1,107 @@
+/* Nüva Product System — visual foundation for the authenticated product. */
+:root {
+  --nuva-ink: #080809;
+  --nuva-gold: #e6c687;
+  --nuva-indigo: #6366f1;
+  --nuva-radius-control: 10px;
+  --nuva-radius-surface: 14px;
+  --nuva-radius-panel: 18px;
+  --nuva-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --nuva-duration-fast: 160ms;
+  --nuva-duration: 220ms;
+  --nuva-duration-slow: 320ms;
+}
+
+.nuva-app {
+  --nuva-surface: color-mix(in oklab, var(--color-card) 96%, var(--color-foreground));
+  --nuva-surface-muted: color-mix(in oklab, var(--color-card) 92%, var(--color-muted));
+  --nuva-line: color-mix(in oklab, var(--color-border) 86%, transparent);
+}
+
+.nuva-app :where(button, a, input, select, textarea, [role="button"]) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nuva-app :where(button, a) {
+  transition-timing-function: var(--nuva-ease);
+}
+
+.nuva-app .nuva-surface {
+  background: var(--nuva-surface);
+  border: 1px solid var(--nuva-line);
+  border-radius: var(--nuva-radius-surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.025), 0 8px 24px rgb(0 0 0 / 0.025);
+}
+
+.nuva-app .nuva-surface-interactive {
+  transition: transform var(--nuva-duration) var(--nuva-ease), box-shadow var(--nuva-duration) var(--nuva-ease), border-color var(--nuva-duration) var(--nuva-ease);
+}
+
+.nuva-app .nuva-surface-interactive:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--color-border) 65%, var(--nuva-indigo));
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.055);
+}
+
+.nuva-app .nuva-nav-item {
+  min-height: 38px;
+  border-radius: var(--nuva-radius-control);
+  transition: background-color var(--nuva-duration-fast) var(--nuva-ease), color var(--nuva-duration-fast) var(--nuva-ease), transform var(--nuva-duration-fast) var(--nuva-ease);
+}
+
+.nuva-app .nuva-nav-item:hover { transform: translateX(1px); }
+.nuva-app .nuva-nav-item[data-active="true"] { box-shadow: inset 2px 0 0 var(--nuva-indigo); }
+
+.nuva-app .nuva-module-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nuva-app .nuva-module-kicker {
+  color: var(--color-muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.nuva-app .nuva-module-title {
+  color: var(--color-foreground);
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.nuva-app .nuva-module-description {
+  max-width: 52rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.nuva-app .nuva-focus-ring:focus-visible,
+.nuva-app :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--nuva-indigo) 78%, white);
+  outline-offset: 2px;
+}
+
+.dark .nuva-app .nuva-surface { box-shadow: 0 12px 30px rgb(0 0 0 / 0.16); }
+.dark .nuva-app .nuva-surface-interactive:hover { box-shadow: 0 16px 38px rgb(0 0 0 / 0.24); }
+
+@media (max-width: 767px) {
+  .nuva-app .nuva-module-header { align-items: flex-start; flex-direction: column; }
+  .nuva-app .nuva-module-title { font-size: 1.5rem; }
+  .nuva-app .nuva-surface-interactive:hover { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-surface-interactive,
+  .nuva-app .nuva-nav-item { transition: none; }
+  .nuva-app .nuva-surface-interactive:hover,
+  .nuva-app .nuva-nav-item:hover { transform: none; }
+}
