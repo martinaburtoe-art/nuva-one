@@ -12,7 +12,7 @@
 - [x] Production `/dashboard` no longer renders Nüva Operating Pulse.
 - [x] Production `/customers` renders the CRM Operating Pulse through `PageHeader`.
 - [x] Nüva Action Queue execution loop supports `approved → executing → completed/failed` with an authenticated, tenant-scoped server route and outcome recording.
-- [ ] Run staged 10 → 25 → 50 → 100 VU load test with a dedicated test account.
+- [x] Run staged 10 → 25 → 50 → 100 VU load test with an ephemeral validation fixture; 1,850/1,850 requests passed, p95 max 366 ms, p99 max 547 ms, and inventory concurrency passed at 25/50/100 VU with no oversell.
 - [ ] Enable Supabase leaked-password protection in Auth settings.
 - [x] Review intentional GraphQL exposure warnings; unused GraphQL surface was removed and the database has no public GraphQL-backed business tables requiring this gate.
 
