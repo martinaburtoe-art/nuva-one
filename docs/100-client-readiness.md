@@ -29,6 +29,6 @@ LOAD_TEST_PASSWORD='use-a-dedicated-secret' \
 node scripts/load-test.mjs
 ```
 
-Increase gradually to 25, 50, 75 and 100 VUs only after the previous level is healthy.
+Increase gradually to 25, 50 and 100 VUs only after the previous level is healthy. The latest ephemeral gate completed successfully across 10/25/50/100 VU, including inventory concurrency and recovery.
 
 Target gate: p95 < 1500 ms, p99 < 3000 ms, zero cross-tenant access, and zero request/user failures.
