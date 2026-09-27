@@ -53,7 +53,7 @@ export const Route = createFileRoute("/api/integrations/webhook")({
         if (!valid) return json({ error: "Firma de webhook inválida" }, 401);
 
         const normalized = await adapter.normalizeWebhook({
-          context: buildIntegrationContext({\n            id: connection.id,\n            business_id: connection.business_id,\n            provider: connection.provider,\n            external_account_id: connection.external_account_id,\n            scopes: connection.scopes,\n            metadata: connection.metadata && typeof connection.metadata === "object" && !Array.isArray(connection.metadata)\n              ? connection.metadata as Record<string, unknown>\n              : {},\n          }),
+          context: buildIntegrationContext(connection),
           headers: request.headers,
           rawBody,
         });
