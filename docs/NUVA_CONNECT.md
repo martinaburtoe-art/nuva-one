@@ -70,3 +70,7 @@ Para secretos por proveedor, `secret_ref` debe apuntar a una variable server-sid
 Shopify expone el HMAC en `X-Shopify-Hmac-SHA256` y un identificador de evento en `X-Shopify-Event-Id`. WooCommerce entrega `X-WC-Webhook-Signature`, `X-WC-Webhook-Topic` y `X-WC-Webhook-Delivery-ID`. Nüva Connect conserva esos eventos sin procesarlos dos veces.
 
 Los conectores siguen quedando en estado Requiere configuración hasta disponer de las credenciales y secretos reales del negocio/proveedor.
+
+## Release readiness
+
+Nüva Connect está integrado en `main`. La infraestructura de conexiones, eventos, idempotencia, verificación de webhooks y aislamiento por negocio queda lista para configuración de proveedores reales. Las credenciales y secretos permanecen fuera del repositorio.
