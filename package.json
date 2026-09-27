@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "verify:migrations": "node scripts/verify-migrations.mjs"
+    "verify:migrations": "node scripts/verify-migrations.mjs",
+    "verify:factory": "node scripts/verify-factory-control-plane.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",
