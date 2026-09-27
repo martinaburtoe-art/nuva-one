@@ -2,14 +2,27 @@ import type { NuvaAgentFinding } from "../nuva-intelligence-agent-council";
 import { calculateNuvaTrust } from "./nuva-trust-engine";
 import { reviewNuvaAction } from "./nuva-guardian";
 
-export function evaluateNuvaFinding(finding: NuvaAgentFinding) {
+export type NuvaMeasuredMetrics = {
+  dataFreshness?: number;
+  agentAgreement?: number;
+  historicalAccuracy?: number;
+  previousOutcomeQuality?: number;
+};
+
+const bounded = (value: number | undefined, fallback: number) =>
+  Math.min(1, Math.max(0, value ?? fallback));
+
+export function evaluateNuvaFinding(
+  finding: NuvaAgentFinding,
+  metrics: NuvaMeasuredMetrics = {},
+) {
   const trust = calculateNuvaTrust({
     confidence: finding.confidence,
     evidenceQuality: finding.evidenceQuality,
-    dataFreshness: 0.9,
-    agentAgreement: 0.8,
-    historicalAccuracy: 0.7,
-    previousOutcomeQuality: 0.7,
+    dataFreshness: bounded(metrics.dataFreshness, 0.5),
+    agentAgreement: bounded(metrics.agentAgreement, 0.5),
+    historicalAccuracy: bounded(metrics.historicalAccuracy, 0.5),
+    previousOutcomeQuality: bounded(metrics.previousOutcomeQuality, 0.5),
   });
 
   const guardian = reviewNuvaAction({
