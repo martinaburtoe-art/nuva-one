@@ -8,3 +8,4 @@ export * from "./nuva-learning-flow";
 export * from "./nuva-persistence";
 export * from "./nuva-playbooks";
 export * from "./nuva-evaluation";
+export * from "./nuva-persisted-learning-flow";
