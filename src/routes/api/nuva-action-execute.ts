@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
+import { learnFromNuvaActionOutcome } from "@/lib/nuva-learning/nuva-server-outcome";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -76,6 +77,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           .eq("status", "executing");
         if (completeError) throw completeError;
         await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: JSON.parse(JSON.stringify(result)), observed_at: new Date().toISOString() });
+        await learnFromNuvaActionOutcome(session.supabase, action, result, true);
         return json({ ok: true, action_id: action.id, result });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Error de ejecución";
