@@ -4035,6 +4035,91 @@ export type Database = {
           },
         ]
       }
+      nuva_business_instincts: {
+        Row: {
+          business_id: string
+          confidence: number
+          created_at: string
+          evidence_count: number
+          id: string
+          key: string
+          last_observed_at: string
+          metadata: Json
+          scope: string
+          statement: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          confidence?: number
+          created_at?: string
+          evidence_count?: number
+          id?: string
+          key: string
+          last_observed_at?: string
+          metadata?: Json
+          scope?: string
+          statement: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          confidence?: number
+          created_at?: string
+          evidence_count?: number
+          id?: string
+          key?: string
+          last_observed_at?: string
+          metadata?: Json
+          scope?: string
+          statement?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_business_instincts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_business_instincts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_business_instincts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_business_instincts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_business_instincts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_business_instincts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       nuva_business_memory: {
         Row: {
           business_id: string
@@ -4136,6 +4221,100 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nuva_business_memory"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuva_decision_evidence: {
+        Row: {
+          agents_consulted: string[]
+          agreement: number
+          business_id: string
+          consensus_confidence: number
+          created_at: string
+          decision_id: string
+          dissent: string[]
+          evidence: Json
+          execution_result: string | null
+          guardian_decision: string | null
+          id: string
+          recommended_action: string | null
+          signal: string
+          verification_passed: boolean | null
+        }
+        Insert: {
+          agents_consulted?: string[]
+          agreement: number
+          business_id: string
+          consensus_confidence: number
+          created_at?: string
+          decision_id: string
+          dissent?: string[]
+          evidence?: Json
+          execution_result?: string | null
+          guardian_decision?: string | null
+          id?: string
+          recommended_action?: string | null
+          signal: string
+          verification_passed?: boolean | null
+        }
+        Update: {
+          agents_consulted?: string[]
+          agreement?: number
+          business_id?: string
+          consensus_confidence?: number
+          created_at?: string
+          decision_id?: string
+          dissent?: string[]
+          evidence?: Json
+          execution_result?: string | null
+          guardian_decision?: string | null
+          id?: string
+          recommended_action?: string | null
+          signal?: string
+          verification_passed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_decision_evidence_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_decision_evidence_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_decision_evidence_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_decision_evidence_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_decision_evidence_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_decision_evidence_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -10865,6 +11044,7 @@ export type Database = {
         Returns: Json
       }
       convert_quote_to_sale: { Args: { p_quote_id: string }; Returns: string }
+      create_demo_business_for_current_user: { Args: never; Returns: string }
       create_fast_sale: {
         Args: {
           p_channel?: string
@@ -10876,10 +11056,6 @@ export type Database = {
           p_notes?: string
           p_payment_method?: string
         }
-        Returns: string
-      }
-      create_demo_business_for_current_user: {
-        Args: never
         Returns: string
       }
       create_mobile_scanner_session: {
