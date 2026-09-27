@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "release_id": "REPLACE_WITH_RELEASE_ID",
+  "commit": "REPLACE_WITH_COMMIT_SHA",
+  "objective": "Describe the release objective.",
+  "scope": [
+    "Describe the validated scope."
+  ],
+  "expected_outcomes": [
+    "Describe measurable expected outcomes."
+  ],
+  "ci_evidence": {
+    "workflow_run": "REPLACE_WITH_WORKFLOW_RUN_ID",
+    "release_evidence_artifact": "factory-release-evidence",
+    "gates": {
+      "factory_control_plane": "passed",
+      "migration_integrity": "passed",
+      "build_and_test_job": "passed"
+    }
+  },
+  "production_evidence": {
+    "deployment_id": "REPLACE_WITH_VERCEL_DEPLOYMENT_ID",
+    "deployment_state": "READY",
+    "commit_match": true,
+    "routes_verified": [],
+    "runtime_errors_checked": true,
+    "ui_e2e_verified": false
+  },
+  "actual_outcomes": [
+    "REPLACE_WITH_OBSERVED_RESULT"
+  ],
+  "incidents": [],
+  "regressions": [],
+  "decisions": [],
+  "learnings": [
+    "REPLACE_WITH_EVIDENCE_BASED_LEARNING"
+  ],
+  "reusable_rules": [
+    "REPLACE_WITH_REUSABLE_RULE"
+  ],
+  "follow_up": []
+}
