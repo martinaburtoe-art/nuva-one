@@ -297,7 +297,6 @@ export function SalesProductAnalytics({ sales, products }: SalesProductAnalytics
                 <SelectItem value="all">Todos los canales</SelectItem>
                 <SelectItem value="tienda">Tienda</SelectItem>
                 <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
                 <SelectItem value="instagram">Instagram</SelectItem>
               </SelectContent>
             </Select>
