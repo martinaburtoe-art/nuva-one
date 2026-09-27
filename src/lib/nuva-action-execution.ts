@@ -62,3 +62,33 @@ export function planActionExecution(request: ActionExecutionRequest): ActionExec
     auditRequired: true,
   };
 }
+
+export type GuardianExecutionInput = {
+  trustScore: number;
+  guardianDecision: "ALLOW" | "REVIEW" | "BLOCK";
+};
+
+export function applyNuvaGuardianToExecution(
+  plan: ActionExecutionPlan,
+  input: GuardianExecutionInput,
+): ActionExecutionPlan {
+  if (input.guardianDecision === "BLOCK") {
+    return {
+      ...plan,
+      status: "blocked",
+      reason: "Nüva Guardian bloqueó la ejecución por controles de seguridad o evidencia.",
+      requiresExplicitApproval: true,
+    };
+  }
+
+  if (input.guardianDecision === "REVIEW" || input.trustScore < 70) {
+    return {
+      ...plan,
+      status: "ready",
+      reason: "Nüva Guardian requiere revisión antes de ejecutar la acción.",
+      requiresExplicitApproval: true,
+    };
+  }
+
+  return plan;
+}
