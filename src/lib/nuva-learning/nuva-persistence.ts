@@ -1,13 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { NuvaEvidencePack } from "./nuva-evidence-pack";
 import type { NuvaInstinct } from "./nuva-instincts";
+import type { Json } from "@/integrations/supabase/types";
 
 export async function persistNuvaEvidencePack(pack: NuvaEvidencePack) {
   const { error } = await supabase.from("nuva_decision_evidence").upsert({
     business_id: pack.businessId,
     decision_id: pack.decisionId,
     signal: pack.signal,
-    evidence: pack.evidence,
+    evidence: pack.evidence as Json,
     agents_consulted: pack.agentsConsulted,
     consensus_confidence: pack.consensusConfidence,
     agreement: pack.agreement,
