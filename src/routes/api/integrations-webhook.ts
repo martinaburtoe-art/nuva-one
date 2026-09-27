@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { buildIntegrationContext, getNuvaIntegrationAdapter } from "@/lib/integrations/adapters";
 import { sha256Hex } from "@/lib/integrations/webhook-crypto";
@@ -68,9 +68,9 @@ export const Route = createFileRoute("/api/integrations/webhook")({
             external_event_id: normalized.externalEventId,
             event_type: normalized.eventType,
             direction: normalized.direction,
-            payload: normalized.payload,
+            payload: normalized.payload as Json,
             payload_hash: payloadHash,
-            normalized,
+            normalized: normalized as unknown as Json,
             status: "received",
           })
           .select("id")
