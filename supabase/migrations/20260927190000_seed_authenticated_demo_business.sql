@@ -66,10 +66,10 @@ begin
     low_stock_threshold, reorder_point, max_stock
   )
   values
-    (v_business,'CAF-250','Café de especialidad 250 g','Café',4100,8990,0,8,10,60),
-    (v_business,'COL-1KG','Granos Colombia 1 kg','Café',10500,18990,0,8,10,40),
-    (v_business,'TOR-CHO','Torta de chocolate','Pastelería',13000,24990,0,3,4,20),
-    (v_business,'CK-CHO','Cookie chocolate','Pastelería',1100,2990,0,10,12,80);
+    (v_business,'CAF-250','Café de especialidad 250 g','Café',4100,8990,25,8,10,60),
+    (v_business,'COL-1KG','Granos Colombia 1 kg','Café',10500,18990,14,8,10,40),
+    (v_business,'TOR-CHO','Torta de chocolate','Pastelería',13000,24990,10,3,4,20),
+    (v_business,'CK-CHO','Cookie chocolate','Pastelería',1100,2990,42,10,12,80);
 
   select id into v_p1 from public.products where business_id=v_business and sku='CAF-250' limit 1;
   select id into v_p2 from public.products where business_id=v_business and sku='COL-1KG' limit 1;
@@ -104,7 +104,7 @@ begin
         jsonb_build_object('product_id',v_p4,'name','Cookie chocolate','qty',2,'price',2990),
         jsonb_build_object('product_id',v_p1,'name','Café de especialidad 250 g','qty',2,'price',8990)
       ),'taxable',19,'Venta corporativa'),
-    (v_business,v_c2,'Diego Muñoz','paid',17980,17980,'Transferencia','tienda',current_date-2,
+    (v_business,v_c2,'Diego Muñoz','paid',27980,27980,'Transferencia','tienda',current_date-2,
       jsonb_build_array(
         jsonb_build_object('product_id',v_p1,'name','Café de especialidad 250 g','qty',1,'price',8990),
         jsonb_build_object('product_id',v_p2,'name','Granos Colombia 1 kg','qty',1,'price',18990)
