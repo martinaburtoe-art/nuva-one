@@ -125,7 +125,15 @@ function Dashboard() {
   return (
     <ModuleGuard module="dashboard">
       <>
-        <PageHeader title={`Hola, ${active?.name ?? "negocio"}`} description="Tu negocio en una vista: rendimiento, atención y acciones para hoy." />
+        <PageHeader
+          title={`Hola, ${active?.name ?? "negocio"}`}
+          description="Tu negocio en una vista: rendimiento, atención y acciones para hoy."
+          actions={
+            <Button variant="outline" size="sm" onClick={loadDemoBusiness} disabled={seedingDemo}>
+              {seedingDemo ? "Preparando…" : "Cargar negocio de prueba"}
+            </Button>
+          }
+        />
         <CompetitiveOpsHub />
         {kpis !== undefined && !hasActivity && (
           <Card className="mt-6 mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/[0.08] via-accent/40 to-background p-6 shadow-soft">
