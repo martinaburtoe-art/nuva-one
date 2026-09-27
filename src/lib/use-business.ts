@@ -64,7 +64,7 @@ export const MODULES = [
   { key: "dashboard", label: "Resumen" }, { key: "pos", label: "Caja (POS)" }, { key: "sales", label: "Ventas" },
   { key: "customers", label: "Clientes" }, { key: "billing", label: "Facturación SII" }, { key: "purchases", label: "Compras" },
   { key: "inventory", label: "Inventario" }, { key: "catalog", label: "Catálogo" }, { key: "finance", label: "Finanzas" },
-  { key: "analytics", label: "Indicadores" }, { key: "quotes", label: "Cotizaciones" }, { key: "automations", label: "Vinculación WhatsApp" },
+  { key: "analytics", label: "Indicadores" }, { key: "quotes", label: "Cotizaciones" },
   { key: "ai", label: "Asistente IA" }, { key: "people", label: "Nüva People" },
 ] as const;
 export type ModuleKey = (typeof MODULES)[number]["key"];
