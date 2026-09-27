@@ -29,7 +29,6 @@ export const Route = createFileRoute("/_authenticated/analytics")({
 const CHANNEL_LABEL: Record<string, string> = {
   tienda: "Tienda",
   online: "Online",
-  whatsapp: "WhatsApp",
   instagram: "Instagram",
 };
 
@@ -126,7 +125,7 @@ function Analytics() {
   ];
   const byChannel: Record<string, number> = {};
   filteredSales.forEach((s) => { byChannel[s.channel] = (byChannel[s.channel] ?? 0) + Number(s.total); });
-  const channelData = Object.entries(byChannel).map(([channel, total]) => ({ canal: CHANNEL_LABEL[channel] ?? channel, total }));
+  const channelData = Object.entries(byChannel).map(([channel, total]) => ({ canal: CHANNEL_LABEL[channel] ?? "Otro", total }));
   const byPayment: Record<string, number> = {};
   filteredSales.forEach((s) => { const key = s.payment_method ?? "sin registrar"; byPayment[key] = (byPayment[key] ?? 0) + Number(s.total); });
   const paymentData = Object.entries(byPayment).map(([metodo, total]) => ({ metodo: PAYMENT_LABEL[metodo] ?? metodo, total }));
