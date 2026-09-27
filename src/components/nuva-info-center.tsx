@@ -40,7 +40,7 @@ const MODULE_LABELS: Record<string, string> = {
 export const MODULE_INFO_PATHS: ReadonlySet<string> = new Set<string>([
   "/dashboard","/pos","/sales","/customers","/billing","/purchases","/inventory","/shipments",
   "/finance","/analytics","/quotes","/pricing-calculator","/nuva-intelligence",
-  "/executive-command-center","/ai","/studio","/shifts","/automations","/catalog","/conexiones",
+  "/executive-command-center","/ai","/shifts","/automations","/catalog","/conexiones",
   "/business-health","/caja-control","/customer-action-center","/customer-intelligence",
   "/customers-intelligence","/finance-accounting","/finance-professional","/financial-control",
   "/financial-dashboard","/financial-integrity","/inventario-conteo","/inventario-operaciones",
