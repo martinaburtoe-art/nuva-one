@@ -3,3 +3,5 @@ export * from "./nuva-guardian";
 export * from "./nuva-verification";
 export * from "./nuva-instincts";
 export * from "./nuva-evidence-pack";
+export * from "./nuva-decision-gate";
+export * from "./nuva-learning-flow";
