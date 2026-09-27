@@ -63,12 +63,28 @@ function Onboarding() {
   const [industry, setIndustry] = useState("other");
   const [size, setSize] = useState("1-5");
   const [goal, setGoal] = useState("sales");
+  const [loadingDemo, setLoadingDemo] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) navigate({ to: "/auth" });
     });
   }, [navigate]);
+
+  async function loadDemoBusiness() {
+    setLoadingDemo(true);
+    try {
+      const { data, error } = await supabase.rpc("create_demo_business_for_current_user");
+      if (error) throw error;
+      localStorage.setItem("novaflow.active_business_id", data);
+      toast.success("Negocio de prueba preparado");
+      window.location.assign("/dashboard");
+    } catch (err: any) {
+      toast.error(err.message ?? "No pudimos preparar el negocio de prueba");
+    } finally {
+      setLoadingDemo(false);
+    }
+  }
 
   async function finish() {
     setLoading(true);
@@ -105,7 +121,12 @@ function Onboarding() {
               </div>
               <span className="font-semibold tracking-tight">Nüva One</span>
             </div>
-            <span className="text-xs text-muted-foreground">Configuración inicial</span>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={loadDemoBusiness} disabled={loadingDemo}>
+                {loadingDemo ? "Preparando…" : "Usar negocio de prueba"}
+              </Button>
+              <span className="hidden text-xs text-muted-foreground sm:inline">Configuración inicial</span>
+            </div>
           </div>
           <div className="mt-6 grid grid-cols-4 gap-2">
             {labels.map((label, index) => {
