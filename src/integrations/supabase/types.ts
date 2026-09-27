@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      nuva_integration_events: {
+        Row: {
+          business_id: string
+          connection_id: string | null
+          created_at: string
+          direction: string
+          error: string | null
+          event_type: string
+          external_event_id: string
+          id: string
+          normalized: Json
+          payload: Json
+          payload_hash: string | null
+          processed_at: string | null
+          provider: string
+          received_at: string
+          retry_count: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          connection_id?: string | null
+          created_at?: string
+          direction: string
+          error?: string | null
+          event_type: string
+          external_event_id: string
+          id?: string
+          normalized?: Json
+          payload?: Json
+          payload_hash?: string | null
+          processed_at?: string | null
+          provider: string
+          received_at?: string
+          retry_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          connection_id?: string | null
+          created_at?: string
+          direction?: string
+          error?: string | null
+          event_type?: string
+          external_event_id?: string
+          id?: string
+          normalized?: Json
+          payload?: Json
+          payload_hash?: string | null
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          retry_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuva_integration_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_plan_limits"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_integration_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_integration_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuva_integration_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_close_health"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_integration_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_control_center"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_integration_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_financial_management_summary"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "nuva_integration_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "nuva_integration_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       accounting_accounts: {
         Row: {
           account_type: string
