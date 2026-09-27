@@ -35,6 +35,12 @@ const MODULE_LABELS: Record<string, string> = {
   "/inventario-conteo": "Conteo de inventario",
   "/inventario-operaciones": "Operaciones de inventario",
   "/mobile-scanner": "Escáner móvil",
+  "/people": "Nüva People",
+  "/people-employees": "Colaboradores",
+  "/people-attendance": "Asistencia y jornada",
+  "/people-payroll": "Remuneraciones",
+  "/people-lifecycle": "Vacaciones, permisos y finiquitos",
+  "/people-compliance": "Centro de cumplimiento",
 };
 
 export const MODULE_INFO_PATHS: ReadonlySet<string> = new Set<string>([
@@ -44,7 +50,7 @@ export const MODULE_INFO_PATHS: ReadonlySet<string> = new Set<string>([
   "/business-health","/caja-control","/customer-action-center","/customer-intelligence",
   "/customers-intelligence","/finance-accounting","/finance-professional","/financial-control",
   "/financial-dashboard","/financial-integrity","/inventario-conteo","/inventario-operaciones",
-  "/mobile-scanner",
+  "/mobile-scanner","/people","/people-employees","/people-attendance","/people-payroll","/people-lifecycle","/people-compliance",
 ] as const);
 
 const INFO: Record<string, { title: string; description: string; tips: string[] }> = {
@@ -150,6 +156,12 @@ const INFO: Record<string, { title: string; description: string; tips: string[] 
       "Puedes pedir explicaciones, análisis, recomendaciones y próximos pasos.",
     ],
   },
+  "/people": { title: "Nüva People", description: "Gestiona personas, contratos, asistencia, remuneraciones y cumplimiento laboral desde una operación conectada.", tips: ["Mantén la información laboral actualizada.", "Revisa vencimientos y estados antes de cerrar períodos."] },
+  "/people-employees": { title: "Colaboradores", description: "Centraliza fichas laborales, previsión, salud y contratos que alimentan el ciclo de personas y remuneraciones.", tips: ["Completa los datos previsionales antes de calcular remuneraciones.", "Revisa la vigencia del contrato y jornada."] },
+  "/people-attendance": { title: "Asistencia y jornada", description: "Registra eventos de jornada y deja trazabilidad para el control operativo y remuneracional.", tips: ["Corrige eventos manuales con fecha y hora precisas.", "Revisa la jornada antes del cierre de remuneraciones."] },
+  "/people-payroll": { title: "Remuneraciones", description: "Ejecuta el ciclo de nómina desde los datos variables hasta cálculo, aprobación, liquidaciones, LRE y cierre.", tips: ["Valida los datos variables antes de calcular.", "No cierres un período mientras existan observaciones pendientes."] },
+  "/people-lifecycle": { title: "Vacaciones, permisos y finiquitos", description: "Gestiona ausencias, saldos de vacaciones y terminaciones con trazabilidad.", tips: ["Revisa saldos antes de aprobar vacaciones.", "Verifica los antecedentes de una terminación antes de generar el cálculo."] },
+  "/people-compliance": { title: "Centro de cumplimiento", description: "Centraliza obligaciones laborales, vencimientos y evidencias que requieren seguimiento.", tips: ["Prioriza obligaciones próximas a vencer.", "Mantén evidencias y estados actualizados."] },
   "/shifts": {
     title: "Turnos",
     description:
@@ -197,6 +209,12 @@ const DETAILS: Record<string, ModuleDetails> = {
   "/financial-integrity": { purpose: "Revisar la consistencia e integridad de la información financiera.", capabilities: ["Detectar anomalías", "Revisar conciliaciones", "Seguir incidencias"], data: "Registros financieros y controles disponibles.", outcome: "Mayor confianza en la información utilizada para gestionar." },
   "/inventario-conteo": { purpose: "Realizar conteos físicos y contrastarlos con el inventario registrado.", capabilities: ["Crear conteos", "Registrar cantidades", "Revisar diferencias"], data: "Productos, ubicaciones, existencias y conteos.", outcome: "Diferencias de inventario identificables y trazables." },
   "/inventario-operaciones": { purpose: "Gestionar movimientos operacionales de inventario.", capabilities: ["Registrar movimientos", "Consultar historial", "Revisar ajustes"], data: "Productos, movimientos, cantidades, costos y ubicaciones.", outcome: "Trazabilidad de entradas, salidas y ajustes." },
+  "/people": { purpose: "Supervisar el ciclo completo de gestión de personas.", capabilities: ["Ver colaboradores activos", "Revisar costos laborales", "Detectar vencimientos y obligaciones"], data: "Colaboradores, contratos, ausencias, remuneraciones y cumplimiento autorizados.", outcome: "Una vista transversal del estado laboral del negocio." },
+  "/people-employees": { purpose: "Administrar fichas laborales y contratos.", capabilities: ["Crear colaboradores", "Registrar previsión y salud", "Gestionar contratos"], data: "Identidad, RUT, previsión, salud, jornada y remuneración.", outcome: "Datos laborales consistentes para asistencia y nómina." },
+  "/people-attendance": { purpose: "Registrar y consultar eventos de jornada.", capabilities: ["Registrar entradas y salidas", "Registrar colación", "Consultar eventos del día"], data: "Colaboradores y eventos de asistencia autorizados.", outcome: "Trazabilidad de jornada disponible para la operación." },
+  "/people-payroll": { purpose: "Operar el ciclo de remuneraciones.", capabilities: ["Crear períodos", "Cargar variables", "Calcular, aprobar, liquidar y preparar LRE"], data: "Contratos, variables, parámetros legales y resultados de nómina.", outcome: "Un período de remuneraciones trazable hasta su cierre." },
+  "/people-lifecycle": { purpose: "Gestionar ausencias, vacaciones y terminaciones.", capabilities: ["Registrar solicitudes", "Aprobar o rechazar", "Calcular saldos y finiquitos"], data: "Solicitudes, ausencias, saldos, contratos y terminaciones autorizadas.", outcome: "Ciclo laboral con estados y cálculos trazables." },
+  "/people-compliance": { purpose: "Controlar obligaciones y vencimientos laborales.", capabilities: ["Revisar pendientes", "Detectar contratos próximos a vencer", "Consultar estado de cumplimiento"], data: "Obligaciones, contratos y fechas de vencimiento.", outcome: "Mayor visibilidad sobre brechas y próximos vencimientos." },
   "/mobile-scanner": { purpose: "Capturar códigos desde dispositivos móviles para acelerar tareas operativas.", capabilities: ["Escanear códigos", "Buscar productos", "Apoyar conteos y operaciones"], data: "Códigos, SKU y productos autorizados.", outcome: "Menos digitación manual y mayor velocidad operativa." },
 };
 
