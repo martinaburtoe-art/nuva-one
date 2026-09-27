@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { PageHeader } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { ModuleInformation } from "@/components/module-information";
 import { FinanceAccountingWorkspaceV2 } from "@/components/finance-accounting-workspace-v2";
@@ -28,6 +29,10 @@ function Finance() {
   return (
     <ModuleGuard module="finance">
       <div className="space-y-5">
+        <PageHeader
+          title="Finanzas"
+          description="Control financiero, contabilidad, tributación y decisiones sobre el dinero del negocio."
+        />
         <ModuleInformation
           title="Finanzas"
           summary="Centro para entender, controlar y tomar decisiones sobre el dinero del negocio, desde la operación diaria hasta la contabilidad y tributación."
