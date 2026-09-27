@@ -23,6 +23,25 @@ Cerrar la etapa de integración central: eliminar superficies retiradas, protege
 - Eliminada la columna heredada `businesses.webhook_url`.
 - Añadidos índices para las FK de Nüva Connect (`created_by`, `connection_id`).
 - Separadas las políticas de Nüva Connect en SELECT, INSERT, UPDATE y DELETE para evitar políticas permisivas solapadas en SELECT.
+- Añadida `public.nuva_core_integrity_audit()` como gate interno de consistencia transversal. Es `SECURITY DEFINER`, de solo lectura y sin EXECUTE para `public`, `anon` o `authenticated`.
+
+### Integridad transversal verificada
+
+La ejecución del gate contra producción devolvió **0 fallos en todos los checks**:
+
+- ventas pagadas sin transacción: 0
+- ventas pagadas sin aplicación de stock: 0
+- ventas con contabilidad pendiente: 0
+- compras recibidas sin aplicación de stock: 0
+- compras con contabilidad pendiente: 0
+- líneas contables huérfanas: 0
+- asientos publicados desbalanceados: 0
+- movimientos de inventario huérfanos: 0
+- movimientos de caja huérfanos: 0
+- resultados de acciones huérfanos: 0
+- riesgos críticos abiertos sin acción recomendada: 0
+
+Además, la base ya dispone de triggers de integración para ventas, compras, pagos, caja, inventario, contabilidad y Action Queue; las verificaciones actuales no muestran duplicaciones ni huérfanos en los datos existentes.
 
 ### Auditoría de seguridad
 
@@ -32,7 +51,7 @@ La protección de contraseñas comprometidas depende del plan de Supabase y no s
 
 ### Performance
 
-Los avisos de 188 índices no usados no se eliminan masivamente: el uso puede ser bajo en el dataset actual aunque sean necesarios en producción. La regla de esta auditoría es eliminar únicamente índices demostrablemente redundantes o incompatibles con consultas reales.
+Los avisos de índices no usados no se eliminan masivamente: el uso puede ser bajo en el dataset actual aunque sean necesarios en producción. La regla de esta auditoría es eliminar únicamente índices demostrablemente redundantes o incompatibles con consultas reales.
 
 ## Contratos de integración
 
@@ -59,15 +78,20 @@ Knowledge / Factory
 
 El mismo principio debe aplicarse a Compras, People, Cotizaciones, Finanzas, Tributario y Operaciones.
 
-## Siguiente bloque de auditoría
+## Producción
 
-1. Verificar consumidores reales de cada entidad de Intelligence y Action Engine.
-2. Verificar que ventas y compras generen efectos contables/caja/inventario exactamente una vez.
-3. Verificar que People publique costos laborales hacia Finanzas sin duplicación.
-4. Verificar que riesgos/oportunidades puedan convertirse en acciones trazables.
-5. Ejecutar simulación integral de una pyme y registrar resultados.
-6. Convertir fallos reales en tests de regresión.
-7. Validar producción después de cada lote de cambios.
+Release actual:
+
+- commit: `74870ee9c109243f7e286c1df7c40dda42fd1261`
+- Vercel deployment: `dpl_6TipEB39EawfB9gPtsQWZpwaeDed`
+- target: `production`
+- estado: `READY`
+- homepage: HTTP 200
+- runtime errors agrupados últimos 60 minutos: 0
+
+## Estado de cierre
+
+La etapa Core Integration queda cerrada cuando los contratos de datos y seguridad anteriores mantienen 0 fallos, el gate permanece en CI/Factory y producción continúa sincronizada con `main`.
 
 ## Regla de cierre
 
