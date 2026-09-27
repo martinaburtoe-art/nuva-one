@@ -180,12 +180,6 @@ const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
   path: '/billing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAutomationsRoute =
-  AuthenticatedAutomationsRouteImport.update({
-    id: '/automations',
-    path: '/automations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -362,7 +356,6 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
-  '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -489,7 +482,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/ai'
     | '/_authenticated/analytics'
-    | '/_authenticated/automations'
     | '/_authenticated/billing'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
@@ -732,13 +724,6 @@ declare module '@tanstack/react-router' {
       path: '/billing'
       fullPath: '/billing'
       preLoaderRoute: typeof AuthenticatedBillingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/automations': {
-      id: '/_authenticated/automations'
-      path: '/automations'
-      fullPath: '/automations'
-      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/analytics': {
