@@ -1,5 +1,5 @@
 // Shared conversational memory for the AI assistant, used by both the web
-// chatbot and the WhatsApp webhook. A "conversation" is a session scoped to
+// chatbot and external messaging webhooks. A "conversation" is a session scoped to
 // (business, channel, identity) that auto-expires after SESSION_DAYS of
 // inactivity, at which point a fresh one starts. History sent to the model
 // is capped to a rolling summary + the most recent messages, so cost and
