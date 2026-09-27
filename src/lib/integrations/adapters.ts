@@ -61,6 +61,6 @@ export function buildIntegrationContext(connection: { id: string; business_id: s
     provider: connection.provider,
     externalAccountId: connection.external_account_id,
     scopes: connection.scopes ?? [],
-    metadata: connection.metadata ?? {},
+    metadata: connection.metadata && typeof connection.metadata === "object" && !Array.isArray(connection.metadata) ? connection.metadata as Record<string, unknown> : {},
   };
 }
