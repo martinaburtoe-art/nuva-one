@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   validation:
-    name: Free ephemeral 25 / 50 / 100 VU validation
+    name: Free ephemeral 10 / 25 / 50 / 100 VU validation
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -80,19 +80,24 @@ jobs:
           echo "Local Supabase URL: $API_URL"
 
       - name: Create deterministic synthetic auth and business fixture
+        env:
+          LOAD_TEST_CROSS_TENANT_EMAIL: "loadtest-secondary@nuva.local"
+          LOAD_TEST_CROSS_TENANT_PASSWORD: "NüvaLoadTest-Secondary-2026!"
         run: node scripts/prepare-load-test-fixture.mjs
 
-      - name: Run 25 / 50 / 100 VU acceptance battery
+      - name: Run 10 / 25 / 50 / 100 VU acceptance battery
         env:
           LOAD_TEST_CONFIRM: "true"
           LOAD_TEST_ENV: staging
-          LOAD_TEST_PHASES: "25,50,100"
+          LOAD_TEST_PHASES: "10,25,50,100"
           LOAD_TEST_ITERATIONS: "2"
           LOAD_TEST_OUTPUT: artifacts/staging-load-test-results.json
           VITE_SUPABASE_URL: ${{ env.API_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
           LOAD_TEST_EMAIL: "loadtest@nuva.local"
           LOAD_TEST_PASSWORD: "NüvaLoadTest-2026!"
+          LOAD_TEST_CROSS_TENANT_EMAIL: "loadtest-secondary@nuva.local"
+          LOAD_TEST_CROSS_TENANT_PASSWORD: "NüvaLoadTest-Secondary-2026!"
         run: node scripts/load-test.mjs
 
       - name: Run real inventory concurrency acceptance battery
