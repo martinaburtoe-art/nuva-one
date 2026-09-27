@@ -10878,6 +10878,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_demo_business_for_current_user: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       create_mobile_scanner_session: {
         Args: { p_business_id: string }
         Returns: {
