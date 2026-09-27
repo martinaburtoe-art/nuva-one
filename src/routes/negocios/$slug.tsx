@@ -13,7 +13,6 @@ import {
   Instagram,
   Facebook,
   Linkedin,
-  MessageCircle,
   ArrowLeft,
 } from "lucide-react";
 
@@ -50,11 +49,6 @@ function useBusinessProfile(slug: string) {
       return data as PublicBusinessDetail | null;
     },
   });
-}
-
-function whatsappHref(raw: string) {
-  const digits = raw.replace(/[^\d]/g, "");
-  return `https://wa.me/${digits}`;
 }
 
 const SOCIAL_ICONS: Record<string, typeof Instagram> = {
@@ -160,17 +154,6 @@ function BusinessProfile() {
                     </Button>
                   </a>
                 )}
-                {business.public_social_links?.whatsapp && (
-                  <a
-                    href={whatsappHref(business.public_social_links.whatsapp)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Button variant="outline" size="sm">
-                      <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp
-                    </Button>
-                  </a>
-                )}
                 {business.public_social_links?.website && (
                   <a href={business.public_social_links.website} target="_blank" rel="noreferrer">
                     <Button variant="outline" size="sm">
@@ -192,9 +175,7 @@ function BusinessProfile() {
                   );
                 })}
                 {!business.public_contact_email &&
-                  !business.public_contact_phone &&
-                  !business.public_social_links?.whatsapp &&
-                  !business.public_social_links?.website &&
+                  !business.public_contact_phone &&                  !business.public_social_links?.website &&
                   !business.public_social_links?.instagram &&
                   !business.public_social_links?.facebook &&
                   !business.public_social_links?.linkedin && (
