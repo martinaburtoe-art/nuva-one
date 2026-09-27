@@ -37,7 +37,7 @@ if (fs.existsSync(factoryDocPath)) {
   }
 }
 
-const sourceRoots = ["src", "supabase", "scripts"];
+const sourceRoots = ["src", "scripts"];
 for (const sourceRoot of sourceRoots) {
   const absoluteRoot = path.join(root, sourceRoot);
   if (!fs.existsSync(absoluteRoot)) continue;
