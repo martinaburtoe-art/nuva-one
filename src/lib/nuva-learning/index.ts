@@ -9,3 +9,5 @@ export * from "./nuva-persistence";
 export * from "./nuva-playbooks";
 export * from "./nuva-evaluation";
 export * from "./nuva-persisted-learning-flow";
+export * from "./nuva-agent-health";
+export * from "./nuva-agent-introspection";
