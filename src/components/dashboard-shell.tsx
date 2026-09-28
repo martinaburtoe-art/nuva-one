@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import "@/nuva-product-system.css";
 import "@/module-motion-system.css";
 import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, Sparkles, Brain, FileText, Settings, Bell, LogOut, ChevronsLeft, ChevronsRight, Building2, ChevronDown, Plus, Menu, Calculator, Lock, CalendarClock, Users, MessagesSquare, Truck, ShieldCheck, HelpCircle, UserRoundCog, Link2 } from "lucide-react";
