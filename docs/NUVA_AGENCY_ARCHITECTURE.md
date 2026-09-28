@@ -92,3 +92,15 @@ Phase 6: strategic improvement loops and cross-domain learning.
 ## External patterns adopted
 
 The design is informed by autonomous QA, multi-agent QA, AppSec agent teams, agent observability and SRE council patterns. Nüva should implement the contracts and safety model itself rather than copy any external runtime wholesale.
+
+## Implementación actual
+
+La primera capa operativa ya está aterrizada en el repositorio:
+
+- **Nüva Sentinel v1** ejecuta observación periódica de producción, GitHub Actions y Supabase cuando sus credenciales opcionales están configuradas.
+- Cada señal genera un **fingerprint determinista** y evidencia JSON en `artifacts/nuva-agency/sentinel.json`.
+- Las señales `warning` y `critical` se transforman mediante el **Incident Engine** en incidentes deduplicables, hallazgos, hipótesis y verificaciones pendientes.
+- El workflow conserva una postura **observe-only**: no modifica producción ni ejecuta auto-reparaciones.
+- Las señales críticas pueden abrir un issue de GitHub para iniciar el circuito de investigación y verificación.
+
+GitHub Actions soporta workflows por eventos y por programación, por lo que esta capa puede operar como vigilancia continua sin convertir cada decisión en una mutación automática. La producción queda separada de la automatización de ingeniería hasta que exista evidencia y verificación determinista suficiente.
