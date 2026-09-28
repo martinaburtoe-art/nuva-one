@@ -37,23 +37,29 @@ function NotFoundComponent() {
     </div>
   );
 }
+
 function isStaleChunkError(error: Error): boolean {
   const msg = `${error.message} ${error.name}`.toLowerCase();
   return msg.includes("failed to fetch dynamically imported module") || msg.includes("failed to import") || msg.includes("importing a module script failed") || msg.includes("error loading dynamically imported module") || (msg.includes("failed to load") && msg.includes("chunk"));
 }
+
+function recoverFromStaleChunk() {
+  const key = "nuva_stale_chunk_reload_at";
+  const now = Date.now();
+  const lastReload = Number(sessionStorage.getItem(key) ?? 0);
+  if (now - lastReload <= 30_000) return;
+  sessionStorage.setItem(key, String(now));
+  const url = new URL(window.location.href);
+  url.searchParams.set("_nuva_refresh", String(now));
+  window.location.replace(url.toString());
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-    if (isStaleChunkError(error)) {
-      const key = "nuva_stale_chunk_reload_at";
-      const lastReload = Number(sessionStorage.getItem(key) ?? 0);
-      if (Date.now() - lastReload > 10_000) {
-        sessionStorage.setItem(key, String(Date.now()));
-        window.location.href = `${window.location.pathname}?_nuva_refresh=${Date.now()}`;
-      }
-    }
+    if (isStaleChunkError(error)) recoverFromStaleChunk();
   }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -93,9 +99,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
+
 function RootShell({ children }: { children: ReactNode }) {
   return <html lang="es"><head><HeadContent /></head><body>{children}<Scripts /></body></html>;
 }
+
 function setPosSearch(value: string) {
   const input = Array.from(document.querySelectorAll<HTMLInputElement>("input")).find((node) => node.placeholder?.includes("Buscar por nombre, SKU o categoría"));
   if (!input) return false;
@@ -105,6 +113,7 @@ function setPosSearch(value: string) {
   input.focus();
   return true;
 }
+
 function PosScannerEnhancement() {
   const handleDetected = useCallback(async (code: string) => {
     const businessId = localStorage.getItem("novaflow.active_business_id");
@@ -127,6 +136,7 @@ function PosScannerEnhancement() {
   }, []);
   return <PosBarcodeScanner onDetected={handleDetected} />;
 }
+
 function RouteEnhancements() {
   const location = useLocation();
   const [mount, setMount] = useState<HTMLElement | null>(null);
@@ -150,10 +160,10 @@ function RouteEnhancements() {
   if (!mount) return null;
   return createPortal(location.pathname === "/pos" ? <PosScannerEnhancement /> : <NuvaOperatingPulse />, mount);
 }
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  const location = useLocation();
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
@@ -163,21 +173,16 @@ function RootComponent() {
     function onUnhandledRejection(event: PromiseRejectionEvent) {
       const reason = event?.reason;
       const err = reason instanceof Error ? reason : new Error(String(reason));
-      if (isStaleChunkError(err)) {
-        const key = "nuva_stale_chunk_reload_at";
-        const lastReload = Number(sessionStorage.getItem(key) ?? 0);
-        if (Date.now() - lastReload > 10_000) { sessionStorage.setItem(key, String(Date.now())); window.location.href = `${window.location.pathname}?_nuva_refresh=${Date.now()}`; }
-      }
+      if (isStaleChunkError(err)) recoverFromStaleChunk();
     }
     window.addEventListener("unhandledrejection", onUnhandledRejection);
     return () => { sub.subscription.unsubscribe(); window.removeEventListener("unhandledrejection", onUnhandledRejection); };
   }, [router, queryClient]);
-  const showLanding = true;
   return (
     <QueryClientProvider client={queryClient}>
       <OfflineBanner />
-      {showLanding ? <RouteEnhancements /> : null}
-      {showLanding ? <Outlet /> : null}
+      <RouteEnhancements />
+      <Outlet />
       <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
   );
