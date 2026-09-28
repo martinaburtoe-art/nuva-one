@@ -65,11 +65,20 @@ function POS() {
   const { data: products, isLoading } = useBizList<any>("products", {
     order: "name",
     ascending: true,
+    select: "id,name,sku,barcode,category,stock,price",
   });
-  const { data: sales } = useBizList<any>("sales", { order: "created_at" });
-  const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
+  const { data: sales } = useBizList<any>("sales", {
+    order: "created_at",
+    select: "id,sale_date,created_at,total",
+  });
+  const { data: customers } = useBizList<any>("customers", {
+    order: "name",
+    ascending: true,
+    select: "id,name,tax_id",
+  });
   const { data: paymentIntegrations } = useBizList<any>("billing_integrations", {
     order: "created_at",
+    select: "id,type,status",
   });
   const hasPaymentGateway = (paymentIntegrations ?? []).some(
     (i: any) => i.type === "payment" && i.status === "connected",
