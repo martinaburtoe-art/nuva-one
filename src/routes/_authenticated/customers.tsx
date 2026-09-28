@@ -110,11 +110,12 @@ function Customers() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const { data, isLoading } = useBizList<Customer>("customers", { order: "name", ascending: true });
-  const { data: sales } = useBizList<any>("sales", { order: "sale_date" });
-  const { data: quotes } = useBizList<any>("quotes", { order: "created_at" });
+  const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total" });
+  const { data: quotes } = useBizList<any>("quotes", { order: "created_at", select: "id,customer_id,created_at,status,total" });
   const { data: activities } = useBizList<Activity>("customer_activities", {
     order: "created_at",
     ascending: false,
+    select: "id,customer_id,type,content,due_date,completed,created_at",
   });
   const insert = useBizInsert("customers");
   const update = useBizUpdate("customers");
