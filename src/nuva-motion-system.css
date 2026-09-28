@@ -8,4 +8,54 @@ html { scroll-behavior:smooth; } body { text-rendering:optimizeLegibility; } #ro
 @keyframes nuva-enter{from{opacity:0;transform:translate3d(0,18px,0) scale(.985);filter:blur(4px)}to{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}}@keyframes nuva-enter-soft{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:translate3d(0,0,0)}}@keyframes nuva-pop{0%{opacity:0;transform:scale(.94);filter:blur(3px)}65%{opacity:1;transform:scale(1.012);filter:blur(0)}100%{transform:scale(1)}}@keyframes nuva-surface-sweep{0%,58%{transform:translateX(-120%);opacity:0}68%{opacity:1}86%,100%{transform:translateX(120%);opacity:0}}
 .nuva-app table tr,.nuva-app [data-state="open"],.nuva-app [data-state="closed"]{transition:background-color var(--nuva-fast) ease,opacity var(--nuva-fast) ease,transform var(--nuva-fast) var(--nuva-ease)}
 
+/* Internal product experience: inspired by state-driven interfaces, creative workspaces and attention-first analytics. */
+body[data-nuva-surface="app"] main{position:relative;isolation:isolate;animation:nuva-module-enter 420ms var(--nuva-ease-soft) both}
+body[data-nuva-surface="app"] main::before{content:"";position:absolute;inset:0 0 auto;z-index:-1;height:260px;pointer-events:none;background:radial-gradient(circle at 12% 0%,oklch(.55 .22 268 / .065),transparent 42%),radial-gradient(circle at 88% 4%,oklch(.70 .18 280 / .045),transparent 38%);mask-image:linear-gradient(to bottom,black,transparent);}
+@keyframes nuva-module-enter{from{opacity:0;transform:translate3d(0,7px,0)}to{opacity:1;transform:none}}
+
+/* Command hierarchy: the first information block arrives first, secondary blocks follow in a restrained cascade. */
+@media (prefers-reduced-motion:no-preference){
+  body[data-nuva-surface="app"] main > :nth-child(1){animation:nuva-module-item 420ms 30ms var(--nuva-ease-soft) both}
+  body[data-nuva-surface="app"] main > :nth-child(2){animation:nuva-module-item 420ms 70ms var(--nuva-ease-soft) both}
+  body[data-nuva-surface="app"] main > :nth-child(3){animation:nuva-module-item 420ms 110ms var(--nuva-ease-soft) both}
+  body[data-nuva-surface="app"] main > :nth-child(4){animation:nuva-module-item 420ms 150ms var(--nuva-ease-soft) both}
+}
+@keyframes nuva-module-item{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Buttons feel physical without becoming theatrical: lift, press, and focused glow. */
+body[data-nuva-surface="app"] button:not([disabled]),body[data-nuva-surface="app"] a[role="button"]{will-change:transform}
+@media (hover:hover) and (pointer:fine){
+  body[data-nuva-surface="app"] button:not([disabled]):hover,body[data-nuva-surface="app"] a[role="button"]:hover{filter:saturate(1.04);}
+  body[data-nuva-surface="app"] button:not([disabled]):active,body[data-nuva-surface="app"] a[role="button"]:active{transform:translateY(1px) scale(.985);}
+}
+body[data-nuva-surface="app"] :where(input,select,textarea):focus{transition:box-shadow 180ms var(--nuva-ease),border-color 180ms ease,background-color 180ms ease;box-shadow:0 0 0 3px oklch(.55 .22 268 / .10),0 8px 24px -18px oklch(.35 .18 270 / .35);}
+
+/* Data-dense screens: tables behave like an instrument panel rather than a static spreadsheet. */
+body[data-nuva-surface="app"] tbody tr{transition:background-color 160ms ease,transform 180ms var(--nuva-ease),box-shadow 180ms ease;}
+@media (hover:hover) and (pointer:fine){body[data-nuva-surface="app"] tbody tr:hover{background-color:color-mix(in oklab,var(--color-accent) 42%,transparent);transform:translateX(1px);}}
+body[data-nuva-surface="app"] thead th{transition:color 180ms ease,background-color 180ms ease;}
+
+/* Tabs and segmented controls: the active state reads as a destination, not just a color change. */
+body[data-nuva-surface="app"] [role="tab"]{position:relative;transition:color 180ms ease,background-color 220ms ease,transform 180ms var(--nuva-ease);}
+body[data-nuva-surface="app"] [role="tab"][aria-selected="true"]::after{content:"";position:absolute;left:18%;right:18%;bottom:-1px;height:2px;border-radius:999px;background:currentColor;opacity:.72;animation:nuva-tab-in 240ms var(--nuva-ease-soft) both;}
+@keyframes nuva-tab-in{from{transform:scaleX(.2);opacity:0}to{transform:scaleX(1);opacity:.72}}
+
+/* Dialogs, popovers and dropdowns use one depth language: opacity + lift, never abrupt appearance. */
+body[data-nuva-surface="app"] [data-radix-popper-content-wrapper]>*,body[data-nuva-surface="app"] [role="dialog"]{transform-origin:var(--radix-popover-content-transform-origin,center);animation:nuva-layer-in 180ms var(--nuva-ease-soft) both;}
+@keyframes nuva-layer-in{from{opacity:0;transform:translateY(5px) scale(.985)}to{opacity:1;transform:none}}
+
+/* Status changes get a tiny pulse so operational feedback is perceived without demanding attention. */
+body[data-nuva-surface="app"] [data-state="open"]{animation:nuva-state-in 180ms var(--nuva-ease-soft) both}
+@keyframes nuva-state-in{from{opacity:.65;transform:translateY(2px)}to{opacity:1;transform:none}}
+
+/* Loading surfaces: a quiet sheen communicates activity without a spinner wall. */
+body[data-nuva-surface="app"] [aria-busy="true"]{position:relative;overflow:hidden;}
+body[data-nuva-surface="app"] [aria-busy="true"]::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 30%,oklch(.55 .22 268 / .07) 50%,transparent 70%);transform:translateX(-120%);animation:nuva-loading-sheen 1.35s var(--nuva-ease-soft) infinite;}
+@keyframes nuva-loading-sheen{to{transform:translateX(120%)}}
+
+/* Compact screens retain the same interaction language without hover-dependent behavior. */
+@media (max-width:767px){body[data-nuva-surface="app"] main{animation-duration:300ms}body[data-nuva-surface="app"] main::before{height:180px;opacity:.7}body[data-nuva-surface="app"] :where(input,select,textarea){font-size:16px;}}
+
+@media (prefers-reduced-motion:reduce){body[data-nuva-surface="app"] main,body[data-nuva-surface="app"] main>* ,body[data-nuva-surface="app"] [role="dialog"],body[data-nuva-surface="app"] [data-radix-popper-content-wrapper]>*,body[data-nuva-surface="app"] [aria-busy="true"]::after{animation:none!important;transition:none!important}body[data-nuva-surface="app"] tbody tr{transform:none!important}}
+
 /* The launch experience owns its complete visual timeline locally via requestAnimationFrame. */
