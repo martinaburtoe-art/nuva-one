@@ -54,6 +54,8 @@ function Sales() {
   const { data: sales, isLoading } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost,cost_price,purchase_price" });
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true, select: "id,name,phone" });
+  const productsById = useMemo(() => new Map((products ?? []).map((p: any) => [p.id, p])), [products]);
+  const customersById = useMemo(() => new Map((customers ?? []).map((c: any) => [c.id, c])), [customers]);
   const fastSale = useMutation({
     mutationFn: async () => {
       const validItems = items.filter((i) => i.product_id && i.qty > 0).map((i) => ({ product_id: i.product_id, qty: i.qty }));
@@ -90,12 +92,12 @@ function Sales() {
   const [isCredit, setIsCredit] = useState(false);
   const [dueDate, setDueDate] = useState("");
 
-  const selectedCustomerPhone = (customers ?? []).find((c: any) => c.id === customerId)?.phone;
+  const selectedCustomerPhone = customersById.get(customerId ?? "")?.phone;
   const computedTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
   const total = manualTotal ?? computedTotal;
 
   function pickProduct(idx: number, productId: string) {
-    const p = (products ?? []).find((x: any) => x.id === productId);
+    const p = productsById.get(productId);
     const copy = [...items];
     if (p) {
       copy[idx] = {
@@ -135,7 +137,7 @@ function Sales() {
 
   function stockHint(productId: string | null) {
     if (!productId) return null;
-    const p = (products ?? []).find((x: any) => x.id === productId);
+    const p = productsById.get(productId);
     return p ? p.stock : null;
   }
 
@@ -175,7 +177,7 @@ function Sales() {
                             setCustomerId(null);
                             return;
                           }
-                          const c = (customers ?? []).find((x: any) => x.id === v);
+                          const c = customersById.get(v);
                           setCustomerId(v);
                           if (c) setCustomerName(c.name);
                         }}
