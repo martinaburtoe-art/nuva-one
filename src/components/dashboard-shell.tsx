@@ -41,7 +41,7 @@ const nav = [
 export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [moduleMotion, setModuleMotion] = useState<string | null>(null);
+  const [moduleMotion, setModuleMotion] = useState<string | null>(null); // motion trigger
   const playModuleMotion = (to: string) => {
     setModuleMotion(to);
     window.setTimeout(() => navigate({ to }), 2100);
