@@ -30,6 +30,61 @@ export function useBizList<T = any>(
   });
 }
 
+export function useBizPage<T = any>(
+  table: string,
+  opts?: {
+    page?: number;
+    pageSize?: number;
+    order?: string;
+    ascending?: boolean;
+    enabled?: boolean;
+    select?: string;
+  },
+) {
+  const { active } = useActiveBusiness();
+  const page = Math.max(1, opts?.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? 50));
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  return useQuery({
+    enabled: !!active?.id && (opts?.enabled ?? true),
+    queryKey: [
+      table,
+      active?.id,
+      "page",
+      page,
+      pageSize,
+      opts?.select ?? "*",
+      opts?.order ?? null,
+      opts?.ascending ?? false,
+    ],
+    placeholderData: (previous) => previous,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    queryFn: async () => {
+      const q = supabase
+        .from(table as any)
+        .select(opts?.select ?? "*", { count: "exact" })
+        .eq("business_id", active!.id)
+        .range(from, to);
+
+      if (opts?.order) q.order(opts.order, { ascending: opts.ascending ?? false });
+
+      const { data, error, count } = await q;
+      if (error) throw error;
+
+      return {
+        rows: (data ?? []) as T[],
+        total: count ?? 0,
+        page,
+        pageSize,
+        pageCount: Math.max(1, Math.ceil((count ?? 0) / pageSize)),
+      };
+    },
+  });
+}
+
 export function useBizInsert(table: string) {
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
