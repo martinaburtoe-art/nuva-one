@@ -6,7 +6,7 @@ const KEY = "novaflow.active_business_id";
 
 export type Business = {
   id: string; name: string; industry: string; logo_url: string | null; tax_id: string | null; giro: string | null;
-  address: string | null; comuna: string | null; owner_id: string; webhook_url: string | null; public_enabled: boolean;
+  address: string | null; comuna: string | null; owner_id: string; public_enabled: boolean;
   public_slug: string | null; public_description: string | null; public_photos: string[];
   public_social_links: Record<string, string>; public_contact_email: string | null; public_contact_phone: string | null; plan: string;
 };
@@ -15,7 +15,7 @@ export function useBusinesses() {
   return useQuery({
     queryKey: ["businesses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("businesses").select("id, name, industry, logo_url, tax_id, giro, address, comuna, owner_id, webhook_url, public_enabled, public_slug, public_description, public_photos, public_social_links, public_contact_email, public_contact_phone, plan").order("created_at", { ascending: true });
+      const { data, error } = await supabase.from("businesses").select("id, name, industry, logo_url, tax_id, giro, address, comuna, owner_id, public_enabled, public_slug, public_description, public_photos, public_social_links, public_contact_email, public_contact_phone, plan").order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as Business[];
     },
