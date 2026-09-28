@@ -1,8 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { updateNuvaInstinct, type NuvaInstinct } from "./nuva-instincts";
 
 type Action = Database["public"]["Tables"]["nuva_action_queue"]["Row"];
+
+const toJson = (value: Record<string, unknown>): Json => JSON.parse(JSON.stringify(value)) as Json;
 
 export async function learnFromNuvaActionOutcome(
   supabase: SupabaseClient<Database>,
@@ -18,7 +20,7 @@ export async function learnFromNuvaActionOutcome(
     business_id: action.business_id,
     decision_id: action.id,
     signal,
-    evidence: result,
+    evidence: toJson(result),
     agents_consulted: ["action-executor"],
     consensus_confidence: succeeded ? 1 : 0,
     agreement: succeeded ? 1 : 0,
