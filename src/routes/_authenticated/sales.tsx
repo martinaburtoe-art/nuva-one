@@ -51,7 +51,9 @@ function Sales() {
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
   const canWrite = canWriteOperations(myRole);
-  const [salesPage, setSalesPage] = useState(1);\n  const { data: salesPageData, isLoading } = useBizPage<any>("sales", { page: salesPage, pageSize: 25, order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });\n  const sales = salesPageData?.rows ?? [];
+  const [salesPage, setSalesPage] = useState(1);
+  const { data: salesPageData, isLoading } = useBizPage<any>("sales", { page: salesPage, pageSize: 25, order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
+  const sales = salesPageData?.rows ?? [];
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost,cost_price,purchase_price" });
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true, select: "id,name,phone" });
   const productsById = useMemo(() => new Map((products ?? []).map((p: any) => [p.id, p])), [products]);
