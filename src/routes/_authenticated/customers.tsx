@@ -47,6 +47,8 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
@@ -135,6 +137,8 @@ function Customers() {
   const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
   const [tagsInput, setTagsInput] = useState("");
   const [rutInput, setRutInput] = useState("");
+  const [customersPage, setCustomersPage] = useState(1);
+  const customersPageSize = 50;
 
   // Métricas de compra por cliente, calculadas desde las ventas ya cargadas
   // (sin nueva tabla ni endpoint: reusa lo que otros módulos ya traen).
@@ -167,6 +171,9 @@ function Customers() {
     }
     return list;
   }, [data, search, statusFilter]);
+
+  const customersTotalPages = Math.max(1, Math.ceil(filtered.length / customersPageSize));
+  const pagedCustomers = filtered.slice((customersPage - 1) * customersPageSize, customersPage * customersPageSize);
 
   const counts = useMemo(() => {
     const list = data ?? [];
@@ -457,7 +464,7 @@ function Customers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((c) => {
+                {pagedCustomers.map((c) => {
                   const stats = statsByCustomer.get(c.id);
                   return (
                     <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
@@ -517,6 +524,16 @@ function Customers() {
                 })}
               </TableBody>
             </Table>
+            {customersTotalPages > 1 && (
+              <div className="flex items-center justify-between gap-3 border-t px-4 py-3 text-xs text-muted-foreground">
+                <span>Mostrando {(customersPage - 1) * customersPageSize + 1}–{Math.min(customersPage * customersPageSize, filtered.length)} de {filtered.length}</span>
+                <div className="flex items-center gap-1">
+                  <Button size="icon" variant="ghost" className="h-8 w-8" disabled={customersPage === 1} onClick={() => setCustomersPage((p) => p - 1)} aria-label="Página anterior"><ChevronLeft className="h-4 w-4" /></Button>
+                  <span>Página {customersPage} / {customersTotalPages}</span>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" disabled={customersPage === customersTotalPages} onClick={() => setCustomersPage((p) => p + 1)} aria-label="Página siguiente"><ChevronRight className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            )}
             </div>
           </Card>
         )}
