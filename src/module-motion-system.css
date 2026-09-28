@@ -18,7 +18,7 @@
   color: hsl(var(--primary));
   pointer-events: none;
   transform: translate3d(-2.5rem, -50%, 0);
-  animation: nuva-module-sweep 2.1s linear both;
+  animation: nuva-module-sweep 240ms var(--nuva-ease) both;
 }
 
 .nuva-module-motion-vehicle svg {
@@ -56,6 +56,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .nuva-module-motion-vehicle {
-    animation-duration: 2.1s;
+    animation-duration: 240ms;
   }
 }

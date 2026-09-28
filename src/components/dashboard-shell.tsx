@@ -49,7 +49,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     navigate({ to });
     moduleMotionTimerRef.current = window.setTimeout(() => {
       setModuleMotion(null);
-    }, 700);
+    }, 300);
   };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
