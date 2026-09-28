@@ -54,7 +54,7 @@ function Sales() {
   const [salesPage, setSalesPage] = useState(1);
   const { data: salesPageData, isLoading } = useBizPage<any>("sales", { page: salesPage, pageSize: 25, order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
   const sales = salesPageData?.rows ?? [];
-  const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost,cost_price,purchase_price" });
+  const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost" });
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true, select: "id,name,phone" });
   const productsById = useMemo(() => new Map((products ?? []).map((p: any) => [p.id, p])), [products]);
   const customersById = useMemo(() => new Map((customers ?? []).map((c: any) => [c.id, c])), [customers]);
