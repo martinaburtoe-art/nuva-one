@@ -7,6 +7,7 @@ type Props = {
   motionKey: string;
 };
 
+// Preview deployment trigger: module motion visual QA.
 export function ModuleMotionLabel({ label, icon: Icon, active, motionKey }: Props) {
   return (
     <span className="nuva-module-motion-label" data-module-motion={motionKey}>
