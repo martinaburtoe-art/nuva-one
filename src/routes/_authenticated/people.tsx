@@ -1,8 +1,9 @@
 // Build marker: keeps Vercel deployment synchronized with the repaired npm lockfile.
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, Clock3, FileText, ShieldCheck, Users, WalletCards } from "lucide-react";
-import { useBizList } from "@/lib/biz-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useActiveBusiness } from "@/lib/use-business";
 import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
@@ -12,18 +13,23 @@ export const Route = createFileRoute("/_authenticated/people")({ head: () => ({ 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
 function People() {
-  const { data: employees = [], isLoading: employeesLoading } = useBizList<any>("people_employees", { order: "last_name", select: "id,employment_status,last_name" });
-  const { data: contracts = [], isLoading: contractsLoading } = useBizList<any>("people_contracts", { order: "end_date", select: "id,end_date,status" });
-  const { data: leaveRequests = [], isLoading: leaveLoading } = useBizList<any>("people_leave_requests", { order: "start_date", select: "id,status,start_date" });
-  const { data: payrollPeriods = [], isLoading: payrollLoading } = useBizList<any>("people_payroll_periods", { order: "period_year", select: "id,period_year,period_month,status" });
-  const { data: payrollItems = [], isLoading: itemsLoading } = useBizList<any>("people_payroll_items", { select: "id,payroll_period_id,employer_cost_amount" });
-  const { data: compliance = [], isLoading: complianceLoading } = useBizList<any>("people_compliance_items", { order: "due_date", select: "id,title,status,due_date" });
-  const loading = employeesLoading || contractsLoading || leaveLoading || payrollLoading || itemsLoading || complianceLoading;
-  const activeEmployees = employees.filter((employee: any) => employee.employment_status === "active");
-  const pendingLeave = leaveRequests.filter((request: any) => request.status === "pending").length;
-  const openCompliance = compliance.filter((item: any) => !["compliant", "not_applicable"].includes(item.status));
-  const expiringContracts = contracts.filter((contract: any) => { if (!contract.end_date || contract.status !== "active") return false; const days = (new Date(contract.end_date).getTime() - Date.now()) / 86_400_000; return days >= 0 && days <= 45; }).length;
-  const currentPayroll = useMemo(() => { const latest = [...payrollPeriods].sort((a: any, b: any) => Number(`${b.period_year}${String(b.period_month).padStart(2, "0")}`) - Number(`${a.period_year}${String(a.period_month).padStart(2, "0")}`))[0]; if (!latest) return { period: "Sin período", cost: 0, status: "draft" }; const cost = payrollItems.filter((item: any) => item.payroll_period_id === latest.id).reduce((sum: number, item: any) => sum + Number(item.employer_cost_amount ?? 0), 0); return { period: `${latest.period_month}/${latest.period_year}`, cost, status: latest.status }; }, [payrollPeriods, payrollItems]);
+  const [businessId] = useActiveBusiness();
+  const { data: summary, isLoading } = useQuery({
+    enabled: !!businessId,
+    queryKey: ["people-dashboard-summary", businessId],
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("people_dashboard_summary", { p_business_id: businessId });
+      if (error) throw error;
+      return data as any;
+    },
+  });
+  const activeEmployees = Number(summary?.active_employees ?? 0);
+  const pendingLeave = Number(summary?.pending_leave ?? 0);
+  const expiringContracts = Number(summary?.expiring_contracts ?? 0);
+  const openCompliance = Array.isArray(summary?.compliance) ? summary.compliance : [];
+  const currentPayroll = summary?.payroll ?? { period: "Sin período", cost: 0, status: "draft" };
   const cards = [
     { label: "Colaboradores activos", value: activeEmployees.length, icon: Users },
     { label: "Costo empleador último período", value: money.format(currentPayroll.cost), icon: WalletCards },
