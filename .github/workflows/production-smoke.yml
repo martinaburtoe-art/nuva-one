@@ -1,0 +1,81 @@
+name: Production Smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: npx playwright@1.55.0 install --with-deps chromium
+
+      - name: Verify production document
+        run: |
+          curl --fail --silent --show-error --location --retry 3 --retry-all-errors \
+            https://nuva-one.vercel.app/ -o /tmp/nuva-one.html
+          grep -qi '<html' /tmp/nuva-one.html
+          grep -qi '<script' /tmp/nuva-one.html
+
+      - name: Verify production frontend and dynamic chunks
+        run: |
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless: true});
+            const page = await browser.newPage();
+            const errors = [];
+            const failed = [];
+            page.on('console', msg => {
+              if (msg.type() === 'error') errors.push(msg.text());
+            });
+            page.on('pageerror', err => errors.push(String(err)));
+            page.on('requestfailed', req => {
+              const url = req.url();
+              if (url.includes('/assets/') || url.includes('/api/')) {
+                failed.push(`${req.method()} ${url} :: ${req.failure()?.errorText || 'request failed'}`);
+              }
+            });
+
+            const response = await page.goto(
+              'https://nuva-one.vercel.app/?_nuva_smoke=' + Date.now(),
+              {waitUntil: 'networkidle', timeout: 60000}
+            );
+            if (!response || !response.ok()) {
+              throw new Error(`Production returned ${response?.status() ?? 'no response'}`);
+            }
+
+            const title = await page.title();
+            if (!title || !/Nüva|Nuva/i.test(title)) {
+              throw new Error(`Unexpected production title: ${title}`);
+            }
+
+            await page.waitForTimeout(3000);
+            const body = await page.locator('body').innerText();
+            if (!body.trim()) throw new Error('Production body is empty');
+
+            if (failed.length || errors.length) {
+              console.error(JSON.stringify({failed, errors}, null, 2));
+              throw new Error(`Production smoke failed: ${failed.length} failed requests, ${errors.length} browser errors`);
+            }
+
+            console.log(JSON.stringify({status: 'ok', title, bodyLength: body.length}, null, 2));
+            await browser.close();
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          NODE
