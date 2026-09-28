@@ -21,7 +21,8 @@
     "factory:release-evidence": "node scripts/create-factory-release-evidence.mjs",
     "factory:validate-learning": "node scripts/validate-factory-learning-record.mjs",
     "agency:sentinel": "node scripts/nuva-agency-sentinel.mjs",
-    "agency:qa": "node scripts/nuva-agency-web-qa.mjs"
+    "agency:qa": "node scripts/nuva-agency-web-qa.mjs",
+    "agency:correlate": "node scripts/nuva-agency-correlate.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",
