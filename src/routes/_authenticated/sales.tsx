@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, ShoppingCart, X, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, ShoppingCart, X, Clock } from "lucide-react";
 import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations, useActiveBusiness } from "@/lib/use-business";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -89,10 +89,6 @@ function Sales() {
   const [manualTotal, setManualTotal] = useState<number | null>(null);
   const [isCredit, setIsCredit] = useState(false);
   const [dueDate, setDueDate] = useState("");
-  const [salesPage, setSalesPage] = useState(1);
-  const salesPageSize = 50;
-  const salesTotalPages = Math.max(1, Math.ceil((sales?.length ?? 0) / salesPageSize));
-  const pagedSales = (sales ?? []).slice((salesPage - 1) * salesPageSize, salesPage * salesPageSize);
 
   const selectedCustomerPhone = (customers ?? []).find((c: any) => c.id === customerId)?.phone;
   const computedTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
@@ -440,7 +436,7 @@ function Sales() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pagedSales.map((s) => (
+                {sales.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -501,16 +497,6 @@ function Sales() {
                 ))}
               </TableBody>
             </Table>
-            {salesTotalPages > 1 && (
-              <div className="flex items-center justify-between gap-3 border-t px-4 py-3 text-xs text-muted-foreground">
-                <span>Mostrando {(salesPage - 1) * salesPageSize + 1}–{Math.min(salesPage * salesPageSize, sales?.length ?? 0)} de {sales?.length ?? 0}</span>
-                <div className="flex items-center gap-1">
-                  <Button size="icon" variant="ghost" className="h-8 w-8" disabled={salesPage === 1} onClick={() => setSalesPage((p) => p - 1)} aria-label="Página anterior"><ChevronLeft className="h-4 w-4" /></Button>
-                  <span>Página {salesPage} / {salesTotalPages}</span>
-                  <Button size="icon" variant="ghost" className="h-8 w-8" disabled={salesPage === salesTotalPages} onClick={() => setSalesPage((p) => p + 1)} aria-label="Página siguiente"><ChevronRight className="h-4 w-4" /></Button>
-                </div>
-              </div>
-            )}
           )}
         </Card>
       </>
