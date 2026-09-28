@@ -1,0 +1,37 @@
+name: Nuva Agency - Sentinel
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Record control-plane heartbeat
+        run: |
+          echo "NÜVA_AGENCY_HEARTBEAT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          echo "Sentinel heartbeat: $NÜVA_AGENCY_HEARTBEAT"
+      - name: Verify control-plane files
+        run: |
+          test -f src/lib/agency/types.ts
+          test -f src/lib/agency/policy.ts
+          test -f src/lib/agency/registry.ts
+          test -f docs/NUVA_AGENCY_ARCHITECTURE.md
+      - name: Emit GitHub summary
+        run: |
+          {
+            echo "## Nuva Agency Sentinel"
+            echo ""
+            echo "Control plane heartbeat: $NÜVA_AGENCY_HEARTBEAT"
+            echo "Mode: OBSERVE"
+            echo "Production mutations: DISABLED"
+          } >> "$GITHUB_STEP_SUMMARY"
