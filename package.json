@@ -22,7 +22,8 @@
     "factory:validate-learning": "node scripts/validate-factory-learning-record.mjs",
     "agency:sentinel": "node scripts/nuva-agency-sentinel.mjs",
     "agency:qa": "node scripts/nuva-agency-web-qa.mjs",
-    "agency:correlate": "node scripts/nuva-agency-correlate.mjs"
+    "agency:correlate": "node scripts/nuva-agency-correlate.mjs",
+    "agency:persist": "node scripts/nuva-agency-persist-incidents.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",
