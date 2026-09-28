@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planActionExecution } from "./nuva-action-execution";
+import { applyNuvaGuardianToExecution, planActionExecution } from "./nuva-action-execution";
 
 const action = {
   id: "cash-burn",
@@ -61,5 +61,29 @@ describe("action execution policy", () => {
     });
     expect(result.status).toBe("approved");
     expect(result.auditRequired).toBe(true);
+  });
+});
+
+
+describe("Nüva Guardian execution gate", () => {
+  it("blocks execution when Guardian blocks", () => {
+    const plan = planActionExecution({
+      action: {
+        id: "a",
+        priority: "medium",
+        title: "Test",
+        reason: "Test",
+        action: "Test",
+        impact: 10,
+        destination: "customers",
+        cta: "Test",
+        mode: "prepare",
+      },
+      businessId: "business",
+      actorUserId: "user",
+      approved: true,
+      idempotencyKey: "idempotency-123",
+    });
+    expect(applyNuvaGuardianToExecution(plan, { trustScore: 90, guardianDecision: "BLOCK" }).status).toBe("blocked");
   });
 });
