@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";\nimport { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BarChart3, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { fmtCLP } from "@/lib/biz-data";\nimport { supabase } from "@/integrations/supabase/client";\nimport { useActiveBusiness } from "@/lib/use-business";
+import { fmtCLP } from "@/lib/biz-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useActiveBusiness } from "@/lib/use-business";
 
 type SalesProductAnalyticsProps = { products: any[] };
 type Metric = "units" | "revenue" | "orders" | "margin";
@@ -55,7 +58,8 @@ function endForPeriod(period: Period, now: Date) {
   return end;
 }
 
-export function SalesProductAnalytics({ products }: SalesProductAnalyticsProps) {\n  const { active } = useActiveBusiness();
+export function SalesProductAnalytics({ products }: SalesProductAnalyticsProps) {
+  const { active } = useActiveBusiness();
   const [period, setPeriod] = useState<Period>("30d");
   const [metric, setMetric] = useState<Metric>("units");
   const [topN, setTopN] = useState("10");
