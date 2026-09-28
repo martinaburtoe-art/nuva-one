@@ -46,10 +46,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const playModuleMotion = (to: string) => {
     if (moduleMotionTimerRef.current !== null) window.clearTimeout(moduleMotionTimerRef.current);
     setModuleMotion(to);
+    navigate({ to });
     moduleMotionTimerRef.current = window.setTimeout(() => {
       setModuleMotion(null);
-      navigate({ to });
-    }, 2100);
+    }, 700);
   };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
