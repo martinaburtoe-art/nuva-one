@@ -109,7 +109,15 @@ const activityMeta: Record<Activity["type"], { l: string; icon: any }> = {
 function Customers() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
-  const [customerPage, setCustomerPage] = useState(1);\n  const searchTerm = search.trim().replace(/[(),]/g, " ");\n  const customerOr = searchTerm ? `name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,tax_id.ilike.%${searchTerm}%` : undefined;\n  const { data: customerPageData, isLoading } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });\n  const data = customerPageData?.rows ?? [];\n  const { data: allCount = 0 } = useBizCount("customers");\n  const { data: leadCount = 0 } = useBizCount("customers", { eq: { status: "lead" } });\n  const { data: activeCount = 0 } = useBizCount("customers", { eq: { status: "active" } });\n  const { data: inactiveCount = 0 } = useBizCount("customers", { eq: { status: "inactive" } });
+  const [customerPage, setCustomerPage] = useState(1);
+  const searchTerm = search.trim().replace(/[(),]/g, " ");
+  const customerOr = searchTerm ? `name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,tax_id.ilike.%${searchTerm}%` : undefined;
+  const { data: customerPageData, isLoading } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });
+  const data = customerPageData?.rows ?? [];
+  const { data: allCount = 0 } = useBizCount("customers");
+  const { data: leadCount = 0 } = useBizCount("customers", { eq: { status: "lead" } });
+  const { data: activeCount = 0 } = useBizCount("customers", { eq: { status: "active" } });
+  const { data: inactiveCount = 0 } = useBizCount("customers", { eq: { status: "inactive" } });
   const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at", select: "id,customer_id,created_at,status,total" });
   const { data: activities } = useBizList<Activity>("customer_activities", {
