@@ -42,7 +42,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [moduleMotion, setModuleMotion] = useState<string | null>(null);
-  const moduleMotionTimerRef = useRef<number | null>(null); // motion trigger
+  const moduleMotionTimerRef = useRef<number | null>(null); // motion trigger — navegación sin bloqueo
   const triggerModuleMotion = (to: string) => {\n    if (moduleMotionTimerRef.current !== null) window.clearTimeout(moduleMotionTimerRef.current);\n    setModuleMotion(to);\n    moduleMotionTimerRef.current = window.setTimeout(() => setModuleMotion(null), 300);\n  };\n  const playModuleMotion = (to: string) => {
     if (moduleMotionTimerRef.current !== null) window.clearTimeout(moduleMotionTimerRef.current);
     setModuleMotion(to);
