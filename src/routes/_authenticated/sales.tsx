@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/
 import { useMyRole, canWriteOperations, useActiveBusiness } from "@/lib/use-business";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SalesProductAnalytics } from "@/components/sales-product-analytics";
+const SalesProductAnalytics = lazy(() => import("@/components/sales-product-analytics").then((m) => ({ default: m.SalesProductAnalytics })));
 
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({ meta: [{ title: "Ventas — Nüva One" }] }),
@@ -400,7 +400,7 @@ function Sales() {
           }
         />
 
-        <SalesProductAnalytics sales={sales ?? []} products={products ?? []} />
+        <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl border bg-muted/30" />}><SalesProductAnalytics sales={sales ?? []} products={products ?? []} /></Suspense>
 
         <Card>
           {isLoading ? (
