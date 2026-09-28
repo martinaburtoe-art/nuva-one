@@ -42,7 +42,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [moduleMotion, setModuleMotion] = useState<string | null>(null);
-  const playModuleMotion = (to: string) => {\n    setModuleMotion(to);\n    window.setTimeout(() => navigate({ to }), 1900);\n  };
+  const playModuleMotion = (to: string) => {
+    setModuleMotion(to);
+    window.setTimeout(() => navigate({ to }), 2100);
+  };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { active, businesses, setActiveId } = useActiveBusiness();
