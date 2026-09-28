@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, ShoppingCart, X, Clock } from "lucide-react";
-import { useBizList, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
+import { useBizList, useBizPage, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations, useActiveBusiness } from "@/lib/use-business";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +51,7 @@ function Sales() {
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
   const canWrite = canWriteOperations(myRole);
-  const { data: sales, isLoading } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
+  const [salesPage, setSalesPage] = useState(1);\n  const { data: salesPageData, isLoading } = useBizPage<any>("sales", { page: salesPage, pageSize: 25, order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });\n  const sales = salesPageData?.rows ?? [];
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost,cost_price,purchase_price" });
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true, select: "id,name,phone" });
   const productsById = useMemo(() => new Map((products ?? []).map((p: any) => [p.id, p])), [products]);
@@ -402,7 +402,7 @@ function Sales() {
           }
         />
 
-        <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl border bg-muted/30" />}><SalesProductAnalytics sales={sales ?? []} products={products ?? []} /></Suspense>
+        <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl border bg-muted/30" />}><SalesProductAnalytics products={products ?? []} /></Suspense>
 
         <Card>
           {isLoading ? (
@@ -499,6 +499,15 @@ function Sales() {
                 ))}
               </TableBody>
             </Table>
+          )}
+          {!isLoading && salesPageData && salesPageData.pageCount > 1 && (
+            <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-muted-foreground">
+              <span>Página {salesPageData.page} de {salesPageData.pageCount} · {salesPageData.total} ventas</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={salesPage === 1} onClick={() => setSalesPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+                <Button variant="outline" size="sm" disabled={salesPage >= salesPageData.pageCount} onClick={() => setSalesPage((p) => Math.min(salesPageData.pageCount, p + 1))}>Siguiente</Button>
+              </div>
+            </div>
           )}
         </Card>
       </>
