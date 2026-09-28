@@ -40,3 +40,7 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm test -- --run
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+      - name: Agency certification
+        run: npm run agency:certify
