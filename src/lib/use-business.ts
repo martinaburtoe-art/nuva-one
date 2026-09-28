@@ -48,19 +48,13 @@ export function isBusinessOwner(role: MemberRole | null | undefined) { return ro
 export function canWriteOperations(role: MemberRole | null | undefined) { return role === "owner" || role === "admin" || role === "staff"; }
 
 export function useMyRole() {
-  const { active } = useActiveBusiness();
-  return useQuery({
-    enabled: !!active?.id,
-    queryKey: ["my-role", active?.id],
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user || !active) return null;
-      const { data, error } = await supabase.from("business_members").select("role").eq("business_id", active.id).eq("user_id", userData.user.id).maybeSingle();
-      if (error) throw error;
-      return (data?.role ?? null) as MemberRole | null;
-    },
-  });
+  const { data: membership, isLoading, isError, refetch } = useMyMembership();
+  return {
+    data: membership?.role ?? null,
+    isLoading,
+    isError,
+    refetch,
+  };
 }
 
 export const MODULES = [
