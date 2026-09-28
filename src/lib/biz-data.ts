@@ -39,6 +39,8 @@ export function useBizPage<T = any>(
     ascending?: boolean;
     enabled?: boolean;
     select?: string;
+    eq?: Record<string, string | number | boolean>;
+    or?: string;
   },
 ) {
   const { active } = useActiveBusiness();
@@ -58,6 +60,8 @@ export function useBizPage<T = any>(
       opts?.select ?? "*",
       opts?.order ?? null,
       opts?.ascending ?? false,
+      opts?.eq ?? null,
+      opts?.or ?? null,
     ],
     placeholderData: (previous) => previous,
     staleTime: 30_000,
@@ -68,6 +72,9 @@ export function useBizPage<T = any>(
         .select(opts?.select ?? "*", { count: "exact" })
         .eq("business_id", active!.id)
         .range(from, to);
+
+      Object.entries(opts?.eq ?? {}).forEach(([key, value]) => q.eq(key, value));
+      if (opts?.or) q.or(opts.or);
 
       if (opts?.order) q.order(opts.order, { ascending: opts.ascending ?? false });
 
@@ -81,6 +88,31 @@ export function useBizPage<T = any>(
         pageSize,
         pageCount: Math.max(1, Math.ceil((count ?? 0) / pageSize)),
       };
+    },
+  });
+}
+
+export function useBizCount(
+  table: string,
+  opts?: {
+    enabled?: boolean;
+    eq?: Record<string, string | number | boolean>;
+    or?: string;
+  },
+) {
+  const { active } = useActiveBusiness();
+  return useQuery({
+    enabled: !!active?.id && (opts?.enabled ?? true),
+    queryKey: [table, active?.id, "count", opts?.eq ?? null, opts?.or ?? null],
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    queryFn: async () => {
+      const q = supabase.from(table as any).select("id", { count: "exact", head: true }).eq("business_id", active!.id);
+      Object.entries(opts?.eq ?? {}).forEach(([key, value]) => q.eq(key, value));
+      if (opts?.or) q.or(opts.or);
+      const { count, error } = await q;
+      if (error) throw error;
+      return count ?? 0;
     },
   });
 }
