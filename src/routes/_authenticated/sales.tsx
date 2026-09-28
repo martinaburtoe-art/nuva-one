@@ -51,8 +51,8 @@ function Sales() {
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
   const canWrite = canWriteOperations(myRole);
-  const { data: sales, isLoading } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_name,sale_date,channel,items,status,is_credit,paid_amount,total,due_date" });
-  const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,stock,price" });
+  const { data: sales, isLoading } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
+  const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost,cost_price,purchase_price" });
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true, select: "id,name,phone" });
   const fastSale = useMutation({
     mutationFn: async () => {
