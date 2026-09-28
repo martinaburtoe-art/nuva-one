@@ -12,12 +12,12 @@ export const Route = createFileRoute("/_authenticated/people")({ head: () => ({ 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
 function People() {
-  const { data: employees = [], isLoading: employeesLoading } = useBizList<any>("people_employees", { order: "last_name" });
-  const { data: contracts = [], isLoading: contractsLoading } = useBizList<any>("people_contracts", { order: "end_date" });
-  const { data: leaveRequests = [], isLoading: leaveLoading } = useBizList<any>("people_leave_requests", { order: "start_date" });
-  const { data: payrollPeriods = [], isLoading: payrollLoading } = useBizList<any>("people_payroll_periods", { order: "period_year" });
-  const { data: payrollItems = [], isLoading: itemsLoading } = useBizList<any>("people_payroll_items");
-  const { data: compliance = [], isLoading: complianceLoading } = useBizList<any>("people_compliance_items", { order: "due_date" });
+  const { data: employees = [], isLoading: employeesLoading } = useBizList<any>("people_employees", { order: "last_name", select: "id,employment_status,last_name" });
+  const { data: contracts = [], isLoading: contractsLoading } = useBizList<any>("people_contracts", { order: "end_date", select: "id,end_date,status" });
+  const { data: leaveRequests = [], isLoading: leaveLoading } = useBizList<any>("people_leave_requests", { order: "start_date", select: "id,status,start_date" });
+  const { data: payrollPeriods = [], isLoading: payrollLoading } = useBizList<any>("people_payroll_periods", { order: "period_year", select: "id,period_year,period_month,status" });
+  const { data: payrollItems = [], isLoading: itemsLoading } = useBizList<any>("people_payroll_items", { select: "id,payroll_period_id,employer_cost_amount" });
+  const { data: compliance = [], isLoading: complianceLoading } = useBizList<any>("people_compliance_items", { order: "due_date", select: "id,title,status,due_date" });
   const loading = employeesLoading || contractsLoading || leaveLoading || payrollLoading || itemsLoading || complianceLoading;
   const activeEmployees = employees.filter((employee: any) => employee.employment_status === "active");
   const pendingLeave = leaveRequests.filter((request: any) => request.status === "pending").length;
