@@ -17,7 +17,9 @@ export function useBizList<T = any>(
   const { active } = useActiveBusiness();
   return useQuery({
     enabled: !!active?.id && (opts?.enabled ?? true),
-    queryKey: [table, active?.id, opts?.select ?? "*"],
+    queryKey: [table, active?.id, opts?.select ?? "*", opts?.order ?? null, opts?.ascending ?? false],
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
     queryFn: async () => {
       const q = supabase.from(table as any).select(opts?.select ?? "*").eq("business_id", active!.id);
       if (opts?.order) q.order(opts.order, { ascending: opts.ascending ?? false });
