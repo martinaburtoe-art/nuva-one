@@ -9,6 +9,8 @@ const requiredFiles = [
   "src/lib/agency/registry.ts",
   "src/lib/agency/incident.ts",
   "src/lib/agency/incident.test.ts",
+  "src/lib/agency/remediation.ts",
+  "src/lib/agency/remediation.test.ts",
   "scripts/nuva-agency-sentinel.mjs",
   "scripts/nuva-agency-web-qa.mjs",
   "scripts/nuva-agency-correlate.mjs",
