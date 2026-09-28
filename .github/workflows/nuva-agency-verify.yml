@@ -33,7 +33,7 @@ jobs:
       - name: Install
         run: npm ci
       - name: Typecheck
-        run: npm run typecheck
+        run: npx tsc --noEmit
       - name: Lint
         run: npm run lint
       - name: Test
