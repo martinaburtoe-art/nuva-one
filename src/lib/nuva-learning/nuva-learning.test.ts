@@ -1,8 +1,26 @@
 import { describe, expect, it } from "vitest";
+import type { NuvaAgentFinding } from "../nuva-intelligence-agent-council";
 import { calculateNuvaTrust } from "./nuva-trust-engine";
 import { reviewNuvaAction } from "./nuva-guardian";
 import { verifyNuvaAction } from "./nuva-verification";
 import { updateNuvaInstinct, instinctIsActionable } from "./nuva-instincts";
+import { evaluateNuvaFinding } from "./nuva-decision-gate";
+
+const finding: NuvaAgentFinding = {
+  agentId: "finance",
+  signalKey: "cash-risk",
+  title: "Riesgo de liquidez",
+  explanation: "Caja proyectada bajo cero.",
+  action: "Revisar cobranza y egresos.",
+  severity: "critical",
+  confidence: 0.95,
+  impact: 100000,
+  requiresApproval: true,
+  evidenceQuality: "high",
+  decisionScore: 120,
+  evidence: { projectedCash30d: -100000 },
+  proposal: { actionType: "cash-burn", destination: "finance", mode: "review" },
+};
 
 describe("Nüva learning foundation", () => {
   it("raises trust only from measured evidence inputs", () => {
@@ -37,6 +55,28 @@ describe("Nüva learning foundation", () => {
       trust,
     });
     expect(result.decision).toBe("BLOCK");
+  });
+
+  it("does not silently authorize the decision gate", () => {
+    const result = evaluateNuvaFinding(finding, {
+      dataFreshness: 1,
+      agentAgreement: 1,
+      historicalAccuracy: 1,
+      previousOutcomeQuality: 1,
+    });
+    expect(result.guardian.decision).toBe("BLOCK");
+  });
+
+  it("allows only explicitly authorized findings to reach review", () => {
+    const result = evaluateNuvaFinding(finding, {
+      dataFreshness: 1,
+      agentAgreement: 1,
+      historicalAccuracy: 1,
+      previousOutcomeQuality: 1,
+      permissionGranted: true,
+      duplicateDetected: false,
+    });
+    expect(result.guardian.decision).toBe("REVIEW");
   });
 
   it("keeps incomplete execution out of the learning loop", () => {
