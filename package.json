@@ -23,7 +23,8 @@
     "agency:sentinel": "node scripts/nuva-agency-sentinel.mjs",
     "agency:qa": "node scripts/nuva-agency-web-qa.mjs",
     "agency:correlate": "node scripts/nuva-agency-correlate.mjs",
-    "agency:persist": "node scripts/nuva-agency-persist-incidents.mjs"
+    "agency:persist": "node scripts/nuva-agency-persist-incidents.mjs",
+    "agency:certify": "node scripts/nuva-agency-certify.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",
