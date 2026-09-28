@@ -19,7 +19,7 @@ Examples that may eventually qualify:
 - refreshing a stale generated artifact
 - recreating a failed disposable test environment
 
-Production data mutation is not part of the initial auto-heal scope.
+Production data mutation is disabled and is not part of the initial auto-heal scope.
 
 ## Escalation
 
