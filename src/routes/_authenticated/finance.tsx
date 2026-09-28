@@ -35,3 +35,22 @@ function Finance() {
     inventoryValue: Number(summary?.inventory_value ?? 0),
   };
 
+
+  return (
+    <ModuleGuard module="finance">
+      <div className="space-y-5">
+        <PageHeader
+          title="Finanzas"
+          description="Control financiero, contabilidad, tributación y decisiones sobre el dinero del negocio."
+        />
+        <Suspense fallback={<div className="space-y-3" aria-busy="true"><div className="h-28 animate-pulse rounded-2xl border bg-muted/30" /><div className="h-48 animate-pulse rounded-2xl border bg-muted/30" /></div>}>
+          <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} loading={isLoading} />
+          <CollectionPriorityPanel />
+          <FinanceSiiWorkspace />
+          <FinanceAdvancedTools />
+          <FinanceAccountingWorkspaceV2 />
+        </Suspense>
+      </div>
+    </ModuleGuard>
+  );
+}
