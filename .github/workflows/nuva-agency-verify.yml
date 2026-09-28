@@ -33,7 +33,7 @@ jobs:
       - name: Install
         run: npm ci
       - name: Generate route tree
-        run: npx tsr generate
+        run: npx @tanstack/router-cli generate
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Lint
