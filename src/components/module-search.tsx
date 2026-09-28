@@ -8,7 +8,7 @@ type NavItem = {
   icon: ComponentType<{ className?: string }>;
 };
 
-export function ModuleSearch({ items }: { items: readonly NavItem[] }) {
+export function ModuleSearch({ items, onSelect }: { items: readonly NavItem[]; onSelect?: (to: string) => void }) {
   const [query, setQuery] = useState("");
   const normalized = query.trim().toLocaleLowerCase("es-CL");
   const matches = useMemo(
@@ -44,7 +44,7 @@ export function ModuleSearch({ items }: { items: readonly NavItem[] }) {
               <Link
                 key={item.to}
                 to={item.to}
-                onClick={() => setQuery("")}
+                onClick={() => { setQuery(""); onSelect?.(item.to); }}
                 className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-foreground transition-colors hover:bg-accent"
               >
                 <item.icon className="h-3.5 w-3.5 text-primary" />
