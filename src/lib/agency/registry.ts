@@ -1,0 +1,15 @@
+import type { AgencyAgentDefinition } from "./types";
+
+export const agencyAgents: AgencyAgentDefinition[] = [
+  { id: "sentinel", name: "Nüva Sentinel", department: "sentinel", responsibilities: ["telemetry", "anomaly correlation", "incident intake"], capabilities: ["read:telemetry", "read:deployments"], defaultAutonomy: "L0_OBSERVE", allowedRisks: ["LOW"] },
+  { id: "engineering", name: "Nüva Engineering", department: "engineering", responsibilities: ["frontend", "backend", "architecture", "refactoring"], capabilities: ["read:repo", "write:branch", "create:pr"], defaultAutonomy: "L3_AUTONOMOUS_ENGINEERING", allowedRisks: ["LOW", "MEDIUM"] },
+  { id: "qa", name: "Nüva QA", department: "qa", responsibilities: ["browser regression", "visual QA", "accessibility", "API QA"], capabilities: ["read:repo", "browser:preview", "write:test"], defaultAutonomy: "L3_AUTONOMOUS_ENGINEERING", allowedRisks: ["LOW", "MEDIUM"] },
+  { id: "security", name: "Nüva Security", department: "security", responsibilities: ["AppSec", "dependencies", "secrets", "threat modeling"], capabilities: ["read:repo", "scan:security", "create:pr"], defaultAutonomy: "L1_RECOMMEND", allowedRisks: ["LOW", "MEDIUM"] },
+  { id: "data", name: "Nüva Data", department: "data", responsibilities: ["PostgreSQL", "Supabase", "integrity", "query performance"], capabilities: ["read:database-metrics", "read:migrations", "create:pr"], defaultAutonomy: "L1_RECOMMEND", allowedRisks: ["LOW", "MEDIUM"] },
+  { id: "devops", name: "Nüva DevOps", department: "devops", responsibilities: ["CI/CD", "Vercel", "release", "rollback"], capabilities: ["read:ci", "read:deployments", "create:preview"], defaultAutonomy: "L2_CONTROLLED_AUTOHEAL", allowedRisks: ["LOW"] },
+  { id: "performance", name: "Nüva Performance", department: "performance", responsibilities: ["web vitals", "bundle", "API latency"], capabilities: ["read:telemetry", "browser:preview", "create:pr"], defaultAutonomy: "L1_RECOMMEND", allowedRisks: ["LOW", "MEDIUM"] },
+  { id: "finops", name: "Nüva FinOps", department: "finops", responsibilities: ["cloud cost", "LLM cost", "usage anomalies"], capabilities: ["read:billing", "read:telemetry"], defaultAutonomy: "L0_OBSERVE", allowedRisks: ["LOW"] },
+  { id: "growth", name: "Nüva Growth", department: "growth", responsibilities: ["SEO", "conversion", "analytics", "content"], capabilities: ["read:analytics", "read:search-console", "create:pr"], defaultAutonomy: "L1_RECOMMEND", allowedRisks: ["LOW", "MEDIUM"] },
+  { id: "compliance", name: "Nüva Compliance", department: "compliance", responsibilities: ["privacy", "audit evidence", "policy drift"], capabilities: ["read:repo", "read:policy"], defaultAutonomy: "L1_RECOMMEND", allowedRisks: ["LOW"] },
+  { id: "ai-reliability", name: "Nüva AI Reliability", department: "ai-reliability", responsibilities: ["agent traces", "model quality", "tool errors", "cost"], capabilities: ["read:agent-traces", "read:telemetry", "create:pr"], defaultAutonomy: "L1_RECOMMEND", allowedRisks: ["LOW", "MEDIUM"] },
+];
