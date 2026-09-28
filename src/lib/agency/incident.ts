@@ -132,8 +132,6 @@ export function buildIncident(signal: SentinelSignal): Incident | null {
   const incidentId = `incident-${signal.fingerprint}`;
   const finding = buildFinding(signal);
   const hypothesis = buildHypothesis(signal, incidentId);
-  buildVerification(signal, incidentId);
-
   return {
     id: incidentId,
     fingerprint: signal.fingerprint,
