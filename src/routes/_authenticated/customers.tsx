@@ -109,7 +109,7 @@ const activityMeta: Record<Activity["type"], { l: string; icon: any }> = {
 function Customers() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
-  const { data, isLoading } = useBizList<Customer>("customers", { order: "name", ascending: true });
+  const [customerPage, setCustomerPage] = useState(1);\n  const searchTerm = search.trim().replace(/[(),]/g, " ");\n  const customerOr = searchTerm ? `name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,tax_id.ilike.%${searchTerm}%` : undefined;\n  const { data: customerPageData, isLoading } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });\n  const data = customerPageData?.rows ?? [];\n  const { data: allCount = 0 } = useBizCount("customers");\n  const { data: leadCount = 0 } = useBizCount("customers", { eq: { status: "lead" } });\n  const { data: activeCount = 0 } = useBizCount("customers", { eq: { status: "active" } });\n  const { data: inactiveCount = 0 } = useBizCount("customers", { eq: { status: "inactive" } });
   const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at", select: "id,customer_id,created_at,status,total" });
   const { data: activities } = useBizList<Activity>("customer_activities", {
@@ -151,32 +151,7 @@ function Customers() {
     return map;
   }, [sales]);
 
-  const filtered = useMemo(() => {
-    let list = data ?? [];
-    if (statusFilter !== "all") list = list.filter((c) => c.status === statusFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.phone?.toLowerCase().includes(q) ||
-          c.email?.toLowerCase().includes(q) ||
-          c.tax_id?.toLowerCase().includes(q) ||
-          (c.tax_id && normalizeRut(c.tax_id).toLowerCase().includes(normalizeRut(q))),
-      );
-    }
-    return list;
-  }, [data, search, statusFilter]);
-
-  const counts = useMemo(() => {
-    const list = data ?? [];
-    return {
-      all: list.length,
-      lead: list.filter((c) => c.status === "lead").length,
-      active: list.filter((c) => c.status === "active").length,
-      inactive: list.filter((c) => c.status === "inactive").length,
-    };
-  }, [data]);
+  const filtered = data;
 
   function openNew() {
     setEditing(null);
@@ -403,14 +378,14 @@ function Customers() {
               placeholder="Buscar por nombre, teléfono, email o RUT"
               className="h-10 rounded-xl border-border/70 bg-background pl-8"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCustomerPage(1); }}
             />
           </div>
           <div className="flex flex-wrap gap-2">
             {(["all", "lead", "active", "inactive"] as const).map((s) => (
               <button
                 key={s}
-                onClick={() => setStatusFilter(s)}
+                onClick={() => { setStatusFilter(s); setCustomerPage(1); }}
                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
                   statusFilter === s
                     ? "border-primary bg-primary/10 text-primary"
@@ -439,7 +414,7 @@ function Customers() {
             <div className="flex items-center justify-between border-b border-border/70 bg-muted/20 px-4 py-3">
               <div>
                 <p className="text-sm font-semibold">Cartera de clientes</p>
-                <p className="text-[11px] text-muted-foreground">{filtered.length} resultados · selecciona una fila para abrir su ficha</p>
+                <p className="text-[11px] text-muted-foreground">{customerPageData?.total ?? filtered.length} resultados · selecciona una fila para abrir su ficha</p>
               </div>
               <Users className="h-4 w-4 text-muted-foreground" />
             </div>
@@ -518,6 +493,15 @@ function Customers() {
               </TableBody>
             </Table>
             </div>
+            {customerPageData && customerPageData.pageCount > 1 && (
+              <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-muted-foreground">
+                <span>Página {customerPageData.page} de {customerPageData.pageCount}</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={customerPage === 1} onClick={() => setCustomerPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button variant="outline" size="sm" disabled={customerPage >= customerPageData.pageCount} onClick={() => setCustomerPage((p) => Math.min(customerPageData.pageCount, p + 1))}>Siguiente</Button>
+                </div>
+              </div>
+            )}
           </Card>
         )}
 
