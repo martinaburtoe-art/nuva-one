@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
@@ -13,7 +13,7 @@ import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { BusinessInsightCard } from "@/components/business-insight-card";
 import { CompetitiveOpsHub } from "@/components/competitive-ops-hub";
 import { ArrowUpRight, X, CheckCircle2, Sparkles, ShieldAlert } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Resumen — Nüva One" }] }),
@@ -167,7 +167,7 @@ function Dashboard() {
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="space-y-6"><NuvaScoreCard /></div>
-          <Card className="rounded-2xl border-border/70 p-5 lg:col-span-2 shadow-sm"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Ingresos vs Gastos</h3><p className="text-xs text-muted-foreground">{isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}</p></div><div className="flex flex-wrap items-end gap-2"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" /> Quitar filtros</Button>}</div></div><ResponsiveContainer width="100%" height={280}><AreaChart data={chartData ?? []}><defs><linearGradient id="gi" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0.4} /><stop offset="100%" stopColor="oklch(0.65 0.22 268)" stopOpacity={0} /></linearGradient><linearGradient id="ge" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0.3} /><stop offset="100%" stopColor="oklch(0.6 0.22 25)" stopOpacity={0} /></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey={isoFrom || isoTo ? "fecha" : "mes"} stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Area type="monotone" dataKey="ingresos" stroke="oklch(0.55 0.22 268)" fill="url(#gi)" strokeWidth={2} /><Area type="monotone" dataKey="gastos" stroke="oklch(0.6 0.22 25)" fill="url(#ge)" strokeWidth={2} /></AreaChart></ResponsiveContainer></Card>
+          <Card className="rounded-2xl border-border/70 p-5 lg:col-span-2 shadow-sm"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Ingresos vs Gastos</h3><p className="text-xs text-muted-foreground">{isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}</p></div><div className="flex flex-wrap items-end gap-2"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" /> Quitar filtros</Button>}</div></div><Suspense fallback={<div className="h-[280px] animate-pulse rounded-xl bg-muted/30" />}><DashboardChart data={chartData ?? []} filtered={isoFrom || isoTo} /></Suspense></Card>
           <Card className="rounded-2xl border-border/70 p-5 shadow-sm"><h3 className="font-semibold">Acciones rápidas</h3><p className="text-xs text-muted-foreground">Operaciones frecuentes</p><div className="mt-4 space-y-2">{[{ l: "Registrar venta", h: "/sales" }, { l: "Agregar producto", h: "/inventory" }, { l: "Nueva cotización", h: "/quotes" }, { l: "Registrar gasto", h: "/finance" }].map((a) => <Link key={a.h} to={a.h} className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2.5 text-sm transition-colors hover:bg-muted/50"><span>{a.l}</span><ArrowUpRight className="h-4 w-4" /></Link>)}</div></Card>
         </div>
       </>
