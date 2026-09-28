@@ -40,6 +40,19 @@ jobs:
           NUVA_SUPABASE_ANON_KEY: ${{ secrets.NUVA_SUPABASE_ANON_KEY }}
         run: npm run agency:sentinel
 
+      - name: Correlate incident evidence
+        if: always()
+        run: npm run agency:correlate
+
+      - name: Upload incident bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuva-agency-incident-bundle-${{ github.run_id }}
+          path: artifacts/nuva-agency/incident-bundle.json
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload sentinel evidence
         if: always()
         uses: actions/upload-artifact@v4
