@@ -30,7 +30,7 @@ const statusText: Record<InventoryStatus, string> = { out_of_stock: "Sin stock",
 
 export function InventoryWorkspace() {
   const { data: role } = useMyRole(); const canWrite = canWriteOperations(role); const [businessId] = useActiveBusinessId();
-  const { data, isLoading } = useBizList<Product>("products", { order: "created_at" }); const insert = useBizInsert("products"); const update = useBizUpdate("products"); const remove = useBizDelete("products");
+  const { data, isLoading } = useBizList<Product>("products", { order: "created_at", select: "id,name,sku,stock,reserved_stock,in_transit_stock,blocked_stock,low_stock_threshold,reorder_point,max_stock,cost,price" }); const insert = useBizInsert("products"); const update = useBizUpdate("products"); const remove = useBizDelete("products");
   const products = data ?? []; const [view, setView] = useState<View>("intelligence"); const [query, setQuery] = useState(""); const [open, setOpen] = useState(false); const [editing, setEditing] = useState<Product | null>(null); const [adjustOpen, setAdjustOpen] = useState(false); const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
   const filtered = useMemo(() => { const q = query.trim().toLowerCase(); return q ? products.filter(p => `${p.name ?? ""} ${p.sku ?? ""}`.toLowerCase().includes(q)) : products; }, [products, query]);
   const metrics = products.map(p => getInventoryMetrics(p)); const available = metrics.reduce((s, m) => s + m.available, 0); const critical = metrics.filter(m => m.status === "out_of_stock" || m.status === "critical").length; const value = products.reduce((s, p) => s + Number(p.stock ?? 0) * Number(p.cost ?? 0), 0);
