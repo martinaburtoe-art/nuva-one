@@ -7,6 +7,8 @@ export type NuvaMeasuredMetrics = {
   agentAgreement?: number;
   historicalAccuracy?: number;
   previousOutcomeQuality?: number;
+  permissionGranted?: boolean;
+  duplicateDetected?: boolean;
 };
 
 const bounded = (value: number | undefined, fallback: number) =>
@@ -28,9 +30,9 @@ export function evaluateNuvaFinding(
   const guardian = reviewNuvaAction({
     actionId: finding.signalKey,
     requiresApproval: finding.requiresApproval,
-    reversible: finding.proposal?.mode !== "prepare",
-    permissionGranted: true,
-    duplicateDetected: false,
+    reversible: finding.proposal?.mode === "prepare",
+    permissionGranted: metrics.permissionGranted ?? false,
+    duplicateDetected: metrics.duplicateDetected ?? false,
     evidenceComplete: Object.keys(finding.evidence).length > 0,
     trust,
   });
