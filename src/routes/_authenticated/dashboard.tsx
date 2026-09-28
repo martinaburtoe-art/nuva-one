@@ -59,11 +59,30 @@ function Dashboard() {
   const isoFrom = dmyToIso(dateFrom);
   const isoTo = dmyToIso(dateTo);
 
+  const chartWindowStart = useMemo(() => {
+    if (isoFrom) return isoFrom;
+    const d = new Date();
+    d.setMonth(d.getMonth() - 5);
+    d.setDate(1);
+    return d.toISOString().slice(0, 10);
+  }, [isoFrom]);
+
   const { data: allTx } = useQuery({
     enabled: !!active?.id,
-    queryKey: ["chart-tx", active?.id],
+    queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories],
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("transactions").select("amount, type, tx_date, category").eq("business_id", active!.id);
+      let query = supabase
+        .from("transactions")
+        .select("amount, type, tx_date, category")
+        .eq("business_id", active!.id)
+        .gte("tx_date", chartWindowStart);
+
+      if (isoTo) query = query.lte("tx_date", isoTo);
+      if (categories.length > 0) query = query.in("category", categories);
+
+      const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
