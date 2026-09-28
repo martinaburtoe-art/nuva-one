@@ -26,8 +26,9 @@ const homepageShowcasePlugin = {
 
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
+    // Keep the SSR server entry and enable route-component code splitting.
+    // TanStack Router loads non-critical route components on demand.
+    router: { autoCodeSplitting: true },
     server: { entry: "server" },
   },
   // Explicit Vercel preset: this project's Lovable sandbox defaults to Cloudflare Workers
