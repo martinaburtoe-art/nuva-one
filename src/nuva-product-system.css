@@ -11,7 +11,7 @@
   --nuva-duration-fast: 160ms;
   --nuva-duration: 220ms;
   --nuva-duration-slow: 320ms;
-  --nuva-duration-enter: 420ms;
+  --nuva-duration-enter: 180ms;
 }
 
 .nuva-app {
@@ -135,7 +135,7 @@
 }
 
 .nuva-app .nuva-stagger > * {
-  animation: nuva-enter 420ms var(--nuva-ease) both;
+  animation: nuva-enter 180ms var(--nuva-ease) both;
 }
 
 .nuva-app .nuva-stagger > *:nth-child(1) { animation-delay: 0ms; }
@@ -146,11 +146,11 @@
 .nuva-app .nuva-stagger > *:nth-child(6) { animation-delay: 175ms; }
 
 .nuva-app .nuva-number-change {
-  animation: nuva-number-change 420ms var(--nuva-ease);
+  animation: nuva-number-change 240ms var(--nuva-ease);
 }
 
 .nuva-app .nuva-success-pulse {
-  animation: nuva-success-pulse 520ms var(--nuva-ease);
+  animation: nuva-success-pulse 360ms var(--nuva-ease);
 }
 
 .nuva-app .nuva-loading-sheen {
