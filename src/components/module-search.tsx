@@ -1,6 +1,5 @@
 import { Search, Command } from "lucide-react";
 import { type ComponentType, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 
 type NavItem = {
   to: string;
@@ -41,15 +40,15 @@ export function ModuleSearch({ items, onSelect }: { items: readonly NavItem[]; o
         <div className="absolute left-2 right-2 top-12 z-50 overflow-hidden rounded-xl border border-border bg-background p-1.5 shadow-xl">
           {matches.length > 0 ? (
             matches.slice(0, 8).map((item) => (
-              <Link
+              <button
                 key={item.to}
-                to={item.to}
+                type="button"
                 onClick={() => { setQuery(""); onSelect?.(item.to); }}
                 className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-foreground transition-colors hover:bg-accent"
               >
                 <item.icon className="h-3.5 w-3.5 text-primary" />
                 <span>{item.label}</span>
-              </Link>
+              </button>
             ))
           ) : (
             <div className="px-3 py-3 text-xs text-muted-foreground">No encontré ese módulo.</div>
