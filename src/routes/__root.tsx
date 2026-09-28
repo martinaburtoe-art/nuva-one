@@ -164,6 +164,13 @@ function RouteEnhancements() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const location = useLocation();
+  useEffect(() => {
+    const publicPaths = new Set(["/", "/news", "/social", "/forum", "/directory", "/pricing", "/about", "/contact"]);
+    const isPublic = publicPaths.has(location.pathname) || location.pathname.startsWith("/auth");
+    document.body.dataset.nuvaSurface = isPublic ? "public" : "app";
+    return () => { delete document.body.dataset.nuvaSurface; };
+  }, [location.pathname]);
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
