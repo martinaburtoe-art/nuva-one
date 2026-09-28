@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";\nimport { useQuery } from "@tanstack/react-query";
 import { BarChart3, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { fmtCLP } from "@/lib/biz-data";
+import { fmtCLP } from "@/lib/biz-data";\nimport { supabase } from "@/integrations/supabase/client";\nimport { useActiveBusiness } from "@/lib/use-business";
 
-type SalesProductAnalyticsProps = { sales: any[]; products: any[] };
+type SalesProductAnalyticsProps = { products: any[] };
 type Metric = "units" | "revenue" | "orders" | "margin";
 type Period = "all" | "today" | "7d" | "30d" | "month" | "year" | "custom";
 const PERIOD_LABELS: Record<Period, string> = {
@@ -55,7 +55,7 @@ function endForPeriod(period: Period, now: Date) {
   return end;
 }
 
-export function SalesProductAnalytics({ sales, products }: SalesProductAnalyticsProps) {
+export function SalesProductAnalytics({ products }: SalesProductAnalyticsProps) {\n  const { active } = useActiveBusiness();
   const [period, setPeriod] = useState<Period>("30d");
   const [metric, setMetric] = useState<Metric>("units");
   const [topN, setTopN] = useState("10");
@@ -73,100 +73,46 @@ export function SalesProductAnalytics({ sales, products }: SalesProductAnalytics
       ).sort(),
     [products],
   );
-  const productMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (products ?? []).forEach((p) => map.set(p.id, p));
-    return map;
-  }, [products]);
-  const rows = useMemo(() => {
-    const now = new Date();
-    const start =
-      period === "custom" && customFrom
-        ? new Date(`${customFrom}T00:00:00`)
-        : startForPeriod(period, now);
-    const end =
-      period === "custom" && customTo
-        ? new Date(`${customTo}T23:59:59`)
-        : endForPeriod(period, now);
-    const grouped = new Map<
-      string,
-      {
-        name: string;
-        sku: string;
-        category: string;
-        units: number;
-        revenue: number;
-        orders: number;
-        margin: number | null;
-      }
-    >();
-    for (const sale of sales ?? []) {
-      if (status !== "all" && sale.status !== status) continue;
-      if (channel !== "all" && sale.channel !== channel) continue;
-      if (paymentMethod !== "all" && sale.payment_method !== paymentMethod) continue;
-      const date = new Date(sale.sale_date);
-      if (start && date < start) continue;
-      if (end && date > end) continue;
-      for (const item of Array.isArray(sale.items) ? sale.items : []) {
-        const product = item.product_id ? productMap.get(item.product_id) : undefined;
-        const name = String(item.name || product?.name || "Producto sin nombre");
-        const productCategory = String(item.category || product?.category || "Sin categoría");
-        if (category !== "all" && productCategory !== category) continue;
-        if (search && !`${name} ${product?.sku ?? ""}`.toLowerCase().includes(search.toLowerCase()))
-          continue;
-        const key = String(item.product_id || `free:${name.toLowerCase()}`);
-        const current = grouped.get(key) ?? {
-          name,
-          sku: String(product?.sku || "—"),
-          category: productCategory,
-          units: 0,
-          revenue: 0,
-          orders: 0,
-          margin: null,
-        };
-        const qty = Number(item.qty || 0);
-        const price = Number(item.price || 0);
-        const rawCost =
-          item.cost ??
-          item.unit_cost ??
-          product?.cost ??
-          product?.cost_price ??
-          product?.purchase_price;
-        const cost = rawCost == null || rawCost === "" ? null : Number(rawCost);
-        current.units += qty;
-        current.revenue += qty * price;
-        current.orders += 1;
-        if (cost != null && Number.isFinite(cost))
-          current.margin = (current.margin ?? 0) + (price - cost) * qty;
-        grouped.set(key, current);
-      }
-    }
-    return Array.from(grouped.values())
-      .sort((a, b) =>
-        metric === "revenue"
-          ? b.revenue - a.revenue
-          : metric === "orders"
-            ? b.orders - a.orders
-            : metric === "margin"
-              ? (b.margin ?? -Infinity) - (a.margin ?? -Infinity)
-              : b.units - a.units,
-      )
-      .slice(0, Number(topN));
-  }, [
-    sales,
-    products,
-    productMap,
-    period,
-    customFrom,
-    customTo,
-    metric,
-    topN,
-    channel,
-    paymentMethod,
-    status,
-    category,
-    search,
-  ]);
+  const analyticsQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["sales-product-analytics", active?.id, period, metric, topN, channel, paymentMethod, status, category, search, customFrom, customTo],
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    queryFn: async () => {
+      const now = new Date();
+      const startDate =
+        period === "custom" && customFrom
+          ? new Date(`${customFrom}T00:00:00`).toISOString()
+          : startForPeriod(period, now)?.toISOString() ?? null;
+      const endDate =
+        period === "custom" && customTo
+          ? new Date(`${customTo}T23:59:59.999`).toISOString()
+          : endForPeriod(period, now)?.toISOString() ?? null;
+      const { data, error } = await supabase.rpc("sales_product_analytics", {
+        p_business_id: active!.id,
+        p_from: startDate,
+        p_to: endDate,
+        p_channel: channel,
+        p_payment_method: paymentMethod,
+        p_status: status,
+        p_category: category,
+        p_search: search.trim(),
+        p_metric: metric,
+        p_top_n: Number(topN),
+      });
+      if (error) throw error;
+      return (data ?? []).map((row: any) => ({
+        name: String(row.name ?? "Producto sin nombre"),
+        sku: String(row.sku ?? "—"),
+        category: String(row.category ?? "Sin categoría"),
+        units: Number(row.units ?? 0),
+        revenue: Number(row.revenue ?? 0),
+        orders: Number(row.orders ?? 0),
+        margin: row.margin == null ? null : Number(row.margin),
+      }));
+    },
+  });
+  const rows = analyticsQuery.data ?? [];
   const chartData = rows.map((row) => ({
     ...row,
     label: row.name.length > 26 ? `${row.name.slice(0, 26)}…` : row.name,
