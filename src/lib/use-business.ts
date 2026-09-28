@@ -14,6 +14,8 @@ export type Business = {
 export function useBusinesses() {
   return useQuery({
     queryKey: ["businesses"],
+    staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("businesses").select("id, name, industry, logo_url, tax_id, giro, address, comuna, owner_id, public_enabled, public_slug, public_description, public_photos, public_social_links, public_contact_email, public_contact_phone, plan").order("created_at", { ascending: true });
       if (error) throw error;
@@ -50,6 +52,7 @@ export function useMyRole() {
   return useQuery({
     enabled: !!active?.id,
     queryKey: ["my-role", active?.id],
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user || !active) return null;
@@ -89,6 +92,7 @@ export function useMyMembership() {
   return useQuery({
     enabled: !!active?.id,
     queryKey: ["my-membership", active?.id],
+    staleTime: 5 * 60_000,
     queryFn: async (): Promise<MyMembership> => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user || !active) return null;
