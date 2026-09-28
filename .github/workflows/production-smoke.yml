@@ -20,8 +20,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Playwright
-        run: npx playwright@1.55.0 install --with-deps chromium
+      - name: Install Playwright runtime
+        run: npm install --no-save --no-package-lock playwright@1.55.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Verify production document
         run: |
