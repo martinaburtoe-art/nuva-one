@@ -8,64 +8,54 @@
 
 .nuva-module-motion-vehicle {
   position: absolute;
-  left: -1.75rem;
+  left: 0;
   top: 50%;
-  z-index: 2;
+  z-index: 20;
   display: grid;
+  width: 2rem;
+  height: 2rem;
   place-items: center;
   color: hsl(var(--primary));
-  filter: drop-shadow(0 4px 8px hsl(var(--primary) / 0.22));
   pointer-events: none;
-  animation: nuva-module-sweep 1.9s cubic-bezier(0.2, 0.72, 0.18, 1) both;
+  transform: translate3d(-2.5rem, -50%, 0);
+  animation: nuva-module-sweep 2.1s linear both;
 }
 
-.nuva-module-motion-label[data-module-motion="/shipments"] .nuva-module-motion-vehicle {
-  animation-duration: 2.1s;
-  transform-origin: center;
+.nuva-module-motion-vehicle svg {
+  filter: drop-shadow(0 2px 5px hsl(var(--primary) / 0.45));
 }
 
-.nuva-module-motion-label[data-module-motion="/inventory"] .nuva-module-motion-vehicle {
-  animation-name: nuva-module-sweep-package;
-}
-
-.nuva-module-motion-label[data-module-motion="/sales"] .nuva-module-motion-vehicle {
-  animation-name: nuva-module-sweep-sales;
-}
-
-.nuva-module-motion-label[data-module-motion="/finance"] .nuva-module-motion-vehicle {
-  animation-name: nuva-module-sweep-finance;
+.nuva-module-motion-trail {
+  position: absolute;
+  right: 70%;
+  top: 50%;
+  width: 2.75rem;
+  height: 2px;
+  border-radius: 999px;
+  background: hsl(var(--primary) / 0.65);
+  transform: translateY(-50%);
+  filter: blur(0.5px);
 }
 
 @keyframes nuva-module-sweep {
-  0% { opacity: 0; transform: translate3d(-1rem, -50%, 0) scale(0.72) rotate(-4deg); }
-  12% { opacity: 1; }
-  68% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(calc(100% + 8rem), -50%, 0) scale(1) rotate(2deg); }
-}
-
-@keyframes nuva-module-sweep-package {
-  0% { opacity: 0; transform: translate3d(-1rem, -50%, 0) scale(0.65) rotate(-8deg); }
-  14% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(calc(100% + 8rem), -50%, 0) scale(0.95) rotate(5deg); }
-}
-
-@keyframes nuva-module-sweep-sales {
-  0% { opacity: 0; transform: translate3d(-1rem, -50%, 0) scale(0.7) rotate(-10deg); }
-  16% { opacity: 1; }
-  72% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(calc(100% + 8rem), -50%, 0) scale(1.05) rotate(8deg); }
-}
-
-@keyframes nuva-module-sweep-finance {
-  0% { opacity: 0; transform: translate3d(-1rem, -50%, 0) scale(0.7); }
-  15% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(calc(100% + 8rem), -50%, 0) scale(1.08); }
+  0% {
+    opacity: 0;
+    transform: translate3d(-2.5rem, -50%, 0) scale(0.8);
+  }
+  8% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(100% + 2.5rem), -50%, 0) scale(1.08);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nuva-module-motion-vehicle { animation-duration: 1ms; }
+  .nuva-module-motion-vehicle {
+    animation-duration: 2.1s;
+  }
 }
-
-/* Production deployment marker: module motion system */
