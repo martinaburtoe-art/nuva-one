@@ -1,0 +1,97 @@
+name: Nuva Agency - Web QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL to inspect (preview or production)"
+        required: false
+        default: "https://nuva-one.vercel.app"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "scripts/**"
+      - ".github/workflows/nuva-agency-web-qa.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  web-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run autonomous web QA
+        id: qa
+        continue-on-error: true
+        env:
+          NUVA_QA_URL: ${{ github.event.inputs.target_url || 'https://nuva-one.vercel.app' }}
+        run: npm run agency:qa
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuva-agency-web-qa-${{ github.run_id }}
+          path: artifacts/nuva-agency/web-qa.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish QA summary
+        if: always()
+        run: |
+          if test -f artifacts/nuva-agency/web-qa.json; then
+            node -e '
+              const fs = require("fs");
+              const s = JSON.parse(fs.readFileSync("artifacts/nuva-agency/web-qa.json", "utf8"));
+              console.log("## Nüva Agency Web QA");
+              console.log("");
+              console.log(`Target: ${s.target}`);
+              console.log(`Status: **${s.status.toUpperCase()}**`);
+              console.log(`Checks: ${s.totals.checks} | Healthy: ${s.totals.healthy} | Warning: ${s.totals.warning} | Critical: ${s.totals.critical}`);
+              for (const c of s.checks) console.log(`- ${c.status.toUpperCase()} — ${c.name}: ${c.detail}`);
+            ' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Open QA incident
+        if: steps.qa.outcome == 'failure' && hashFiles('artifacts/nuva-agency/web-qa.json') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const { execFileSync } = require("child_process");
+          const report = JSON.parse(fs.readFileSync("artifacts/nuva-agency/web-qa.json", "utf8"));
+          if (report.status !== "critical") process.exit(0);
+          const failed = report.checks.filter((c) => c.status === "critical");
+          const title = `[Nüva Agency][QA] Critical web regression — ${report.target}`;
+          const body = [
+            "## Autonomous Web QA Incident",
+            "",
+            `Target: ${report.target}`,
+            `Observed: ${report.generatedAt}`,
+            "",
+            ...failed.map((c) => `- **${c.name}** — ${c.detail}`),
+            "",
+            "No production mutation was performed. Investigation and remediation remain policy-gated."
+          ].join("\n");
+          const existing = execFileSync("gh", ["issue", "list", "--state", "open", "--search", `in:title "${title}"`, "--json", "number"], { encoding: "utf8" });
+          if (JSON.parse(existing).length === 0) {
+            execFileSync("gh", ["issue", "create", "--title", title, "--body", body], { stdio: "inherit" });
+          }
+          NODE

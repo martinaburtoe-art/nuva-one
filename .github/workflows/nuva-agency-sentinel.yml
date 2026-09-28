@@ -1,0 +1,129 @@
+name: Nuva Agency - Sentinel
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17,47 * * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: nuva-agency-sentinel
+  cancel-in-progress: true
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run production sentinel
+        id: sentinel
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUVA_PRODUCTION_URL: https://nuva-one.vercel.app
+          NUVA_SUPABASE_URL: ${{ secrets.NUVA_SUPABASE_URL }}
+          NUVA_SUPABASE_ANON_KEY: ${{ secrets.NUVA_SUPABASE_ANON_KEY }}
+        run: npm run agency:sentinel
+
+      - name: Correlate incident evidence
+        if: always()
+        run: npm run agency:correlate
+
+      - name: Persist incident evidence
+        if: always()
+        env:
+          NUVA_SUPABASE_URL: ${{ secrets.NUVA_SUPABASE_URL }}
+          NUVA_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NUVA_SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run agency:persist
+
+      - name: Upload incident bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuva-agency-incident-bundle-${{ github.run_id }}
+          path: artifacts/nuva-agency/incident-bundle.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload sentinel evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuva-agency-sentinel-${{ github.run_id }}
+          path: artifacts/nuva-agency/sentinel.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish sentinel summary
+        if: always()
+        env:
+          SENTINEL_RESULT: ${{ steps.sentinel.outcome }}
+        run: |
+          if test -f artifacts/nuva-agency/sentinel.json; then
+            node -e '
+              const fs = require("fs");
+              const s = JSON.parse(fs.readFileSync("artifacts/nuva-agency/sentinel.json", "utf8"));
+              console.log("## Nüva Agency Sentinel");
+              console.log("");
+              console.log(`Status: **${s.status.toUpperCase()}**`);
+              console.log(`Checks: ${s.totals.checks} | Healthy: ${s.totals.healthy} | Warning: ${s.totals.warning} | Critical: ${s.totals.critical} | Skipped: ${s.totals.skipped}`);
+              console.log("");
+              for (const c of s.checks) {
+                console.log(`- ${c.status.toUpperCase()} — ${c.source}/${c.name}: ${c.detail ?? ""}`);
+              }
+            ' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Nüva Agency Sentinel" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Sentinel did not produce an evidence file. Result: $SENTINEL_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Open incident issue for critical signal
+        if: steps.sentinel.outcome == 'failure' && hashFiles('artifacts/nuva-agency/sentinel.json') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const s = JSON.parse(fs.readFileSync("artifacts/nuva-agency/sentinel.json", "utf8"));
+          if (s.status !== "critical") process.exit(0);
+          const fingerprints = s.incidentFingerprints.join(", ");
+          const title = `[Nüva Agency] Critical sentinel signal — ${fingerprints}`;
+          const body = [
+            "## Automated sentinel incident",
+            "",
+            `Status: **${s.status}**`,
+            `Observed: ${s.generatedAt}`,
+            `Production: ${s.productionUrl}`,
+            `Fingerprints: ${fingerprints}`,
+            "",
+            "This issue is evidence only. No production mutation was performed.",
+            "The next automation layer must investigate, verify evidence, and pass the agency policy gate before any remediation.",
+          ].join("\n");
+          const { execFileSync } = require("child_process");
+          const existing = execFileSync("gh", ["issue", "list", "--state", "open", "--search", `in:title "${fingerprints}"`, "--json", "number"], { encoding: "utf8" });
+          if (JSON.parse(existing).length === 0) {
+            execFileSync("gh", ["issue", "create", "--title", title, "--body", body], { stdio: "inherit" });
+          }
+          NODE
+
+      - name: Preserve observe-only posture
+        if: always()
+        run: |
+          echo "Agency autonomy: L0/L1 observation and recommendation only."
+          echo "Production mutations: DISABLED."

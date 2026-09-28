@@ -27,6 +27,7 @@ jobs:
 
       - name: Run Gemini review in read-only mode
         id: gemini
+        continue-on-error: true
         uses: google-github-actions/run-gemini-cli@v0.1.11
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -62,6 +63,14 @@ jobs:
                 "enabled": false
               }
             }
+
+      - name: Publish reviewer availability
+        if: github.event_name == 'pull_request' && steps.gemini.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "## 🤖 Nüva One autonomous review\n\nReviewer temporarily unavailable (for example provider quota/rate limit). This run is **NEEDS_EVIDENCE** and does not approve or reject the PR."
 
       - name: Publish review
         if: github.event_name == 'pull_request' && steps.gemini.outputs.summary != ''
