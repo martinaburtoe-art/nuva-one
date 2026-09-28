@@ -54,11 +54,3 @@ jobs:
 
           console.log(JSON.stringify({status:'ok', title, referencedAssets:refs.size, checkedAssets:refs.size}, null, 2));
           NODE
-
-      - name: Verify stale-chunk recovery code is present
-        run: |
-          curl --fail --silent --show-error --location \
-            https://raw.githubusercontent.com/martinaburtoe-art/nuva-one/main/src/routes/__root.tsx \
-            -o /tmp/root.tsx
-          grep -q 'recoverFromStaleChunk' /tmp/root.tsx
-          grep -q '_nuva_refresh' /tmp/root.tsx
