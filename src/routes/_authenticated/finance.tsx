@@ -15,8 +15,8 @@ export const Route = createFileRoute("/_authenticated/finance")({
 });
 
 function Finance() {
-  const { data: transactions = [], isLoading: transactionsLoading } = useBizList<any>("transactions", { order: "tx_date", ascending: false });
-  const { data: products = [], isLoading: productsLoading } = useBizList<any>("products");
+  const { data: transactions = [], isLoading: transactionsLoading } = useBizList<any>("transactions", { order: "tx_date", ascending: false, select: "amount,type" });
+  const { data: products = [], isLoading: productsLoading } = useBizList<any>("products", { select: "stock,price" });
 
   const control = useMemo(() => {
     const income = transactions.filter((row: any) => row.type === "income").reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
