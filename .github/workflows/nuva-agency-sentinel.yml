@@ -44,6 +44,13 @@ jobs:
         if: always()
         run: npm run agency:correlate
 
+      - name: Persist incident evidence
+        if: always()
+        env:
+          NUVA_SUPABASE_URL: ${{ secrets.NUVA_SUPABASE_URL }}
+          NUVA_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NUVA_SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run agency:persist
+
       - name: Upload incident bundle
         if: always()
         uses: actions/upload-artifact@v4
