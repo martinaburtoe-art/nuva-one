@@ -1,6 +1,7 @@
 import type {
   Evidence,
   Finding,
+  FindingSeverity,
   Hypothesis,
   Incident,
   Verification,
@@ -16,50 +17,64 @@ export type SentinelSignal = {
   [key: string]: unknown;
 };
 
-const severityByStatus = {
+const severityByStatus: Record<SentinelSignal["status"], FindingSeverity> = {
   healthy: "LOW",
   skipped: "LOW",
   warning: "MEDIUM",
   critical: "CRITICAL",
-} as const;
+};
 
 export function buildEvidence(signal: SentinelSignal): Evidence {
   return {
-    type: "telemetry",
+    id: `evidence-${signal.fingerprint}`,
+    kind: signal.source === "github" ? "github" : "log",
     source: signal.source,
-    capturedAt: signal.observedAt,
+    observedAt: signal.observedAt,
     summary: signal.detail ?? signal.name,
-    data: signal,
+    metadata: signal,
   };
 }
 
 export function buildFinding(signal: SentinelSignal): Finding {
   return {
     id: `finding-${signal.fingerprint}`,
+    fingerprint: signal.fingerprint,
     severity: severityByStatus[signal.status],
     title: `${signal.source}: ${signal.name}`,
-    description: signal.detail ?? "Sentinel signal requires investigation.",
+    confidence: signal.status === "critical" ? 0.9 : 0.65,
     evidence: [buildEvidence(signal)],
+    department: signal.source === "github" ? "engineering" : "sentinel",
+    detectedAt: signal.observedAt,
+    tenantSafe: true,
   };
 }
 
-export function buildHypothesis(signal: SentinelSignal): Hypothesis {
-  const detail = signal.detail ?? "";
+export function buildHypothesis(
+  signal: SentinelSignal,
+  incidentId: string,
+): Hypothesis {
+  const findingId = `finding-${signal.fingerprint}`;
 
   if (signal.source === "github" && signal.name === "actions_health") {
     return {
+      id: `hypothesis-${signal.fingerprint}`,
+      incidentId,
       statement: "A recent CI workflow may be failing or timing out.",
       confidence: signal.status === "critical" ? 0.8 : 0.55,
-      evidenceIds: [`finding-${signal.fingerprint}`],
+      supportingEvidence: [findingId],
+      contradictingEvidence: [],
       nextChecks: ["Inspect the latest failed workflow job and its logs."],
     };
   }
 
   if (signal.source === "vercel" && signal.name === "production_http") {
     return {
+      id: `hypothesis-${signal.fingerprint}`,
+      incidentId,
       statement: "The production surface may be unavailable or returning an unexpected status.",
       confidence: signal.status === "critical" ? 0.95 : 0.6,
-      evidenceIds: [`finding-${signal.fingerprint}`],
+      supportingEvidence: [findingId],
+      contradictingEvidence: [],
       nextChecks: [
         "Check the latest production deployment.",
         "Inspect runtime logs for correlated errors.",
@@ -69,31 +84,43 @@ export function buildHypothesis(signal: SentinelSignal): Hypothesis {
 
   if (signal.source === "supabase" && signal.name === "rest_health") {
     return {
+      id: `hypothesis-${signal.fingerprint}`,
+      incidentId,
       statement: "The Supabase REST surface may be degraded or unreachable.",
       confidence: signal.status === "critical" ? 0.9 : 0.5,
-      evidenceIds: [`finding-${signal.fingerprint}`],
+      supportingEvidence: [findingId],
+      contradictingEvidence: [],
       nextChecks: ["Inspect Supabase project health and recent logs."],
     };
   }
 
   return {
+    id: `hypothesis-${signal.fingerprint}`,
+    incidentId,
     statement: `The signal ${signal.name} from ${signal.source} requires investigation.`,
     confidence: signal.status === "critical" ? 0.7 : 0.4,
-    evidenceIds: [`finding-${signal.fingerprint}`],
-    nextChecks: [detail || "Collect a second independent signal before acting."],
+    supportingEvidence: [findingId],
+    contradictingEvidence: [],
+    nextChecks: [signal.detail || "Collect a second independent signal before acting."],
   };
 }
 
-export function buildVerification(signal: SentinelSignal): Verification {
+export function buildVerification(
+  signal: SentinelSignal,
+  incidentId: string,
+): Verification {
   return {
     id: `verification-${signal.fingerprint}`,
-    required: signal.status === "critical" || signal.status === "warning",
+    actionId: incidentId,
+    passed: false,
     checks: [
       {
         name: `repeat:${signal.source}/${signal.name}`,
-        expected: "healthy",
+        passed: false,
+        detail: "Awaiting deterministic re-check.",
       },
     ],
+    observedAt: signal.observedAt,
   };
 }
 
@@ -102,20 +129,23 @@ export function buildIncident(signal: SentinelSignal): Incident | null {
     return null;
   }
 
+  const incidentId = `incident-${signal.fingerprint}`;
   const finding = buildFinding(signal);
-  const hypothesis = buildHypothesis(signal);
-  const verification = buildVerification(signal);
+  const hypothesis = buildHypothesis(signal, incidentId);
+  const verification = buildVerification(signal, incidentId);
 
   return {
-    id: `incident-${signal.fingerprint}`,
+    id: incidentId,
     fingerprint: signal.fingerprint,
+    title: finding.title,
+    status: "OPEN",
     severity: severityByStatus[signal.status],
-    status: "open",
-    summary: finding.title,
-    findings: [finding],
-    hypotheses: [hypothesis],
-    verifications: [verification],
-    openedAt: signal.observedAt,
+    findings: [finding.id],
+    hypotheses: [hypothesis.id],
+    actions: [],
+    evidence: finding.evidence.map((item) => item.id),
+    createdAt: signal.observedAt,
+    updatedAt: signal.observedAt,
   };
 }
 
@@ -134,7 +164,8 @@ export function correlateSignals(signals: SentinelSignal[]): Incident[] {
 
     existing.findings.push(...incident.findings);
     existing.hypotheses.push(...incident.hypotheses);
-    existing.verifications.push(...incident.verifications);
+    existing.evidence.push(...incident.evidence);
+    existing.updatedAt = signal.observedAt;
   }
 
   return [...incidents.values()];
