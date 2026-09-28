@@ -7,15 +7,19 @@
   --nuva-radius-surface: 14px;
   --nuva-radius-panel: 18px;
   --nuva-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --nuva-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --nuva-duration-fast: 160ms;
   --nuva-duration: 220ms;
   --nuva-duration-slow: 320ms;
+  --nuva-duration-enter: 420ms;
 }
 
 .nuva-app {
   --nuva-surface: color-mix(in oklab, var(--color-card) 96%, var(--color-foreground));
   --nuva-surface-muted: color-mix(in oklab, var(--color-card) 92%, var(--color-muted));
   --nuva-line: color-mix(in oklab, var(--color-border) 86%, transparent);
+  --nuva-shadow-soft: 0 1px 2px rgb(0 0 0 / 0.025), 0 8px 24px rgb(0 0 0 / 0.025);
+  --nuva-shadow-hover: 0 14px 34px rgb(0 0 0 / 0.065);
 }
 
 .nuva-app :where(button, a, input, select, textarea, [role="button"]) {
@@ -26,32 +30,72 @@
   transition-timing-function: var(--nuva-ease);
 }
 
+/* Surfaces: restrained depth, never decorative noise. */
 .nuva-app .nuva-surface {
   background: var(--nuva-surface);
   border: 1px solid var(--nuva-line);
   border-radius: var(--nuva-radius-surface);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.025), 0 8px 24px rgb(0 0 0 / 0.025);
+  box-shadow: var(--nuva-shadow-soft);
 }
 
 .nuva-app .nuva-surface-interactive {
-  transition: transform var(--nuva-duration) var(--nuva-ease), box-shadow var(--nuva-duration) var(--nuva-ease), border-color var(--nuva-duration) var(--nuva-ease);
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  transition: transform var(--nuva-duration) var(--nuva-ease), box-shadow var(--nuva-duration) var(--nuva-ease), border-color var(--nuva-duration) var(--nuva-ease), background-color var(--nuva-duration) var(--nuva-ease);
+}
+
+.nuva-app .nuva-surface-interactive::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(115deg, transparent 0%, color-mix(in oklab, var(--nuva-indigo) 7%, transparent) 48%, transparent 72%);
+  transform: translateX(-100%);
+  transition: opacity var(--nuva-duration) var(--nuva-ease), transform 650ms var(--nuva-ease);
 }
 
 .nuva-app .nuva-surface-interactive:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--color-border) 65%, var(--nuva-indigo));
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.055);
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--color-border) 62%, var(--nuva-indigo));
+  box-shadow: var(--nuva-shadow-hover);
 }
 
+.nuva-app .nuva-surface-interactive:hover::after {
+  opacity: 1;
+  transform: translateX(100%);
+}
+
+.nuva-app .nuva-surface-interactive:active {
+  transform: translateY(0) scale(0.997);
+  transition-duration: 90ms;
+}
+
+/* Sidebar/navigation: spatial feedback rather than loud animation. */
 .nuva-app .nuva-nav-item {
   min-height: 38px;
   border-radius: var(--nuva-radius-control);
-  transition: background-color var(--nuva-duration-fast) var(--nuva-ease), color var(--nuva-duration-fast) var(--nuva-ease), transform var(--nuva-duration-fast) var(--nuva-ease);
+  transition: background-color var(--nuva-duration-fast) var(--nuva-ease), color var(--nuva-duration-fast) var(--nuva-ease), transform var(--nuva-duration-fast) var(--nuva-ease), box-shadow var(--nuva-duration-fast) var(--nuva-ease);
 }
 
-.nuva-app .nuva-nav-item:hover { transform: translateX(1px); }
-.nuva-app .nuva-nav-item[data-active="true"] { box-shadow: inset 2px 0 0 var(--nuva-indigo); }
+.nuva-app .nuva-nav-item:hover { transform: translateX(2px); }
+.nuva-app .nuva-nav-item:active { transform: translateX(1px) scale(0.99); }
+.nuva-app .nuva-nav-item[data-active="true"] {
+  box-shadow: inset 2px 0 0 var(--nuva-indigo), 0 1px 2px rgb(0 0 0 / 0.025);
+}
 
+.nuva-app .nuva-nav-item[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 7px auto 7px 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--nuva-indigo);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--nuva-indigo) 55%, transparent);
+}
+
+/* Module header hierarchy. */
 .nuva-app .nuva-module-header {
   display: flex;
   min-width: 0;
@@ -75,6 +119,7 @@
   font-weight: 650;
   letter-spacing: -0.035em;
   line-height: 1.05;
+  text-wrap: balance;
 }
 
 .nuva-app .nuva-module-description {
@@ -84,24 +129,133 @@
   line-height: 1.5;
 }
 
+/* Intentional motion primitives. Apply these to real product states only. */
+.nuva-app .nuva-enter {
+  animation: nuva-enter var(--nuva-duration-enter) var(--nuva-ease) both;
+}
+
+.nuva-app .nuva-stagger > * {
+  animation: nuva-enter 420ms var(--nuva-ease) both;
+}
+
+.nuva-app .nuva-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.nuva-app .nuva-stagger > *:nth-child(2) { animation-delay: 35ms; }
+.nuva-app .nuva-stagger > *:nth-child(3) { animation-delay: 70ms; }
+.nuva-app .nuva-stagger > *:nth-child(4) { animation-delay: 105ms; }
+.nuva-app .nuva-stagger > *:nth-child(5) { animation-delay: 140ms; }
+.nuva-app .nuva-stagger > *:nth-child(6) { animation-delay: 175ms; }
+
+.nuva-app .nuva-number-change {
+  animation: nuva-number-change 420ms var(--nuva-ease);
+}
+
+.nuva-app .nuva-success-pulse {
+  animation: nuva-success-pulse 520ms var(--nuva-ease);
+}
+
+.nuva-app .nuva-loading-sheen {
+  position: relative;
+  overflow: hidden;
+  background: var(--nuva-surface-muted);
+}
+
+.nuva-app .nuva-loading-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(100deg, transparent, color-mix(in oklab, var(--color-foreground) 7%, transparent), transparent);
+  animation: nuva-sheen 1.15s var(--nuva-ease) infinite;
+}
+
+.nuva-app [aria-busy="true"] {
+  cursor: progress;
+}
+
 .nuva-app .nuva-focus-ring:focus-visible,
 .nuva-app :where(button, a, input, select, textarea):focus-visible {
   outline: 2px solid color-mix(in oklab, var(--nuva-indigo) 78%, white);
   outline-offset: 2px;
 }
 
+/* Tables and dense work surfaces. */
+.nuva-app table tbody tr {
+  transition: background-color var(--nuva-duration-fast) var(--nuva-ease), box-shadow var(--nuva-duration-fast) var(--nuva-ease);
+}
+
+.nuva-app table tbody tr:hover {
+  box-shadow: inset 2px 0 0 color-mix(in oklab, var(--nuva-indigo) 45%, transparent);
+}
+
+/* Form controls get immediate tactile feedback without changing layout. */
+.nuva-app :where(input, select, textarea) {
+  transition: border-color var(--nuva-duration-fast) var(--nuva-ease), box-shadow var(--nuva-duration-fast) var(--nuva-ease), background-color var(--nuva-duration-fast) var(--nuva-ease);
+}
+
+.nuva-app :where(input, select, textarea):focus {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--nuva-indigo) 13%, transparent);
+}
+
+/* Dialog/overlay depth. */
+.nuva-app [data-state="open"] {
+  animation: nuva-overlay-in var(--nuva-duration) var(--nuva-ease) both;
+}
+
+.nuva-app [data-state="closed"] {
+  animation: nuva-overlay-out 140ms var(--nuva-ease) both;
+}
+
+@keyframes nuva-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes nuva-number-change {
+  0% { transform: translateY(3px); opacity: 0.55; }
+  55% { transform: translateY(-2px); opacity: 1; }
+  100% { transform: translateY(0); }
+}
+
+@keyframes nuva-success-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--nuva-indigo) 22%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; }
+}
+
+@keyframes nuva-sheen {
+  to { transform: translateX(100%); }
+}
+
+@keyframes nuva-overlay-in {
+  from { opacity: 0; transform: scale(0.985) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes nuva-overlay-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.985); }
+}
+
 .dark .nuva-app .nuva-surface { box-shadow: 0 12px 30px rgb(0 0 0 / 0.16); }
-.dark .nuva-app .nuva-surface-interactive:hover { box-shadow: 0 16px 38px rgb(0 0 0 / 0.24); }
+.dark .nuva-app .nuva-surface-interactive:hover { box-shadow: 0 18px 42px rgb(0 0 0 / 0.24); }
 
 @media (max-width: 767px) {
   .nuva-app .nuva-module-header { align-items: flex-start; flex-direction: column; }
   .nuva-app .nuva-module-title { font-size: 1.5rem; }
   .nuva-app .nuva-surface-interactive:hover { transform: none; }
+  .nuva-app .nuva-nav-item:hover { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nuva-app .nuva-surface-interactive,
-  .nuva-app .nuva-nav-item { transition: none; }
+  .nuva-app *,
+  .nuva-app *::before,
+  .nuva-app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
   .nuva-app .nuva-surface-interactive:hover,
-  .nuva-app .nuva-nav-item:hover { transform: none; }
+  .nuva-app .nuva-nav-item:hover,
+  .nuva-app .nuva-surface-interactive:active,
+  .nuva-app .nuva-nav-item:active { transform: none; }
 }
