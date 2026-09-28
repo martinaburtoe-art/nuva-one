@@ -67,3 +67,5 @@
 @media (prefers-reduced-motion: reduce) {
   .nuva-module-motion-vehicle { animation-duration: 1ms; }
 }
+
+/* Production deployment marker: module motion system */
