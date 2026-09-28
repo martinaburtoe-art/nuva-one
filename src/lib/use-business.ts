@@ -82,15 +82,21 @@ export function hasModulePermission(role: MemberRole | null | undefined, permiss
 
 export type MyMembership = { role: MemberRole; position: string | null; permissions: ModulePermissions } | null;
 export function useMyMembership() {
-  const { active } = useActiveBusiness();
+  // Use the persisted business id directly so membership can load in parallel
+  // with the businesses list instead of waiting for the list to resolve.
+  const [activeId] = useActiveBusinessId();
+  const { data: businesses } = useBusinesses();
+  const fallbackId = businesses?.[0]?.id ?? null;
+  const businessId = activeId ?? fallbackId;
+
   return useQuery({
-    enabled: !!active?.id,
-    queryKey: ["my-membership", active?.id],
+    enabled: !!businessId,
+    queryKey: ["my-membership", businessId],
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<MyMembership> => {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user || !active) return null;
-      const { data, error } = await supabase.from("business_members").select("role, position, permissions").eq("business_id", active.id).eq("user_id", userData.user.id).maybeSingle();
+      if (!userData.user || !businessId) return null;
+      const { data, error } = await supabase.from("business_members").select("role, position, permissions").eq("business_id", businessId).eq("user_id", userData.user.id).maybeSingle();
       if (error) throw error;
       if (!data) return null;
       return { role: data.role as MemberRole, position: (data as any).position ?? null, permissions: ((data as any).permissions ?? {}) as ModulePermissions };
