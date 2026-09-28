@@ -76,7 +76,7 @@ async function main() {
 
   check(
     "verify:typecheck",
-    /npm run typecheck/.test(verify),
+    /(npm run typecheck|npx tsc --noEmit)/.test(verify),
     "Agency verification must run TypeScript checks.",
   );
 
