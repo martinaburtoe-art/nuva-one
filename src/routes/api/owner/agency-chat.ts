@@ -96,17 +96,6 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
           }
         }
 
-
-        if (serviceRoleKey) {
-          try {
-            const db = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
-            const { data } = await db.from("ops_agent_learning").select("lesson_type,title,lesson,confidence,occurrences,last_seen_at").eq("agent_id", agentId).order("last_seen_at", { ascending: false }).limit(8);
-            learningContext = JSON.stringify(data ?? []);
-          } catch (memoryError) {
-            console.error("Agency learning read error", memoryError);
-          }
-        }
-
         const modelMessages: ModelMessage[] = messages.map((message) => ({
           role: message.role,
           content: message.content,
