@@ -10,6 +10,7 @@ type ControlMetrics = {
   ai_telemetry?: { events_24h?: number; events_30d?: number; input_tokens_24h?: number; output_tokens_24h?: number; total_tokens_24h?: number; estimated_cost_usd_24h?: number; estimated_cost_usd_30d?: number; fallbacks_24h?: number; avg_attempts_24h?: number; providers_24h?: Record<string, number> } | null;
 };
 type AgencyMessage = { role: "user" | "assistant"; content: string };
+type WorkerStatus = { agentId: string; state: "active" | "recent" | "standby"; lastActivity: string | null; conversations: number; lessons: number; confidence: number | null };
 
 export const Route = createFileRoute("/owner/control-tower")({
   ssr: false,
@@ -40,7 +41,7 @@ async function loadMetrics() {
   } satisfies ControlMetrics;
 }
 
-async function askWorker(agentId: string, messages: AgencyMessage[], signal: AbortSignal) {
+async function loadAgencyStatus() {\n  const { data: session } = await supabase.auth.getSession();\n  const token = session.session?.access_token;\n  if (!token) throw new Error("Sesión expirada.");\n  const response = await fetch("/api/owner/agency-status", { headers: { Authorization: `Bearer ${token}` } });\n  if (!response.ok) throw new Error("No se pudo consultar el estado del equipo.");\n  return (await response.json()) as { generated_at: string; workers: WorkerStatus[] };\n}\n\nasync function askWorker(agentId: string, messages: AgencyMessage[], signal: AbortSignal) {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
   if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
@@ -62,7 +63,7 @@ const n = (value: number | undefined) => (value ?? 0).toLocaleString("es-CL");
 const usd = (value: number | undefined) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 4 }).format(value ?? 0);
 
 function ControlTower() {
-  const [metrics, setMetrics] = useState<ControlMetrics | null>(null);
+  const [metrics, setMetrics] = useState<ControlMetrics | null>(null);\n  const [workerStatus, setWorkerStatus] = useState<WorkerStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedWorker, setSelectedWorker] = useState("constructor");
@@ -73,7 +74,7 @@ function ControlTower() {
 
   const refresh = async () => {
     setLoading(true); setError(null);
-    try { setMetrics(await loadMetrics()); }
+    try {\n      const [nextMetrics, nextStatus] = await Promise.all([loadMetrics(), loadAgencyStatus()]);\n      setMetrics(nextMetrics);\n      setWorkerStatus(nextStatus.workers);\n    }
     catch (err) { setError(err instanceof Error ? err.message : "Error inesperado"); }
     finally { setLoading(false); }
   };
@@ -132,7 +133,7 @@ function ControlTower() {
           </div>
         </header>
 
-        <AgencyTeam selectedWorker={selectedWorker} onSelectWorker={(agentId) => { setSelectedWorker(agentId); setMessages([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]); }} />
+        <AgencyTeam selectedWorker={selectedWorker} onSelectWorker={(agentId) => { setSelectedWorker(agentId); setMessages([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]); }} />\n\n        <section className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] p-5">\n          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><div className="text-sm font-semibold">Estado real de Agency</div><div className="text-xs text-white/35">Actividad derivada de conversaciones y aprendizaje persistido; no es un indicador ficticio.</div></div><div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-300">Cobertura continua</div></div>\n          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">{workerStatus.map((worker) => <button key={worker.agentId} onClick={() => { setSelectedWorker(worker.agentId); setMessages([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]); }} className="rounded-xl border border-white/8 bg-black/15 px-3 py-2 text-left hover:border-white/15"><div className="flex items-center justify-between"><span className="text-xs font-semibold">{worker.agentId}</span><span className={worker.state === "active" ? "text-emerald-300" : worker.state === "recent" ? "text-cyan-200" : "text-white/30"}>{worker.state === "active" ? "ACTIVO" : worker.state === "recent" ? "RECIENTE" : "EN ESPERA"}</span></div><div className="mt-1 text-[10px] text-white/30">{worker.conversations} conversaciones · {worker.lessons} aprendizajes</div></button>)}</div>\n        </section>
 
         {error ? <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">{error}</div> : null}
 
