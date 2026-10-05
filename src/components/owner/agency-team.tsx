@@ -13,7 +13,7 @@ type AgencyWorker = {
 };
 
 const workers: AgencyWorker[] = [
-  { id: "constructor", name: "Constructor", role: "Engineering", specialty: "Construcción y reparación", status: "online", icon: Wrench, description: "Implementa trabajo verificado, corrige regresiones y prepara PRs." },
+  { id: "constructor", name: "Constructor", role: "Engineering", specialty: "Construcción y reparación", status: "online", icon: Wrench, description: "Implementa trabajo verificado, corrige regresiones y prepara PRs.", autonomy: "L3 · PR autónomo", capabilities: ["repo","branch","tests","PR"] },
   { id: "orchestrator", name: "Orchestrator", role: "Dirección", specialty: "Coordinación de Agency", status: "watching", icon: Bot, description: "Prioriza señales, asigna trabajo y coordina especialistas.", autonomy: "L4 · estrategia", capabilities: ["priorización","asignación","evidencia","escalamiento"] },
   { id: "finance", name: "Finance", role: "Finanzas", specialty: "Caja, contabilidad y métricas", status: "watching", icon: LineChart, description: "Vigila integridad financiera y señales de liquidez.", autonomy: "L1 · recomendación", capabilities: ["caja","contabilidad","liquidez","reconciliación"] },
   { id: "sales", name: "Sales", role: "Ventas", specialty: "Ventas, CRM y conversión", status: "standby", icon: ShoppingCart, description: "Analiza pipeline, ventas y oportunidades comerciales.", autonomy: "L1 · recomendación", capabilities: ["pipeline","CRM","conversión","clientes"] },
