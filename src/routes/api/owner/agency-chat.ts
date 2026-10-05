@@ -54,19 +54,19 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
         const body = (await request.json()) as { agentId?: string; messages?: Array<{ role: "user" | "assistant"; content: string }> };
         const agentId = body.agentId ?? "constructor";
         const workers = {
-          constructor: { name: "Constructor", role: "Engineering", focus: "Construcción y reparación" },
-          orchestrator: { name: "Orchestrator", role: "Dirección", focus: "Coordinación de Agency" },
-          finance: { name: "Finance", role: "Finanzas", focus: "Caja, contabilidad y métricas" },
-          sales: { name: "Sales", role: "Ventas", focus: "Ventas, CRM y conversión" },
-          supply: { name: "Supply", role: "Abastecimiento", focus: "Compras e inventario" },
-          people: { name: "People", role: "Personas", focus: "Nüva People y nómina" },
-          compliance: { name: "Compliance", role: "Cumplimiento", focus: "Normativa y riesgo" },
-          growth: { name: "Growth", role: "Growth", focus: "Producto y crecimiento" },
-          security: { name: "Security", role: "Seguridad", focus: "AppSec, RLS y privacidad" },
-          qa: { name: "QA", role: "Quality", focus: "Tests y regresiones" },
-          sentinel: { name: "Sentinel", role: "Observabilidad", focus: "Salud y anomalías" },
-          ux: { name: "UX", role: "Experiencia", focus: "UI, accesibilidad y responsive" },
-          release: { name: "Release", role: "Release Engineering", focus: "Gates y certificación" },
+          constructor: { name: "Constructor", role: "Engineering", focus: "Construcción y reparación", autonomy: "L3 · PR autónomo", capabilities: ["repo", "branch", "tests", "PR"] },
+          orchestrator: { name: "Orchestrator", role: "Dirección", focus: "Coordinación de Agency", autonomy: "L4 · estrategia", capabilities: ["priorización", "asignación", "evidencia", "escalamiento"] },
+          finance: { name: "Finance", role: "Finanzas", focus: "Caja, contabilidad y métricas", autonomy: "L1 · recomendación", capabilities: ["caja", "contabilidad", "liquidez", "reconciliación"] },
+          sales: { name: "Sales", role: "Ventas", focus: "Ventas, CRM y conversión", autonomy: "L1 · recomendación", capabilities: ["pipeline", "CRM", "conversión", "clientes"] },
+          supply: { name: "Supply", role: "Abastecimiento", focus: "Compras e inventario", autonomy: "L1 · recomendación", capabilities: ["stock", "compras", "recepción", "riesgo"] },
+          people: { name: "People", role: "Personas", focus: "Nüva People y nómina", autonomy: "L1 · recomendación", capabilities: ["contratos", "asistencia", "nómina", "cumplimiento"] },
+          compliance: { name: "Compliance", role: "Cumplimiento", focus: "Normativa y riesgo", autonomy: "L1 · recomendación", capabilities: ["privacidad", "normativa", "auditoría", "riesgo"] },
+          growth: { name: "Growth", role: "Growth", focus: "Producto y crecimiento", autonomy: "L1 · recomendación", capabilities: ["SEO", "analytics", "conversión", "mercado"] },
+          security: { name: "Security", role: "Seguridad", focus: "AppSec, RLS y privacidad", autonomy: "L1 · recomendación", capabilities: ["AppSec", "RLS", "auth", "secrets"] },
+          qa: { name: "QA", role: "Quality", focus: "Tests y regresiones", autonomy: "L3 · verificación", capabilities: ["unit", "integration", "E2E", "accesibilidad"] },
+          sentinel: { name: "Sentinel", role: "Observabilidad", focus: "Salud y anomalías", autonomy: "L0 · observación", capabilities: ["telemetría", "anomalías", "incidentes", "evidencia"] },
+          ux: { name: "UX", role: "Experiencia", focus: "UI, accesibilidad y responsive", autonomy: "L1 · recomendación", capabilities: ["UI", "responsive", "a11y", "visual QA"] },
+          release: { name: "Release", role: "Release Engineering", focus: "Gates y certificación", autonomy: "L2 · gates controlados", capabilities: ["CI", "Vercel", "release", "rollback"] },
         } as const;
         const worker = workers[agentId as keyof typeof workers];
         if (!worker) return new Response(JSON.stringify({ error: "AGENCY_WORKER_NOT_FOUND" }), { status: 400 });
