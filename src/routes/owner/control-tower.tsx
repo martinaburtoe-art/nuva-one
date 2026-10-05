@@ -72,26 +72,6 @@ function ControlTower() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const sendFeedback = async (index: number, helpful: boolean) => {
-    if (feedback[index]) return;
-    const message = messages[index];
-    if (!message || message.role !== "assistant") return;
-    const previousUser = [...messages.slice(0, index)].reverse().find((item) => item.role === "user");
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-      if (!token) return;
-      const response = await fetch("/api/owner/agency-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ agentId: selectedWorker, prompt: previousUser?.content ?? "", response: message.content, feedback: helpful }),
-      });
-      if (response.ok) setFeedback((current) => ({ ...current, [index]: helpful ? "positive" : "negative" }));
-    } catch {
-      // El feedback no debe interrumpir la conversación.
-    }
-  };
-
   const send = async () => {
     const text = input.trim();
     if (!text || chatLoading) return;
@@ -178,7 +158,7 @@ function ControlTower() {
               {chatLoading ? <button onClick={() => abortRef.current?.abort()} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 text-xs hover:bg-white/10"><Square className="h-3 w-3" /> Detener</button> : <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">ONLINE</span>}
             </div>
             <div className="flex-1 space-y-4 overflow-y-auto p-5">
-              {messages.map((message, index) => <div key={index} className={message.role === "user" ? "ml-auto max-w-[82%] rounded-2xl rounded-br-md bg-indigo-500/20 px-4 py-3 text-sm text-white" : "max-w-[88%] rounded-2xl rounded-bl-md border border-white/8 bg-white/[0.035] px-4 py-3 text-sm leading-6 text-white/75"}><div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">{message.role === "user" ? "Tú" : selectedWorker}</div><div className="whitespace-pre-wrap">{message.content || "Pensando…"}</div>{message.role === "assistant" && message.content && !chatLoading ? <div className="mt-3 flex items-center gap-2 border-t border-white/6 pt-2"><span className="text-[10px] text-white/25">¿Te sirvió?</span><button onClick={() => void sendFeedback(index, true)} disabled={Boolean(feedback[index])} className={`rounded-md px-2 py-1 text-[10px] ${feedback[index] === "positive" ? "bg-emerald-300/15 text-emerald-200" : "text-white/35 hover:bg-white/5"}`}>Útil</button><button onClick={() => void sendFeedback(index, false)} disabled={Boolean(feedback[index])} className={`rounded-md px-2 py-1 text-[10px] ${feedback[index] === "negative" ? "bg-amber-300/15 text-amber-200" : "text-white/35 hover:bg-white/5"}`}>Corregir</button></div> : null}</div>)}
+              {messages.map((message, index) => <div key={index} className={message.role === "user" ? "ml-auto max-w-[82%] rounded-2xl rounded-br-md bg-indigo-500/20 px-4 py-3 text-sm text-white" : "max-w-[88%] rounded-2xl rounded-bl-md border border-white/8 bg-white/[0.035] px-4 py-3 text-sm leading-6 text-white/75"}><div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">{message.role === "user" ? "Tú" : selectedWorker}</div><div className="whitespace-pre-wrap">{message.content || "Pensando…"}</div></div>)}
             </div>
             <div className="border-t border-white/10 p-4">
               <div className="flex gap-2 rounded-xl border border-white/10 bg-black/20 p-2 focus-within:border-cyan-200/30">
