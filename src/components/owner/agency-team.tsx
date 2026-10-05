@@ -4,7 +4,8 @@ type AgencyWorker = {
   name: string;
   role: string;
   specialty: string;
-  status: "online" | "watching" | "standby";\n  id: string;
+  status: "online" | "watching" | "standby";
+  id: string;
   icon: typeof Bot;
   description: string;
 };
