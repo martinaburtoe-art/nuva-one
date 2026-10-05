@@ -8,22 +8,24 @@ type AgencyWorker = {
   id: string;
   icon: typeof Bot;
   description: string;
+  autonomy: string;
+  capabilities: string[];
 };
 
 const workers: AgencyWorker[] = [
   { id: "constructor", name: "Constructor", role: "Engineering", specialty: "Construcción y reparación", status: "online", icon: Wrench, description: "Implementa trabajo verificado, corrige regresiones y prepara PRs." },
-  { id: "orchestrator", name: "Orchestrator", role: "Dirección", specialty: "Coordinación de Agency", status: "watching", icon: Bot, description: "Prioriza señales, asigna trabajo y coordina especialistas." },
-  { id: "finance", name: "Finance", role: "Finanzas", specialty: "Caja, contabilidad y métricas", status: "watching", icon: LineChart, description: "Vigila integridad financiera y señales de liquidez." },
-  { id: "sales", name: "Sales", role: "Ventas", specialty: "Ventas, CRM y conversión", status: "standby", icon: ShoppingCart, description: "Analiza pipeline, ventas y oportunidades comerciales." },
-  { id: "supply", name: "Supply", role: "Abastecimiento", specialty: "Compras e inventario", status: "watching", icon: Database, description: "Supervisa stock, compras, recepción y riesgos de abastecimiento." },
-  { id: "people", name: "People", role: "Personas", specialty: "Nüva People y nómina", status: "standby", icon: Users, description: "Vigila RRHH, remuneraciones, contratos y cumplimiento laboral." },
-  { id: "compliance", name: "Compliance", role: "Cumplimiento", specialty: "Normativa y riesgo", status: "watching", icon: Scale, description: "Detecta riesgos regulatorios y requisitos pendientes." },
-  { id: "growth", name: "Growth", role: "Growth", specialty: "Producto y crecimiento", status: "standby", icon: Search, description: "Investiga mercado, adopción y oportunidades de crecimiento." },
-  { id: "security", name: "Security", role: "Seguridad", specialty: "AppSec, RLS y privacidad", status: "watching", icon: LockKeyhole, description: "Busca regresiones de seguridad, aislamiento y exposición de datos." },
-  { id: "qa", name: "QA", role: "Quality", specialty: "Tests y regresiones", status: "watching", icon: CheckCircle2, description: "Verifica cambios, pruebas, flujos core y evidencia." },
-  { id: "sentinel", name: "Sentinel", role: "Observabilidad", specialty: "Salud y anomalías", status: "watching", icon: Activity, description: "Monitorea señales de producción y genera alertas verificables." },
-  { id: "ux", name: "UX", role: "Experiencia", specialty: "UI, accesibilidad y responsive", status: "standby", icon: Palette, description: "Audita la experiencia visual y accesibilidad de Nüva One." },
-  { id: "release", name: "Release", role: "Release Engineering", specialty: "Gates y certificación", status: "watching", icon: Code2, description: "Consolida evidencia y protege los criterios de salida." },
+  { id: "orchestrator", name: "Orchestrator", role: "Dirección", specialty: "Coordinación de Agency", status: "watching", icon: Bot, description: "Prioriza señales, asigna trabajo y coordina especialistas.", autonomy: "L4 · estrategia", capabilities: ["priorización","asignación","evidencia","escalamiento"] },
+  { id: "finance", name: "Finance", role: "Finanzas", specialty: "Caja, contabilidad y métricas", status: "watching", icon: LineChart, description: "Vigila integridad financiera y señales de liquidez.", autonomy: "L1 · recomendación", capabilities: ["caja","contabilidad","liquidez","reconciliación"] },
+  { id: "sales", name: "Sales", role: "Ventas", specialty: "Ventas, CRM y conversión", status: "standby", icon: ShoppingCart, description: "Analiza pipeline, ventas y oportunidades comerciales.", autonomy: "L1 · recomendación", capabilities: ["pipeline","CRM","conversión","clientes"] },
+  { id: "supply", name: "Supply", role: "Abastecimiento", specialty: "Compras e inventario", status: "watching", icon: Database, description: "Supervisa stock, compras, recepción y riesgos de abastecimiento.", autonomy: "L1 · recomendación", capabilities: ["stock","compras","recepción","riesgo"] },
+  { id: "people", name: "People", role: "Personas", specialty: "Nüva People y nómina", status: "standby", icon: Users, description: "Vigila RRHH, remuneraciones, contratos y cumplimiento laboral.", autonomy: "L1 · recomendación", capabilities: ["contratos","asistencia","nómina","cumplimiento"] },
+  { id: "compliance", name: "Compliance", role: "Cumplimiento", specialty: "Normativa y riesgo", status: "watching", icon: Scale, description: "Detecta riesgos regulatorios y requisitos pendientes.", autonomy: "L1 · recomendación", capabilities: ["privacidad","normativa","auditoría","riesgo"] },
+  { id: "growth", name: "Growth", role: "Growth", specialty: "Producto y crecimiento", status: "standby", icon: Search, description: "Investiga mercado, adopción y oportunidades de crecimiento.", autonomy: "L1 · recomendación", capabilities: ["SEO","analytics","conversión","mercado"] },
+  { id: "security", name: "Security", role: "Seguridad", specialty: "AppSec, RLS y privacidad", status: "watching", icon: LockKeyhole, description: "Busca regresiones de seguridad, aislamiento y exposición de datos.", autonomy: "L1 · recomendación", capabilities: ["AppSec","RLS","auth","secrets"] },
+  { id: "qa", name: "QA", role: "Quality", specialty: "Tests y regresiones", status: "watching", icon: CheckCircle2, description: "Verifica cambios, pruebas, flujos core y evidencia.", autonomy: "L3 · verificación", capabilities: ["unit","integration","E2E","accesibilidad"] },
+  { id: "sentinel", name: "Sentinel", role: "Observabilidad", specialty: "Salud y anomalías", status: "watching", icon: Activity, description: "Monitorea señales de producción y genera alertas verificables.", autonomy: "L0 · observación", capabilities: ["telemetría","anomalías","incidentes","evidencia"] },
+  { id: "ux", name: "UX", role: "Experiencia", specialty: "UI, accesibilidad y responsive", status: "standby", icon: Palette, description: "Audita la experiencia visual y accesibilidad de Nüva One.", autonomy: "L1 · recomendación", capabilities: ["UI","responsive","a11y","visual QA"] },
+  { id: "release", name: "Release", role: "Release Engineering", specialty: "Gates y certificación", status: "watching", icon: Code2, description: "Consolida evidencia y protege los criterios de salida.", autonomy: "L2 · gates controlados", capabilities: ["CI","Vercel","release","rollback"] },
 ];
 
 const statusLabel = { online: "TRABAJANDO", watching: "MONITOREANDO", standby: "EN ESPERA" } as const;
@@ -56,7 +58,7 @@ export function AgencyTeam({ selectedWorker, onSelectWorker }: { selectedWorker?
         })}
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-[10px] text-white/30">
-        <span className="rounded-full border border-white/8 px-2.5 py-1">13 especialistas</span>
+        <span className="rounded-full border border-white/8 px-2.5 py-1">13 especialistas</span><span className="rounded-full border border-white/8 px-2.5 py-1">13 identidades especializadas</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Owner-only</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Evidence-first</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Producción protegida</span>
