@@ -1,0 +1,9 @@
+{
+  "certification": "functional-release-v1",
+  "date": "2026-10-05",
+  "goldenBusinessSimulation": {"tests": 12, "passed": 12, "failed": 0, "execution": "direct Supabase transactional verification", "rollback": true},
+  "production": {"deployment": "READY", "productionSmoke": "PASS", "applicationCodeChangedSinceValidatedDeployment": false},
+  "coreInvariants": ["purchase -> inventory","purchase -> financial transaction","purchase -> accounting journal","sale -> inventory","sale -> financial transaction","sale -> accounting journal","accounting balance","Action Queue -> Outcome","tenant isolation"],
+  "ciException": {"status": "EXTERNAL_INFRASTRUCTURE_QUEUE", "note": "GitHub-hosted runner remained queued; no application failure was observed in the queued jobs."},
+  "scope": "functional release certification; GitHub Actions runtime certification remains an infrastructure exception"
+}
