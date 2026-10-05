@@ -81,10 +81,10 @@ function ControlTower() {
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
       if (!token) return;
-      const response = await fetch("/api/owner/agency-feedback", {
+      const response = await fetch("/api/owner/agency-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ agentId: selectedWorker, prompt: previousUser?.content ?? "", response: message.content, helpful }),
+        body: JSON.stringify({ agentId: selectedWorker, prompt: previousUser?.content ?? "", response: message.content, feedback: helpful }),
       });
       if (response.ok) setFeedback((current) => ({ ...current, [index]: helpful ? "positive" : "negative" }));
     } catch {
