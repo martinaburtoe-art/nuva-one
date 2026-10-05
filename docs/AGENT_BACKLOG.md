@@ -5,13 +5,19 @@ This backlog is intentionally evidence-driven. Autonomous agents should select t
 ## Operating lanes
 
 ### P0 — Reliability / production
+- Execute the Market Release Gate in issue #144.
 - Investigate and repair any current failing CI workflow.
 - Investigate current Vercel production/runtime errors if evidence exists.
 - Repair broken user-facing flows discovered by automated verification.
 
+### P0 — Product scope integrity
+- Keep retired Studio, n8n runtime and WhatsApp surfaces out of active product/runtime code.
+- Resolve any contradictory documentation, registry entry, route or workflow that reintroduces retired scope.
+- Never remove historical audit evidence; supersede it with a newer decision record when needed.
+
 ### P1 — Product completeness
 - Verify that core modules remain reachable through normal navigation and search.
-- Identify incomplete flows in sales, inventory, expenses, reports, CRM, quotes, purchases, Nüva Intelligence, and Nüva Studio.
+- Identify incomplete flows in sales, inventory, expenses, reports, CRM, quotes, purchases, Nüva Intelligence, Finance and People.
 - Implement one focused missing capability at a time with regression coverage.
 
 ### P1 — Security / data integrity
@@ -31,10 +37,6 @@ This backlog is intentionally evidence-driven. Autonomous agents should select t
 - Improve the existing cinematic scroll-driven homepage and parallel no-video experience based on the repository's reference/continuity documents.
 - Preserve the shared story engine and existing functional CTAs/navigation.
 - Do not generate expensive video assets when the required quota or credential is unavailable.
-
-### P2 — Nüva Studio
-- Keep Nüva Studio visible in primary navigation, mobile navigation, and relevant search/command surfaces.
-- Improve its create/research/Brand DNA/opportunity workflows only when the current implementation shows a concrete gap.
 
 ### P3 — Documentation / developer experience
 - Keep architecture, runbooks, and continuity documents aligned with the actual code.
