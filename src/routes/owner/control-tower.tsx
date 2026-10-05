@@ -28,7 +28,7 @@ async function loadMetrics() {
   return data as ControlMetrics;
 }
 
-async function askConstructor(messages: AgencyMessage[], signal: AbortSignal) {
+async function askWorker(agentId: string, messages: AgencyMessage[], signal: AbortSignal) {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
   if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
@@ -37,7 +37,7 @@ async function askConstructor(messages: AgencyMessage[], signal: AbortSignal) {
     method: "POST",
     signal,
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ agentId, messages }),
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { error?: string } | null;
@@ -53,7 +53,8 @@ function ControlTower() {
   const [metrics, setMetrics] = useState<ControlMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [messages, setMessages] = useState<AgencyMessage[]>([{ role: "assistant", content: "Constructor conectado. Puedo ayudarte a supervisar Nüva One, analizar el backlog y preparar el siguiente trabajo. No afirmaré ejecuciones que no pueda verificar." }]);
+  const [selectedWorker, setSelectedWorker] = useState("constructor");
+  const [messages, setMessages] = useState<AgencyMessage[]>([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]);
   const [input, setInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -81,7 +82,7 @@ function ControlTower() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const stream = await askConstructor(next, controller.signal);
+      const stream = await askWorker(selectedWorker, next, controller.signal);
       if (!stream) throw new Error("El Constructor no devolvió un flujo de respuesta.");
       const reader = stream.getReader();
       const decoder = new TextDecoder();
@@ -119,7 +120,7 @@ function ControlTower() {
           </div>
         </header>
 
-        <AgencyTeam />
+        <AgencyTeam selectedWorker={selectedWorker} onSelectWorker={(agentId) => { setSelectedWorker(agentId); setMessages([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]); }} />
 
         {error ? <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">{error}</div> : null}
 
@@ -153,15 +154,15 @@ function ControlTower() {
 
           <section className="flex min-h-[680px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-              <div><div className="flex items-center gap-2 font-semibold"><Bot className="h-4 w-4 text-cyan-200" /> Nüva Constructor</div><div className="mt-1 text-xs text-white/35">Conversación privada del Control Plane</div></div>
+              <div><div className="flex items-center gap-2 font-semibold"><Bot className="h-4 w-4 text-cyan-200" /> Nüva Agency · {selectedWorker}</div><div className="mt-1 text-xs text-white/35">Canal privado del trabajador seleccionado · memoria operativa persistente</div></div>
               {chatLoading ? <button onClick={() => abortRef.current?.abort()} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 text-xs hover:bg-white/10"><Square className="h-3 w-3" /> Detener</button> : <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">ONLINE</span>}
             </div>
             <div className="flex-1 space-y-4 overflow-y-auto p-5">
-              {messages.map((message, index) => <div key={index} className={message.role === "user" ? "ml-auto max-w-[82%] rounded-2xl rounded-br-md bg-indigo-500/20 px-4 py-3 text-sm text-white" : "max-w-[88%] rounded-2xl rounded-bl-md border border-white/8 bg-white/[0.035] px-4 py-3 text-sm leading-6 text-white/75"}><div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">{message.role === "user" ? "Tú" : "Constructor"}</div><div className="whitespace-pre-wrap">{message.content || "Pensando…"}</div></div>)}
+              {messages.map((message, index) => <div key={index} className={message.role === "user" ? "ml-auto max-w-[82%] rounded-2xl rounded-br-md bg-indigo-500/20 px-4 py-3 text-sm text-white" : "max-w-[88%] rounded-2xl rounded-bl-md border border-white/8 bg-white/[0.035] px-4 py-3 text-sm leading-6 text-white/75"}><div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">{message.role === "user" ? "Tú" : selectedWorker}</div><div className="whitespace-pre-wrap">{message.content || "Pensando…"}</div></div>)}
             </div>
             <div className="border-t border-white/10 p-4">
               <div className="flex gap-2 rounded-xl border border-white/10 bg-black/20 p-2 focus-within:border-cyan-200/30">
-                <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }} placeholder="Ordena o pregunta al Constructor…" rows={2} className="min-h-12 flex-1 resize-none bg-transparent px-2 py-1 text-sm outline-none placeholder:text-white/25" disabled={chatLoading} />
+                <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }} placeholder={`Ordena o pregunta a ${selectedWorker}…`} rows={2} className="min-h-12 flex-1 resize-none bg-transparent px-2 py-1 text-sm outline-none placeholder:text-white/25" disabled={chatLoading} />
                 <button onClick={() => void send()} disabled={chatLoading || !input.trim()} className="self-end rounded-lg bg-white px-3 py-2 text-black transition hover:bg-white/90 disabled:opacity-30"><Send className="h-4 w-4" /></button>
               </div>
               <div className="mt-2 text-[10px] text-white/25">Enter enviar · Shift+Enter salto de línea · acceso exclusivo Owner</div>
