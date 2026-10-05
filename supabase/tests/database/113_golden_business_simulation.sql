@@ -7,6 +7,13 @@ values ('00000000-0000-0000-0000-00000000b145', 'Golden Simulation Business', '0
 insert into public.products (id, business_id, name, price, stock)
 values ('00000000-0000-0000-0000-00000000c145', '00000000-0000-0000-0000-00000000b145', 'Golden Widget', 10000, 5);
 
+insert into public.accounting_accounts (business_id,code,name,account_type,system_key) values
+('00000000-0000-0000-0000-00000000b145','1.01','Caja','asset','cash'),
+('00000000-0000-0000-0000-00000000b145','1.02','Inventario','asset','inventory'),
+('00000000-0000-0000-0000-00000000b145','2.01','Proveedores','liability','accounts_payable'),
+('00000000-0000-0000-0000-00000000b145','4.01','Ventas','income','sales_revenue'),
+('00000000-0000-0000-0000-00000000b145','6.01','Gastos operacionales','expense','operating_expense');
+
 insert into public.purchases (id, business_id, status, total, items)
 values ('00000000-0000-0000-0000-00000000d145', '00000000-0000-0000-0000-00000000b145', 'received', 20000,
   jsonb_build_array(jsonb_build_object('product_id','00000000-0000-0000-0000-00000000c145','qty',2,'name','Golden Widget')));
