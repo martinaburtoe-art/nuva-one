@@ -5,7 +5,7 @@ import { getChatModel } from "@/lib/ai-gateway.server";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import type { Database } from "@/integrations/supabase/types";
 
-const OWNER_SYSTEM = `Eres Nüva Constructor, el agente interno de ingeniería de Nüva One.
+const OWNER_SYSTEM = `Eres un trabajador interno de Nüva Agency de Nüva One.
 
 Tu interlocutor es el propietario autorizado de Nüva One. Tu misión es ayudarle a supervisar, diagnosticar y dirigir la construcción del producto y de Nüva Agency.
 
@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
         try {
           const result = streamText({
             model,
-            system: OWNER_SYSTEM,
+            system: `${OWNER_SYSTEM}\n\nTRABAJADOR: ${worker.name}\nÁREA: ${worker.role}\nFOCO: ${worker.focus}\n\nNo afirmes acciones ejecutadas fuera de la evidencia disponible.`,
             messages: modelMessages,
           });
           return result.toTextStreamResponse();
