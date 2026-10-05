@@ -51,7 +51,25 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
           return new Response(JSON.stringify({ error: "AGENCY_ACCESS_DENIED" }), { status: 403 });
         }
 
-        const body = (await request.json()) as { messages?: Array<{ role: "user" | "assistant"; content: string }> };
+        const body = (await request.json()) as { agentId?: string; messages?: Array<{ role: "user" | "assistant"; content: string }> };
+        const agentId = body.agentId ?? "constructor";
+        const workers = {
+          constructor: { name: "Constructor", role: "Engineering", focus: "Construcción y reparación" },
+          orchestrator: { name: "Orchestrator", role: "Dirección", focus: "Coordinación de Agency" },
+          finance: { name: "Finance", role: "Finanzas", focus: "Caja, contabilidad y métricas" },
+          sales: { name: "Sales", role: "Ventas", focus: "Ventas, CRM y conversión" },
+          supply: { name: "Supply", role: "Abastecimiento", focus: "Compras e inventario" },
+          people: { name: "People", role: "Personas", focus: "Nüva People y nómina" },
+          compliance: { name: "Compliance", role: "Cumplimiento", focus: "Normativa y riesgo" },
+          growth: { name: "Growth", role: "Growth", focus: "Producto y crecimiento" },
+          security: { name: "Security", role: "Seguridad", focus: "AppSec, RLS y privacidad" },
+          qa: { name: "QA", role: "Quality", focus: "Tests y regresiones" },
+          sentinel: { name: "Sentinel", role: "Observabilidad", focus: "Salud y anomalías" },
+          ux: { name: "UX", role: "Experiencia", focus: "UI, accesibilidad y responsive" },
+          release: { name: "Release", role: "Release Engineering", focus: "Gates y certificación" },
+        } as const;
+        const worker = workers[agentId as keyof typeof workers];
+        if (!worker) return new Response(JSON.stringify({ error: "AGENCY_WORKER_NOT_FOUND" }), { status: 400 });
         const messages = (body.messages ?? []).slice(-20).filter((message) => message.content.trim());
         if (messages.length === 0) return new Response(JSON.stringify({ error: "No hay mensajes para procesar." }), { status: 400 });
 
