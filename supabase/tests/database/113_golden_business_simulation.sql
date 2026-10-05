@@ -11,7 +11,9 @@ insert into public.accounting_accounts (business_id,code,name,account_type,syste
 ('00000000-0000-0000-0000-00000000b145','1.01','Caja','asset','cash'),
 ('00000000-0000-0000-0000-00000000b145','1.02','Inventario','asset','inventory'),
 ('00000000-0000-0000-0000-00000000b145','2.01','Proveedores','liability','accounts_payable'),
+('00000000-0000-0000-0000-00000000b145','2.02','IVA débito','liability','vat_debit'),
 ('00000000-0000-0000-0000-00000000b145','4.01','Ventas','revenue','sales_revenue'),
+('00000000-0000-0000-0000-00000000b145','1.03','IVA crédito','asset','vat_credit'),
 ('00000000-0000-0000-0000-00000000b145','6.01','Gastos operacionales','expense','operating_expense');
 
 insert into public.purchases (id, business_id, status, total, items)
