@@ -23,9 +23,21 @@ export const Route = createFileRoute("/owner/control-tower")({
 });
 
 async function loadMetrics() {
-  const { data, error } = await supabase.functions.invoke("owner-metrics", { body: {} });
-  if (error) throw new Error("No se pudieron cargar los indicadores de plataforma.");
-  return data as ControlMetrics;
+  const { data, error } = await supabase.functions.invoke("owner-operational-metrics", { body: {} });
+  if (error) throw new Error("No se pudo consultar el centro de operaciones.");
+  const source = data as {
+    generated_at?: string;
+    telemetry?: { events_24h?: number; error_events_24h?: number; distinct_errors_24h?: number };
+    services?: Record<string, unknown>;
+    vitals?: Record<string, unknown>;
+  };
+  return {
+    generated_at: source.generated_at,
+    ai_telemetry: {
+      events_24h: source.telemetry?.events_24h ?? 0,
+      fallbacks_24h: source.telemetry?.error_events_24h ?? 0,
+    },
+  } satisfies ControlMetrics;
 }
 
 async function askWorker(agentId: string, messages: AgencyMessage[], signal: AbortSignal) {
