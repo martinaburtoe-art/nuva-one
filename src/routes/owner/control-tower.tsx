@@ -56,7 +56,7 @@ function ControlTower() {
   const [selectedWorker, setSelectedWorker] = useState("constructor");
   const [messages, setMessages] = useState<AgencyMessage[]>([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]);
   const [input, setInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);\n  const [feedback, setFeedback] = useState<Record<number, "positive" | "negative">>({});
+  const [chatLoading, setChatLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const refresh = async () => {
