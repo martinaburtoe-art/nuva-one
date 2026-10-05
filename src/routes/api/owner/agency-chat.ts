@@ -101,6 +101,18 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
             model,
             system: `${OWNER_SYSTEM}\n\nTRABAJADOR: ${worker.name}\nÁREA: ${worker.role}\nFOCO: ${worker.focus}\n\nAPRENDIZAJE PERSISTENTE:\n${learningContext}\n\nNo afirmes acciones ejecutadas fuera de la evidencia disponible.`,
             messages: modelMessages,
+            onFinish: async ({ text }) => {
+              if (!serviceRoleKey) return;
+              try {
+                const db = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+                await db.from("agentes_historial").insert([
+                  { session_id: `owner-agency:${agentId}`, role: "user", content: messages[messages.length - 1].content },
+                  { session_id: `owner-agency:${agentId}`, role: "assistant", content: text },
+                ]);
+              } catch (memoryError) {
+                console.error("Agency history write error", memoryError);
+              }
+            },
           });
           return result.toTextStreamResponse();
         } catch (error) {
