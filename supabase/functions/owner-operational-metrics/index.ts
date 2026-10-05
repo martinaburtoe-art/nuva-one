@@ -6,10 +6,18 @@ const admin = createClient(supabaseUrl, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "https://nuva-one.vercel.app",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
+};
+
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
+      ...corsHeaders,
       "content-type": "application/json; charset=utf-8",
       "cache-control": "private, no-store",
     },
@@ -17,6 +25,10 @@ function json(data: Record<string, unknown>, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { status: 204, headers: corsHeaders });
+  }
+
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   if (!token) return json({ error: "Unauthorized" }, 401);
 
