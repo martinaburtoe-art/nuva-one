@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { url, anonKey, ok } = getServerSupabaseEnv();
+        const { url, anonKey, serviceRoleKey, ok } = getServerSupabaseEnv();
         if (!ok) return new Response(JSON.stringify({ error: "Configuración de Supabase incompleta" }), { status: 500 });
 
         const authHeader = request.headers.get("authorization") ?? "";
@@ -80,7 +80,33 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
           return new Response(JSON.stringify({ error: "AI no configurado" }), { status: 500 });
         }
 
+        if (serviceRoleKey) {
+          try {
+            const db = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+            const { data } = await db.from("ops_agent_learning").select("lesson_type,title,lesson,confidence,occurrences,last_seen_at").eq("agent_id", agentId).order("last_seen_at", { ascending: false }).limit(8);
+            learningContext = JSON.stringify(data ?? []);
+          } catch (memoryError) {
+            console.error("Agency learning read error", memoryError);
+          }
+        }
+
         let learningContext = "Sin aprendizajes persistidos para este trabajador.";
+        let historyContext = "";
+        if (serviceRoleKey) {
+          try {
+            const db = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+            const [learningResult, historyResult] = await Promise.all([
+              db.from("ops_agent_learning").select("lesson_type,title,lesson,confidence,occurrences,last_seen_at").eq("agent_id", agentId).order("last_seen_at", { ascending: false }).limit(8),
+              db.from("agentes_historial").select("role,content,created_at").eq("session_id", `owner-agency:${agentId}`).order("created_at", { ascending: false }).limit(12),
+            ]);
+            learningContext = JSON.stringify(learningResult.data ?? []);
+            historyContext = JSON.stringify((historyResult.data ?? []).reverse());
+          } catch (memoryError) {
+            console.error("Agency memory read error", memoryError);
+          }
+        }
+
+
         if (serviceRoleKey) {
           try {
             const db = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -99,7 +125,7 @@ export const Route = createFileRoute("/api/owner/agency-chat")({
         try {
           const result = streamText({
             model,
-            system: `${OWNER_SYSTEM}\n\nTRABAJADOR: ${worker.name}\nÁREA: ${worker.role}\nFOCO: ${worker.focus}\n\nAPRENDIZAJE PERSISTENTE:\n${learningContext}\n\nNo afirmes acciones ejecutadas fuera de la evidencia disponible.`,
+            system: `${OWNER_SYSTEM}\n\nTRABAJADOR: ${worker.name}\nÁREA: ${worker.role}\nFOCO: ${worker.focus}\n\nAPRENDIZAJE PERSISTENTE:\n${learningContext}\n\nMEMORIA CONVERSACIONAL RECIENTE:\n${historyContext}\n\nNo afirmes acciones ejecutadas fuera de la evidencia disponible.`,
             messages: modelMessages,
             onFinish: async ({ text }) => {
               if (!serviceRoleKey) return;
