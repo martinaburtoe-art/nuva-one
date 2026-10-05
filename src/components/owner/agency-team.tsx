@@ -27,7 +27,7 @@ const workers: AgencyWorker[] = [
 
 const statusLabel = { online: "TRABAJANDO", watching: "MONITOREANDO", standby: "EN ESPERA" } as const;
 
-export function AgencyTeam() {
+export function AgencyTeam({ selectedWorker, onSelectWorker }: { selectedWorker?: string; onSelectWorker?: (agentId: string) => void }) {
   return (
     <section className="mt-5 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 sm:p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -42,7 +42,7 @@ export function AgencyTeam() {
         {workers.map((worker) => {
           const Icon = worker.icon;
           return (
-            <article key={worker.name} className="rounded-2xl border border-white/8 bg-black/15 p-4 transition hover:border-white/15 hover:bg-white/[0.045]">
+            <article key={worker.name} onClick={() => onSelectWorker?.(worker.name.toLowerCase())} className={`cursor-pointer rounded-2xl border border-white/8 bg-black/15 p-4 transition hover:border-white/15 hover:bg-white/[0.045] ${selectedWorker === worker.name.toLowerCase() ? "border-cyan-300/30 bg-cyan-300/[0.05]" : ""}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]"><Icon className="h-5 w-5 text-white/65" /></div>
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[9px] font-bold tracking-[0.12em] ${worker.status === "online" ? "border-cyan-300/20 bg-cyan-300/10 text-cyan-200" : worker.status === "watching" ? "border-emerald-300/15 bg-emerald-300/5 text-emerald-200" : "border-white/10 bg-white/[0.03] text-white/35"}`}><span className={`h-1.5 w-1.5 rounded-full ${worker.status === "standby" ? "bg-white/25" : "bg-emerald-300"}`} />{statusLabel[worker.status]}</span>
