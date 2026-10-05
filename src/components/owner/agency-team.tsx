@@ -58,7 +58,8 @@ export function AgencyTeam() {
         <span className="rounded-full border border-white/8 px-2.5 py-1">13 especialistas</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Owner-only</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Evidence-first</span>
-        <span className="rounded-full border border-white/8 px-2.5 py-1">Producción protegida</span>\n        <span className="rounded-full border border-cyan-300/15 bg-cyan-300/5 px-2.5 py-1 text-cyan-200/70">Cobertura continua 24/7</span>
+        <span className="rounded-full border border-white/8 px-2.5 py-1">Producción protegida</span>
+        <span className="rounded-full border border-cyan-300/15 bg-cyan-300/5 px-2.5 py-1 text-cyan-200/70">Cobertura continua 24/7</span>
       </div>
     </section>
   );
