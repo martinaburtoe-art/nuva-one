@@ -145,16 +145,16 @@ function ControlTower() {
 
         <section className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.35fr]">
           <div className="space-y-5">
-            <Panel title="Constructor interno" icon={Terminal}>
+            <Panel title="Trabajador seleccionado" icon={Terminal}>
               <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.06] p-4">
                 <div className="flex items-center gap-3"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300" /><div><div className="font-semibold">Disponible</div><div className="text-xs text-white/40">Canal privado · solo Owner</div></div></div>
                 <div className="mt-4 grid gap-2 text-xs text-white/55">
-                  <Row label="Foco" value="#145 / #144" />
+                  <Row label="Trabajador" value={selectedWorker} /><Row label="Foco" value="#145 / #144" />
                   <Row label="Modo" value="Evidencia primero" />
                   <Row label="Producción" value="Protegida" />
                 </div>
               </div>
-              <div className="rounded-xl bg-white/[0.03] p-4 text-xs leading-5 text-white/45">El chat ya está conectado al endpoint privado del Constructor. La ejecución autónoma continúa gobernada por los gates de Agency; esta conversación no simula commits, PRs ni despliegues.</div>
+              <div className="rounded-xl bg-white/[0.03] p-4 text-xs leading-5 text-white/45">El chat está conectado al endpoint privado del trabajador seleccionado. La ejecución autónoma continúa gobernada por los gates de Agency; esta conversación no simula commits, PRs ni despliegues.</div>
             </Panel>
             <Panel title="Plataforma" icon={Database}>
               <Row label="Usuarios" value={n(platform?.users)} /><Row label="PYMEs" value={n(platform?.businesses)} /><Row label="Membresías" value={n(platform?.memberships)} /><Row label="Clientes" value={n(platform?.customers)} /><Row label="Productos" value={n(platform?.products)} />
