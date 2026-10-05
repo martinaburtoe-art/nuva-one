@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(12);
 
 insert into auth.users (id) values ('00000000-0000-0000-0000-00000000a145');
 insert into public.businesses (id, name, owner_id, plan)
