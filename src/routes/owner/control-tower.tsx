@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, AlertTriangle, Bot, Database, Gauge, RefreshCw, ShieldCheck, Send, Square, Terminal, Zap, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AgencyTeam } from "@/components/owner/agency-team";
 
 type PlatformMetrics = { users?: number; businesses?: number; memberships?: number; customers?: number; products?: number; sales?: number; transactions?: number; quotes?: number; ai_conversations?: number; ai_messages?: number; income?: number; expenses?: number; generated_at?: string };
 type ControlMetrics = {
@@ -117,6 +118,8 @@ function ControlTower() {
             <button onClick={() => void refresh()} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Actualizar</button>
           </div>
         </header>
+
+        <AgencyTeam />
 
         {error ? <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">{error}</div> : null}
 
