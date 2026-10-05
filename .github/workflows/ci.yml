@@ -111,7 +111,7 @@ jobs:
           node-version: "22"
           cache: "npm"
       - name: Install dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Verify Supabase migration integrity
         run: npm run verify:migrations
       - name: Verify Nüva One Factory control plane
@@ -183,7 +183,7 @@ jobs:
           node-version: "22"
           cache: "npm"
       - name: Install dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Generate release evidence
         run: npm run factory:release-evidence
       - name: Upload Factory release evidence
