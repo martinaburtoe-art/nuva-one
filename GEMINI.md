@@ -40,9 +40,15 @@ Nüva One is a premium all-in-one SaaS for Chilean pymes and businesses. The rep
 
 Completed historical work must be treated as established context unless current evidence contradicts it: security/RLS hardening, TypeScript/build/tests, migrations/recovery, checkout, Owner Intelligence privacy, atomic overselling, load testing, and inventory concurrency were previously validated. Do not repeat these audits from scratch without a concrete regression signal.
 
-Current homepage work includes the cinematic scroll-driven experience, a parallel no-video experience, reference-video continuity documents, cinematic asset manifests/prompts, and the Veo generation workflow. The Veo pipeline has previously encountered Gemini quota exhaustion, so do not burn quota on repeated generation attempts without evidence that quota/credentials are available.
+The cinematic homepage and parallel no-video experience are active product workstreams. The Veo pipeline has previously encountered Gemini quota exhaustion, so do not burn quota on repeated generation attempts without evidence that quota/credentials are available.
 
-Nüva Studio exists and must remain usable through normal navigation, not only by knowing an internal route.
+### Retired product scope
+
+Nüva Studio is retired. WhatsApp is out of scope. n8n is out of the current runtime architecture. Do not reintroduce Studio, n8n runtime dependencies, WhatsApp channels, outboxes, routes, tools, or documentation unless a new explicit product decision supersedes this policy.
+
+Nüva Intelligence is an existing core module and must not be duplicated as a separate homepage summary card.
+
+Nüva Agent Council, Action Engine, Nüva Business Memory, Guardian/Trust and Factory remain active capabilities.
 
 ## Autonomous task protocol
 
@@ -58,7 +64,7 @@ While editing:
 - Keep unrelated files untouched.
 
 Before proposing a PR:
-- Inspect `git diff`.
+- Inspect the diff.
 - Run applicable lint/typecheck/tests/build/migration verification.
 - Summarize exactly what changed, what was validated, and any remaining risk.
 
