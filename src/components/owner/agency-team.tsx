@@ -34,7 +34,7 @@ export function AgencyTeam() {
         <div>
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-amber-200/70"><ShieldCheck className="h-4 w-4" /> Equipo privado del Owner</div>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">Nüva Agency · Equipo de trabajadores</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">Especialistas internos para cubrir ingeniería, producto, datos, seguridad, negocio, cumplimiento, calidad y operación. El estado mostrado es de la capa de Agency; no implica que cada agente esté ejecutando una tarea en este instante.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">Equipo interno especializado para cubrir ingeniería, producto, datos, seguridad, negocio, cumplimiento, calidad y operación. La cobertura automática está programada de forma continua: Sentinel cada 30 min, Constructor cada 30 min y Web QA cada hora. El estado mostrado es de la capa de Agency; no implica que cada agente esté ejecutando una tarea en este instante.</p>
         </div>
         <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.05] px-3 py-2 text-xs text-emerald-200"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-300" />Control exclusivo Owner</div>
       </div>
@@ -58,7 +58,7 @@ export function AgencyTeam() {
         <span className="rounded-full border border-white/8 px-2.5 py-1">13 especialistas</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Owner-only</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Evidence-first</span>
-        <span className="rounded-full border border-white/8 px-2.5 py-1">Producción protegida</span>
+        <span className="rounded-full border border-white/8 px-2.5 py-1">Producción protegida</span>\n        <span className="rounded-full border border-cyan-300/15 bg-cyan-300/5 px-2.5 py-1 text-cyan-200/70">Cobertura continua 24/7</span>
       </div>
     </section>
   );
