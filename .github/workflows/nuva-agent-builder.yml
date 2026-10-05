@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    name: Autonomous engineering cycle
+    name: Internal construction cycle
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -35,13 +35,12 @@ jobs:
           echo "open_agent_prs=$count"
           skip=false
           if [ "$count" -gt 0 ]; then skip=true; fi
-          # Ahorro de cuota: si el CI de main está en rojo, el CI Repairer lo atiende; el Builder no compite.
           ci=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status completed --limit 1 --json conclusion --jq '.[0].conclusion // ""')
           echo "main_ci=$ci"
           if [ "$ci" = "failure" ]; then skip=true; fi
           echo "skip=$skip" >> "$GITHUB_OUTPUT"
 
-      - name: Run Gemini autonomous engineer
+      - name: Run internal construction agent
         if: steps.gate.outputs.skip != 'true'
         id: gemini
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -52,19 +51,40 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3-flash-preview' }}
           prompt: |
-            You are the autonomous builder for Nüva One.
+            You are the Nüva One Internal Construction Agent operating inside Nüva Agency.
 
-            Read GEMINI.md and docs/AGENT_BACKLOG.md first. Then inspect the current repository state, recent commits, open issues and pull requests, and current CI status. Do not start a generic audit from scratch.
+            Read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md and docs/AGENT_BACKLOG.md first.
+            Then inspect the current repository, recent commits, open issues/PRs and CI evidence.
 
-            Select exactly ONE highest-priority, evidence-backed task that can be completed safely in this run. Prefer a current production/CI blocker, regression, missing core product flow, or a focused quality/security improvement over speculative redesign.
+            Your job is to BUILD, not merely report findings.
+            Select exactly ONE highest-priority evidence-backed task.
 
-            Implement the task in the real repository. Preserve existing architecture and working modules. Do not touch secrets. Do not generate expensive media. Do not make broad refactors.
+            RELEASE PRIORITY:
+            Open P0 release gates take precedence. In particular, inspect issue #145
+            "P0 RELEASE: Golden Business Simulation y certificación de flujo end-to-end"
+            and issue #144 "Market Release Gate". If #145 is still open and can be advanced
+            safely, prefer it over speculative work.
 
-            Validate the change with the most relevant tests. For code changes, run at minimum the relevant lint/typecheck/unit/build commands available in package.json; run migration verification for database-related changes. Diagnose failures rather than hiding them.
+            For #145, prefer composing existing tested business operations into a deterministic
+            certification fixture/test rather than rewriting production architecture. Verify:
+            tenant isolation, customers/products, purchase/receipt, inventory, sale/payment,
+            cash/finance, accounting, Intelligence, Action Queue/outcome and reporting.
 
-            Stop after one coherent task. Do not make unrelated improvements just to fill the run.
+            Implement the selected task in the real repository.
+            Preserve working functionality. Do not reintroduce Nüva Studio, WhatsApp or n8n.
+            Do not touch secrets. Do not generate expensive media. Do not make broad refactors.
+            Do not mutate production data directly.
 
-            At the end, print a concise summary containing: task selected, files changed, validation performed, result, and remaining risk. Leave the workspace changes uncommitted so the next step can create the PR.
+            Validate the change with the most relevant tests. For code changes, run the
+            available lint, typecheck, unit/integration tests and build as applicable.
+            Database changes require migration/recovery verification and relevant pgTAP coverage.
+            Diagnose failures instead of masking them.
+
+            Stop after one coherent task. Create no unrelated work.
+            Leave the workspace changes available for the PR creation step.
+
+            Final response must contain:
+            TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {
               "model": {
@@ -100,22 +120,23 @@ jobs:
           title: 'feat(agent): autonomous Nüva One improvement'
           commit-message: 'feat(agent): autonomous Nüva One improvement'
           body: |
-            ## Nüva One autonomous engineering cycle
+            ## Nüva One internal construction cycle
 
-            This PR was produced by the scheduled autonomous builder.
+            This PR was produced by the scheduled Nüva Agency Internal Construction Agent.
 
             ### Agent summary
-            ${{ steps.gemini.outputs.summary || 'No summary returned; inspect the workflow logs.' }}
+            ${{ steps.gemini.outputs.summary || 'No summary returned; inspect workflow logs.' }}
 
             ### Validation
-            The workflow ran focused lint, typecheck, unit tests, and production build after the agent edits.
+            The workflow ran focused lint, typecheck, unit tests and production build after the agent edits.
 
             ### Merge policy
-            Review the diff and CI evidence before merging. The autonomous system does not bypass failing checks or security controls.
+            CI, independent review and the Market Release Gate remain authoritative.
+            The autonomous agent does not bypass failing checks or security controls.
 
       - name: Report result
         if: always()
         run: |
-          echo "### Autonomous cycle" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Internal construction cycle" >> "$GITHUB_STEP_SUMMARY"
           echo "Builder gate: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "PR: ${{ steps.cpr.outputs.pull-request-url || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
