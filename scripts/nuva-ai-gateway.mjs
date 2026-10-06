@@ -22,6 +22,7 @@ const DEFAULT_MODELS = Object.freeze({
 const PROVIDER_ORDER = ["gemini", "groq", "cloudflare"];
 const TRANSIENT_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 const MAX_RETRIES = 2;
+const MAX_PROMPT_CHARS = 12000;
 
 function configured(provider) {
   if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY);
@@ -108,6 +109,7 @@ export function providerStatus() {
 
 export async function generate(prompt, options = {}) {
   if (!prompt?.trim()) throw new Error("Gateway prompt cannot be empty");
+  prompt = prompt.slice(0, MAX_PROMPT_CHARS);
   const order = options.providers?.length ? options.providers : PROVIDER_ORDER;
   const timeoutMs = options.timeoutMs ?? 45000;
   const failures = [];
