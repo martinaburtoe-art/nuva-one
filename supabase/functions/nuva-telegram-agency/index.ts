@@ -99,11 +99,7 @@ async function generate(provider: string, prompt: string) {
 
     const token = getSecret("CLOUDFLARE_API_TOKEN");
     const account = getSecret("CLOUDFLARE_ACCOUNT_ID");
-    const configuredModel = getSecret("CLOUDFLARE_AI_MODEL");
-    const deprecatedModels = new Set(["@cf/meta/llama-3.1-8b-instruct", "@cf/meta/llama-3.1-8b-instruct-awq"]);
-    const model = configuredModel && !deprecatedModels.has(configuredModel)
-      ? configuredModel
-      : "@cf/meta/llama-3.1-8b-instruct-fast";
+    const model = "@cf/meta/llama-3.1-8b-instruct-fp8";
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account)}/ai/run/${encodeURIComponent(model)}`,
       {

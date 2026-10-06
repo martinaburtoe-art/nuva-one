@@ -39,7 +39,7 @@ async function githubEvidence(): Promise<Evidence> {
 
     return {
       source: "github",
-      status: latestRuns.some((run: any) => run.conclusion === "failure") ? "warn" : "pass",
+      status: latestRuns.some((run: any) => ["failure", "timed_out", "cancelled"].includes(run.conclusion)) ? "warn" : "pass",
       summary: "GitHub conectado; main=" + repo.default_branch + ", PR abiertos=" + prs.length + ", workflows recientes=" + latestRuns.length + ".",
       details: {
         default_branch: repo.default_branch,
@@ -145,13 +145,14 @@ async function providerEvidence(
     const started = Date.now();
     try {
       const result = await generate(provider, "Return exactly: NÜVA_HEALTH_OK");
-      results.push({ provider, status: "pass", model: result.model, latency_ms: Date.now() - started, response_ok: result.text.trim() === "NÜVA_HEALTH_OK" });
+      const response_ok = result.text.trim() === "NÜVA_HEALTH_OK";
+      results.push({ provider, status: response_ok ? "pass" : "fail", model: result.model, latency_ms: Date.now() - started, response_ok, error: response_ok ? undefined : "unexpected_health_response" });
     } catch (error) {
       results.push({ provider, status: "fail", latency_ms: Date.now() - started, error: error instanceof Error ? error.message : "unknown" });
     }
   }
 
-  const failed = results.filter((item) => item.status === "fail").length;
+  const failed = results.filter((item) => item.status !== "pass" || item.response_ok !== true).length;
   return {
     source: "ai_providers",
     status: failed ? "warn" : "pass",
