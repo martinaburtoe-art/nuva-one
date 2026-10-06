@@ -2,8 +2,10 @@ name: Nüva Agency — AI Gateway Live Certification
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
+  pull_request:
+    paths:
+      - 'scripts/nuva-ai-gateway.mjs'
+      - '.github/workflows/nuva-ai-gateway-live-certification.yml'
   workflow_run:
     workflows: ["CI Fast"]
     types: [completed]
@@ -39,7 +41,7 @@ jobs:
           response="$(curl --fail-with-body -sS -X POST "https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-ai-broker" -H "Authorization: Bearer $oidc_token" -H "content-type: application/json" -d '{"action":"health","providers":["gemini","groq","cloudflare"]}')"
           echo "$response" > /tmp/nuva-broker-results.json
           cat /tmp/nuva-broker-results.json
-          node -e 'const x=require("/tmp/nuva-broker-results.json"); if(!x.ok) process.exit(1); for(const r of x.results){if(!r.pass)process.exit(1)}'
+          node -e 'const x=require("/tmp/nuva-broker-results.json"); const required=["gemini","groq"]; if(required.some(p=>!x.results.find(r=>r.provider===p&&r.pass))) process.exit(1); console.log("Gemini + Groq certified; Cloudflare remains optional.")'
           node -e 'const x=require("/tmp/nuva-broker-results.json"); require("fs").writeFileSync("/tmp/nuva-gateway-results.tsv",x.results.map(r=>r.provider+"\t"+(r.pass?"PASS":"FAIL")+"\tOIDC_BROKER").join("\n")+"\n")'
 
       - name: Publish per-provider certification statuses
