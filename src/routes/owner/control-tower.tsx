@@ -6,6 +6,7 @@ import { AgencyTeam } from "@/components/owner/agency-team";
 
 type PlatformMetrics = { users?: number; businesses?: number; memberships?: number; customers?: number; products?: number; sales?: number; transactions?: number; quotes?: number; ai_conversations?: number; ai_messages?: number; income?: number; expenses?: number; generated_at?: string };
 type ControlMetrics = {
+  generated_at?: string;
   platform?: PlatformMetrics | null;
   ai_telemetry?: { events_24h?: number; events_30d?: number; input_tokens_24h?: number; output_tokens_24h?: number; total_tokens_24h?: number; estimated_cost_usd_24h?: number; estimated_cost_usd_30d?: number; fallbacks_24h?: number; avg_attempts_24h?: number; providers_24h?: Record<string, number> } | null;
 };
