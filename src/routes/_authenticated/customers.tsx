@@ -110,15 +110,17 @@ function Customers() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const [customerPage, setCustomerPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
   const searchTerm = search.trim().replace(/[(),]/g, " ");
   const customerOr = searchTerm ? `name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,tax_id.ilike.%${searchTerm}%` : undefined;
   const { data: customerPageData, isLoading } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });
   const data = customerPageData?.rows ?? [];
-  const counts = { all: allCount, lead: leadCount, active: activeCount, inactive: inactiveCount };
   const { data: allCount = 0 } = useBizCount("customers");
   const { data: leadCount = 0 } = useBizCount("customers", { eq: { status: "lead" } });
   const { data: activeCount = 0 } = useBizCount("customers", { eq: { status: "active" } });
   const { data: inactiveCount = 0 } = useBizCount("customers", { eq: { status: "inactive" } });
+  const counts = { all: allCount, lead: leadCount, active: activeCount, inactive: inactiveCount };
   const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at", select: "id,customer_id,created_at,status,total" });
   const { data: activities } = useBizList<Activity>("customer_activities", {
@@ -140,8 +142,6 @@ function Customers() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [detail, setDetail] = useState<Customer | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
   const [tagsInput, setTagsInput] = useState("");
   const [rutInput, setRutInput] = useState("");
 
