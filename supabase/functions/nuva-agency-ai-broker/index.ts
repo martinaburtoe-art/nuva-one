@@ -39,7 +39,7 @@ async function resolveCloudflareAccount(token: string, configured: string | null
   for (const candidate of accounts) {
     if (!candidate?.id) continue;
     const probe = await fetch(
-      "https://api.cloudflare.com/client/v4/accounts/" + candidate.id + "/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "https://api.cloudflare.com/client/v4/accounts/" + candidate.id + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
       {
         method: "POST",
         headers: { authorization: "Bearer " + token, "content-type": "application/json" },
@@ -70,7 +70,7 @@ async function providerConfig(provider: string) {
     const configuredAccount = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
     if (!token) return null;
     const account = await resolveCloudflareAccount(token, configuredAccount);
-    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
       headers: { authorization: "Bearer " + token },
       body: (prompt: string) => ({ prompt, max_tokens: 2048 }) };
   }
