@@ -102,3 +102,26 @@ This integration uses **evidence-based operational learning**, not unverified mo
 5. Verification/regression evidence can increase confidence.
 
 A claim of actual machine-learning model training requires a dataset, training run, held-out evaluation and measured improvement. The current system deliberately does not pretend that persistent memory is model training.
+
+
+## Read-only Tool Plane
+
+The owner can request `/audit` or `AUDIT_HEALTH_CHECK` from Telegram. The Edge Function runs a bounded read-only evidence collection without changing business data.
+
+The audit collects:
+
+- GitHub: main branch, latest commit, open PRs and recent Actions runs.
+- Supabase: operational table counts and `nuva_core_integrity_audit()` when available.
+- Vercel: public production HTTP status and latency; optional authenticated Vercel API check when scoped secrets are configured.
+- AI Gateway: live health probe for every configured provider.
+
+Each completed audit is persisted in `public.ops_agent_audit_runs`. The table is RLS-protected with a deny-public policy; the Edge Function writes through its server-side service role.
+
+### Evidence semantics
+
+- **PASS**: the source responded and the required check completed.
+- **WARN**: the source is reachable but one or more checks are unavailable or unhealthy.
+- **FAIL**: the source could not be checked.
+- A configured credential is not treated as proof of provider health; live execution is required.
+
+This is an evidence collector, not a production mutation engine. Changes remain behind the existing CI, safety and approval gates.
