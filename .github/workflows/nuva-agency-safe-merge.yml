@@ -41,7 +41,7 @@ jobs:
           sha=$(gh pr view "$number" --json headRefOid --jq '.headRefOid')
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           git fetch origin "$sha"
-          git checkout --detach "$sha"
+          git checkout --detach FETCH_HEAD
 
       - name: Inspect autonomous diff policy
         if: steps.pr.outputs.eligible == 'true'
