@@ -92,7 +92,7 @@ export function SalesProductAnalytics({ products }: SalesProductAnalyticsProps) 
         period === "custom" && customTo
           ? new Date(`${customTo}T23:59:59.999`).toISOString()
           : endForPeriod(period, now)?.toISOString() ?? null;
-      const { data, error } = await supabase.rpc("sales_product_analytics", {
+      const { data, error } = await (supabase as any).rpc("sales_product_analytics", {
         p_business_id: active!.id,
         p_from: startDate,
         p_to: endDate,
@@ -105,7 +105,7 @@ export function SalesProductAnalytics({ products }: SalesProductAnalyticsProps) 
         p_top_n: Number(topN),
       });
       if (error) throw error;
-      return (data ?? []).map((row: any) => ({
+      return ((data ?? []) as any[]).map((row: any) => ({
         name: String(row.name ?? "Producto sin nombre"),
         sku: String(row.sku ?? "—"),
         category: String(row.category ?? "Sin categoría"),
