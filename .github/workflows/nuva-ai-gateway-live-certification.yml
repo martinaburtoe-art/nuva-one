@@ -48,33 +48,47 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --input-type=module <<'NODE'
+          node --input-type=module > /tmp/nuva-gateway-results.tsv <<'NODE'
           import { providerStatus, generate } from "./scripts/nuva-ai-gateway.mjs";
           const expected = "NÜVA_HEALTH_OK";
-          const failures = [];
           for (const item of providerStatus()) {
             if (!item.configured) {
-              console.log(item.provider + ": FAIL (not configured)");
-              failures.push(item.provider + ":not_configured");
+              console.log(item.provider + "\tFAIL\tNOT_CONFIGURED");
               continue;
             }
             try {
               const result = await generate(expected, { providers: [item.provider], timeoutMs: 30000 });
               const ok = result.content.trim() === expected;
-              console.log(item.provider + ": " + (ok ? "PASS" : "FAIL") + " [" + result.model + "]");
-              if (!ok) failures.push(item.provider + ":unexpected_response");
+              console.log(item.provider + "\t" + (ok ? "PASS" : "FAIL") + "\t" + result.model);
             } catch (error) {
               const details = error?.failures?.find((x) => x.provider === item.provider);
-              console.log(item.provider + ": FAIL" + (details?.status ? " HTTP " + details.status : ""));
-              failures.push(item.provider + ":request_failed");
+              console.log(item.provider + "\tFAIL\t" + (details?.status ? "HTTP_" + details.status : "REQUEST_FAILED"));
             }
           }
-          if (failures.length) {
-            console.error("LIVE_CERTIFICATION_FAILED");
-            process.exit(1);
-          }
-          console.log("LIVE_CERTIFICATION_PASS");
           NODE
+          cat /tmp/nuva-gateway-results.tsv
+          if grep -q $'\tFAIL\t' /tmp/nuva-gateway-results.tsv; then exit 1; fi
+
+      - name: Publish per-provider certification statuses
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        shell: bash
+        run: |
+          if [ ! -f /tmp/nuva-gateway-results.tsv ]; then exit 0; fi
+          while IFS=$'\t' read -r provider result model; do
+            [ -n "$provider" ] || continue
+            if [ "$result" = "PASS" ]; then state=success; else state=failure; fi
+            curl --fail-with-body -sS -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/$REPO/statuses/$SHA" \
+              -d "$(PROVIDER="$provider" RESULT="$result" MODEL="$model" python -c 'import json,os; print(json.dumps({"state":"success" if os.environ["RESULT"]=="PASS" else "failure","context":"nuva-agency/ai-gateway/"+os.environ["PROVIDER"],"description":os.environ["RESULT"]+" ["+os.environ["MODEL"]+"]"}))')"
+          done < /tmp/nuva-gateway-results.tsv
+
       - name: Publish certification status
         if: always()
         env:
