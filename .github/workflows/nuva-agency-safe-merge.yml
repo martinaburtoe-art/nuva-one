@@ -1,12 +1,12 @@
-name: Nüva Agency — Safe Autonomous Merge
+name: Nüva Agency — Independent Safety Verification
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pull-requests: read
   checks: read
   statuses: read
 
@@ -21,6 +21,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Inspect autonomous diff policy
         env:
@@ -32,7 +33,7 @@ jobs:
 
           blocked='^(\.github/workflows/|supabase/migrations/|supabase/functions/|src/routes/auth|src/routes/api/(billing|checkout)|src/lib/(auth|security)|src/integrations/supabase/types\.ts$)'
           if echo "$files" | grep -Eq "$blocked"; then
-            echo "Blocked sensitive path detected; human/release review required."
+            echo "Blocked sensitive path detected; controlled review required."
             exit 1
           fi
 
@@ -65,10 +66,3 @@ jobs:
 
       - name: Independent production build
         run: npm run build
-
-      - name: Enable autonomous squash merge
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh pr merge ${{ github.event.pull_request.number }} --squash --auto --delete-branch
