@@ -11,12 +11,15 @@ export async function isBusinessMember(
   userId: string,
 ): Promise<boolean> {
   if (!businessId || !userId) return false;
+  const trimmedBizId = businessId.trim();
+  const trimmedUserId = userId.trim();
+  if (!trimmedBizId || !trimmedUserId) return false;
 
   const { data, error } = await supabase
     .from("business_members")
     .select("id")
-    .eq("business_id", businessId)
-    .eq("user_id", userId)
+    .eq("business_id", trimmedBizId)
+    .eq("user_id", trimmedUserId)
     .maybeSingle();
 
   return !error && !!data;

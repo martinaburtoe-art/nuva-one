@@ -38,8 +38,18 @@ describe("isBusinessMember", () => {
     expect(await isBusinessMember(supabase, "", "user-1")).toBe(false);
   });
 
+  it("devuelve false con businessId lleno de espacios", async () => {
+    const supabase = fakeSupabase({ data: { id: "m1" }, error: null });
+    expect(await isBusinessMember(supabase, "   ", "user-1")).toBe(false);
+  });
+
   it("devuelve false sin userId, sin consultar la base", async () => {
     const supabase = fakeSupabase({ data: { id: "m1" }, error: null });
     expect(await isBusinessMember(supabase, "biz-1", "")).toBe(false);
+  });
+
+  it("devuelve false con userId lleno de espacios", async () => {
+    const supabase = fakeSupabase({ data: { id: "m1" }, error: null });
+    expect(await isBusinessMember(supabase, "biz-1", "   ")).toBe(false);
   });
 });
