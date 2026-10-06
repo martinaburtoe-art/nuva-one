@@ -2,6 +2,11 @@ name: Nüva One — AI Gateway Live Certification
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/nuva-ai-gateway.mjs'
+      - 'scripts/nuva-agency-gateway-check.mjs'
+      - '.github/workflows/nuva-ai-gateway-smoke.yml'
   push:
     branches: [main]
     paths:
