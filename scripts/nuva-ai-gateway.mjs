@@ -5,10 +5,17 @@
  * Providers are optional. The gateway never logs credentials.
  */
 
+const CLOUDFLARE_DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
+const CLOUDFLARE_DEPRECATED_MODELS = new Set(["@cf/meta/llama-3.1-8b-instruct", "@cf/meta/llama-3.1-8b-instruct-awq"]);
+const configuredCloudflareModel = process.env.CLOUDFLARE_AI_MODEL?.trim();
+const CLOUDFLARE_MODEL = configuredCloudflareModel && !CLOUDFLARE_DEPRECATED_MODELS.has(configuredCloudflareModel)
+  ? configuredCloudflareModel
+  : CLOUDFLARE_DEFAULT_MODEL;
+
 const DEFAULT_MODELS = Object.freeze({
   gemini: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
   groq: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
-  cloudflare: process.env.CLOUDFLARE_AI_MODEL || "@cf/meta/llama-3.1-8b-instruct-fast",
+  cloudflare: CLOUDFLARE_MODEL,
 });
 
 const PROVIDER_ORDER = ["gemini", "groq", "cloudflare"];
