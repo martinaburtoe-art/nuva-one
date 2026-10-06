@@ -2,8 +2,9 @@ name: Nüva Agency — AI Gateway Live Certification
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
+  workflow_run:
+    workflows: ["CI Fast"]
+    types: [completed]
   push:
     paths:
       - "scripts/nuva-ai-gateway.mjs"
@@ -11,6 +12,7 @@ on:
 
 permissions:
   contents: read
+
 
 jobs:
   live-certification:
