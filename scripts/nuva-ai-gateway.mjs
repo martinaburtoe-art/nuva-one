@@ -20,6 +20,8 @@ const DEFAULT_MODELS = Object.freeze({
 });
 
 const PROVIDER_ORDER = ["gemini", "groq", "cloudflare"];
+const TRANSIENT_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
+const MAX_RETRIES = 2;
 
 function configured(provider) {
   if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY);
@@ -85,6 +87,7 @@ async function request(provider, prompt, timeoutMs) {
     if (!response.ok) {
       const error = new Error(`${provider} HTTP ${response.status}`);
       error.status = response.status;
+      error.retryAfterMs = Math.min(5000, Math.max(250, Number(response.headers.get("retry-after") || 0) * 1000));
       throw error;
     }
     const content = extract(provider, json);
@@ -114,15 +117,23 @@ export async function generate(prompt, options = {}) {
       failures.push({ provider, reason: "not_configured" });
       continue;
     }
-    try {
-      const content = await request(provider, prompt, timeoutMs);
-      return { provider, model: DEFAULT_MODELS[provider], content, failures };
-    } catch (error) {
-      failures.push({
-        provider,
-        reason: error?.message || "request_failed",
-        status: error?.status ?? null,
-      });
+    if (options.forceFailureProvider === provider) {
+      failures.push({ provider, reason: "forced_failure", status: null });
+      continue;
+    }
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+      try {
+        const content = await request(provider, prompt, timeoutMs);
+        return { provider, model: DEFAULT_MODELS[provider], content, failures, attempts: attempt + 1 };
+      } catch (error) {
+        const transient = TRANSIENT_STATUS.has(error?.status);
+        if (!transient || attempt === MAX_RETRIES) {
+          failures.push({ provider, reason: error?.message || "request_failed", status: error?.status ?? null, attempts: attempt + 1 });
+          break;
+        }
+        const delay = error?.retryAfterMs || 250 * (2 ** attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
   }
 
