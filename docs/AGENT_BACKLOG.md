@@ -2,6 +2,19 @@
 
 This backlog is intentionally evidence-driven. Autonomous agents should select the highest-priority item they can verify from the current repository state and finish one coherent task per run.
 
+## Overnight mission — continuous completion
+
+The workforce is authorized to continue through repeated scheduled cycles while the owner is offline. The objective is to reduce the verified gap between the current repository state and a genuinely releasable Nüva One.
+
+Each cycle must:
+- select the highest-priority verified blocker or incomplete capability;
+- implement and validate one coherent fix;
+- preserve all safety gates and previously certified work;
+- leave evidence and a concrete next target for the following cycle;
+- never invent work merely to keep the rotation active.
+
+The mission does not end when a single worker finishes. It ends only when current release criteria are evidenced as satisfied or every remaining blocker is explicitly external, documented and actionable.
+
 ## Operating lanes
 
 ### P0 — Reliability / production
