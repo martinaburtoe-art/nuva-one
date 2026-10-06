@@ -16,9 +16,14 @@ async function verifyGitHubToken(token: string) {
   const { payload } = await jose.jwtVerify(token, JWKS, {
     issuer: ISSUER, audience: AUDIENCE,
   });
-  if (payload.repository !== REPOSITORY || payload.ref !== "refs/heads/main") {
-    throw new Error("github_identity_not_allowed");
-  }
+  if (payload.repository !== REPOSITORY) throw new Error("github_identity_not_allowed");
+  const event = payload.event_name;
+  const workflow = payload.workflow;
+  const isMain = payload.ref === "refs/heads/main" && event !== "pull_request";
+  const isCertifiedPull = event === "pull_request" &&
+    payload.base_ref === "main" &&
+    workflow === "Nüva Agency — AI Gateway Live Certification";
+  if (!isMain && !isCertifiedPull) throw new Error("github_execution_context_not_allowed");
   return payload;
 }
 
