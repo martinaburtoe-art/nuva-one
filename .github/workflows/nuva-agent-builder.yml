@@ -116,7 +116,7 @@ jobs:
             TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {
-              "model": { "maxSessionTurns": 12 },
+              "model": { "maxSessionTurns": 25 },
               "telemetry": { "enabled": false }
             }
 
