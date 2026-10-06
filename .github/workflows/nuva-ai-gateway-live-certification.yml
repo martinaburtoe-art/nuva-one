@@ -20,13 +20,6 @@ jobs:
   live-certification:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
-      GROQ_MODEL: ${{ vars.GROQ_MODEL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,40 +27,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify provider configuration through Supabase OIDC broker
+      - name: Live provider certification through Supabase OIDC broker
+        id: broker
         shell: bash
         run: |
           set -euo pipefail
           oidc_url="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https%3A%2F%2Fvnzyecnbdqbfuxawzrda.supabase.co"
           oidc_token="$(curl --fail-with-body -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$oidc_url" | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>process.stdout.write(JSON.parse(s).value))')"
-          response="$(curl --fail-with-body -sS -X POST "https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-ai-broker" -H "Authorization: Bearer $oidc_token" -H "content-type: application/json" -d '{"action":"health"}')"
-          echo "$response" | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const x=JSON.parse(s); console.log(JSON.stringify(x.results)); if(!x.ok) process.exit(1)})'
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-      - name: Live provider probes
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --input-type=module > /tmp/nuva-gateway-results.tsv <<'NODE'
-          import { providerStatus, generate } from "./scripts/nuva-ai-gateway.mjs";
-          const expected = "NÜVA_HEALTH_OK";
-          for (const item of providerStatus()) {
-            if (!item.configured) {
-              console.log(item.provider + "\tFAIL\tNOT_CONFIGURED");
-              continue;
-            }
-            try {
-              const result = await generate(expected, { providers: [item.provider], timeoutMs: 30000 });
-              const ok = result.content.trim() === expected;
-              console.log(item.provider + "\t" + (ok ? "PASS" : "FAIL") + "\t" + result.model);
-            } catch (error) {
-              const details = error?.failures?.find((x) => x.provider === item.provider);
-              console.log(item.provider + "\tFAIL\t" + (details?.status ? "HTTP_" + details.status : "REQUEST_FAILED"));
-            }
-          }
-          NODE
-          cat /tmp/nuva-gateway-results.tsv
-          if grep -q $'\tFAIL\t' /tmp/nuva-gateway-results.tsv; then exit 1; fi
+          response="$(curl --fail-with-body -sS -X POST "https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-ai-broker" -H "Authorization: Bearer $oidc_token" -H "content-type: application/json" -d '{"action":"health","providers":["gemini","groq","cloudflare"]}')"
+          echo "$response" > /tmp/nuva-broker-results.json
+          cat /tmp/nuva-broker-results.json
+          node -e 'const x=require("/tmp/nuva-broker-results.json"); if(!x.ok) process.exit(1); for(const r of x.results){if(!r.pass)process.exit(1)}'
+          node -e 'const x=require("/tmp/nuva-broker-results.json"); require("fs").writeFileSync("/tmp/nuva-gateway-results.tsv",x.results.map(r=>r.provider+"\t"+(r.pass?"PASS":"FAIL")+"\tOIDC_BROKER").join("\n")+"\n")'
 
       - name: Publish per-provider certification statuses
         if: always()
