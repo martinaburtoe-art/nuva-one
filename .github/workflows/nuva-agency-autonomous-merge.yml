@@ -1,0 +1,65 @@
+name: Nüva Agency — Autonomous Merge Controller
+
+on:
+  workflow_run:
+    workflows: ["Nüva Agency — Independent Safety Verification"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+
+jobs:
+  merge:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Inspect verified PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          prs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/pull_requests")
+          number=$(echo "$prs" | jq -r '.[0].number // empty')
+          head=$(echo "$prs" | jq -r '.[0].head.ref // empty')
+          if [ -z "$number" ] || [[ "$head" != agent/agency-* ]]; then
+            echo "No eligible Agency PR associated with this successful run."
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+
+      - name: Re-check autonomous policy
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          number="${{ steps.pr.outputs.number }}"
+          files="$(gh pr diff "$number" --name-only)"
+          blocked='^(\.github/workflows/|supabase/migrations/|supabase/functions/|src/routes/auth|src/routes/api/(billing|checkout)|src/lib/(auth|security)|src/integrations/supabase/types\.ts$)'
+          if echo "$files" | grep -Eq "$blocked"; then
+            echo "Sensitive path appeared after verification; refusing autonomous merge."
+            exit 1
+          fi
+          additions=$(gh pr view "$number" --json additions --jq '.additions')
+          deletions=$(gh pr view "$number" --json deletions --jq '.deletions')
+          total=$((additions + deletions))
+          if [ "$total" -gt 220 ]; then
+            echo "Diff grew beyond autonomous limit."
+            exit 1
+          fi
+
+      - name: Merge verified Agency PR
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh pr merge "${{ steps.pr.outputs.number }}" --squash --auto --delete-branch
