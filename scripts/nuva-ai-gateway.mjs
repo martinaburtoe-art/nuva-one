@@ -8,7 +8,7 @@
 const DEFAULT_MODELS = Object.freeze({
   gemini: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
   groq: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
-  cloudflare: process.env.CLOUDFLARE_AI_MODEL || "@cf/meta/llama-3.1-8b-instruct",
+  cloudflare: process.env.CLOUDFLARE_AI_MODEL || "@cf/meta/llama-3.1-8b-instruct-fast",
 });
 
 const PROVIDER_ORDER = ["gemini", "groq", "cloudflare"];
