@@ -118,7 +118,7 @@ jobs:
             {
               "model": {
                 "name": "gemini-3.1-flash-lite",
-                "maxSessionTurns": 8
+                "maxSessionTurns": 25
               },
               "telemetry": { "enabled": false }
             }
