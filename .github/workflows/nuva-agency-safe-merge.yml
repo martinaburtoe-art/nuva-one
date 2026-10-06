@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: read
+  statuses: write
   checks: read
-  statuses: read
 
 jobs:
   safety-gate:
@@ -38,11 +38,13 @@ jobs:
           set -euo pipefail
           number="${{ steps.pr.outputs.number }}"
           sha=$(gh pr view "$number" --json headRefOid --jq '.headRefOid')
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
           git fetch origin "$sha"
           git checkout --detach "$sha"
 
       - name: Inspect autonomous diff policy
         if: steps.pr.outputs.eligible == 'true'
+        id: policy
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -50,13 +52,11 @@ jobs:
           number="${{ steps.pr.outputs.number }}"
           files="$(gh pr diff "$number" --name-only)"
           echo "$files"
-
           blocked='^(\.github/workflows/|supabase/migrations/|supabase/functions/|src/routes/auth|src/routes/api/(billing|checkout)|src/lib/(auth|security)|src/integrations/supabase/types\.ts$)'
           if echo "$files" | grep -Eq "$blocked"; then
-            echo "Blocked sensitive path detected; controlled review required."
+            echo "Blocked sensitive path detected."
             exit 1
           fi
-
           additions=$(gh pr view "$number" --json additions --jq '.additions')
           deletions=$(gh pr view "$number" --json deletions --jq '.deletions')
           total=$((additions + deletions))
@@ -84,3 +84,17 @@ jobs:
       - name: Independent production build
         if: steps.pr.outputs.eligible == 'true'
         run: npm run build
+
+      - name: Publish verified commit status
+        if: steps.pr.outputs.eligible == 'true' && success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/${{ steps.pr.outputs.sha }}"             -f state=success             -f context='nuva-agency/safety'             -f description='Independent Agency lint, typecheck, tests and build passed.'
+
+      - name: Publish failed commit status
+        if: steps.pr.outputs.eligible == 'true' && failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/${{ steps.pr.outputs.sha }}"             -f state=failure             -f context='nuva-agency/safety'             -f description='Independent Agency safety verification failed.'
