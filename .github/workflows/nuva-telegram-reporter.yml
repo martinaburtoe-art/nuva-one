@@ -1,0 +1,32 @@
+name: Nüva Agency — Telegram Reporter
+
+on:
+  workflow_run:
+    workflows:
+      - "Nüva Agency — Autonomous Construction"
+      - "Nüva Agency — Independent Safety Verification"
+      - "Nüva One — Autonomous PR Reviewer"
+      - "Nüva Agency — Autonomous Merge"
+      - "Nüva Agency — Autonomous Repair"
+      - "Nüva AI Gateway — Live Smoke"
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    if: >
+      github.event.workflow_run.conclusion != 'success' ||
+      contains(github.event.workflow_run.name, 'Autonomous') ||
+      contains(github.event.workflow_run.name, 'Gateway')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Send Telegram update
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_OWNER_CHAT_ID: ${{ secrets.TELEGRAM_OWNER_CHAT_ID }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: node scripts/nuva-telegram-notify.mjs
