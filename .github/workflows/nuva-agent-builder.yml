@@ -153,7 +153,6 @@ jobs:
           token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
           branch: agent/agency-${{ steps.role.outputs.role }}
           delete-branch: true
-          draft: true
           title: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
           commit-message: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
           labels: 'agency-autonomous'
