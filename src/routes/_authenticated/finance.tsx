@@ -17,14 +17,15 @@ export const Route = createFileRoute("/_authenticated/finance")({
 });
 
 function Finance() {
-  const [businessId] = useActiveBusiness();
+  const { active } = useActiveBusiness();
+  const businessId = active?.id;
   const { data: summary, isLoading } = useQuery({
     enabled: !!businessId,
     queryKey: ["finance-dashboard-summary", businessId],
     staleTime: 30_000,
     gcTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("finance_dashboard_summary", { p_business_id: businessId });
+      const { data, error } = await (supabase as any).rpc("finance_dashboard_summary", { p_business_id: businessId });
       if (error) throw error;
       return data as { income: number; expense: number; inventory_value: number };
     },
