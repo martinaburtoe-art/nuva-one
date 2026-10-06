@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OwnerControlTowerRouteImport } from './routes/owner/control-tower'
+import { Route as OwnerRouteImport } from './routes/owner'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SelectBusinessRouteImport } from './routes/select-business'
@@ -50,6 +52,16 @@ import { Route as ApiBillingPaymentsDisconnectRouteImport } from './routes/api/b
 import { Route as ApiBillingPaymentsCreateRouteImport } from './routes/api/billing/payments/create'
 import { Route as ApiBillingPaymentsConnectRouteImport } from './routes/api/billing/payments/connect'
 
+const OwnerRoute = OwnerRouteImport.update({
+  id: '/owner',
+  path: '/owner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerControlTowerRoute = OwnerControlTowerRouteImport.update({
+  id: '/owner/control-tower',
+  path: '/control-tower',
+  getParentRoute: () => OwnerRoute,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -262,6 +274,8 @@ const ApiBillingPaymentsConnectRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/owner': typeof OwnerRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
@@ -303,6 +317,8 @@ export interface FileRoutesByFullPath {
   '/api/billing/subscribe/run-charges': typeof ApiBillingSubscribeRunChargesRoute
 }
 export interface FileRoutesByTo {
+  '/owner': typeof OwnerRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
@@ -344,6 +360,8 @@ export interface FileRoutesByTo {
   '/api/billing/subscribe/run-charges': typeof ApiBillingSubscribeRunChargesRoute
 }
 export interface FileRoutesById {
+  '/owner': typeof OwnerRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
@@ -389,6 +407,8 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/owner'
+    | '/owner/control-tower'
     | '/'
     | '/auth'
     | '/onboarding'
@@ -522,6 +542,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SelectBusinessRoute: typeof SelectBusinessRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  OwnerRoute: typeof OwnerRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ForoTopicIdRoute: typeof ForoTopicIdRoute
@@ -864,7 +885,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+const OwnerRouteChildren = {
+  OwnerControlTowerRoute: OwnerControlTowerRoute,
+}
+const OwnerRouteWithChildren = OwnerRoute._addFileChildren(OwnerRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
+  OwnerRoute: OwnerRouteWithChildren,
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
