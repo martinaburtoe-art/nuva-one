@@ -1,0 +1,23 @@
+name: Nüva Agency — Configure Telegram Webhook
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure webhook
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          TELEGRAM_WEBHOOK_URL: ${{ vars.TELEGRAM_WEBHOOK_URL }}
+        run: |
+          test -n "$TELEGRAM_BOT_TOKEN"
+          test -n "$TELEGRAM_WEBHOOK_SECRET"
+          test -n "$TELEGRAM_WEBHOOK_URL"
+          curl --fail --silent --show-error --request POST             --data-urlencode "url=$TELEGRAM_WEBHOOK_URL"             --data-urlencode "secret_token=$TELEGRAM_WEBHOOK_SECRET"             --data-urlencode 'allowed_updates=["message"]'             "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook"
+          curl --fail --silent --show-error             "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo"
