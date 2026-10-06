@@ -67,6 +67,9 @@ async function callProvider(provider: string, prompt: string) {
     try { json = JSON.parse(raw); } catch { json = {}; }
     if (!response.ok) {
       lastError = "provider_http_" + response.status;
+      if (provider === "cloudflare" && response.status === 404) {
+        lastError += "_" + raw.replace(/[^a-zA-Z0-9_ -]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 180);
+      }
       if ([408, 425, 429, 500, 502, 503, 504].includes(response.status) && attempt < 2) {
         await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
         continue;
