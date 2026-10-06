@@ -102,6 +102,10 @@ export async function generate(prompt, options = {}) {
   const failures = [];
 
   for (const provider of order) {
+    if (options.forceFailureProvider === provider) {
+      failures.push({ provider, reason: "forced_test_failure" });
+      continue;
+    }
     if (!configured(provider)) {
       failures.push({ provider, reason: "not_configured" });
       continue;
