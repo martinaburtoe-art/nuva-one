@@ -1,4 +1,4 @@
-name: Nüva One — Autonomous Builder
+name: Nüva One — Autonomous Agency Workers
 
 on:
   schedule:
@@ -12,37 +12,55 @@ permissions:
   actions: read
 
 concurrency:
-  group: nuva-agent-builder
+  group: nuva-agency-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Internal construction cycle
+  worker:
+    name: Agency worker rotation
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
     steps:
       - name: Checkout main
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Check for existing autonomous PR
+      - name: Select specialist for this cycle
+        id: role
+        shell: bash
+        run: |
+          set -euo pipefail
+          roles=(constructor orchestrator finance sales supply people compliance growth security qa sentinel ux release)
+          slot=$(( $(date -u +%s) / 1800 ))
+          index=$(( slot % ${#roles[@]} ))
+          role="${roles[$index]}"
+          echo "role=$role" >> "$GITHUB_OUTPUT"
+          echo "Selected Nüva Agency worker: $role"
+
+      - name: Check autonomous safety gate
         id: gate
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          count=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json headRefName --jq '[.[] | select(.headRefName == "agent/autonomous-cycle" or .headRefName == "agent/ci-repair")] | length')
-          echo "open_agent_prs=$count"
-          skip=false
-          if [ "$count" -gt 0 ]; then skip=true; fi
+          set -euo pipefail
+          open=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("agent/agency-"))] | length')
+          echo "open_agency_prs=$open"
+          if [ "$open" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           ci=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status completed --limit 1 --json conclusion --jq '.[0].conclusion // ""')
-          echo "main_ci=$ci"
-          if [ "$ci" = "failure" ]; then skip=true; fi
-          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          echo "latest_main_ci=$ci"
+          if [ "$ci" = "failure" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
 
-      - name: Run internal construction agent
+      - name: Run specialist worker
         if: steps.gate.outputs.skip != 'true'
-        id: gemini
+        id: worker
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -51,92 +69,99 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3-flash-preview' }}
           prompt: |
-            You are the Nüva One Internal Construction Agent operating inside Nüva Agency.
+            You are the ${{ steps.role.outputs.role }} worker inside Nüva Agency.
+            You are one of 13 persistent digital workers improving the real Nüva One repository.
 
-            Read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md and docs/AGENT_BACKLOG.md first.
-            Then inspect the current repository, recent commits, open issues/PRs and CI evidence.
+            FIRST read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md and docs/AGENT_BACKLOG.md.
+            Inspect recent commits, open issues/PRs and current CI evidence before changing anything.
 
-            Your job is to BUILD, not merely report findings.
-            Select exactly ONE highest-priority evidence-backed task.
+            Your role for this cycle is exactly: ${{ steps.role.outputs.role }}.
+            Work continuously toward a better production-ready Nüva One, but complete exactly ONE
+            evidence-backed task in this cycle. Build/repair code, do not merely write a report.
 
-            RELEASE PRIORITY:
-            Open P0 release gates take precedence. In particular, inspect issue #145
-            "P0 RELEASE: Golden Business Simulation y certificación de flujo end-to-end"
-            and issue #144 "Market Release Gate". If #145 is still open and can be advanced
-            safely, prefer it over speculative work.
+            ROLE FOCUS:
+            constructor = implementation, bug fixes and focused refactors.
+            orchestrator = prioritize and coordinate the highest-value verified task; implement it if safe.
+            finance = finance, cash, accounting and financial integrity flows.
+            sales = sales, CRM, quotes and conversion flows.
+            supply = purchases, inventory, stock and fulfillment flows.
+            people = Nüva People, payroll, contracts, attendance and HR flows.
+            compliance = Chilean compliance, risk controls and evidence.
+            growth = onboarding, activation, product growth and SEO.
+            security = auth, authorization, tenant isolation and AppSec; report/PR only for sensitive changes.
+            qa = regression tests, deterministic verification and flaky-test repair.
+            sentinel = observability, production errors, telemetry and reliability.
+            ux = accessibility, responsive behavior, interaction quality and visual polish.
+            release = release gates, CI/CD and certification evidence.
 
-            For #145, prefer composing existing tested business operations into a deterministic
-            certification fixture/test rather than rewriting production architecture. Verify:
-            tenant isolation, customers/products, purchase/receipt, inventory, sale/payment,
-            cash/finance, accounting, Intelligence, Action Queue/outcome and reporting.
+            AUTONOMOUS SAFETY:
+            - Never commit secrets or credentials.
+            - Never mutate production data directly.
+            - Never weaken auth, RLS, billing, checkout or security controls to make tests pass.
+            - Never reintroduce Nüva Studio, WhatsApp or n8n runtime architecture.
+            - Never duplicate Nüva Intelligence on the homepage.
+            - Do not modify Supabase migrations, RLS/auth, billing, checkout, or GitHub workflows in an
+              autonomous application PR. If such work is required, stop and record the blocker in the summary.
+            - Keep the implementation focused; do not make unrelated broad refactors.
+            - Prefer changes that can be independently validated by lint, typecheck, unit tests and build.
+            - If there is no safe evidence-backed task, make no code change and report the finding.
 
-            Implement the selected task in the real repository.
-            Preserve working functionality. Do not reintroduce Nüva Studio, WhatsApp or n8n.
-            Do not touch secrets. Do not generate expensive media. Do not make broad refactors.
-            Do not mutate production data directly.
+            IMPLEMENTATION LOOP:
+            inspect -> choose one task -> implement -> test -> inspect diff -> summarize.
+            The repository will create a PR only when the workspace changed.
 
-            Validate the change with the most relevant tests. For code changes, run the
-            available lint, typecheck, unit/integration tests and build as applicable.
-            Database changes require migration/recovery verification and relevant pgTAP coverage.
-            Diagnose failures instead of masking them.
-
-            Stop after one coherent task. Create no unrelated work.
-            Leave the workspace changes available for the PR creation step.
-
-            Final response must contain:
+            Final response must contain exactly:
             TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {
-              "model": {
-                "maxSessionTurns": 25
-              },
-              "telemetry": {
-                "enabled": false
-              }
+              "model": { "maxSessionTurns": 25 },
+              "telemetry": { "enabled": false }
             }
 
-      - name: Run focused verification
-        if: steps.gate.outputs.skip != 'true'
+      - name: Focused verification
+        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
         run: |
           set -euo pipefail
           if git diff --quiet; then
-            echo "No code changes produced; nothing to verify."
+            echo "No implementation produced."
             exit 0
           fi
-          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --ignore-scripts --no-audit --no-fund
           npm run lint
           npm run typecheck
           npm run test
           npm run build
 
-      - name: Create autonomous pull request
-        if: steps.gate.outputs.skip != 'true'
-        id: cpr
+      - name: Create autonomous PR
+        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
-          branch: agent/autonomous-cycle
+          branch: agent/agency-${{ steps.role.outputs.role }}
           delete-branch: true
-          title: 'feat(agent): autonomous Nüva One improvement'
-          commit-message: 'feat(agent): autonomous Nüva One improvement'
+          title: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
+          commit-message: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
+          labels: 'agency-autonomous'
           body: |
-            ## Nüva One internal construction cycle
+            ## Nüva Agency autonomous worker
 
-            This PR was produced by the scheduled Nüva Agency Internal Construction Agent.
+            **Worker:** `${{ steps.role.outputs.role }}`
+            **Cycle:** `${{ github.run_id }}`
 
-            ### Agent summary
-            ${{ steps.gemini.outputs.summary || 'No summary returned; inspect workflow logs.' }}
+            This PR was created by the rotating Nüva Agency workforce.
+            It is eligible for autonomous merge only after the independent safety gate,
+            validation and repository protection rules pass.
 
-            ### Validation
-            The workflow ran focused lint, typecheck, unit tests and production build after the agent edits.
+            ### Agent result
+            ${{ steps.worker.outputs.summary || 'Inspect workflow logs for the worker result.' }}
 
-            ### Merge policy
-            CI, independent review and the Market Release Gate remain authoritative.
-            The autonomous agent does not bypass failing checks or security controls.
+            ### Policy
+            No secrets, production mutations, retired product scope or security bypasses are allowed.
 
-      - name: Report result
+      - name: Publish cycle summary
         if: always()
         run: |
-          echo "### Internal construction cycle" >> "$GITHUB_STEP_SUMMARY"
-          echo "Builder gate: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "PR: ${{ steps.cpr.outputs.pull-request-url || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Nüva Agency cycle" >> "$GITHUB_STEP_SUMMARY"
+          echo "Worker: ${{ steps.role.outputs.role || 'unknown' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Safety gate skipped: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Worker outcome: ${{ steps.worker.outcome || 'not run' }}" >> "$GITHUB_STEP_SUMMARY"
