@@ -27,7 +27,20 @@ async function verifyGitHubToken(token: string) {
   return payload;
 }
 
-function providerConfig(provider: string) {
+async function resolveCloudflareAccount(token: string, configured: string | null) {
+  if (configured && /^[a-f0-9]{32}$/i.test(configured)) return configured;
+  const response = await fetch("https://api.cloudflare.com/client/v4/accounts?page=1&per_page=10", {
+    headers: { authorization: "Bearer " + token },
+    signal: AbortSignal.timeout(10000),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("cloudflare_account_discovery_http_" + response.status);
+  const accounts = Array.isArray(json?.result) ? json.result : [];
+  if (accounts.length !== 1 || !accounts[0]?.id) throw new Error("cloudflare_account_id_invalid_multiple_accounts");
+  return accounts[0].id;
+}
+
+async function providerConfig(provider: string) {
   if (provider === "gemini") {
     const key = Deno.env.get("GEMINI_API_KEY");
     if (!key) return null;
@@ -42,8 +55,9 @@ function providerConfig(provider: string) {
   }
   if (provider === "cloudflare") {
     const token = Deno.env.get("CLOUDFLARE_API_TOKEN");
-    const account = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
-    if (!token || !account) return null;
+    const configuredAccount = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
+    if (!token) return null;
+    const account = await resolveCloudflareAccount(token, configuredAccount);
     return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
       headers: { authorization: "Bearer " + token },
       body: (prompt: string) => ({ prompt, max_tokens: 2048 }) };
@@ -52,7 +66,7 @@ function providerConfig(provider: string) {
 }
 
 async function callProvider(provider: string, prompt: string) {
-  const cfg = providerConfig(provider);
+  const cfg = await providerConfig(provider);
   if (!cfg) throw new Error("provider_not_configured");
   let lastError = "provider_request_failed";
   for (let attempt = 0; attempt < 3; attempt++) {
