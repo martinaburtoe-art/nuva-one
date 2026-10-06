@@ -1,0 +1,74 @@
+name: Nüva Agency — Safe Autonomous Merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+
+jobs:
+  safety-gate:
+    if: startsWith(github.event.pull_request.head.ref, 'agent/agency-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Inspect autonomous diff policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          files="$(gh pr diff ${{ github.event.pull_request.number }} --name-only)"
+          echo "$files"
+
+          blocked='^(\.github/workflows/|supabase/migrations/|supabase/functions/|src/routes/auth|src/routes/api/(billing|checkout)|src/lib/(auth|security)|src/integrations/supabase/types\.ts$)'
+          if echo "$files" | grep -Eq "$blocked"; then
+            echo "Blocked sensitive path detected; human/release review required."
+            exit 1
+          fi
+
+          additions=$(gh pr view ${{ github.event.pull_request.number }} --json additions --jq '.additions')
+          deletions=$(gh pr view ${{ github.event.pull_request.number }} --json deletions --jq '.deletions')
+          total=$((additions + deletions))
+          echo "Changed lines: $total"
+          if [ "$total" -gt 220 ]; then
+            echo "Autonomous diff exceeds 220 changed lines."
+            exit 1
+          fi
+
+          title=$(gh pr view ${{ github.event.pull_request.number }} --json title --jq '.title')
+          case "$title" in
+            'feat(agency): '*) ;;
+            *) echo "Unexpected autonomous PR title"; exit 1 ;;
+          esac
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Independent lint
+        run: npm run lint
+
+      - name: Independent typecheck
+        run: npm run typecheck
+
+      - name: Independent unit tests
+        run: npm run test
+
+      - name: Independent production build
+        run: npm run build
+
+      - name: Enable autonomous squash merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh pr merge ${{ github.event.pull_request.number }} --squash --auto --delete-branch
