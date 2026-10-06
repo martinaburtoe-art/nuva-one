@@ -2,6 +2,10 @@ name: Nüva Agency — AI Gateway Live Certification
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/nuva-ai-gateway.mjs'
+      - '.github/workflows/nuva-ai-gateway-live-certification.yml'
   schedule:
     - cron: '*/5 * * * *'
   workflow_run:
