@@ -7,6 +7,7 @@ Nüva Agency no depende de una sola API. El gateway mantiene un orden de fallbac
 1. Gemini
 2. Groq
 3. Cloudflare Workers AI
+4. Deterministic local fallback (emergency only)
 
 Cada proveedor es opcional y las credenciales nunca se imprimen ni se escriben en el repositorio.
 
@@ -43,3 +44,7 @@ Para una prueba real:
 `NUVA_GATEWAY_LIVE_TEST=true npm run agency:gateway`
 
 La prueba real debe ejecutarse solo después de agregar las APIs.
+
+## Continuidad operativa
+
+Si todos los proveedores externos están indisponibles, el gateway puede completar tareas deterministas con `deterministic`. Este fallback no genera lenguaje ni sustituye un modelo: evita que automatizaciones seguras y deterministas queden bloqueadas por indisponibilidad de IA.
