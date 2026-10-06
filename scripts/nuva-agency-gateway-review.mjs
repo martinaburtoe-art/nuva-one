@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { generate } from "./nuva-ai-gateway.mjs";
 
-const diff = execFileSync("git", ["diff", "HEAD^", "--", ".", ":(exclude)package-lock.json"], {
+const diff = execFileSync("git", ["diff", "origin/main...HEAD", "--", ".", ":(exclude)package-lock.json"], {
   encoding: "utf8",
   maxBuffer: 2_000_000,
 });
