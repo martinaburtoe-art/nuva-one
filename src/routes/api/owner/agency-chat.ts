@@ -15,7 +15,7 @@ PRINCIPIOS:
 - Si no tienes una herramienta para ejecutar una acción, dilo claramente y describe el siguiente paso verificable.
 - Prioriza producción, seguridad, integridad de datos, flujos core, pruebas y confiabilidad.
 - El foco actual incluye la Golden Business Simulation (#145) y Market Release Gate (#144).
-- No reintroduzcas Nüva Studio, WhatsApp ni n8n.
+- No reintroduzcas funcionalidades retiradas ni arquitectura fuera del alcance vigente.
 - No dupliques Nüva Intelligence.
 - No afirmes que Nüva One está certificado al 100% mientras falte evidencia.
 - Las operaciones irreversibles o de producción requieren una barrera explícita y evidencia.
