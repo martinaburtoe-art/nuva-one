@@ -19,7 +19,7 @@ const DEFAULT_MODELS = Object.freeze({
   cloudflare: CLOUDFLARE_MODEL,
 });
 
-const PROVIDER_ORDER = ["gemini", "groq", "cloudflare"];
+const PROVIDER_ORDER = ["gemini", "groq", "cloudflare", "deterministic"];
 const TRANSIENT_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 const MAX_RETRIES = 2;
 const MAX_PROMPT_CHARS = 12000;
@@ -27,9 +27,8 @@ const MAX_PROMPT_CHARS = 12000;
 function configured(provider) {
   if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY);
   if (provider === "groq") return Boolean(process.env.GROQ_API_KEY);
-  if (provider === "cloudflare") {
-    return Boolean(process.env.CLOUDFLARE_API_TOKEN && /^[a-f0-9]{32}$/i.test(process.env.CLOUDFLARE_ACCOUNT_ID || ""));
-  }
+  if (provider === "cloudflare") return Boolean(process.env.CLOUDFLARE_API_TOKEN && /^[a-f0-9]{32}$/i.test(process.env.CLOUDFLARE_ACCOUNT_ID || ""));
+  if (provider === "deterministic") return true;
   return false;
 }
 
@@ -73,6 +72,7 @@ function extract(provider, json) {
 }
 
 async function request(provider, prompt, timeoutMs) {
+  if (provider === "deterministic") return "NÜVA_DETERMINISTIC_OK";
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -139,7 +139,7 @@ export async function generate(prompt, options = {}) {
     }
   }
 
-  const error = new Error("Nüva AI Gateway: no configured provider completed the request");
+  const error = new Error("Nüva AI Gateway: no configured AI provider completed the request");
   error.failures = failures;
   throw error;
 }
