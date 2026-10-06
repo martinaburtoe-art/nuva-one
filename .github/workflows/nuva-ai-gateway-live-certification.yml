@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 
 jobs:
@@ -74,3 +75,20 @@ jobs:
           }
           console.log("LIVE_CERTIFICATION_PASS");
           NODE
+      - name: Publish certification status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ job.status }}
+          DESC: ${{ job.status == 'success' && 'All configured AI providers passed the live exact-response probe.' || 'One or more AI providers failed the live exact-response probe.' }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          state="${{ job.status }}"
+          if [ "$state" = "success" ]; then desc="All configured AI providers passed the live exact-response probe."; else desc="One or more AI providers failed the live exact-response probe."; fi
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha || github.sha }}" \
+            -d "$(node -e 'console.log(JSON.stringify({state:process.env.STATE,context:"nuva-agency/ai-gateway-live",description:process.env.DESC,target_url:"https://github.com/"+process.env.REPO+"/actions"}))' )"
