@@ -173,7 +173,7 @@ Deno.serve(async (request) => {
       "Comandos:",
       "/agents — lista de trabajadores",
       "/agent <id> — cambia de trabajador",
-      "/status — estado operativo y memoria",
+      "/status — estado operativo y memoria\n      "/audit — auditoría read-only con evidencia",
       "/help — ayuda",
       "",
       "También puedes escribir directamente para conversar con el trabajador activo.",
