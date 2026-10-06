@@ -1,17 +1,20 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/owner")({
   ssr: false,
-  component: OwnerIndexRedirect,
+  component: OwnerLayout,
 });
 
-function OwnerIndexRedirect() {
+function OwnerLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    void navigate({ to: "/owner/control-tower", replace: true });
-  }, [navigate]);
+    if (location.pathname === "/owner") {
+      void navigate({ to: "/owner/control-tower", replace: true });
+    }
+  }, [location.pathname, navigate]);
 
-  return null;
+  return <Outlet />;
 }
