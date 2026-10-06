@@ -3,6 +3,9 @@ name: Nüva Agency — Autonomous Merge Controller
 on:
   schedule:
     - cron: '17,47 * * * *'
+  workflow_run:
+    workflows: ["Nüva Agency — Independent Safety Verification"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
