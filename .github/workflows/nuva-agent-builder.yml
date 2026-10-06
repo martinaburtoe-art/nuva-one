@@ -12,6 +12,7 @@ permissions:
   pull-requests: write
   issues: read
   actions: read
+  id-token: write
 
 concurrency:
   group: nuva-agency-${{ github.repository }}
@@ -39,6 +40,32 @@ jobs:
           role="${roles[$index]}"
           echo "role=$role" >> "$GITHUB_OUTPUT"
           echo "Selected Nüva Agency worker: $role"
+
+      - name: Audit external control-plane connectivity
+        id: connectivity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF || 'vnzyecnbdqbfuxawzrda' }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_TTggp4XCuSLXEuFjyNsR6dHwf8Xe' }}
+        run: |
+          set -euo pipefail
+          echo "github=connected" | tee -a "$GITHUB_STEP_SUMMARY"
+
+          if [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+            curl -fsS "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF"               -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" >/dev/null
+            echo "supabase_management=connected" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "supabase_management=not_configured" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ -n "${VERCEL_TOKEN:-}" ]; then
+            curl -fsS "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID"               -H "Authorization: Bearer $VERCEL_TOKEN" >/dev/null
+            echo "vercel_api=connected" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "vercel_api=not_configured" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Check autonomous safety gate
         id: gate
@@ -76,10 +103,16 @@ jobs:
             You are one of 13 persistent digital workers improving the real Nüva One repository.
 
             FIRST read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md and docs/AGENT_BACKLOG.md.
+            Then read docs/nuva-agency/LEARNING_PROTOCOL.md and inspect any recent
+            agency learning evidence available in the repository.
             Inspect recent commits, open issues/PRs and current CI evidence before changing anything.
 
             Your role for this cycle is exactly: ${{ steps.role.outputs.role }}.
             Complete exactly ONE evidence-backed task. Build or repair real code; do not merely write a report.
+            Treat previous validated incidents, regressions and successful fixes as training evidence:
+            infer recurring failure patterns, prefer proven remediation strategies, and record a concise
+            new lesson in the PR summary when the cycle discovers a reusable pattern. Do not claim model
+            training occurred unless a measurable training/evaluation step actually ran.
 
             ROLE FOCUS:
             constructor = implementation, bug fixes and focused refactors.
@@ -103,6 +136,8 @@ jobs:
             - Never reintroduce Nüva Studio, WhatsApp or n8n runtime architecture.
             - Never duplicate Nüva Intelligence on the homepage.
             - Do not modify Supabase migrations, RLS/auth, billing, checkout, or GitHub workflows in an autonomous application PR.
+            - External-system changes must use approved APIs/CLI and least-privilege credentials; never
+              paste tokens into files, prompts, logs or PR bodies.
             - Keep the implementation focused and under 220 changed lines.
             - Do not modify package-lock.json or generated route trees unless explicitly required.
             - Prefer changes independently validated by lint, typecheck, unit tests and build.
@@ -187,3 +222,5 @@ jobs:
           echo "Worker: ${{ steps.role.outputs.role || 'unknown' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Safety gate skipped: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Worker outcome: ${{ steps.worker.outcome || 'not run' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Learning mode: evidence-driven; no unverified self-training claims." >> "$GITHUB_STEP_SUMMARY"
+          echo "External control plane: GitHub always; Supabase/Vercel conditional on scoped credentials." >> "$GITHUB_STEP_SUMMARY"
