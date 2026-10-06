@@ -1,0 +1,109 @@
+name: Nüva Agency — Autonomous Repair Worker
+
+on:
+  workflow_run:
+    workflows: ["Nüva Agency — Independent Safety Verification"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: read
+  actions: read
+
+jobs:
+  repair:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Resolve Agency PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          prs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/pull_requests")
+          number=$(echo "$prs" | jq -r '.[0].number // empty')
+          head=$(echo "$prs" | jq -r '.[0].head.ref // empty')
+          sha=$(echo "$prs" | jq -r '.[0].head.sha // empty')
+          if [ -z "$number" ] || [ -z "$head" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "$head" in
+            agent/agency-constructor|agent/agency-orchestrator|agent/agency-finance|agent/agency-sales|agent/agency-supply|agent/agency-people|agent/agency-compliance|agent/agency-growth|agent/agency-security|agent/agency-qa|agent/agency-sentinel|agent/agency-ux|agent/agency-release) ;;
+            *) echo "eligible=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
+          esac
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout failed Agency branch
+        if: steps.pr.outputs.eligible == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.pr.outputs.head }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Read failure evidence
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run view ${{ github.event.workflow_run.id }} --log-failed > /tmp/agency-failure.log || true
+          tail -n 250 /tmp/agency-failure.log
+
+      - name: Run autonomous repair worker
+        if: steps.pr.outputs.eligible == 'true'
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3-flash-preview' }}
+          prompt: |
+            You are the Nüva Agency autonomous repair worker.
+            A previously generated Agency PR failed its independent safety verification.
+
+            Read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md and docs/AGENT_BACKLOG.md.
+            Read /tmp/agency-failure.log and inspect the current branch diff.
+
+            Diagnose the actual failure and repair ONLY that failure.
+            Do not broaden scope. Do not weaken tests. Do not touch secrets.
+            Do not modify auth/RLS, billing, checkout, Supabase migrations/functions,
+            or GitHub workflows. If the failure is in a blocked sensitive area, make no change.
+
+            Run the relevant validation locally. The parent safety workflow will independently
+            rerun the complete lint, typecheck, unit-test and production-build gate.
+
+            Do not push, merge or create another PR. Leave only the focused repair in the workspace.
+
+      - name: Recheck repair
+        if: steps.pr.outcome == 'success' && steps.pr.outputs.eligible == 'true'
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "Repair worker produced no change."
+            exit 0
+          fi
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run lint
+          npm run typecheck
+          npm run test
+          npm run build
+
+      - name: Push verified repair to the same Agency branch
+        if: steps.pr.outcome == 'success' && steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then exit 0; fi
+          git config user.name "Nüva Agency"
+          git config user.email "agency@nuva.one"
+          git add -A
+          git commit -m "fix(agency): repair failed autonomous verification"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:${{ steps.pr.outputs.head }}
