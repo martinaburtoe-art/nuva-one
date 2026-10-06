@@ -94,7 +94,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           STATE: ${{ job.status }}
-          DESC: ${{ job.status == 'success' && 'All configured AI providers passed the live exact-response probe.' || 'One or more AI providers failed the live exact-response probe.' }}
           REPO: ${{ github.repository }}
         shell: bash
         run: |
@@ -110,4 +109,4 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha || github.sha }}" \
-            -d "$(node -e 'console.log(JSON.stringify({state:process.env.STATE,context:"nuva-agency/ai-gateway-live",description:process.env.DESC,target_url:"https://github.com/"+process.env.REPO+"/actions"}))' )"
+            -d "$(STATE="$state" DESC="$desc" REPO="${{ github.repository }}" RUN="${{ github.run_id }}" node -e 'console.log(JSON.stringify({state:process.env.STATE,context:"nuva-agency/ai-gateway-live",description:process.env.DESC,target_url:"https://github.com/"+process.env.REPO+"/actions/runs/"+process.env.RUN}))' )"
