@@ -60,7 +60,7 @@ jobs:
           number="${{ steps.pr.outputs.number }}"
           branch=$(gh pr view "$number" --json headRefName --jq '.headRefName')
           git fetch origin "$branch"
-          git checkout --detach "$branch"
+          git checkout --detach "origin/$branch"
           echo "branch=$branch" >> "$GITHUB_ENV"
 
       - name: Collect current checks
