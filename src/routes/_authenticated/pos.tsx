@@ -408,7 +408,7 @@ function POS() {
                 <div className="text-xs text-muted-foreground">Hoy</div>
                 <div className="text-lg font-bold">{fmtCLP(todayTotal)}</div>
                 <div className="text-[10px] text-muted-foreground">
-                  {todaySalesCount} venta(s)
+                  {todaySales.length} venta(s)
                 </div>
               </div>
             </div>
