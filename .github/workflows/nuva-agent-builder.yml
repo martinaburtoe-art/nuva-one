@@ -103,7 +103,7 @@ jobs:
             You are one of 13 persistent digital workers improving the real Nüva One repository.
 
             FIRST read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md and docs/AGENT_BACKLOG.md.
-            Then read docs/nuva-agency/WORKFORCE_LEARNING_PROTOCOL.md and inspect any recent
+            Then read docs/nuva-agency/LEARNING_PROTOCOL.md and inspect any recent
             agency learning evidence available in the repository.
             Inspect recent commits, open issues/PRs and current CI evidence before changing anything.
 
