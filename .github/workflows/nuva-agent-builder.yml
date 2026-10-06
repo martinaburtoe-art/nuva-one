@@ -137,6 +137,11 @@ jobs:
           npm run test
           npm run build
 
+      - name: Remove generated verification churn
+        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
+        run: |
+          git checkout -- package-lock.json src/routeTree.gen.ts
+
       - name: Create autonomous PR
         if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
         uses: peter-evans/create-pull-request@v8
