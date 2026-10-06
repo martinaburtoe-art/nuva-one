@@ -28,7 +28,7 @@ function configured(provider) {
   if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY);
   if (provider === "groq") return Boolean(process.env.GROQ_API_KEY);
   if (provider === "cloudflare") {
-    return Boolean(process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_ACCOUNT_ID);
+    return Boolean(process.env.CLOUDFLARE_API_TOKEN && /^[a-f0-9]{32}$/i.test(process.env.CLOUDFLARE_ACCOUNT_ID || ""));
   }
   return false;
 }
