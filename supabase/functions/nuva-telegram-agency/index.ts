@@ -208,7 +208,18 @@ Deno.serve(async (request) => {
       "Duración: " + audit.duration_ms + " ms",
       "Persistido: " + (audit.persisted ? "sí" : "no"),
       "",
-      ...audit.evidence.map((item) => "• " + item.source + ": " + item.status.toUpperCase() + " — " + item.summary),
+      ...audit.evidence.flatMap((item) => {
+        const lines = ["• " + item.source + ": " + item.status.toUpperCase() + " — " + item.summary];
+        const details = item.details as Record<string, unknown> | undefined;
+        if (item.source === "ai_providers" && Array.isArray(details?.results)) {
+          for (const result of details.results as Array<Record<string, unknown>>) {
+            lines.push("  ↳ " + String(result.provider ?? "provider") + ": " + String(result.status ?? "unknown") + (result.error ? " — " + String(result.error) : "") + (result.model ? " [" + String(result.model) + "]" : ""));
+          }
+        }
+        if (item.source === "supabase" && item.status !== "pass") lines.push("  ↳ detalle: " + JSON.stringify(details ?? {}).slice(0, 700));
+        return lines;
+      }),
+      ...(audit.persistence_error ? ["", "Persistencia: " + audit.persistence_error.slice(0, 500)] : []),
     ];
     await sendTelegram(token, chatId, lines.join("\n"));
     if (Number.isSafeInteger(updateId)) {
@@ -235,7 +246,6 @@ Deno.serve(async (request) => {
       `• Incidentes registrados: ${incidents ?? 0}`,
       `• Hallazgos registrados: ${findings ?? 0}`,
       `• Proveedores IA configurados: ${configuredProviders().join(", ") || "ninguno"}`,
-      "• Proveedores IA configurados: " + (configuredProviders().join(", ") || "ninguno"),
       "• Cambios autónomos: siempre sujetos a CI, seguridad y gates.",
     ].join("\n"));
     return new Response("ok");
