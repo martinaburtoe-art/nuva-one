@@ -17,7 +17,7 @@ function getConfiguredWebhookSecret(secretRef: string | null) {
   return process.env[secretRef] ?? "";
 }
 
-export const Route = createFileRoute("/api/integrations/webhook")({
+export const Route = createFileRoute("/api/integrations-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
