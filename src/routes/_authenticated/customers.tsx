@@ -48,7 +48,7 @@ import {
   Circle,
   Clock,
 } from "lucide-react";
-import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
+import { useBizList, useBizPage, useBizCount, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
 import { formatRut, normalizeRut } from "@/lib/rut";
 import { toast } from "sonner";
@@ -114,6 +114,7 @@ function Customers() {
   const customerOr = searchTerm ? `name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,tax_id.ilike.%${searchTerm}%` : undefined;
   const { data: customerPageData, isLoading } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });
   const data = customerPageData?.rows ?? [];
+  const counts = { all: allCount, lead: leadCount, active: activeCount, inactive: inactiveCount };
   const { data: allCount = 0 } = useBizCount("customers");
   const { data: leadCount = 0 } = useBizCount("customers", { eq: { status: "lead" } });
   const { data: activeCount = 0 } = useBizCount("customers", { eq: { status: "active" } });
