@@ -3,6 +3,9 @@ name: Nüva Agency — Independent Safety Verification
 on:
   schedule:
     - cron: '7,37 * * * *'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
