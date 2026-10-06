@@ -10,7 +10,7 @@ function json(data: Record<string, unknown>, status = 200) {
   });
 }
 
-export const Route = createFileRoute("/api/integrations/events")({
+export const Route = createFileRoute("/api/integrations-events")({
   server: {
     handlers: {
       GET: async ({ request }) => {

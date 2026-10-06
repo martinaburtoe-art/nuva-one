@@ -9,87 +9,104 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OwnerControlTowerRouteImport } from './routes/owner/control-tower'
-import { Route as OwnerRouteImport } from './routes/owner'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SelectBusinessRouteImport } from './routes/select-business'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as NegociosIndexRouteImport } from './routes/negocios/index'
-import { Route as ForoIndexRouteImport } from './routes/foro/index'
-import { Route as NegociosSlugRouteImport } from './routes/negocios/$slug'
-import { Route as ForoTopicIdRouteImport } from './routes/foro/$topicId'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as AuthenticatedShiftsRouteImport } from './routes/_authenticated/shifts'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
-import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
-import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authenticated/purchases'
-import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
-import { Route as AuthenticatedMfaRequiredRouteImport } from './routes/_authenticated/mfa-required'
-import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
-import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
-import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CheckoutDemoRouteImport } from './routes/checkout-demo'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DirectorioRouteImport } from './routes/directorio'
+import { Route as ExperienceRouteImport } from './routes/experience'
+import { Route as ExperienceParallelRouteImport } from './routes/experience-parallel'
+import { Route as ExperienciaRouteImport } from './routes/experiencia'
+import { Route as NewsRouteImport } from './routes/news'
+import { Route as NoticiasRouteImport } from './routes/noticias'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as OwnerRouteImport } from './routes/owner'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SelectBusinessRouteImport } from './routes/select-business'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
-import { Route as ApiQuotesFollowUpRouteImport } from './routes/api/quotes/follow-up'
-import { Route as ApiNotificationsLowStockCheckRouteImport } from './routes/api/notifications/low-stock-check'
-import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/collections/check-overdue'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
+import { Route as AuthenticatedBusinessHealthRouteImport } from './routes/_authenticated/business-health'
+import { Route as AuthenticatedBusinessSimulatorRouteImport } from './routes/_authenticated/business-simulator'
+import { Route as AuthenticatedCajaControlRouteImport } from './routes/_authenticated/caja-control'
+import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
+import { Route as AuthenticatedConexionesRouteImport } from './routes/_authenticated/conexiones'
+import { Route as AuthenticatedCustomerActionCenterRouteImport } from './routes/_authenticated/customer-action-center'
+import { Route as AuthenticatedCustomerIntelligenceRouteImport } from './routes/_authenticated/customer-intelligence'
+import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedCustomersIntelligenceRouteImport } from './routes/_authenticated/customers-intelligence'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedExecutiveCommandCenterRouteImport } from './routes/_authenticated/executive-command-center'
+import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
+import { Route as AuthenticatedFinanceAccountingRouteImport } from './routes/_authenticated/finance-accounting'
+import { Route as AuthenticatedFinanceProfessionalRouteImport } from './routes/_authenticated/finance-professional'
+import { Route as AuthenticatedFinancialControlRouteImport } from './routes/_authenticated/financial-control'
+import { Route as AuthenticatedFinancialDashboardRouteImport } from './routes/_authenticated/financial-dashboard'
+import { Route as AuthenticatedFinancialIntegrityRouteImport } from './routes/_authenticated/financial-integrity'
+import { Route as AuthenticatedHelpCenterRouteImport } from './routes/_authenticated/help-center'
+import { Route as AuthenticatedInventarioConteoRouteImport } from './routes/_authenticated/inventario-conteo'
+import { Route as AuthenticatedInventarioOperacionesRouteImport } from './routes/_authenticated/inventario-operaciones'
+import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedMfaRequiredRouteImport } from './routes/_authenticated/mfa-required'
+import { Route as AuthenticatedMobileScannerRouteImport } from './routes/_authenticated/mobile-scanner'
+import { Route as AuthenticatedNuvaIntelligenceRouteImport } from './routes/_authenticated/nuva-intelligence'
+import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
+import { Route as AuthenticatedPeopleAttendanceRouteImport } from './routes/_authenticated/people-attendance'
+import { Route as AuthenticatedPeopleComplianceRouteImport } from './routes/_authenticated/people-compliance'
+import { Route as AuthenticatedPeopleEmployeesRouteImport } from './routes/_authenticated/people-employees'
+import { Route as AuthenticatedPeopleLifecycleRouteImport } from './routes/_authenticated/people-lifecycle'
+import { Route as AuthenticatedPeoplePayrollRouteImport } from './routes/_authenticated/people-payroll'
+import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
+import { Route as AuthenticatedPricingCalculatorRouteImport } from './routes/_authenticated/pricing-calculator'
+import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authenticated/purchases'
+import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
+import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedShiftsRouteImport } from './routes/_authenticated/shifts'
+import { Route as AuthenticatedShipmentsRouteImport } from './routes/_authenticated/shipments'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiIntegrationsRouteImport } from './routes/api/integrations'
+import { Route as ApiIntegrationsEventsRouteImport } from './routes/api/integrations-events'
+import { Route as ApiIntegrationsWebhookRouteImport } from './routes/api/integrations-webhook'
+import { Route as ApiNuvaActionExecuteRouteImport } from './routes/api/nuva-action-execute'
+import { Route as ApiTelemetryRouteImport } from './routes/api/telemetry'
+import { Route as ForoIndexRouteImport } from './routes/foro/index'
+import { Route as ForoTopicIdRouteImport } from './routes/foro/$topicId'
+import { Route as NegociosIndexRouteImport } from './routes/negocios/index'
+import { Route as NegociosSlugRouteImport } from './routes/negocios/$slug'
+import { Route as OwnerControlTowerRouteImport } from './routes/owner/control-tower'
+import { Route as PublicCatalogSlugRouteImport } from './routes/public-catalog.$slug'
 import { Route as ApiBusinessExplainRouteImport } from './routes/api/business/explain'
-import { Route as ApiBillingSubscribeRunChargesRouteImport } from './routes/api/billing/subscribe/run-charges'
-import { Route as ApiBillingSubscribeRegisterRouteImport } from './routes/api/billing/subscribe/register'
-import { Route as ApiBillingSubscribeCancelRouteImport } from './routes/api/billing/subscribe/cancel'
-import { Route as ApiBillingSubscribeCallbackRouteImport } from './routes/api/billing/subscribe/callback'
-import { Route as ApiBillingPaymentsWebhookRouteImport } from './routes/api/billing/payments/webhook'
-import { Route as ApiBillingPaymentsDisconnectRouteImport } from './routes/api/billing/payments/disconnect'
-import { Route as ApiBillingPaymentsCreateRouteImport } from './routes/api/billing/payments/create'
+import { Route as ApiCronNuvaIntelligenceWorkerRouteImport } from './routes/api/cron/nuva-intelligence-worker'
+import { Route as ApiNotificationsLowStockCheckRouteImport } from './routes/api/notifications/low-stock-check'
+import { Route as ApiOwnerAgencyChatRouteImport } from './routes/api/owner/agency-chat'
+import { Route as ApiOwnerOperationalMetricsRouteImport } from './routes/api/owner/operational-metrics'
+import { Route as ApiBillingMercadopagoCreateRouteImport } from './routes/api/billing/mercadopago/create'
+import { Route as ApiBillingMercadopagoManageRouteImport } from './routes/api/billing/mercadopago/manage'
+import { Route as ApiBillingMercadopagoWebhookRouteImport } from './routes/api/billing/mercadopago/webhook'
 import { Route as ApiBillingPaymentsConnectRouteImport } from './routes/api/billing/payments/connect'
+import { Route as ApiBillingPaymentsCreateRouteImport } from './routes/api/billing/payments/create'
+import { Route as ApiBillingPaymentsDisconnectRouteImport } from './routes/api/billing/payments/disconnect'
+import { Route as ApiBillingPaymentsWebhookRouteImport } from './routes/api/billing/payments/webhook'
+import { Route as ApiBillingSubscribeCallbackRouteImport } from './routes/api/billing/subscribe/callback'
+import { Route as ApiBillingSubscribeCancelRouteImport } from './routes/api/billing/subscribe/cancel'
+import { Route as ApiBillingSubscribeRegisterRouteImport } from './routes/api/billing/subscribe/register'
+import { Route as ApiBillingSubscribeRunChargesRouteImport } from './routes/api/billing/subscribe/run-charges'
 
-const OwnerRoute = OwnerRouteImport.update({
-  id: '/owner',
-  path: '/owner',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OwnerControlTowerRoute = OwnerControlTowerRouteImport.update({
-  id: '/owner/control-tower',
-  path: '/control-tower',
-  getParentRoute: () => OwnerRoute,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SelectBusinessRoute = SelectBusinessRouteImport.update({
-  id: '/select-business',
-  path: '/select-business',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -97,68 +114,223 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CheckoutDemoRoute = CheckoutDemoRouteImport.update({
+  id: '/checkout-demo',
+  path: '/checkout-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NegociosIndexRoute = NegociosIndexRouteImport.update({
-  id: '/negocios/',
-  path: '/negocios/',
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ForoIndexRoute = ForoIndexRouteImport.update({
-  id: '/foro/',
-  path: '/foro/',
+const DirectorioRoute = DirectorioRouteImport.update({
+  id: '/directorio',
+  path: '/directorio',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NegociosSlugRoute = NegociosSlugRouteImport.update({
-  id: '/negocios/$slug',
-  path: '/negocios/$slug',
+const ExperienceRoute = ExperienceRouteImport.update({
+  id: '/experience',
+  path: '/experience',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ForoTopicIdRoute = ForoTopicIdRouteImport.update({
-  id: '/foro/$topicId',
-  path: '/foro/$topicId',
+const ExperienceParallelRoute = ExperienceParallelRouteImport.update({
+  id: '/experience-parallel',
+  path: '/experience-parallel',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const ExperienciaRoute = ExperienciaRouteImport.update({
+  id: '/experiencia',
+  path: '/experiencia',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedShiftsRoute = AuthenticatedShiftsRouteImport.update({
-  id: '/shifts',
-  path: '/shifts',
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticiasRoute = NoticiasRouteImport.update({
+  id: '/noticias',
+  path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerRoute = OwnerRouteImport.update({
+  id: '/owner',
+  path: '/owner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SelectBusinessRoute = SelectBusinessRouteImport.update({
+  id: '/select-business',
+  path: '/select-business',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAiRoute = AuthenticatedAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
-  id: '/sales',
-  path: '/sales',
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedQuotesRoute = AuthenticatedQuotesRouteImport.update({
-  id: '/quotes',
-  path: '/quotes',
+const AuthenticatedBusinessHealthRoute =
+  AuthenticatedBusinessHealthRouteImport.update({
+    id: '/business-health',
+    path: '/business-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBusinessSimulatorRoute =
+  AuthenticatedBusinessSimulatorRouteImport.update({
+    id: '/business-simulator',
+    path: '/business-simulator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCajaControlRoute =
+  AuthenticatedCajaControlRouteImport.update({
+    id: '/caja-control',
+    path: '/caja-control',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPurchasesRoute = AuthenticatedPurchasesRouteImport.update({
-  id: '/purchases',
-  path: '/purchases',
+const AuthenticatedConexionesRoute = AuthenticatedConexionesRouteImport.update({
+  id: '/conexiones',
+  path: '/conexiones',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
-  id: '/pos',
-  path: '/pos',
+const AuthenticatedCustomerActionCenterRoute =
+  AuthenticatedCustomerActionCenterRouteImport.update({
+    id: '/customer-action-center',
+    path: '/customer-action-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCustomerIntelligenceRoute =
+  AuthenticatedCustomerIntelligenceRouteImport.update({
+    id: '/customer-intelligence',
+    path: '/customer-intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCustomersIntelligenceRoute =
+  AuthenticatedCustomersIntelligenceRouteImport.update({
+    id: '/customers-intelligence',
+    path: '/customers-intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedExecutiveCommandCenterRoute =
+  AuthenticatedExecutiveCommandCenterRouteImport.update({
+    id: '/executive-command-center',
+    path: '/executive-command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceRoute = AuthenticatedFinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFinanceAccountingRoute =
+  AuthenticatedFinanceAccountingRouteImport.update({
+    id: '/finance-accounting',
+    path: '/finance-accounting',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceProfessionalRoute =
+  AuthenticatedFinanceProfessionalRouteImport.update({
+    id: '/finance-professional',
+    path: '/finance-professional',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancialControlRoute =
+  AuthenticatedFinancialControlRouteImport.update({
+    id: '/financial-control',
+    path: '/financial-control',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancialDashboardRoute =
+  AuthenticatedFinancialDashboardRouteImport.update({
+    id: '/financial-dashboard',
+    path: '/financial-dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancialIntegrityRoute =
+  AuthenticatedFinancialIntegrityRouteImport.update({
+    id: '/financial-integrity',
+    path: '/financial-integrity',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHelpCenterRoute = AuthenticatedHelpCenterRouteImport.update({
+  id: '/help-center',
+  path: '/help-center',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInventarioConteoRoute =
+  AuthenticatedInventarioConteoRouteImport.update({
+    id: '/inventario-conteo',
+    path: '/inventario-conteo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventarioOperacionesRoute =
+  AuthenticatedInventarioOperacionesRouteImport.update({
+    id: '/inventario-operaciones',
+    path: '/inventario-operaciones',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMfaRequiredRoute =
@@ -167,103 +339,203 @@ const AuthenticatedMfaRequiredRoute =
     path: '/mfa-required',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
+const AuthenticatedMobileScannerRoute =
+  AuthenticatedMobileScannerRouteImport.update({
+    id: '/mobile-scanner',
+    path: '/mobile-scanner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNuvaIntelligenceRoute =
+  AuthenticatedNuvaIntelligenceRouteImport.update({
+    id: '/nuva-intelligence',
+    path: '/nuva-intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleRoute = AuthenticatedPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedFinanceRoute = AuthenticatedFinanceRouteImport.update({
-  id: '/finance',
-  path: '/finance',
+const AuthenticatedPeopleAttendanceRoute =
+  AuthenticatedPeopleAttendanceRouteImport.update({
+    id: '/people-attendance',
+    path: '/people-attendance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleComplianceRoute =
+  AuthenticatedPeopleComplianceRouteImport.update({
+    id: '/people-compliance',
+    path: '/people-compliance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleEmployeesRoute =
+  AuthenticatedPeopleEmployeesRouteImport.update({
+    id: '/people-employees',
+    path: '/people-employees',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleLifecycleRoute =
+  AuthenticatedPeopleLifecycleRouteImport.update({
+    id: '/people-lifecycle',
+    path: '/people-lifecycle',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeoplePayrollRoute =
+  AuthenticatedPeoplePayrollRouteImport.update({
+    id: '/people-payroll',
+    path: '/people-payroll',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedPricingCalculatorRoute =
+  AuthenticatedPricingCalculatorRouteImport.update({
+    id: '/pricing-calculator',
+    path: '/pricing-calculator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPurchasesRoute = AuthenticatedPurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
+const AuthenticatedQuotesRoute = AuthenticatedQuotesRouteImport.update({
+  id: '/quotes',
+  path: '/quotes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
+const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAiRoute = AuthenticatedAiRouteImport.update({
-  id: '/ai',
-  path: '/ai',
+const AuthenticatedShiftsRoute = AuthenticatedShiftsRouteImport.update({
+  id: '/shifts',
+  path: '/shifts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiQuotesFollowUpRoute = ApiQuotesFollowUpRouteImport.update({
-  id: '/api/quotes/follow-up',
-  path: '/api/quotes/follow-up',
+const AuthenticatedShipmentsRoute = AuthenticatedShipmentsRouteImport.update({
+  id: '/shipments',
+  path: '/shipments',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIntegrationsRoute = ApiIntegrationsRouteImport.update({
+  id: '/api/integrations',
+  path: '/api/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIntegrationsEventsRoute = ApiIntegrationsEventsRouteImport.update({
+  id: '/api/integrations-events',
+  path: '/api/integrations-events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIntegrationsWebhookRoute = ApiIntegrationsWebhookRouteImport.update({
+  id: '/api/integrations-webhook',
+  path: '/api/integrations-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNuvaActionExecuteRoute = ApiNuvaActionExecuteRouteImport.update({
+  id: '/api/nuva-action-execute',
+  path: '/api/nuva-action-execute',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTelemetryRoute = ApiTelemetryRouteImport.update({
+  id: '/api/telemetry',
+  path: '/api/telemetry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForoIndexRoute = ForoIndexRouteImport.update({
+  id: '/foro/',
+  path: '/foro/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForoTopicIdRoute = ForoTopicIdRouteImport.update({
+  id: '/foro/$topicId',
+  path: '/foro/$topicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NegociosIndexRoute = NegociosIndexRouteImport.update({
+  id: '/negocios/',
+  path: '/negocios/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NegociosSlugRoute = NegociosSlugRouteImport.update({
+  id: '/negocios/$slug',
+  path: '/negocios/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerControlTowerRoute = OwnerControlTowerRouteImport.update({
+  id: '/control-tower',
+  path: '/control-tower',
+  getParentRoute: () => OwnerRoute,
+} as any)
+const PublicCatalogSlugRoute = PublicCatalogSlugRouteImport.update({
+  id: '/public-catalog/$slug',
+  path: '/public-catalog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBusinessExplainRoute = ApiBusinessExplainRouteImport.update({
+  id: '/api/business/explain',
+  path: '/api/business/explain',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronNuvaIntelligenceWorkerRoute =
+  ApiCronNuvaIntelligenceWorkerRouteImport.update({
+    id: '/api/cron/nuva-intelligence-worker',
+    path: '/api/cron/nuva-intelligence-worker',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiNotificationsLowStockCheckRoute =
   ApiNotificationsLowStockCheckRouteImport.update({
     id: '/api/notifications/low-stock-check',
     path: '/api/notifications/low-stock-check',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiCollectionsCheckOverdueRoute =
-  ApiCollectionsCheckOverdueRouteImport.update({
-    id: '/api/collections/check-overdue',
-    path: '/api/collections/check-overdue',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiBusinessExplainRoute = ApiBusinessExplainRouteImport.update({
-  id: '/api/business/explain',
-  path: '/api/business/explain',
+const ApiOwnerAgencyChatRoute = ApiOwnerAgencyChatRouteImport.update({
+  id: '/api/owner/agency-chat',
+  path: '/api/owner/agency-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBillingSubscribeRunChargesRoute =
-  ApiBillingSubscribeRunChargesRouteImport.update({
-    id: '/api/billing/subscribe/run-charges',
-    path: '/api/billing/subscribe/run-charges',
+const ApiOwnerOperationalMetricsRoute =
+  ApiOwnerOperationalMetricsRouteImport.update({
+    id: '/api/owner/operational-metrics',
+    path: '/api/owner/operational-metrics',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiBillingSubscribeRegisterRoute =
-  ApiBillingSubscribeRegisterRouteImport.update({
-    id: '/api/billing/subscribe/register',
-    path: '/api/billing/subscribe/register',
+const ApiBillingMercadopagoCreateRoute =
+  ApiBillingMercadopagoCreateRouteImport.update({
+    id: '/api/billing/mercadopago/create',
+    path: '/api/billing/mercadopago/create',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiBillingSubscribeCancelRoute =
-  ApiBillingSubscribeCancelRouteImport.update({
-    id: '/api/billing/subscribe/cancel',
-    path: '/api/billing/subscribe/cancel',
+const ApiBillingMercadopagoManageRoute =
+  ApiBillingMercadopagoManageRouteImport.update({
+    id: '/api/billing/mercadopago/manage',
+    path: '/api/billing/mercadopago/manage',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiBillingSubscribeCallbackRoute =
-  ApiBillingSubscribeCallbackRouteImport.update({
-    id: '/api/billing/subscribe/callback',
-    path: '/api/billing/subscribe/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiBillingPaymentsWebhookRoute =
-  ApiBillingPaymentsWebhookRouteImport.update({
-    id: '/api/billing/payments/webhook',
-    path: '/api/billing/payments/webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiBillingPaymentsDisconnectRoute =
-  ApiBillingPaymentsDisconnectRouteImport.update({
-    id: '/api/billing/payments/disconnect',
-    path: '/api/billing/payments/disconnect',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiBillingPaymentsCreateRoute =
-  ApiBillingPaymentsCreateRouteImport.update({
-    id: '/api/billing/payments/create',
-    path: '/api/billing/payments/create',
+const ApiBillingMercadopagoWebhookRoute =
+  ApiBillingMercadopagoWebhookRouteImport.update({
+    id: '/api/billing/mercadopago/webhook',
+    path: '/api/billing/mercadopago/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiBillingPaymentsConnectRoute =
@@ -272,13 +544,64 @@ const ApiBillingPaymentsConnectRoute =
     path: '/api/billing/payments/connect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiBillingPaymentsCreateRoute =
+  ApiBillingPaymentsCreateRouteImport.update({
+    id: '/api/billing/payments/create',
+    path: '/api/billing/payments/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingPaymentsDisconnectRoute =
+  ApiBillingPaymentsDisconnectRouteImport.update({
+    id: '/api/billing/payments/disconnect',
+    path: '/api/billing/payments/disconnect',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingPaymentsWebhookRoute =
+  ApiBillingPaymentsWebhookRouteImport.update({
+    id: '/api/billing/payments/webhook',
+    path: '/api/billing/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingSubscribeCallbackRoute =
+  ApiBillingSubscribeCallbackRouteImport.update({
+    id: '/api/billing/subscribe/callback',
+    path: '/api/billing/subscribe/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingSubscribeCancelRoute =
+  ApiBillingSubscribeCancelRouteImport.update({
+    id: '/api/billing/subscribe/cancel',
+    path: '/api/billing/subscribe/cancel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingSubscribeRegisterRoute =
+  ApiBillingSubscribeRegisterRouteImport.update({
+    id: '/api/billing/subscribe/register',
+    path: '/api/billing/subscribe/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingSubscribeRunChargesRoute =
+  ApiBillingSubscribeRunChargesRouteImport.update({
+    id: '/api/billing/subscribe/run-charges',
+    path: '/api/billing/subscribe/run-charges',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/owner': typeof OwnerRoute
-  '/owner/control-tower': typeof OwnerControlTowerRoute
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/checkout-demo': typeof CheckoutDemoRoute
+  '/demo': typeof DemoRoute
+  '/directorio': typeof DirectorioRoute
+  '/experience': typeof ExperienceRoute
+  '/experience-parallel': typeof ExperienceParallelRoute
+  '/experiencia': typeof ExperienciaRoute
+  '/news': typeof NewsRoute
+  '/noticias': typeof NoticiasRoute
   '/onboarding': typeof OnboardingRoute
+  '/owner': typeof OwnerRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
@@ -287,26 +610,65 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AuthenticatedAiRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/billing': typeof AuthenticatedBillingRoute
+  '/business-health': typeof AuthenticatedBusinessHealthRoute
+  '/business-simulator': typeof AuthenticatedBusinessSimulatorRoute
+  '/caja-control': typeof AuthenticatedCajaControlRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
+  '/conexiones': typeof AuthenticatedConexionesRoute
+  '/customer-action-center': typeof AuthenticatedCustomerActionCenterRoute
+  '/customer-intelligence': typeof AuthenticatedCustomerIntelligenceRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/customers-intelligence': typeof AuthenticatedCustomersIntelligenceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/executive-command-center': typeof AuthenticatedExecutiveCommandCenterRoute
   '/finance': typeof AuthenticatedFinanceRoute
+  '/finance-accounting': typeof AuthenticatedFinanceAccountingRoute
+  '/finance-professional': typeof AuthenticatedFinanceProfessionalRoute
+  '/financial-control': typeof AuthenticatedFinancialControlRoute
+  '/financial-dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/financial-integrity': typeof AuthenticatedFinancialIntegrityRoute
+  '/help-center': typeof AuthenticatedHelpCenterRoute
+  '/inventario-conteo': typeof AuthenticatedInventarioConteoRoute
+  '/inventario-operaciones': typeof AuthenticatedInventarioOperacionesRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mfa-required': typeof AuthenticatedMfaRequiredRoute
+  '/mobile-scanner': typeof AuthenticatedMobileScannerRoute
+  '/nuva-intelligence': typeof AuthenticatedNuvaIntelligenceRoute
+  '/people': typeof AuthenticatedPeopleRoute
+  '/people-attendance': typeof AuthenticatedPeopleAttendanceRoute
+  '/people-compliance': typeof AuthenticatedPeopleComplianceRoute
+  '/people-employees': typeof AuthenticatedPeopleEmployeesRoute
+  '/people-lifecycle': typeof AuthenticatedPeopleLifecycleRoute
+  '/people-payroll': typeof AuthenticatedPeoplePayrollRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/pricing-calculator': typeof AuthenticatedPricingCalculatorRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
+  '/shipments': typeof AuthenticatedShipmentsRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/integrations': typeof ApiIntegrationsRoute
+  '/api/integrations-events': typeof ApiIntegrationsEventsRoute
+  '/api/integrations-webhook': typeof ApiIntegrationsWebhookRoute
+  '/api/nuva-action-execute': typeof ApiNuvaActionExecuteRoute
+  '/api/telemetry': typeof ApiTelemetryRoute
   '/foro/$topicId': typeof ForoTopicIdRoute
   '/negocios/$slug': typeof NegociosSlugRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
+  '/public-catalog/$slug': typeof PublicCatalogSlugRoute
   '/foro/': typeof ForoIndexRoute
   '/negocios/': typeof NegociosIndexRoute
   '/api/business/explain': typeof ApiBusinessExplainRoute
-  '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/cron/nuva-intelligence-worker': typeof ApiCronNuvaIntelligenceWorkerRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
-  '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
+  '/api/owner/agency-chat': typeof ApiOwnerAgencyChatRoute
+  '/api/owner/operational-metrics': typeof ApiOwnerOperationalMetricsRoute
+  '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
+  '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
+  '/api/billing/mercadopago/webhook': typeof ApiBillingMercadopagoWebhookRoute
   '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
@@ -317,11 +679,20 @@ export interface FileRoutesByFullPath {
   '/api/billing/subscribe/run-charges': typeof ApiBillingSubscribeRunChargesRoute
 }
 export interface FileRoutesByTo {
-  '/owner': typeof OwnerRoute
-  '/owner/control-tower': typeof OwnerControlTowerRoute
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/checkout-demo': typeof CheckoutDemoRoute
+  '/demo': typeof DemoRoute
+  '/directorio': typeof DirectorioRoute
+  '/experience': typeof ExperienceRoute
+  '/experience-parallel': typeof ExperienceParallelRoute
+  '/experiencia': typeof ExperienciaRoute
+  '/news': typeof NewsRoute
+  '/noticias': typeof NoticiasRoute
   '/onboarding': typeof OnboardingRoute
+  '/owner': typeof OwnerRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
@@ -330,26 +701,65 @@ export interface FileRoutesByTo {
   '/ai': typeof AuthenticatedAiRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/billing': typeof AuthenticatedBillingRoute
+  '/business-health': typeof AuthenticatedBusinessHealthRoute
+  '/business-simulator': typeof AuthenticatedBusinessSimulatorRoute
+  '/caja-control': typeof AuthenticatedCajaControlRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
+  '/conexiones': typeof AuthenticatedConexionesRoute
+  '/customer-action-center': typeof AuthenticatedCustomerActionCenterRoute
+  '/customer-intelligence': typeof AuthenticatedCustomerIntelligenceRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/customers-intelligence': typeof AuthenticatedCustomersIntelligenceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/executive-command-center': typeof AuthenticatedExecutiveCommandCenterRoute
   '/finance': typeof AuthenticatedFinanceRoute
+  '/finance-accounting': typeof AuthenticatedFinanceAccountingRoute
+  '/finance-professional': typeof AuthenticatedFinanceProfessionalRoute
+  '/financial-control': typeof AuthenticatedFinancialControlRoute
+  '/financial-dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/financial-integrity': typeof AuthenticatedFinancialIntegrityRoute
+  '/help-center': typeof AuthenticatedHelpCenterRoute
+  '/inventario-conteo': typeof AuthenticatedInventarioConteoRoute
+  '/inventario-operaciones': typeof AuthenticatedInventarioOperacionesRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mfa-required': typeof AuthenticatedMfaRequiredRoute
+  '/mobile-scanner': typeof AuthenticatedMobileScannerRoute
+  '/nuva-intelligence': typeof AuthenticatedNuvaIntelligenceRoute
+  '/people': typeof AuthenticatedPeopleRoute
+  '/people-attendance': typeof AuthenticatedPeopleAttendanceRoute
+  '/people-compliance': typeof AuthenticatedPeopleComplianceRoute
+  '/people-employees': typeof AuthenticatedPeopleEmployeesRoute
+  '/people-lifecycle': typeof AuthenticatedPeopleLifecycleRoute
+  '/people-payroll': typeof AuthenticatedPeoplePayrollRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/pricing-calculator': typeof AuthenticatedPricingCalculatorRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
+  '/shipments': typeof AuthenticatedShipmentsRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/integrations': typeof ApiIntegrationsRoute
+  '/api/integrations-events': typeof ApiIntegrationsEventsRoute
+  '/api/integrations-webhook': typeof ApiIntegrationsWebhookRoute
+  '/api/nuva-action-execute': typeof ApiNuvaActionExecuteRoute
+  '/api/telemetry': typeof ApiTelemetryRoute
   '/foro/$topicId': typeof ForoTopicIdRoute
   '/negocios/$slug': typeof NegociosSlugRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
+  '/public-catalog/$slug': typeof PublicCatalogSlugRoute
   '/foro': typeof ForoIndexRoute
   '/negocios': typeof NegociosIndexRoute
   '/api/business/explain': typeof ApiBusinessExplainRoute
-  '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/cron/nuva-intelligence-worker': typeof ApiCronNuvaIntelligenceWorkerRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
-  '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
+  '/api/owner/agency-chat': typeof ApiOwnerAgencyChatRoute
+  '/api/owner/operational-metrics': typeof ApiOwnerOperationalMetricsRoute
+  '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
+  '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
+  '/api/billing/mercadopago/webhook': typeof ApiBillingMercadopagoWebhookRoute
   '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
@@ -360,13 +770,22 @@ export interface FileRoutesByTo {
   '/api/billing/subscribe/run-charges': typeof ApiBillingSubscribeRunChargesRoute
 }
 export interface FileRoutesById {
-  '/owner': typeof OwnerRoute
-  '/owner/control-tower': typeof OwnerControlTowerRoute
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/checkout-demo': typeof CheckoutDemoRoute
+  '/demo': typeof DemoRoute
+  '/directorio': typeof DirectorioRoute
+  '/experience': typeof ExperienceRoute
+  '/experience-parallel': typeof ExperienceParallelRoute
+  '/experiencia': typeof ExperienciaRoute
+  '/news': typeof NewsRoute
+  '/noticias': typeof NoticiasRoute
   '/onboarding': typeof OnboardingRoute
+  '/owner': typeof OwnerRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
@@ -375,26 +794,65 @@ export interface FileRoutesById {
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
+  '/_authenticated/business-health': typeof AuthenticatedBusinessHealthRoute
+  '/_authenticated/business-simulator': typeof AuthenticatedBusinessSimulatorRoute
+  '/_authenticated/caja-control': typeof AuthenticatedCajaControlRoute
+  '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
+  '/_authenticated/conexiones': typeof AuthenticatedConexionesRoute
+  '/_authenticated/customer-action-center': typeof AuthenticatedCustomerActionCenterRoute
+  '/_authenticated/customer-intelligence': typeof AuthenticatedCustomerIntelligenceRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
+  '/_authenticated/customers-intelligence': typeof AuthenticatedCustomersIntelligenceRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/executive-command-center': typeof AuthenticatedExecutiveCommandCenterRoute
   '/_authenticated/finance': typeof AuthenticatedFinanceRoute
+  '/_authenticated/finance-accounting': typeof AuthenticatedFinanceAccountingRoute
+  '/_authenticated/finance-professional': typeof AuthenticatedFinanceProfessionalRoute
+  '/_authenticated/financial-control': typeof AuthenticatedFinancialControlRoute
+  '/_authenticated/financial-dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/_authenticated/financial-integrity': typeof AuthenticatedFinancialIntegrityRoute
+  '/_authenticated/help-center': typeof AuthenticatedHelpCenterRoute
+  '/_authenticated/inventario-conteo': typeof AuthenticatedInventarioConteoRoute
+  '/_authenticated/inventario-operaciones': typeof AuthenticatedInventarioOperacionesRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/mfa-required': typeof AuthenticatedMfaRequiredRoute
+  '/_authenticated/mobile-scanner': typeof AuthenticatedMobileScannerRoute
+  '/_authenticated/nuva-intelligence': typeof AuthenticatedNuvaIntelligenceRoute
+  '/_authenticated/people': typeof AuthenticatedPeopleRoute
+  '/_authenticated/people-attendance': typeof AuthenticatedPeopleAttendanceRoute
+  '/_authenticated/people-compliance': typeof AuthenticatedPeopleComplianceRoute
+  '/_authenticated/people-employees': typeof AuthenticatedPeopleEmployeesRoute
+  '/_authenticated/people-lifecycle': typeof AuthenticatedPeopleLifecycleRoute
+  '/_authenticated/people-payroll': typeof AuthenticatedPeoplePayrollRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
+  '/_authenticated/pricing-calculator': typeof AuthenticatedPricingCalculatorRoute
   '/_authenticated/purchases': typeof AuthenticatedPurchasesRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shifts': typeof AuthenticatedShiftsRoute
+  '/_authenticated/shipments': typeof AuthenticatedShipmentsRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/integrations': typeof ApiIntegrationsRoute
+  '/api/integrations-events': typeof ApiIntegrationsEventsRoute
+  '/api/integrations-webhook': typeof ApiIntegrationsWebhookRoute
+  '/api/nuva-action-execute': typeof ApiNuvaActionExecuteRoute
+  '/api/telemetry': typeof ApiTelemetryRoute
   '/foro/$topicId': typeof ForoTopicIdRoute
   '/negocios/$slug': typeof NegociosSlugRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
+  '/public-catalog/$slug': typeof PublicCatalogSlugRoute
   '/foro/': typeof ForoIndexRoute
   '/negocios/': typeof NegociosIndexRoute
   '/api/business/explain': typeof ApiBusinessExplainRoute
-  '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/cron/nuva-intelligence-worker': typeof ApiCronNuvaIntelligenceWorkerRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
-  '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
+  '/api/owner/agency-chat': typeof ApiOwnerAgencyChatRoute
+  '/api/owner/operational-metrics': typeof ApiOwnerOperationalMetricsRoute
+  '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
+  '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
+  '/api/billing/mercadopago/webhook': typeof ApiBillingMercadopagoWebhookRoute
   '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
@@ -407,11 +865,20 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/owner'
-    | '/owner/control-tower'
     | '/'
     | '/auth'
+    | '/checkout'
+    | '/checkout-demo'
+    | '/demo'
+    | '/directorio'
+    | '/experience'
+    | '/experience-parallel'
+    | '/experiencia'
+    | '/news'
+    | '/noticias'
     | '/onboarding'
+    | '/owner'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/select-business'
@@ -420,26 +887,65 @@ export interface FileRouteTypes {
     | '/ai'
     | '/analytics'
     | '/billing'
+    | '/business-health'
+    | '/business-simulator'
+    | '/caja-control'
+    | '/catalog'
+    | '/conexiones'
+    | '/customer-action-center'
+    | '/customer-intelligence'
     | '/customers'
+    | '/customers-intelligence'
     | '/dashboard'
+    | '/executive-command-center'
     | '/finance'
+    | '/finance-accounting'
+    | '/finance-professional'
+    | '/financial-control'
+    | '/financial-dashboard'
+    | '/financial-integrity'
+    | '/help-center'
+    | '/inventario-conteo'
+    | '/inventario-operaciones'
     | '/inventory'
     | '/mfa-required'
+    | '/mobile-scanner'
+    | '/nuva-intelligence'
+    | '/people'
+    | '/people-attendance'
+    | '/people-compliance'
+    | '/people-employees'
+    | '/people-lifecycle'
+    | '/people-payroll'
     | '/pos'
+    | '/pricing-calculator'
     | '/purchases'
     | '/quotes'
     | '/sales'
     | '/settings'
     | '/shifts'
+    | '/shipments'
     | '/api/chat'
+    | '/api/health'
+    | '/api/integrations'
+    | '/api/integrations-events'
+    | '/api/integrations-webhook'
+    | '/api/nuva-action-execute'
+    | '/api/telemetry'
     | '/foro/$topicId'
     | '/negocios/$slug'
+    | '/owner/control-tower'
+    | '/public-catalog/$slug'
     | '/foro/'
     | '/negocios/'
     | '/api/business/explain'
-    | '/api/collections/check-overdue'
+    | '/api/cron/nuva-intelligence-worker'
     | '/api/notifications/low-stock-check'
-    | '/api/quotes/follow-up'
+    | '/api/owner/agency-chat'
+    | '/api/owner/operational-metrics'
+    | '/api/billing/mercadopago/create'
+    | '/api/billing/mercadopago/manage'
+    | '/api/billing/mercadopago/webhook'
     | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
@@ -450,11 +956,20 @@ export interface FileRouteTypes {
     | '/api/billing/subscribe/run-charges'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/owner'
-    | '/owner/control-tower'
     | '/'
     | '/auth'
+    | '/checkout'
+    | '/checkout-demo'
+    | '/demo'
+    | '/directorio'
+    | '/experience'
+    | '/experience-parallel'
+    | '/experiencia'
+    | '/news'
+    | '/noticias'
     | '/onboarding'
+    | '/owner'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/select-business'
@@ -463,26 +978,65 @@ export interface FileRouteTypes {
     | '/ai'
     | '/analytics'
     | '/billing'
+    | '/business-health'
+    | '/business-simulator'
+    | '/caja-control'
+    | '/catalog'
+    | '/conexiones'
+    | '/customer-action-center'
+    | '/customer-intelligence'
     | '/customers'
+    | '/customers-intelligence'
     | '/dashboard'
+    | '/executive-command-center'
     | '/finance'
+    | '/finance-accounting'
+    | '/finance-professional'
+    | '/financial-control'
+    | '/financial-dashboard'
+    | '/financial-integrity'
+    | '/help-center'
+    | '/inventario-conteo'
+    | '/inventario-operaciones'
     | '/inventory'
     | '/mfa-required'
+    | '/mobile-scanner'
+    | '/nuva-intelligence'
+    | '/people'
+    | '/people-attendance'
+    | '/people-compliance'
+    | '/people-employees'
+    | '/people-lifecycle'
+    | '/people-payroll'
     | '/pos'
+    | '/pricing-calculator'
     | '/purchases'
     | '/quotes'
     | '/sales'
     | '/settings'
     | '/shifts'
+    | '/shipments'
     | '/api/chat'
+    | '/api/health'
+    | '/api/integrations'
+    | '/api/integrations-events'
+    | '/api/integrations-webhook'
+    | '/api/nuva-action-execute'
+    | '/api/telemetry'
     | '/foro/$topicId'
     | '/negocios/$slug'
+    | '/owner/control-tower'
+    | '/public-catalog/$slug'
     | '/foro'
     | '/negocios'
     | '/api/business/explain'
-    | '/api/collections/check-overdue'
+    | '/api/cron/nuva-intelligence-worker'
     | '/api/notifications/low-stock-check'
-    | '/api/quotes/follow-up'
+    | '/api/owner/agency-chat'
+    | '/api/owner/operational-metrics'
+    | '/api/billing/mercadopago/create'
+    | '/api/billing/mercadopago/manage'
+    | '/api/billing/mercadopago/webhook'
     | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
@@ -496,7 +1050,18 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/checkout'
+    | '/checkout-demo'
+    | '/demo'
+    | '/directorio'
+    | '/experience'
+    | '/experience-parallel'
+    | '/experiencia'
+    | '/news'
+    | '/noticias'
     | '/onboarding'
+    | '/owner'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/select-business'
@@ -505,26 +1070,65 @@ export interface FileRouteTypes {
     | '/_authenticated/ai'
     | '/_authenticated/analytics'
     | '/_authenticated/billing'
+    | '/_authenticated/business-health'
+    | '/_authenticated/business-simulator'
+    | '/_authenticated/caja-control'
+    | '/_authenticated/catalog'
+    | '/_authenticated/conexiones'
+    | '/_authenticated/customer-action-center'
+    | '/_authenticated/customer-intelligence'
     | '/_authenticated/customers'
+    | '/_authenticated/customers-intelligence'
     | '/_authenticated/dashboard'
+    | '/_authenticated/executive-command-center'
     | '/_authenticated/finance'
+    | '/_authenticated/finance-accounting'
+    | '/_authenticated/finance-professional'
+    | '/_authenticated/financial-control'
+    | '/_authenticated/financial-dashboard'
+    | '/_authenticated/financial-integrity'
+    | '/_authenticated/help-center'
+    | '/_authenticated/inventario-conteo'
+    | '/_authenticated/inventario-operaciones'
     | '/_authenticated/inventory'
     | '/_authenticated/mfa-required'
+    | '/_authenticated/mobile-scanner'
+    | '/_authenticated/nuva-intelligence'
+    | '/_authenticated/people'
+    | '/_authenticated/people-attendance'
+    | '/_authenticated/people-compliance'
+    | '/_authenticated/people-employees'
+    | '/_authenticated/people-lifecycle'
+    | '/_authenticated/people-payroll'
     | '/_authenticated/pos'
+    | '/_authenticated/pricing-calculator'
     | '/_authenticated/purchases'
     | '/_authenticated/quotes'
     | '/_authenticated/sales'
     | '/_authenticated/settings'
     | '/_authenticated/shifts'
+    | '/_authenticated/shipments'
     | '/api/chat'
+    | '/api/health'
+    | '/api/integrations'
+    | '/api/integrations-events'
+    | '/api/integrations-webhook'
+    | '/api/nuva-action-execute'
+    | '/api/telemetry'
     | '/foro/$topicId'
     | '/negocios/$slug'
+    | '/owner/control-tower'
+    | '/public-catalog/$slug'
     | '/foro/'
     | '/negocios/'
     | '/api/business/explain'
-    | '/api/collections/check-overdue'
+    | '/api/cron/nuva-intelligence-worker'
     | '/api/notifications/low-stock-check'
-    | '/api/quotes/follow-up'
+    | '/api/owner/agency-chat'
+    | '/api/owner/operational-metrics'
+    | '/api/billing/mercadopago/create'
+    | '/api/billing/mercadopago/manage'
+    | '/api/billing/mercadopago/webhook'
     | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
@@ -539,22 +1143,43 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CheckoutRoute: typeof CheckoutRoute
+  CheckoutDemoRoute: typeof CheckoutDemoRoute
+  DemoRoute: typeof DemoRoute
+  DirectorioRoute: typeof DirectorioRoute
+  ExperienceRoute: typeof ExperienceRoute
+  ExperienceParallelRoute: typeof ExperienceParallelRoute
+  ExperienciaRoute: typeof ExperienciaRoute
+  NewsRoute: typeof NewsRoute
+  NoticiasRoute: typeof NoticiasRoute
   OnboardingRoute: typeof OnboardingRoute
+  OwnerRoute: typeof OwnerRouteWithChildren
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SelectBusinessRoute: typeof SelectBusinessRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  OwnerRoute: typeof OwnerRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiIntegrationsRoute: typeof ApiIntegrationsRoute
+  ApiIntegrationsEventsRoute: typeof ApiIntegrationsEventsRoute
+  ApiIntegrationsWebhookRoute: typeof ApiIntegrationsWebhookRoute
+  ApiNuvaActionExecuteRoute: typeof ApiNuvaActionExecuteRoute
+  ApiTelemetryRoute: typeof ApiTelemetryRoute
   ForoTopicIdRoute: typeof ForoTopicIdRoute
   NegociosSlugRoute: typeof NegociosSlugRoute
+  PublicCatalogSlugRoute: typeof PublicCatalogSlugRoute
   ForoIndexRoute: typeof ForoIndexRoute
   NegociosIndexRoute: typeof NegociosIndexRoute
   ApiBusinessExplainRoute: typeof ApiBusinessExplainRoute
-  ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
+  ApiCronNuvaIntelligenceWorkerRoute: typeof ApiCronNuvaIntelligenceWorkerRoute
   ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
-  ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
+  ApiOwnerAgencyChatRoute: typeof ApiOwnerAgencyChatRoute
+  ApiOwnerOperationalMetricsRoute: typeof ApiOwnerOperationalMetricsRoute
+  ApiBillingMercadopagoCreateRoute: typeof ApiBillingMercadopagoCreateRoute
+  ApiBillingMercadopagoManageRoute: typeof ApiBillingMercadopagoManageRoute
+  ApiBillingMercadopagoWebhookRoute: typeof ApiBillingMercadopagoWebhookRoute
   ApiBillingPaymentsConnectRoute: typeof ApiBillingPaymentsConnectRoute
   ApiBillingPaymentsCreateRoute: typeof ApiBillingPaymentsCreateRoute
   ApiBillingPaymentsDisconnectRoute: typeof ApiBillingPaymentsDisconnectRoute
@@ -567,53 +1192,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/select-business': {
-      id: '/select-business'
-      path: '/select-business'
-      fullPath: '/select-business'
-      preLoaderRoute: typeof SelectBusinessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -623,130 +1206,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/negocios/': {
-      id: '/negocios/'
-      path: '/negocios'
-      fullPath: '/negocios/'
-      preLoaderRoute: typeof NegociosIndexRouteImport
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/foro/': {
-      id: '/foro/'
-      path: '/foro'
-      fullPath: '/foro/'
-      preLoaderRoute: typeof ForoIndexRouteImport
+    '/checkout-demo': {
+      id: '/checkout-demo'
+      path: '/checkout-demo'
+      fullPath: '/checkout-demo'
+      preLoaderRoute: typeof CheckoutDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/negocios/$slug': {
-      id: '/negocios/$slug'
-      path: '/negocios/$slug'
-      fullPath: '/negocios/$slug'
-      preLoaderRoute: typeof NegociosSlugRouteImport
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/foro/$topicId': {
-      id: '/foro/$topicId'
-      path: '/foro/$topicId'
-      fullPath: '/foro/$topicId'
-      preLoaderRoute: typeof ForoTopicIdRouteImport
+    '/directorio': {
+      id: '/directorio'
+      path: '/directorio'
+      fullPath: '/directorio'
+      preLoaderRoute: typeof DirectorioRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/experience': {
+      id: '/experience'
+      path: '/experience'
+      fullPath: '/experience'
+      preLoaderRoute: typeof ExperienceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/shifts': {
-      id: '/_authenticated/shifts'
-      path: '/shifts'
-      fullPath: '/shifts'
-      preLoaderRoute: typeof AuthenticatedShiftsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/experience-parallel': {
+      id: '/experience-parallel'
+      path: '/experience-parallel'
+      fullPath: '/experience-parallel'
+      preLoaderRoute: typeof ExperienceParallelRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/experiencia': {
+      id: '/experiencia'
+      path: '/experiencia'
+      fullPath: '/experiencia'
+      preLoaderRoute: typeof ExperienciaRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/sales': {
-      id: '/_authenticated/sales'
-      path: '/sales'
-      fullPath: '/sales'
-      preLoaderRoute: typeof AuthenticatedSalesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/quotes': {
-      id: '/_authenticated/quotes'
-      path: '/quotes'
-      fullPath: '/quotes'
-      preLoaderRoute: typeof AuthenticatedQuotesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/noticias': {
+      id: '/noticias'
+      path: '/noticias'
+      fullPath: '/noticias'
+      preLoaderRoute: typeof NoticiasRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/purchases': {
-      id: '/_authenticated/purchases'
-      path: '/purchases'
-      fullPath: '/purchases'
-      preLoaderRoute: typeof AuthenticatedPurchasesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/pos': {
-      id: '/_authenticated/pos'
-      path: '/pos'
-      fullPath: '/pos'
-      preLoaderRoute: typeof AuthenticatedPosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/owner': {
+      id: '/owner'
+      path: '/owner'
+      fullPath: '/owner'
+      preLoaderRoute: typeof OwnerRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/mfa-required': {
-      id: '/_authenticated/mfa-required'
-      path: '/mfa-required'
-      fullPath: '/mfa-required'
-      preLoaderRoute: typeof AuthenticatedMfaRequiredRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/inventory': {
-      id: '/_authenticated/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/finance': {
-      id: '/_authenticated/finance'
-      path: '/finance'
-      fullPath: '/finance'
-      preLoaderRoute: typeof AuthenticatedFinanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/select-business': {
+      id: '/select-business'
+      path: '/select-business'
+      fullPath: '/select-business'
+      preLoaderRoute: typeof SelectBusinessRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/customers': {
-      id: '/_authenticated/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/billing': {
-      id: '/_authenticated/billing'
-      path: '/billing'
-      fullPath: '/billing'
-      preLoaderRoute: typeof AuthenticatedBillingRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/ai': {
+      id: '/_authenticated/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AuthenticatedAiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/analytics': {
@@ -756,32 +1346,368 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/ai': {
-      id: '/_authenticated/ai'
-      path: '/ai'
-      fullPath: '/ai'
-      preLoaderRoute: typeof AuthenticatedAiRouteImport
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/quotes/follow-up': {
-      id: '/api/quotes/follow-up'
-      path: '/api/quotes/follow-up'
-      fullPath: '/api/quotes/follow-up'
-      preLoaderRoute: typeof ApiQuotesFollowUpRouteImport
+    '/_authenticated/business-health': {
+      id: '/_authenticated/business-health'
+      path: '/business-health'
+      fullPath: '/business-health'
+      preLoaderRoute: typeof AuthenticatedBusinessHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/business-simulator': {
+      id: '/_authenticated/business-simulator'
+      path: '/business-simulator'
+      fullPath: '/business-simulator'
+      preLoaderRoute: typeof AuthenticatedBusinessSimulatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/caja-control': {
+      id: '/_authenticated/caja-control'
+      path: '/caja-control'
+      fullPath: '/caja-control'
+      preLoaderRoute: typeof AuthenticatedCajaControlRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/catalog': {
+      id: '/_authenticated/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof AuthenticatedCatalogRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/conexiones': {
+      id: '/_authenticated/conexiones'
+      path: '/conexiones'
+      fullPath: '/conexiones'
+      preLoaderRoute: typeof AuthenticatedConexionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customer-action-center': {
+      id: '/_authenticated/customer-action-center'
+      path: '/customer-action-center'
+      fullPath: '/customer-action-center'
+      preLoaderRoute: typeof AuthenticatedCustomerActionCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customer-intelligence': {
+      id: '/_authenticated/customer-intelligence'
+      path: '/customer-intelligence'
+      fullPath: '/customer-intelligence'
+      preLoaderRoute: typeof AuthenticatedCustomerIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customers': {
+      id: '/_authenticated/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customers-intelligence': {
+      id: '/_authenticated/customers-intelligence'
+      path: '/customers-intelligence'
+      fullPath: '/customers-intelligence'
+      preLoaderRoute: typeof AuthenticatedCustomersIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/executive-command-center': {
+      id: '/_authenticated/executive-command-center'
+      path: '/executive-command-center'
+      fullPath: '/executive-command-center'
+      preLoaderRoute: typeof AuthenticatedExecutiveCommandCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance': {
+      id: '/_authenticated/finance'
+      path: '/finance'
+      fullPath: '/finance'
+      preLoaderRoute: typeof AuthenticatedFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance-accounting': {
+      id: '/_authenticated/finance-accounting'
+      path: '/finance-accounting'
+      fullPath: '/finance-accounting'
+      preLoaderRoute: typeof AuthenticatedFinanceAccountingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance-professional': {
+      id: '/_authenticated/finance-professional'
+      path: '/finance-professional'
+      fullPath: '/finance-professional'
+      preLoaderRoute: typeof AuthenticatedFinanceProfessionalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financial-control': {
+      id: '/_authenticated/financial-control'
+      path: '/financial-control'
+      fullPath: '/financial-control'
+      preLoaderRoute: typeof AuthenticatedFinancialControlRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financial-dashboard': {
+      id: '/_authenticated/financial-dashboard'
+      path: '/financial-dashboard'
+      fullPath: '/financial-dashboard'
+      preLoaderRoute: typeof AuthenticatedFinancialDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financial-integrity': {
+      id: '/_authenticated/financial-integrity'
+      path: '/financial-integrity'
+      fullPath: '/financial-integrity'
+      preLoaderRoute: typeof AuthenticatedFinancialIntegrityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/help-center': {
+      id: '/_authenticated/help-center'
+      path: '/help-center'
+      fullPath: '/help-center'
+      preLoaderRoute: typeof AuthenticatedHelpCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventario-conteo': {
+      id: '/_authenticated/inventario-conteo'
+      path: '/inventario-conteo'
+      fullPath: '/inventario-conteo'
+      preLoaderRoute: typeof AuthenticatedInventarioConteoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventario-operaciones': {
+      id: '/_authenticated/inventario-operaciones'
+      path: '/inventario-operaciones'
+      fullPath: '/inventario-operaciones'
+      preLoaderRoute: typeof AuthenticatedInventarioOperacionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory': {
+      id: '/_authenticated/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mfa-required': {
+      id: '/_authenticated/mfa-required'
+      path: '/mfa-required'
+      fullPath: '/mfa-required'
+      preLoaderRoute: typeof AuthenticatedMfaRequiredRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mobile-scanner': {
+      id: '/_authenticated/mobile-scanner'
+      path: '/mobile-scanner'
+      fullPath: '/mobile-scanner'
+      preLoaderRoute: typeof AuthenticatedMobileScannerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/nuva-intelligence': {
+      id: '/_authenticated/nuva-intelligence'
+      path: '/nuva-intelligence'
+      fullPath: '/nuva-intelligence'
+      preLoaderRoute: typeof AuthenticatedNuvaIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people': {
+      id: '/_authenticated/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof AuthenticatedPeopleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-attendance': {
+      id: '/_authenticated/people-attendance'
+      path: '/people-attendance'
+      fullPath: '/people-attendance'
+      preLoaderRoute: typeof AuthenticatedPeopleAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-compliance': {
+      id: '/_authenticated/people-compliance'
+      path: '/people-compliance'
+      fullPath: '/people-compliance'
+      preLoaderRoute: typeof AuthenticatedPeopleComplianceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-employees': {
+      id: '/_authenticated/people-employees'
+      path: '/people-employees'
+      fullPath: '/people-employees'
+      preLoaderRoute: typeof AuthenticatedPeopleEmployeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-lifecycle': {
+      id: '/_authenticated/people-lifecycle'
+      path: '/people-lifecycle'
+      fullPath: '/people-lifecycle'
+      preLoaderRoute: typeof AuthenticatedPeopleLifecycleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-payroll': {
+      id: '/_authenticated/people-payroll'
+      path: '/people-payroll'
+      fullPath: '/people-payroll'
+      preLoaderRoute: typeof AuthenticatedPeoplePayrollRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pos': {
+      id: '/_authenticated/pos'
+      path: '/pos'
+      fullPath: '/pos'
+      preLoaderRoute: typeof AuthenticatedPosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pricing-calculator': {
+      id: '/_authenticated/pricing-calculator'
+      path: '/pricing-calculator'
+      fullPath: '/pricing-calculator'
+      preLoaderRoute: typeof AuthenticatedPricingCalculatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/purchases': {
+      id: '/_authenticated/purchases'
+      path: '/purchases'
+      fullPath: '/purchases'
+      preLoaderRoute: typeof AuthenticatedPurchasesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/quotes': {
+      id: '/_authenticated/quotes'
+      path: '/quotes'
+      fullPath: '/quotes'
+      preLoaderRoute: typeof AuthenticatedQuotesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sales': {
+      id: '/_authenticated/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof AuthenticatedSalesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/shifts': {
+      id: '/_authenticated/shifts'
+      path: '/shifts'
+      fullPath: '/shifts'
+      preLoaderRoute: typeof AuthenticatedShiftsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/shipments': {
+      id: '/_authenticated/shipments'
+      path: '/shipments'
+      fullPath: '/shipments'
+      preLoaderRoute: typeof AuthenticatedShipmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/notifications/low-stock-check': {
-      id: '/api/notifications/low-stock-check'
-      path: '/api/notifications/low-stock-check'
-      fullPath: '/api/notifications/low-stock-check'
-      preLoaderRoute: typeof ApiNotificationsLowStockCheckRouteImport
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/collections/check-overdue': {
-      id: '/api/collections/check-overdue'
-      path: '/api/collections/check-overdue'
-      fullPath: '/api/collections/check-overdue'
-      preLoaderRoute: typeof ApiCollectionsCheckOverdueRouteImport
+    '/api/integrations': {
+      id: '/api/integrations'
+      path: '/api/integrations'
+      fullPath: '/api/integrations'
+      preLoaderRoute: typeof ApiIntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations-events': {
+      id: '/api/integrations-events'
+      path: '/api/integrations-events'
+      fullPath: '/api/integrations-events'
+      preLoaderRoute: typeof ApiIntegrationsEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations-webhook': {
+      id: '/api/integrations-webhook'
+      path: '/api/integrations-webhook'
+      fullPath: '/api/integrations-webhook'
+      preLoaderRoute: typeof ApiIntegrationsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/nuva-action-execute': {
+      id: '/api/nuva-action-execute'
+      path: '/api/nuva-action-execute'
+      fullPath: '/api/nuva-action-execute'
+      preLoaderRoute: typeof ApiNuvaActionExecuteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telemetry': {
+      id: '/api/telemetry'
+      path: '/api/telemetry'
+      fullPath: '/api/telemetry'
+      preLoaderRoute: typeof ApiTelemetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foro/': {
+      id: '/foro/'
+      path: '/foro'
+      fullPath: '/foro/'
+      preLoaderRoute: typeof ForoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foro/$topicId': {
+      id: '/foro/$topicId'
+      path: '/foro/$topicId'
+      fullPath: '/foro/$topicId'
+      preLoaderRoute: typeof ForoTopicIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/negocios/': {
+      id: '/negocios/'
+      path: '/negocios'
+      fullPath: '/negocios/'
+      preLoaderRoute: typeof NegociosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/negocios/$slug': {
+      id: '/negocios/$slug'
+      path: '/negocios/$slug'
+      fullPath: '/negocios/$slug'
+      preLoaderRoute: typeof NegociosSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/control-tower': {
+      id: '/owner/control-tower'
+      path: '/control-tower'
+      fullPath: '/owner/control-tower'
+      preLoaderRoute: typeof OwnerControlTowerRouteImport
+      parentRoute: typeof OwnerRoute
+    }
+    '/public-catalog/$slug': {
+      id: '/public-catalog/$slug'
+      path: '/public-catalog/$slug'
+      fullPath: '/public-catalog/$slug'
+      preLoaderRoute: typeof PublicCatalogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/business/explain': {
@@ -791,53 +1717,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBusinessExplainRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/subscribe/run-charges': {
-      id: '/api/billing/subscribe/run-charges'
-      path: '/api/billing/subscribe/run-charges'
-      fullPath: '/api/billing/subscribe/run-charges'
-      preLoaderRoute: typeof ApiBillingSubscribeRunChargesRouteImport
+    '/api/cron/nuva-intelligence-worker': {
+      id: '/api/cron/nuva-intelligence-worker'
+      path: '/api/cron/nuva-intelligence-worker'
+      fullPath: '/api/cron/nuva-intelligence-worker'
+      preLoaderRoute: typeof ApiCronNuvaIntelligenceWorkerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/subscribe/register': {
-      id: '/api/billing/subscribe/register'
-      path: '/api/billing/subscribe/register'
-      fullPath: '/api/billing/subscribe/register'
-      preLoaderRoute: typeof ApiBillingSubscribeRegisterRouteImport
+    '/api/notifications/low-stock-check': {
+      id: '/api/notifications/low-stock-check'
+      path: '/api/notifications/low-stock-check'
+      fullPath: '/api/notifications/low-stock-check'
+      preLoaderRoute: typeof ApiNotificationsLowStockCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/subscribe/cancel': {
-      id: '/api/billing/subscribe/cancel'
-      path: '/api/billing/subscribe/cancel'
-      fullPath: '/api/billing/subscribe/cancel'
-      preLoaderRoute: typeof ApiBillingSubscribeCancelRouteImport
+    '/api/owner/agency-chat': {
+      id: '/api/owner/agency-chat'
+      path: '/api/owner/agency-chat'
+      fullPath: '/api/owner/agency-chat'
+      preLoaderRoute: typeof ApiOwnerAgencyChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/subscribe/callback': {
-      id: '/api/billing/subscribe/callback'
-      path: '/api/billing/subscribe/callback'
-      fullPath: '/api/billing/subscribe/callback'
-      preLoaderRoute: typeof ApiBillingSubscribeCallbackRouteImport
+    '/api/owner/operational-metrics': {
+      id: '/api/owner/operational-metrics'
+      path: '/api/owner/operational-metrics'
+      fullPath: '/api/owner/operational-metrics'
+      preLoaderRoute: typeof ApiOwnerOperationalMetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/payments/webhook': {
-      id: '/api/billing/payments/webhook'
-      path: '/api/billing/payments/webhook'
-      fullPath: '/api/billing/payments/webhook'
-      preLoaderRoute: typeof ApiBillingPaymentsWebhookRouteImport
+    '/api/billing/mercadopago/create': {
+      id: '/api/billing/mercadopago/create'
+      path: '/api/billing/mercadopago/create'
+      fullPath: '/api/billing/mercadopago/create'
+      preLoaderRoute: typeof ApiBillingMercadopagoCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/payments/disconnect': {
-      id: '/api/billing/payments/disconnect'
-      path: '/api/billing/payments/disconnect'
-      fullPath: '/api/billing/payments/disconnect'
-      preLoaderRoute: typeof ApiBillingPaymentsDisconnectRouteImport
+    '/api/billing/mercadopago/manage': {
+      id: '/api/billing/mercadopago/manage'
+      path: '/api/billing/mercadopago/manage'
+      fullPath: '/api/billing/mercadopago/manage'
+      preLoaderRoute: typeof ApiBillingMercadopagoManageRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/billing/payments/create': {
-      id: '/api/billing/payments/create'
-      path: '/api/billing/payments/create'
-      fullPath: '/api/billing/payments/create'
-      preLoaderRoute: typeof ApiBillingPaymentsCreateRouteImport
+    '/api/billing/mercadopago/webhook': {
+      id: '/api/billing/mercadopago/webhook'
+      path: '/api/billing/mercadopago/webhook'
+      fullPath: '/api/billing/mercadopago/webhook'
+      preLoaderRoute: typeof ApiBillingMercadopagoWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/billing/payments/connect': {
@@ -847,6 +1773,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBillingPaymentsConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/payments/create': {
+      id: '/api/billing/payments/create'
+      path: '/api/billing/payments/create'
+      fullPath: '/api/billing/payments/create'
+      preLoaderRoute: typeof ApiBillingPaymentsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/payments/disconnect': {
+      id: '/api/billing/payments/disconnect'
+      path: '/api/billing/payments/disconnect'
+      fullPath: '/api/billing/payments/disconnect'
+      preLoaderRoute: typeof ApiBillingPaymentsDisconnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/payments/webhook': {
+      id: '/api/billing/payments/webhook'
+      path: '/api/billing/payments/webhook'
+      fullPath: '/api/billing/payments/webhook'
+      preLoaderRoute: typeof ApiBillingPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/subscribe/callback': {
+      id: '/api/billing/subscribe/callback'
+      path: '/api/billing/subscribe/callback'
+      fullPath: '/api/billing/subscribe/callback'
+      preLoaderRoute: typeof ApiBillingSubscribeCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/subscribe/cancel': {
+      id: '/api/billing/subscribe/cancel'
+      path: '/api/billing/subscribe/cancel'
+      fullPath: '/api/billing/subscribe/cancel'
+      preLoaderRoute: typeof ApiBillingSubscribeCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/subscribe/register': {
+      id: '/api/billing/subscribe/register'
+      path: '/api/billing/subscribe/register'
+      fullPath: '/api/billing/subscribe/register'
+      preLoaderRoute: typeof ApiBillingSubscribeRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/subscribe/run-charges': {
+      id: '/api/billing/subscribe/run-charges'
+      path: '/api/billing/subscribe/run-charges'
+      fullPath: '/api/billing/subscribe/run-charges'
+      preLoaderRoute: typeof ApiBillingSubscribeRunChargesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -854,64 +1829,149 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiRoute: typeof AuthenticatedAiRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
+  AuthenticatedBusinessHealthRoute: typeof AuthenticatedBusinessHealthRoute
+  AuthenticatedBusinessSimulatorRoute: typeof AuthenticatedBusinessSimulatorRoute
+  AuthenticatedCajaControlRoute: typeof AuthenticatedCajaControlRoute
+  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
+  AuthenticatedConexionesRoute: typeof AuthenticatedConexionesRoute
+  AuthenticatedCustomerActionCenterRoute: typeof AuthenticatedCustomerActionCenterRoute
+  AuthenticatedCustomerIntelligenceRoute: typeof AuthenticatedCustomerIntelligenceRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
+  AuthenticatedCustomersIntelligenceRoute: typeof AuthenticatedCustomersIntelligenceRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedExecutiveCommandCenterRoute: typeof AuthenticatedExecutiveCommandCenterRoute
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
+  AuthenticatedFinanceAccountingRoute: typeof AuthenticatedFinanceAccountingRoute
+  AuthenticatedFinanceProfessionalRoute: typeof AuthenticatedFinanceProfessionalRoute
+  AuthenticatedFinancialControlRoute: typeof AuthenticatedFinancialControlRoute
+  AuthenticatedFinancialDashboardRoute: typeof AuthenticatedFinancialDashboardRoute
+  AuthenticatedFinancialIntegrityRoute: typeof AuthenticatedFinancialIntegrityRoute
+  AuthenticatedHelpCenterRoute: typeof AuthenticatedHelpCenterRoute
+  AuthenticatedInventarioConteoRoute: typeof AuthenticatedInventarioConteoRoute
+  AuthenticatedInventarioOperacionesRoute: typeof AuthenticatedInventarioOperacionesRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMfaRequiredRoute: typeof AuthenticatedMfaRequiredRoute
+  AuthenticatedMobileScannerRoute: typeof AuthenticatedMobileScannerRoute
+  AuthenticatedNuvaIntelligenceRoute: typeof AuthenticatedNuvaIntelligenceRoute
+  AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
+  AuthenticatedPeopleAttendanceRoute: typeof AuthenticatedPeopleAttendanceRoute
+  AuthenticatedPeopleComplianceRoute: typeof AuthenticatedPeopleComplianceRoute
+  AuthenticatedPeopleEmployeesRoute: typeof AuthenticatedPeopleEmployeesRoute
+  AuthenticatedPeopleLifecycleRoute: typeof AuthenticatedPeopleLifecycleRoute
+  AuthenticatedPeoplePayrollRoute: typeof AuthenticatedPeoplePayrollRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
+  AuthenticatedPricingCalculatorRoute: typeof AuthenticatedPricingCalculatorRoute
   AuthenticatedPurchasesRoute: typeof AuthenticatedPurchasesRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShiftsRoute: typeof AuthenticatedShiftsRoute
+  AuthenticatedShipmentsRoute: typeof AuthenticatedShipmentsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiRoute: AuthenticatedAiRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
+  AuthenticatedBusinessHealthRoute: AuthenticatedBusinessHealthRoute,
+  AuthenticatedBusinessSimulatorRoute: AuthenticatedBusinessSimulatorRoute,
+  AuthenticatedCajaControlRoute: AuthenticatedCajaControlRoute,
+  AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
+  AuthenticatedConexionesRoute: AuthenticatedConexionesRoute,
+  AuthenticatedCustomerActionCenterRoute:
+    AuthenticatedCustomerActionCenterRoute,
+  AuthenticatedCustomerIntelligenceRoute:
+    AuthenticatedCustomerIntelligenceRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
+  AuthenticatedCustomersIntelligenceRoute:
+    AuthenticatedCustomersIntelligenceRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedExecutiveCommandCenterRoute:
+    AuthenticatedExecutiveCommandCenterRoute,
   AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
+  AuthenticatedFinanceAccountingRoute: AuthenticatedFinanceAccountingRoute,
+  AuthenticatedFinanceProfessionalRoute: AuthenticatedFinanceProfessionalRoute,
+  AuthenticatedFinancialControlRoute: AuthenticatedFinancialControlRoute,
+  AuthenticatedFinancialDashboardRoute: AuthenticatedFinancialDashboardRoute,
+  AuthenticatedFinancialIntegrityRoute: AuthenticatedFinancialIntegrityRoute,
+  AuthenticatedHelpCenterRoute: AuthenticatedHelpCenterRoute,
+  AuthenticatedInventarioConteoRoute: AuthenticatedInventarioConteoRoute,
+  AuthenticatedInventarioOperacionesRoute:
+    AuthenticatedInventarioOperacionesRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMfaRequiredRoute: AuthenticatedMfaRequiredRoute,
+  AuthenticatedMobileScannerRoute: AuthenticatedMobileScannerRoute,
+  AuthenticatedNuvaIntelligenceRoute: AuthenticatedNuvaIntelligenceRoute,
+  AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
+  AuthenticatedPeopleAttendanceRoute: AuthenticatedPeopleAttendanceRoute,
+  AuthenticatedPeopleComplianceRoute: AuthenticatedPeopleComplianceRoute,
+  AuthenticatedPeopleEmployeesRoute: AuthenticatedPeopleEmployeesRoute,
+  AuthenticatedPeopleLifecycleRoute: AuthenticatedPeopleLifecycleRoute,
+  AuthenticatedPeoplePayrollRoute: AuthenticatedPeoplePayrollRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
+  AuthenticatedPricingCalculatorRoute: AuthenticatedPricingCalculatorRoute,
   AuthenticatedPurchasesRoute: AuthenticatedPurchasesRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShiftsRoute: AuthenticatedShiftsRoute,
+  AuthenticatedShipmentsRoute: AuthenticatedShipmentsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-const OwnerRouteChildren = {
+interface OwnerRouteChildren {
+  OwnerControlTowerRoute: typeof OwnerControlTowerRoute
+}
+
+const OwnerRouteChildren: OwnerRouteChildren = {
   OwnerControlTowerRoute: OwnerControlTowerRoute,
 }
+
 const OwnerRouteWithChildren = OwnerRoute._addFileChildren(OwnerRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  OwnerRoute: OwnerRouteWithChildren,
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CheckoutRoute: CheckoutRoute,
+  CheckoutDemoRoute: CheckoutDemoRoute,
+  DemoRoute: DemoRoute,
+  DirectorioRoute: DirectorioRoute,
+  ExperienceRoute: ExperienceRoute,
+  ExperienceParallelRoute: ExperienceParallelRoute,
+  ExperienciaRoute: ExperienciaRoute,
+  NewsRoute: NewsRoute,
+  NoticiasRoute: NoticiasRoute,
   OnboardingRoute: OnboardingRoute,
+  OwnerRoute: OwnerRouteWithChildren,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SelectBusinessRoute: SelectBusinessRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiIntegrationsRoute: ApiIntegrationsRoute,
+  ApiIntegrationsEventsRoute: ApiIntegrationsEventsRoute,
+  ApiIntegrationsWebhookRoute: ApiIntegrationsWebhookRoute,
+  ApiNuvaActionExecuteRoute: ApiNuvaActionExecuteRoute,
+  ApiTelemetryRoute: ApiTelemetryRoute,
   ForoTopicIdRoute: ForoTopicIdRoute,
   NegociosSlugRoute: NegociosSlugRoute,
+  PublicCatalogSlugRoute: PublicCatalogSlugRoute,
   ForoIndexRoute: ForoIndexRoute,
   NegociosIndexRoute: NegociosIndexRoute,
   ApiBusinessExplainRoute: ApiBusinessExplainRoute,
-  ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
+  ApiCronNuvaIntelligenceWorkerRoute: ApiCronNuvaIntelligenceWorkerRoute,
   ApiNotificationsLowStockCheckRoute: ApiNotificationsLowStockCheckRoute,
-  ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
+  ApiOwnerAgencyChatRoute: ApiOwnerAgencyChatRoute,
+  ApiOwnerOperationalMetricsRoute: ApiOwnerOperationalMetricsRoute,
+  ApiBillingMercadopagoCreateRoute: ApiBillingMercadopagoCreateRoute,
+  ApiBillingMercadopagoManageRoute: ApiBillingMercadopagoManageRoute,
+  ApiBillingMercadopagoWebhookRoute: ApiBillingMercadopagoWebhookRoute,
   ApiBillingPaymentsConnectRoute: ApiBillingPaymentsConnectRoute,
   ApiBillingPaymentsCreateRoute: ApiBillingPaymentsCreateRoute,
   ApiBillingPaymentsDisconnectRoute: ApiBillingPaymentsDisconnectRoute,
