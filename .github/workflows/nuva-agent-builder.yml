@@ -69,7 +69,7 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
+          gemini_model: gemini-2.5-flash-lite
           prompt: |
             You are the ${{ steps.role.outputs.role }} worker inside Nüva Agency.
             You are one of 13 persistent digital workers improving the real Nüva One repository.
@@ -116,7 +116,7 @@ jobs:
             TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {
-              "model": "gemini-3.1-flash-lite", "maxSessionTurns": 18,
+              "model": "gemini-2.5-flash-lite", "maxSessionTurns": 8,
               "telemetry": { "enabled": false }
             }
 
