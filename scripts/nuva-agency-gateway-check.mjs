@@ -23,11 +23,18 @@ if (process.env.NUVA_GATEWAY_LIVE_TEST === "true") {
     console.log(`Provider live test passed: ${result.provider}/${result.model}`);
   }
 
-  const fallback = await generate("Return exactly: NÜVA_GATEWAY_OK", { timeoutMs: 30000 });
-  if (!fallback.content.includes("NÜVA_GATEWAY_OK")) {
-    throw new Error("Gateway routing test returned an unexpected response");
+  if (configured.length >= 2) {
+    const forcedProvider = configured[0].provider;
+    const fallback = await generate("Return exactly: NÜVA_GATEWAY_OK", {
+      providers: configured.map((item) => item.provider),
+      forceFailureProvider: forcedProvider,
+      timeoutMs: 30000,
+    });
+    if (fallback.provider === forcedProvider || !fallback.content.includes("NÜVA_GATEWAY_OK")) {
+      throw new Error("Gateway forced-fallback test did not route to a different healthy provider");
+    }
+    console.log(`Forced fallback passed: ${forcedProvider} -> ${fallback.provider}`);
   }
-  console.log(`Gateway routing test passed through ${fallback.provider}/${fallback.model}`);
 } else {
   console.log("Live provider test disabled; no external API call was made.");
 }
