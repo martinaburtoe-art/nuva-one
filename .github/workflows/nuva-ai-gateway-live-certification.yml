@@ -99,7 +99,12 @@ jobs:
         shell: bash
         run: |
           state="${{ job.status }}"
-          if [ "$state" = "success" ]; then desc="All configured AI providers passed the live exact-response probe."; else desc="One or more AI providers failed the live exact-response probe."; fi
+          if [ -f /tmp/nuva-gateway-results.tsv ]; then
+            evidence="$(tr '\t' '=' < /tmp/nuva-gateway-results.tsv | paste -sd ' ' -)"
+          else
+            evidence="provider_evidence_unavailable"
+          fi
+          desc="Gateway $state; $evidence"
           curl --fail-with-body -sS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
