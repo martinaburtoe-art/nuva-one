@@ -24,7 +24,8 @@
     "agency:qa": "node scripts/nuva-agency-web-qa.mjs",
     "agency:correlate": "node scripts/nuva-agency-correlate.mjs",
     "agency:persist": "node scripts/nuva-agency-persist-incidents.mjs",
-    "agency:certify": "node scripts/nuva-agency-certify.mjs"
+    "agency:certify": "node scripts/nuva-agency-certify.mjs",
+    "agency:gateway": "node scripts/nuva-agency-gateway-check.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",
