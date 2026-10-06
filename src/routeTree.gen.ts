@@ -450,6 +450,8 @@ export interface FileRouteTypes {
     | '/api/billing/subscribe/run-charges'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/owner'
+    | '/owner/control-tower'
     | '/'
     | '/auth'
     | '/onboarding'
