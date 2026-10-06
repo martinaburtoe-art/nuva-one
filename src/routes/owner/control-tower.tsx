@@ -14,10 +14,25 @@ type AgencyMessage = { role: "user" | "assistant"; content: string };
 export const Route = createFileRoute("/owner/control-tower")({
   ssr: false,
   beforeLoad: async () => {
-    await supabase.auth.refreshSession();
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw redirect({
+        to: "/auth",
+        search: { redirect: "/owner/control-tower" },
+      });
+    }
+
     const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
-    if (data.user.app_metadata?.platform_role !== "owner") throw redirect({ to: "/" });
+    if (!data.user) {
+      throw redirect({
+        to: "/auth",
+        search: { redirect: "/owner/control-tower" },
+      });
+    }
+
+    if (data.user.app_metadata?.platform_role !== "owner") {
+      throw redirect({ to: "/" });
+    }
   },
   component: ControlTower,
 });
