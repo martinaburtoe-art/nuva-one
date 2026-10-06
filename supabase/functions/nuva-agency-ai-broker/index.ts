@@ -36,8 +36,18 @@ async function resolveCloudflareAccount(token: string, configured: string | null
   const json = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error("cloudflare_account_discovery_http_" + response.status);
   const accounts = Array.isArray(json?.result) ? json.result : [];
-  if (accounts.length !== 1 || !accounts[0]?.id) throw new Error("cloudflare_account_id_invalid_multiple_accounts");
-  return accounts[0].id;
+  for (const candidate of accounts) {
+    if (!candidate?.id) continue;
+    const probe = await fetch(
+      "https://api.cloudflare.com/client/v4/accounts/" + candidate.id + "/ai/models/search?search=llama-3.3-70b-instruct-fp8-fast&per_page=5",
+      { headers: { authorization: "Bearer " + token }, signal: AbortSignal.timeout(10000) }
+    );
+    if (!probe.ok) continue;
+    const probeJson = await probe.json().catch(() => ({}));
+    const models = Array.isArray(probeJson?.result) ? probeJson.result : [];
+    if (models.length > 0) return candidate.id;
+  }
+  throw new Error("cloudflare_account_ai_not_found");
 }
 
 async function providerConfig(provider: string) {
