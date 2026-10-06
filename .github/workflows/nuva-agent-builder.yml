@@ -109,14 +109,14 @@ jobs:
             - If there is no safe evidence-backed task, make no code change and report the finding.
 
             IMPLEMENTATION LOOP:
-            inspect -> choose one task -> implement -> test -> inspect diff -> summarize.
+            inspect only the relevant files -> choose one task -> implement a small focused patch -> stop. Do not browse the whole repository, do not redesign architecture, and do not spend turns explaining.
             The repository will create a PR only when the workspace changed.
 
             Final response must contain exactly:
             TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {
-              "model": "gemini-3.1-flash-lite", "maxSessionTurns": 60,
+              "model": "gemini-3.1-flash-lite", "maxSessionTurns": 18,
               "telemetry": { "enabled": false }
             }
 
