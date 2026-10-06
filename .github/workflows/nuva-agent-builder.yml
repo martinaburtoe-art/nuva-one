@@ -146,9 +146,10 @@ jobs:
         if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
+          token: ${{ secrets.AGENT_GITHUB_TOKEN }}
           branch: agent/agency-${{ steps.role.outputs.role }}
           delete-branch: true
+          draft: true
           title: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
           commit-message: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
           labels: 'agency-autonomous'
