@@ -110,3 +110,8 @@ The workforce must continue protecting the certified release chain:
 tenant -> customers -> products -> purchase -> receipt -> inventory -> sale -> payment -> cash/finance -> accounting -> Intelligence -> Action Queue -> outcome -> reports
 
 Any broken link or invariant blocks autonomous promotion.
+
+
+## Runtime activation probe
+
+The autonomous workforce requires GitHub Actions execution to be observable before runtime certification. This marker intentionally triggers the repository push event after the worker workflows are installed; it does not grant production mutation privileges.
