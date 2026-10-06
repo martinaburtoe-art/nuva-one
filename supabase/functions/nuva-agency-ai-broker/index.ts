@@ -44,7 +44,7 @@ function providerConfig(provider: string) {
     const token = Deno.env.get("CLOUDFLARE_API_TOKEN");
     const account = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
     if (!token || !account) return null;
-    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fast",
+    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
       headers: { authorization: "Bearer " + token },
       body: (prompt: string) => ({ prompt, max_tokens: 2048 }) };
   }
