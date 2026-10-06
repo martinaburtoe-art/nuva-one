@@ -52,3 +52,83 @@ export function getInventoryMetrics(product: InventoryMetricInput) {
     suggestedReplenishment: getSuggestedReplenishment(product),
   };
 }
+
+export type SupplyReplenishmentItem = {
+  productId?: string;
+  name?: string | null;
+  sku?: string | null;
+  available: number;
+  projected: number;
+  status: InventoryStatus;
+  suggestedReplenishment: number;
+  unitCost: number;
+  estimatedCost: number;
+};
+
+export type SupplyReplenishmentPlan = {
+  items: SupplyReplenishmentItem[];
+  totalItemsToOrder: number;
+  estimatedTotalCost: number;
+  outOfStockCount: number;
+  criticalCount: number;
+  reorderCount: number;
+  healthyCount: number;
+};
+
+export function calculateSupplyReplenishmentPlan(
+  products: (InventoryMetricInput & {
+    id?: string;
+    name?: string | null;
+    sku?: string | null;
+    cost?: number | null;
+  })[],
+): SupplyReplenishmentPlan {
+  const items: SupplyReplenishmentItem[] = [];
+  let totalItemsToOrder = 0;
+  let estimatedTotalCost = 0;
+  let outOfStockCount = 0;
+  let criticalCount = 0;
+  let reorderCount = 0;
+  let healthyCount = 0;
+
+  for (const product of products ?? []) {
+    const available = getAvailableStock(product);
+    const projected = getProjectedStock(product);
+    const status = getInventoryStatus(product);
+    const suggestedReplenishment = getSuggestedReplenishment(product);
+    const unitCost = nonNegative(product.cost);
+    const estimatedCost = suggestedReplenishment * unitCost;
+
+    if (status === "out_of_stock") outOfStockCount++;
+    else if (status === "critical") criticalCount++;
+    else if (status === "reorder") reorderCount++;
+    else healthyCount++;
+
+    if (suggestedReplenishment > 0) {
+      totalItemsToOrder += suggestedReplenishment;
+      estimatedTotalCost += estimatedCost;
+    }
+
+    items.push({
+      productId: product.id,
+      name: product.name,
+      sku: product.sku,
+      available,
+      projected,
+      status,
+      suggestedReplenishment,
+      unitCost,
+      estimatedCost,
+    });
+  }
+
+  return {
+    items,
+    totalItemsToOrder,
+    estimatedTotalCost,
+    outOfStockCount,
+    criticalCount,
+    reorderCount,
+    healthyCount,
+  };
+}
