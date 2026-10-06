@@ -1,8 +1,17 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/owner")({
   ssr: false,
-  beforeLoad: async () => {
-    throw redirect({ to: "/owner/control-tower" });
-  },
+  component: OwnerIndexRedirect,
 });
+
+function OwnerIndexRedirect() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    void navigate({ to: "/owner/control-tower", replace: true });
+  }, [navigate]);
+
+  return null;
+}
