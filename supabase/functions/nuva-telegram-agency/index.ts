@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { runHealthAudit } from "./audit.ts";
 
 const AGENTS = {
   constructor: "Constructor — construcción y reparación",
@@ -197,6 +198,30 @@ Deno.serve(async (request) => {
     return new Response("ok");
   }
 
+  if (text === "/audit" || text === "AUDIT_HEALTH_CHECK" || /auditoría.*salud|health.*check/i.test(text)) {
+    await sendTelegram(token, chatId, "Nüva Agency · iniciando AUDIT_HEALTH_CHECK (solo lectura)…");
+    const audit = await runHealthAudit(db, configuredProviders(), generate);
+    const lines = [
+      "Nüva Agency · AUDIT_HEALTH_CHECK",
+      "",
+      "Estado: " + audit.status,
+      "Duración: " + audit.duration_ms + " ms",
+      "Persistido: " + (audit.persisted ? "sí" : "no"),
+      "",
+      ...audit.evidence.map((item) => "• " + item.source + ": " + item.status.toUpperCase() + " — " + item.summary),
+    ];
+    await sendTelegram(token, chatId, lines.join("\n"));
+    if (Number.isSafeInteger(updateId)) {
+      await db.from("owner_telegram_sessions").upsert({
+        chat_id: chatId,
+        agent_id: currentAgent,
+        last_update_id: updateId,
+        updated_at: new Date().toISOString(),
+      });
+    }
+    return new Response("ok");
+  }
+
   if (text === "/status") {
     const [{ count: learning }, { count: incidents }, { count: findings }] = await Promise.all([
       db.from("ops_agent_learning").select("id", { count: "exact", head: true }),
@@ -210,6 +235,7 @@ Deno.serve(async (request) => {
       `• Incidentes registrados: ${incidents ?? 0}`,
       `• Hallazgos registrados: ${findings ?? 0}`,
       `• Proveedores IA configurados: ${configuredProviders().join(", ") || "ninguno"}`,
+      "• Proveedores IA configurados: " + (configuredProviders().join(", ") || "ninguno"),
       "• Cambios autónomos: siempre sujetos a CI, seguridad y gates.",
     ].join("\n"));
     return new Response("ok");
