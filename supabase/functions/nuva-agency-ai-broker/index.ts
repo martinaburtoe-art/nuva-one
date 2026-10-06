@@ -44,7 +44,7 @@ function providerConfig(provider: string) {
     const token = Deno.env.get("CLOUDFLARE_API_TOKEN");
     const account = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
     if (!token || !account) return null;
-    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
+    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fast",
       headers: { authorization: "Bearer " + token },
       body: (prompt: string) => ({ prompt, max_tokens: 2048 }) };
   }
@@ -54,23 +54,34 @@ function providerConfig(provider: string) {
 async function callProvider(provider: string, prompt: string) {
   const cfg = providerConfig(provider);
   if (!cfg) throw new Error("provider_not_configured");
-  const response = await fetch(cfg.endpoint, {
+  let lastError = "provider_request_failed";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(cfg.endpoint, {
     method: "POST",
     headers: { "content-type": "application/json", ...(cfg.headers || {}) },
     body: JSON.stringify(cfg.body(prompt)),
     signal: AbortSignal.timeout(30000),
   });
-  const raw = await response.text();
-  let json: any;
-  try { json = JSON.parse(raw); } catch { json = {}; }
-  if (!response.ok) throw new Error("provider_http_" + response.status);
-  const content = provider === "gemini"
+    const raw = await response.text();
+    let json: any;
+    try { json = JSON.parse(raw); } catch { json = {}; }
+    if (!response.ok) {
+      lastError = "provider_http_" + response.status;
+      if ([408, 425, 429, 500, 502, 503, 504].includes(response.status) && attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+        continue;
+      }
+      throw new Error(lastError);
+    }
+    const content = provider === "gemini"
     ? json?.candidates?.[0]?.content?.parts?.map((p: any) => p.text || "").join("") || ""
     : provider === "groq"
       ? json?.choices?.[0]?.message?.content || ""
       : json?.result?.response || "";
-  if (!content) throw new Error("provider_empty_response");
-  return content;
+    if (!content) throw new Error("provider_empty_response");
+    return content;
+  }
+  throw new Error(lastError);
 }
 
 Deno.serve(async (req: Request) => {
