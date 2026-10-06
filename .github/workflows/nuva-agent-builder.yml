@@ -116,7 +116,7 @@ jobs:
             TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {
-              "model": "gemini-3.1-flash-lite", "maxSessionTurns": 25,
+              "model": "gemini-3.1-flash-lite", "maxSessionTurns": 60,
               "telemetry": { "enabled": false }
             }
 
