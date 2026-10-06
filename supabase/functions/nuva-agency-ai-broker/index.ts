@@ -39,13 +39,15 @@ async function resolveCloudflareAccount(token: string, configured: string | null
   for (const candidate of accounts) {
     if (!candidate?.id) continue;
     const probe = await fetch(
-      "https://api.cloudflare.com/client/v4/accounts/" + candidate.id + "/ai/models/search?search=llama-3.3-70b-instruct-fp8-fast&per_page=5",
-      { headers: { authorization: "Bearer " + token }, signal: AbortSignal.timeout(10000) }
+      "https://api.cloudflare.com/client/v4/accounts/" + candidate.id + "/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      {
+        method: "POST",
+        headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+        body: JSON.stringify({ prompt: "Return exactly: NÜVA_HEALTH_OK", max_tokens: 16 }),
+        signal: AbortSignal.timeout(15000),
+      }
     );
-    if (!probe.ok) continue;
-    const probeJson = await probe.json().catch(() => ({}));
-    const models = Array.isArray(probeJson?.result) ? probeJson.result : [];
-    if (models.length > 0) return candidate.id;
+    if (probe.ok) return candidate.id;
   }
   throw new Error("cloudflare_account_ai_not_found");
 }
