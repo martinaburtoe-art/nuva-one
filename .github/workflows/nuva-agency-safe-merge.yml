@@ -31,6 +31,7 @@ jobs:
           echo "eligible=true" >> "$GITHUB_OUTPUT"
 
       - name: Checkout Agency PR
+        id: checkout
         if: steps.pr.outputs.eligible == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -90,7 +91,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/statuses/${{ steps.pr.outputs.sha }}"             -f state=success             -f context='nuva-agency/safety'             -f description='Independent Agency lint, typecheck, tests and build passed.'
+          gh api "repos/$GITHUB_REPOSITORY/statuses/${{ steps.checkout.outputs.sha }}"             -f state=success             -f context='nuva-agency/safety'             -f description='Independent Agency lint, typecheck, tests and build passed.'
 
       - name: Publish failed commit status
         if: steps.pr.outputs.eligible == 'true' && failure()
