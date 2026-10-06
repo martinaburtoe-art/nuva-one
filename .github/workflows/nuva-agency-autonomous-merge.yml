@@ -64,4 +64,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh pr merge "${{ steps.pr.outputs.number }}" --squash --auto --delete-branch
+          gh pr merge "${{ steps.pr.outputs.number }}" --squash --delete-branch
