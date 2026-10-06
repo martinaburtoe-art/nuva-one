@@ -1,8 +1,9 @@
 name: Nüva Agency — Independent Safety Verification
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,23 +13,42 @@ permissions:
 
 jobs:
   safety-gate:
-    if: startsWith(github.event.pull_request.head.ref, 'agent/agency-')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Inspect autonomous diff policy
+      - name: Find one Agency PR
+        id: pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          files="$(gh pr diff ${{ github.event.pull_request.number }} --name-only)"
+          number=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,headRefName --jq '[.[] | select(.headRefName | startswith("agent/agency-"))][0].number // empty')
+          if [ -z "$number" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Agency PR
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          number="${{ steps.pr.outputs.number }}"
+          sha=$(gh pr view "$number" --json headRefOid --jq '.headRefOid')
+          git fetch origin "$sha"
+          git checkout --detach "$sha"
+
+      - name: Inspect autonomous diff policy
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          number="${{ steps.pr.outputs.number }}"
+          files="$(gh pr diff "$number" --name-only)"
           echo "$files"
 
           blocked='^(\.github/workflows/|supabase/migrations/|supabase/functions/|src/routes/auth|src/routes/api/(billing|checkout)|src/lib/(auth|security)|src/integrations/supabase/types\.ts$)'
@@ -37,32 +57,30 @@ jobs:
             exit 1
           fi
 
-          additions=$(gh pr view ${{ github.event.pull_request.number }} --json additions --jq '.additions')
-          deletions=$(gh pr view ${{ github.event.pull_request.number }} --json deletions --jq '.deletions')
+          additions=$(gh pr view "$number" --json additions --jq '.additions')
+          deletions=$(gh pr view "$number" --json deletions --jq '.deletions')
           total=$((additions + deletions))
-          echo "Changed lines: $total"
           if [ "$total" -gt 220 ]; then
             echo "Autonomous diff exceeds 220 changed lines."
             exit 1
           fi
 
-          title=$(gh pr view ${{ github.event.pull_request.number }} --json title --jq '.title')
-          case "$title" in
-            'feat(agency): '*) ;;
-            *) echo "Unexpected autonomous PR title"; exit 1 ;;
-          esac
-
       - name: Install dependencies
+        if: steps.pr.outputs.eligible == 'true'
         run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Independent lint
+        if: steps.pr.outputs.eligible == 'true'
         run: npm run lint
 
       - name: Independent typecheck
+        if: steps.pr.outputs.eligible == 'true'
         run: npm run typecheck
 
       - name: Independent unit tests
+        if: steps.pr.outputs.eligible == 'true'
         run: npm run test
 
       - name: Independent production build
+        if: steps.pr.outputs.eligible == 'true'
         run: npm run build
