@@ -38,19 +38,28 @@ export const Route = createFileRoute("/owner/control-tower")({
 });
 
 async function loadMetrics() {
-  const { data, error } = await supabase.functions.invoke("owner-operational-metrics", { body: {} });
-  if (error) throw new Error("No se pudo consultar el centro de operaciones.");
-  const source = data as {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+
+  const response = await fetch("/api/owner/operational-metrics", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: "{}",
+  });
+  const source = await response.json().catch(() => null) as {
     generated_at?: string;
     telemetry?: { events_24h?: number; error_events_24h?: number; distinct_errors_24h?: number };
     services?: Record<string, unknown>;
     vitals?: Record<string, unknown>;
-  };
+    error?: string;
+  } | null;
+  if (!response.ok) throw new Error(source?.error ?? "No se pudo consultar el centro de operaciones.");
   return {
-    generated_at: source.generated_at,
+    generated_at: source?.generated_at,
     ai_telemetry: {
-      events_24h: source.telemetry?.events_24h ?? 0,
-      fallbacks_24h: source.telemetry?.error_events_24h ?? 0,
+      events_24h: source?.telemetry?.events_24h ?? 0,
+      fallbacks_24h: source?.telemetry?.error_events_24h ?? 0,
     },
   } satisfies ControlMetrics;
 }
