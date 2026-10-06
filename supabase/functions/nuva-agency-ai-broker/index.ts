@@ -16,13 +16,43 @@ async function verifyGitHubToken(token: string) {
   const { payload } = await jose.jwtVerify(token, JWKS, {
     issuer: ISSUER, audience: AUDIENCE,
   });
-  if (payload.repository !== REPOSITORY || payload.ref !== "refs/heads/main") {
-    throw new Error("github_identity_not_allowed");
-  }
+  if (payload.repository !== REPOSITORY) throw new Error("github_identity_not_allowed");
+  const event = payload.event_name;
+  const workflow = payload.workflow;
+  const isMain = payload.ref === "refs/heads/main" && event !== "pull_request";
+  const isCertifiedPull = event === "pull_request" &&
+    payload.base_ref === "main" &&
+    workflow === "Nüva Agency — AI Gateway Live Certification";
+  if (!isMain && !isCertifiedPull) throw new Error("github_execution_context_not_allowed");
   return payload;
 }
 
-function providerConfig(provider: string) {
+async function resolveCloudflareAccount(token: string, configured: string | null) {
+  if (configured && /^[a-f0-9]{32}$/i.test(configured)) return configured;
+  const response = await fetch("https://api.cloudflare.com/client/v4/accounts?page=1&per_page=10", {
+    headers: { authorization: "Bearer " + token },
+    signal: AbortSignal.timeout(10000),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("cloudflare_account_discovery_http_" + response.status);
+  const accounts = Array.isArray(json?.result) ? json.result : [];
+  for (const candidate of accounts) {
+    if (!candidate?.id) continue;
+    const probe = await fetch(
+      "https://api.cloudflare.com/client/v4/accounts/" + candidate.id + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
+      {
+        method: "POST",
+        headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+        body: JSON.stringify({ prompt: "Return exactly: NÜVA_HEALTH_OK", max_tokens: 16 }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+    if (probe.ok) return candidate.id;
+  }
+  throw new Error("cloudflare_account_ai_not_found");
+}
+
+async function providerConfig(provider: string) {
   if (provider === "gemini") {
     const key = Deno.env.get("GEMINI_API_KEY");
     if (!key) return null;
@@ -37,8 +67,9 @@ function providerConfig(provider: string) {
   }
   if (provider === "cloudflare") {
     const token = Deno.env.get("CLOUDFLARE_API_TOKEN");
-    const account = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
-    if (!token || !account) return null;
+    const configuredAccount = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
+    if (!token) return null;
+    const account = await resolveCloudflareAccount(token, configuredAccount);
     return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
       headers: { authorization: "Bearer " + token },
       body: (prompt: string) => ({ prompt, max_tokens: 2048 }) };
@@ -47,25 +78,39 @@ function providerConfig(provider: string) {
 }
 
 async function callProvider(provider: string, prompt: string) {
-  const cfg = providerConfig(provider);
+  const cfg = await providerConfig(provider);
   if (!cfg) throw new Error("provider_not_configured");
-  const response = await fetch(cfg.endpoint, {
+  let lastError = "provider_request_failed";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(cfg.endpoint, {
     method: "POST",
     headers: { "content-type": "application/json", ...(cfg.headers || {}) },
     body: JSON.stringify(cfg.body(prompt)),
     signal: AbortSignal.timeout(30000),
   });
-  const raw = await response.text();
-  let json: any;
-  try { json = JSON.parse(raw); } catch { json = {}; }
-  if (!response.ok) throw new Error("provider_http_" + response.status);
-  const content = provider === "gemini"
+    const raw = await response.text();
+    let json: any;
+    try { json = JSON.parse(raw); } catch { json = {}; }
+    if (!response.ok) {
+      lastError = "provider_http_" + response.status;
+      if (provider === "cloudflare" && response.status === 404) {
+        lastError += "_" + raw.replace(/[^a-zA-Z0-9_ -]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 180);
+      }
+      if ([408, 425, 429, 500, 502, 503, 504].includes(response.status) && attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+        continue;
+      }
+      throw new Error(lastError);
+    }
+    const content = provider === "gemini"
     ? json?.candidates?.[0]?.content?.parts?.map((p: any) => p.text || "").join("") || ""
     : provider === "groq"
       ? json?.choices?.[0]?.message?.content || ""
       : json?.result?.response || "";
-  if (!content) throw new Error("provider_empty_response");
-  return content;
+    if (!content) throw new Error("provider_empty_response");
+    return content;
+  }
+  throw new Error(lastError);
 }
 
 Deno.serve(async (req: Request) => {
