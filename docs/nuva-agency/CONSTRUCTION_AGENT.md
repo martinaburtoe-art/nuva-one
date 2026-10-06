@@ -105,7 +105,7 @@ A cycle is complete only when:
 
 ## Current release focus
 
-The workforce must continue protecting the certified release chain:
+P0 release issue #145 (Golden Business Simulation) is closed with 12/12 transactional checks passing and independent evidence persisted. The workforce must continue protecting the certified release chain:
 
 tenant -> customers -> products -> purchase -> receipt -> inventory -> sale -> payment -> cash/finance -> accounting -> Intelligence -> Action Queue -> outcome -> reports
 
