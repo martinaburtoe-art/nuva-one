@@ -1,3 +1,4 @@
+// Live certification trigger: deterministic, credential-safe provider probes.
 /**
  * Nüva AI Gateway
  *
