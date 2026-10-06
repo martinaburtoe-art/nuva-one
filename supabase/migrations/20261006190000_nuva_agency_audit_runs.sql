@@ -18,6 +18,11 @@ create policy "ops_agent_audit_runs_deny_public"
   using (false)
   with check (false);
 
+-- The Edge Function uses the Supabase service role exclusively for server-side
+-- evidence persistence. No client role receives write access.
+grant insert on table public.ops_agent_audit_runs to service_role;
+grant usage, select on sequence public.ops_agent_audit_runs_id_seq to service_role;
+
 create index if not exists idx_ops_agent_audit_runs_created_at
   on public.ops_agent_audit_runs (created_at desc);
 
