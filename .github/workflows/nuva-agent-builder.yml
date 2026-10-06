@@ -105,6 +105,8 @@ jobs:
             - Do not modify Supabase migrations, RLS/auth, billing, checkout, or GitHub workflows in an
               autonomous application PR. If such work is required, stop and record the blocker in the summary.
             - Keep the implementation focused; do not make unrelated broad refactors.
+            - Do not modify package-lock.json or generated route trees unless the selected task explicitly requires it.
+            - Keep autonomous application diffs under 220 changed lines; if the task needs more, stop and report the blocker.
             - Prefer changes that can be independently validated by lint, typecheck, unit tests and build.
             - If there is no safe evidence-backed task, make no code change and report the finding.
 
@@ -132,6 +134,56 @@ jobs:
             exit 0
           fi
           npm install --ignore-scripts --no-audit --no-fund
+          changed_lines="$(git diff --numstat | awk '{a+=$1; d+=$2} END {print a+d+0}')"
+          if [ "$changed_lines" -gt 220 ]; then
+            echo "Autonomous change rejected: $changed_lines changed lines exceeds the 220-line safety budget."
+            exit 1
+          fi
+          if git diff --name-only | grep -Eq '(^|/)package-lock\.json
+
+      - name: Remove generated verification churn
+        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
+        run: |
+          git checkout -- package-lock.json src/routeTree.gen.ts
+
+      - name: Create autonomous PR
+        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
+          branch: agent/agency-${{ steps.role.outputs.role }}
+          delete-branch: true
+          draft: true
+          title: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
+          commit-message: 'feat(agency): ${{ steps.role.outputs.role }} autonomous improvement'
+          labels: 'agency-autonomous'
+          body: |
+            ## Nüva Agency autonomous worker
+
+            **Worker:** `${{ steps.role.outputs.role }}`
+            **Cycle:** `${{ github.run_id }}`
+
+            This PR was created by the rotating Nüva Agency workforce.
+            It is eligible for autonomous merge only after the independent safety gate,
+            validation and repository protection rules pass.
+
+            ### Agent result
+            ${{ steps.worker.outputs.summary || 'Inspect workflow logs for the worker result.' }}
+
+            ### Policy
+            No secrets, production mutations, retired product scope or security bypasses are allowed.
+
+      - name: Publish cycle summary
+        if: always()
+        run: |
+          echo "## Nüva Agency cycle" >> "$GITHUB_STEP_SUMMARY"
+          echo "Worker: ${{ steps.role.outputs.role || 'unknown' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Safety gate skipped: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Worker outcome: ${{ steps.worker.outcome || 'not run' }}" >> "$GITHUB_STEP_SUMMARY"
+; then
+            echo "Autonomous change rejected: package-lock.json must not change unless dependency work is explicitly selected."
+            exit 1
+          fi
           npm run lint
           npm run typecheck
           npm run test
@@ -146,7 +198,7 @@ jobs:
         if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.AGENT_GITHUB_TOKEN }}
+          token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
           branch: agent/agency-${{ steps.role.outputs.role }}
           delete-branch: true
           draft: true
