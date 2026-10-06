@@ -75,7 +75,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bienvenido de vuelta");
-        navigate({ to: "/select-business" });
+        navigate({ to: search.redirect ?? "/select-business" });
       }
     } catch (err: any) {
       toast.error(err.message ?? "Error de autenticación");
