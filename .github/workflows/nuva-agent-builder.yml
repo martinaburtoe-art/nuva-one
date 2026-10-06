@@ -80,9 +80,9 @@ jobs:
             exit 0
           fi
 
-          ci=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status completed --limit 1 --json conclusion --jq '.[0].conclusion // ""')
-          echo "latest_main_ci=$ci"
-          if [ "$ci" = "failure" ] || [ "$ci" = "cancelled" ]; then
+          ci_fast=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci-fast.yml --branch main --status completed --limit 1 --json conclusion --jq '.[0].conclusion // ""')
+          echo "latest_main_ci_fast=$ci_fast"
+          if [ "$ci_fast" = "failure" ] || [ "$ci_fast" = "cancelled" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
