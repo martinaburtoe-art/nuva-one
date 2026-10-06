@@ -122,7 +122,9 @@ jobs:
             Inspect recent commits, open issues/PRs and current CI evidence before changing anything.
 
             Your role for this cycle is exactly: ${{ steps.role.outputs.role }}.
-            Complete exactly ONE evidence-backed task. Build or repair real code; do not merely write a report.
+            This is an OVERNIGHT CONTINUOUS-COMPLETION mission: the goal is to move the real Nüva One product as close as evidence permits to a releasable, usable and trustworthy state while the owner is offline.
+            Complete exactly ONE coherent evidence-backed implementation task in this cycle. Build or repair real code; do not merely write a report.
+            Do not stop because one task is complete. Validate the result, identify the next highest-priority verified gap, and leave evidence for the next cycle to continue without human assignment. If no safe implementation exists, perform a read-only certification/inspection task and record the concrete blocker or next target.
             Treat previous validated incidents, regressions and successful fixes as training evidence:
             infer recurring failure patterns, prefer proven remediation strategies, and record a concise
             new lesson in the PR summary when the cycle discovers a reusable pattern. Do not claim model
@@ -158,8 +160,8 @@ jobs:
             - If no safe evidence-backed task exists, make no code change and report the finding.
 
             IMPLEMENTATION LOOP:
-            inspect relevant files -> choose one task -> implement focused patch -> validate -> stop.
-            Do not browse the whole repository or redesign architecture.
+            inspect evidence -> choose highest-priority verified task -> implement focused patch -> validate -> prepare auditable PR -> record remaining risk and next target.
+            The end of this cycle is NOT the end of the mission. Do not browse the whole repository or redesign architecture.
 
             Final response must contain exactly:
             TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
