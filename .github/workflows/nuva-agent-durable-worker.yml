@@ -44,8 +44,6 @@ jobs:
         id: claim
         env:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
-          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
