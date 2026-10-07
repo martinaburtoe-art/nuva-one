@@ -29,7 +29,7 @@ create table if not exists public.agency_events (
 );
 
 create table if not exists public.agency_agent_leases (
-  id uuid primary key default gen_random_uuid(), task_id uuid not null unique references public.agency_tasks(id) on delete cascade,
+  id uuid primary key default gen_random_uuid(), task_id uuid not null references public.agency_tasks(id) on delete cascade,
   agent_id text not null, lease_token text not null unique,
   status text not null default 'active' check (status in ('active','released','expired')),
   heartbeat_at timestamptz not null default now(), expires_at timestamptz not null,
@@ -58,6 +58,7 @@ create index if not exists agency_tasks_mission_idx on public.agency_tasks(missi
 create index if not exists agency_events_mission_idx on public.agency_events(mission_id, created_at desc);
 create index if not exists agency_events_task_idx on public.agency_events(task_id, created_at desc);
 create index if not exists agency_leases_expiry_idx on public.agency_agent_leases(status, expires_at);
+create unique index if not exists agency_agent_leases_active_task_idx on public.agency_agent_leases(task_id) where status='active';
 create index if not exists agency_approvals_status_idx on public.agency_approvals(status, created_at desc);
 create index if not exists agency_artifacts_task_idx on public.agency_artifacts(task_id, created_at desc);
 
