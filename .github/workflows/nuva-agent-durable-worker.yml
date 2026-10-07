@@ -12,6 +12,7 @@ permissions:
   pull-requests: write
   issues: read
   actions: read
+  id-token: write
 
 concurrency:
   group: nuva-durable-agent-${{ github.repository }}
@@ -42,13 +43,14 @@ jobs:
       - name: Claim persisted mission task
         id: claim
         env:
-          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p .agency
-          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
+          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $AGENCY_OIDC_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
           printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
           lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
           if [ -z "$lease" ]; then
@@ -100,7 +102,7 @@ jobs:
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
+          AGENCY_OIDC_TOKEN: ${{ env.AGENCY_OIDC_TOKEN }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
           curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
