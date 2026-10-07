@@ -56,7 +56,10 @@ jobs:
             -H "Content-Type: application/json" \
             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}" \
-            --data '{"action":"claim_task","leaseSeconds":21600}')"\n          cat .agency/claim-response.json\n          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then exit 1; fi\n          response="$(cat .agency/claim-response.json)"
+            --data '{"action":"claim_task","leaseSeconds":21600}')"
+          cat .agency/claim-response.json
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then exit 1; fi
+          response="$(cat .agency/claim-response.json)"
           printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
           lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
           if [ -z "$lease" ]; then
@@ -66,7 +69,6 @@ jobs:
           echo "has_lease=true" >> "$GITHUB_OUTPUT"
           echo "AGENCY_LEASE_TOKEN=$lease" >> "$GITHUB_ENV"
           echo "Durable task claimed for ${{ steps.role.outputs.role }}."
-
       - name: Run autonomous worker
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         id: worker
