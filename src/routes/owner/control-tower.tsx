@@ -97,7 +97,7 @@ async function loadDurableAgency() {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
-  const response = await fetch("/api/owner/agency-control", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  const response = await fetch("https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
   const source = await response.json().catch(() => null) as DurableAgency & { error?: string };
   if (!response.ok) throw new Error(source?.error ?? "No se pudo consultar la misión durable.");
   return source;
