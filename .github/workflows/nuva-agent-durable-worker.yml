@@ -50,13 +50,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .agency
-          response="$(curl -fsS -X POST "$AGENCY_URL" \
+          http_code="$(curl -sS -o .agency/claim-response.json -w "%{http_code}" -X POST "$AGENCY_URL" \
             -H "X-Agency-GitHub-Token: $GH_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             -H "Content-Type: application/json" \
             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}" \
-            --data '{"action":"claim_task","leaseSeconds":21600}')"
+            --data '{"action":"claim_task","leaseSeconds":21600}')"\n          cat .agency/claim-response.json\n          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then exit 1; fi\n          response="$(cat .agency/claim-response.json)"
           printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
           lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
           if [ -z "$lease" ]; then
