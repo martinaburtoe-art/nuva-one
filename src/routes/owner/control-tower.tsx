@@ -23,6 +23,13 @@ type AgencyStatus = {
   audit_evidence: Array<{ id: number; protocol: string; status: "PASS" | "WARN" | "FAIL"; duration_ms: number | null; evidence: unknown; created_at: string }>;
 };
 
+type DurableMission = { id: string; title: string; objective: string; status: string; priority: number; current_agent_id: string | null; last_heartbeat_at: string | null; success_criteria: unknown[]; created_at: string; updated_at: string };
+type DurableTask = { id: string; mission_id: string; title: string; objective: string; agent_id: string; status: string; attempt_count: number; max_attempts: number; output_summary: string | null; created_at: string };
+type DurableEvent = { id: number; mission_id: string | null; task_id: string | null; agent_id: string | null; event_type: string; level: string; message: string; created_at: string };
+type DurableLease = { id: string; task_id: string; agent_id: string; status: string; heartbeat_at: string; expires_at: string };
+type DurableApproval = { id: string; action_type: string; risk_level: string; description: string; status: string; created_at: string };
+type DurableAgency = { generated_at: string; missions: DurableMission[]; tasks: DurableTask[]; events: DurableEvent[]; leases: DurableLease[]; approvals: DurableApproval[] };
+
 export const Route = createFileRoute("/owner/control-tower")({
   ssr: false,
   beforeLoad: async () => {
@@ -86,6 +93,16 @@ async function loadAgencyStatus() {
   return source;
 }
 
+async function loadDurableAgency() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+  const response = await fetch("/api/owner/agency-control", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  const source = await response.json().catch(() => null) as DurableAgency & { error?: string };
+  if (!response.ok) throw new Error(source?.error ?? "No se pudo consultar la misión durable.");
+  return source;
+}
+
 async function askWorker(agentId: string, messages: AgencyMessage[], signal: AbortSignal) {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
@@ -117,15 +134,17 @@ function ControlTower() {
   const [chatLoading, setChatLoading] = useState(false);
   const [agencyStatus, setAgencyStatus] = useState<AgencyStatus | null>(null);
   const [agencyLoading, setAgencyLoading] = useState(true);
+  const [durableAgency, setDurableAgency] = useState<DurableAgency | null>(null);
   const [agencyError, setAgencyError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const refresh = async () => {
     setLoading(true); setError(null);
     try {
-      const [nextMetrics, nextAgency] = await Promise.all([loadMetrics(), loadAgencyStatus()]);
+      const [nextMetrics, nextAgency, nextDurable] = await Promise.all([loadMetrics(), loadAgencyStatus(), loadDurableAgency()]);
       setMetrics(nextMetrics);
       setAgencyStatus(nextAgency);
+      setDurableAgency(nextDurable);
       setAgencyError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
@@ -189,6 +208,7 @@ function ControlTower() {
         </header>
 
         <LiveAgencyPanel status={agencyStatus} loading={agencyLoading} error={agencyError} onRefresh={() => void refresh()} />
+        <DurableAgencyPanel data={durableAgency} loading={agencyLoading} onRefresh={() => void refresh()} />
 
         <AgencyTeam selectedWorker={selectedWorker} onSelectWorker={(agentId) => { setSelectedWorker(agentId); setMessages([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]); }} />
 
@@ -248,6 +268,62 @@ function ControlTower() {
       </div>
     </main>
   );
+}
+
+function DurableAgencyPanel({ data, loading, onRefresh }: { data: DurableAgency | null; loading: boolean; onRefresh: () => void }) {
+  const mission = data?.missions.find((item) => !["completed","cancelled"].includes(item.status)) ?? data?.missions[0] ?? null;
+  const missionTasks = data?.tasks.filter((task) => task.mission_id === mission?.id) ?? [];
+  const activeAgents = new Set((data?.leases ?? []).filter((lease) => lease.status === "active" && new Date(lease.expires_at).getTime() > Date.now()).map((lease) => lease.agent_id));
+  const pendingApprovals = (data?.approvals ?? []).filter((approval) => approval.status === "pending").length;
+  const completed = missionTasks.filter((task) => task.status === "completed").length;
+  const total = missionTasks.length;
+  const progress = total ? Math.round((completed / total) * 100) : 0;
+
+  return (
+    <section className="mt-5 overflow-hidden rounded-[28px] border border-indigo-300/15 bg-indigo-400/[0.035]">
+      <div className="flex flex-col gap-4 border-b border-white/10 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-200">Control Plane durable</div>
+          <h2 className="mt-2 text-2xl font-semibold">Misión persistente · agentes autónomos</h2>
+          <p className="mt-1 max-w-3xl text-sm text-white/45">Estado almacenado en Supabase: misiones, tareas, leases, eventos y aprobaciones. Un worker puede morir y otro puede reanudar el trabajo desde el estado persistido.</p>
+        </div>
+        <button onClick={onRefresh} disabled={loading} className="inline-flex items-center gap-2 self-start rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10 disabled:opacity-50"><RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Actualizar</button>
+      </div>
+      <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-5">
+        <MiniStat label="Misión" value={mission?.status ?? "—"} />
+        <MiniStat label="Tareas" value={`${completed}/${total}`} />
+        <MiniStat label="Progreso" value={`${progress}%`} />
+        <MiniStat label="Agentes activos" value={String(activeAgents.size)} />
+        <MiniStat label="Aprobaciones" value={String(pendingApprovals)} />
+      </div>
+      <div className="grid gap-4 px-5 pb-5 sm:px-6 lg:grid-cols-[1.15fr_1fr]">
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="flex items-center justify-between gap-3"><div className="font-medium">{mission?.title ?? "Sin misión persistente"}</div><span className="rounded-full border border-indigo-300/15 px-2 py-1 text-[10px] text-indigo-200">{mission?.current_agent_id ?? "orchestrator"}</span></div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-indigo-300 transition-all" style={{ width: `${progress}%` }} /></div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {missionTasks.slice(0, 13).map((task) => <div key={task.id} className="rounded-xl bg-white/[0.03] p-3"><div className="flex items-center justify-between gap-2"><span className="text-xs font-medium text-white/75">{task.agent_id}</span><span className="text-[10px] text-white/30">{task.status}</span></div><div className="mt-1 text-[11px] text-white/40">{task.title}</div></div>)}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="font-medium">Timeline de colaboración</div>
+          <div className="mt-3 max-h-[300px] space-y-2 overflow-auto">
+            {(data?.events ?? []).slice(0, 14).map((event) => <div key={event.id} className="rounded-xl bg-white/[0.03] p-3"><div className="flex items-center justify-between gap-2 text-[10px] text-white/30"><span>{event.agent_id ?? "system"} · {event.event_type}</span><span>{new Date(event.created_at).toLocaleTimeString("es-CL")}</span></div><div className="mt-1 text-xs text-white/65">{event.message}</div></div>)}
+            {!data?.events?.length ? <div className="text-xs text-white/30">Esperando el primer evento durable.</div> : null}
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-white/10 px-5 py-4 sm:px-6">
+        <div className="flex flex-wrap gap-2">
+          {(data?.leases ?? []).filter((lease) => lease.status === "active").slice(0, 13).map((lease) => <span key={lease.id} className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.04] px-2.5 py-1.5 text-[10px] text-emerald-200">{lease.agent_id} · lease activo</span>)}
+          {pendingApprovals > 0 ? <span className="rounded-full border border-amber-300/15 bg-amber-300/[0.04] px-2.5 py-1.5 text-[10px] text-amber-200">{pendingApprovals} aprobación(es) requieren Owner</span> : <span className="rounded-full border border-white/10 px-2.5 py-1.5 text-[10px] text-white/35">Sin aprobaciones pendientes</span>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3"><div className="text-[10px] uppercase tracking-[0.16em] text-white/30">{label}</div><div className="mt-1 text-lg font-semibold text-white/85">{value}</div></div>;
 }
 
 function LiveAgencyPanel({ status, loading, error, onRefresh }: { status: AgencyStatus | null; loading: boolean; error: string | null; onRefresh: () => void }) {
