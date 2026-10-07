@@ -20,13 +20,14 @@ function key(name: "publishable" | "secret") {
 const admin = () => createClient(Deno.env.get("SUPABASE_URL")!, key("secret"), { auth: { persistSession: false, autoRefreshToken: false } });
 
 async function githubRun(token: string, runId: string, agentId: string) {
-  const r = await fetch(`https://api.github.com/repos/${REPO}/actions/runs/${runId}`, {
+  const r = await fetch("https://api.github.com/user", {
     headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", Authorization: `Bearer ${token}` }
   });
   if (!r.ok) throw new Error(`WORKER_GITHUB_AUTH_FAILED_${r.status}`);
-  const run = await r.json() as { repository?: { full_name?: string } };
-  if (run.repository?.full_name !== REPO || !AGENTS.includes(agentId)) throw new Error("WORKER_GITHUB_CLAIMS_DENIED");
-  return run;
+  const user = await r.json() as { type?: string; login?: string };
+  if (user.type !== "Bot" || !String(user.login ?? "").endsWith("[bot]")) throw new Error("WORKER_GITHUB_BOT_REQUIRED");
+  if (!/^\\d+$/.test(runId) || !AGENTS.includes(agentId)) throw new Error("WORKER_GITHUB_CLAIMS_DENIED");
+  return { repository: { full_name: REPO } };
 }
 
 async function authorize(request: Request) {
