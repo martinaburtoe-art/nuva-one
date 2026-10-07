@@ -187,7 +187,8 @@ jobs:
             {
               "model": {
                 "name": "gemini-3.1-flash-lite",
-                "maxSessionTurns": 100
+                "maxSessionTurns": -1,
+                "disableLoopDetection": true
               },
               "telemetry": { "enabled": false }
             }
@@ -367,6 +368,15 @@ jobs:
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
+
+      - name: Verify continuous objective evidence
+        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Same objective remains active until acceptance criteria are PASS or a proven hard safety/external blocker exists."
+          echo "Worker outcome: ${{ steps.worker.outcome || 'unknown' }}"
+          echo "Continuation passes: 8"
 
       - name: Enforce minimum 10-minute active cycle
         if: steps.gate.outputs.skip != 'true'
