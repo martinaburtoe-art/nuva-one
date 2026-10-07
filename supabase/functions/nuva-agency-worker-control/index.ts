@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createRemoteJWKSet, jwtVerify } from "npm:jose@6";
 
 const REPO = "martinaburtoe-art/nuva-one";
 const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release"];
@@ -19,14 +20,12 @@ function key(name: "publishable" | "secret") {
 
 const admin = () => createClient(Deno.env.get("SUPABASE_URL")!, key("secret"), { auth: { persistSession: false, autoRefreshToken: false } });
 
+const GITHUB_JWKS = createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 async function githubRun(token: string, runId: string, agentId: string) {
-  const r = await fetch("https://api.github.com/user", {
-    headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", Authorization: `Bearer ${token}` }
-  });
-  if (!r.ok) throw new Error(`WORKER_GITHUB_AUTH_FAILED_${r.status}`);
-  const user = await r.json() as { type?: string; login?: string };
-  if (!user.login) throw new Error("WORKER_GITHUB_IDENTITY_REQUIRED");
-  if (!/^\\d+$/.test(runId) || !AGENTS.includes(agentId)) throw new Error("WORKER_GITHUB_CLAIMS_DENIED");
+  const { payload } = await jwtVerify(token, GITHUB_JWKS, { issuer: "https://token.actions.githubusercontent.com" });
+  if (payload.repository !== REPO || String(payload.run_id ?? "") !== runId || !AGENTS.includes(agentId)) {
+    throw new Error("WORKER_OIDC_CLAIMS_DENIED");
+  }
   return { repository: { full_name: REPO } };
 }
 
