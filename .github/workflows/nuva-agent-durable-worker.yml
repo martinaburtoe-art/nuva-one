@@ -1,0 +1,223 @@
+name: Nüva One — Durable Autonomous Agent Worker
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '7,27,47 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+  actions: read
+
+concurrency:
+  group: nuva-durable-agent-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  durable-agent:
+    name: Durable autonomous agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select specialist
+        id: role
+        shell: bash
+        run: |
+          set -euo pipefail
+          roles=(constructor orchestrator finance sales supply people compliance growth security qa sentinel ux release)
+          slot=$(( $(date -u +%s) / 1200 ))
+          index=$(( slot % ${#roles[@]} ))
+          echo "role=${roles[$index]}" >> "$GITHUB_OUTPUT"
+          echo "Selected durable agent: ${roles[$index]}"
+
+      - name: Claim persisted mission task
+        id: claim
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .agency
+          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
+          printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
+          lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
+          if [ -z "$lease" ]; then
+            echo "has_lease=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_lease=true" >> "$GITHUB_OUTPUT"
+          echo "AGENCY_LEASE_TOKEN=$lease" >> "$GITHUB_ENV"
+          echo "Durable task claimed for ${{ steps.role.outputs.role }}."
+
+      - name: Run autonomous worker
+        if: ${{ steps.claim.outputs.has_lease == 'true' }}
+        id: worker
+        continue-on-error: true
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            You are a durable autonomous Nüva One engineering agent.
+            Read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md, docs/AGENT_BACKLOG.md and docs/nuva-agency/LEARNING_PROTOCOL.md.
+            Then read .agency/task.json. That persisted task is authoritative for this run.
+            Your role is exactly: ${{ steps.role.outputs.role }}.
+
+            Mission: make Nüva One genuinely ready for market. Work on the persisted objective until it is actually
+            validated. Inspect first, define acceptance criteria, implement only safe evidence-backed changes, validate,
+            inspect the result, repair remaining defects and revalidate. Use the real repository and real tools.
+            Delegate necessary specialist work through the durable control plane; do not leave informal handoffs.
+            Preserve evidence in commits/tests/artifacts and do not claim completion from confidence.
+
+            C1 Code Integrity, C2 Integration, C3 Business Integrity, C4 Experience and C5 Production are the acceptance
+            model. Preserve tenant isolation, RLS, auth, billing, checkout, deterministic financial/legal calculations
+            and existing security controls. Never expose secrets, mutate production data directly, or weaken controls.
+            Do not add Nüva Studio, WhatsApp or n8n runtime architecture. Do not duplicate Nüva Intelligence.
+            If an external blocker prevents part of the objective, prove it with evidence and continue all safe work
+            that remains possible.
+
+            The worker is durable: do not treat process termination as task completion. The task state is persisted in
+            Supabase and may be resumed by another worker if this run expires or fails.
+
+            End with exactly: TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
+
+      - name: Heartbeat durable lease
+        if: ${{ steps.claim.outputs.has_lease == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+        run: |
+          curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+
+      - name: Continue durable objective — pass 1
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.worker.outcome != 'cancelled' }}
+        continue-on-error: true
+        id: continue_1
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 1/4 OF THE SAME PERSISTED TASK.
+            Inspect .agency/task.json, the current diff, tests and evidence. Continue the same objective.
+            Find remaining defects, edge cases, regressions or missing proof. Implement safe fixes and validate them.
+            Do not start a new objective and do not stop merely because the first patch worked.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
+
+      - name: Heartbeat after pass 1
+        if: ${{ steps.claim.outputs.has_lease == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+        run: |
+          curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+
+      - name: Continue durable objective — pass 2
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_1.outcome != 'cancelled' }}
+        continue-on-error: true
+        id: continue_2
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 2/4 OF THE SAME PERSISTED TASK.
+            Re-inspect the current state and accumulated evidence. Continue implementation or targeted regression.
+            Repair anything still incomplete. Do not fabricate progress.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
+
+      - name: Heartbeat after pass 2
+        if: ${{ steps.claim.outputs.has_lease == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+        run: |
+          curl -fsS -X POST "$AGENCY_URL" -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+
+      - name: Continue durable objective — pass 3
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_2.outcome != 'cancelled' }}
+        continue-on-error: true
+        id: continue_3
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 3/4 OF THE SAME PERSISTED TASK.
+            Perform deeper boundary verification, integration checks and regression analysis for the same objective.
+            Implement safe repairs and validate. Stop only when complete or externally blocked with evidence.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
+
+      - name: Heartbeat after pass 3
+        if: ${{ steps.claim.outputs.has_lease == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+        run: |
+          curl -fsS -X POST "$AGENCY_URL" -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+
+      - name: Continue durable objective — pass 4
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_3.outcome != 'cancelled' }}
+        continue-on-error: true
+        id: continue_4
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 4/4 OF THE SAME PERSISTED TASK.
+            Perform the final independent verification pass. Inspect the objective, diff, tests, runtime evidence and
+            remaining risk. Repair safe remaining defects. Do not declare success without evidence.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
+
+      - name: Finish persisted task
+        if: ${{ always() && steps.claim.outputs.has_lease == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+        run: |
+          status="completed"
+          if [ "${{ steps.worker.outcome }}" != "success" ] || [ "${{ steps.continue_4.outcome }}" = "failure" ]; then status="failed"; fi
+          summary="$(cat .agency/task.json | tr '\n' ' ' | cut -c1-3000)"
+          payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "${{ steps.role.outputs.role }}" '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent}}')"
+          curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$payload" | jq .
