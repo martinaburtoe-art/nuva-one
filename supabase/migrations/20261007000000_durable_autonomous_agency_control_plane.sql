@@ -90,7 +90,7 @@ begin
     order by t.priority desc,t.created_at asc for update skip locked limit 1;
   if not found then return null; end if;
   v_lease.id:=gen_random_uuid(); v_lease.task_id:=v_task.id; v_lease.agent_id:=p_agent_id;
-  v_lease.lease_token:=encode(gen_random_bytes(24),'hex'); v_lease.status:='active'; v_lease.heartbeat_at:=v_now;
+  v_lease.lease_token:=md5(v_lease.id::text || v_task.id::text || clock_timestamp()::text); v_lease.status:='active'; v_lease.heartbeat_at:=v_now;
   v_lease.expires_at:=v_now+make_interval(secs=>p_lease_seconds);
   insert into agency_agent_leases(id,task_id,agent_id,lease_token,status,heartbeat_at,expires_at)
     values(v_lease.id,v_lease.task_id,v_lease.agent_id,v_lease.lease_token,'active',v_now,v_lease.expires_at);
