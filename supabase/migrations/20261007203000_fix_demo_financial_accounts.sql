@@ -1,5 +1,4 @@
--- Bootstrap del plan contable para todo negocio nuevo y reparación del demo existente.
--- Mantiene la creación de cuentas idempotente por (business_id, code).
+-- Bootstrap del plan contable para negocios nuevos y reparación del demo existente.
 
 create or replace function private.seed_financial_accounts_on_business_created()
 returns trigger
@@ -29,7 +28,6 @@ begin
     (new.id,'8.01.01','Otros gastos','other_expense','other_expense','other_expense')
   on conflict (business_id,code) do update
     set name=excluded.name, system_key=excluded.system_key;
-
   return new;
 end;
 $$;
@@ -44,12 +42,11 @@ after insert on public.businesses
 for each row
 execute function private.seed_financial_accounts_on_business_created();
 
--- Backfill idempotente para negocios existentes que no tengan plan contable.
 insert into public.accounting_accounts
   (business_id, code, name, account_type, tax_category, system_key)
-select b.id, v.code, v.name, v.account_type, v.tax_category, v.system_key
-from public.businesses b
-cross join (values
+select
+  '06372cb0-832f-4303-9ce9-95c49df05a24'::uuid, v.code, v.name, v.account_type, v.tax_category, v.system_key
+from (values
   ('1.01.01','Caja','asset','cash','cash'),
   ('1.01.02','Bancos','asset','bank','bank'),
   ('1.01.03','Clientes por cobrar','asset','receivable','accounts_receivable'),
@@ -66,26 +63,26 @@ cross join (values
   ('6.01.01','Gastos operacionales','expense','operating_expense','operating_expense'),
   ('7.01.01','Otros ingresos','other_income','other_income','other_income'),
   ('8.01.01','Otros gastos','other_expense','other_expense','other_expense')
-) as v(code,name,account_type,tax_category,system_key) on true
-where not exists (
-  select 1 from public.accounting_accounts existing
-  where existing.business_id=b.id and existing.code=v.code
-);
+) as v(code,name,account_type,tax_category,system_key)
+on conflict (business_id,code) do update
+set name=excluded.name, system_key=excluded.system_key;
 
--- Reintento seguro de asientos pendientes: las funciones de posting son idempotentes.
 do $$
 declare r record;
 begin
   for r in
     select id from public.sales
-    where status='paid' and accounting_posting_status <> 'posted'
+    where business_id='06372cb0-832f-4303-9ce9-95c49df05a24'
+      and status='paid'
+      and accounting_posting_status <> 'posted'
   loop
     perform public.post_sale_accounting(r.id);
   end loop;
-
   for r in
     select id from public.purchases
-    where status in ('received','paid') and accounting_posting_status <> 'posted'
+    where business_id='06372cb0-832f-4303-9ce9-95c49df05a24'
+      and status in ('received','paid')
+      and accounting_posting_status <> 'posted'
   loop
     perform public.post_purchase_accounting(r.id);
   end loop;
