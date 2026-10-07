@@ -48,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .agency
-          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $AGENCY_OIDC_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
+          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
           printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
           lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
           if [ -z "$lease" ]; then
