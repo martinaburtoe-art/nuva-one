@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Activity, AlertTriangle, Bot, Database, Gauge, RefreshCw, ShieldCheck, Send, Square, Terminal, Zap, type LucideIcon } from "lucide-react";
+import { Activity, AlertTriangle, Bot, Database, Gauge, RefreshCw, ShieldCheck, Send, Square, Terminal, ExternalLink, Radio, Clock3, GitBranch, CheckCircle2, CircleDashed, XCircle, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AgencyTeam } from "@/components/owner/agency-team";
 
@@ -11,6 +11,17 @@ type ControlMetrics = {
   ai_telemetry?: { events_24h?: number; events_30d?: number; input_tokens_24h?: number; output_tokens_24h?: number; total_tokens_24h?: number; estimated_cost_usd_24h?: number; estimated_cost_usd_30d?: number; fallbacks_24h?: number; avg_attempts_24h?: number; providers_24h?: Record<string, number> } | null;
 };
 type AgencyMessage = { role: "user" | "assistant"; content: string };
+type AgencyStep = { name: string; status: string; conclusion: string | null; number: number | null; started_at: string | null; completed_at: string | null };
+type AgencyJob = { id: number; name: string; status: string; conclusion: string | null; started_at: string | null; completed_at: string | null; html_url: string | null; steps: AgencyStep[] };
+type AgencyRun = { id: number; name: string; workflow_file?: string; agent_id: string; status: string; conclusion: string | null; updated_at: string | null; html_url: string | null; head_sha?: string | null };
+type AgencyStatus = {
+  generated_at: string;
+  active_run: AgencyRun | null;
+  jobs: AgencyJob[];
+  active_runs: AgencyRun[];
+  recent_runs: AgencyRun[];
+  audit_evidence: Array<{ id: number; protocol: string; status: "PASS" | "WARN" | "FAIL"; duration_ms: number | null; evidence: unknown; created_at: string }>;
+};
 
 export const Route = createFileRoute("/owner/control-tower")({
   ssr: false,
@@ -65,6 +76,16 @@ async function loadMetrics() {
   } satisfies ControlMetrics;
 }
 
+async function loadAgencyStatus() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+  const response = await fetch("/api/owner/agency-status", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  const source = await response.json().catch(() => null) as AgencyStatus & { error?: string };
+  if (!response.ok) throw new Error(source?.error ?? "No se pudo consultar la actividad de Agency.");
+  return source;
+}
+
 async function askWorker(agentId: string, messages: AgencyMessage[], signal: AbortSignal) {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
@@ -94,18 +115,28 @@ function ControlTower() {
   const [messages, setMessages] = useState<AgencyMessage[]>([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]);
   const [input, setInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [agencyStatus, setAgencyStatus] = useState<AgencyStatus | null>(null);
+  const [agencyLoading, setAgencyLoading] = useState(true);
+  const [agencyError, setAgencyError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const refresh = async () => {
     setLoading(true); setError(null);
-    try { setMetrics(await loadMetrics()); }
-    catch (err) { setError(err instanceof Error ? err.message : "Error inesperado"); }
-    finally { setLoading(false); }
+    try {
+      const [nextMetrics, nextAgency] = await Promise.all([loadMetrics(), loadAgencyStatus()]);
+      setMetrics(nextMetrics);
+      setAgencyStatus(nextAgency);
+      setAgencyError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado");
+      try { setAgencyStatus(await loadAgencyStatus()); setAgencyError(null); }
+      catch (agencyErr) { setAgencyError(agencyErr instanceof Error ? agencyErr.message : "Agency no disponible"); }
+    } finally { setLoading(false); setAgencyLoading(false); }
   };
 
   useEffect(() => {
     void refresh();
-    const timer = window.setInterval(() => void refresh(), 60_000);
+    const timer = window.setInterval(() => void refresh(), 15_000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -156,6 +187,8 @@ function ControlTower() {
             <button onClick={() => void refresh()} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Actualizar</button>
           </div>
         </header>
+
+        <LiveAgencyPanel status={agencyStatus} loading={agencyLoading} error={agencyError} onRefresh={() => void refresh()} />
 
         <AgencyTeam selectedWorker={selectedWorker} onSelectWorker={(agentId) => { setSelectedWorker(agentId); setMessages([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]); }} />
 
@@ -215,6 +248,100 @@ function ControlTower() {
       </div>
     </main>
   );
+}
+
+function LiveAgencyPanel({ status, loading, error, onRefresh }: { status: AgencyStatus | null; loading: boolean; error: string | null; onRefresh: () => void }) {
+  const active = status?.active_run ?? null;
+  const currentJob = status?.jobs.find((job) => job.status === "in_progress" || job.status === "queued") ?? status?.jobs[0];
+  const currentStep = currentJob?.steps.find((step) => step.status === "in_progress" || step.status === "queued") ?? currentJob?.steps[currentJob.steps.length - 1];
+  const doneSteps = currentJob?.steps.filter((step) => step.conclusion === "success").length ?? 0;
+  const totalSteps = currentJob?.steps.length ?? 0;
+  const progress = totalSteps ? Math.round((doneSteps / totalSteps) * 100) : 0;
+
+  return (
+    <section className="mt-5 overflow-hidden rounded-[28px] border border-cyan-300/15 bg-gradient-to-br from-cyan-300/[0.07] via-white/[0.035] to-indigo-400/[0.06]">
+      <div className="border-b border-white/10 px-5 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-200"><Radio className="h-4 w-4 animate-pulse" /> Agencia en vivo</div>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Qué están haciendo ahora</h2>
+            <p className="mt-1 text-sm text-white/45">Datos reales de GitHub Actions + evidencia persistida. Actualización automática cada 15 segundos.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {active?.html_url ? <a href={active.html_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10"><ExternalLink className="h-3.5 w-3.5" /> Ver ejecución</a> : null}
+            <button onClick={onRefresh} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10"><RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Actualizar</button>
+          </div>
+        </div>
+      </div>
+
+      {error ? <div className="border-b border-amber-300/10 bg-amber-300/[0.05] px-5 py-3 text-xs text-amber-100">{error}</div> : null}
+
+      <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-[1.1fr_1fr]">
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">Misión activa</div>
+              <div className="mt-2 text-lg font-semibold">{active?.name ?? "Sin ejecución activa"}</div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/40">
+                <span className="rounded-full border border-cyan-300/15 px-2 py-1 text-cyan-200">{active?.agent_id ?? "orchestrator"}</span>
+                {active?.head_sha ? <span className="inline-flex items-center gap-1"><GitBranch className="h-3 w-3" />{active.head_sha.slice(0, 8)}</span> : null}
+                {active?.status ? <span>{active.status}</span> : null}
+              </div>
+            </div>
+            <StatusIcon status={active?.conclusion ?? active?.status ?? "unknown"} />
+          </div>
+
+          <div className="mt-5 rounded-xl border border-white/8 bg-white/[0.025] p-4">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-white/45">Paso actual</span>
+              <span className="font-medium text-white/80">{currentStep?.name ?? "Esperando un worker"}</span>
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-cyan-300 transition-all" style={{ width: `${progress}%` }} /></div>
+            <div className="mt-2 flex justify-between text-[10px] text-white/30"><span>{doneSteps}/{totalSteps || "—"} pasos completados</span><span>{totalSteps ? `${progress}%` : "—"}</span></div>
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            {(status?.active_runs ?? []).slice(0, 5).map((run) => (
+              <a key={run.id} href={run.html_url ?? "#"} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2.5 text-xs hover:bg-white/[0.06]">
+                <span className="min-w-0 truncate"><span className="font-medium text-white/75">{run.agent_id}</span><span className="ml-2 text-white/35">{run.name}</span></span>
+                <span className="ml-3 shrink-0 text-cyan-200">{run.status}</span>
+              </a>
+            ))}
+            {!status?.active_runs?.length ? <div className="rounded-xl bg-white/[0.03] px-3 py-3 text-xs text-white/35">No hay workers ejecutándose en este instante. Eso no significa que estén desconectados; revisa el historial reciente.</div> : null}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+          <div className="flex items-center justify-between"><div><div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">Actividad verificable</div><div className="mt-1 font-semibold">Últimas ejecuciones</div></div><Clock3 className="h-4 w-4 text-white/30" /></div>
+          <div className="mt-4 max-h-[320px] space-y-2 overflow-auto pr-1">
+            {(status?.recent_runs ?? []).slice(0, 10).map((run) => (
+              <a key={run.id} href={run.html_url ?? "#"} target="_blank" rel="noreferrer" className="block rounded-xl border border-white/6 bg-white/[0.025] p-3 hover:bg-white/[0.05]">
+                <div className="flex items-center justify-between gap-2"><span className="truncate text-xs font-medium text-white/75">{run.name}</span><StatusIcon status={run.conclusion ?? run.status} /></div>
+                <div className="mt-1 flex items-center justify-between text-[10px] text-white/30"><span>{run.agent_id}</span><span>{run.updated_at ? new Date(run.updated_at).toLocaleString("es-CL") : "—"}</span></div>
+              </a>
+            ))}
+          </div>
+          <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.025] p-3 text-[10px] text-white/35">Fuente: GitHub Actions. Los estados de chat no se presentan como ejecución de código. Los commits, tests y despliegues solo se consideran reales cuando aparecen en la evidencia.</div>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 px-5 py-4 sm:px-6">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-white/30"><span>Auditorías persistidas</span><span>{status?.generated_at ? new Date(status.generated_at).toLocaleTimeString("es-CL") : "—"}</span></div>
+        <div className="mt-3 flex gap-2 overflow-x-auto">
+          {(status?.audit_evidence ?? []).slice(0, 8).map((audit) => <span key={audit.id} className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] ${audit.status === "PASS" ? "border-emerald-300/15 text-emerald-200" : audit.status === "WARN" ? "border-amber-300/15 text-amber-200" : "border-red-300/15 text-red-200"}`}><StatusIcon status={audit.status} />{audit.protocol}</span>)}
+          {!status?.audit_evidence?.length ? <span className="text-xs text-white/30">Sin auditorías persistidas disponibles.</span> : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatusIcon({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
+  if (normalized === "success" || normalized === "pass") return <CheckCircle2 className="h-4 w-4 text-emerald-300" />;
+  if (normalized === "failure" || normalized === "fail") return <XCircle className="h-4 w-4 text-red-300" />;
+  if (normalized === "cancelled") return <XCircle className="h-4 w-4 text-white/35" />;
+  return <CircleDashed className="h-4 w-4 animate-pulse text-cyan-200" />;
 }
 
 function Card({ icon: Icon, label, value, tone = "normal" }: { icon: LucideIcon; label: string; value: string; tone?: "normal" | "warn" | "ok" }) {
