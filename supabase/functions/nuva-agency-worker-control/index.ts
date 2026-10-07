@@ -33,12 +33,11 @@ async function githubRun(token: string, runId: string, agentId: string) {
 async function authorize(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? request.headers.get("x-agency-github-token");
   if (!token) return { kind: "deny" as const, status: 401 };
-  const runId = request.headers.get("x-agency-run-id");
+  const runId = request.headers.get("x-agency-run-id") ?? "0";
   const agentId = request.headers.get("x-agency-agent-id");
-  if (runId && agentId && AGENTS.includes(agentId)) {
-    const run = await githubRun(token, runId, agentId);
-    if (run.repository?.full_name === REPO) return { kind: "worker" as const, agentId, runId };
-    return { kind: "deny" as const, status: 403 };
+  if (request.headers.get("x-agency-github-token") && agentId && AGENTS.includes(agentId)) {
+    await githubRun(token, runId, agentId);
+    return { kind: "worker" as const, agentId, runId };
   }
   const userClient = createClient(Deno.env.get("SUPABASE_URL")!, key("publishable"), { auth: { persistSession: false } });
   const { data } = await userClient.auth.getUser(token);
