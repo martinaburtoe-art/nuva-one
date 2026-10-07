@@ -212,7 +212,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 2
         if: steps.gate.outputs.skip != 'true' && !cancelled()
@@ -234,7 +234,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 3
         if: steps.gate.outputs.skip != 'true' && !cancelled()
@@ -256,7 +256,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 4
         if: steps.gate.outputs.skip != 'true' && !cancelled()
@@ -278,7 +278,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 5
         if: steps.gate.outputs.skip != 'true' && !cancelled()
@@ -300,7 +300,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 6
         if: steps.gate.outputs.skip != 'true' && !cancelled()
@@ -322,7 +322,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 7
         if: steps.gate.outputs.skip != 'true' && !cancelled()
@@ -344,7 +344,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 8
         if: steps.gate.outputs.skip != 'true' && !cancelled()
@@ -366,7 +366,7 @@ jobs:
             Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Enforce minimum 10-minute active cycle
         if: steps.gate.outputs.skip != 'true'
