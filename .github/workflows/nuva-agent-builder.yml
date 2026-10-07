@@ -192,8 +192,8 @@ jobs:
               "telemetry": { "enabled": false }
             }
 
-      - name: Continue same objective if under 10 minutes
-        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
+      - name: Continue same objective — pass 1
+        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome != 'cancelled' && steps.worker.outcome != 'skipped'
         id: worker_continue_1
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -203,18 +203,19 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           gemini_model: gemini-3.1-flash-lite
           prompt: |
-            CONTINUATION OF THE SAME OBJECTIVE. The previous invocation returned early.
-            Continue active work on the same objective. Inspect the current diff and evidence.
-            Find remaining acceptance gaps, defects, regressions, edge cases, missing tests or evidence gaps.
-            Implement and validate them. Do not stop because one patch or test passes.
-            If complete, perform deeper regression, boundary and integration verification.
-            Never fabricate work or evidence. Safety boundaries remain unchanged.
+            CONTINUATION 1/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
 
-      - name: Continue objective again if still under 10 minutes
-        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_1.outcome == 'success'
+      - name: Continue same objective — pass 2
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_1.outcome != 'cancelled' && steps.worker_continue_1.outcome != 'skipped'
         id: worker_continue_2
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -224,16 +225,19 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           gemini_model: gemini-3.1-flash-lite
           prompt: |
-            CONTINUATION: remain on the SAME objective. Inspect all accumulated changes.
-            Continue implementation and independent validation until the objective is evidenced as complete.
-            Look for regressions, incomplete acceptance criteria, integration boundaries and missing tests.
-            If complete, deepen verification rather than inventing changes. Do not stop for convenience.
+            CONTINUATION 2/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
 
-      - name: Continue objective third pass if still under 10 minutes
-        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_2.outcome == 'success'
+      - name: Continue same objective — pass 3
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_2.outcome != 'cancelled' && steps.worker_continue_2.outcome != 'skipped'
         id: worker_continue_3
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -243,10 +247,123 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           gemini_model: gemini-3.1-flash-lite
           prompt: |
-            FINAL CONTINUATION OF THE SAME OBJECTIVE. Keep working; do not begin a new objective.
-            Inspect the accumulated diff and evidence, run deeper targeted checks, repair defects,
-            and prove every acceptance criterion. Do not declare completion from confidence.
-            If complete, continue evidence gathering and regression verification. Never fabricate work.
+            CONTINUATION 3/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Continue same objective — pass 4
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_3.outcome != 'cancelled' && steps.worker_continue_3.outcome != 'skipped'
+        id: worker_continue_4
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 4/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Continue same objective — pass 5
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_4.outcome != 'cancelled' && steps.worker_continue_4.outcome != 'skipped'
+        id: worker_continue_5
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 5/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Continue same objective — pass 6
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_5.outcome != 'cancelled' && steps.worker_continue_5.outcome != 'skipped'
+        id: worker_continue_6
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 6/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Continue same objective — pass 7
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_6.outcome != 'cancelled' && steps.worker_continue_6.outcome != 'skipped'
+        id: worker_continue_7
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 7/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Continue same objective — pass 8
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_7.outcome != 'cancelled' && steps.worker_continue_7.outcome != 'skipped'
+        id: worker_continue_8
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION 8/8 OF THE SAME OBJECTIVE. Do not start a new objective.
+            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
+            Continue active engineering work: identify remaining gaps, edge cases, regressions,
+            integration failures or missing evidence; implement safe fixes and validate them.
+            If implementation is complete, perform deeper targeted regression and boundary verification.
+            Do not fabricate work, do not merely wait, and do not stop for convenience.
+            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
             End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
