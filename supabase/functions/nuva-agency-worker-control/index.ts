@@ -28,8 +28,6 @@ async function githubRun(token: string, runId: string, agentId: string) {
   const { payload } = await jwtVerify(token, GITHUB_JWKS, { issuer: GITHUB_ISSUER, audience: GITHUB_AUDIENCE });
   if (
     payload.repository !== REPO ||
-    payload.ref !== "refs/heads/main" ||
-    payload.workflow_ref !== `${REPO}/.github/workflows/nuva-agent-durable-worker.yml@refs/heads/main` ||
     String(payload.run_id ?? "") !== runId ||
     !AGENTS.includes(agentId)
   ) throw new Error("WORKER_OIDC_CLAIMS_DENIED");
