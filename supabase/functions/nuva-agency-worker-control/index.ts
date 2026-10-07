@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createRemoteJWKSet, jwtVerify } from "npm:jose@6";
 
 const REPO = "martinaburtoe-art/nuva-one";
 const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release"];
@@ -19,12 +20,20 @@ function key(name: "publishable" | "secret") {
 
 const admin = () => createClient(Deno.env.get("SUPABASE_URL")!, key("secret"), { auth: { persistSession: false, autoRefreshToken: false } });
 
-async function githubRun(token: string, runId: string) {
-  const r = await fetch(`https://api.github.com/repos/${REPO}/actions/runs/${runId}`, {
-    headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", Authorization: `Bearer ${token}` }
-  });
-  if (!r.ok) throw new Error(`WORKER_GITHUB_AUTH_FAILED_${r.status}`);
-  return r.json() as Promise<{ repository?: { full_name?: string } }>;
+const GITHUB_JWKS = createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
+const GITHUB_ISSUER = "https://token.actions.githubusercontent.com";
+const GITHUB_AUDIENCE = "nuva-one-agency";
+
+async function githubRun(token: string, runId: string, agentId: string) {
+  const { payload } = await jwtVerify(token, GITHUB_JWKS, { issuer: GITHUB_ISSUER, audience: GITHUB_AUDIENCE });
+  if (
+    payload.repository !== REPO ||
+    payload.ref !== "refs/heads/main" ||
+    payload.workflow_ref !== `${REPO}/.github/workflows/nuva-agent-durable-worker.yml@refs/heads/main` ||
+    String(payload.run_id ?? "") !== runId ||
+    !AGENTS.includes(agentId)
+  ) throw new Error("WORKER_OIDC_CLAIMS_DENIED");
+  return payload;
 }
 
 async function authorize(request: Request) {
@@ -33,7 +42,7 @@ async function authorize(request: Request) {
   const runId = request.headers.get("x-agency-run-id");
   const agentId = request.headers.get("x-agency-agent-id");
   if (runId && agentId && AGENTS.includes(agentId)) {
-    const run = await githubRun(token, runId);
+    const run = await githubRun(token, runId, agentId);
     if (run.repository?.full_name === REPO) return { kind: "worker" as const, agentId, runId };
     return { kind: "deny" as const, status: 403 };
   }
