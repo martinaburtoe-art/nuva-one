@@ -12,6 +12,7 @@ permissions:
   pull-requests: write
   issues: read
   actions: read
+  id-token: write
 
 concurrency:
   group: nuva-durable-agent-${{ github.repository }}
@@ -44,28 +45,26 @@ jobs:
       - name: Claim persisted mission task
         id: claim
         env:
-          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p .agency
+          oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -r .value)"
+          export AGENCY_OIDC_TOKEN="$oidc"
+          echo "AGENCY_OIDC_TOKEN=$oidc" >> "$GITHUB_ENV"
           http_code="$(curl -sS -o .agency/claim-response.json -w "%{http_code}" -X POST "$AGENCY_URL" \
-            -H "X-Agency-GitHub-Token: $GH_TOKEN" \
+            -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             -H "Content-Type: application/json" \
             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}" \
             --data '{"action":"claim_task","leaseSeconds":21600}')"
-          cat .agency/claim-response.json
-          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then exit 1; fi
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then cat .agency/claim-response.json; exit 1; fi
           response="$(cat .agency/claim-response.json)"
           printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
           lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
-          if [ -z "$lease" ]; then
-            echo "has_lease=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          if [ -z "$lease" ]; then echo "has_lease=false" >> "$GITHUB_OUTPUT"; exit 0; fi
           echo "has_lease=true" >> "$GITHUB_OUTPUT"
           echo "AGENCY_LEASE_TOKEN=$lease" >> "$GITHUB_ENV"
           echo "Durable task claimed for ${{ steps.role.outputs.role }}."
@@ -110,10 +109,9 @@ jobs:
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN" \
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 1
@@ -140,10 +138,9 @@ jobs:
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN" \
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 2
@@ -169,10 +166,9 @@ jobs:
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-GitHub-Token: $GH_TOKEN" \
+          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 3
@@ -198,10 +194,9 @@ jobs:
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-GitHub-Token: $GH_TOKEN" \
+          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 4
@@ -227,12 +222,11 @@ jobs:
         if: ${{ always() && steps.claim.outputs.has_lease == 'true' }}
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
           status="completed"
           if [ "${{ steps.worker.outcome }}" != "success" ] || [ "${{ steps.continue_4.outcome }}" = "failure" ]; then status="failed"; fi
           summary="$(cat .agency/task.json | tr '\n' ' ' | cut -c1-3000)"
           payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "${{ steps.role.outputs.role }}" '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent}}')"
-          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN" \
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$payload" | jq .
