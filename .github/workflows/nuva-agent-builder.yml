@@ -23,6 +23,7 @@ jobs:
     name: Agency worker rotation
     runs-on: ubuntu-latest
     timeout-minutes: 55
+    # A cycle is accepted only after at least 10 minutes of active worker work/validation.
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -101,6 +102,13 @@ jobs:
             exit 0
           fi
           echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Record work-cycle start
+        if: steps.gate.outputs.skip != 'true'
+        id: cycle_start
+        shell: bash
+        run: |
+          echo "started_at=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Run specialist worker
         if: steps.gate.outputs.skip != 'true'
@@ -184,6 +192,80 @@ jobs:
               "telemetry": { "enabled": false }
             }
 
+      - name: Continue same objective if under 10 minutes
+        if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
+        id: worker_continue_1
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: \${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: \${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION OF THE SAME OBJECTIVE. The previous invocation returned early.
+            Continue active work on the same objective. Inspect the current diff and evidence.
+            Find remaining acceptance gaps, defects, regressions, edge cases, missing tests or evidence gaps.
+            Implement and validate them. Do not stop because one patch or test passes.
+            If complete, perform deeper regression, boundary and integration verification.
+            Never fabricate work or evidence. Safety boundaries remain unchanged.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Continue objective again if still under 10 minutes
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_1.outcome == 'success'
+        id: worker_continue_2
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: \${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: \${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            CONTINUATION: remain on the SAME objective. Inspect all accumulated changes.
+            Continue implementation and independent validation until the objective is evidenced as complete.
+            Look for regressions, incomplete acceptance criteria, integration boundaries and missing tests.
+            If complete, deepen verification rather than inventing changes. Do not stop for convenience.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Continue objective third pass if still under 10 minutes
+        if: steps.gate.outputs.skip != 'true' && steps.worker_continue_2.outcome == 'success'
+        id: worker_continue_3
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          GITHUB_TOKEN: \${{ github.token }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: \${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-3.1-flash-lite
+          prompt: |
+            FINAL CONTINUATION OF THE SAME OBJECTIVE. Keep working; do not begin a new objective.
+            Inspect the accumulated diff and evidence, run deeper targeted checks, repair defects,
+            and prove every acceptance criterion. Do not declare completion from confidence.
+            If complete, continue evidence gathering and regression verification. Never fabricate work.
+            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          settings: |
+            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":100},"telemetry":{"enabled":false}}
+
+      - name: Enforce minimum 10-minute active cycle
+        if: steps.gate.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          start='\${{ steps.cycle_start.outputs.started_at }}'
+          now=$(date +%s)
+          elapsed=$((now-start))
+          echo "Active worker cycle elapsed: ${elapsed}s"
+          echo "Required minimum: 600s"
+          if [ "$elapsed" -lt 600 ]; then
+            echo "ERROR: autonomous cycle ended before the required 10 minutes of active work/validation."
+            exit 1
+          fi
+          echo "Minimum continuous-work requirement satisfied: ${elapsed}s." >> "$GITHUB_STEP_SUMMARY"
       - name: Focused verification
         if: steps.gate.outputs.skip != 'true' && steps.worker.outcome == 'success'
         run: |
