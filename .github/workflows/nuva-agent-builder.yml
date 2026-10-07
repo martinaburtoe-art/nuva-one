@@ -112,6 +112,7 @@ jobs:
 
       - name: Run specialist worker
         if: steps.gate.outputs.skip != 'true'
+        continue-on-error: true
         id: worker
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -194,7 +195,8 @@ jobs:
             }
 
       - name: Continue same objective — pass 1
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_1
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -216,7 +218,8 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 2
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_1.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_2
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -238,7 +241,8 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 3
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_2.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_3
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -260,7 +264,8 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 4
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_3.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_4
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -282,7 +287,8 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 5
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_4.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_5
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -304,7 +310,8 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 6
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_5.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_6
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -326,7 +333,8 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 7
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_6.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_7
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -348,7 +356,8 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 8
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_7.outcome != 'cancelled'
+        continue-on-error: true
         id: worker_continue_8
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
