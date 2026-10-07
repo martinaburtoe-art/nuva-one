@@ -22,7 +22,7 @@ jobs:
   worker:
     name: Agency worker rotation
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 350
     # A cycle is accepted only after at least 10 minutes of active worker work/validation.
     steps:
       - name: Checkout main
@@ -194,7 +194,7 @@ jobs:
             }
 
       - name: Continue same objective — pass 1
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_1
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -216,7 +216,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 2
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_2
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -238,7 +238,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 3
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_3
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -260,7 +260,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 4
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_4
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -282,7 +282,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 5
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_5
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -304,7 +304,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 6
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_6
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -326,7 +326,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 7
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_7
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -348,7 +348,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 8
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         id: worker_continue_8
         uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
@@ -370,7 +370,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Verify continuous objective evidence
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         shell: bash
         run: |
           set -euo pipefail
@@ -394,7 +394,7 @@ jobs:
           fi
           echo "Minimum continuous-work requirement satisfied: ${elapsed}s." >> "$GITHUB_STEP_SUMMARY"
       - name: Focused verification
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         run: |
           set -euo pipefail
           if git diff --quiet; then
@@ -420,12 +420,12 @@ jobs:
           npm run build
 
       - name: Remove generated verification churn
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         run: |
           git checkout -- package-lock.json src/routeTree.gen.ts 2>/dev/null || true
 
       - name: Create autonomous PR
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
