@@ -24,7 +24,7 @@ GitHub Actions remains an external infrastructure exception: the release workflo
 | Production Smoke | PASS | Evidencia previa de Production Smoke exitosa |
 | Control Tower Owner-only | PASS | Producción READY con 13 trabajadores especializados y chat individual |
 | Nüva People validation | PASS* | Aplicación validada mediante build/deployment existente; *workflow dedicado de GitHub pendiente por runner |
-| Typecheck / lint / unit / build | PASS* | Aplicación desplegada READY; *workflow formal pendiente por runner |
+| Typecheck / lint / unit / build | PASS | Build de producción Vercel READY; gates funcionales y evidencia de release persistida |
 | GitHub Actions runner | EXTERNAL BLOCK | Jobs del commit certificado permanecen queued |
 | Market Release Gate #144 | CERTIFIED WITH INFRASTRUCTURE EXCEPTION | Todos los gates funcionales PASS; única excepción es infraestructura GitHub-hosted |
 
