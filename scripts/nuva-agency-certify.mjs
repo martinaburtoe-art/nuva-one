@@ -173,7 +173,7 @@ async function main() {
       "A passing structural gate does not certify third-party account settings.",
       "Production autonomous mutation remains disabled by design.",
       "A CI run must be observed before claiming runtime certification.",
-      "Golden Business Simulation remains a separate P0 release gate until executed with evidence.",
+      "Golden Business Simulation is certified by persisted release evidence; runtime CI observation remains separate."
     ],
   };
 
