@@ -51,14 +51,14 @@ Report independently:
 
 Never average these into a misleading single score.
 
-## Overnight protocol
+## Continuous objective protocol
 1. Inspect current evidence and open work.
 2. Select the highest-priority UNKNOWN/FAIL/WARN that is safe and actionable.
-3. Assign the domain specialist.
-4. Implement one coherent change or perform one focused verification.
-5. Run independent checks.
-6. Record evidence and residual risk.
-7. Leave the next highest-value target for the next cycle.
+3. Assign the domain specialist and define explicit acceptance criteria.
+4. Keep the same objective active through implementation, validation, regression analysis, repair and revalidation.
+5. Do not stop because one patch, file, test or invocation completed.
+6. Stop the objective only when every acceptance criterion has current evidence PASS, a hard safety boundary is reached, or an external dependency is proven and all safe dependent work is exhausted.
+7. After objective completion, aggregate independent C1-C5 evidence and select the next highest-priority objective.
 
 When safe actionable work is exhausted, switch to surveillance/certification instead of inventing changes.
 
