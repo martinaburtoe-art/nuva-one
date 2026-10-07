@@ -30,7 +30,7 @@ async function githubRun(token: string, runId: string, agentId: string) {
 }
 
 async function authorize(request: Request) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? request.headers.get("x-agency-github-token");
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? request.headers.get("x-agency-github-token") ?? request.headers.get("x-agency-oidc-token");
   if (!token) return { kind: "deny" as const, status: 401 };
   const runId = request.headers.get("x-agency-run-id") ?? "0";
   const agentId = request.headers.get("x-agency-agent-id");
