@@ -12,7 +12,6 @@ permissions:
   pull-requests: write
   issues: read
   actions: read
-  id-token: write
 
 concurrency:
   group: nuva-durable-agent-${{ github.repository }}
@@ -43,6 +42,7 @@ jobs:
       - name: Claim persisted mission task
         id: claim
         env:
+          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         shell: bash
         run: |
@@ -51,7 +51,23 @@ jobs:
           oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -r .value)"
           echo "AGENCY_OIDC_TOKEN=$oidc" >> "$GITHUB_ENV"
           export AGENCY_OIDC_TOKEN="$oidc"
-          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
+          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OI        run: |
+          set -euo pipefail
+          mkdir -p .agency
+          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
+          printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
+          lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
+          if [ -z "$lease" ]; then
+            echo "has_lease=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_lease=true" >> "$GITHUB_OUTPUT"
+          echo "AGENCY_LEASE_TOKEN=$lease" >> "$GITHUB_ENV"
+          echo "Durable task claimed for ${{ steps.role.outputs.role }}."
+_REQUEST_URL&audience=nuva-one-agency" | jq -r .value)"
+          echo "AGENCY_OIDC_TOKEN=$oidc" >> "$GITHUB_ENV"
+          export AGENCY_OIDC_TOKEN="$oidc"
+          response="$(curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":21600}')"
           printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
           lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
           if [ -z "$lease" ]; then
@@ -103,6 +119,7 @@ jobs:
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         continue-on-error: true
         env:
+          GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
           curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
