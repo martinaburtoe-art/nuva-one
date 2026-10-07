@@ -108,7 +108,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 1
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.worker.outcome != 'cancelled' }}
@@ -137,7 +137,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 2
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_1.outcome != 'cancelled' }}
@@ -165,7 +165,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL" -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-GitHub-Token: $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 3
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_2.outcome != 'cancelled' }}
@@ -193,7 +193,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL" -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-GitHub-Token: $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 4
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_3.outcome != 'cancelled' }}
@@ -225,4 +225,4 @@ jobs:
           if [ "${{ steps.worker.outcome }}" != "success" ] || [ "${{ steps.continue_4.outcome }}" = "failure" ]; then status="failed"; fi
           summary="$(cat .agency/task.json | tr '\n' ' ' | cut -c1-3000)"
           payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "${{ steps.role.outputs.role }}" '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent}}')"
-          curl -fsS -X POST "$AGENCY_URL"             -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$payload" | jq .
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-GitHub-Token: $GH_TOKEN" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$payload" | jq .
