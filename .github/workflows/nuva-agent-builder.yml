@@ -23,7 +23,6 @@ jobs:
     name: Agency worker rotation
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    # A cycle is accepted only after at least 10 minutes of active worker work/validation.
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -222,7 +221,7 @@ jobs:
             }
 
       - name: Continue same objective — pass 1
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_1
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -245,7 +244,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 2
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_1.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_1.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_2
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -268,7 +267,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 3
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_2.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_2.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_3
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -291,7 +290,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 4
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_3.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_3.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_4
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -314,7 +313,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 5
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_4.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_4.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_5
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -337,7 +336,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 6
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_5.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_5.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_6
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -360,7 +359,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 7
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_6.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_6.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_7
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -383,7 +382,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Continue same objective — pass 8
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_7.outcome != 'cancelled'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_7.conclusion != 'cancelled'
         continue-on-error: true
         id: worker_continue_8
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -411,7 +410,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Same objective remains active until acceptance criteria are PASS or a proven hard safety/external blocker exists."
-          echo "Worker outcome: ${{ steps.worker.outcome || 'unknown' }}"
+          echo "Worker outcome: ${{ steps.worker.conclusion || 'unknown' }}"
           echo "Continuation passes: 8"
 
       - name: Verify required continuation passes
@@ -454,7 +453,7 @@ jobs:
           git checkout -- package-lock.json src/routeTree.gen.ts 2>/dev/null || true
 
       - name: Create autonomous PR
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.focused_verification.outcome == 'success' && steps.worker.outcome == 'success'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.focused_verification.outcome == 'success' && steps.worker.conclusion == 'success'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
@@ -485,6 +484,6 @@ jobs:
           echo "## Nüva Agency cycle" >> "$GITHUB_STEP_SUMMARY"
           echo "Worker: ${{ steps.role.outputs.role || 'unknown' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Safety gate skipped: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Worker outcome: ${{ steps.worker.outcome || 'not run' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Worker outcome: ${{ steps.worker.conclusion || 'not run' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Learning mode: evidence-driven; no unverified self-training claims." >> "$GITHUB_STEP_SUMMARY"
           echo "External control plane: GitHub always; Supabase/Vercel conditional on scoped credentials." >> "$GITHUB_STEP_SUMMARY"
