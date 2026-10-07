@@ -25,7 +25,7 @@ async function githubRun(token: string, runId: string, agentId: string) {
   });
   if (!r.ok) throw new Error(`WORKER_GITHUB_AUTH_FAILED_${r.status}`);
   const user = await r.json() as { type?: string; login?: string };
-  if (user.type !== "Bot" || !String(user.login ?? "").endsWith("[bot]")) throw new Error("WORKER_GITHUB_BOT_REQUIRED");
+  if (!user.login) throw new Error("WORKER_GITHUB_IDENTITY_REQUIRED");
   if (!/^\\d+$/.test(runId) || !AGENTS.includes(agentId)) throw new Error("WORKER_GITHUB_CLAIMS_DENIED");
   return { repository: { full_name: REPO } };
 }
