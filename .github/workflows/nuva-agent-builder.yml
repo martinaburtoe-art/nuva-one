@@ -130,6 +130,33 @@ jobs:
             agency learning evidence available in the repository.
             Inspect recent commits, open issues/PRs and current CI evidence before changing anything.
 
+            PERSISTENT MARKET-READINESS MISSION:
+            Do NOT treat this as a generic rotating maintenance cycle. The persistent mission is to make Nüva One
+            genuinely ready for market launch, using current evidence and the repository's release criteria.
+            Continue from the current state; never reset the mission when the specialist role changes.
+            Prioritize, in order: production/release blockers; security/tenant/data integrity; broken core business
+            flows; incomplete or unusable modules; regression/reliability; accessibility/responsive UX; onboarding,
+            activation, SEO and visual polish; documentation. The goal is not to create PRs or activity.
+            The goal is a verifiable release candidate.
+
+            MARKET-READINESS ACCEPTANCE GATE:
+            Before declaring the mission complete, current evidence must support C1 Code Integrity, C2 Integration,
+            C3 Business Integrity, C4 Experience, and C5 Production. Exercise the real critical chain where safely
+            possible: tenant -> customers -> products -> purchase -> receipt -> inventory -> sale -> payment ->
+            cash/finance -> accounting -> Nüva Intelligence -> Action Queue -> outcomes -> reports.
+            Inspect every critical user-facing module for broken routes, dead actions, missing loading/empty/error
+            states, responsive failures and high-impact accessibility defects. Do not duplicate Nüva Intelligence.
+            Validate deterministic financial/legal calculations with existing tests; AI may explain/recommend but must
+            not replace deterministic business rules. For every FAIL/WARN/UNKNOWN, either repair it and revalidate,
+            or record exact external dependency, evidence, owner/action and why it cannot be resolved safely.
+
+            EXTERNAL BLOCKER RECOVERY:
+            The currently known blockers are Cloudflare Workers AI (cloudflare_account_ai_not_found) and Vercel
+            deployment/build-rate limits. Diagnose them with approved APIs/configuration first. If credentials or
+            provider configuration are missing, identify the exact missing configuration without exposing secrets.
+            If Vercel cannot deploy because of a platform quota, continue all non-deployment release work and leave
+            production certification explicitly pending rather than claiming success.
+
             Your role for this cycle is exactly: ${{ steps.role.outputs.role }}.
             Work on ONE evidence-backed objective, but do NOT stop merely because one patch, file or subtask is finished.
             Continue inspecting, implementing and validating the objective until its acceptance criteria are actually
