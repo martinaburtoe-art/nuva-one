@@ -34,7 +34,7 @@ async function authorize(request: Request) {
   if (!token) return { kind: "deny" as const, status: 401 };
   const runId = request.headers.get("x-agency-run-id") ?? "0";
   const agentId = request.headers.get("x-agency-agent-id");
-  if (request.headers.get("x-agency-github-token") && agentId && AGENTS.includes(agentId)) {
+  if ((request.headers.get("x-agency-github-token") || request.headers.get("x-agency-oidc-token")) && agentId && AGENTS.includes(agentId)) {
     await githubRun(token, runId, agentId);
     return { kind: "worker" as const, agentId, runId };
   }
