@@ -22,7 +22,7 @@ jobs:
   worker:
     name: Agency worker rotation
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 55
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -122,7 +122,13 @@ jobs:
             Inspect recent commits, open issues/PRs and current CI evidence before changing anything.
 
             Your role for this cycle is exactly: ${{ steps.role.outputs.role }}.
-            Complete exactly ONE evidence-backed task. Build or repair real code; do not merely write a report.
+            Work on ONE evidence-backed objective, but do NOT stop merely because one patch, file or subtask is finished.
+            Continue inspecting, implementing and validating the objective until its acceptance criteria are actually
+            satisfied and independently evidenced. If the first fix exposes another necessary subtask inside the same
+            objective, complete it before stopping. A cycle may stop only when: (A) the objective is fully validated,
+            (B) an explicit hard safety boundary is reached, or (C) an external dependency makes further progress
+            impossible and the blocker is recorded with exact evidence. Never stop because the task is inconvenient,
+            the first test passed, or a single change was made.
             Treat previous validated incidents, regressions and successful fixes as training evidence:
             infer recurring failure patterns, prefer proven remediation strategies, and record a concise
             new lesson in the PR summary when the cycle discovers a reusable pattern. Do not claim model
@@ -158,8 +164,14 @@ jobs:
             - If no safe evidence-backed task exists, make no code change and report the finding.
 
             IMPLEMENTATION LOOP:
-            inspect relevant files -> choose one task -> implement focused patch -> validate -> stop.
-            Do not browse the whole repository or redesign architecture.
+            inspect -> define acceptance criteria -> implement -> validate -> inspect result -> repair remaining defects
+            -> revalidate -> repeat until the objective is complete or a hard safety/external blocker is proven.
+            Do not browse the whole repository or redesign architecture. Stay focused on the objective.
+
+            COMPLETION GATE:
+            Before stopping, explicitly prove each acceptance criterion. If any criterion is UNKNOWN, FAIL or merely
+            assumed, keep working. If a blocker is external, document the exact dependency and continue with any safe
+            subwork that does not depend on it. Do not declare completion from model confidence.
 
             Final response must contain exactly:
             TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
@@ -167,7 +179,7 @@ jobs:
             {
               "model": {
                 "name": "gemini-3.1-flash-lite",
-                "maxSessionTurns": 25
+                "maxSessionTurns": 100
               },
               "telemetry": { "enabled": false }
             }
