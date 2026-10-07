@@ -23,7 +23,7 @@ jobs:
     name: Agency worker rotation
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    # A cycle is accepted only after at least 10 minutes of active worker work/validation.
+    # Durable mission execution: each worker claims a persisted task with a renewable lease.
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -110,6 +110,26 @@ jobs:
         run: |
           echo "started_at=$(date +%s)" >> "$GITHUB_OUTPUT"
 
+      - name: Claim durable mission task
+        if: steps.gate.outputs.skip != 'true'
+        id: durable_claim
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .agency
+          response="$(curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data '{"action":"claim_task","leaseSeconds":3600}')"
+          printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
+          lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
+          if [ -z "$lease" ]; then
+            echo "Durable task was not claimed; legacy evidence loop remains active."
+          else
+            echo "AGENCY_LEASE_TOKEN=$lease" >> "$GITHUB_ENV"
+            echo "Durable task claimed for ${{ steps.role.outputs.role }}."
+          fi
+
       - name: Run specialist worker
         if: steps.gate.outputs.skip != 'true'
         continue-on-error: true
@@ -156,6 +176,12 @@ jobs:
             provider configuration are missing, identify the exact missing configuration without exposing secrets.
             If Vercel cannot deploy because of a platform quota, continue all non-deployment release work and leave
             production certification explicitly pending rather than claiming success.
+
+            DURABLE AGENCY TASK:
+            A persistent task has been claimed for this run. Read .agency/task.json before choosing work.
+            Treat its objective and context as authoritative for this cycle. If the task exposes a necessary
+            specialist handoff, delegate it through the durable control plane rather than leaving an informal note.
+            Preserve evidence in the repository and finish/validate the claimed task before considering the cycle done.
 
             Your role for this cycle is exactly: ${{ steps.role.outputs.role }}.
             Work on ONE evidence-backed objective, but do NOT stop merely because one patch, file or subtask is finished.
@@ -221,6 +247,14 @@ jobs:
               "telemetry": { "enabled": false }
             }
 
+      - name: Heartbeat durable lease — worker
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 1
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker.outcome != 'cancelled'
         continue-on-error: true
@@ -244,6 +278,14 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Heartbeat durable lease — pass 1
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 2
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_1.outcome != 'cancelled'
         continue-on-error: true
@@ -267,6 +309,14 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Heartbeat durable lease — pass 2
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 3
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_2.outcome != 'cancelled'
         continue-on-error: true
@@ -290,6 +340,14 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Heartbeat durable lease — pass 3
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 4
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_3.outcome != 'cancelled'
         continue-on-error: true
@@ -313,6 +371,14 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Heartbeat durable lease — pass 4
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 5
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_4.outcome != 'cancelled'
         continue-on-error: true
@@ -336,6 +402,14 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Heartbeat durable lease — pass 5
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 6
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_5.outcome != 'cancelled'
         continue-on-error: true
@@ -359,6 +433,14 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Heartbeat durable lease — pass 6
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 7
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_6.outcome != 'cancelled'
         continue-on-error: true
@@ -382,6 +464,14 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Heartbeat durable lease — pass 7
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "{\"action\":\"heartbeat\",\"leaseToken\":\"$AGENCY_LEASE_TOKEN\",\"extendSeconds\":3600}" | jq .
       - name: Continue same objective — pass 8
         if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_7.outcome != 'cancelled'
         continue-on-error: true
@@ -405,6 +495,20 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Finish durable mission task
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && env.AGENCY_LEASE_TOKEN != '' && (success() || failure())
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENCY_BASE_URL: https://nuva-one.vercel.app
+        run: |
+          set -euo pipefail
+          status="completed"
+          if [ "${{ steps.worker.outcome }}" != "success" ]; then status="failed"; fi
+          summary="$(tail -n 80 .agency/task.json 2>/dev/null | tr '
+' ' ' | cut -c1-4000)"
+          payload="$(jq -n --arg action finish_task --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg outcome "${{ steps.worker.outcome }}" '{action:$action,leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,worker_outcome:$outcome}}')"
+          curl -fsS -X POST "$AGENCY_BASE_URL/api/owner/agency-control"             -H "Authorization: Bearer $GH_TOKEN"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$payload" | jq .
       - name: Verify continuous objective evidence
         if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
         shell: bash
