@@ -1,0 +1,167 @@
+# Nüva One — Auditoría de preparación profesional
+
+- **Fecha de corte:** 2026-10-09
+- **Rama base observada:** `main`
+- **Objetivo:** preparar una transición controlada desde el desarrollo de funcionalidades hacia una etapa profesional centrada en fiabilidad, seguridad, producto, operación y crecimiento.
+- **Estado global:** **NO CERTIFICADO**. Hay evidencia positiva, pero aún no se han satisfecho ni verificado todos los criterios C1–C5.
+- **Regla de evidencia:** `UNKNOWN`, `WARN` y `FAIL` nunca cuentan como `PASS`. No calcular un porcentaje global que mezcle implementación, certificación, salud de proveedores y preparación de release.
+
+## 1. Resumen ejecutivo
+
+### Evidencia positiva observada
+
+1. Supabase informa el proyecto `vnzyecnbdqbfuxawzrda` como `ACTIVE_HEALTHY`, con PostgreSQL 17.6.1.104.
+2. Vercel informa un deployment de producción `READY` del proyecto `nuva-one`, desde `main`, commit `89c232d9a4d5725dc4974b3c3ac79951e81372b3` (`fix(agency): do not block workers on cancelled CI runs`). Los alias incluyen `nuva-one.vercel.app`.
+3. La función `public.nuva_core_integrity_audit()` se ejecutó y devolvió cero hallazgos en los 11 controles consultados: ventas sin transacción, ventas pagadas sin stock, ventas/compras con contabilidad pendiente, recepciones sin movimiento de inventario, líneas contables huérfanas, asientos descuadrados, movimientos de inventario/caja huérfanos, resultados de acciones huérfanos y riesgos críticos sin acción.
+4. Las ejecuciones recientes consultadas de GitHub Actions incluyen ejecuciones satisfactorias de Web QA, Operational Metrics, Autonomous Agency Workers, Durable Agent Worker, Production Watch, Autonomous Repair Worker, Independent Safety Verification, Sentinel y Health Auditor. Esto es evidencia de ejecuciones individuales, no certificación completa del sistema.
+5. El repositorio ya define comandos de verificación en `package.json`: `lint`, `typecheck`, `test`, `verify:migrations`, `agency:qa`, `agency:certify`, `agency:gateway` y `agency:dependency-audit`.
+6. Existe una matriz de certificación independiente en `docs/nuva-agency/CERTIFICATION_MATRIX.md` y un backlog operativo en `docs/AGENT_BACKLOG.md`.
+
+### Hallazgos que requieren trabajo
+
+| ID | Severidad provisional | Hallazgo observado | Próxima acción segura | Criterio de cierre |
+|---|---|---|---|---|
+| SEC-01 | Alta / P1 | Supabase Auth reporta deshabilitada la protección de contraseñas filtradas. | Confirmar compatibilidad con el flujo de autenticación; habilitar desde la configuración de Auth y probar registro/cambio de contraseña. | Configuración verificada y pruebas de autenticación aprobadas. |
+| SEC-02 | P1, sujeto a verificación | El asesor de Supabase reporta seis tablas Agency con RLS activo y sin políticas explícitas: `agency_agent_leases`, `agency_approvals`, `agency_artifacts`, `agency_events`, `agency_missions`, `agency_tasks`. | Inspeccionar grants, roles consumidores, políticas, funciones privilegiadas y pruebas de acceso por propietario/no propietario. No abrir acceso para eliminar el aviso. | Acceso mínimo necesario documentado y pruebas negativas/positivas de autorización pasando. |
+| PERF-01 | P2 | Cuatro claves foráneas sin índice de cobertura en `agency_approvals`, `agency_artifacts` y `agency_tasks`. | Revisar columnas, cardinalidad y planes de consulta; preparar migración reversible si los índices son útiles. | Planes antes/después y pruebas de regresión satisfactorias. |
+| PERF-02 | P2 | Tres políticas de `ops_agent_learning` reevalúan funciones de autenticación por fila. | Revisar las expresiones y cambiar a evaluación estable por sentencia cuando corresponda. | Pruebas de RLS conservadas y comparación de planes/resultados. |
+| PERF-03 | Investigación | El linter informa 197 índices sin uso observado. | No eliminarlos en bloque. Cruzar telemetría, consultas de baja frecuencia, constraints, ventanas de observación y planes antes de proponer cambios. | Cada eliminación propuesta cuenta con justificación, evidencia y rollback. |
+| AI-01 | P1 | PR #154 para certificación en vivo de Gemini, Groq y Cloudflare Workers AI está abierto y la integración reportó `mergeable: false`. | Inspeccionar checks, conflictos y ejecución del workflow; ejecutar certificación por proveedor y fallback sin exponer secretos. | Conflictos resueltos, checks requeridos en verde y evidencia por proveedor; fallback determinista no se cuenta como proveedor IA. |
+| OPS-01 | P1 | La API de GitHub devolvió 403 al consultar branch protection para `main`. | Revisar la protección de rama desde una conexión con permisos adecuados o desde GitHub Settings. | Reglas documentadas para PR, CI, revisión, restricciones de push y bypass. |
+| OBS-01 | P1 | Una consulta de agregación de logs falló con error del backend; no se obtuvieron métricas válidas de las últimas 24 horas en esa consulta. | Reintentar con una consulta soportada y revisar logs de Edge Functions, Postgres, PostgREST y runtime. | Informe de errores con ventana temporal, severidad y referencias verificables. |
+| QA-01 | P1 | No se ejecutó en esta auditoría la batería completa local/CI ni una simulación end-to-end de todos los módulos. | Ejecutar scripts existentes en CI y ampliar pruebas de negocio por flujo crítico. | Artefactos y resultados actuales por criterio C1–C3. |
+| UX-01 | P1 | No se completó una inspección manual/automatizada de todas las rutas, dispositivos y estados de interfaz. | Generar inventario de rutas y cobertura de loading/empty/error, teclado, accesibilidad y responsive. | Rutas críticas probadas; defectos bloqueantes corregidos o registrados. |
+
+Las severidades son prioridades de trabajo iniciales, no una declaración de explotabilidad. La clasificación final depende de contexto, exposición, permisos y evidencia de impacto.
+
+## 2. Inventario de estado GitHub y producción
+
+- Deployment consultado: `nuva-2opdzxa8l-martinaburtoe.vercel.app`, estado `READY`, target `production`, commit `89c232d9a4d5725dc4974b3c3ac79951e81372b3`.
+- El deployment tenía alias `nuva-one.vercel.app`, `nuva-one-martinaburtoe.vercel.app` y `nuva-one-git-main-martinaburtoe.vercel.app`.
+- En la consulta de PR abiertos, solo apareció PR #154. Volver a consultar antes de actuar: el inventario cambia continuamente.
+- La API devolvió una lista de ejecuciones recientes con varios workflows en `success`; un workflow Telegram Reporter apareció como `skipped` bajo el evento `workflow_run`. Un `skipped` no debe marcarse como fallo sin comprobar sus condiciones, y tampoco como certificación.
+- No se pudo leer la configuración de protección de rama debido a permisos insuficientes de la integración. El estado de protección queda `UNKNOWN`, no `PASS`.
+
+## 3. Plan de preparación por puertas de salida
+
+### Puerta A — Seguridad y control de cambios
+
+- [ ] Revisar Auth, MFA según riesgo, recuperación de cuenta, protección de contraseñas filtradas y sesiones.
+- [ ] Auditar RLS por tabla y tenant; revisar grants, vistas, RPC, triggers y funciones `SECURITY DEFINER`.
+- [ ] Probar aislamiento multi-tenant con al menos dos empresas y roles diferentes.
+- [ ] Verificar que Telegram y el panel de Agency sean exclusivos del propietario autorizado.
+- [ ] Confirmar ausencia de secretos en logs, artefactos, errores, commits y respuestas API.
+- [ ] Revisar branch protection/rulesets y requisitos de checks mediante acceso autorizado.
+- [ ] Revisar dependencias con `npm run agency:dependency-audit`; priorizar explotabilidad y rutas de ejecución.
+
+**Salida:** cero vulnerabilidades críticas/altas sin mitigación aceptada; autorización positiva y negativa probada; cambios de producción sujetos a CI, revisión y rollback.
+
+### Puerta B — Integridad técnica
+
+- [ ] Ejecutar `npm ci` en entorno limpio.
+- [ ] Ejecutar `npm run lint`.
+- [ ] Ejecutar `npm run typecheck`.
+- [ ] Ejecutar `npm test` y revisar cobertura relevante.
+- [ ] Ejecutar `npm run build`.
+- [ ] Ejecutar `npm run verify:migrations`.
+- [ ] Revisar errores de consola, dependencias, rutas y configuración de entorno.
+- [ ] Registrar commit, fecha, workflow URL, conclusión y artefactos.
+
+**Salida:** resultados actuales y reproducibles en CI; ninguna regresión introducida por los cambios.
+
+### Puerta C — Flujos de negocio críticos
+
+Validar la cadena: tenant → clientes → productos → compras → recepción → inventario → venta → pago → caja/finanzas → contabilidad → Nüva Intelligence → Action Queue → outcome → reportes.
+
+- [ ] Caso feliz con datos de prueba aislados.
+- [ ] Duplicación/idempotencia de solicitudes y webhooks.
+- [ ] Concurrencia de stock y venta; ausencia de overselling.
+- [ ] Fallos intermedios, reintentos, compensaciones y reversas.
+- [ ] Cuadre contable, caja e inventario después de cada escenario.
+- [ ] Permisos por rol y empresa en cada endpoint crítico.
+- [ ] Ejecutar simulación golden de negocio y guardar resultados.
+
+**Salida:** invariantes verificadas, sin corrupción de datos ni dobles contabilizaciones.
+
+### Puerta D — Experiencia y producto
+
+- [ ] Inventariar rutas/pantallas desde el router real.
+- [ ] Probar navegación, búsqueda, CTAs y formularios.
+- [ ] Probar estados de carga, vacío, error, reintento y éxito.
+- [ ] Revisar responsive en móvil, tablet y desktop.
+- [ ] Revisar accesibilidad por teclado, foco, etiquetas, contraste y semántica.
+- [ ] Verificar mensajes y formatos chilenos donde corresponda (CLP, fechas, impuestos).
+- [ ] Documentar defectos visuales y funcionales con pasos de reproducción.
+
+**Salida:** todas las rutas críticas cubiertas; ningún defecto bloqueante de UX abierto sin excepción documentada.
+
+### Puerta E — Operación y producción
+
+- [ ] Confirmar smoke tests contra el dominio de producción y rutas autenticadas de forma segura.
+- [ ] Consultar logs de Vercel, Supabase, Postgres, PostgREST y Edge Functions.
+- [ ] Establecer objetivos de latencia/error por operación crítica.
+- [ ] Probar límites, timeouts, reintentos y degradación de proveedores IA.
+- [ ] Confirmar copias de seguridad y ejecutar prueba de restauración en entorno seguro.
+- [ ] Probar rollback de deployment y procedimiento de migración compatible.
+- [ ] Confirmar alertas accionables, responsables y guía de respuesta a incidentes.
+
+**Salida:** runbook operativo, observabilidad utilizable y recuperación demostrada.
+
+### Puerta F — Agencia y release
+
+- [ ] Verificar cada uno de los 13 roles con tarea, resultado y evidencia persistida.
+- [ ] Confirmar que el worker continúa tareas tras fallos transitorios y no informa falsos PASS.
+- [ ] Validar persistencia de auditorías y eventos, deduplicación y manejo de permisos.
+- [ ] Certificar Gemini, Groq y Cloudflare por separado cuando estén configurados; identificar modelo y timestamp, nunca imprimir secretos.
+- [ ] Probar fallback forzado y distinguir proveedor IA de fallback determinista.
+- [ ] Confirmar que los agentes no fusionan/publican ante checks fallidos, conflictos o hallazgos críticos.
+- [ ] Obtener verificación independiente del agente implementador.
+- [ ] Generar release evidence y matriz C1–C5 con referencias de ejecución.
+
+**Salida:** release readiness solo puede ser `READY` con criterios obligatorios en `PASS`, evidencia vigente y sin bloqueos críticos/altos abiertos.
+
+## 4. Secuencia de ejecución recomendada
+
+1. **Primero:** inspeccionar PR #154, estado actual de checks y workflow de gateway. No fusionar por conveniencia.
+2. **Segundo:** resolver la protección de contraseñas filtradas y auditar las seis tablas Agency con RLS.
+3. **Tercero:** ejecutar C1 en CI limpio y guardar evidencia; corregir fallos reales antes de ampliar alcance.
+4. **Cuarto:** correr la simulación golden end-to-end, pruebas de aislamiento multi-tenant y concurrencia.
+5. **Quinto:** corregir hallazgos de rendimiento con mediciones y migraciones seguras.
+6. **Sexto:** completar QA de UX/accesibilidad, observabilidad, recuperación y runbooks.
+7. **Séptimo:** emitir la certificación C1–C5; solo después abrir la fase de potenciación profesional.
+
+## 5. Reglas para evitar falsas certificaciones
+
+- Nunca declarar el producto listo basándose únicamente en un deployment `READY` o workflows verdes.
+- Nunca convertir ausencia de datos o permisos de lectura insuficientes en un resultado PASS.
+- Nunca borrar avisos, eliminar índices o abrir políticas RLS solo para reducir el número de hallazgos.
+- Nunca ejecutar cambios destructivos de producción sin migración revisada, backup/rollback y pruebas.
+- Mantener separados: `implementation_percent`, `certification_percent`, `provider_health_percent` y `release_readiness`.
+- Cada hallazgo debe tener propietario, severidad, evidencia, aceptación, estado y siguiente acción.
+- Cerrar un hallazgo únicamente con evidencia posterior al cambio y pruebas de regresión.
+
+## 6. Entregable para la siguiente fase profesional
+
+Esta auditoría define la línea base y la secuencia de trabajo. La siguiente fase debe concentrarse en:
+
+1. **Producto:** propuesta de valor, segmentos de clientes, onboarding, demo, activación y retención.
+2. **Calidad:** criterios de aceptación por módulo y release gates automatizados.
+3. **Operación:** observabilidad, incidentes, soporte, recuperación y SLA internos.
+4. **Seguridad y cumplimiento:** privacidad, ciclo de vida de datos, trazabilidad y controles aplicables a Chile.
+5. **Escalabilidad:** capacidad, coste por tenant, límites de uso, rendimiento y estrategia de soporte.
+6. **Negocio:** planes/precios, facturación, métricas de activación, uso y conversión.
+
+No iniciar esta potenciación como una expansión indiscriminada de funcionalidades. Utilizar los resultados de las puertas anteriores para priorizar las inversiones que más reduzcan riesgo y mejoren valor para clientes.
+
+## 7. Evidencias y referencias
+
+- Repositorio: https://github.com/martinaburtoe-art/nuva-one
+- Matriz de certificación: https://github.com/martinaburtoe-art/nuva-one/blob/main/docs/nuva-agency/CERTIFICATION_MATRIX.md
+- Backlog de ingeniería: https://github.com/martinaburtoe-art/nuva-one/blob/main/docs/AGENT_BACKLOG.md
+- PR de gateway observado: https://github.com/martinaburtoe-art/nuva-one/pull/154
+- Deployment observado: https://nuva-one.vercel.app/
+- Supabase Auth: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+- Supabase RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
+- Supabase database linter: https://supabase.com/docs/guides/database/database-linter
+
+**Nota de alcance:** esta es una auditoría inicial basada en la evidencia accesible al 2026-10-09. No equivale a una auditoría externa de penetración, una revisión legal ni a una certificación final de release.
