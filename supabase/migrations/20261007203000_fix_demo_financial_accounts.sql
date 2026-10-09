@@ -45,8 +45,9 @@ execute function private.seed_financial_accounts_on_business_created();
 insert into public.accounting_accounts
   (business_id, code, name, account_type, tax_category, system_key)
 select
-  '06372cb0-832f-4303-9ce9-95c49df05a24'::uuid, v.code, v.name, v.account_type, v.tax_category, v.system_key
-from (values
+  b.id, v.code, v.name, v.account_type, v.tax_category, v.system_key
+from public.businesses as b
+cross join (values
   ('1.01.01','Caja','asset','cash','cash'),
   ('1.01.02','Bancos','asset','bank','bank'),
   ('1.01.03','Clientes por cobrar','asset','receivable','accounts_receivable'),
@@ -64,6 +65,7 @@ from (values
   ('7.01.01','Otros ingresos','other_income','other_income','other_income'),
   ('8.01.01','Otros gastos','other_expense','other_expense','other_expense')
 ) as v(code,name,account_type,tax_category,system_key)
+where b.id = '06372cb0-832f-4303-9ce9-95c49df05a24'::uuid
 on conflict (business_id,code) do update
 set name=excluded.name, system_key=excluded.system_key;
 
