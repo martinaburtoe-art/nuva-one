@@ -165,3 +165,15 @@ No iniciar esta potenciación como una expansión indiscriminada de funcionalida
 - Supabase database linter: https://supabase.com/docs/guides/database/database-linter
 
 **Nota de alcance:** esta es una auditoría inicial basada en la evidencia accesible al 2026-10-09. No equivale a una auditoría externa de penetración, una revisión legal ni a una certificación final de release.
+
+
+## 7. Evidencia adicional de CI — 2026-10-09
+
+La revisión del PR de esta auditoría activó comprobaciones que sí ejecutaron validaciones técnicas. Los resultados observados identifican bloqueos concretos:
+
+- **C1 — TypeScript/build: FAIL.** `src/routes/api/owner/agency-control.ts` reportó errores TS2339: el resultado de autenticación puede representar al propietario (`userId`) o al worker (`agentId`), por lo que el código no puede acceder directamente a ambos campos en la unión de tipos.
+- **C2 — PostgreSQL/pgTAP bootstrap: FAIL.** El arranque limpio de Supabase se detuvo al insertar en `accounting_accounts` por la FK `accounting_accounts_business_id_fkey` (SQLSTATE 23503). El log señala la migración de cuentas financieras demo; hay que comprobar la existencia del negocio de demostración y el orden/aislamiento del seed antes de cambiar migraciones históricas.
+- **C5 — AI Gateway: WARN/FAIL parcial.** Gemini y Groq reportaron PASS en el chequeo consultado; Cloudflare reportó FAIL. El gateway completo no debe marcarse PASS.
+- **Estado de corrección:** se abrió el PR [#195](https://github.com/martinaburtoe-art/nuva-one/pull/195) para resolver el error de tipos de autenticación. Sus checks están pendientes/en ejecución en el momento de esta actualización; todavía no se considera corregido hasta que finalicen y pasen.
+
+Estos resultados prevalecen sobre cualquier expectativa previa: la auditoría es un artefacto de planificación y evidencia, no una certificación. El fallo de bootstrap debe resolverse en un cambio independiente y seguro, validado desde una base de datos limpia; no se debe modificar producción para hacer pasar CI.
