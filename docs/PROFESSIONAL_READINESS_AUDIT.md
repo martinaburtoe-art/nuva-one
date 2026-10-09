@@ -177,3 +177,24 @@ La revisión del PR de esta auditoría activó comprobaciones que sí ejecutaron
 - **Estado de corrección:** se abrió el PR [#195](https://github.com/martinaburtoe-art/nuva-one/pull/195) para resolver el error de tipos de autenticación. Sus checks están pendientes/en ejecución en el momento de esta actualización; todavía no se considera corregido hasta que finalicen y pasen.
 
 Estos resultados prevalecen sobre cualquier expectativa previa: la auditoría es un artefacto de planificación y evidencia, no una certificación. El fallo de bootstrap debe resolverse en un cambio independiente y seguro, validado desde una base de datos limpia; no se debe modificar producción para hacer pasar CI.
+
+## 8. Seguimiento de remediaciones — 2026-10-09
+
+Se abrieron tres PR de remediación independientes para que cada cambio tenga CI y revisión propios:
+
+- **[PR #195 — autenticación de la agencia](https://github.com/martinaburtoe-art/nuva-one/pull/195):** corrección de narrowing TypeScript. En la consulta más reciente, build, safety-gate, web-qa, production-smoke, repository integrity y review están en PASS; pgTAP sigue en ejecución. No fusionar hasta obtener resultado final de pgTAP.
+- **[PR #196 — seed financiero demo](https://github.com/martinaburtoe-art/nuva-one/pull/196):** el seed histórico insertaba cuentas para un UUID fijo sin verificar que existiera el negocio demo, bloqueando un esquema limpio por FK. Se condicionó la inserción a que el negocio exista. CI está en ejecución; el cambio aún no está aprobado.
+- **[PR #197 — índices FK de Agency](https://github.com/martinaburtoe-art/nuva-one/pull/197):** agrega índices en las cuatro columnas FK reportadas por el asesor de rendimiento. CI está en ejecución; aún no está aprobado.
+
+### Revisión adicional de exposición de tablas Agency
+
+La consulta de permisos en producción encontró RLS habilitado y sin políticas explícitas en las seis tablas señaladas por el asesor. En la consulta de grants realizada, los privilegios de tabla observados correspondían a postgres y ciertos privilegios de estructura a service_role; no se observaron grants de SELECT/INSERT/UPDATE/DELETE a anon ni authenticated. Por tanto, el aviso no demuestra por sí solo exposición directa al cliente. Queda pendiente revisar todas las rutas de acceso privilegiadas, funciones SECURITY DEFINER y uso de service_role; no se añadirán políticas client-side indiscriminadamente.
+
+### Rendimiento y seguridad
+
+- Se verificaron cuatro índices faltantes de claves foráneas y se propuso remediación en PR #197.
+- El asesor aún informa protección de contraseña filtrada deshabilitada. No hay una herramienta de Auth settings disponible en esta conexión para cambiar ese ajuste de forma verificada; requiere activación en la configuración Auth de Supabase y comprobación posterior.
+- El asesor reporta 197 índices no usados; no se eliminarán automáticamente. Hace falta medir ventana de observación y revisar impacto de cada índice antes de retirarlos.
+- La alerta sobre evaluación de auth por fila en ops_agent_learning se contrastó con las expresiones de política actuales, que ya usan subconsultas SELECT auth.jwt(). Debe tratarse como posible alerta desactualizada hasta revalidar después de la próxima migración/actualización del asesor.
+
+Los PR son propuestas de cambio; solo sus resultados finales de CI, revisión y pruebas de regresión pueden elevar el estado de cada control.
