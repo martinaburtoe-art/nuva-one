@@ -1,10 +1,11 @@
 begin;
-select plan(7);
+select plan(8);
 
 create temporary table agency_recovery_fixture (
   mission_id uuid not null default gen_random_uuid(),
   task_id uuid not null default gen_random_uuid(),
   retryable_task_id uuid not null default gen_random_uuid(),
+  retryable_lease_id uuid not null default gen_random_uuid(),
   queued_exhausted_task_id uuid not null default gen_random_uuid()
 ) on commit drop;
 insert into agency_recovery_fixture default values;
@@ -29,6 +30,18 @@ insert into public.agency_tasks(
 select retryable_task_id, mission_id, 'Retryable expired task fixture', 'Must be requeued when attempts remain',
        'security', 'running', 900, 1, 3, null
 from agency_recovery_fixture;
+
+insert into public.agency_agent_leases(
+  id, task_id, agent_id, lease_token, status, heartbeat_at, expires_at
+)
+select retryable_lease_id, retryable_task_id, 'security',
+       'test-expired-' || retryable_lease_id::text, 'active',
+       now() - interval '2 hours', now() - interval '1 hour'
+from agency_recovery_fixture;
+
+update public.agency_tasks
+   set lease_id=(select retryable_lease_id from agency_recovery_fixture)
+ where id=(select retryable_task_id from agency_recovery_fixture);
 
 insert into public.agency_tasks(
   id, mission_id, title, objective, agent_id, status, priority,
@@ -79,6 +92,12 @@ select is(
       and event_type='task.recovery_exhausted'),
   1,
   'existing exhausted queue entry receives one recovery event'
+);
+
+select is(
+  (select status from public.agency_agent_leases where id=(select retryable_lease_id from agency_recovery_fixture)),
+  'expired',
+  'expired active lease is explicitly marked expired'
 );
 
 select is(
