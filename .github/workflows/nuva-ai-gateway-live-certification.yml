@@ -5,6 +5,7 @@ on:
   workflow_run:
     workflows: ["CI Fast"]
     types: [completed]
+    branches: [main]
   push:
     paths:
       - "scripts/nuva-ai-gateway.mjs"
