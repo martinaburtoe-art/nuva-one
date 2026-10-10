@@ -341,6 +341,7 @@ jobs:
           echo "## Nüva Agency cycle" >> "$GITHUB_STEP_SUMMARY"
           echo "Worker: ${{ steps.role.outputs.role || 'unknown' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Safety gate skipped: ${{ steps.gate.outputs.skip || 'not evaluated' }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Worker outcome: ${{ steps.worker.conclusion || 'not run' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Gemini worker outcome: ${{ steps.worker.outcome || 'not run' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Groq fallback outcome: ${{ steps.groq_fallback.outcome || 'not needed' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Learning mode: evidence-driven; no unverified self-training claims." >> "$GITHUB_STEP_SUMMARY"
           echo "External control plane: GitHub always; Supabase/Vercel conditional on scoped credentials." >> "$GITHUB_STEP_SUMMARY"
