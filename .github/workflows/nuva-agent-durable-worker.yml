@@ -146,7 +146,7 @@ jobs:
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 1
-        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.worker.conclusion != 'cancelled' }}
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.worker.outcome == 'success' }}
         continue-on-error: true
         id: continue_1
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -175,7 +175,7 @@ jobs:
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 2
-        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_1.conclusion != 'cancelled' }}
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_1.outcome == 'success' }}
         continue-on-error: true
         id: continue_2
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -203,7 +203,7 @@ jobs:
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 3
-        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_2.conclusion != 'cancelled' }}
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_2.outcome == 'success' }}
         continue-on-error: true
         id: continue_3
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -231,7 +231,7 @@ jobs:
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 4
-        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_3.conclusion != 'cancelled' }}
+        if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_3.outcome == 'success' }}
         continue-on-error: true
         id: continue_4
         uses: google-github-actions/run-gemini-cli@v0.1.22
@@ -249,6 +249,51 @@ jobs:
           settings: |
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
+      - name: Groq coding-agent fallback
+        if: ${{ always() && steps.claim.outputs.has_lease == 'true' && (steps.worker.outcome != 'success' || steps.continue_1.outcome != 'success' || steps.continue_2.outcome != 'success' || steps.continue_3.outcome != 'success' || steps.continue_4.outcome != 'success') }}
+        id: groq_fallback
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
+          ACTIVE_AGENT: ${{ steps.claim.outputs.active_role }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${GROQ_API_KEY:-}" ]; then
+            echo "::error::Gemini failed and GROQ_API_KEY is not configured; task cannot be completed."
+            exit 1
+          fi
+
+          npm install --global --no-audit --no-fund opencode-ai
+          opencode --version
+
+          cat > .agency/groq-fallback-prompt.md <<'PROMPT'
+          You are the Groq-backed fallback coding agent for Nüva One.
+          Read .agency/task.json, AGENTS.md, GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md,
+          docs/AGENT_BACKLOG.md and docs/nuva-agency/LEARNING_PROTOCOL.md.
+          Your assigned specialist role is: ${{ steps.claim.outputs.active_role }}.
+          Continue the same durable task. Gemini CLI failed due to provider quota or execution errors;
+          inspect the working tree and preserve any partial changes already made.
+          Work in the real repository. Define acceptance criteria, make safe evidence-backed changes,
+          run relevant tests, and inspect the final diff. Do not claim completion if validation fails.
+          Respect C1 Code Integrity, C2 Integration, C3 Business Integrity, C4 Experience and C5 Production.
+          Preserve tenant isolation, RLS, authentication, billing, checkout and deterministic finance/legal logic.
+          Never expose secrets, weaken security, mutate production data directly, or bypass CI.
+          Do not add Nüva Studio, WhatsApp or n8n, and do not duplicate Nüva Intelligence.
+          Do not push directly to main. If a code change is needed, create a branch named
+          agent/agency-${{ steps.claim.outputs.active_role }}-${{ github.run_id }}, commit only validated changes,
+          and open a pull request. If no code change is needed, record the evidence and remaining risk.
+          End your final response with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          PROMPT
+
+          export OPENCODE_PERMISSION='{"*":"allow"}'
+          opencode run --model "groq/${GROQ_MODEL}" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
+
+          test -s .agency/groq-fallback-output.log
+          git diff --check
+          npm run build --if-present
+          echo "Groq fallback completed; final task status depends on this step's exit code and persisted evidence."
+
       - name: Finish persisted task
         if: ${{ always() && steps.claim.outputs.has_lease == 'true' }}
         env:
@@ -259,6 +304,7 @@ jobs:
           CONTINUE_2_OUTCOME: ${{ steps.continue_2.outcome }}
           CONTINUE_3_OUTCOME: ${{ steps.continue_3.outcome }}
           CONTINUE_4_OUTCOME: ${{ steps.continue_4.outcome }}
+          FALLBACK_OUTCOME: ${{ steps.groq_fallback.outcome }}
           WORKER_RESPONSE: ${{ steps.worker.outputs.gemini_response }}
           CONTINUE_1_RESPONSE: ${{ steps.continue_1.outputs.gemini_response }}
           CONTINUE_2_RESPONSE: ${{ steps.continue_2.outputs.gemini_response }}
@@ -269,34 +315,34 @@ jobs:
           set -euo pipefail
 
           status="completed"
+          gemini_ok=true
           outcomes=("$WORKER_OUTCOME" "$CONTINUE_1_OUTCOME" "$CONTINUE_2_OUTCOME" "$CONTINUE_3_OUTCOME" "$CONTINUE_4_OUTCOME")
           for outcome in "${outcomes[@]}"; do
-            if [ "$outcome" != "success" ]; then
-              status="failed"
-              break
-            fi
+            if [ "$outcome" != "success" ]; then gemini_ok=false; break; fi
           done
+          if [ "$gemini_ok" != true ] && [ "$FALLBACK_OUTCOME" != "success" ]; then status="failed"; fi
 
-          # Keep auditable evidence of every pass; cap model excerpts and never use the initial claim payload as the result.
+          fallback_response=""
+          if [ -s .agency/groq-fallback-output.log ]; then fallback_response="$(tail -c 1200 .agency/groq-fallback-output.log)"; fi
           summary="$(jq -n \
-            --arg run "$GITHUB_RUN_ID" \
-            --arg agent "$ACTIVE_AGENT" \
-            --arg status "$status" \
-            --arg worker_outcome "$WORKER_OUTCOME" --arg worker_response "${WORKER_RESPONSE:0:1200}" \
-            --arg pass1_outcome "$CONTINUE_1_OUTCOME" --arg pass1_response "${CONTINUE_1_RESPONSE:0:1200}" \
-            --arg pass2_outcome "$CONTINUE_2_OUTCOME" --arg pass2_response "${CONTINUE_2_RESPONSE:0:1200}" \
-            --arg pass3_outcome "$CONTINUE_3_OUTCOME" --arg pass3_response "${CONTINUE_3_RESPONSE:0:1200}" \
-            --arg pass4_outcome "$CONTINUE_4_OUTCOME" --arg pass4_response "${CONTINUE_4_RESPONSE:0:1200}" \
+            --arg run "$GITHUB_RUN_ID" --arg agent "$ACTIVE_AGENT" --arg status "$status" \
+            --arg worker_outcome "$WORKER_OUTCOME" --arg worker_response "${WORKER_RESPONSE:0:800}" \
+            --arg pass1_outcome "$CONTINUE_1_OUTCOME" --arg pass1_response "${CONTINUE_1_RESPONSE:0:800}" \
+            --arg pass2_outcome "$CONTINUE_2_OUTCOME" --arg pass2_response "${CONTINUE_2_RESPONSE:0:800}" \
+            --arg pass3_outcome "$CONTINUE_3_OUTCOME" --arg pass3_response "${CONTINUE_3_RESPONSE:0:800}" \
+            --arg pass4_outcome "$CONTINUE_4_OUTCOME" --arg pass4_response "${CONTINUE_4_RESPONSE:0:800}" \
+            --arg fallback_outcome "$FALLBACK_OUTCOME" --arg fallback_response "$fallback_response" \
             '{run_id:$run,agent_id:$agent,status:$status,passes:{
               initial:{outcome:$worker_outcome,response_excerpt:$worker_response},
               continuation_1:{outcome:$pass1_outcome,response_excerpt:$pass1_response},
               continuation_2:{outcome:$pass2_outcome,response_excerpt:$pass2_response},
               continuation_3:{outcome:$pass3_outcome,response_excerpt:$pass3_response},
-              continuation_4:{outcome:$pass4_outcome,response_excerpt:$pass4_response}
+              continuation_4:{outcome:$pass4_outcome,response_excerpt:$pass4_response},
+              groq_fallback:{outcome:$fallback_outcome,response_excerpt:$fallback_response}
             }}')"
 
-          payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "$ACTIVE_AGENT" \
-            '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent,status:$status,pass_outcomes:{initial:env.WORKER_OUTCOME,continuation_1:env.CONTINUE_1_OUTCOME,continuation_2:env.CONTINUE_2_OUTCOME,continuation_3:env.CONTINUE_3_OUTCOME,continuation_4:env.CONTINUE_4_OUTCOME}}}')"
+          payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "$ACTIVE_AGENT" --arg worker "$WORKER_OUTCOME" --arg p1 "$CONTINUE_1_OUTCOME" --arg p2 "$CONTINUE_2_OUTCOME" --arg p3 "$CONTINUE_3_OUTCOME" --arg p4 "$CONTINUE_4_OUTCOME" --arg fallback "$FALLBACK_OUTCOME" \
+            '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent,status:$status,pass_outcomes:{initial:$worker,continuation_1:$p1,continuation_2:$p2,continuation_3:$p3,continuation_4:$p4,groq_fallback:$fallback}}}')"
 
           curl -fsS -X POST "$AGENCY_URL" \
             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
