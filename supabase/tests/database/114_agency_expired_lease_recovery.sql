@@ -11,7 +11,7 @@ create temporary table agency_recovery_fixture (
 insert into agency_recovery_fixture default values;
 
 insert into public.agency_missions(id, title, objective, status, priority, metadata)
-select mission_id, 'Expired lease recovery test', 'Verify exhausted leases become visible failures', 'running', 1000,
+select mission_id, 'Expired lease recovery test', 'Verify exhausted leases become visible failures', 'running', 100,
        '{"mode":"durable-autonomous-agency","scope":"test"}'::jsonb
 from agency_recovery_fixture;
 
@@ -20,7 +20,7 @@ insert into public.agency_tasks(
   attempt_count, max_attempts, lease_id
 )
 select task_id, mission_id, 'Exhausted task fixture', 'Must not remain queued after lease recovery',
-       'qa', 'running', 1000, 3, 3, null
+       'qa', 'running', 100, 3, 3, null
 from agency_recovery_fixture;
 
 insert into public.agency_tasks(
@@ -28,7 +28,7 @@ insert into public.agency_tasks(
   attempt_count, max_attempts, lease_id
 )
 select retryable_task_id, mission_id, 'Retryable expired task fixture', 'Must be requeued when attempts remain',
-       'security', 'running', 900, 1, 3, null
+       'security', 'running', 90, 1, 3, null
 from agency_recovery_fixture;
 
 insert into public.agency_agent_leases(
@@ -49,7 +49,7 @@ insert into public.agency_tasks(
 )
 select queued_exhausted_task_id, mission_id, 'Queued exhausted task fixture',
        'Already-queued exhausted tasks must be made visible failures',
-       'people', 'queued', 850, 3, 3, null
+       'people', 'queued', 85, 3, 3, null
 from agency_recovery_fixture;
 
 -- Recovery runs before claim selection. The fixture task is exhausted and must not be claimed again.
