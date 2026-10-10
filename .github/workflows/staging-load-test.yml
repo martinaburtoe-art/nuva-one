@@ -79,10 +79,22 @@ jobs:
           } >> "$GITHUB_ENV"
           echo "Local Supabase URL: $API_URL"
 
+      - name: Generate per-run synthetic credentials
+        shell: bash
+        run: |
+          LOAD_TEST_PASSWORD="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(24).toString("base64url"))')"
+          LOAD_TEST_CROSS_TENANT_PASSWORD="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(24).toString("base64url"))')"
+          echo "::add-mask::$LOAD_TEST_PASSWORD"
+          echo "::add-mask::$LOAD_TEST_CROSS_TENANT_PASSWORD"
+          {
+            printf 'LOAD_TEST_PASSWORD=%s\n' "$LOAD_TEST_PASSWORD"
+            printf 'LOAD_TEST_CROSS_TENANT_PASSWORD=%s\n' "$LOAD_TEST_CROSS_TENANT_PASSWORD"
+          } >> "$GITHUB_ENV"
+
       - name: Create deterministic synthetic auth and business fixture
         env:
+          LOAD_TEST_EMAIL: "loadtest@nuva.local"
           LOAD_TEST_CROSS_TENANT_EMAIL: "loadtest-secondary@nuva.local"
-          LOAD_TEST_CROSS_TENANT_PASSWORD: "NüvaLoadTest-Secondary-2026!"
         run: node scripts/prepare-load-test-fixture.mjs
 
       - name: Run 10 / 25 / 50 / 100 VU acceptance battery
@@ -95,9 +107,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ env.API_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
           LOAD_TEST_EMAIL: "loadtest@nuva.local"
-          LOAD_TEST_PASSWORD: "NüvaLoadTest-2026!"
           LOAD_TEST_CROSS_TENANT_EMAIL: "loadtest-secondary@nuva.local"
-          LOAD_TEST_CROSS_TENANT_PASSWORD: "NüvaLoadTest-Secondary-2026!"
         run: node scripts/load-test.mjs
 
       - name: Run real inventory concurrency acceptance battery
@@ -109,7 +119,6 @@ jobs:
           VITE_SUPABASE_URL: ${{ env.API_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
           LOAD_TEST_EMAIL: "loadtest@nuva.local"
-          LOAD_TEST_PASSWORD: "NüvaLoadTest-2026!"
         run: node scripts/inventory-concurrency-test.mjs
 
       - name: Run database recovery drill

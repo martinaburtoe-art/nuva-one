@@ -1,11 +1,11 @@
 const baseUrl = (process.env.API_URL ?? process.env.SUPABASE_URL ?? "").replace(/\/$/, "");
 const serviceRoleKey = process.env.SERVICE_ROLE_KEY ?? "";
 const email = "loadtest@nuva.local";
-const password = "NüvaLoadTest-2026!";
+const password = process.env.LOAD_TEST_PASSWORD ?? "";
 const secondaryEmail = process.env.LOAD_TEST_CROSS_TENANT_EMAIL ?? "";
 const secondaryPassword = process.env.LOAD_TEST_CROSS_TENANT_PASSWORD ?? "";
 
-if (!baseUrl || !serviceRoleKey || !secondaryEmail || !secondaryPassword) throw new Error("Missing local Supabase API_URL/SERVICE_ROLE_KEY or cross-tenant fixture credentials.");
+if (!baseUrl || !serviceRoleKey || !password || !secondaryEmail || !secondaryPassword) throw new Error("Missing local Supabase API_URL/SERVICE_ROLE_KEY or ephemeral load-test credentials.");
 
 const headers = {
   apikey: serviceRoleKey,
