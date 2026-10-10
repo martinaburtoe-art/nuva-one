@@ -280,7 +280,7 @@ jobs:
             echo "::error::Local OIDC-refreshing Groq proxy did not become healthy."
             exit 1
           fi
-          export OPENCODE_CONFIG_CONTENT="$(jq -n --arg base_url 'http://127.0.0.1:4318/v1' '{provider:{"nuva-groq-proxy":{npm:"@ai-sdk/openai-compatible",name:"Nüva Groq OIDC Proxy",options:{baseURL:$base_url,apiKey:"nuva-local-oidc-proxy"},models:{"gpt-oss-20b":{name:"Groq GPT OSS 20B"}}}},permission:{"*":"allow"}}')"
+          export OPENCODE_CONFIG_CONTENT="$(jq -n --arg base_url 'http://127.0.0.1:4318/v1' '{provider:{"nuva-groq-proxy":{npm:"@ai-sdk/openai-compatible",name:"Nüva Groq OIDC Proxy",options:{baseURL:$base_url,apiKey:"nuva-local-oidc-proxy"},models:{"gpt-oss-20b":{name:"Groq GPT OSS 20B",limit:{context:131072,output:8192},modalities:{input:["text"],output:["text"]},tool_call:true,reasoning:true,temperature:true,attachment:false}}}},permission:{"*":"allow"}}')"
           export OPENCODE_PERMISSION='{"*":"allow"}'
 
           cat > .agency/groq-fallback-prompt.md <<'PROMPT'
