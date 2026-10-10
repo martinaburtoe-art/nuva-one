@@ -90,9 +90,12 @@ async function resolveCloudflareAccount(token: string, configured: string | null
   if (candidates.length === 0 && discoveryFailure) {
     throw new Error("cloudflare_account_discovery_network_" + discoveryFailure);
   }
+  if (candidates.length === 0 && discoveryStatus === 200) {
+    throw new Error("cloudflare_account_discovery_no_accessible_accounts");
+  }
   throw new Error("cloudflare_account_ai_probe_network_" + (probeFailure ?? "unknown"));
 }
-async function providerConfig(provider: string) {
+async function providerConfig(provider: string, cloudflareAccountId: string | null) {
   if (provider === "gemini") {
     const key = Deno.env.get("GEMINI_API_KEY");
     if (!key) return null;
@@ -107,7 +110,7 @@ async function providerConfig(provider: string) {
   }
   if (provider === "cloudflare") {
     const token = Deno.env.get("CLOUDFLARE_API_TOKEN");
-    const configuredAccount = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
+    const configuredAccount = cloudflareAccountId || Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
     if (!token) return null;
     const account = await resolveCloudflareAccount(token, configuredAccount);
     return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account.accountId + "/ai/run/" + account.model,
@@ -117,8 +120,8 @@ async function providerConfig(provider: string) {
   return null;
 }
 
-async function callProvider(provider: string, prompt: string) {
-  const cfg = await providerConfig(provider);
+async function callProvider(provider: string, prompt: string, cloudflareAccountId: string | null) {
+  const cfg = await providerConfig(provider, cloudflareAccountId);
   if (!cfg) throw new Error("provider_not_configured");
   let lastError = "provider_request_failed";
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -231,10 +234,14 @@ Deno.serve(async (req: Request) => {
   if (!["health", "generate"].includes(action)) return deny("unsupported_action", 400);
   const providers = Array.isArray(input?.providers) ? input.providers : ["gemini", "groq", "cloudflare"];
   const prompt = typeof input?.prompt === "string" ? input.prompt.slice(0, 12000) : "Return exactly: NÜVA_HEALTH_OK";
+  // Only a trusted main-branch workflow may supply the non-secret account ID. PR runs must use server config/discovery.
+  const mainWorkflow = identity.ref === "refs/heads/main" && identity.event_name !== "pull_request";
+  const requestedAccountId = mainWorkflow && typeof input?.cloudflareAccountId === "string" &&
+    /^[a-f0-9]{32}$/i.test(input.cloudflareAccountId) ? input.cloudflareAccountId : null;
   const results: any[] = [];
   for (const provider of providers.slice(0, 3)) {
     try {
-      const content = await callProvider(provider, prompt);
+      const content = await callProvider(provider, prompt, requestedAccountId);
       results.push({ provider, pass: action === "health" ? content.trim() === "NÜVA_HEALTH_OK" : true, content: action === "health" ? undefined : content });
     } catch (error) {
       results.push({ provider, pass: false, error: error instanceof Error ? error.message : "request_failed" });
