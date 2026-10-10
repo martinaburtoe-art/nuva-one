@@ -153,12 +153,77 @@ async function callProvider(provider: string, prompt: string) {
   throw new Error(lastError);
 }
 
+async function proxyGroqChatCompletions(req: Request, identity: Record<string, unknown>) {
+  const allowedWorkflows = new Set([
+    "Nüva One — Durable Autonomous Agent Worker",
+    "Nüva One — Autonomous Agency Workers",
+  ]);
+  if (
+    identity.ref !== "refs/heads/main" ||
+    identity.event_name === "pull_request" ||
+    !allowedWorkflows.has(String(identity.workflow || ""))
+  ) {
+    return deny("groq_proxy_workflow_not_allowed", 403);
+  }
+
+  const key = Deno.env.get("GROQ_API_KEY");
+  if (!key) return deny("groq_provider_not_configured", 503);
+
+  const raw = await req.text();
+  if (raw.length > 1_000_000) return deny("request_too_large", 413);
+
+  let input: Record<string, unknown>;
+  try {
+    input = JSON.parse(raw);
+  } catch {
+    return deny("invalid_json", 400);
+  }
+  if (!Array.isArray(input.messages) || input.messages.length === 0 || input.messages.length > 250) {
+    return deny("invalid_messages", 400);
+  }
+  if (Array.isArray(input.tools) && input.tools.length > 128) {
+    return deny("too_many_tools", 400);
+  }
+
+  const model = Deno.env.get("GROQ_MODEL") || "openai/gpt-oss-20b";
+  const upstreamBody = { ...input, model };
+  const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer " + key,
+      "content-type": "application/json",
+      accept: req.headers.get("accept") || "application/json",
+    },
+    body: JSON.stringify(upstreamBody),
+    signal: AbortSignal.timeout(120000),
+  });
+
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: {
+      "content-type": upstream.headers.get("content-type") || "application/json",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return deny("method_not_allowed", 405);
   const auth = req.headers.get("authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (!token) return deny("missing_github_oidc");
-  try { await verifyGitHubToken(token); } catch { return deny("invalid_github_oidc"); }
+  let identity: Record<string, unknown>;
+  try { identity = await verifyGitHubToken(token) as Record<string, unknown>; } catch { return deny("invalid_github_oidc"); }
+
+  const pathname = new URL(req.url).pathname;
+  if (pathname.endsWith("/v1/chat/completions")) {
+    try {
+      return await proxyGroqChatCompletions(req, identity);
+    } catch (error) {
+      return deny(error instanceof Error && /^groq_/.test(error.message) ? error.message : "groq_proxy_upstream_failed", 502);
+    }
+  }
 
   let input: any;
   try { input = await req.json(); } catch { return deny("invalid_json", 400); }
