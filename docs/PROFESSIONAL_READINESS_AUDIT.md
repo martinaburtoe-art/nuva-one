@@ -198,3 +198,15 @@ La consulta de permisos en producción encontró RLS habilitado y sin políticas
 - La alerta sobre evaluación de auth por fila en ops_agent_learning se contrastó con las expresiones de política actuales, que ya usan subconsultas SELECT auth.jwt(). Debe tratarse como posible alerta desactualizada hasta revalidar después de la próxima migración/actualización del asesor.
 
 Los PR son propuestas de cambio; solo sus resultados finales de CI, revisión y pruebas de regresión pueden elevar el estado de cada control.
+
+## 9. CI de remediación — actualización 2026-10-10
+
+La revisión continuada produjo resultados más recientes y nuevas correcciones:
+
+- **PR #196 — seed de cuentas demo + correcciones de lint:** [revisar PR](https://github.com/martinaburtoe-art/nuva-one/pull/196). El resultado anterior confirmó pgTAP PASS y build PASS, pero falló el workflow agregado de lint por dos errores `prefer-const`. Ambos se corrigieron en el head más reciente; una nueva ronda de CI está en ejecución. El estado final de esa ronda aún es pendiente.
+- **PR #197 — índices FK:** [revisar PR](https://github.com/martinaburtoe-art/nuva-one/pull/197). Se actualizó con las mismas correcciones de lint y el arreglo de tipos/seed que necesita su rama. Debe volver a pasar CI completo antes de aceptar los índices.
+- **PR #195 — narrowing de autenticación:** build, repository integrity, safety-gate, web QA y production smoke habían pasado; pgTAP falló en una ejecución anterior porque el seed de negocio/cuentas demo rompía el bootstrap limpio. El arreglo de seed se está validando de forma separada en PR #196.
+
+### Bloqueo actual y siguiente criterio de cierre
+
+No fusionar hasta que la última ronda de CI confirme todos los checks requeridos. La protección de contraseña filtrada de Supabase sigue pendiente porque la integración disponible permite consultar proyecto, SQL, migraciones y asesores, pero no modificar de forma verificada esa opción de Auth. Los 197 índices no usados continúan fuera de cualquier cambio automático. No se han aplicado migraciones ni cambios de datos a producción en esta ronda.
