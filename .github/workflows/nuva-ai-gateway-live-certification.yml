@@ -38,7 +38,9 @@ jobs:
           set -euo pipefail
           oidc_url="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https%3A%2F%2Fvnzyecnbdqbfuxawzrda.supabase.co"
           oidc_token="$(curl --fail-with-body -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$oidc_url" | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>process.stdout.write(JSON.parse(s).value))')"
-          response="$(curl --fail-with-body -sS -X POST "https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-ai-broker" -H "Authorization: Bearer $oidc_token" -H "content-type: application/json" -d '{"action":"health","providers":["gemini","groq","cloudflare"]}')"
+          if [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then echo "cloudflare_account_id_configured=true"; else echo "cloudflare_account_id_configured=false"; fi
+          payload="$(node -e 'console.log(JSON.stringify({action:"health",providers:["gemini","groq","cloudflare"],cloudflareAccountId:process.env.CLOUDFLARE_ACCOUNT_ID || ""}))')"
+          response="$(curl --fail-with-body -sS -X POST "https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-ai-broker" -H "Authorization: Bearer $oidc_token" -H "content-type: application/json" -d "$payload")"
           echo "$response" > /tmp/nuva-broker-results.json
           cat /tmp/nuva-broker-results.json
           node -e 'const x=require("/tmp/nuva-broker-results.json"); const required=["gemini","groq"]; if(required.some(p=>!x.results.find(r=>r.provider===p&&r.pass))) process.exit(1); console.log("Gemini + Groq certified; Cloudflare remains optional.")'
@@ -50,6 +52,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         shell: bash
         run: |
           if [ ! -f /tmp/nuva-gateway-results.tsv ]; then exit 0; fi
