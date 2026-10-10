@@ -51,23 +51,54 @@ jobs:
           set -euo pipefail
           mkdir -p .agency
           oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -r .value)"
+          echo "::add-mask::$oidc"
           export AGENCY_OIDC_TOKEN="$oidc"
           echo "AGENCY_OIDC_TOKEN=$oidc" >> "$GITHUB_ENV"
-          http_code="$(curl -sS -o .agency/claim-response.json -w "%{http_code}" -X POST "$AGENCY_URL" \
-            -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            -H "Content-Type: application/json" \
-            -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
-            -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}" \
-            --data '{"action":"claim_task","leaseSeconds":21600}')"
-          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then cat .agency/claim-response.json; exit 1; fi
-          response="$(cat .agency/claim-response.json)"
-          printf '%s' "$response" | jq '{claimed: (.claimed.task // null)}' > .agency/task.json
-          lease="$(printf '%s' "$response" | jq -r '.claimed.lease.token // empty')"
-          if [ -z "$lease" ]; then echo "has_lease=false" >> "$GITHUB_OUTPUT"; exit 0; fi
-          echo "has_lease=true" >> "$GITHUB_OUTPUT"
-          echo "AGENCY_LEASE_TOKEN=$lease" >> "$GITHUB_ENV"
-          echo "Durable task claimed for ${{ steps.role.outputs.role }}."
+
+          roles=(constructor orchestrator finance sales supply people compliance growth security qa sentinel ux release)
+          slot=$(( $(date -u +%s) / 1200 ))
+          start_index=$(( slot % ${#roles[@]} ))
+          claimed=false
+
+          # One role can have no eligible task. Try the remaining specialists before skipping the cycle.
+          for offset in "${!roles[@]}"; do
+            index=$(( (start_index + offset) % ${#roles[@]} ))
+            role="${roles[$index]}"
+            http_code="$(curl -sS -o .agency/claim-response.json -w "%{http_code}" -X POST "$AGENCY_URL" \
+              -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+              -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+              -H "Content-Type: application/json" \
+              -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
+              -H "X-Agency-Agent-Id: $role" \
+              --data '{"action":"claim_task","leaseSeconds":21600}')"
+            if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+              echo "Claim API failed with HTTP $http_code for role $role"
+              cat .agency/claim-response.json
+              exit 1
+            fi
+
+            lease="$(jq -r '.claimed.lease.token // empty' .agency/claim-response.json)"
+            if [ -z "$lease" ]; then
+              echo "No eligible task for role $role; trying next specialist."
+              continue
+            fi
+
+            jq '{claimed: (.claimed.task // null)}' .agency/claim-response.json > .agency/task.json
+            echo "has_lease=true" >> "$GITHUB_OUTPUT"
+            echo "active_role=$role" >> "$GITHUB_OUTPUT"
+            echo "::add-mask::$lease"
+            echo "AGENCY_LEASE_TOKEN=$lease" >> "$GITHUB_ENV"
+            echo "Durable task claimed for $role."
+            claimed=true
+            break
+          done
+
+          if [ "$claimed" != true ]; then
+            printf '{"claimed":null}\n' > .agency/task.json
+            echo "has_lease=false" >> "$GITHUB_OUTPUT"
+            echo "active_role=none" >> "$GITHUB_OUTPUT"
+            echo "No eligible task exists for any of the 13 specialists; no work was claimed."
+          fi
       - name: Run autonomous worker
         if: ${{ steps.claim.outputs.has_lease == 'true' }}
         id: worker
@@ -83,7 +114,7 @@ jobs:
             You are a durable autonomous Nüva One engineering agent.
             Read GEMINI.md, docs/nuva-agency/CONSTRUCTION_AGENT.md, docs/AGENT_BACKLOG.md and docs/nuva-agency/LEARNING_PROTOCOL.md.
             Then read .agency/task.json. That persisted task is authoritative for this run.
-            Your role is exactly: ${{ steps.role.outputs.role }}.
+            Your role is exactly: ${{ steps.claim.outputs.active_role }}.
 
             Mission: make Nüva One genuinely ready for market. Work on the persisted objective until it is actually
             validated. Inspect first, define acceptance criteria, implement only safe evidence-backed changes, validate,
@@ -112,7 +143,7 @@ jobs:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
           curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 1
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.worker.conclusion != 'cancelled' }}
@@ -141,7 +172,7 @@ jobs:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
           curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 2
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_1.conclusion != 'cancelled' }}
@@ -169,7 +200,7 @@ jobs:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
           curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 3
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_2.conclusion != 'cancelled' }}
@@ -197,7 +228,7 @@ jobs:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
           curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 4
         if: ${{ steps.claim.outputs.has_lease == 'true' && steps.continue_3.conclusion != 'cancelled' }}
@@ -227,6 +258,6 @@ jobs:
           status="completed"
           if [ "${{ steps.worker.conclusion }}" != "success" ] || [ "${{ steps.continue_4.conclusion }}" = "failure" ]; then status="failed"; fi
           summary="$(cat .agency/task.json | tr '\n' ' ' | cut -c1-3000)"
-          payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "${{ steps.role.outputs.role }}" '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent}}')"
+          payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "${{ steps.claim.outputs.active_role }}" '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent}}')"
           curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.role.outputs.role }}"             --data "$payload" | jq .
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$payload" | jq .
