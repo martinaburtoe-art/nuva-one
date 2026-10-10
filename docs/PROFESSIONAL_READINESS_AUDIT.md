@@ -261,3 +261,15 @@ La inspección de solo lectura de `public.agency_tasks` y `public.agency_agent_l
 - Corrección propuesta en [PR #199](https://github.com/martinaburtoe-art/nuva-one/pull/199): al ejecutar recuperación de leases, convertir tareas expiradas que agotaron intentos —incluidas las que ya quedaron `queued` por una recuperación anterior— a `failed`, escribir `error.code=max_attempts_exhausted` y emitir el evento auditable `task.recovery_exhausted`. Las tareas con intentos restantes siguen reencolándose.
 - La corrección aún no se considera integrada ni desplegada; está pendiente de CI y pgTAP. No se modificaron esas tareas en producción directamente.
 - Este hallazgo bloquea la certificación de recuperación autónoma hasta que la corrección pase pruebas y la recuperación de producción se ejecute con trazabilidad y revisión segura.
+
+
+### Revalidación tras endurecer las credenciales de carga — 2026-10-10
+
+Fuente: [Free Beta Validation Lab run 38021406084](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38021406084), ejecutado tras integrar [PR #198](https://github.com/martinaburtoe-art/nuva-one/pull/198).
+
+- **PR #198 integrado**: el fixture y el workflow ya no contienen contraseñas fijas. Cada ejecución genera credenciales aleatorias, las enmascara y las comparte mediante el entorno del job.
+- La ejecución nueva terminó en **PASS**. pgTAP y el recovery drill del stack local terminaron correctamente; el aislamiento cross-tenant siguió en PASS con cero filas visibles al tenant secundario.
+- Carga sintética: 10/25/50/100 VU, dos iteraciones por fase, cero fallos de usuario/solicitud; p95 observado de 79/75/151/327 ms.
+- Concurrencia de inventario: commits 25/25, 50/50 y 52/52; cero fallos de transporte; p95 280/233/275 ms.
+- La inspección de los logs de esta nueva ejecución confirmó que no reaparecieron las contraseñas fijas y que los valores generados se enmascararon. El artefacto de evidencia quedó publicado en la ejecución enlazada.
+- Alcance: estas son pruebas sintéticas en Supabase local efímero, no pruebas de carga contra producción.
