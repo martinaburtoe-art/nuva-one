@@ -273,3 +273,8 @@ Fuente: [Free Beta Validation Lab run 38021406084](https://github.com/martinabur
 - Concurrencia de inventario: commits 25/25, 50/50 y 52/52; cero fallos de transporte; p95 280/233/275 ms.
 - La inspección de los logs de esta nueva ejecución confirmó que no reaparecieron las contraseñas fijas y que los valores generados se enmascararon. El artefacto de evidencia quedó publicado en la ejecución enlazada.
 - Alcance: estas son pruebas sintéticas en Supabase local efímero, no pruebas de carga contra producción.
+
+
+### Confirmación en ejecución del trabajador durable
+
+La ejecución [Durable autonomous agent, run 38021406077](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38021406077) terminó el job en success, pero el paso **Run autonomous worker** quedó **skipped**: el selector eligió `people`, `claim_task` no devolvió un lease y se omitieron heartbeat/finish. Por tanto, el estado verde de ese job no demuestra que se haya ejecutado trabajo autónomo en esa ocasión; coincide con la tarea People agotada que la consulta de producción encontró encolada. PR #199 corrige la causa en la función de recuperación, pero todavía debe pasar CI y desplegarse antes de verificar que la tarea quede terminal y el siguiente worker pueda continuar.
