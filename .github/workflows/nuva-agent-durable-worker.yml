@@ -290,6 +290,12 @@ jobs:
           opencode run --model "groq/${GROQ_MODEL}" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
 
           test -s .agency/groq-fallback-output.log
+          for marker in TASK WHY FILES VALIDATION RESULT REMAINING_RISK; do
+            if ! grep -Eiq "^${marker}([[:space:]]*:|[[:space:]]+)" .agency/groq-fallback-output.log; then
+              echo "::error::Groq fallback report is missing required evidence section: ${marker}"
+              exit 1
+            fi
+          done
           git diff --check
           npm run build --if-present
           echo "Groq fallback completed; final task status depends on this step's exit code and persisted evidence."
