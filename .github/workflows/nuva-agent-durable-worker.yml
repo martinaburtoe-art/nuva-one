@@ -255,6 +255,8 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           ACTIVE_AGENT: ${{ steps.claim.outputs.active_role }}
         shell: bash
         run: |
@@ -283,7 +285,7 @@ jobs:
           Do not push directly to main. If a code change is needed, create a branch named
           agent/agency-${{ steps.claim.outputs.active_role }}-${{ github.run_id }}, commit only validated changes,
           and open a pull request. If no code change is needed, record the evidence and remaining risk.
-          End your final response with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
+          Use these exact headings, one per line: TASK:, WHY:, FILES:, VALIDATION:, RESULT:, REMAINING_RISK:.
           PROMPT
 
           export OPENCODE_PERMISSION='{"*":"allow"}'
