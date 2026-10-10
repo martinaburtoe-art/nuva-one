@@ -47,17 +47,25 @@ begin
              else t.error
            end,
            updated_at = v_now
-     where t.status in ('claimed', 'running')
-       and (
-         t.lease_id is null
-         or not exists (
-           select 1
-             from public.agency_agent_leases l
-            where l.id = t.lease_id
-              and l.status = 'active'
-              and l.expires_at >= v_now
+     where (
+       (
+         t.status in ('claimed', 'running')
+         and (
+           t.lease_id is null
+           or not exists (
+             select 1
+               from public.agency_agent_leases l
+              where l.id = t.lease_id
+                and l.status = 'active'
+                and l.expires_at >= v_now
+           )
          )
        )
+       or (
+         t.status = 'queued'
+         and t.attempt_count >= t.max_attempts
+       )
+     )
      returning t.id, t.mission_id, t.agent_id, t.status, t.attempt_count, t.max_attempts
   )
   insert into public.agency_events(
