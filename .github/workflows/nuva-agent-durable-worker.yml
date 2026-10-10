@@ -251,13 +251,57 @@ jobs:
 
       - name: Finish persisted task
         if: ${{ always() && steps.claim.outputs.has_lease == 'true' }}
-        continue-on-error: true
         env:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
+          ACTIVE_AGENT: ${{ steps.claim.outputs.active_role }}
+          WORKER_OUTCOME: ${{ steps.worker.outcome }}
+          CONTINUE_1_OUTCOME: ${{ steps.continue_1.outcome }}
+          CONTINUE_2_OUTCOME: ${{ steps.continue_2.outcome }}
+          CONTINUE_3_OUTCOME: ${{ steps.continue_3.outcome }}
+          CONTINUE_4_OUTCOME: ${{ steps.continue_4.outcome }}
+          WORKER_RESPONSE: ${{ steps.worker.outputs.gemini_response }}
+          CONTINUE_1_RESPONSE: ${{ steps.continue_1.outputs.gemini_response }}
+          CONTINUE_2_RESPONSE: ${{ steps.continue_2.outputs.gemini_response }}
+          CONTINUE_3_RESPONSE: ${{ steps.continue_3.outputs.gemini_response }}
+          CONTINUE_4_RESPONSE: ${{ steps.continue_4.outputs.gemini_response }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           status="completed"
-          if [ "${{ steps.worker.conclusion }}" != "success" ] || [ "${{ steps.continue_4.conclusion }}" = "failure" ]; then status="failed"; fi
-          summary="$(cat .agency/task.json | tr '\n' ' ' | cut -c1-3000)"
-          payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "${{ steps.claim.outputs.active_role }}" '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent}}')"
-          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$payload" | jq .
+          outcomes=("$WORKER_OUTCOME" "$CONTINUE_1_OUTCOME" "$CONTINUE_2_OUTCOME" "$CONTINUE_3_OUTCOME" "$CONTINUE_4_OUTCOME")
+          for outcome in "${outcomes[@]}"; do
+            if [ "$outcome" != "success" ]; then
+              status="failed"
+              break
+            fi
+          done
+
+          # Keep auditable evidence of every pass; cap model excerpts and never use the initial claim payload as the result.
+          summary="$(jq -n \
+            --arg run "$GITHUB_RUN_ID" \
+            --arg agent "$ACTIVE_AGENT" \
+            --arg status "$status" \
+            --arg worker_outcome "$WORKER_OUTCOME" --arg worker_response "${WORKER_RESPONSE:0:1200}" \
+            --arg pass1_outcome "$CONTINUE_1_OUTCOME" --arg pass1_response "${CONTINUE_1_RESPONSE:0:1200}" \
+            --arg pass2_outcome "$CONTINUE_2_OUTCOME" --arg pass2_response "${CONTINUE_2_RESPONSE:0:1200}" \
+            --arg pass3_outcome "$CONTINUE_3_OUTCOME" --arg pass3_response "${CONTINUE_3_RESPONSE:0:1200}" \
+            --arg pass4_outcome "$CONTINUE_4_OUTCOME" --arg pass4_response "${CONTINUE_4_RESPONSE:0:1200}" \
+            '{run_id:$run,agent_id:$agent,status:$status,passes:{
+              initial:{outcome:$worker_outcome,response_excerpt:$worker_response},
+              continuation_1:{outcome:$pass1_outcome,response_excerpt:$pass1_response},
+              continuation_2:{outcome:$pass2_outcome,response_excerpt:$pass2_response},
+              continuation_3:{outcome:$pass3_outcome,response_excerpt:$pass3_response},
+              continuation_4:{outcome:$pass4_outcome,response_excerpt:$pass4_response}
+            }}')"
+
+          payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "$ACTIVE_AGENT" \
+            '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent,status:$status,pass_outcomes:{initial:env.WORKER_OUTCOME,continuation_1:env.CONTINUE_1_OUTCOME,continuation_2:env.CONTINUE_2_OUTCOME,continuation_3:env.CONTINUE_3_OUTCOME,continuation_4:env.CONTINUE_4_OUTCOME}}}')"
+
+          curl -fsS -X POST "$AGENCY_URL" \
+            -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
+            -H "X-Agency-Agent-Id: $ACTIVE_AGENT" \
+            --data "$payload" | jq .
