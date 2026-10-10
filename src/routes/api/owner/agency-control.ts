@@ -68,25 +68,29 @@ export const Route = createFileRoute("/api/owner/agency-control")({
       const internal = ["claim_task","heartbeat","finish_task","event","delegate"].includes(action);
       const auth = internal ? await worker(request) : await owner(request);
       if (!auth.ok) return Response.json({ error: internal ? "AGENCY_WORKER_DENIED" : "AGENCY_ACCESS_DENIED" }, { status: auth.status });
+      // La unión owner/worker no garantiza ambos IDs; extraemos el campo validado por cada vía.
+      const workerAgentId = "agentId" in auth ? auth.agentId : "";
+      const ownerUserId = "userId" in auth ? auth.userId : "";
 
       try {
         const client = db();
         if (action === "claim_task") {
-          let { data, error } = await client.rpc("agency_claim_task", { p_agent_id: auth.agentId, p_lease_seconds: body.leaseSeconds ?? 1800 });
+          const { data: initialData, error } = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: body.leaseSeconds ?? 1800 });
+          let data = initialData;
           if (error) throw error;
           if (!data) {
             const { data: mission } = await client.from("agency_missions").select("id,objective,success_criteria").eq("metadata->>mode", "durable-autonomous-agency").not("status", "in", "('cancelled','failed')").order("priority", { ascending: false }).limit(1).maybeSingle();
             if (mission) {
               const { error: taskError } = await client.from("agency_tasks").insert({
                 mission_id: mission.id,
-                title: `Autonomous ${auth.agentId} cycle`,
+                title: `Autonomous ${workerAgentId} cycle`,
                 objective: mission.objective,
-                agent_id: auth.agentId,
-                priority: auth.agentId === "security" ? 100 : 70,
+                agent_id: workerAgentId,
+                priority: workerAgentId === "security" ? 100 : 70,
                 input_context: { success_criteria: mission.success_criteria, source: "durable-cycle" },
               });
               if (taskError) throw taskError;
-              const claimed = await client.rpc("agency_claim_task", { p_agent_id: auth.agentId, p_lease_seconds: body.leaseSeconds ?? 1800 });
+              const claimed = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: body.leaseSeconds ?? 1800 });
               if (claimed.error) throw claimed.error;
               data = claimed.data;
             }
@@ -104,7 +108,7 @@ export const Route = createFileRoute("/api/owner/agency-control")({
           return Response.json({ ok: Boolean(data) });
         }
         if (action === "event") {
-          const { error } = await client.from("agency_events").insert({ mission_id: body.missionId ?? null, task_id: body.taskId ?? null, agent_id: auth.agentId, event_type: body.eventType, level: body.level ?? "info", message: body.message, payload: body.payload ?? {} });
+          const { error } = await client.from("agency_events").insert({ mission_id: body.missionId ?? null, task_id: body.taskId ?? null, agent_id: workerAgentId, event_type: body.eventType, level: body.level ?? "info", message: body.message, payload: body.payload ?? {} });
           if (error) throw error;
           return Response.json({ ok: true });
         }
@@ -115,12 +119,12 @@ export const Route = createFileRoute("/api/owner/agency-control")({
             depends_on: body.dependsOn ?? [], input_context: body.inputContext ?? {},
           }).select().single();
           if (error) throw error;
-          await client.from("agency_events").insert({ mission_id: body.missionId, task_id: data.id, agent_id: auth.agentId, event_type: "task.delegated", level: "info", message: `Delegated to ${body.agentId}`, payload: { title: body.title } });
+          await client.from("agency_events").insert({ mission_id: body.missionId, task_id: data.id, agent_id: workerAgentId, event_type: "task.delegated", level: "info", message: `Delegated to ${body.agentId}`, payload: { title: body.title } });
           return Response.json({ task: data });
         }
         if (action === "create_mission") {
           const { data: mission, error } = await client.from("agency_missions").insert({
-            title: body.title, objective: body.objective, priority: body.priority ?? 80, owner_user_id: auth.userId,
+            title: body.title, objective: body.objective, priority: body.priority ?? 80, owner_user_id: ownerUserId,
             success_criteria: body.successCriteria ?? [], metadata: body.metadata ?? {}, status: "queued",
           }).select().single();
           if (error) throw error;
@@ -141,7 +145,7 @@ export const Route = createFileRoute("/api/owner/agency-control")({
         if (action === "approval") {
           const status = body.status === "approved" || body.status === "rejected" ? body.status : null;
           if (!status) return Response.json({ error: "INVALID_APPROVAL_STATUS" }, { status: 400 });
-          const { error } = await client.from("agency_approvals").update({ status, decided_by: auth.userId, decided_at: new Date().toISOString(), decision_note: body.note ?? null }).eq("id", body.approvalId).eq("status", "pending");
+          const { error } = await client.from("agency_approvals").update({ status, decided_by: ownerUserId, decided_at: new Date().toISOString(), decision_note: body.note ?? null }).eq("id", body.approvalId).eq("status", "pending");
           if (error) throw error;
           return Response.json({ ok: true });
         }
