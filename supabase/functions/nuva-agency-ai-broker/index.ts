@@ -27,7 +27,7 @@ async function verifyGitHubToken(token: string) {
   return payload;
 }
 
-async function resolveCloudflareAccount(token: string, configured: string | null) {
+async function resolveCloudflareAccount(token: string, configured: string | null): Promise<{ accountId: string; model: string }> {
   const candidates: string[] = [];
   if (configured && /^[a-f0-9]{32}$/i.test(configured)) candidates.push(configured);
 
@@ -52,22 +52,28 @@ async function resolveCloudflareAccount(token: string, configured: string | null
     // Continue with the explicitly configured account if discovery is temporarily unavailable.
   }
 
+  const models = [
+    "@cf/meta/llama-3.1-8b-instruct-fp8",
+    "@cf/meta/llama-3.1-8b-instruct-fast",
+  ];
   let lastProbeStatus: number | null = null;
   for (const accountId of candidates) {
-    try {
-      const probe = await fetch(
-        "https://api.cloudflare.com/client/v4/accounts/" + accountId + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
-        {
-          method: "POST",
-          headers: { authorization: "Bearer " + token, "content-type": "application/json" },
-          body: JSON.stringify({ prompt: "Return exactly: NÜVA_HEALTH_OK", max_tokens: 16 }),
-          signal: AbortSignal.timeout(15000),
-        }
-      );
-      lastProbeStatus = probe.status;
-      if (probe.ok) return accountId;
-    } catch {
-      // Try the next account without logging credentials or response bodies.
+    for (const model of models) {
+      try {
+        const probe = await fetch(
+          "https://api.cloudflare.com/client/v4/accounts/" + accountId + "/ai/run/" + model,
+          {
+            method: "POST",
+            headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+            body: JSON.stringify({ prompt: "Return exactly: NÜVA_HEALTH_OK", max_tokens: 16 }),
+            signal: AbortSignal.timeout(15000),
+          }
+        );
+        lastProbeStatus = probe.status;
+        if (probe.ok) return { accountId, model };
+      } catch {
+        // Try the next model/account without logging credentials or response bodies.
+      }
     }
   }
 
@@ -94,7 +100,7 @@ async function providerConfig(provider: string) {
     const configuredAccount = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
     if (!token) return null;
     const account = await resolveCloudflareAccount(token, configuredAccount);
-    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
+    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account.accountId + "/ai/run/" + account.model,
       headers: { authorization: "Bearer " + token },
       body: (prompt: string) => ({ prompt, max_tokens: 2048 }) };
   }
