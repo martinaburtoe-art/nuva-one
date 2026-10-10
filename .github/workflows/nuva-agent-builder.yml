@@ -220,209 +220,66 @@ jobs:
               "telemetry": { "enabled": false }
             }
 
-      - name: Continue same objective — pass 1
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_1
-        uses: google-github-actions/run-gemini-cli@v0.1.22
+      - name: Groq coding-agent fallback
+        if: ${{ steps.gate.outputs.skip != 'true' && steps.worker.outcome != 'success' }}
+        id: groq_fallback
         env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
           GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 1/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Continue same objective — pass 2
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_1.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_2
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 2/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Continue same objective — pass 3
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_2.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_3
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 3/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Continue same objective — pass 4
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_3.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_4
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 4/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Continue same objective — pass 5
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_4.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_5
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 5/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Continue same objective — pass 6
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_5.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_6
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 6/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Continue same objective — pass 7
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_6.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_7
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 7/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Continue same objective — pass 8
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.worker_continue_7.conclusion != 'cancelled'
-        continue-on-error: true
-        id: worker_continue_8
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-3.1-flash-lite
-          prompt: |
-            CONTINUATION 8/8 OF THE SAME OBJECTIVE. Do not start a new objective.
-            Inspect the current workspace, accumulated diff, tests and acceptance evidence.
-            Continue active engineering work: identify remaining gaps, edge cases, regressions,
-            integration failures or missing evidence; implement safe fixes and validate them.
-            If implementation is complete, perform deeper targeted regression and boundary verification.
-            Do not fabricate work, do not merely wait, and do not stop for convenience.
-            Continue until the objective is genuinely evidenced as complete or a hard safety/external blocker is proven.
-            End with TASK, WHY, FILES, VALIDATION, RESULT, REMAINING_RISK.
-          settings: |
-            {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
-
-      - name: Verify continuous objective evidence
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+          GH_TOKEN: ${{ github.token }}
+          ACTIVE_AGENT: ${{ steps.role.outputs.role }}
         shell: bash
         run: |
           set -euo pipefail
-          echo "Same objective remains active until acceptance criteria are PASS or a proven hard safety/external blocker exists."
-          echo "Worker outcome: ${{ steps.worker.conclusion || 'unknown' }}"
-          echo "Continuation passes: 8"
+          if [ -z "${GROQ_API_KEY:-}" ]; then
+            echo "::error::Gemini worker failed and GROQ_API_KEY is not configured."
+            exit 1
+          fi
 
-      - name: Verify required continuation passes
-        if: steps.gate.outputs.skip != 'true' && !cancelled()
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Required continuation passes completed/attempted: 8"
-          echo "Continuous objective evidence is based on eight same-objective passes plus focused validation, not artificial wall-clock waiting."
-          echo "Continuation passes: 8" >> "$GITHUB_STEP_SUMMARY"
+          npm install --global --no-audit --no-fund opencode-ai
+          opencode --version
+          mkdir -p .agency
+          cat > .agency/groq-fallback-prompt.md <<'PROMPT'
+          You are the Groq-backed coding-agent fallback for Nüva One.
+          FIRST read GEMINI.md, AGENTS.md, docs/nuva-agency/CONSTRUCTION_AGENT.md,
+          docs/AGENT_BACKLOG.md and docs/nuva-agency/LEARNING_PROTOCOL.md.
+          Inspect recent commits, open issues/PRs and current CI evidence before changing anything.
+          Your specialist role is: ${{ steps.role.outputs.role }}.
+          Continue the persistent market-readiness mission; do not start a generic or unrelated task.
+          Prioritize release blockers, security/tenant/data integrity, broken core business flows,
+          incomplete modules, reliability, accessibility/responsive UX, onboarding, activation and SEO.
+          Use C1 Code Integrity, C2 Integration, C3 Business Integrity, C4 Experience and C5 Production.
+          Preserve RLS, tenant isolation, authentication, billing, checkout and deterministic financial/legal rules.
+          Never expose secrets, mutate production data, weaken security, or bypass CI.
+          Do not add Nüva Studio, WhatsApp or n8n, and do not duplicate Nüva Intelligence.
+          Do not modify Supabase migrations, RLS/auth, billing, checkout, or GitHub workflows in this application PR.
+          Keep the change focused under 220 changed lines; do not modify package-lock.json or generated route trees.
+          Work in this workspace only: do not commit or open a PR; the workflow will run focused verification
+          and create the PR only if the changes pass. If no safe change exists, make no code changes and report evidence.
+          Use these exact headings, one per line: TASK:, WHY:, FILES:, VALIDATION:, RESULT:, REMAINING_RISK:.
+          PROMPT
+
+          export OPENCODE_PERMISSION='{"*":"allow"}'
+          opencode run --model "groq/${GROQ_MODEL}" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
+          test -s .agency/groq-fallback-output.log
+          for marker in TASK WHY FILES VALIDATION RESULT REMAINING_RISK; do
+            if ! grep -Eiq "^${marker}([[:space:]]*:|[[:space:]]+)" .agency/groq-fallback-output.log; then
+              echo "::error::Groq fallback report missing section: ${marker}"
+              exit 1
+            fi
+          done
+          git diff --check
+          delimiter="GROQ_FALLBACK_$(date +%s%N)"
+          {
+            echo "summary<<$delimiter"
+            tail -c 2500 .agency/groq-fallback-output.log
+            echo
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Focused verification
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && (success() || failure())
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && (steps.worker.outcome == 'success' || steps.groq_fallback.outcome == 'success')
         run: |
           set -euo pipefail
           if git diff --quiet; then
@@ -453,7 +310,7 @@ jobs:
           git checkout -- package-lock.json src/routeTree.gen.ts 2>/dev/null || true
 
       - name: Create autonomous PR
-        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.focused_verification.outcome == 'success' && steps.worker.conclusion == 'success'
+        if: steps.gate.outputs.skip != 'true' && !cancelled() && steps.focused_verification.outcome == 'success' && (steps.worker.outcome == 'success' || steps.groq_fallback.outcome == 'success')
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
@@ -473,7 +330,7 @@ jobs:
             validation and repository protection rules pass.
 
             ### Agent result
-            ${{ steps.worker.outputs.summary || 'Inspect workflow logs for the worker result.' }}
+            ${{ steps.worker.outputs.summary || steps.groq_fallback.outputs.summary || 'Inspect workflow logs for the worker result.' }}
 
             ### Policy
             No secrets, production mutations, retired product scope or security bypasses are allowed.
