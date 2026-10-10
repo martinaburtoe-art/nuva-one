@@ -252,3 +252,12 @@ Fuente: [Free Beta Validation Lab, run 38020757646](https://github.com/martinabu
 - **Carga sintética:** las fases de 10, 25, 50 y 100 usuarios virtuales, con 2 iteraciones por fase, terminaron con cero fallos de usuario y cero fallos de solicitud. Latencia p95 observada: 82 ms (10 VU), 68 ms (25 VU), 147 ms (50 VU) y 351 ms (100 VU); ninguna fase excedió el presupuesto de latencia configurado.
 - **Concurrencia de inventario:** los commits exitosos coincidieron con los esperados en las fases ejecutadas (25/25, 50/50 y 52/52); fallos de transporte: 0. p95 reportado: 307 ms, 256 ms y 295 ms, respectivamente.
 - **Alcance:** son pruebas sintéticas contra un stack Supabase efímero/local, no una prueba de carga de producción ni una garantía de capacidad real para 100 usuarios simultáneos sostenidos. La rotación de agentes sigue pendiente en la ejecución de CI observada y debe terminar antes de dar por certificada la operación autónoma.
+
+
+### Hallazgo operativo de Agency — 2026-10-10
+
+La inspección de solo lectura de `public.agency_tasks` y `public.agency_agent_leases` encontró **dos tareas `queued` con `attempt_count = max_attempts = 3`** (roles QA y People). El selector de `agency_claim_task` exige `attempt_count < max_attempts`, por lo que esas filas estaban encoladas pero no podían volver a ser reclamadas. También había una tarea Supply en ejecución en su tercer intento, con lease activo; no se intervino mientras el lease estaba vigente.
+
+- Corrección propuesta en [PR #199](https://github.com/martinaburtoe-art/nuva-one/pull/199): al ejecutar recuperación de leases, convertir tareas expiradas que agotaron intentos —incluidas las que ya quedaron `queued` por una recuperación anterior— a `failed`, escribir `error.code=max_attempts_exhausted` y emitir el evento auditable `task.recovery_exhausted`. Las tareas con intentos restantes siguen reencolándose.
+- La corrección aún no se considera integrada ni desplegada; está pendiente de CI y pgTAP. No se modificaron esas tareas en producción directamente.
+- Este hallazgo bloquea la certificación de recuperación autónoma hasta que la corrección pase pruebas y la recuperación de producción se ejecute con trazabilidad y revisión segura.
