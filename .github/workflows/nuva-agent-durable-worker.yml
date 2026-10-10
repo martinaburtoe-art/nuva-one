@@ -253,7 +253,6 @@ jobs:
         if: ${{ always() && steps.claim.outputs.has_lease == 'true' && (steps.worker.outcome != 'success' || steps.continue_1.outcome != 'success' || steps.continue_2.outcome != 'success' || steps.continue_3.outcome != 'success' || steps.continue_4.outcome != 'success') }}
         id: groq_fallback
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
           GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
@@ -261,13 +260,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${GROQ_API_KEY:-}" ]; then
-            echo "::error::Gemini failed and GROQ_API_KEY is not configured; task cannot be completed."
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+            echo "::error::GitHub OIDC is unavailable; secure Groq proxy cannot be used."
             exit 1
           fi
 
           npm install --global --no-audit --no-fund opencode-ai
           opencode --version
+          node scripts/nuva-groq-openai-proxy.mjs > /tmp/nuva-groq-openai-proxy.log 2>&1 &
+          proxy_pid=$!
+          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4318/health | jq -e '.ok == true' >/dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            echo "::error::Local OIDC-refreshing Groq proxy did not become healthy."
+            exit 1
+          fi
+          export OPENCODE_CONFIG_CONTENT="$(jq -n --arg base_url 'http://127.0.0.1:4318/v1' '{provider:{groq:{options:{baseURL:$base_url,apiKey:"nuva-local-oidc-proxy"}}},permission:{"*":"allow"}}')"
+          export OPENCODE_PERMISSION='{"*":"allow"}'
 
           cat > .agency/groq-fallback-prompt.md <<'PROMPT'
           You are the Groq-backed fallback coding agent for Nüva One.
