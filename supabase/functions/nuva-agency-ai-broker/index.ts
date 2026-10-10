@@ -33,6 +33,8 @@ async function resolveCloudflareAccount(token: string, configured: string | null
 
   // A valid-looking but stale account ID must not block discovery of other accessible accounts.
   let discoveryStatus: number | null = null;
+  let discoveryFailure: string | null = null;
+  let probeFailure: string | null = null;
   try {
     const response = await fetch("https://api.cloudflare.com/client/v4/accounts?page=1&per_page=50", {
       headers: { authorization: "Bearer " + token },
@@ -48,8 +50,9 @@ async function resolveCloudflareAccount(token: string, configured: string | null
         }
       }
     }
-  } catch {
-    // Continue with the explicitly configured account if discovery is temporarily unavailable.
+  } catch (error) {
+    // Keep only the exception class; never log tokens, URLs containing credentials, or response bodies.
+    discoveryFailure = error instanceof Error ? error.name : "unknown";
   }
 
   const models = [
@@ -71,8 +74,9 @@ async function resolveCloudflareAccount(token: string, configured: string | null
         );
         lastProbeStatus = probe.status;
         if (probe.ok) return { accountId, model };
-      } catch {
-        // Try the next model/account without logging credentials or response bodies.
+      } catch (error) {
+        // Preserve a coarse error class for diagnosis without exposing sensitive details.
+        probeFailure = error instanceof Error ? error.name : "unknown";
       }
     }
   }
@@ -80,7 +84,13 @@ async function resolveCloudflareAccount(token: string, configured: string | null
   if (candidates.length === 0 && discoveryStatus !== null && discoveryStatus !== 200) {
     throw new Error("cloudflare_account_discovery_http_" + discoveryStatus);
   }
-  throw new Error("cloudflare_account_ai_not_found_http_" + (lastProbeStatus ?? "unreachable"));
+  if (lastProbeStatus !== null) {
+    throw new Error("cloudflare_account_ai_not_found_http_" + lastProbeStatus);
+  }
+  if (candidates.length === 0 && discoveryFailure) {
+    throw new Error("cloudflare_account_discovery_network_" + discoveryFailure);
+  }
+  throw new Error("cloudflare_account_ai_probe_network_" + (probeFailure ?? "unknown"));
 }
 async function providerConfig(provider: string) {
   if (provider === "gemini") {
