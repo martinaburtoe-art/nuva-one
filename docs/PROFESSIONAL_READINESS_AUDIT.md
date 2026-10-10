@@ -210,3 +210,34 @@ La revisión continuada produjo resultados más recientes y nuevas correcciones:
 ### Bloqueo actual y siguiente criterio de cierre
 
 No fusionar hasta que la última ronda de CI confirme todos los checks requeridos. La protección de contraseña filtrada de Supabase sigue pendiente porque la integración disponible permite consultar proyecto, SQL, migraciones y asesores, pero no modificar de forma verificada esa opción de Auth. Los 197 índices no usados continúan fuera de cualquier cambio automático. No se han aplicado migraciones ni cambios de datos a producción en esta ronda.
+
+
+## Actualización de evidencia verificada — 2026-10-10
+
+Esta sección sustituye cualquier estado temporal anterior sobre las mismas comprobaciones. No declara certificación global.
+
+### Integración y CI
+
+- PR #196 y PR #197 se integraron en `main` después de que sus respectivas ejecuciones de CI reportaran 10/10 checks aprobados.
+- La ejecución de `live-certification` sobre `main` terminó en PASS. Su evidencia viva confirma Gemini PASS y Groq PASS; Cloudflare devuelve `cloudflare_account_ai_not_found`. El workflow deja Cloudflare como proveedor opcional, así que su fallo no invalida los dos proveedores certificados, pero sí impide declarar salud de los tres proveedores.
+- La ejecución posterior a los merges tiene `build`, `Repository integrity`, `production-smoke` y `live-certification` en PASS. A la hora de esta actualización, pgTAP/reconstrucción de esquema, carga efímera 10/25/50/100 VU y rotación de agentes siguen `IN_PROGRESS`; no se cuentan como aprobados.
+
+### Producción: integridad, rendimiento y permisos de Agency
+
+- `public.nuva_core_integrity_audit()` se volvió a ejecutar en producción el 2026-10-10: 11 controles, cero fallos en todos los controles devueltos.
+- Se añadieron los cuatro índices identificados por el asesor de rendimiento: `agency_approvals(mission_id)`, `agency_approvals(task_id)`, `agency_artifacts(mission_id)` y `agency_tasks(parent_task_id)`. La consulta posterior confirmó los cuatro índices presentes en producción. Los cambios están integrados en PR #197.
+- El asesor de seguridad sigue listando seis tablas Agency con RLS activo y sin políticas. El hallazgo es INFO, no prueba por sí solo exposición: consulta directa de privilegios encontró cero grants DML a `anon` y `authenticated` en esas seis tablas.
+- Se inspeccionaron las funciones privilegiadas `agency_claim_task`, `agency_finish_task` y `agency_heartbeat`: las tres tienen `SECURITY DEFINER`, fijan `search_path` a `public, pg_catalog` y permiten `EXECUTE` a `service_role`; los roles `anon` y `authenticated` no tienen `EXECUTE`. Esto respalda el aislamiento observado, pero no reemplaza pruebas de integración negativas y positivas de cada endpoint.
+- El asesor de rendimiento ya no reporta las cuatro FK Agency como hallazgos. Sigue informando tres avisos `auth_rls_initplan` en `ops_agent_learning`; la inspección de `pg_policies` mostró las expresiones de `auth.jwt()` envueltas en `SELECT`, por lo que este aviso puede ser obsoleto. No se alteraron esas políticas sin una reproducción que justifique el cambio. Los 201 índices marcados como no usados no se borrarán automáticamente.
+
+### Pendientes que siguen bloqueando una certificación completa
+
+- Supabase Auth: `auth_leaked_password_protection` continúa en WARN. No se ha modificado porque las herramientas conectadas no exponen el ajuste de Auth; requiere habilitarse en la configuración de Supabase y validar el flujo.
+- Cloudflare Workers AI: error de cuenta/modelo `cloudflare_account_ai_not_found`; revisar ID de cuenta, modelo y permisos del token.
+- Reglas de protección de rama: `UNKNOWN` por permisos insuficientes para confirmar su configuración.
+- Pruebas de recuperación, pgTAP, carga, rotación real de los agentes y pruebas end-to-end C1–C5 deben terminar y conservar evidencia actual.
+- La matriz global no se considera READY mientras haya puertas obligatorias pendientes o UNKNOWN. El éxito de CI no se interpreta como certificación completa de UX, seguridad, todos los módulos ni operación 24/7.
+
+### Corrección del estado anterior
+
+Una nota previa decía que no se habían aplicado cambios de base de datos en producción. Esa afirmación dejó de ser válida al aplicar y verificar los cuatro índices FK indicados arriba. No se eliminaron datos ni índices existentes como parte de esta optimización.
