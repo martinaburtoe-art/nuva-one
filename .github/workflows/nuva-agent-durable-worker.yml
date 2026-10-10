@@ -267,6 +267,7 @@ jobs:
 
           npm install --global --no-audit --no-fund opencode-ai
           opencode --version
+          node --check scripts/nuva-groq-openai-proxy.mjs
           node scripts/nuva-groq-openai-proxy.mjs > /tmp/nuva-groq-openai-proxy.log 2>&1 &
           proxy_pid=$!
           trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
