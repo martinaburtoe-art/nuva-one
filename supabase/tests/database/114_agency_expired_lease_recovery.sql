@@ -1,9 +1,10 @@
 begin;
-select plan(4);
+select plan(5);
 
 create temporary table agency_recovery_fixture (
   mission_id uuid not null default gen_random_uuid(),
-  task_id uuid not null default gen_random_uuid()
+  task_id uuid not null default gen_random_uuid(),
+  retryable_task_id uuid not null default gen_random_uuid()
 ) on commit drop;
 insert into agency_recovery_fixture default values;
 
@@ -18,6 +19,14 @@ insert into public.agency_tasks(
 )
 select task_id, mission_id, 'Exhausted task fixture', 'Must not remain queued after lease recovery',
        'qa', 'running', 1000, 3, 3, null
+from agency_recovery_fixture;
+
+insert into public.agency_tasks(
+  id, mission_id, title, objective, agent_id, status, priority,
+  attempt_count, max_attempts, lease_id
+)
+select retryable_task_id, mission_id, 'Retryable expired task fixture', 'Must be requeued when attempts remain',
+       'security', 'running', 900, 1, 3, null
 from agency_recovery_fixture;
 
 -- Recovery runs before claim selection. The fixture task is exhausted and must not be claimed again.
@@ -46,6 +55,12 @@ select is(
       and event_type='task.recovery_exhausted'),
   1,
   'recovery emits exactly one owner-visible failure event'
+);
+
+select is(
+  (select status from public.agency_tasks where id=(select retryable_task_id from agency_recovery_fixture)),
+  'queued',
+  'expired task with attempts remaining is requeued for retry'
 );
 
 select * from finish();
