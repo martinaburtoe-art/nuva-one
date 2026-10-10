@@ -241,3 +241,14 @@ Esta sección sustituye cualquier estado temporal anterior sobre las mismas comp
 ### Corrección del estado anterior
 
 Una nota previa decía que no se habían aplicado cambios de base de datos en producción. Esa afirmación dejó de ser válida al aplicar y verificar los cuatro índices FK indicados arriba. No se eliminaron datos ni índices existentes como parte de esta optimización.
+
+
+### Evidencia de carga, aislamiento y recuperación — ejecución 2026-10-10
+
+Fuente: [Free Beta Validation Lab, run 38020757646](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38020757646) y [pgTAP database tests, run 38020757624](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38020757624).
+
+- **pgTAP:** PASS en el stack Supabase local efímero. La reconstrucción de esquema y el ejercicio de recuperación finalizaron con PASS.
+- **Aislamiento entre tenants:** la sonda cross-tenant devolvió PASS, con cero filas visibles para el tenant secundario en la consulta protegida.
+- **Carga sintética:** las fases de 10, 25, 50 y 100 usuarios virtuales, con 2 iteraciones por fase, terminaron con cero fallos de usuario y cero fallos de solicitud. Latencia p95 observada: 82 ms (10 VU), 68 ms (25 VU), 147 ms (50 VU) y 351 ms (100 VU); ninguna fase excedió el presupuesto de latencia configurado.
+- **Concurrencia de inventario:** los commits exitosos coincidieron con los esperados en las fases ejecutadas (25/25, 50/50 y 52/52); fallos de transporte: 0. p95 reportado: 307 ms, 256 ms y 295 ms, respectivamente.
+- **Alcance:** son pruebas sintéticas contra un stack Supabase efímero/local, no una prueba de carga de producción ni una garantía de capacidad real para 100 usuarios simultáneos sostenidos. La rotación de agentes sigue pendiente en la ejecución de CI observada y debe terminar antes de dar por certificada la operación autónoma.
