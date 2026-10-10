@@ -27,31 +27,61 @@ async function verifyGitHubToken(token: string) {
   return payload;
 }
 
-async function resolveCloudflareAccount(token: string, configured: string | null) {
-  if (configured && /^[a-f0-9]{32}$/i.test(configured)) return configured;
-  const response = await fetch("https://api.cloudflare.com/client/v4/accounts?page=1&per_page=10", {
-    headers: { authorization: "Bearer " + token },
-    signal: AbortSignal.timeout(10000),
-  });
-  const json = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error("cloudflare_account_discovery_http_" + response.status);
-  const accounts = Array.isArray(json?.result) ? json.result : [];
-  for (const candidate of accounts) {
-    if (!candidate?.id) continue;
-    const probe = await fetch(
-      "https://api.cloudflare.com/client/v4/accounts/" + candidate.id + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
-      {
-        method: "POST",
-        headers: { authorization: "Bearer " + token, "content-type": "application/json" },
-        body: JSON.stringify({ prompt: "Return exactly: NÜVA_HEALTH_OK", max_tokens: 16 }),
-        signal: AbortSignal.timeout(15000),
-      }
-    );
-    if (probe.ok) return candidate.id;
-  }
-  throw new Error("cloudflare_account_ai_not_found");
-}
+async function resolveCloudflareAccount(token: string, configured: string | null): Promise<{ accountId: string; model: string }> {
+  const candidates: string[] = [];
+  if (configured && /^[a-f0-9]{32}$/i.test(configured)) candidates.push(configured);
 
+  // A valid-looking but stale account ID must not block discovery of other accessible accounts.
+  let discoveryStatus: number | null = null;
+  try {
+    const response = await fetch("https://api.cloudflare.com/client/v4/accounts?page=1&per_page=50", {
+      headers: { authorization: "Bearer " + token },
+      signal: AbortSignal.timeout(10000),
+    });
+    discoveryStatus = response.status;
+    if (response.ok) {
+      const json = await response.json().catch(() => ({}));
+      const accounts = Array.isArray(json?.result) ? json.result : [];
+      for (const account of accounts) {
+        if (typeof account?.id === "string" && /^[a-f0-9]{32}$/i.test(account.id) && !candidates.includes(account.id)) {
+          candidates.push(account.id);
+        }
+      }
+    }
+  } catch {
+    // Continue with the explicitly configured account if discovery is temporarily unavailable.
+  }
+
+  const models = [
+    "@cf/meta/llama-3.1-8b-instruct-fp8",
+    "@cf/meta/llama-3.1-8b-instruct-fast",
+  ];
+  let lastProbeStatus: number | null = null;
+  for (const accountId of candidates) {
+    for (const model of models) {
+      try {
+        const probe = await fetch(
+          "https://api.cloudflare.com/client/v4/accounts/" + accountId + "/ai/run/" + model,
+          {
+            method: "POST",
+            headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+            body: JSON.stringify({ prompt: "Return exactly: NÜVA_HEALTH_OK", max_tokens: 16 }),
+            signal: AbortSignal.timeout(15000),
+          }
+        );
+        lastProbeStatus = probe.status;
+        if (probe.ok) return { accountId, model };
+      } catch {
+        // Try the next model/account without logging credentials or response bodies.
+      }
+    }
+  }
+
+  if (candidates.length === 0 && discoveryStatus !== null && discoveryStatus !== 200) {
+    throw new Error("cloudflare_account_discovery_http_" + discoveryStatus);
+  }
+  throw new Error("cloudflare_account_ai_not_found_http_" + (lastProbeStatus ?? "unreachable"));
+}
 async function providerConfig(provider: string) {
   if (provider === "gemini") {
     const key = Deno.env.get("GEMINI_API_KEY");
@@ -70,7 +100,7 @@ async function providerConfig(provider: string) {
     const configuredAccount = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
     if (!token) return null;
     const account = await resolveCloudflareAccount(token, configuredAccount);
-    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account + "/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
+    return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account.accountId + "/ai/run/" + account.model,
       headers: { authorization: "Bearer " + token },
       body: (prompt: string) => ({ prompt, max_tokens: 2048 }) };
   }
