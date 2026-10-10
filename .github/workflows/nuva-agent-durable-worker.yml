@@ -280,7 +280,7 @@ jobs:
             echo "::error::Local OIDC-refreshing Groq proxy did not become healthy."
             exit 1
           fi
-          export OPENCODE_CONFIG_CONTENT="$(jq -n --arg base_url 'http://127.0.0.1:4318/v1' '{provider:{groq:{options:{baseURL:$base_url,apiKey:"nuva-local-oidc-proxy"}}},permission:{"*":"allow"}}')"
+          export OPENCODE_CONFIG_CONTENT="$(jq -n --arg base_url 'http://127.0.0.1:4318/v1' '{provider:{"nuva-groq-proxy":{npm:"@ai-sdk/openai-compatible",name:"Nüva Groq OIDC Proxy",options:{baseURL:$base_url,apiKey:"nuva-local-oidc-proxy"},models:{"gpt-oss-20b":{name:"Groq GPT OSS 20B"}}}},permission:{"*":"allow"}}')"
           export OPENCODE_PERMISSION='{"*":"allow"}'
 
           cat > .agency/groq-fallback-prompt.md <<'PROMPT'
@@ -303,7 +303,7 @@ jobs:
           PROMPT
 
           export OPENCODE_PERMISSION='{"*":"allow"}'
-          opencode run --model "groq/${GROQ_MODEL}" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
+          opencode run --model "nuva-groq-proxy/gpt-oss-20b" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
 
           test -s .agency/groq-fallback-output.log
           for marker in TASK WHY FILES VALIDATION RESULT REMAINING_RISK; do
