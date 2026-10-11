@@ -253,7 +253,6 @@ jobs:
         if: ${{ always() && steps.claim.outputs.has_lease == 'true' && (steps.worker.outcome != 'success' || steps.continue_1.outcome != 'success' || steps.continue_2.outcome != 'success' || steps.continue_3.outcome != 'success' || steps.continue_4.outcome != 'success') }}
         id: groq_fallback
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
           GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
@@ -261,13 +260,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${GROQ_API_KEY:-}" ]; then
-            echo "::error::Gemini failed and GROQ_API_KEY is not configured; task cannot be completed."
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+            echo "::error::GitHub OIDC is unavailable; secure Groq proxy cannot be used."
             exit 1
           fi
 
           npm install --global --no-audit --no-fund opencode-ai
           opencode --version
+          node --check scripts/nuva-groq-openai-proxy.mjs
+          node scripts/nuva-groq-openai-proxy.mjs > /tmp/nuva-groq-openai-proxy.log 2>&1 &
+          proxy_pid=$!
+          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4318/health | jq -e '.ok == true' >/dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            echo "::error::Local OIDC-refreshing Groq proxy did not become healthy."
+            exit 1
+          fi
+          export OPENCODE_CONFIG_CONTENT="$(jq -n --arg base_url 'http://127.0.0.1:4318/v1' '{provider:{"nuva-groq-proxy":{npm:"@ai-sdk/openai-compatible",name:"Nüva Groq OIDC Proxy",options:{baseURL:$base_url,apiKey:"nuva-local-oidc-proxy"},models:{"gpt-oss-20b":{name:"Groq GPT OSS 20B",limit:{context:131072,output:8192},modalities:{input:["text"],output:["text"]},tool_call:true,reasoning:true,temperature:true,attachment:false}}}},permission:{"*":"allow"}}')"
+          export OPENCODE_PERMISSION='{"*":"allow"}'
 
           cat > .agency/groq-fallback-prompt.md <<'PROMPT'
           You are the Groq-backed fallback coding agent for Nüva One.
@@ -289,7 +303,7 @@ jobs:
           PROMPT
 
           export OPENCODE_PERMISSION='{"*":"allow"}'
-          opencode run --model "groq/${GROQ_MODEL}" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
+          opencode run --model "nuva-groq-proxy/gpt-oss-20b" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
 
           test -s .agency/groq-fallback-output.log
           for marker in TASK WHY FILES VALIDATION RESULT REMAINING_RISK; do
@@ -352,9 +366,7 @@ jobs:
           payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "$ACTIVE_AGENT" --arg worker "$WORKER_OUTCOME" --arg p1 "$CONTINUE_1_OUTCOME" --arg p2 "$CONTINUE_2_OUTCOME" --arg p3 "$CONTINUE_3_OUTCOME" --arg p4 "$CONTINUE_4_OUTCOME" --arg fallback "$FALLBACK_OUTCOME" \
             '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent,status:$status,pass_outcomes:{initial:$worker,continuation_1:$p1,continuation_2:$p2,continuation_3:$p3,continuation_4:$p4,groq_fallback:$fallback}}}')"
 
-          # Supabase Edge Gateway may transiently return 502 after the worker has
-          # successfully completed all passes. Retry transient transport/5xx failures.
-          # Keep the payload identical so task completion remains auditable by run_id.
+          # Reintenta errores transitorios del gateway sin cambiar la identidad de la tarea.
           response_file=".agency/finish-response.json"
           http_code="$(curl --silent --show-error --output "$response_file" --write-out "%{http_code}" \
             --retry 5 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
