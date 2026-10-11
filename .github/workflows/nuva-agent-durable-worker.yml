@@ -366,10 +366,20 @@ jobs:
           payload="$(jq -n --arg token "$AGENCY_LEASE_TOKEN" --arg status "$status" --arg summary "$summary" --arg run "$GITHUB_RUN_ID" --arg agent "$ACTIVE_AGENT" --arg worker "$WORKER_OUTCOME" --arg p1 "$CONTINUE_1_OUTCOME" --arg p2 "$CONTINUE_2_OUTCOME" --arg p3 "$CONTINUE_3_OUTCOME" --arg p4 "$CONTINUE_4_OUTCOME" --arg fallback "$FALLBACK_OUTCOME" \
             '{action:"finish_task",leaseToken:$token,status:$status,summary:$summary,result:{run_id:$run,agent_id:$agent,status:$status,pass_outcomes:{initial:$worker,continuation_1:$p1,continuation_2:$p2,continuation_3:$p3,continuation_4:$p4,groq_fallback:$fallback}}}')"
 
-          curl -fsS -X POST "$AGENCY_URL" \
+          # Reintenta errores transitorios del gateway sin cambiar la identidad de la tarea.
+          response_file=".agency/finish-response.json"
+          http_code="$(curl --silent --show-error --output "$response_file" --write-out "%{http_code}" \
+            --retry 5 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
+            -X POST "$AGENCY_URL" \
             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             -H "Content-Type: application/json" \
             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
             -H "X-Agency-Agent-Id: $ACTIVE_AGENT" \
-            --data "$payload" | jq .
+            --data "$payload")"
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::finish_task failed after retries (HTTP $http_code); response follows."
+            cat "$response_file"
+            exit 1
+          fi
+          jq . "$response_file"
