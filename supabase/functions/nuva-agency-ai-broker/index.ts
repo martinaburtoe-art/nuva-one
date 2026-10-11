@@ -189,7 +189,15 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
   }
 
   const model = Deno.env.get("GROQ_MODEL") || "openai/gpt-oss-20b";
-  const upstreamBody = { ...input, model };
+  // OpenCode can include provider-specific reasoning_content in assistant history.
+  // Groq's OpenAI-compatible endpoint rejects that field, so strip it at the gateway boundary.
+  const normalizedMessages = input.messages.map((message) => {
+    if (!message || typeof message !== "object" || Array.isArray(message)) return message;
+    const compatibleMessage = { ...message };
+    delete compatibleMessage.reasoning_content;
+    return compatibleMessage;
+  });
+  const upstreamBody = { ...input, messages: normalizedMessages, model };
   const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
