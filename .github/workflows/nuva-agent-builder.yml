@@ -164,6 +164,18 @@ jobs:
             (B) an explicit hard safety boundary is reached, or (C) an external dependency makes further progress
             impossible and the blocker is recorded with exact evidence. Never stop because the task is inconvenient,
             the first test passed, or a single change was made.
+
+            CHANGE-SCOPE AND DIFF SAFETY BUDGET:
+            The autonomous PR gate allows at most 220 changed lines per cycle and rejects package-lock.json changes.
+            This is a hard safety limit, not a target to exceed and not permission to bypass the gate. Before each edit,
+            inspect the intended files and define the smallest coherent patch. Prefer focused fixes, regression tests,
+            and targeted documentation over rewrites or broad formatting. Avoid generated files, route-tree churn,
+            lockfile churn, unrelated cleanup, and whole-file replacement. After every coherent change, inspect
+            "git diff --stat" and "git diff --numstat". If the objective needs more than 220 changed lines, split it
+            into independently testable, ordered increments with explicit follow-up evidence; do not attempt to land
+            multiple increments in one cycle. Before finishing, ensure the final diff is <=220 changed lines, contains
+            only objective-related files, passes git diff --check, and preserves existing safeguards. Never weaken or
+            modify the safety gate just to make a large patch pass.
             Treat previous validated incidents, regressions and successful fixes as training evidence:
             infer recurring failure patterns, prefer proven remediation strategies, and record a concise
             new lesson in the PR summary when the cycle discovers a reusable pattern. Do not claim model
