@@ -31,6 +31,11 @@ jobs:
           node-version: 22
       - name: Live provider certification through Supabase OIDC broker
         id: broker
+        env:
+          # The broker call must receive the trusted account ID and API token.
+          # The publication step's env does not carry into this separate step.
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
