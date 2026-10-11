@@ -259,7 +259,7 @@ Fuente: [Free Beta Validation Lab, run 38020757646](https://github.com/martinabu
 La inspección de solo lectura de `public.agency_tasks` y `public.agency_agent_leases` encontró **dos tareas `queued` con `attempt_count = max_attempts = 3`** (roles QA y People). El selector de `agency_claim_task` exige `attempt_count < max_attempts`, por lo que esas filas estaban encoladas pero no podían volver a ser reclamadas. También había una tarea Supply en ejecución en su tercer intento, con lease activo; no se intervino mientras el lease estaba vigente.
 
 - Corrección propuesta en [PR #199](https://github.com/martinaburtoe-art/nuva-one/pull/199): al ejecutar recuperación de leases, convertir tareas expiradas que agotaron intentos —incluidas las que ya quedaron `queued` por una recuperación anterior— a `failed`, escribir `error.code=max_attempts_exhausted` y emitir el evento auditable `task.recovery_exhausted`. Las tareas con intentos restantes siguen reencolándose.
-- La corrección aún no se considera integrada ni desplegada; está pendiente de CI y pgTAP. No se modificaron esas tareas en producción directamente.
+- La corrección quedó integrada en `main` mediante PR #199. La recuperación real de tareas agotadas y su transición terminal deben verificarse con evidencia live; no se modificaron manualmente esas tareas en producción.
 - Este hallazgo bloquea la certificación de recuperación autónoma hasta que la corrección pase pruebas y la recuperación de producción se ejecute con trazabilidad y revisión segura.
 
 
@@ -278,3 +278,28 @@ Fuente: [Free Beta Validation Lab run 38021406084](https://github.com/martinabur
 ### Confirmación en ejecución del trabajador durable
 
 La ejecución [Durable autonomous agent, run 38021406077](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38021406077) terminó el job en success, pero el paso **Run autonomous worker** quedó **skipped**: el selector eligió `people`, `claim_task` no devolvió un lease y se omitieron heartbeat/finish. Por tanto, el estado verde de ese job no demuestra que se haya ejecutado trabajo autónomo en esa ocasión; coincide con la tarea People agotada que la consulta de producción encontró encolada. PR #199 corrige la causa en la función de recuperación, pero todavía debe pasar CI y desplegarse antes de verificar que la tarea quede terminal y el siguiente worker pueda continuar.
+
+
+### Revalidación de Agencia y AI Gateway — 2026-10-11
+
+Fuentes de ejecución:
+- [AI Gateway Live Certification, run 38104720049](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38104720049).
+- [Durable Autonomous Agent Worker, run 38104664313](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38104664313).
+- [PR #212 — fallback Groq seguro por OIDC](https://github.com/martinaburtoe-art/nuva-one/pull/212), fusionada.
+- [PR #213 — fallback Groq en el constructor](https://github.com/martinaburtoe-art/nuva-one/pull/213), validación en curso.
+- [PR #214 — normalización de mensajes para Groq](https://github.com/martinaburtoe-art/nuva-one/pull/214), validación en curso.
+- [Issue #211 — credenciales Cloudflare](https://github.com/martinaburtoe-art/nuva-one/issues/211).
+
+Resultados observados:
+- **Gemini: PASS** en la certificación del gateway; sin embargo, el worker durable falló en una ejecución posterior porque agotó la cuota diaria del modelo. El estado del proveedor en una prueba no garantiza cuota disponible en todas las ejecuciones.
+- **Groq: PASS** en la certificación del gateway.
+- **Cloudflare Workers AI: FAIL**. La ejecución confirmó que `CLOUDFLARE_API_TOKEN` no está configurado en GitHub Actions. El valor de `CLOUDFLARE_ACCOUNT_ID` no es un ID de cuenta válido; el broker no pudo descubrir cuentas accesibles. El workflow global terminó en success porque Gemini y Groq son obligatorios y Cloudflare es opcional en ese workflow; el estado individual Cloudflare sigue siendo failure. No debe contarse como proveedor certificado.
+- PR #212 fue fusionada tras CI, pgTAP, build, integridad, safety-gate y smoke de producción en el commit revisado. El broker `nuva-agency-ai-broker` fue desplegado en Supabase como versión 13 con autenticación OIDC personalizada; `verify_jwt=false` se mantiene porque la función valida el token de GitHub dentro del handler.
+- La prueba del worker durable alcanzó el fallback Groq, pero falló porque el historial de OpenCode incluyó `messages.2.reasoning_content`, campo que la API compatible de Groq rechaza. PR #214 elimina ese campo en el límite del broker; aún no se considera corregido hasta pasar checks y repetir la prueba live.
+- PR #213 sustituye ocho continuaciones Gemini consecutivas por fallback Groq protegido por el proxy OIDC. Sus checks de pgTAP aún están pendientes en el momento de esta actualización.
+- La finalización persistida de tareas debe validarse por resultado terminal en `agency_tasks` y evento correspondiente en `agency_events`. Un `ok: true` del plano de control, un job en verde o la mera llegada a `finish_task` no prueban finalización exitosa.
+- **Bloqueo externo de Cloudflare:** configurar en GitHub Actions el secret `CLOUDFLARE_API_TOKEN` con alcance mínimo y la variable `CLOUDFLARE_ACCOUNT_ID` con el ID real de 32 caracteres hexadecimales. No almacenar estas credenciales en el repositorio ni en logs.
+
+Estado de certificación:
+- C1–C5 siguen **NO CERTIFICADOS globalmente** hasta reunir evidencia actual para todos los criterios obligatorios.
+- No combinar implementación, certificación, salud de proveedores y release readiness en un único porcentaje. Las pruebas locales/sintéticas y los checks de CI no equivalen a prueba de producción para todos los flujos.
