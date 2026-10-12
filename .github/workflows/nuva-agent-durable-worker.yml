@@ -250,6 +250,7 @@ jobs:
             {"model":{"name":"gemini-3.1-flash-lite","maxSessionTurns":-1,"disableLoopDetection":true},"telemetry":{"enabled":false}}
 
       - name: Groq coding-agent fallback
+        timeout-minutes: 20
         if: ${{ always() && steps.claim.outputs.has_lease == 'true' && (steps.worker.outcome != 'success' || steps.continue_1.outcome != 'success' || steps.continue_2.outcome != 'success' || steps.continue_3.outcome != 'success' || steps.continue_4.outcome != 'success') }}
         id: groq_fallback
         env:
@@ -303,7 +304,7 @@ jobs:
           PROMPT
 
           export OPENCODE_PERMISSION='{"*":"allow"}'
-          opencode run --model "nuva-groq-proxy/gpt-oss-20b" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
+          timeout 15m opencode run --model "nuva-groq-proxy/gpt-oss-20b" --agent build --title "Nüva Agency ${ACTIVE_AGENT} fallback" "$(cat .agency/groq-fallback-prompt.md)" 2>&1 | tee .agency/groq-fallback-output.log
 
           test -s .agency/groq-fallback-output.log
           for marker in TASK WHY FILES VALIDATION RESULT REMAINING_RISK; do
