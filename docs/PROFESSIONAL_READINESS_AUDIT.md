@@ -285,8 +285,8 @@ La ejecución [Durable autonomous agent, run 38021406077](https://github.com/mar
 Fuentes de evidencia:
 - [PR #212 — proxy Groq protegido por OIDC](https://github.com/martinaburtoe-art/nuva-one/pull/212), fusionada.
 - [PR #214 — normalización de mensajes Groq](https://github.com/martinaburtoe-art/nuva-one/pull/214), fusionada.
-- [PR #216 — constructor con cuatro continuaciones y fallback Groq](https://github.com/martinaburtoe-art/nuva-one/pull/216), validación final en curso.
-- [PR #217 — límite temporal del fallback durable](https://github.com/martinaburtoe-art/nuva-one/pull/217), validación final en curso.
+- [PR #216 — constructor con cuatro continuaciones y fallback Groq](https://github.com/martinaburtoe-art/nuva-one/pull/216), fusionada tras CI, pgTAP, integridad, seguridad y smoke.
+- [PR #217 — límite temporal del fallback durable](https://github.com/martinaburtoe-art/nuva-one/pull/217), fusionada; limita el paso a 20 minutos y OpenCode a 15 minutos en ejecuciones futuras.
 - [Issue #211 — credenciales Cloudflare](https://github.com/martinaburtoe-art/nuva-one/issues/211).
 - [Issue #218 — revisión de tareas agotadas](https://github.com/martinaburtoe-art/nuva-one/issues/218).
 - [Ejecución durable controlada, run 38196139941](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38196139941).
@@ -296,8 +296,8 @@ Resultados confirmados:
 - **Groq: PASS en certificación live del gateway anterior**. La ejecución durable posterior encontró reasoning_content incompatible con la API de Groq; PR #214 se fusionó y nuva-agency-ai-broker se desplegó como versión 14 con la normalización aplicada.
 - **Prueba durable actual:** la tarea controlada 2f10a1f0-6096-470c-ae6f-364aedc81a2d fue reclamada y pasó a running, con evento task.claimed. El trabajador Gemini terminó con éxito; el paso de fallback Groq sigue en ejecución. Todavía no hay evento de finalización ni estado terminal. No certificar hasta verificar el resultado final en agency_tasks y agency_events.
 - **Cola de tareas:** consulta de solo lectura el 2026-10-12 encontró 3 tareas completadas, 10 fallidas y 1 en ejecución. Ocho fallidas tienen max_attempts_exhausted; dos guardan errores de ejecución. No se han reencolado ni alterado las tareas fallidas; el análisis y la recuperación trazable se siguen en issue #218.
-- **Constructor:** PR #216 reemplaza las ocho continuaciones Gemini por cuatro y añade fallback OIDC de Groq. El diff se mantuvo por debajo del presupuesto de 220 líneas cambiadas. Los checks de build, smoke, safety e integridad pasaron; las verificaciones finales restantes siguen en ejecución.
-- **Duración del fallback:** PR #217 añade límite de 20 minutos al paso y timeout de 15 minutos a OpenCode. Sus checks de pgTAP, build, smoke, seguridad e integridad pasaron; la validación agregada final sigue en ejecución. La ejecución ya iniciada no incorpora este timeout retroactivamente.
+- **Constructor:** PR #216 reemplaza las ocho continuaciones Gemini por cuatro y añade fallback OIDC de Groq. El diff se mantuvo por debajo del presupuesto de 220 líneas cambiadas. CI, pgTAP, Factory release evidence, build, smoke, safety e integridad pasaron.
+- **Duración del fallback:** PR #217 añade límite de 20 minutos al paso y timeout de 15 minutos a OpenCode. Sus checks de pgTAP, build, Factory release evidence, smoke, seguridad e integridad pasaron. La ejecución ya iniciada no incorpora este timeout retroactivamente.
 - **Cloudflare Workers AI: FAIL / BLOQUEADO.** Falta el secret CLOUDFLARE_API_TOKEN en GitHub Actions y CLOUDFLARE_ACCOUNT_ID debe ser el ID real de cuenta de 32 caracteres hexadecimales. No poner secretos en el repositorio ni en logs.
 
 Estado de certificación:
