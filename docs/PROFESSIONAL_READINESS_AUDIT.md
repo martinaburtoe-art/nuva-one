@@ -287,6 +287,7 @@ Fuentes de evidencia:
 - [PR #214 — normalización de mensajes Groq](https://github.com/martinaburtoe-art/nuva-one/pull/214), fusionada.
 - [PR #216 — constructor con cuatro continuaciones y fallback Groq](https://github.com/martinaburtoe-art/nuva-one/pull/216), fusionada tras CI, pgTAP, integridad, seguridad y smoke.
 - [PR #217 — límite temporal del fallback durable](https://github.com/martinaburtoe-art/nuva-one/pull/217), fusionada; limita el paso a 20 minutos y OpenCode a 15 minutos en ejecuciones futuras.
+- [PR #220 — heartbeat periódico durante el fallback](https://github.com/martinaburtoe-art/nuva-one/pull/220), en validación; evita que el lease quede sin heartbeat durante llamadas largas.
 - [Issue #211 — credenciales Cloudflare](https://github.com/martinaburtoe-art/nuva-one/issues/211).
 - [Issue #218 — revisión de tareas agotadas](https://github.com/martinaburtoe-art/nuva-one/issues/218).
 - [Ejecución durable controlada, run 38196139941](https://github.com/martinaburtoe-art/nuva-one/actions/runs/38196139941).
@@ -294,7 +295,7 @@ Fuentes de evidencia:
 Resultados confirmados:
 - **Gemini: PASS en certificación live anterior**, pero la cuota diaria agotada provocó fallos en una ejecución durable posterior. El estado del proveedor no garantiza cuota disponible en cada ciclo.
 - **Groq: PASS en certificación live del gateway anterior**. La ejecución durable posterior encontró reasoning_content incompatible con la API de Groq; PR #214 se fusionó y nuva-agency-ai-broker se desplegó como versión 14 con la normalización aplicada.
-- **Prueba durable actual:** la tarea controlada 2f10a1f0-6096-470c-ae6f-364aedc81a2d fue reclamada y pasó a running, con evento task.claimed. El trabajador Gemini terminó con éxito; el paso de fallback Groq sigue en ejecución. Todavía no hay evento de finalización ni estado terminal. No certificar hasta verificar el resultado final en agency_tasks y agency_events.
+- **Prueba durable actual:** la tarea controlada 2f10a1f0-6096-470c-ae6f-364aedc81a2d fue reclamada y pasó a running, con evento task.claimed. El trabajador Gemini terminó con éxito; el paso de fallback Groq sigue en ejecución. El heartbeat de la misión permanece en 04:32:37Z mientras el fallback sigue en ejecución. PR #220 propone heartbeat periódico durante la ejecución larga; aún no hay evento de finalización ni estado terminal. No certificar hasta verificar el resultado final en agency_tasks y agency_events.
 - **Cola de tareas:** consulta de solo lectura el 2026-10-12 encontró 3 tareas completadas, 10 fallidas y 1 en ejecución. Ocho fallidas tienen max_attempts_exhausted; dos guardan errores de ejecución. No se han reencolado ni alterado las tareas fallidas; el análisis y la recuperación trazable se siguen en issue #218.
 - **Constructor:** PR #216 reemplaza las ocho continuaciones Gemini por cuatro y añade fallback OIDC de Groq. El diff se mantuvo por debajo del presupuesto de 220 líneas cambiadas. CI, pgTAP, Factory release evidence, build, smoke, safety e integridad pasaron.
 - **Duración del fallback:** PR #217 añade límite de 20 minutos al paso y timeout de 15 minutos a OpenCode. Sus checks de pgTAP, build, Factory release evidence, smoke, seguridad e integridad pasaron. La ejecución ya iniciada no incorpora este timeout retroactivamente.
