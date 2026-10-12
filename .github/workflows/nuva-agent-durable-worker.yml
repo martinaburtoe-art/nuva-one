@@ -251,13 +251,15 @@ jobs:
 
       - name: Groq coding-agent fallback
         timeout-minutes: 20
-        if: ${{ always() && steps.claim.outputs.has_lease == 'true' && (steps.worker.outcome != 'success' || steps.continue_1.outcome != 'success' || steps.continue_2.outcome != 'success' || steps.continue_3.outcome != 'success' || steps.continue_4.outcome != 'success') }}
-        id: groq_fallback
         env:
+          AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
           GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
           ACTIVE_AGENT: ${{ steps.claim.outputs.active_role }}
+        timeout-minutes: 20
+        if: ${{ always() && steps.claim.outputs.has_lease == 'true' && (steps.worker.outcome != 'success' || steps.continue_1.outcome != 'success' || steps.continue_2.outcome != 'success' || steps.continue_3.outcome != 'success' || steps.continue_4.outcome != 'success') }}
+        id: groq_fallback
         shell: bash
         run: |
           set -euo pipefail
@@ -271,7 +273,15 @@ jobs:
           node --check scripts/nuva-groq-openai-proxy.mjs
           node scripts/nuva-groq-openai-proxy.mjs > /tmp/nuva-groq-openai-proxy.log 2>&1 &
           proxy_pid=$!
-          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
+          heartbeat_pid=""
+          stop_background() {
+            if [ -n "${heartbeat_pid:-}" ]; then
+              kill "$heartbeat_pid" 2>/dev/null || true
+              wait "$heartbeat_pid" 2>/dev/null || true
+            fi
+            kill "$proxy_pid" 2>/dev/null || true
+          }
+          trap stop_background EXIT
           ready=false
           for attempt in $(seq 1 20); do
             if curl -fsS http://127.0.0.1:4318/health | jq -e '.ok == true' >/dev/null; then ready=true; break; fi
@@ -281,6 +291,21 @@ jobs:
             echo "::error::Local OIDC-refreshing Groq proxy did not become healthy."
             exit 1
           fi
+
+          # Keep the durable lease alive while OpenCode is working for several minutes.
+          (
+            while sleep 240; do
+              curl --fail-with-body -sS -X POST "$AGENCY_URL" \
+                -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+                -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+                -H "Content-Type: application/json" \
+                -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
+                -H "X-Agency-Agent-Id: $ACTIVE_AGENT" \
+                --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" \
+                >> .agency/groq-heartbeat.log 2>&1 || exit 1
+            done
+          ) &
+          heartbeat_pid=$!
           export OPENCODE_CONFIG_CONTENT="$(jq -n --arg base_url 'http://127.0.0.1:4318/v1' '{provider:{"nuva-groq-proxy":{npm:"@ai-sdk/openai-compatible",name:"Nüva Groq OIDC Proxy",options:{baseURL:$base_url,apiKey:"nuva-local-oidc-proxy"},models:{"gpt-oss-20b":{name:"Groq GPT OSS 20B",limit:{context:131072,output:8192},modalities:{input:["text"],output:["text"]},tool_call:true,reasoning:true,temperature:true,attachment:false}}}},permission:{"*":"allow"}}')"
           export OPENCODE_PERMISSION='{"*":"allow"}'
 
@@ -315,6 +340,10 @@ jobs:
           done
           git diff --check
           npm run build --if-present
+          if ! kill -0 "$heartbeat_pid" 2>/dev/null; then
+            echo "::error::Durable lease heartbeat stopped during Groq fallback."
+            exit 1
+          fi
           echo "Groq fallback completed; final task status depends on this step's exit code and persisted evidence."
 
       - name: Finish persisted task
