@@ -1,0 +1,84 @@
+/* Experimento visual aislado: solo afecta al módulo Resumen. */
+.nuva-resumen-premium {
+  --resumen-ink: #17181d;
+  --resumen-muted: #a8a9b2;
+  --resumen-line: rgba(255, 255, 255, 0.11);
+  --resumen-gold: #e6c687;
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+  color: #f7f4ed;
+  padding: clamp(0.25rem, 1vw, 0.75rem);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(230, 198, 135, 0.10), transparent 34rem),
+    radial-gradient(ellipse at 100% 18%, rgba(99, 102, 241, 0.10), transparent 32rem),
+    linear-gradient(145deg, #111216 0%, #17181d 55%, #1d1d22 100%);
+}
+.nuva-resumen-premium h1 {
+  color: #fbf8f0;
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  font-weight: 650;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+}
+.nuva-resumen-premium h2,
+.nuva-resumen-premium h3 {
+  color: #f7f4ed;
+  letter-spacing: -0.025em;
+}
+.nuva-resumen-premium p {
+  color: var(--resumen-muted);
+}
+.nuva-resumen-premium [class*="rounded-2xl"] {
+  border-color: var(--resumen-line);
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
+}
+.nuva-resumen-premium .border-border\/70 {
+  background: linear-gradient(145deg, rgba(38, 39, 45, 0.96), rgba(27, 28, 33, 0.98));
+  border-color: var(--resumen-line);
+  color: #f7f4ed;
+}
+.nuva-resumen-premium [class*="bg-gradient-to-br"] {
+  background: linear-gradient(125deg, rgba(230, 198, 135, 0.16), rgba(99, 102, 241, 0.10) 52%, rgba(33, 34, 39, 0.98));
+  border-color: rgba(230, 198, 135, 0.28);
+}
+.nuva-resumen-premium a[class*="rounded-xl"] {
+  border-color: var(--resumen-line);
+  background: rgba(255, 255, 255, 0.035);
+  color: #f7f4ed;
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+.nuva-resumen-premium a[class*="rounded-xl"]:hover {
+  transform: translateY(-2px);
+  border-color: rgba(230, 198, 135, 0.42);
+  background: rgba(230, 198, 135, 0.08);
+}
+.nuva-resumen-premium input,
+.nuva-resumen-premium button[class*="outline"] {
+  border-color: var(--resumen-line);
+}
+.nuva-resumen-premium svg {
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .nuva-resumen-premium {
+    padding: 0.15rem;
+    border-radius: 1.15rem;
+  }
+  .nuva-resumen-premium h1 {
+    font-size: clamp(1.7rem, 8vw, 2.15rem);
+  }
+  .nuva-resumen-premium [class*="rounded-2xl"] {
+    border-radius: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-resumen-premium a[class*="rounded-xl"] {
+    transition: none;
+  }
+  .nuva-resumen-premium a[class*="rounded-xl"]:hover {
+    transform: none;
+  }
+}
