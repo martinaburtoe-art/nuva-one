@@ -1,3 +1,4 @@
+import "@/resumen-premium.css";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -143,7 +144,7 @@ function Dashboard() {
 
   return (
     <ModuleGuard module="dashboard">
-      <>
+      <div className="nuva-resumen-premium">
         <PageHeader
           title={`Hola, ${active?.name ?? "negocio"}`}
           description="Tu negocio en una vista: rendimiento, atención y acciones para hoy."
@@ -170,7 +171,7 @@ function Dashboard() {
           <Card className="rounded-2xl border-border/70 p-5 lg:col-span-2 shadow-sm"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Ingresos vs Gastos</h3><p className="text-xs text-muted-foreground">{isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}</p></div><div className="flex flex-wrap items-end gap-2"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" /> Quitar filtros</Button>}</div></div><Suspense fallback={<div className="h-[280px] animate-pulse rounded-xl bg-muted/30" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense></Card>
           <Card className="rounded-2xl border-border/70 p-5 shadow-sm"><h3 className="font-semibold">Acciones rápidas</h3><p className="text-xs text-muted-foreground">Operaciones frecuentes</p><div className="mt-4 space-y-2">{[{ l: "Registrar venta", h: "/sales" }, { l: "Agregar producto", h: "/inventory" }, { l: "Nueva cotización", h: "/quotes" }, { l: "Registrar gasto", h: "/finance" }].map((a) => <Link key={a.h} to={a.h} className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2.5 text-sm transition-colors hover:bg-muted/50"><span>{a.l}</span><ArrowUpRight className="h-4 w-4" /></Link>)}</div></Card>
         </div>
-      </>
+      </div>
     </ModuleGuard>
   );
 }
