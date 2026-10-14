@@ -9,7 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
 import { Toaster, toast } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -18,8 +18,9 @@ import "../nuva-motion-system.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
-import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
-import { PosBarcodeScanner } from "@/components/pos-barcode-scanner";
+// Cargar mejoras pesadas solo cuando se visita su módulo.
+const NuvaOperatingPulse = lazy(() => import("@/components/nuva-operating-pulse").then((module) => ({ default: module.NuvaOperatingPulse })));
+const PosBarcodeScanner = lazy(() => import("@/components/pos-barcode-scanner").then((module) => ({ default: module.PosBarcodeScanner })));
 
 function NotFoundComponent() {
   return (
@@ -158,7 +159,12 @@ function RouteEnhancements() {
     return () => { setMount(null); mountNode.remove(); };
   }, [location.pathname]);
   if (!mount) return null;
-  return createPortal(location.pathname === "/pos" ? <PosScannerEnhancement /> : <NuvaOperatingPulse />, mount);
+  return createPortal(
+    <Suspense fallback={null}>
+      {location.pathname === "/pos" ? <PosScannerEnhancement /> : <NuvaOperatingPulse />}
+    </Suspense>,
+    mount,
+  );
 }
 
 function RootComponent() {
