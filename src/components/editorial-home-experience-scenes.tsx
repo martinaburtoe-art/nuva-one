@@ -56,7 +56,7 @@ export function SceneArt({kind,progress,reducedMotion=false,mediaMode="video"}:S
     src={`/home-cinematic/${mediaFile}`}
     muted
     playsInline
-    preload="auto"
+    preload="metadata"
     loop
     disablePictureInPicture
     onLoadedMetadata={()=>{
