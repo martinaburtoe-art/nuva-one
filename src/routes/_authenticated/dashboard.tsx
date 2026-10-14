@@ -11,9 +11,8 @@ import { DateRangeFilter, dmyToIso } from "@/components/date-range-filter";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
-import { BusinessInsightCard } from "@/components/business-insight-card";
-import { CompetitiveOpsHub } from "@/components/competitive-ops-hub";
-import { ArrowUpRight, X, CheckCircle2, Sparkles, ShieldAlert } from "lucide-react";
+import { fmtCLP } from "@/lib/biz-data";
+import { ArrowUpRight, X, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -144,35 +143,93 @@ function Dashboard() {
 
   return (
     <ModuleGuard module="dashboard">
-      <div className="nuva-resumen-premium nuva-resumen-canvas">
-        <div className="nuva-resumen-topline"><span className="nuva-resumen-kicker">NÜVA ONE <span> / </span> BUSINESS OVERVIEW</span><span className="nuva-resumen-live"><i /> VISTA EJECUTIVA</span></div>
-        <PageHeader
-          title={`Hola, ${active?.name ?? "negocio"}`}
-          description="Tu negocio en una vista: rendimiento, atención y acciones para hoy."
-          actions={
-            <Button variant="outline" size="sm" onClick={loadDemoBusiness} disabled={seedingDemo}>
+      <main className="nuva-resumen-premium nuva-resumen-canvas">
+        <header className="nuva-resumen-header">
+          <div className="nuva-resumen-brandline">
+            <span className="nuva-resumen-wordmark">nüva<span>one</span></span>
+            <span className="nuva-resumen-breadcrumb">/ RESUMEN</span>
+            <span className="nuva-resumen-live"><i /> VISTA EJECUTIVA</span>
+          </div>
+          <div className="nuva-resumen-heading">
+            <div>
+              <p className="nuva-resumen-overline">TU NEGOCIO, EN PERSPECTIVA</p>
+              <h1>Hola, {active?.name ?? "tu negocio"}.</h1>
+              <p className="nuva-resumen-subtitle">Una lectura clara de lo que está pasando hoy.</p>
+            </div>
+            <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
               {seedingDemo ? "Preparando…" : "Cargar negocio de prueba"}
             </Button>
-          }
-        />
-        <div className="nuva-resumen-command-surface"><CompetitiveOpsHub /></div>
+          </div>
+        </header>
+
         {kpis !== undefined && !hasActivity && (
-          <Card className="mt-6 mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/[0.08] via-accent/40 to-background p-6 shadow-soft">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div className="max-w-2xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><Sparkles className="h-4 w-4" /> Activación de Nüva One</div><h2 className="mt-2 text-xl font-bold">Tu Nüva One está listo. Ahora hagamos que empiece a trabajar para ti.</h2><p className="mt-1 text-sm text-muted-foreground">Tu foco inicial es <strong className="text-foreground">{goalsLabel(onboardingFocus)}</strong>. Completa una primera operación y comenzaremos a construir tu visión del negocio.</p></div><Link to={focusAction.href} className="shrink-0"><Button size="lg">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link></div>
-            <div className="mt-6 grid gap-2 sm:grid-cols-4"><ActivationStep done title="Negocio creado" /><ActivationStep done={hasActivity} title="Primera operación" /><ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" /><ActivationStep done={false} title="Primer análisis" /></div>
+          <Card className="nuva-resumen-onboarding">
+            <div className="nuva-resumen-onboarding-copy">
+              <span className="nuva-resumen-section-label"><Sparkles className="h-4 w-4" /> CONFIGURACIÓN INICIAL</span>
+              <h2>Tu espacio está listo para empezar.</h2>
+              <p>Tu foco inicial son {goalsLabel(onboardingFocus)}. Registra una operación para activar los indicadores de tu negocio.</p>
+              <Link to={focusAction.href}><Button size="sm">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
+            </div>
+            <div className="nuva-resumen-steps"><ActivationStep done title="Negocio creado" /><ActivationStep done={hasActivity} title="Primera operación" /><ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" /><ActivationStep done={false} title="Primer análisis" /></div>
           </Card>
         )}
-        <div className="nuva-resumen-financial-surface"><BusinessInsightCard income={kpis?.income ?? 0} expense={kpis?.expense ?? 0} inventoryValue={kpis?.inventoryValue ?? 0} productsCount={kpis?.productsCount ?? 0} salesCount={kpis?.salesCount ?? 0} /></div>
-        <div className="nuva-resumen-operational-grid mt-5 grid gap-3 md:grid-cols-2">
-          <OperationalCard icon={<ShieldAlert className="h-5 w-5" />} label="Atención hoy" value={attentionCount} description={attentionCount === 0 ? "Sin alertas operativas detectadas" : "Puntos que conviene revisar"} href={attentionCount > 0 ? "/inventory" : "/sales"} />
-          <OperationalCard icon={<Sparkles className="h-5 w-5" />} label="Dirección" value="Centro Ejecutivo" description="Decisiones, predicción y ejecución" href="/executive-command-center" />
-        </div>
-        <div className="nuva-resumen-analytics-grid mt-5 grid gap-5 lg:grid-cols-3">
-          <div className="space-y-6"><NuvaScoreCard /></div>
-          <Card className="rounded-2xl border-border/70 p-5 lg:col-span-2 shadow-sm"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Ingresos vs Gastos</h3><p className="text-xs text-muted-foreground">{isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}</p></div><div className="flex flex-wrap items-end gap-2"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" /> Quitar filtros</Button>}</div></div><Suspense fallback={<div className="h-[280px] animate-pulse rounded-xl bg-muted/30" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense></Card>
-          <Card className="rounded-2xl border-border/70 p-5 shadow-sm"><h3 className="font-semibold">Acciones rápidas</h3><p className="text-xs text-muted-foreground">Operaciones frecuentes</p><div className="mt-4 space-y-2">{[{ l: "Registrar venta", h: "/sales" }, { l: "Agregar producto", h: "/inventory" }, { l: "Nueva cotización", h: "/quotes" }, { l: "Registrar gasto", h: "/finance" }].map((a) => <Link key={a.h} to={a.h} className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2.5 text-sm transition-colors hover:bg-muted/50"><span>{a.l}</span><ArrowUpRight className="h-4 w-4" /></Link>)}</div></Card>
-        </div>
-      </div>
+
+        <section className="nuva-resumen-overview" aria-label="Indicadores principales">
+          <article className="nuva-resumen-net-card">
+            <div className="nuva-resumen-net-top">
+              <span className="nuva-resumen-section-label">RESULTADO NETO</span>
+              <span className="nuva-resumen-period"><span /> ACUMULADO</span>
+            </div>
+            <div className="nuva-resumen-net-value">{kpis ? fmtCLP(kpis.net) : "—"}</div>
+            <div className="nuva-resumen-net-footer">
+              <span className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}><TrendingUp className="h-4 w-4" /> {kpis && kpis.net < 0 ? "Requiere revisión" : "Ingresos menos gastos"}</span>
+              <span className="nuva-resumen-net-note">Según movimientos registrados</span>
+            </div>
+            <svg className="nuva-resumen-net-art" viewBox="0 0 320 100" fill="none" aria-hidden="true"><path d="M0 78 C24 74 30 40 57 53 S95 79 119 45 S158 19 178 42 S216 70 239 35 S282 22 320 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><path d="M0 78 C24 74 30 40 57 53 S95 79 119 45 S158 19 178 42 S216 70 239 35 S282 22 320 7 V100 H0Z" fill="url(#nuvaNetFill)" opacity=".18"/><defs><linearGradient id="nuvaNetFill" x1="160" y1="0" x2="160" y2="100" gradientUnits="userSpaceOnUse"><stop stopColor="#E6C687"/><stop offset="1" stopColor="#E6C687" stopOpacity="0"/></linearGradient></defs></svg>
+          </article>
+          <article className="nuva-resumen-metric-card">
+            <div className="nuva-resumen-metric-head"><span>Ingresos</span><span className="nuva-resumen-metric-icon"><TrendingUp className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
+            <p><span className="nuva-resumen-dot nuva-resumen-dot-gold" /> Total registrado</p>
+          </article>
+          <article className="nuva-resumen-metric-card">
+            <div className="nuva-resumen-metric-head"><span>Gastos</span><span className="nuva-resumen-metric-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong>
+            <p><span className="nuva-resumen-dot nuva-resumen-dot-grey" /> Total registrado</p>
+          </article>
+          <article className="nuva-resumen-metric-card">
+            <div className="nuva-resumen-metric-head"><span>Inventario</span><span className="nuva-resumen-metric-icon"><Package className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong>
+            <p>{kpis ? `${kpis.productsCount} productos en catálogo` : "Consultando catálogo"}</p>
+          </article>
+        </section>
+
+        <section className="nuva-resumen-lower-grid">
+          <div className="nuva-resumen-panel nuva-resumen-chart-panel">
+            <div className="nuva-resumen-panel-heading">
+              <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p className="nuva-resumen-panel-caption">{isoFrom || isoTo ? "Período seleccionado" : "Últimos seis meses"}</p></div>
+              <div className="nuva-resumen-filters"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" /> Limpiar</Button>}</div>
+            </div>
+            <Suspense fallback={<div className="nuva-resumen-chart-loading" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
+            <div className="nuva-resumen-chart-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
+          </div>
+          <aside className="nuva-resumen-side-column">
+            <div className="nuva-resumen-panel nuva-resumen-health-panel">
+              <p className="nuva-resumen-section-label">ESTADO DEL NEGOCIO</p><h2>Tu operación</h2>
+              <div className="nuva-resumen-health-row"><span className="nuva-resumen-health-icon"><ShieldAlert className="h-4 w-4" /></span><div><strong>{attentionCount === 0 ? "Sin alertas críticas" : `${attentionCount} puntos por revisar`}</strong><p>{attentionCount === 0 ? "No se detectan alertas de inventario ni resultado negativo." : "Revisa inventario y resultado financiero."}</p></div></div>
+              <div className="nuva-resumen-health-row"><span className="nuva-resumen-health-icon"><ShoppingBag className="h-4 w-4" /></span><div><strong>{kpis?.salesCount ?? "—"} ventas registradas</strong><p>{kpis ? `${kpis.productsCount} productos en catálogo` : "Consultando actividad"}</p></div></div>
+              <Link to={attentionCount > 0 ? "/inventory" : "/executive-command-center"} className="nuva-resumen-text-link">{attentionCount > 0 ? "Revisar alertas" : "Abrir centro ejecutivo"} <ArrowUpRight className="h-4 w-4" /></Link>
+            </div>
+            <div className="nuva-resumen-panel nuva-resumen-actions-panel">
+              <p className="nuva-resumen-section-label">SIGUIENTE PASO</p><h2>Acciones rápidas</h2>
+              <div className="nuva-resumen-quick-actions">{[{ l: "Registrar venta", h: "/sales" }, { l: "Agregar producto", h: "/inventory" }, { l: "Nueva cotización", h: "/quotes" }, { l: "Registrar gasto", h: "/finance" }].map((a) => <Link key={a.h} to={a.h}><span><Plus className="h-3.5 w-3.5" /></span>{a.l}<ArrowUpRight className="nuva-resumen-action-arrow h-4 w-4" /></Link>)}</div>
+            </div>
+          </aside>
+        </section>
+
+        <section className="nuva-resumen-score-section"><div><p className="nuva-resumen-section-label">INTELIGENCIA DE NEGOCIO</p><h2>Salud de tu empresa</h2><p>Indicadores complementarios para tomar mejores decisiones.</p></div><div className="nuva-resumen-score-card"><NuvaScoreCard /></div></section>
+        <footer className="nuva-resumen-footer"><span>NÜVA ONE <span>·</span> CONTROL DE NEGOCIO</span><span>Los indicadores reflejan los movimientos registrados en tu cuenta.</span></footer>
+      </main>
     </ModuleGuard>
   );
 }
