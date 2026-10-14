@@ -1,24 +1,25 @@
-/* Nüva One · Resumen premium
-   Estilos encapsulados: no afectan otros módulos ni cambian la lógica de datos. */
+/* Nüva One · Resumen Premium
+   Sistema visual aislado para el dashboard. Conserva la lógica y los componentes de negocio. */
 .nuva-resumen-premium {
-  --resumen-ink: #202124;
-  --resumen-muted: #73777d;
-  --resumen-line: rgba(255, 255, 255, 0.72);
+  --resumen-ink: #17191b;
+  --resumen-muted: #777b80;
+  --resumen-line: rgba(255,255,255,.78);
   --resumen-gold: #b99a5d;
+  --resumen-indigo: #6366f1;
   position: relative;
   isolation: isolate;
   min-height: 100%;
-  padding: clamp(0.65rem, 1.5vw, 1.25rem);
+  padding: clamp(1rem, 2.1vw, 2rem);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 1.8rem;
+  border: 1px solid rgba(255,255,255,.82);
+  border-radius: 2rem;
   color: var(--resumen-ink);
   background:
-    radial-gradient(ellipse at 8% 4%, rgba(255, 255, 255, 0.96), transparent 34rem),
-    radial-gradient(ellipse at 92% 12%, rgba(230, 198, 135, 0.19), transparent 31rem),
-    radial-gradient(ellipse at 72% 88%, rgba(99, 102, 241, 0.07), transparent 34rem),
-    linear-gradient(145deg, #e9ebea 0%, #f1f1ed 48%, #e4e7e6 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 24px 70px rgba(29, 34, 39, .07);
+    radial-gradient(ellipse at 10% 0%, rgba(255,255,255,.98), transparent 34rem),
+    radial-gradient(ellipse at 88% 7%, rgba(230,198,135,.2), transparent 28rem),
+    radial-gradient(ellipse at 76% 86%, rgba(99,102,241,.075), transparent 34rem),
+    linear-gradient(145deg,#e8eae9 0%,#f1f1ed 48%,#e4e7e6 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 28px 80px rgba(27,31,34,.08);
 }
 .nuva-resumen-premium::before {
   content: "";
@@ -26,78 +27,139 @@
   z-index: -1;
   inset: 0;
   pointer-events: none;
-  opacity: .34;
-  background-image: radial-gradient(rgba(54, 58, 62, .12) .55px, transparent .55px);
+  opacity: .18;
+  background-image: radial-gradient(rgba(54,58,62,.18) .5px,transparent .5px);
   background-size: 5px 5px;
-  mask-image: linear-gradient(to bottom, black, transparent 70%);
+  mask-image: linear-gradient(to bottom,black,transparent 72%);
+}
+.nuva-resumen-topline {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  margin:0 0 .75rem;
+  padding:0 .15rem;
+  color:#6e7277;
+  font-size:.65rem;
+  font-weight:650;
+  letter-spacing:.17em;
+}
+.nuva-resumen-kicker { color:#242629; }
+.nuva-resumen-kicker span { color:#b99a5d; padding:0 .35rem; }
+.nuva-resumen-live {
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  border:1px solid rgba(255,255,255,.9);
+  border-radius:999px;
+  padding:.42rem .68rem;
+  background:rgba(255,255,255,.45);
+  box-shadow:inset 0 1px 0 white;
+  letter-spacing:.1em;
+  font-size:.58rem;
+}
+.nuva-resumen-live i {
+  display:block;
+  width:.38rem;
+  height:.38rem;
+  border-radius:50%;
+  background:#9a8352;
+  box-shadow:0 0 0 3px rgba(185,154,93,.13);
 }
 .nuva-resumen-premium h1 {
-  color: #17191b;
-  font-size: clamp(1.85rem, 3vw, 2.8rem);
-  font-weight: 650;
-  letter-spacing: -.055em;
-  line-height: 1.08;
+  color:#17191b;
+  font-size:clamp(2rem,3.5vw,3.25rem);
+  font-weight:580;
+  letter-spacing:-.065em;
+  line-height:1.02;
 }
 .nuva-resumen-premium h2,
 .nuva-resumen-premium h3 {
-  color: #242629;
-  letter-spacing: -.025em;
+  color:#242629;
+  letter-spacing:-.035em;
 }
-.nuva-resumen-premium p {
-  color: var(--resumen-muted);
-}
+.nuva-resumen-premium p { color:var(--resumen-muted); }
 .nuva-resumen-premium [class*="rounded-2xl"] {
-  border: 1px solid rgba(255,255,255,.78);
-  border-radius: 1.35rem;
-  background: linear-gradient(145deg, rgba(255,255,255,.76), rgba(247,248,245,.52));
-  box-shadow: 0 14px 34px rgba(34, 39, 43, .055), inset 0 1px 0 rgba(255,255,255,.82);
-  backdrop-filter: blur(22px) saturate(125%);
-  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  border:1px solid rgba(255,255,255,.84);
+  border-radius:1.55rem;
+  background:linear-gradient(145deg,rgba(255,255,255,.79),rgba(247,248,245,.54));
+  box-shadow:0 16px 38px rgba(34,39,43,.055),inset 0 1px 0 rgba(255,255,255,.96);
+  backdrop-filter:blur(24px) saturate(130%);
+  -webkit-backdrop-filter:blur(24px) saturate(130%);
 }
 .nuva-resumen-premium [class~="border-border/70"] {
-  border-color: rgba(255,255,255,.78);
-  background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(247,248,245,.58));
-  color: #242629;
+  border-color:rgba(255,255,255,.86);
+  background:linear-gradient(145deg,rgba(255,255,255,.83),rgba(247,248,245,.6));
+  color:#242629;
 }
 .nuva-resumen-premium [class*="bg-gradient-to-br"] {
-  border-color: rgba(185,154,93,.24);
-  background: linear-gradient(125deg, rgba(255,255,255,.88), rgba(230,198,135,.19) 54%, rgba(99,102,241,.07));
+  border-color:rgba(185,154,93,.27);
+  background:linear-gradient(125deg,rgba(255,255,255,.9),rgba(230,198,135,.2) 54%,rgba(99,102,241,.08));
 }
+.nuva-resumen-command-surface,
+.nuva-resumen-financial-surface {
+  position:relative;
+  margin-top:1rem;
+}
+.nuva-resumen-command-surface > *,
+.nuva-resumen-financial-surface > * { min-width:0; }
+.nuva-resumen-operational-grid { align-items:stretch; }
+.nuva-resumen-operational-grid > a { min-width:0; }
+.nuva-resumen-operational-grid > a > * {
+  border-radius:1.45rem;
+  min-height:100%;
+  transition:transform 220ms ease,box-shadow 220ms ease,border-color 220ms ease;
+}
+.nuva-resumen-operational-grid > a:hover > * {
+  transform:translateY(-3px);
+  border-color:rgba(185,154,93,.48);
+  box-shadow:0 22px 42px rgba(34,39,43,.09),inset 0 1px 0 white;
+}
+.nuva-resumen-analytics-grid { align-items:stretch; }
+.nuva-resumen-analytics-grid > * { min-width:0; }
+.nuva-resumen-analytics-grid h3 { font-size:1rem; font-weight:620; }
 .nuva-resumen-premium a[class*="rounded-xl"] {
-  border-color: rgba(255,255,255,.86);
-  background: rgba(255,255,255,.48);
-  color: #292b2e;
-  box-shadow: 0 5px 15px rgba(30,35,40,.035), inset 0 1px 0 rgba(255,255,255,.8);
-  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  border-color:rgba(255,255,255,.9);
+  background:rgba(255,255,255,.48);
+  color:#292b2e;
+  box-shadow:0 6px 18px rgba(30,35,40,.035),inset 0 1px 0 rgba(255,255,255,.88);
+  transition:transform 180ms ease,background-color 180ms ease,border-color 180ms ease,box-shadow 180ms ease;
 }
 .nuva-resumen-premium a[class*="rounded-xl"]:hover {
-  transform: translateY(-2px);
-  border-color: rgba(185,154,93,.58);
-  background: rgba(255,255,255,.84);
-  box-shadow: 0 12px 24px rgba(30,35,40,.075);
+  transform:translateY(-2px);
+  border-color:rgba(185,154,93,.58);
+  background:rgba(255,255,255,.86);
+  box-shadow:0 12px 26px rgba(30,35,40,.075);
 }
 .nuva-resumen-premium input,
+.nuva-resumen-premium button[class*="outline"] { border-color:rgba(80,84,88,.18); }
 .nuva-resumen-premium button[class*="outline"] {
-  border-color: rgba(80,84,88,.18);
+  background:rgba(255,255,255,.58);
+  color:#27292c;
+  backdrop-filter:blur(14px);
 }
-.nuva-resumen-premium button[class*="outline"] {
-  background: rgba(255,255,255,.56);
-  color: #27292c;
-  backdrop-filter: blur(14px);
-}
-.nuva-resumen-premium svg { flex-shrink: 0; }
-.nuva-resumen-premium [class*="text-muted-foreground"] { color: #74787e; }
+.nuva-resumen-premium svg { flex-shrink:0; }
+.nuva-resumen-premium [class*="text-muted-foreground"] { color:#74787e; }
 .nuva-resumen-premium [class*="bg-background/70"] {
-  border-color: rgba(255,255,255,.8);
-  background: rgba(255,255,255,.58);
+  border-color:rgba(255,255,255,.86);
+  background:rgba(255,255,255,.6);
 }
-.nuva-resumen-premium [class*="shadow-sm"] { box-shadow: 0 14px 34px rgba(34,39,43,.055); }
-@media (max-width: 767px) {
-  .nuva-resumen-premium { padding: .35rem; border-radius: 1.2rem; }
-  .nuva-resumen-premium h1 { font-size: clamp(1.7rem, 8vw, 2.15rem); }
-  .nuva-resumen-premium [class*="rounded-2xl"] { border-radius: 1.05rem; }
+.nuva-resumen-premium [class*="shadow-sm"] { box-shadow:0 16px 38px rgba(34,39,43,.055); }
+@media (min-width:1280px) {
+  .nuva-resumen-premium { padding:2rem; }
+  .nuva-resumen-analytics-grid { gap:1.25rem; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .nuva-resumen-premium a[class*="rounded-xl"] { transition: none; }
-  .nuva-resumen-premium a[class*="rounded-xl"]:hover { transform: none; }
+@media (max-width:767px) {
+  .nuva-resumen-premium { padding:.7rem; border-radius:1.3rem; }
+  .nuva-resumen-topline { align-items:flex-start; font-size:.55rem; letter-spacing:.11em; }
+  .nuva-resumen-live { font-size:.5rem; white-space:nowrap; }
+  .nuva-resumen-premium h1 { font-size:clamp(1.8rem,8vw,2.25rem); }
+  .nuva-resumen-premium [class*="rounded-2xl"] { border-radius:1.15rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nuva-resumen-premium *,
+  .nuva-resumen-premium *::before,
+  .nuva-resumen-premium *::after { scroll-behavior:auto!important; transition:none!important; animation:none!important; }
+  .nuva-resumen-premium a:hover,
+  .nuva-resumen-operational-grid > a:hover > * { transform:none; }
 }
