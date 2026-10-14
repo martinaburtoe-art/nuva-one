@@ -144,7 +144,8 @@ function Dashboard() {
 
   return (
     <ModuleGuard module="dashboard">
-      <div className="nuva-resumen-premium">
+      <div className="nuva-resumen-premium nuva-resumen-canvas">
+        <div className="nuva-resumen-topline"><span className="nuva-resumen-kicker">NÜVA ONE <span> / </span> BUSINESS OVERVIEW</span><span className="nuva-resumen-live"><i /> VISTA EJECUTIVA</span></div>
         <PageHeader
           title={`Hola, ${active?.name ?? "negocio"}`}
           description="Tu negocio en una vista: rendimiento, atención y acciones para hoy."
@@ -154,19 +155,19 @@ function Dashboard() {
             </Button>
           }
         />
-        <CompetitiveOpsHub />
+        <div className="nuva-resumen-command-surface"><CompetitiveOpsHub /></div>
         {kpis !== undefined && !hasActivity && (
           <Card className="mt-6 mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/[0.08] via-accent/40 to-background p-6 shadow-soft">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div className="max-w-2xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><Sparkles className="h-4 w-4" /> Activación de Nüva One</div><h2 className="mt-2 text-xl font-bold">Tu Nüva One está listo. Ahora hagamos que empiece a trabajar para ti.</h2><p className="mt-1 text-sm text-muted-foreground">Tu foco inicial es <strong className="text-foreground">{goalsLabel(onboardingFocus)}</strong>. Completa una primera operación y comenzaremos a construir tu visión del negocio.</p></div><Link to={focusAction.href} className="shrink-0"><Button size="lg">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link></div>
             <div className="mt-6 grid gap-2 sm:grid-cols-4"><ActivationStep done title="Negocio creado" /><ActivationStep done={hasActivity} title="Primera operación" /><ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" /><ActivationStep done={false} title="Primer análisis" /></div>
           </Card>
         )}
-        <BusinessInsightCard income={kpis?.income ?? 0} expense={kpis?.expense ?? 0} inventoryValue={kpis?.inventoryValue ?? 0} productsCount={kpis?.productsCount ?? 0} salesCount={kpis?.salesCount ?? 0} />
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div className="nuva-resumen-financial-surface"><BusinessInsightCard income={kpis?.income ?? 0} expense={kpis?.expense ?? 0} inventoryValue={kpis?.inventoryValue ?? 0} productsCount={kpis?.productsCount ?? 0} salesCount={kpis?.salesCount ?? 0} /></div>
+        <div className="nuva-resumen-operational-grid mt-5 grid gap-3 md:grid-cols-2">
           <OperationalCard icon={<ShieldAlert className="h-5 w-5" />} label="Atención hoy" value={attentionCount} description={attentionCount === 0 ? "Sin alertas operativas detectadas" : "Puntos que conviene revisar"} href={attentionCount > 0 ? "/inventory" : "/sales"} />
           <OperationalCard icon={<Sparkles className="h-5 w-5" />} label="Dirección" value="Centro Ejecutivo" description="Decisiones, predicción y ejecución" href="/executive-command-center" />
         </div>
-        <div className="mt-5 grid gap-5 lg:grid-cols-3">
+        <div className="nuva-resumen-analytics-grid mt-5 grid gap-5 lg:grid-cols-3">
           <div className="space-y-6"><NuvaScoreCard /></div>
           <Card className="rounded-2xl border-border/70 p-5 lg:col-span-2 shadow-sm"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Ingresos vs Gastos</h3><p className="text-xs text-muted-foreground">{isoFrom || isoTo ? "Rango seleccionado" : "Últimos 6 meses"}</p></div><div className="flex flex-wrap items-end gap-2"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />{hasChartFilters && <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); setCategories([]); }}><X className="mr-1 h-3.5 w-3.5" /> Quitar filtros</Button>}</div></div><Suspense fallback={<div className="h-[280px] animate-pulse rounded-xl bg-muted/30" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense></Card>
           <Card className="rounded-2xl border-border/70 p-5 shadow-sm"><h3 className="font-semibold">Acciones rápidas</h3><p className="text-xs text-muted-foreground">Operaciones frecuentes</p><div className="mt-4 space-y-2">{[{ l: "Registrar venta", h: "/sales" }, { l: "Agregar producto", h: "/inventory" }, { l: "Nueva cotización", h: "/quotes" }, { l: "Registrar gasto", h: "/finance" }].map((a) => <Link key={a.h} to={a.h} className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2.5 text-sm transition-colors hover:bg-muted/50"><span>{a.l}</span><ArrowUpRight className="h-4 w-4" /></Link>)}</div></Card>
