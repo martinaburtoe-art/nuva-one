@@ -37,6 +37,10 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Build production assets and measure client bundle
+        run: |
+          npm run build 2>&1 | tee client-build.log
+          node scripts/report-client-bundle.mjs 2>&1 | tee client-bundle-report.txt
       - name: Run Knip audit (report-only; review before removal)
         shell: bash
         run: |
@@ -52,6 +56,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuva-dependency-usage-audit
-          path: dependency-usage-audit.txt
+          path: |
+            dependency-usage-audit.txt
+            client-build.log
+            client-bundle-report.txt
           if-no-files-found: warn
           retention-days: 14
