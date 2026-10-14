@@ -1,0 +1,57 @@
+name: Nüva One — dependency usage audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "bun.lock"
+      - "src/**"
+      - "app/**"
+      - "vite.config.ts"
+      - "tsconfig*.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-usage-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  knip-report:
+    name: Detect unused files, exports and dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run Knip audit (report-only; review before removal)
+        shell: bash
+        run: |
+          set +e
+          npx --yes knip --reporter compact 2>&1 | tee dependency-usage-audit.txt
+          result=${PIPESTATUS[0]}
+          echo "KNIP_EXIT_CODE=$result" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Knip is a static candidate finder, not proof that every reported item is safe to remove. Review dynamic imports, framework conventions, scripts, tests, and deployment/runtime usage before deleting anything." >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+      - name: Upload dependency audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuva-dependency-usage-audit
+          path: dependency-usage-audit.txt
+          if-no-files-found: warn
+          retention-days: 14
