@@ -104,3 +104,148 @@
  .nuva-resumen-lower-grid{margin-top:10px;gap:10px}.nuva-resumen-panel{padding:16px;border-radius:19px}.nuva-resumen-panel-heading{flex-direction:column;gap:12px}.nuva-resumen-filters{justify-content:flex-start;width:100%}.nuva-resumen-side-column{grid-template-columns:1fr;gap:10px}.nuva-resumen-score-section{grid-template-columns:1fr;gap:10px;margin-top:18px;padding-top:18px}.nuva-resumen-score-card{padding:5px}.nuva-resumen-footer{flex-direction:column;gap:5px}.nuva-resumen-onboarding{grid-template-columns:1fr;padding:17px}.nuva-resumen-steps{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce) {.nuva-resumen-premium *{scroll-behavior:auto!important;animation:none!important;transition:none!important}.nuva-resumen-metric-card:hover{transform:none}}
+
+
+/* Dirección artística v2: referencia editorial + superficies de dispositivo translúcidas */
+.nuva-resumen-canvas {
+  --nr-ink:#161819; --nr-muted:#74797b; --nr-gold:#c1a36c; --nr-indigo:#7275d9;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  padding:clamp(16px,2.6vw,38px)!important;overflow:visible!important;
+  background:
+    radial-gradient(ellipse at 49% 39%,rgba(255,255,255,.96) 0%,rgba(245,246,243,.72) 29%,transparent 64%),
+    radial-gradient(ellipse at 8% 12%,rgba(255,255,255,.92),transparent 38%),
+    linear-gradient(135deg,#dfe2e1 0%,#eef0ed 46%,#dfe3e2 100%)!important;
+  isolation:isolate;
+}
+.nuva-resumen-canvas::before {opacity:.12;background-size:4px 4px}
+.nuva-resumen-ambient-word {
+  position:absolute;z-index:-1;top:clamp(105px,13vw,190px);left:50%;width:max-content;
+  transform:translateX(-50%);pointer-events:none;white-space:nowrap;
+  color:rgba(103,110,112,.16);font-size:clamp(78px,14vw,210px);font-weight:650;
+  letter-spacing:-.085em;line-height:.9;user-select:none;
+}
+.nuva-resumen-brandline {border-bottom:0;padding-bottom:12px}
+.nuva-resumen-wordmark {font-size:18px;letter-spacing:-.08em}
+.nuva-resumen-breadcrumb {font-size:9px;letter-spacing:.18em}
+.nuva-resumen-live {background:rgba(255,255,255,.38);border-color:rgba(255,255,255,.62)}
+.nuva-resumen-heading {padding:15px 1px 8px;align-items:flex-end}
+.nuva-resumen-heading h1 {font-size:clamp(29px,3.2vw,44px);font-weight:500;letter-spacing:-.07em}
+.nuva-resumen-overline {letter-spacing:.21em}
+.nuva-resumen-subtitle {font-size:12px}
+.nuva-resumen-device-stage {
+  position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr) minmax(0,1fr);
+  align-items:center;gap:clamp(12px,2.7vw,38px);max-width:1260px;margin:clamp(20px,3vw,44px) auto 0;
+  perspective:1400px;
+}
+.nuva-resumen-device {
+  position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;
+  border:1px solid rgba(255,255,255,.94);border-radius:clamp(25px,3vw,38px);
+  padding:14px clamp(13px,1.7vw,23px) 13px;
+  color:#242728;
+  background:
+    radial-gradient(ellipse at 15% 0%,rgba(255,255,255,.95),transparent 44%),
+    linear-gradient(145deg,rgba(247,248,244,.84),rgba(232,235,230,.76) 60%,rgba(250,250,246,.84));
+  box-shadow:0 28px 65px rgba(48,55,56,.13),0 7px 18px rgba(48,55,56,.06),inset 0 1px 0 rgba(255,255,255,.98),inset 0 0 0 1px rgba(191,196,192,.12);
+  backdrop-filter:blur(28px) saturate(135%);-webkit-backdrop-filter:blur(28px) saturate(135%);
+  transition:transform .28s ease,box-shadow .28s ease;
+}
+.nuva-resumen-device::before {content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(120deg,rgba(255,255,255,.26),transparent 35%,rgba(255,255,255,.08) 78%,transparent)}
+.nuva-resumen-device-performance,.nuva-resumen-device-operations {min-height:510px;transform:translateY(30px) scale(.965)}
+.nuva-resumen-device-main {min-height:575px;padding-left:clamp(16px,2vw,26px);padding-right:clamp(16px,2vw,26px);z-index:2}
+.nuva-resumen-device:hover {box-shadow:0 34px 75px rgba(48,55,56,.16),0 8px 20px rgba(48,55,56,.07),inset 0 1px 0 white}
+.nuva-resumen-device-performance:hover {transform:translateY(24px) scale(.975)}
+.nuva-resumen-device-main:hover {transform:translateY(-4px)}
+.nuva-resumen-device-operations:hover {transform:translateY(24px) scale(.975)}
+.nuva-resumen-device-status {position:relative;display:flex;align-items:center;justify-content:space-between;height:19px;margin:0 4px 13px;font-size:9px;font-weight:700;color:#333839}
+.nuva-resumen-device-island {position:absolute;left:50%;top:0;transform:translateX(-50%);width:66px;height:18px;border-radius:20px;background:rgba(202,207,202,.57);box-shadow:inset 0 1px 1px rgba(130,136,133,.08)}
+.nuva-resumen-device-topline {display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative;z-index:1}
+.nuva-resumen-avatar {display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(255,255,255,.96);border-radius:50%;background:linear-gradient(145deg,#fff,#e1e5e0);box-shadow:0 2px 9px rgba(40,45,45,.07);font-size:12px;font-weight:700;letter-spacing:-.1em;color:#a48c5c}
+.nuva-resumen-device-kicker {font-size:8px;font-weight:750;letter-spacing:.17em;color:#818687}
+.nuva-resumen-notification {display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(255,255,255,.95);border-radius:50%;background:rgba(255,255,255,.45);color:#777d7c;font-size:20px}
+.nuva-resumen-device-title {display:flex;flex-direction:column;gap:5px;margin:29px 0 12px;text-align:center}
+.nuva-resumen-device-title>span {font-size:clamp(17px,1.55vw,23px);font-family:Georgia,"Times New Roman",serif;letter-spacing:-.04em;color:#222627}
+.nuva-resumen-device-title small {font-size:8px;letter-spacing:.16em;color:#969b9a}
+.nuva-resumen-device-chart {height:195px;min-height:0;overflow:hidden;margin:8px -8px 4px}
+.nuva-resumen-device-chart>div,.nuva-resumen-device-chart .recharts-responsive-container {width:100%!important;height:100%!important;min-height:150px}
+.nuva-resumen-device-chart .recharts-cartesian-axis-tick text {font-size:8px;fill:#999e9c}
+.nuva-resumen-device-chart .recharts-cartesian-grid line {stroke:rgba(111,118,116,.11)}
+.nuva-resumen-device-chart .recharts-line path {stroke-width:2.1}
+.nuva-resumen-device-legend {display:flex;justify-content:center;gap:13px;color:#858b89;font-size:9px}
+.nuva-resumen-device-legend span {display:flex;align-items:center;gap:5px}
+.nuva-resumen-device-legend i {display:inline-block;width:6px;height:6px;border-radius:50%}
+.nuva-resumen-device-divider {height:1px;margin:17px 0 7px;background:rgba(112,119,116,.13)}
+.nuva-resumen-device-minirow {display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid rgba(112,119,116,.1);font-size:10px;color:#858b89}
+.nuva-resumen-device-minirow strong {font-size:11px;font-weight:650;color:#454b49}
+.nuva-resumen-device-bottom {display:flex;justify-content:space-around;gap:8px;margin-top:auto;padding:13px 0 0;color:#929795;font-size:8px}
+.nuva-resumen-device-bottom span {white-space:nowrap}
+.nuva-resumen-bottom-active {color:#303634;font-weight:750}
+.nuva-resumen-main-intro {margin:24px 0 18px;text-align:center}
+.nuva-resumen-main-intro p {margin:0 0 7px;font-size:10px;color:#8c918f}
+.nuva-resumen-main-intro h2 {margin:0;color:#242928;font-family:Georgia,"Times New Roman",serif;font-size:clamp(24px,2.3vw,34px);font-weight:400;letter-spacing:-.055em;line-height:1.12}
+.nuva-resumen-main-intro>span {display:block;margin-top:8px;color:#9a9f9d;font-size:9px}
+.nuva-resumen-balance-card {position:relative;overflow:hidden;padding:17px 17px 13px;border:1px solid rgba(255,255,255,.97);border-radius:23px;background:linear-gradient(145deg,rgba(255,255,255,.76),rgba(235,238,232,.68));box-shadow:inset 0 1px 0 white,0 9px 22px rgba(48,55,56,.045)}
+.nuva-resumen-balance-label {display:flex;align-items:center;justify-content:space-between;gap:8px;color:#8d9390;font-size:8px;font-weight:750;letter-spacing:.14em}
+.nuva-resumen-balance-mark {display:grid;place-items:center;width:23px;height:23px;border:1px solid white;border-radius:50%;color:#b49a67;font-size:15px}
+.nuva-resumen-balance-card>strong {display:block;margin:13px 0 8px;font-size:clamp(24px,2.35vw,34px);font-weight:550;letter-spacing:-.07em;line-height:1.05;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.nuva-resumen-balance-card>p {display:flex;align-items:center;gap:5px;margin:0;font-size:9px}
+.nuva-resumen-balance-sparkline {width:100%;height:49px;margin-top:9px;color:#b99a5d;opacity:.85}
+.nuva-resumen-device-money-grid {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.nuva-resumen-device-money-grid>div {min-width:0;padding:12px 10px;border:1px solid rgba(255,255,255,.91);border-radius:16px;background:rgba(255,255,255,.39)}
+.nuva-resumen-device-money-grid>div>span {display:flex;align-items:center;gap:5px;color:#8b918f;font-size:9px}
+.nuva-resumen-device-money-grid i {display:inline-block;width:6px;height:6px;border-radius:50%}
+.nuva-resumen-device-money-grid strong {display:block;margin-top:8px;font-size:clamp(12px,1.1vw,16px);font-weight:650;letter-spacing:-.04em;overflow-wrap:anywhere}
+.nuva-resumen-device-portfolio {display:flex;align-items:center;gap:10px;margin-top:10px;padding:11px 10px;border:1px solid rgba(255,255,255,.9);border-radius:15px;background:rgba(255,255,255,.38)}
+.nuva-resumen-portfolio-icon {display:grid;place-items:center;width:30px;height:30px;flex:0 0 30px;border-radius:10px;background:rgba(255,255,255,.72);color:#9c895f}
+.nuva-resumen-device-portfolio>span:nth-child(2) {display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.nuva-resumen-device-portfolio small {color:#8d9390;font-size:8px}
+.nuva-resumen-device-portfolio strong {font-size:11px;overflow-wrap:anywhere}
+.nuva-resumen-status-card {display:flex;align-items:flex-start;gap:9px;margin-top:22px;padding:13px 11px;border:1px solid rgba(255,255,255,.92);border-radius:17px;background:rgba(255,255,255,.48)}
+.nuva-resumen-status-symbol {display:grid;place-items:center;width:30px;height:30px;flex:0 0 30px;border:1px solid white;border-radius:10px;background:rgba(255,255,255,.7);color:#9a895f}
+.nuva-resumen-status-card>div {flex:1;min-width:0}
+.nuva-resumen-status-card strong {display:block;margin:1px 0 5px;font-size:10px;font-weight:700}
+.nuva-resumen-status-card p {margin:0;color:#929795;font-size:9px;line-height:1.5}
+.nuva-resumen-status-light {width:6px;height:6px;flex:0 0 6px;margin-top:4px;border-radius:50%;background:#bda875;box-shadow:0 0 0 3px rgba(189,168,117,.14)}
+.nuva-resumen-operation-list {margin-top:24px}
+.nuva-resumen-operation-list>.nuva-resumen-section-label {margin-bottom:8px;font-size:8px}
+.nuva-resumen-operation-list>a {display:flex;align-items:center;gap:9px;padding:11px 0;border-bottom:1px solid rgba(112,119,116,.1);text-decoration:none;color:#454b49}
+.nuva-resumen-operation-list>a:last-child {border-bottom:0}
+.nuva-resumen-operation-icon {display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border:1px solid white;border-radius:11px;background:rgba(255,255,255,.58);color:#98865f}
+.nuva-resumen-operation-list>a>span:nth-child(2) {display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.nuva-resumen-operation-list strong {font-size:10px;font-weight:650}
+.nuva-resumen-operation-list small {color:#929795;font-size:8px}
+.nuva-resumen-operation-list>a>svg {color:#a2a6a3}
+.nuva-resumen-device-footer-note {display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:12px;color:#969b98;font-size:8px;line-height:1.4}
+.nuva-resumen-refine-row {display:flex;align-items:center;justify-content:space-between;gap:18px;max-width:1260px;margin:68px auto 0;padding:18px 2px 0;border-top:1px solid rgba(96,103,100,.12)}
+.nuva-resumen-refine-row h2 {margin:5px 0 0;font-size:18px;font-weight:550;letter-spacing:-.045em}
+.nuva-resumen-refine-row p:not(.nuva-resumen-section-label) {margin:5px 0 0;color:#858b88;font-size:10px}
+.nuva-resumen-refine-row .nuva-resumen-filters {max-width:55%}
+.nuva-resumen-score-section {max-width:1260px;margin:22px auto 0}
+.nuva-resumen-footer {max-width:1260px;margin:23px auto 0}
+.nuva-resumen-onboarding {max-width:1260px;margin:12px auto 0;background:rgba(255,255,255,.64)}
+@media(max-width:1000px) {
+ .nuva-resumen-ambient-word {top:140px;font-size:clamp(78px,14vw,140px)}
+ .nuva-resumen-device-stage {grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:760px;gap:16px}
+ .nuva-resumen-device-main {grid-column:1/-1;grid-row:1;max-width:470px;width:100%;justify-self:center;min-height:0}
+ .nuva-resumen-device-performance,.nuva-resumen-device-operations {min-height:470px;transform:none}
+ .nuva-resumen-device-performance:hover,.nuva-resumen-device-operations:hover {transform:translateY(-3px)}
+ .nuva-resumen-device-chart {height:155px}
+ .nuva-resumen-refine-row {margin-top:38px}
+}
+@media(max-width:620px) {
+ .nuva-resumen-canvas {padding:13px!important}
+ .nuva-resumen-ambient-word {top:145px;font-size:76px}
+ .nuva-resumen-heading {padding-top:19px}
+ .nuva-resumen-heading h1 {font-size:32px}
+ .nuva-resumen-device-stage {grid-template-columns:minmax(0,1fr);max-width:410px;margin-top:19px;gap:14px}
+ .nuva-resumen-device-main {grid-column:auto;grid-row:auto;max-width:none;width:100%;min-height:0}
+ .nuva-resumen-device-performance,.nuva-resumen-device-operations {min-height:0;transform:none}
+ .nuva-resumen-device-performance:hover,.nuva-resumen-device-main:hover,.nuva-resumen-device-operations:hover {transform:translateY(-2px)}
+ .nuva-resumen-device-chart {height:180px}
+ .nuva-resumen-device-title {margin-top:21px}
+ .nuva-resumen-main-intro {margin:21px 0 15px}
+ .nuva-resumen-device-bottom {padding-top:16px}
+ .nuva-resumen-refine-row {align-items:flex-start;flex-direction:column;margin-top:30px}
+ .nuva-resumen-refine-row .nuva-resumen-filters {max-width:none;justify-content:flex-start}
+ .nuva-resumen-score-section {grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce) {.nuva-resumen-device,.nuva-resumen-device * {transition:none!important;animation:none!important}}
