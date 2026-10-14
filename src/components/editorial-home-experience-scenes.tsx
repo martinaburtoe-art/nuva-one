@@ -13,10 +13,26 @@ export function SceneArt({kind,progress,reducedMotion=false,mediaMode="video"}:S
  const style={"--art-progress":progress} as CSSProperties;
  const index=EDITORIAL_CHAPTERS.findIndex(item=>item.visual===kind);
  const chapter=EDITORIAL_CHAPTERS[index];
+ const sceneRef=useRef<HTMLDivElement|null>(null);
  const videoRef=useRef<HTMLVideoElement|null>(null);
+ const [videoNearViewport,setVideoNearViewport]=useState(false);
  const [videoFailed,setVideoFailed]=useState(false);
  const mediaFile=REAL_MEDIA[kind];
- const showVideo=mediaMode==="video"&&!reducedMotion&&!videoFailed&&Boolean(mediaFile);
+ const showVideo=mediaMode==="video"&&!reducedMotion&&!videoFailed&&videoNearViewport&&Boolean(mediaFile);
+
+ // No descargar metadatos de escenas que aún están lejos del viewport.
+ useEffect(()=>{
+  const node=sceneRef.current;
+  if(!node||mediaMode!=="video"||reducedMotion||!mediaFile){return;}
+  if(typeof IntersectionObserver==="undefined"){setVideoNearViewport(true);return;}
+  const observer=new IntersectionObserver(([entry])=>{
+   if(!entry.isIntersecting)return;
+   setVideoNearViewport(true);
+   observer.disconnect();
+  },{rootMargin:"240px 0px"});
+  observer.observe(node);
+  return()=>observer.disconnect();
+ },[kind,mediaFile,mediaMode,reducedMotion]);
 
  useEffect(()=>{
   const video=videoRef.current;
@@ -49,7 +65,7 @@ export function SceneArt({kind,progress,reducedMotion=false,mediaMode="video"}:S
   };
  },[progress,showVideo]);
 
- return <div className={`editorial-art editorial-art--${kind}`} style={style} aria-hidden="true">
+ return <div ref={sceneRef} className={`editorial-art editorial-art--${kind}`} style={style} aria-hidden="true">
   {showVideo&&<video
     ref={videoRef}
     className="editorial-art__video"
