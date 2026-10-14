@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowRight, BarChart3, Boxes, Brain, CheckCircle2, CircleDollarSign, ScanLine, ShoppingCart, Smartphone, Users } from "lucide-react";
-import { DemoWorkspace } from "@/components/demo/demo-workspace";
-import { DemoStateProvider } from "@/lib/demo/demo-state";
+
+// La demo interactiva pesa más que el contenido editorial: cargarla al acercarse a pantalla.
+const DemoWorkspace = lazy(() => import("@/components/demo/demo-workspace").then((module) => ({ default: module.DemoWorkspace })));
+const DemoStateProvider = lazy(() => import("@/lib/demo/demo-state").then((module) => ({ default: module.DemoStateProvider })));
 
 const BENEFITS = [
   { icon: ShoppingCart, title: "Ventas conectadas", text: "Registra ventas y mantén el resto de la operación actualizado." },
@@ -12,6 +14,45 @@ const BENEFITS = [
   { icon: BarChart3, title: "Reportes útiles", text: "Convierte los datos operacionales en información que puedas usar." },
   { icon: Brain, title: "Inteligencia para decidir", text: "Nüva One ayuda a interpretar lo que está pasando en tu negocio." },
 ];
+
+function DeferredDemo() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node || shouldLoad) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setShouldLoad(true);
+      observer.disconnect();
+    }, { rootMargin: "320px 0px" });
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [shouldLoad]);
+
+  return (
+    <div ref={containerRef} className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
+      {shouldLoad ? (
+        <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/55" role="status">Preparando la demo interactiva…</div>}>
+          <DemoStateProvider>
+            <DemoWorkspace onExit={() => undefined} />
+          </DemoStateProvider>
+        </Suspense>
+      ) : (
+        <div className="flex min-h-[420px] items-center justify-center bg-white px-6 text-center text-sm text-black/55">
+          La demo interactiva se cargará al acercarte a esta sección.
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function HomeFixedExperience() {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
@@ -90,7 +131,7 @@ export function HomeFixedExperience() {
   return (
     <>
       <section className="home-hero relative isolate min-h-[100svh] overflow-hidden bg-[#080809] text-white">
-        <video ref={heroVideoRef} className="home-hero__video absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" aria-hidden="true" autoPlay loop muted playsInline preload="auto" />
+        <video ref={heroVideoRef} className="home-hero__video absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" aria-hidden="true" autoPlay loop muted playsInline preload="metadata" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 mx-auto flex min-h-[min(860px,100vh)] max-w-7xl items-end px-6 pb-16 pt-32 md:px-10 md:pb-20">
           <div className="max-w-4xl">
@@ -133,9 +174,7 @@ export function HomeFixedExperience() {
             <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Ahora pruébalo aquí mismo.</h2>
             <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación completa de Nüva One con datos ficticios. Navega por los módulos y entiende cómo se conecta la operación, sin salir de la homepage.</p>
           </div>
-          <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
-            <DemoStateProvider><DemoWorkspace onExit={() => undefined} /></DemoStateProvider>
-          </div>
+          <DeferredDemo />
         </div>
       </section>
 
