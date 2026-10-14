@@ -1,84 +1,103 @@
-/* Experimento visual aislado: solo afecta al módulo Resumen. */
+/* Nüva One · Resumen premium
+   Estilos encapsulados: no afectan otros módulos ni cambian la lógica de datos. */
 .nuva-resumen-premium {
-  --resumen-ink: #17181d;
-  --resumen-muted: #a8a9b2;
-  --resumen-line: rgba(255, 255, 255, 0.11);
-  --resumen-gold: #e6c687;
+  --resumen-ink: #202124;
+  --resumen-muted: #73777d;
+  --resumen-line: rgba(255, 255, 255, 0.72);
+  --resumen-gold: #b99a5d;
   position: relative;
   isolation: isolate;
   min-height: 100%;
-  color: #f7f4ed;
-  padding: clamp(0.25rem, 1vw, 0.75rem);
-  border-radius: 1.75rem;
+  padding: clamp(0.65rem, 1.5vw, 1.25rem);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 1.8rem;
+  color: var(--resumen-ink);
   background:
-    radial-gradient(ellipse at 8% 0%, rgba(230, 198, 135, 0.10), transparent 34rem),
-    radial-gradient(ellipse at 100% 18%, rgba(99, 102, 241, 0.10), transparent 32rem),
-    linear-gradient(145deg, #111216 0%, #17181d 55%, #1d1d22 100%);
+    radial-gradient(ellipse at 8% 4%, rgba(255, 255, 255, 0.96), transparent 34rem),
+    radial-gradient(ellipse at 92% 12%, rgba(230, 198, 135, 0.19), transparent 31rem),
+    radial-gradient(ellipse at 72% 88%, rgba(99, 102, 241, 0.07), transparent 34rem),
+    linear-gradient(145deg, #e9ebea 0%, #f1f1ed 48%, #e4e7e6 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 24px 70px rgba(29, 34, 39, .07);
+}
+.nuva-resumen-premium::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  opacity: .34;
+  background-image: radial-gradient(rgba(54, 58, 62, .12) .55px, transparent .55px);
+  background-size: 5px 5px;
+  mask-image: linear-gradient(to bottom, black, transparent 70%);
 }
 .nuva-resumen-premium h1 {
-  color: #fbf8f0;
-  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  color: #17191b;
+  font-size: clamp(1.85rem, 3vw, 2.8rem);
   font-weight: 650;
-  letter-spacing: -0.055em;
+  letter-spacing: -.055em;
   line-height: 1.08;
 }
 .nuva-resumen-premium h2,
 .nuva-resumen-premium h3 {
-  color: #f7f4ed;
-  letter-spacing: -0.025em;
+  color: #242629;
+  letter-spacing: -.025em;
 }
 .nuva-resumen-premium p {
   color: var(--resumen-muted);
 }
 .nuva-resumen-premium [class*="rounded-2xl"] {
-  border-color: var(--resumen-line);
-  border-radius: 1.25rem;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255,255,255,.78);
+  border-radius: 1.35rem;
+  background: linear-gradient(145deg, rgba(255,255,255,.76), rgba(247,248,245,.52));
+  box-shadow: 0 14px 34px rgba(34, 39, 43, .055), inset 0 1px 0 rgba(255,255,255,.82);
+  backdrop-filter: blur(22px) saturate(125%);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
 }
-.nuva-resumen-premium .border-border\/70 {
-  background: linear-gradient(145deg, rgba(38, 39, 45, 0.96), rgba(27, 28, 33, 0.98));
-  border-color: var(--resumen-line);
-  color: #f7f4ed;
+.nuva-resumen-premium [class~="border-border/70"] {
+  border-color: rgba(255,255,255,.78);
+  background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(247,248,245,.58));
+  color: #242629;
 }
 .nuva-resumen-premium [class*="bg-gradient-to-br"] {
-  background: linear-gradient(125deg, rgba(230, 198, 135, 0.16), rgba(99, 102, 241, 0.10) 52%, rgba(33, 34, 39, 0.98));
-  border-color: rgba(230, 198, 135, 0.28);
+  border-color: rgba(185,154,93,.24);
+  background: linear-gradient(125deg, rgba(255,255,255,.88), rgba(230,198,135,.19) 54%, rgba(99,102,241,.07));
 }
 .nuva-resumen-premium a[class*="rounded-xl"] {
-  border-color: var(--resumen-line);
-  background: rgba(255, 255, 255, 0.035);
-  color: #f7f4ed;
-  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  border-color: rgba(255,255,255,.86);
+  background: rgba(255,255,255,.48);
+  color: #292b2e;
+  box-shadow: 0 5px 15px rgba(30,35,40,.035), inset 0 1px 0 rgba(255,255,255,.8);
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 .nuva-resumen-premium a[class*="rounded-xl"]:hover {
   transform: translateY(-2px);
-  border-color: rgba(230, 198, 135, 0.42);
-  background: rgba(230, 198, 135, 0.08);
+  border-color: rgba(185,154,93,.58);
+  background: rgba(255,255,255,.84);
+  box-shadow: 0 12px 24px rgba(30,35,40,.075);
 }
 .nuva-resumen-premium input,
 .nuva-resumen-premium button[class*="outline"] {
-  border-color: var(--resumen-line);
+  border-color: rgba(80,84,88,.18);
 }
-.nuva-resumen-premium svg {
-  flex-shrink: 0;
+.nuva-resumen-premium button[class*="outline"] {
+  background: rgba(255,255,255,.56);
+  color: #27292c;
+  backdrop-filter: blur(14px);
 }
+.nuva-resumen-premium svg { flex-shrink: 0; }
+.nuva-resumen-premium [class*="text-muted-foreground"] { color: #74787e; }
+.nuva-resumen-premium [class*="bg-background/70"] {
+  border-color: rgba(255,255,255,.8);
+  background: rgba(255,255,255,.58);
+}
+.nuva-resumen-premium [class*="shadow-sm"] { box-shadow: 0 14px 34px rgba(34,39,43,.055); }
 @media (max-width: 767px) {
-  .nuva-resumen-premium {
-    padding: 0.15rem;
-    border-radius: 1.15rem;
-  }
-  .nuva-resumen-premium h1 {
-    font-size: clamp(1.7rem, 8vw, 2.15rem);
-  }
-  .nuva-resumen-premium [class*="rounded-2xl"] {
-    border-radius: 1rem;
-  }
+  .nuva-resumen-premium { padding: .35rem; border-radius: 1.2rem; }
+  .nuva-resumen-premium h1 { font-size: clamp(1.7rem, 8vw, 2.15rem); }
+  .nuva-resumen-premium [class*="rounded-2xl"] { border-radius: 1.05rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .nuva-resumen-premium a[class*="rounded-xl"] {
-    transition: none;
-  }
-  .nuva-resumen-premium a[class*="rounded-xl"]:hover {
-    transform: none;
-  }
+  .nuva-resumen-premium a[class*="rounded-xl"] { transition: none; }
+  .nuva-resumen-premium a[class*="rounded-xl"]:hover { transform: none; }
 }
