@@ -249,3 +249,17 @@
  .nuva-resumen-score-section {grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce) {.nuva-resumen-device,.nuva-resumen-device * {transition:none!important;animation:none!important}}
+
+
+/* Ajuste de fidelidad visual: dashboard real, sin maquetas de teléfonos */
+.nuva-resumen-chart-bottomline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(95,99,103,.1)}
+.nuva-resumen-chart-bottomline>span{display:flex;flex-direction:column;gap:5px;min-width:0}
+.nuva-resumen-chart-bottomline small{font-size:8px;font-weight:750;letter-spacing:.1em;color:#96999b}
+.nuva-resumen-chart-bottomline strong{font-size:17px;font-weight:600;letter-spacing:-.04em;color:#333638}
+.nuva-resumen-chart-panel .recharts-responsive-container{min-height:260px}
+.nuva-resumen-chart-panel .nuva-resumen-chart-loading{height:260px}
+.nuva-resumen-refine-row{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:18px;padding:15px 2px 0;border-top:1px solid rgba(95,99,103,.1)}
+.nuva-resumen-refine-row h2{margin:5px 0 0;font-size:14px;font-weight:600;letter-spacing:-.025em}
+.nuva-resumen-refine-row p:last-child{margin:4px 0 0;font-size:10px;color:#85898c}
+.nuva-resumen-premium .nuva-resumen-device-divider{height:1px;margin:14px 0;background:rgba(95,99,103,.1)}
+@media(max-width:700px){.nuva-resumen-chart-bottomline{grid-template-columns:1fr 1fr}.nuva-resumen-chart-bottomline>span:last-child{grid-column:1/-1}.nuva-resumen-chart-bottomline strong{font-size:15px}.nuva-resumen-chart-panel .recharts-responsive-container{min-height:220px}.nuva-resumen-refine-row{align-items:flex-start}}
