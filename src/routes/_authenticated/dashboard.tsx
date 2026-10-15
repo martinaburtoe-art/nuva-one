@@ -175,6 +175,58 @@ function Dashboard() {
           </Card>
         )}
 
+        <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
+          <article className="nuva-resumen-device nuva-resumen-device-performance">
+            <div className="nuva-resumen-device-status"><span>9:41</span><span className="nuva-resumen-device-island" /><span>•••</span></div>
+            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">NÜVA ONE · FINANZAS</span><span className="nuva-resumen-notification">⌁</span></div>
+            <div className="nuva-resumen-device-title"><span>Rendimiento</span><small>VISIÓN FINANCIERA</small></div>
+            <div className="nuva-resumen-device-chart"><Suspense fallback={<div className="nuva-resumen-chart-loading" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense></div>
+            <div className="nuva-resumen-device-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
+            <div className="nuva-resumen-device-divider" />
+            <div className="nuva-resumen-device-minirow"><span>Ventas registradas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
+            <div className="nuva-resumen-device-minirow"><span>Productos en catálogo</span><strong>{kpis?.productsCount ?? "—"}</strong></div>
+            <div className="nuva-resumen-device-bottom"><span>Resumen</span><span>Finanzas</span><span>Actividad</span></div>
+          </article>
+
+          <article className="nuva-resumen-device nuva-resumen-device-main">
+            <div className="nuva-resumen-device-status"><span>9:41</span><span className="nuva-resumen-device-island" /><span>•••</span></div>
+            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
+            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Todo en equilibrio.</h2><span>Una mirada clara a tu negocio.</span></div>
+            <div className="nuva-resumen-balance-card">
+              <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span><span className="nuva-resumen-balance-mark">↗</span></div>
+              <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
+              <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Requiere atención" : "Resultado acumulado"}</p>
+              <svg className="nuva-resumen-balance-sparkline" viewBox="0 0 220 49" fill="none" aria-hidden="true"><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3 V49 H0Z" fill="currentColor" opacity=".08"/></svg>
+            </div>
+            <div className="nuva-resumen-device-money-grid">
+              <div><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
+              <div><span><i className="nuva-resumen-dot-indigo" /> Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
+            </div>
+            <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR ESTIMADO DE INVENTARIO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
+            <div className="nuva-resumen-status-card"><span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span><div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div><i className="nuva-resumen-status-light" /></div>
+            <div className="nuva-resumen-device-bottom"><span className="nuva-resumen-bottom-active">Resumen</span><span>Operaciones</span><span>Finanzas</span></div>
+          </article>
+
+          <article className="nuva-resumen-device nuva-resumen-device-operations">
+            <div className="nuva-resumen-device-status"><span>9:41</span><span className="nuva-resumen-device-island" /><span>•••</span></div>
+            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">CENTRO DE OPERACIONES</span><span className="nuva-resumen-notification">⌁</span></div>
+            <div className="nuva-resumen-device-title"><span>Tu negocio</span><small>ACCESOS Y ACTIVIDAD</small></div>
+            <div className="nuva-resumen-device-money-grid">
+              <div><span><i className="nuva-resumen-dot-gold" /> Ventas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
+              <div><span><i className="nuva-resumen-dot-indigo" /> Stock bajo</span><strong>{kpis?.lowStockCount ?? "—"}</strong></div>
+            </div>
+            <div className="nuva-resumen-operation-list">
+              <p className="nuva-resumen-section-label">CONTINUAR TRABAJANDO</p>
+              <Link to="/sales"><span className="nuva-resumen-operation-icon"><ShoppingBag className="h-4 w-4" /></span><span><strong>Ventas y operaciones</strong><small>Registros y actividad</small></span><ArrowUpRight className="h-4 w-4" /></Link>
+              <Link to="/inventory"><span className="nuva-resumen-operation-icon"><Package className="h-4 w-4" /></span><span><strong>Inventario y stock</strong><small>Productos y existencias</small></span><ArrowUpRight className="h-4 w-4" /></Link>
+              <Link to="/quotes"><span className="nuva-resumen-operation-icon"><Plus className="h-4 w-4" /></span><span><strong>Cotizaciones</strong><small>Propuestas comerciales</small></span><ArrowUpRight className="h-4 w-4" /></Link>
+              <Link to="/finance"><span className="nuva-resumen-operation-icon"><TrendingUp className="h-4 w-4" /></span><span><strong>Finanzas</strong><small>Movimientos y resultados</small></span><ArrowUpRight className="h-4 w-4" /></Link>
+            </div>
+            <div className="nuva-resumen-device-footer-note"><CheckCircle2 className="h-3.5 w-3.5" /> Tus accesos directos están disponibles.</div>
+            <div className="nuva-resumen-device-bottom"><span>Resumen</span><span className="nuva-resumen-bottom-active">Operaciones</span><span>Perfil</span></div>
+          </article>
+        </section>
+
         <section className="nuva-resumen-overview" aria-label="Indicadores principales">
           <article className="nuva-resumen-net-card">
             <div className="nuva-resumen-net-top"><span className="nuva-resumen-period"><span /> RESULTADO DEL NEGOCIO</span><span className="nuva-resumen-metric-icon"><TrendingUp className="h-4 w-4" /></span></div>
