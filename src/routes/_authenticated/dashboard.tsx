@@ -179,7 +179,7 @@ function Dashboard() {
           <article className="nuva-resumen-device nuva-resumen-device-performance">
             <div className="nuva-resumen-device-status"><span>9:41</span><span className="nuva-resumen-device-island" /><span>•••</span></div>
             <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">NÜVA ONE · FINANZAS</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-device-title"><span>Rendimiento</span><small>VISIÓN FINANCIERA</small></div>
+            <div className="nuva-resumen-device-title"><span>Rendimiento</span><small>VISIÓN FINANCIERA</small></div><div className="nuva-resumen-filters nuva-resumen-device-filters"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} /></div>
             <div className="nuva-resumen-device-chart"><Suspense fallback={<div className="nuva-resumen-chart-loading" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense></div>
             <div className="nuva-resumen-device-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
             <div className="nuva-resumen-device-divider" />
