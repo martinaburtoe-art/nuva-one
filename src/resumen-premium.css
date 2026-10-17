@@ -883,3 +883,64 @@
   .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-portfolio,
   .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-status-card {grid-column:1!important;grid-row:auto!important}
 }
+
+
+/* V8 — sistema visual extraído de la referencia: editorial oscuro, ancho contenido, tipografía limpia,
+   bordes discretos, acento cálido/frío y jerarquía de una sola página. */
+.nuva-resumen-canvas {
+  width:100%!important; max-width:none!important; min-height:100vh!important;
+  padding:clamp(22px,4vw,58px)!important; border:0!important; border-radius:0!important;
+  background:#090a0c!important; color:#f4f3f0!important; box-shadow:none!important;
+}
+.nuva-resumen-canvas::before {opacity:.035!important;background-size:7px 7px!important}
+.nuva-resumen-canvas > * {max-width:1240px;margin-left:auto;margin-right:auto}
+.nuva-resumen-canvas .nuva-resumen-header {max-width:1240px}
+.nuva-resumen-canvas .nuva-resumen-brandline {padding-bottom:18px!important;border-bottom-color:#242529!important}
+.nuva-resumen-canvas .nuva-resumen-heading {padding-top:clamp(42px,7vw,88px)!important;padding-bottom:30px!important;align-items:flex-end!important}
+.nuva-resumen-canvas .nuva-resumen-overline {font-size:10px!important;letter-spacing:.2em!important;color:#c5ad82!important}
+.nuva-resumen-canvas .nuva-resumen-heading h1 {max-width:780px!important;font-size:clamp(42px,6vw,76px)!important;line-height:.98!important;letter-spacing:-.065em!important;font-weight:560!important}
+.nuva-resumen-canvas .nuva-resumen-subtitle {max-width:560px!important;font-size:clamp(14px,1.35vw,17px)!important;line-height:1.7!important}
+.nuva-resumen-canvas .nuva-resumen-demo-button {border-radius:999px!important;padding:0 22px!important;min-height:42px!important}
+.nuva-resumen-canvas .nuva-resumen-device-stage {display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:16px!important;margin-top:12px!important}
+.nuva-resumen-canvas .nuva-resumen-device {border-radius:20px!important;padding:clamp(20px,2.5vw,32px)!important;background:#101114!important;border:1px solid #242529!important;box-shadow:none!important;backdrop-filter:none!important}
+.nuva-resumen-canvas .nuva-resumen-device-main {grid-column:1/-1!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(250px,.85fr) minmax(220px,.8fr)!important;grid-template-rows:auto auto auto!important;gap:18px 26px!important;background:#0d0e11!important;border-color:#292a2e!important}
+.nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-topline {grid-column:1/-1!important;grid-row:1!important}
+.nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-main-intro {grid-column:1!important;grid-row:2!important;align-self:center!important}
+.nuva-resumen-canvas .nuva-resumen-main-intro h2 {font-size:clamp(30px,3.4vw,48px)!important;letter-spacing:-.055em!important;line-height:1.02!important}
+.nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-balance-card {grid-column:2!important;grid-row:2/span 2!important;min-height:230px!important;border-radius:16px!important}
+.nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-money-grid {grid-column:1!important;grid-row:3!important}
+.nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-portfolio {grid-column:3!important;grid-row:2!important}
+.nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-status-card {grid-column:3!important;grid-row:3!important}
+.nuva-resumen-canvas .nuva-resumen-device-performance {grid-column:1!important;grid-row:2!important;min-height:0!important}
+.nuva-resumen-canvas .nuva-resumen-device-operations {grid-column:2!important;grid-row:2!important;min-height:0!important}
+.nuva-resumen-canvas .nuva-resumen-device-title>span {font-size:clamp(22px,2.4vw,30px)!important;letter-spacing:-.04em!important}
+.nuva-resumen-canvas .nuva-resumen-balance-card {border-radius:16px!important}
+.nuva-resumen-canvas .nuva-resumen-device-money-grid>div,.nuva-resumen-canvas .nuva-resumen-device-portfolio,.nuva-resumen-canvas .nuva-resumen-status-card {border-radius:12px!important}
+.nuva-resumen-canvas .nuva-resumen-refine-row {border-top:1px solid #292a2e!important;padding-top:30px!important;margin-top:36px!important}
+.nuva-resumen-canvas .nuva-resumen-score-section {border-top:1px solid #292a2e!important;padding-top:30px!important;margin-top:28px!important}
+.nuva-resumen-canvas .nuva-resumen-score-card {border-radius:18px!important}
+.nuva-resumen-canvas .nuva-resumen-footer {border-top:1px solid #242529!important;padding-top:18px!important;margin-top:42px!important}
+.nuva-resumen-canvas a,.nuva-resumen-canvas button {transition:background-color .18s ease,border-color .18s ease,transform .18s ease}
+.nuva-resumen-canvas .nuva-resumen-operation-list>a:hover {background:rgba(255,255,255,.035)!important}
+@media(max-width:1050px) {
+ .nuva-resumen-canvas .nuva-resumen-device-main {grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-portfolio,
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-status-card {grid-column:1/-1!important;grid-row:auto!important}
+ .nuva-resumen-canvas .nuva-resumen-device-stage {grid-template-columns:minmax(0,1fr)!important}
+ .nuva-resumen-canvas .nuva-resumen-device-performance,.nuva-resumen-canvas .nuva-resumen-device-operations {grid-column:1!important;grid-row:auto!important}
+}
+@media(max-width:700px) {
+ .nuva-resumen-canvas {padding:18px!important}
+ .nuva-resumen-canvas .nuva-resumen-heading {padding-top:42px!important;align-items:flex-start!important;gap:20px!important;flex-direction:column!important}
+ .nuva-resumen-canvas .nuva-resumen-heading h1 {font-size:clamp(38px,12vw,54px)!important}
+ .nuva-resumen-canvas .nuva-resumen-device-main {grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important}
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-topline,
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-main-intro,
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-balance-card,
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-money-grid,
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-device-portfolio,
+ .nuva-resumen-canvas .nuva-resumen-device-main>.nuva-resumen-status-card {grid-column:1!important;grid-row:auto!important}
+}
+@media(prefers-reduced-motion:reduce) {
+ .nuva-resumen-canvas * {scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
