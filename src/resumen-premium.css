@@ -530,3 +530,115 @@
  .nuva-resumen-device-title>span {font-size:24px!important}
  .nuva-resumen-main-intro h2 {font-size:28px!important}
 }
+
+
+/* V6 — fidelidad a la referencia fintech clara: perla, vidrio esmerilado y tres superficies verticales.
+   Alcance exclusivo del módulo Resumen. Mantiene los componentes y datos funcionales existentes. */
+.nuva-resumen-canvas {
+  --nr-ink:#202322; --nr-muted:#747a79; --nr-gold:#b59a62; --nr-indigo:#777b86;
+  color:#242726!important;
+  background:
+    radial-gradient(ellipse at 50% 15%,rgba(255,255,255,.96),transparent 46rem),
+    radial-gradient(ellipse at 8% 75%,rgba(219,224,220,.62),transparent 32rem),
+    linear-gradient(145deg,#e6e9e7 0%,#dfe3e1 48%,#edf0ed 100%)!important;
+}
+.nuva-resumen-canvas::before {
+  opacity:.20!important;
+  background-image:radial-gradient(rgba(64,70,68,.20) .5px,transparent .6px)!important;
+  background-size:4px 4px!important;
+  mask-image:linear-gradient(to bottom,#000,transparent 82%)!important;
+}
+.nuva-resumen-ambient-word {
+  top:clamp(100px,13vw,205px)!important;
+  color:rgba(60,66,64,.105)!important;
+  font-size:clamp(70px,14vw,190px)!important;
+  letter-spacing:-.09em!important;
+  font-weight:650!important;
+}
+.nuva-resumen-brandline {border-color:rgba(65,72,69,.13)!important}
+.nuva-resumen-wordmark,.nuva-resumen-heading h1 {color:#252927!important}
+.nuva-resumen-wordmark span,.nuva-resumen-breadcrumb {color:#737a77!important}
+.nuva-resumen-live,.nuva-resumen-demo-button {
+  color:#343a37!important;background:rgba(255,255,255,.36)!important;
+  border-color:rgba(255,255,255,.78)!important;
+  box-shadow:0 3px 12px rgba(50,57,54,.045),inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+.nuva-resumen-overline {color:#8b7448!important}
+.nuva-resumen-subtitle,.nuva-resumen-footer,.nuva-resumen-refine-row p:last-child,
+.nuva-resumen-score-section>div:first-child>p:last-child {color:#747b78!important}
+.nuva-resumen-section-label,.nuva-resumen-device-kicker {color:#7d8581!important}
+.nuva-resumen-device {
+  color:#292e2b!important;
+  border:1px solid rgba(255,255,255,.86)!important;
+  background:
+    radial-gradient(ellipse at 10% 0%,rgba(255,255,255,.9),transparent 58%),
+    linear-gradient(145deg,rgba(255,255,255,.70),rgba(248,249,246,.38) 58%,rgba(232,236,232,.55))!important;
+  box-shadow:0 22px 48px rgba(61,70,65,.11),inset 0 1px 0 rgba(255,255,255,.98),inset 0 -1px 0 rgba(255,255,255,.42)!important;
+  backdrop-filter:blur(30px) saturate(112%)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(112%)!important;
+}
+.nuva-resumen-device-main {
+  border-color:rgba(255,255,255,.96)!important;
+  background:
+    radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.96),transparent 64%),
+    linear-gradient(150deg,rgba(255,255,255,.83),rgba(246,247,242,.58) 58%,rgba(229,233,227,.62))!important;
+  box-shadow:0 28px 58px rgba(61,70,65,.14),inset 0 1px 0 #fff!important;
+}
+.nuva-resumen-device-topline {border-color:rgba(73,81,76,.12)!important}
+.nuva-resumen-avatar {color:#555d58!important;background:rgba(255,255,255,.72)!important;border-color:rgba(255,255,255,.95)!important;box-shadow:0 2px 10px rgba(50,58,53,.08)}
+.nuva-resumen-notification {color:#555d58!important;background:rgba(255,255,255,.65)!important;border-color:rgba(255,255,255,.95)!important}
+.nuva-resumen-device-title>span,.nuva-resumen-main-intro h2 {color:#252a27!important}
+.nuva-resumen-device-title small,.nuva-resumen-main-intro>span {color:#7e8581!important}
+.nuva-resumen-main-intro p {color:#8b7448!important}
+.nuva-resumen-balance-card {
+  background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(244,246,241,.48))!important;
+  border-color:rgba(255,255,255,.94)!important;
+  box-shadow:0 10px 25px rgba(70,78,72,.055),inset 0 1px 0 #fff!important;
+}
+.nuva-resumen-balance-label,.nuva-resumen-balance-card>strong {color:#282d2a!important}
+.nuva-resumen-balance-card p {color:#7d8580!important}
+.nuva-resumen-balance-sparkline {color:#b19a69!important;opacity:.75}
+.nuva-resumen-device-money-grid>div,.nuva-resumen-device-portfolio,.nuva-resumen-status-card {
+  color:#343a36!important;background:rgba(255,255,255,.52)!important;
+  border-color:rgba(255,255,255,.92)!important;
+  box-shadow:0 5px 18px rgba(70,78,72,.035),inset 0 1px 0 rgba(255,255,255,.86)!important;
+}
+.nuva-resumen-device-money-grid span,.nuva-resumen-device-minirow span,
+.nuva-resumen-operation-list small,.nuva-resumen-device-footer-note {color:#7c8480!important}
+.nuva-resumen-device-money-grid strong,.nuva-resumen-device-minirow strong,
+.nuva-resumen-operation-list strong,.nuva-resumen-status-card strong {color:#2d332f!important}
+.nuva-resumen-device-minirow,.nuva-resumen-device-divider {border-color:rgba(70,78,72,.12)!important}
+.nuva-resumen-device-legend,.nuva-resumen-device-legend span {color:#727a75!important}
+.nuva-resumen-dot-gold {background:#b6a06e!important}
+.nuva-resumen-dot-indigo {background:#9299a0!important}
+.nuva-resumen-operation-list>a {color:#353b37!important;border-color:rgba(70,78,72,.12)!important}
+.nuva-resumen-operation-icon {color:#777e79!important;background:rgba(255,255,255,.74)!important;border-color:rgba(255,255,255,.95)!important}
+.nuva-resumen-operation-list>a>svg,.nuva-resumen-action-arrow {color:#8b918d!important}
+.nuva-resumen-filters button,.nuva-resumen-filters [role="combobox"],.nuva-resumen-filters input {
+  color:#444b46!important;background:rgba(255,255,255,.62)!important;border-color:rgba(255,255,255,.94)!important;
+}
+.nuva-resumen-filters [data-placeholder],.nuva-resumen-filters svg {color:#777f79!important}
+.nuva-resumen-chart-panel .recharts-cartesian-grid line {stroke:rgba(77,86,80,.12)!important}
+.nuva-resumen-chart-panel .recharts-cartesian-axis-tick text {fill:#7a827d!important}
+.nuva-resumen-onboarding,.nuva-resumen-score-card {
+  color:#2c322e!important;border:1px solid rgba(255,255,255,.88)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.75),rgba(245,247,243,.45))!important;
+  box-shadow:0 18px 40px rgba(61,70,65,.08),inset 0 1px 0 #fff!important;
+}
+.nuva-resumen-onboarding h2,.nuva-resumen-score-section h2 {color:#2a302c!important}
+.nuva-resumen-onboarding-copy>p {color:#747c76!important}
+.nuva-resumen-steps>div {color:#3c433e!important;background:rgba(255,255,255,.55)!important;border-color:rgba(255,255,255,.9)!important}
+.nuva-resumen-footer>span:first-child {color:#626a65!important}
+.nuva-resumen-canvas a:focus-visible,.nuva-resumen-canvas button:focus-visible,.nuva-resumen-canvas input:focus-visible {outline-color:#8d784e!important}
+@media(max-width:1120px) {
+  .nuva-resumen-device-stage {grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:680px) {
+  .nuva-resumen-canvas {padding:15px!important}
+  .nuva-resumen-ambient-word {top:120px!important;font-size:22vw!important}
+  .nuva-resumen-device-stage {gap:12px!important}
+  .nuva-resumen-device {border-radius:25px!important}
+}
+@media(prefers-reduced-transparency:reduce) {
+  .nuva-resumen-canvas .nuva-resumen-device,.nuva-resumen-canvas .nuva-resumen-onboarding,.nuva-resumen-canvas .nuva-resumen-score-card {backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:#f0f2ef!important}
+}
