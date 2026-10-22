@@ -79,10 +79,10 @@ SELECT ok(NOT EXISTS (SELECT 1 FROM pg_policies p WHERE p.schemaname='public' AN
 SELECT ok(to_regclass('public.people_employee_operational') IS NOT NULL, 'limited operational employee view exists');
 SELECT ok(has_table_privilege('authenticated', 'public.people_employee_operational', 'SELECT'), 'authenticated can read the limited operational view');
 SELECT ok((SELECT bool_and(column_name NOT IN ('national_id','email','phone','birth_date','bank_name','bank_account_type','bank_account_last4','afp_name','health_system','health_plan_uf','health_additional_clp','dependents_count','overtime_hours','taxable_bonus','non_taxable_bonus','other_deductions','gratification_mode')) FROM information_schema.columns WHERE table_schema='public' AND table_name='people_employee_operational'), 'limited view excludes identity, banking, health and compensation fields');
-SELECT ok(position('people_employee_operational_rows' IN pg_get_viewdef('public.people_employee_operational'::regclass, true)) > 0, 'limited view delegates rows to the safe projection function');
-SELECT ok(position('is_business_member' IN pg_get_functiondef('private.people_employee_operational_rows(uuid)'::regprocedure)) > 0, 'safe projection function enforces business membership explicitly');
-SELECT ok((SELECT prosecdef AND provolatile = 'S' FROM pg_proc WHERE oid = 'private.people_employee_operational_rows(uuid)'::regprocedure), 'safe projection function is STABLE SECURITY DEFINER');
-SELECT ok('security_invoker=true' = ANY((SELECT reloptions FROM pg_class WHERE oid = 'public.people_employee_operational'::regclass)), 'operational view enforces security_invoker (repo security invariant)');
+SELECT ok(coalesce((SELECT position('people_employee_operational_rows' IN pg_get_viewdef(c.oid, true)) > 0 FROM pg_class c WHERE c.oid = to_regclass('public.people_employee_operational')), false), 'limited view delegates rows to the safe projection function');
+SELECT ok(coalesce((SELECT position('is_business_member' IN pg_get_functiondef(p.oid)) > 0 FROM pg_proc p WHERE p.oid = to_regprocedure('private.people_employee_operational_rows(uuid)')), false), 'safe projection function enforces business membership explicitly');
+SELECT ok(coalesce((SELECT p.prosecdef AND p.provolatile = 'S' FROM pg_proc p WHERE p.oid = to_regprocedure('private.people_employee_operational_rows(uuid)')), false), 'safe projection function is STABLE SECURITY DEFINER');
+SELECT ok(EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = to_regclass('public.people_employee_operational') AND 'security_invoker=true' = ANY(c.reloptions)), 'operational view enforces security_invoker (repo security invariant)');
 
 SELECT * FROM finish();
 ROLLBACK;
