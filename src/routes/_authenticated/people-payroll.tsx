@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Calculator, FileCheck2, FileText, LockKeyhole, Play, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { ModuleGuard } from "@/components/module-guard";
+import { PeopleSensitiveGate } from "@/components/people-sensitive-gate";
 import { PeopleLegalParameters } from "@/components/people-legal-parameters";
 
 import { PageHeader } from "@/components/page-utils";
@@ -60,7 +61,7 @@ function PeoplePayroll() {
   }
   const selectedInputs = inputs.filter((x: any) => x.payroll_period_id === selectedPeriod);
   const selectedItems = items.filter((x: any) => x.payroll_period_id === selectedPeriod);
-  return <ModuleGuard module="people"><div className="p-4 md:p-6">
+  return <ModuleGuard module="people"><PeopleSensitiveGate><div className="p-4 md:p-6">
     <PageHeader title="Remuneraciones" description="Carga los datos del mes, calcula, valida, aprueba, genera liquidaciones/LRE y cierra el período." actions={<PeopleBackLink />} />
     <Card className="mb-5 rounded-2xl border-amber-500/30 bg-amber-500/5 p-4"><div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5" /><div><p className="font-semibold">Flujo operativo</p><p className="text-sm text-muted-foreground">Colaborador → contrato → datos del mes → cálculo → validación → aprobación → liquidaciones/LRE → cierre.</p></div></div></Card>
     <div className="grid gap-4 lg:grid-cols-3">
@@ -87,5 +88,5 @@ function PeoplePayroll() {
     {engineMessage && <Card className="mt-5 rounded-2xl border-indigo-500/30 bg-indigo-500/5 p-4 text-sm">{engineMessage}</Card>}
     {selectedPeriod && <div className="mt-5 grid gap-4 md:grid-cols-3"><Card className="rounded-2xl p-5"><p className="text-sm text-muted-foreground">Cálculos</p><p className="mt-2 text-2xl font-semibold">{selectedItems.length}</p></Card><Card className="rounded-2xl p-5"><p className="text-sm text-muted-foreground">Liquidaciones</p><p className="mt-2 text-2xl font-semibold">{liquidations.filter((x: any) => x.payroll_period_id === selectedPeriod).length}</p></Card><Card className="rounded-2xl p-5"><p className="text-sm text-muted-foreground">LRE</p><p className="mt-2 text-2xl font-semibold">{lre.filter((x: any) => x.payroll_period_id === selectedPeriod).length}</p></Card></div>}
     <PeopleLegalParameters params={latestParams} />
-  </div></ModuleGuard>;
+  </div></PeopleSensitiveGate></ModuleGuard>;
 }

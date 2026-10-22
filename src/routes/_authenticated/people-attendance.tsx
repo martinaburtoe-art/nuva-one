@@ -9,11 +9,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBizInsert, useBizList } from "@/lib/biz-data";
+import { useMyRole, canManageBusiness } from "@/lib/use-business";
 
 export const Route = createFileRoute("/_authenticated/people-attendance")({ component: PeopleAttendance });
 
 function PeopleAttendance() {
-  const { data: employees=[] } = useBizList<any>("people_employees",{order:"last_name"});
+  const { data: role } = useMyRole();
+  const canManage = canManageBusiness(role);
+  const { data: employees=[] } = useBizList<any>(canManage ? "people_employees" : "people_employee_operational",{order:"last_name"});
   const { data: events=[],isLoading } = useBizList<any>("people_attendance_events",{order:"event_at"});
   const insert=useBizInsert("people_attendance_events");
   const [form,setForm]=useState({employee_id:"",event_type:"check_in",event_at:new Date().toISOString().slice(0,16),source:"manual"});
