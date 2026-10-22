@@ -25,3 +25,20 @@ La migración no modifica componentes frontend. Cualquier pantalla que hoy lea d
 
 ## Limitaciones de la suite incluida
 La prueba pgTAP valida el catálogo de políticas, RLS y el contrato de la vista. No sustituye las pruebas end-to-end de sesión/roles ni certifica el comportamiento visual del frontend. No se ejecutó contra producción.
+
+## Revisión técnica (2026-10-22 — JARVIS / Hermes Agent)
+
+### Corrección aplicada a esta propuesta
+- **Causa raíz del fallo de CI** (`pgTAP database tests` → `999_security_invariants.sql` test 1): el invariant del repositorio exige `security_invoker=true` en TODA vista client-exposed; la vista original usaba `security_barrier` con predicado explícito.
+- **Fix**: la proyección segura pasó a una función `private.people_employee_operational_rows(uuid)` (`STABLE SECURITY DEFINER`, `search_path=public`, filtro `is_business_member` por el uid DEL LLAMANTE pasado como argumento, lista fija de columnas operativas) y la vista es ahora `security_invoker=true` sobre esa función. El invariant queda intacto (no se debilita el gate) y el directorio operativo de staff sigue funcionando. `GRANT EXECUTE` sólo a `authenticated`; `REVOKE` de `anon`.
+- Suite pgTAP renumerada 112 → **115** (el 112 ya estaba tomado por `112_core_integrity_gate.sql`) y extendida a 61 aserciones: vista delega en la función, la función exige membresía, es STABLE SECURITY DEFINER, y la vista cumple security_invoker.
+
+### Verificaciones adicionales de la revisión
+- **RPC bypass: cerrado.** `calculate_people_payroll_period`, `generate_people_liquidations` y `review_people_leave_request` ya están endurecidos en migraciones previas (`SECURITY INVOKER`/`DEFINER` con `has_business_role(..., owner, admin)` explícito). El endurecimiento de tablas no es burlable por esas vías.
+- **El propio test 115 pasó en CI** contra la cadena completa de migraciones en base efímera (evidencia: run 39720477452, `112_people_sensitive_access_hardening.sql ... ok`); sólo el invariant de vistas fallaba.
+
+### Riesgos y trabajo pendiente ANTES de aprobar (bloqueantes de fusión)
+1. **Impacto UX staff**: `people_absences`, `people_leave_requests`, `people_vacation_balances` pasan de SELECT miembro-amplio a owner/admin. Las pantallas de ciclo de vida (`people-lifecycle.tsx`) mostrarán listas vacías para staff/viewer hasta que el frontend consulte la vista operativa o se definan vistas operativas equivalentes para esas tablas. Requiere PR de frontend acompañante.
+2. **Cobertura incompleta del módulo**: `people_attendance_events`, `people_org_units` y `people_requests` NO están en las 18 tablas. Attendance necesita un diseño operativo (staff la registra); proponer follow-up.
+3. **Drift detectado**: el RPC `people_dashboard_summary` (y `finance_dashboard_summary`) se invocan desde el frontend pero NO existen en ninguna migración versionada — o fueron creados fuera de banda o no existen. Verificar con acceso a la BD y versionar.
+4. Las pruebas autenticadas end-to-end por rol (owner/admin/staff/viewer/otra empresa) siguen pendientes — la suite actual es de catálogo, no de comportamiento con sesión.

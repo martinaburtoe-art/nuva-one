@@ -89,24 +89,60 @@ END
 $migration$;
 
 -- Operational employee directory for staff: intentionally excludes sensitive columns.
--- The explicit membership predicate is required because a view owner can bypass table RLS.
+-- Design (repo security invariant: every client-exposed view must be security_invoker):
+-- the safe row projection lives in a STABLE SECURITY DEFINER function with an explicit
+-- membership check, and the client-facing view is security_invoker so callers execute
+-- it with their own privileges. The function is the only privileged component, it filters
+-- rows by the CALLER's membership (passed as an argument, never re-read inside), and it
+-- projects a fixed safe column list — identity, contact, banking, health/pension and
+-- compensation fields are structurally absent.
+CREATE OR REPLACE FUNCTION private.people_employee_operational_rows(_user_id uuid)
+RETURNS TABLE (
+  id uuid,
+  business_id uuid,
+  first_name text,
+  last_name text,
+  hire_date date,
+  employment_status text,
+  employment_type text,
+  job_title text,
+  department text,
+  manager_id uuid,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    e.id, e.business_id, e.first_name, e.last_name, e.hire_date,
+    e.employment_status, e.employment_type, e.job_title, e.department,
+    e.manager_id, e.created_at, e.updated_at
+  FROM public.people_employees AS e
+  WHERE private.is_business_member(e.business_id, _user_id)
+$$;
+
+GRANT EXECUTE ON FUNCTION private.people_employee_operational_rows(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION private.people_employee_operational_rows(uuid) FROM anon;
+
 CREATE OR REPLACE VIEW public.people_employee_operational
-WITH (security_barrier = true) AS
+WITH (security_invoker = true) AS
 SELECT
-  e.id,
-  e.business_id,
-  e.first_name,
-  e.last_name,
-  e.hire_date,
-  e.employment_status,
-  e.employment_type,
-  e.job_title,
-  e.department,
-  e.manager_id,
-  e.created_at,
-  e.updated_at
-FROM public.people_employees AS e
-WHERE private.is_business_member(e.business_id, (SELECT auth.uid()));
+  rows.id,
+  rows.business_id,
+  rows.first_name,
+  rows.last_name,
+  rows.hire_date,
+  rows.employment_status,
+  rows.employment_type,
+  rows.job_title,
+  rows.department,
+  rows.manager_id,
+  rows.created_at,
+  rows.updated_at
+FROM private.people_employee_operational_rows((SELECT auth.uid())) AS rows;
 
 GRANT SELECT ON public.people_employee_operational TO authenticated;
 
