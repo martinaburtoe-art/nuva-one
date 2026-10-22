@@ -9,7 +9,7 @@ Estados: PASS / WARN / FAIL / UNKNOWN / BLOCKED. Severidades: P0 (crítico) a P3
 
 | ID | Severidad | Título | Estado |
 |---|---|---|---|
-| SEC-01 | **P0 (candidato)** | 21 tablas vivas sin RLS declarada, consultadas por el frontend con filtro de tenant solo en aplicación | CONFIRMADO en código/migraciones; impacto en BD: verificar |
+| SEC-01 | **P1** (corregido 22-oct) | Políticas permisivas de miembro-amplio en tablas de People (RLS **sí** existe; ver corrección abajo); enderezadas por PR #234 | CONFIRMADO por CI; sin aplicar a producción |
 | SEC-02 | P2 | `main` sin branch protection (push directo = despliegue a producción) | CONFIRMADO |
 | SEC-03 | P2 | Sin CSP (Content-Security-Policy) en vercel.json | CONFIRMADO |
 | SEC-04 | P2 | 11 vulnerabilidades npm (8 high) — todas en toolchain de desarrollo | CONFIRMADO |
@@ -19,9 +19,18 @@ Estados: PASS / WARN / FAIL / UNKNOWN / BLOCKED. Severidades: P0 (crítico) a P3
 | SEC-08 | PASS | Denegación por defecto al rol anónimo en Data API (sondeo REST) | CONFIRMADO |
 | SEC-09 | P2 | Interferencia de antivirus (Defender real-time) durante instalaciones — riesgo operativo | CONFIRMADO (evidencia: access violations en node.exe) |
 
-## SEC-01 — Tablas sin RLS (detalle y evidencia)
+## SEC-01 — Tablas de People: políticas permisivas (CORRECCIÓN del hallazgo original)
 
-Análisis de las 297 migraciones (`supabase/migrations/*.sql`): 142 tablas creadas, 16 dropeadas, 121 con `ENABLE ROW LEVEL SECURITY` declarado. **21 tablas vivas sin RLS declarada en migraciones**:
+**Corrección 2026-10-22**: el hallazgo original decía "21 tablas vivas sin RLS en migraciones". Era un falso positivo del análisis estático (regex de una línea sobre SQL multi-línea/dinámico). Evidencia en contrario: la aserción 2 de `999_security_invariants.sql` ("all public tables have RLS enabled") **PASA** en CI contra la cadena completa de 297 migraciones en base efímera (runs 39720477452 y posteriores) — todas las tablas públicas tienen RLS habilitada. El problema real eran **políticas de SELECT miembro-amplio** (`is_business_member`) en tablas con datos laborales sensibles (people_absences, people_leave_requests, people_vacation_balances y familia payroll), que otorgaban lectura a staff/viewer de datos de salud/remuneraciones derivadas. Ese es exactamente el alcance del PR #234 (18 tablas → owner/admin), revisado y corregido por este auditor (ver docs/security/NUVA_PEOPLE_SENSITIVE_ACCESS_PROPOSAL.md en la rama del PR).
+
+Pendiente del módulo (documentado como bloqueantes del PR #234): `people_attendance_events`, `people_org_units`, `people_requests` sin endurecer; vistas operativas para ausencias/permisos del staff; RPCs `people_dashboard_summary`/`finance_dashboard_summary` invocados por el frontend pero ausentes de las migraciones (drift a verificar con acceso a BD).
+
+Evidencia original de consultas frontend con filtro `business_id` solo en cliente (sigue vigente como defensa-en-profundidad incompleta):
+- `src/components/nuva-action-center.tsx:28,30`, `src/lib/use-nuva-score.ts:63-78`, `src/components/shipments/ShipmentsWorkspaceV2.tsx:72,81`, `src/components/audit-log-view.tsx:87`
+
+## Nota sobre el análisis estático original
+
+El conteo regex inicial (142 creadas / 121 con RLS "declarada" / 21 "sin RLS") queda como referencia del método fallido: el SQL multi-línea y dinámico de migraciones reales rompe un análisis de una línea. La fuente de verdad para el catálogo RLS es la aserción en vivo de `999_security_invariants.sql` ejecutada por CI sobre la cadena completa.
 
 `audit_log`, `customers`, `products`, `sales`, `purchases`, `quotes`, `suppliers`, `transactions`, y el módulo People completo: `people_attendance_events`, `people_compliance_items`, `people_contracts`, `people_documents`, `people_employees`, `people_leave_requests`, `people_lre_exports`, `people_org_units`, `people_payroll_items`, `people_payroll_periods`, `people_payroll_postings`, `people_payroll_runs`, `people_requests`.
 
