@@ -18,10 +18,12 @@ export function isInTaxPeriod(
   monthIndex: number,
 ) {
   if (!documentDate) return false;
-  const date = new Date(documentDate);
-  if (Number.isNaN(date.getTime())) return false;
-  const { start, end } = getMonthBounds(year, monthIndex);
-  return date >= start && date < end;
+  const timestamp =
+    documentDate instanceof Date ? documentDate.getTime() : Date.parse(documentDate);
+  if (isNaN(timestamp)) return false;
+  const start = Date.UTC(year, monthIndex, 1);
+  const end = Date.UTC(year, monthIndex + 1, 1);
+  return timestamp >= start && timestamp < end;
 }
 
 export function filterTaxDocumentsForPeriod(
