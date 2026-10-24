@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PageHeader, ComingSoonBadge } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +35,11 @@ function Settings() {
   const [address, setAddress] = useState("");
   const [comuna, setComuna] = useState("");
 
-  useEffect(() => {
+  // Sincroniza el formulario cuando cambia el negocio activo usando el patrón
+  // "previous value" durante el render (recomendado por React) en vez de un efecto.
+  const [syncedActive, setSyncedActive] = useState(active);
+  if (active !== syncedActive) {
+    setSyncedActive(active);
     if (active) {
       setName(active.name);
       setTaxId(active.tax_id ?? "");
@@ -43,7 +47,7 @@ function Settings() {
       setAddress(active.address ?? "");
       setComuna(active.comuna ?? "");
     }
-  }, [active]);
+  }
 
   async function save() {
     if (!active) return;
@@ -136,7 +140,7 @@ function BillingTab() {
   const status = (active as any)?.subscription_status ?? "active";
   const isPro = plan === "pro";
   const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
-  const trialDaysLeft = createdAt ? Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000)) : 15;
+  const trialDaysLeft = createdAt ? trialDaysRemaining(createdAt) : 15;
   const trialExpired = !isPro && trialDaysLeft <= 0;
 
   async function callBillingEndpoint(path: "register") {
@@ -165,6 +169,10 @@ function BillingTab() {
 
 function slugify(input: string): string { return input.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60); }
 
+// Días de prueba restantes (15 desde created_at); Date.now queda en scope de módulo.
+const trialDaysRemaining = (createdAt: Date) =>
+  Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000));
+
 const SOCIAL_FIELDS = [
   { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/tu_negocio" },
   { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/tu_negocio" },
@@ -184,7 +192,11 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
+  // Sincroniza el perfil público cuando cambia el negocio activo, con el patrón
+  // "previous value" durante el render en vez de un efecto.
+  const [syncedActive, setSyncedActive] = useState(active);
+  if (active !== syncedActive) {
+    setSyncedActive(active);
     if (active) {
       setEnabled(active.public_enabled ?? false);
       setSlug(active.public_slug ?? slugify(active.name));
@@ -194,7 +206,7 @@ function PublicProfileCard({ canManage }: { canManage: boolean }) {
       setContactEmail(active.public_contact_email ?? "");
       setContactPhone(active.public_contact_phone ?? "");
     }
-  }, [active]);
+  }
 
   async function persist(fields: Partial<{ public_enabled: boolean; public_slug: string; public_description: string | null; public_photos: string[]; public_social_links: Record<string, string>; public_contact_email: string | null; public_contact_phone: string | null; }>) {
     if (!active) return false;

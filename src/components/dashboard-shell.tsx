@@ -37,6 +37,10 @@ const nav = [
   { to: "/settings", label: "Configuración", icon: Settings, section: "Espacio" },
 ] as const;
 
+// Días de prueba restantes evaluados en scope de módulo (Date.now fuera del render).
+const trialDaysRemaining = (createdAt: Date) =>
+  Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000));
+
 export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -58,7 +62,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const mobileMoreNav = visibleNav.filter((n) => !mobilePrimaryNav.includes(n));
   const plan = (active as any)?.plan ?? "starter";
   const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
-  const trialDaysLeft = createdAt ? Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000)) : 15;
+  const trialDaysLeft = createdAt ? trialDaysRemaining(createdAt) : 15;
   const trialExpired = plan !== "pro" && trialDaysLeft <= 0;
   const isSettingsRoute = pathname.startsWith("/settings");
   const showModuleInfo = MODULE_INFO_PATHS.has(pathname);

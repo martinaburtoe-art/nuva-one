@@ -37,6 +37,10 @@ const money = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
+const isOverdue = (a: Activity) =>
+  !!a.due_date && new Date(a.due_date).getTime() < Date.now();
+const dueInDays = (days: number) => new Date(Date.now() + days * 86400000).toISOString();
+
 export function CrmActionCenter({
   customers,
   sales,
@@ -51,8 +55,7 @@ export function CrmActionCenter({
     (a) =>
       a.type === "task" &&
       !a.completed &&
-      a.due_date &&
-      new Date(a.due_date).getTime() < Date.now(),
+      isOverdue(a),
   ).length;
   const completedTasks = activities.filter((a) => a.type === "task" && a.completed).length;
 
@@ -63,7 +66,7 @@ export function CrmActionCenter({
         customer_id: p.id,
         type: "task",
         content: p.action,
-        due_date: new Date(Date.now() + 2 * 86400000).toISOString(),
+        due_date: dueInDays(2),
         completed: false,
       });
       toast.success(`Tarea creada para ${p.name}`);

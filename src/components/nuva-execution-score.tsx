@@ -4,13 +4,16 @@ import { Card } from "@/components/ui/card";
 type Activity = { type?: string | null; completed?: boolean | null; due_date?: string | null };
 type Props = { activities?: Activity[]; priorities?: number };
 
+const isOverdue = (a: Activity) =>
+  !!a.due_date && new Date(a.due_date).getTime() < Date.now();
+
 export function NuvaExecutionScore({ activities = [], priorities = 0 }: Props) {
   const tasks = activities.filter((a) => a.type === "task");
   const completed = tasks.filter((a) => a.completed).length;
   const open = tasks.filter((a) => !a.completed).length;
-  const pending = tasks.filter((a) => !a.completed && !(a.due_date && new Date(a.due_date).getTime() < Date.now())).length;
+  const pending = tasks.filter((a) => !a.completed && !isOverdue(a)).length;
   const overdue = tasks.filter(
-    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+    (a) => !a.completed && isOverdue(a),
   ).length;
   const execution = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
   const discipline = tasks.length

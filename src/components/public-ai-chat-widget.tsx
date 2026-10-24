@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
@@ -26,6 +26,28 @@ import { extractChatErrorMessage } from "@/lib/chat-error";
 // Public marketing-site assistant. It shares the authenticated /api/chat
 // context with the in-app assistant, while keeping anonymous visitors in a
 // lightweight explanatory state instead of firing business queries.
+
+// Holder de módulo para auth/negocio: react-hooks/refs prohíbe leer refs en
+// closures creadas durante el render (como el `fetch` del transporte). Este
+// objeto se escribe solo desde efectos y callbacks, y el fetch lo lee por
+// petición, preservando el comportamiento original de los refs.
+const chatAuth: { businessId: string; token: string | null } = {
+  businessId: "",
+  token: null,
+};
+
+function createAuthedTransport() {
+  return new DefaultChatTransport({
+    api: "/api/chat",
+    fetch: (input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set("x-business-id", chatAuth.businessId);
+      if (chatAuth.token) headers.set("Authorization", `Bearer ${chatAuth.token}`);
+      return fetch(input, { ...init, headers });
+    },
+  });
+}
+
 export function PublicAiChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -33,18 +55,17 @@ export function PublicAiChatWidget() {
   const [authChecked, setAuthChecked] = useState(false);
   const [activeId] = useActiveBusinessId();
 
-  const tokenRef = useRef<string | null>(null);
-  const businessIdRef = useRef<string>("");
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      tokenRef.current = data.session?.access_token ?? null;
-      setToken(tokenRef.current);
+      const nextToken = data.session?.access_token ?? null;
+      chatAuth.token = nextToken;
+      setToken(nextToken);
       setAuthChecked(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      tokenRef.current = session?.access_token ?? null;
-      setToken(tokenRef.current);
+      const nextToken = session?.access_token ?? null;
+      chatAuth.token = nextToken;
+      setToken(nextToken);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -65,7 +86,7 @@ export function PublicAiChatWidget() {
   const active = businesses?.find((b) => b.id === activeId) ?? businesses?.[0] ?? null;
 
   useEffect(() => {
-    businessIdRef.current = active?.id ?? "";
+    chatAuth.businessId = active?.id ?? "";
   }, [active?.id]);
 
   const state: "loading" | "signed_out" | "no_business" | "ready" = !authChecked
@@ -79,15 +100,7 @@ export function PublicAiChatWidget() {
           : "no_business";
 
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      fetch: (input, init) => {
-        const headers = new Headers(init?.headers);
-        headers.set("x-business-id", businessIdRef.current);
-        if (tokenRef.current) headers.set("Authorization", `Bearer ${tokenRef.current}`);
-        return fetch(input, { ...init, headers });
-      },
-    }),
+    transport: createAuthedTransport(),
     onError: (err) => {
       toast.error(extractChatErrorMessage(err.message));
     },

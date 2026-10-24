@@ -31,6 +31,10 @@ const inDays = (value: string | null | undefined, days: number) => {
   const age = Date.now() - new Date(value).getTime();
   return age >= 0 && age <= days * 86400000;
 };
+const ageDays = (value: string | null | undefined) =>
+  value ? (Date.now() - new Date(value).getTime()) / 86400000 : Infinity;
+const isOverdue = (a: Activity) =>
+  !!a.due_date && new Date(a.due_date).getTime() < Date.now();
 const priorityLabel = (score: number) =>
   score >= 80 ? "Crítica" : score >= 60 ? "Alta" : score >= 35 ? "Moderada" : "Baja";
 
@@ -39,7 +43,7 @@ export function NuvaPredictiveSignals({ sales = [], quotes = [], activities = []
   const recentSales = activeSales.filter((s) => inDays(s.sale_date, 30));
   const previousSales = activeSales.filter((s) => {
     if (!s.sale_date) return false;
-    const age = (Date.now() - new Date(s.sale_date).getTime()) / 86400000;
+    const age = ageDays(s.sale_date);
     return age > 30 && age <= 60;
   });
   const recentRevenue = recentSales.reduce((sum, s) => sum + Number(s.total ?? 0), 0);
@@ -55,7 +59,7 @@ export function NuvaPredictiveSignals({ sales = [], quotes = [], activities = []
     .reduce((sum, q) => sum + Number(q.total ?? 0), 0);
   const tasks = activities.filter((a) => a.type === "task");
   const overdue = tasks.filter(
-    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+    (a) => !a.completed && isOverdue(a),
   ).length;
   const signals: SignalData[] = [];
 
