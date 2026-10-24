@@ -410,8 +410,10 @@ function CopilotView() {
   const [typed, setTyped] = useState(0);
   const answer =
     "Tus ventas aumentaron 12,4%, pero hay 5 productos con stock bajo. Nüva recomienda revisar reposición y el margen de la categoría que más creció.";
+  // El efecto arranca el tipeo; no hace falta resetear `typed` aquí:
+  // `answer` es una constante del componente, el efecto corre una sola vez
+  // y typed ya inicia en 0. El interval avanza el contador hasta answer.length.
   useEffect(() => {
-    setTyped(0);
     const id = window.setInterval(() => setTyped((v) => Math.min(v + 2, answer.length)), 35);
     return () => window.clearInterval(id);
   }, [answer]);
