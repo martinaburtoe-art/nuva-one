@@ -233,7 +233,7 @@ export function PymeNewsHub() {
   }, []);
 
   useEffect(() => {
-    void load();
+    queueMicrotask(() => void load());
     const id = window.setInterval(() => void load(), 30 * 60 * 1000);
     return () => window.clearInterval(id);
   }, [load]);

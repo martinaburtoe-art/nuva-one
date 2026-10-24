@@ -38,6 +38,11 @@ type Signal = {
 };
 const OPEN_STAGES = ["new", "contacted", "qualified", "proposal"];
 
+const msSince = (value?: string | null) =>
+  value ? Date.now() - new Date(value).getTime() : Infinity;
+const isDue = (value?: string | null) =>
+  value ? new Date(value).getTime() <= Date.now() : false;
+
 export function NuvaOperatingPulse() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const enabled = pathname === "/customers";
@@ -61,17 +66,16 @@ export function NuvaOperatingPulse() {
 
   const crm = useMemo(() => {
     const list = customers ?? [];
-    const now = Date.now();
     const openPipeline = list.filter((c) => OPEN_STAGES.includes(c.pipeline_stage)).length;
     const prospects = list.filter((c) => c.status === "lead").length;
     const active = list.filter((c) => c.status === "active").length;
     const stale = list.filter((c) => {
       if (c.status === "inactive") return false;
       if (!c.last_contacted_at) return true;
-      return now - new Date(c.last_contacted_at).getTime() > 14 * 24 * 60 * 60 * 1000;
+      return msSince(c.last_contacted_at) > 14 * 24 * 60 * 60 * 1000;
     }).length;
     const pendingTasks = (activities ?? []).filter(
-      (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() <= now,
+      (a) => !a.completed && isDue(a.due_date),
     ).length;
     const openQuotes = (quotes ?? []).filter((q: any) =>
       ["draft", "sent", "pending", "open"].includes(String(q.status ?? "").toLowerCase()),

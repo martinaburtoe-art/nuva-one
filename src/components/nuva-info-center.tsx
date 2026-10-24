@@ -258,9 +258,13 @@ export function NuvaInfoCenter({ inline = false }: { inline?: boolean }) {
     };
   }, [open]);
 
-  useEffect(() => {
+  // Cierra el overlay al navegar usando el patrón previous-value durante el
+  // render (React-sanctioned) en vez de un efecto.
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname);
     setOpen(false);
-  }, [location.pathname]);
+  }
 
   useEffect(() => {
     if (!open) triggerRef.current?.focus();

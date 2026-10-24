@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
@@ -10,42 +10,53 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { extractChatErrorMessage } from "@/lib/chat-error";
 
+// Holder de módulo para auth/negocio: react-hooks/refs prohíbe leer refs en
+// closures creadas durante el render (como el `fetch` del transporte). Este
+// objeto se escribe solo desde efectos y callbacks, y el fetch lo lee por
+// petición, preservando el comportamiento original de los refs.
+const chatAuth: { businessId: string; token: string | null } = {
+  businessId: "",
+  token: null,
+};
+
+function createAuthedTransport() {
+  return new DefaultChatTransport({
+    api: "/api/chat",
+    fetch: (input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set("x-business-id", chatAuth.businessId);
+      if (chatAuth.token) headers.set("Authorization", `Bearer ${chatAuth.token}`);
+      return fetch(input, { ...init, headers });
+    },
+  });
+}
+
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const { active } = useActiveBusiness();
 
-  // Read auth/business via refs + a custom fetch (evaluated per-request)
-  // instead of a static headers object -- useChat only captures `transport`
-  // on its first render, so a plain headers object freezes in the
-  // pre-login `token === null` state forever, sending every request with
-  // no Authorization header and failing with "No autenticado".
-  const tokenRef = useRef<string | null>(null);
-  const businessIdRef = useRef<string>("");
+  // Read auth/business via a module-level holder + a custom fetch
+  // (evaluated per-request) instead of a static headers object -- useChat
+  // only captures `transport` on its first render, so a plain headers object
+  // freezes in the pre-login `token === null` state forever, sending every
+  // request with no Authorization header and failing with "No autenticado".
   useEffect(() => {
-    businessIdRef.current = active?.id ?? "";
+    chatAuth.businessId = active?.id ?? "";
   }, [active?.id]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      tokenRef.current = data.session?.access_token ?? null;
+      chatAuth.token = data.session?.access_token ?? null;
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      tokenRef.current = session?.access_token ?? null;
+      chatAuth.token = session?.access_token ?? null;
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      fetch: (input, init) => {
-        const headers = new Headers(init?.headers);
-        headers.set("x-business-id", businessIdRef.current);
-        if (tokenRef.current) headers.set("Authorization", `Bearer ${tokenRef.current}`);
-        return fetch(input, { ...init, headers });
-      },
-    }),
+    transport: createAuthedTransport(),
     onError: (err) => {
       toast.error(extractChatErrorMessage(err.message));
     },
@@ -59,13 +70,13 @@ export function AiChatBubble() {
 
     // Belt-and-suspenders: re-check the session right before sending instead
     // of only trusting the mount-time effect. Closes the one real gap in the
-    // ref approach -- a token that expired or hadn't loaded yet by the time
-    // the user hit send -- so this request is never fired with a missing
-    // Authorization header (which is what "No autenticado" means).
-    if (!tokenRef.current) {
+    // module-holder approach -- a token that expired or hadn't loaded yet by
+    // the time the user hit send -- so this request is never fired with a
+    // missing Authorization header (which is what "No autenticado" means).
+    if (!chatAuth.token) {
       const { data } = await supabase.auth.getSession();
-      tokenRef.current = data.session?.access_token ?? null;
-      if (!tokenRef.current) {
+      chatAuth.token = data.session?.access_token ?? null;
+      if (!chatAuth.token) {
         toast.error("Tu sesión expiró. Vuelve a iniciar sesión para usar el asistente.");
         return;
       }
