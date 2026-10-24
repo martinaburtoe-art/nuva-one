@@ -97,6 +97,8 @@ function useTopics(category: string | "all") {
         .select(
           "id, title, body, category, business_name, business_industry, reply_count, views, created_at",
         )
+        .eq("status", "published")
+        .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(50);
       if (category !== "all") q = q.eq("category", category);
