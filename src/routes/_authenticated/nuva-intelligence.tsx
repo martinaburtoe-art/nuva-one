@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/nuva-intelligence")({
 
 type View = "read" | "signals" | "opportunities" | "explain";
 
-const isOverdue = (a: any) =>
+const isOverdue = (a: { due_date?: string | null }) =>
   !!a.due_date && new Date(a.due_date).getTime() < Date.now();
 
 const views: Array<{ id: View; title: string; description: string; info: string }> = [
