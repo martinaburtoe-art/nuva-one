@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -76,16 +76,23 @@ const quickActions = [
   { to: "/finance", label: "Registrar gasto", keywords: "gasto egreso finanzas", icon: CreditCard },
 ] as const;
 
+// Suscripción vacía para el patrón "mounted" con useSyncExternalStore:
+// false durante SSR/hidratación, true en cliente, sin setState en efectos.
+const emptySubscribe = () => () => {};
+
 export function GlobalSearch({ visibleNav }: { visibleNav?: readonly { to: string }[] }) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
   const [online, setOnline] = useState(() =>
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
   const navigate = useNavigate();
 
   useEffect(() => {
-    setMounted(true);
     const updateOnline = () => setOnline(navigator.onLine);
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
