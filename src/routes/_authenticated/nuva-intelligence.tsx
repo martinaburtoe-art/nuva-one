@@ -14,6 +14,9 @@ export const Route = createFileRoute("/_authenticated/nuva-intelligence")({
 
 type View = "read" | "signals" | "opportunities" | "explain";
 
+const isOverdue = (a: any) =>
+  !!a.due_date && new Date(a.due_date).getTime() < Date.now();
+
 const views: Array<{ id: View; title: string; description: string; info: string }> = [
   { id: "read", title: "Lectura del negocio", description: "Qué significan tus datos y qué está cambiando", info: "Interpreta caja, ventas, inventario, cotizaciones y seguimiento para explicar cambios relevantes." },
   { id: "signals", title: "Señales", description: "Riesgos, anomalías y cambios que requieren atención", info: "Resume señales observables como presión de stock, atrasos comerciales y resultados financieros débiles." },
@@ -35,7 +38,7 @@ function NuvaIntelligence() {
     const income = (transactions ?? []).filter((t: any) => t.type === "income").reduce((sum: number, t: any) => sum + Number(t.amount ?? 0), 0);
     const expense = (transactions ?? []).filter((t: any) => t.type === "expense").reduce((sum: number, t: any) => sum + Number(t.amount ?? 0), 0);
     const lowStock = (products ?? []).filter((p: any) => Number(p.stock ?? 0) <= Number(p.min_stock ?? p.low_stock_threshold ?? 0)).length;
-    const overdue = (activities ?? []).filter((a: any) => a.type === "task" && !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now()).length;
+    const overdue = (activities ?? []).filter((a: any) => a.type === "task" && !a.completed && isOverdue(a)).length;
     const openQuotes = (quotes ?? []).filter((q: any) => !["won", "lost", "cancelled"].includes(String(q.status ?? "").toLowerCase()));
     const openPipeline = openQuotes.reduce((sum: number, q: any) => sum + Number(q.total ?? 0), 0);
     const net = income - expense;
