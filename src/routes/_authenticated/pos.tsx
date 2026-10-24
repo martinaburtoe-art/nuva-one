@@ -125,7 +125,14 @@ function POS() {
       (customers ?? []).find((c: any) => c.tax_id && normalizeRut(c.tax_id) === rutClean) ?? null
     );
   }, [customers, rutClean, rutLooksValid]);
-  useEffect(() => setMatchedCustomer(foundByRut), [foundByRut]);
+  // El cliente detectado por RUT se refleja en matchedCustomer con el patrón
+  // "previous value" durante el render (React-sanctioned) en vez de un efecto;
+  // setMatchedCustomer también se usa al registrar un cliente nuevo.
+  const [prevFoundByRut, setPrevFoundByRut] = useState(foundByRut);
+  if (foundByRut !== prevFoundByRut) {
+    setPrevFoundByRut(foundByRut);
+    setMatchedCustomer(foundByRut);
+  }
 
   async function registerCustomerFromPos() {
     if (!newCustomerName.trim()) return toast.error("Ingresa el nombre del cliente");
@@ -152,11 +159,15 @@ function POS() {
   const [favs, setFavs] = useState<string[]>([]);
   useEffect(() => {
     if (!favKey) return;
-    try {
-      setFavs(JSON.parse(localStorage.getItem(favKey) ?? "[]"));
-    } catch {
-      setFavs([]);
-    }
+    // Favoritos guardados en localStorage, leídos en un microtask para no
+    // disparar setState síncrono desde el efecto.
+    queueMicrotask(() => {
+      try {
+        setFavs(JSON.parse(localStorage.getItem(favKey) ?? "[]"));
+      } catch {
+        setFavs([]);
+      }
+    });
   }, [favKey]);
   function toggleFav(id: string) {
     if (!favKey) return;
