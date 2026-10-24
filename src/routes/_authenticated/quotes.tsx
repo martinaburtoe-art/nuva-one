@@ -38,6 +38,10 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 // quote-pdf is imported dynamically inside the handler so jspdf never enters the SSR/worker bundle.
 import { toast } from "sonner";
 
+// Días completos transcurridos desde el envío; Date.now queda en scope de módulo.
+const daysSince = (value?: string | null) =>
+  value ? Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000) : 0;
+
 export const Route = createFileRoute("/_authenticated/quotes")({
   head: () => ({ meta: [{ title: "Cotizaciones — Nüva One" }] }),
   component: Quotes,
@@ -436,7 +440,7 @@ function Quotes() {
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {(q.status === "sent" || q.status === "viewed") && q.sent_at
-                        ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta`
+                        ? `${daysSince(q.sent_at)} día(s) sin respuesta`
                         : "—"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
