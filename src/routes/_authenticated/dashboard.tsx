@@ -4,7 +4,6 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
-import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangeFilter, dmyToIso } from "@/components/date-range-filter";
@@ -13,7 +12,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
-import { ArrowUpRight, X, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -70,7 +69,7 @@ function Dashboard() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, [isoFrom]);
 
-  const { data: allTx } = useQuery({
+  const { data: allTx, error: txError } = useQuery({
     enabled: !!active?.id,
     queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories],
     staleTime: 60_000,
@@ -151,7 +150,7 @@ function Dashboard() {
 
   return (
     <ModuleGuard module="dashboard">
-      <main className="nuva-resumen-premium nuva-resumen-canvas">
+      <main className="nuva-resumen-canvas">
         <div className="nuva-resumen-ambient-word" aria-hidden="true">Resumen</div>
         <header className="nuva-resumen-header">
           <div className="nuva-resumen-brandline">
@@ -171,6 +170,16 @@ function Dashboard() {
           </div>
         </header>
 
+        {kpis === undefined && !kpisError && !txError && (
+          <div className="nuva-resumen-onboarding nuva-resumen-loading">
+            <div className="nuva-resumen-onboarding-copy">
+              <span className="nuva-resumen-section-label"><span className="animate-pulse" /></span>
+              <h2>Cargando indicadores del negocio</h2>
+              <p>Obteniendo los datos de tu panel ejecutivo. Un momento.</p>
+            </div>
+          </div>
+        )}
+
         {kpisError && (
           <div role="alert" className="nuva-resumen-onboarding">
             <div className="nuva-resumen-onboarding-copy">
@@ -178,6 +187,17 @@ function Dashboard() {
               <h2>No se pudieron cargar los indicadores del negocio</h2>
               <p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p>
               <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
+            </div>
+          </div>
+        )}
+
+        {txError && (
+          <div role="alert" className="nuva-resumen-onboarding">
+            <div className="nuva-resumen-onboarding-copy">
+              <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR MOVIMIENTOS</span>
+              <h2>No se pudo cargar el historial de transacciones</h2>
+              <p>{String(txError?.message ?? txError ?? "Error desconocido")}</p>
+              <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
             </div>
           </div>
         )}
@@ -235,8 +255,8 @@ function Dashboard() {
             <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
             <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
           </div>
-          <div className="nuva-resumen-device-chart">
-            <Suspense fallback={<div className="nuva-resumen-chart-loading" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
+          <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
+            <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
           </div>
           <div className="nuva-resumen-chart-legend">
             <span><i className="nuva-resumen-dot-gold" /> Ingresos</span>

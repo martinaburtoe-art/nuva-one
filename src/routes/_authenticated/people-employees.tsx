@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useBizInsert, useBizList } from "@/lib/biz-data";
+import { useBizInsert } from "@/lib/biz-data";
+import { useMyRole, useActiveBusinessId } from "@/lib/use-business";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/people-employees")({ component: PeopleEmployees });
@@ -18,8 +21,41 @@ const blankEmployee = { first_name:"", last_name:"", national_id:"", email:"", p
 const blankContract = { employee_id:"", contract_type:"indefinite", start_date:todayLocal(), end_date:"", weekly_hours:42, work_days:5, salary_amount:0, salary_type:"monthly", status:"active" };
 
 function PeopleEmployees() {
-  const { data: employees=[], isLoading } = useBizList<any>("people_employees",{order:"last_name"});
-  const { data: contracts=[] } = useBizList<any>("people_contracts",{order:"start_date"});
+  const [activeId] = useActiveBusinessId();
+  const { data: role } = useMyRole();
+  const isAdmin = role === "owner" || role === "admin";
+
+  const { data: employees=[], isLoading } = useQuery({
+    queryKey: isAdmin ? ["people_employees", activeId, "last_name"] : ["people_employees_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_employees").select("*").eq("business_id", bid).order("last_name");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_employees_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
+
+  const { data: contracts=[] } = useQuery({
+    queryKey: isAdmin ? ["people_contracts", activeId, "start_date"] : ["people_contracts_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_contracts").select("*").eq("business_id", bid).order("start_date");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_contracts_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
   const insertEmployee=useBizInsert("people_employees");
   const insertContract=useBizInsert("people_contracts");
   const [search,setSearch]=useState("");
@@ -30,8 +66,8 @@ function PeopleEmployees() {
   const legalHoursMax=contract.start_date>="2028-04-26"?40:42;
   const filteredEmployees=employees.filter((e:any)=>`${e.first_name} ${e.last_name} ${e.national_id} ${e.job_title??""} ${e.department??""}`.toLowerCase().includes(search.trim().toLowerCase()));
 
-  async function saveEmployee(){if(!form.first_name||!form.last_name||!form.national_id){toast.warning("Completa nombre, apellidos y RUT antes de guardar.");return;}try{const e=await insertEmployee.mutateAsync(form);setContract(v=>({...v,employee_id:e.id}));setForm(blankEmployee);setOpen(false);setContractOpen(true);}catch{return;}}
-  async function saveContract(){if(!contract.employee_id||Number(contract.salary_amount)<=0||Number(contract.weekly_hours)<=0||Number(contract.weekly_hours)>legalHoursMax){toast.warning("Revisa colaborador, sueldo y horas semanales antes de guardar.");return;}try{await insertContract.mutateAsync({...contract,end_date:contract.end_date||null,weekly_hours:Number(contract.weekly_hours),work_days:Number(contract.work_days),salary_amount:Number(contract.salary_amount),salary_type:"monthly"});setContract(blankContract);setContractOpen(false);}catch{return;}}
+  async function saveEmployee(){if(!form.first_name||!form.last_name||!form.national_id){toast.warning("Completa nombre, apellidos y RUT antes de guardar.");return;}try{const e=await insertEmployee.mutateAsync(form);setContract(v=>({...v,employee_id:e.id}));setForm(blankEmployee);setOpen(false);setContractOpen(true);}catch(err){console.error("[people] error guardando colaborador:",err);toast.error("No se pudo guardar el colaborador. Inténtalo de nuevo.");return;}}
+  async function saveContract(){if(!contract.employee_id||Number(contract.salary_amount)<=0||Number(contract.weekly_hours)<=0||Number(contract.weekly_hours)>legalHoursMax){toast.warning("Revisa colaborador, sueldo y horas semanales antes de guardar.");return;}try{await insertContract.mutateAsync({...contract,end_date:contract.end_date||null,weekly_hours:Number(contract.weekly_hours),work_days:Number(contract.work_days),salary_amount:Number(contract.salary_amount),salary_type:"monthly"});setContract(blankContract);setContractOpen(false);}catch(err){console.error("[people] error guardando contrato:",err);toast.error("No se pudo guardar el contrato. Inténtalo de nuevo.");return;}}
 
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
     <PageHeader title="Colaboradores" description="Ficha laboral completa: identidad, previsión, salud y contrato. Estos datos alimentan remuneraciones." actions={<PeopleBackLink />} />

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { CalendarDays, Check, FileCheck2, LogOut, Plus, X } from "lucide-react";
 import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
@@ -9,17 +9,81 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useBizInsert, useBizList } from "@/lib/biz-data";
+import { useBizInsert } from "@/lib/biz-data";
+import { useMyRole, useActiveBusinessId } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/people-lifecycle")({ component: PeopleLifecycle });
 
 function PeopleLifecycle() {
   const queryClient = useQueryClient();
-  const { data: employees=[] }=useBizList<any>("people_employees",{order:"last_name"});
-  const { data: leaves=[] }=useBizList<any>("people_leave_requests",{order:"start_date"});
-  const { data: terminations=[] }=useBizList<any>("people_terminations",{order:"termination_date"});
-  const { data: balances=[] }=useBizList<any>("people_vacation_balances",{order:"as_of_date"});
+  const [activeId] = useActiveBusinessId();
+  const { data: role } = useMyRole();
+  const isAdmin = role === "owner" || role === "admin";
+
+  const { data: employees=[]}=useQuery({
+    queryKey: isAdmin ? ["people_employees", activeId, "last_name"] : ["people_employees_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_employees").select("*").eq("business_id", bid).order("last_name");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_employees_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
+
+  const { data: leaves=[] }=useQuery({
+    queryKey: isAdmin ? ["people_leave_requests", activeId, "start_date"] : ["people_leave_requests_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_leave_requests").select("*").eq("business_id", bid).order("start_date");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_leave_requests_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
+
+  const { data: terminations=[] }=useQuery({
+    queryKey: isAdmin ? ["people_terminations", activeId, "termination_date"] : ["people_terminations_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_terminations").select("*").eq("business_id", bid).order("termination_date");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_terminations_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
+
+  const { data: balances=[] }=useQuery({
+    queryKey: isAdmin ? ["people_vacation_balances", activeId, "as_of_date"] : ["people_vacation_balances_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_vacation_balances").select("*").eq("business_id", bid).order("as_of_date");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_vacation_balances_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
   const insertLeave=useBizInsert("people_leave_requests");
   const [leave,setLeave]=useState({employee_id:"",leave_type:"vacation",start_date:new Date().toISOString().slice(0,10),end_date:new Date().toISOString().slice(0,10),days:1,reason:""});
   const [termination,setTermination]=useState({employee_id:"",termination_date:new Date().toISOString().slice(0,10),cause:"161_necesidades_empresa",notice_given:true});
