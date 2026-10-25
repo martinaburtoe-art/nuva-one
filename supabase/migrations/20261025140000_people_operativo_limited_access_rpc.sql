@@ -39,9 +39,6 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.people_employees_limited(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.people_employees_limited(uuid) TO authenticated;
-
 -- Eventos de asistencia: solo metadatos del evento (sin datos sensibles del empleado)
 CREATE OR REPLACE FUNCTION public.people_attendance_limited(p_business_id uuid)
 RETURNS jsonb
@@ -73,9 +70,6 @@ BEGIN
   ), '[]'::jsonb);
 END;
 $$;
-
-REVOKE EXECUTE ON FUNCTION public.people_attendance_limited(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.people_attendance_limited(uuid) TO authenticated;
 
 -- Solicitudes de licencia: datos operativos (sin información de nómina)
 CREATE OR REPLACE FUNCTION public.people_leave_requests_limited(p_business_id uuid)
@@ -112,9 +106,6 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.people_leave_requests_limited(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.people_leave_requests_limited(uuid) TO authenticated;
-
 -- Vacaciones: saldos disponibles (sin desglose de acumulación detallada)
 CREATE OR REPLACE FUNCTION public.people_vacation_balances_limited(p_business_id uuid)
 RETURNS jsonb
@@ -145,9 +136,6 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.people_vacation_balances_limited(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.people_vacation_balances_limited(uuid) TO authenticated;
-
 -- Contratos: solo fechas y estado (sin salario_amount ni salary_type)
 CREATE OR REPLACE FUNCTION public.people_contracts_limited(p_business_id uuid)
 RETURNS jsonb
@@ -177,9 +165,6 @@ BEGIN
   ), '[]'::jsonb);
 END;
 $$;
-
-REVOKE EXECUTE ON FUNCTION public.people_contracts_limited(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.people_contracts_limited(uuid) TO authenticated;
 
 -- Cumplimiento: ítems abiertos (sin documentos ni evidencias)
 CREATE OR REPLACE FUNCTION public.people_compliance_items_limited(p_business_id uuid)
@@ -245,6 +230,3 @@ BEGIN
   ), '[]'::jsonb);
 END;
 $$;
-
-REVOKE EXECUTE ON FUNCTION public.people_terminations_limited(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.people_terminations_limited(uuid) TO authenticated;

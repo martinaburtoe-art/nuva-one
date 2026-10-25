@@ -102,6 +102,3 @@ BEGIN
   );
 END;
 $$;
-
-REVOKE EXECUTE ON FUNCTION public.people_dashboard_summary(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.people_dashboard_summary(uuid) TO authenticated;
