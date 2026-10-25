@@ -229,7 +229,20 @@ function Dashboard() {
               <div><span><i className="nuva-resumen-dot-indigo" /> Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
             </div>
             <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR ESTIMADO DE INVENTARIO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
-            <div className="nuva-resumen-status-card"><span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span><div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div><i className="nuva-resumen-status-light" /></div>
+            <div className="nuva-resumen-status-card">
+              {kpis === undefined ? (
+                <>
+                  <span className="nuva-resumen-status-symbol"><i className="nuva-resumen-dot-gold" /></span>
+                  <div><strong>—</strong><p>Esperando datos del negocio…</p></div>
+                </>
+              ) : (
+                <>
+                  <span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span>
+                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div>
+                </>
+              )}
+              <i className="nuva-resumen-status-light" />
+            </div>
                       </article>
 
           <article className="nuva-resumen-device nuva-resumen-device-operations">
