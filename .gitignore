@@ -42,3 +42,4 @@ coverage
 # Gemini CLI local state and credentials
 .gemini/
 gha-creds-*.json
+.env*

@@ -9,11 +9,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBizInsert, useBizList } from "@/lib/biz-data";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/people-employees")({ component: PeopleEmployees });
 
-const blankEmployee = { first_name:"", last_name:"", national_id:"", email:"", phone:"", job_title:"", department:"", hire_date:new Date().toISOString().slice(0,10), afp_name:"Uno", health_system:"fonasa", health_plan_uf:0, health_additional_clp:0, dependents_count:0, pension_status:"active", gratification_mode:"none" };
-const blankContract = { employee_id:"", contract_type:"indefinite", start_date:new Date().toISOString().slice(0,10), end_date:"", weekly_hours:42, work_days:5, salary_amount:0, salary_type:"monthly", status:"active" };
+const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const blankEmployee = { first_name:"", last_name:"", national_id:"", email:"", phone:"", job_title:"", department:"", hire_date:todayLocal(), afp_name:"Uno", health_system:"fonasa", health_plan_uf:0, health_additional_clp:0, dependents_count:0, pension_status:"active", gratification_mode:"none" };
+const blankContract = { employee_id:"", contract_type:"indefinite", start_date:todayLocal(), end_date:"", weekly_hours:42, work_days:5, salary_amount:0, salary_type:"monthly", status:"active" };
 
 function PeopleEmployees() {
   const { data: employees=[], isLoading } = useBizList<any>("people_employees",{order:"last_name"});
@@ -28,8 +30,8 @@ function PeopleEmployees() {
   const legalHoursMax=contract.start_date>="2028-04-26"?40:42;
   const filteredEmployees=employees.filter((e:any)=>`${e.first_name} ${e.last_name} ${e.national_id} ${e.job_title??""} ${e.department??""}`.toLowerCase().includes(search.trim().toLowerCase()));
 
-  async function saveEmployee(){if(!form.first_name||!form.last_name||!form.national_id)return;const e=await insertEmployee.mutateAsync(form);setContract(v=>({...v,employee_id:e.id}));setForm(blankEmployee);setOpen(false);setContractOpen(true);}
-  async function saveContract(){if(!contract.employee_id||Number(contract.salary_amount)<=0||Number(contract.weekly_hours)<=0||Number(contract.weekly_hours)>legalHoursMax)return;await insertContract.mutateAsync({...contract,end_date:contract.end_date||null,weekly_hours:Number(contract.weekly_hours),work_days:Number(contract.work_days),salary_amount:Number(contract.salary_amount),salary_type:"monthly"});setContract(blankContract);setContractOpen(false);}
+  async function saveEmployee(){if(!form.first_name||!form.last_name||!form.national_id){toast.warning("Completa nombre, apellidos y RUT antes de guardar.");return;}try{const e=await insertEmployee.mutateAsync(form);setContract(v=>({...v,employee_id:e.id}));setForm(blankEmployee);setOpen(false);setContractOpen(true);}catch{return;}}
+  async function saveContract(){if(!contract.employee_id||Number(contract.salary_amount)<=0||Number(contract.weekly_hours)<=0||Number(contract.weekly_hours)>legalHoursMax){toast.warning("Revisa colaborador, sueldo y horas semanales antes de guardar.");return;}try{await insertContract.mutateAsync({...contract,end_date:contract.end_date||null,weekly_hours:Number(contract.weekly_hours),work_days:Number(contract.work_days),salary_amount:Number(contract.salary_amount),salary_type:"monthly"});setContract(blankContract);setContractOpen(false);}catch{return;}}
 
   return <ModuleGuard module="people"><div className="p-4 md:p-6">
     <PageHeader title="Colaboradores" description="Ficha laboral completa: identidad, previsión, salud y contrato. Estos datos alimentan remuneraciones." actions={<PeopleBackLink />} />
