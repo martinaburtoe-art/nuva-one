@@ -24,6 +24,8 @@ DECLARE
   v_pending_leave int;
   v_expiring_contracts int;
   v_compliance jsonb;
+  v_payroll_period record;
+  v_payroll_cost numeric;
   v_payroll jsonb;
 BEGIN
   -- Verificar que el usuario autenticado sea miembro del negocio
@@ -72,25 +74,28 @@ BEGIN
     LIMIT 50), '[]'::jsonb) INTO v_compliance;
 
   -- Último período de nómina con costo empleador (solo owner/admin)
+  v_payroll := jsonb_build_object('period', 'Sin período', 'cost', 0, 'status', 'draft');
+
   IF v_is_admin THEN
-    SELECT COALESCE(
-      (SELECT jsonb_build_object(
-        'period', p.period_year::text || '-' || lpad(p.period_month::text, 2, '0'),
-        'cost', COALESCE((
-          SELECT SUM(pi.employer_cost_amount)
-          FROM public.people_payroll_items pi
-          WHERE pi.payroll_period_id = p.id
-        ), 0),
-        'status', p.status
-      ))
-      FROM public.people_payroll_periods p
-      WHERE p.business_id = p_business_id
-      ORDER BY p.period_year DESC, p.period_month DESC
-      LIMIT 1),
-      jsonb_build_object('period', 'Sin período', 'cost', 0, 'status', 'draft')
-    ) INTO v_payroll;
-  ELSE
-    v_payroll := jsonb_build_object('period', 'Sin período', 'cost', 0, 'status', 'draft');
+    SELECT id, period_year, period_month, status
+    INTO v_payroll_period
+    FROM public.people_payroll_periods
+    WHERE business_id = p_business_id
+    ORDER BY period_year DESC, period_month DESC
+    LIMIT 1;
+
+    IF v_payroll_period IS NOT NULL THEN
+      SELECT SUM(pi.employer_cost_amount)
+      INTO v_payroll_cost
+      FROM public.people_payroll_items pi
+      WHERE pi.payroll_period_id = v_payroll_period.id;
+
+      v_payroll := jsonb_build_object(
+        'period', v_payroll_period.period_year::text || '-' || lpad(v_payroll_period.period_month::text, 2, '0'),
+        'cost', COALESCE(v_payroll_cost, 0),
+        'status', v_payroll_period.status
+      );
+    END IF;
   END IF;
 
   RETURN jsonb_build_object(
