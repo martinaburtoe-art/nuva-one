@@ -220,10 +220,12 @@ select ok(has_function_privilege('authenticated','public.people_dashboard_summar
 select ok(
   (select proacl from pg_proc where oid = 'public.people_dashboard_summary(uuid)'::regprocedure) IS NOT NULL
   and not exists (
-    select 1 from aclexplode(
-      (select proacl from pg_proc where oid = 'public.people_dashboard_summary(uuid)'::regprocedure)
-    ) as a(grantor oid, grantee oid, privilege_type text, is_grantable boolean)
-    where a.grantee = 0 and a.privilege_type = 'X'
+    select 1
+    from pg_proc p
+    cross join lateral aclexplode(p.proacl) as a
+    where p.oid = 'public.people_dashboard_summary(uuid)'::regprocedure
+      and a.grantee = 0
+      and a.privilege_type = 'X'
   ),
   'PUBLIC no tiene EXECUTE sobre people_dashboard_summary'
 );
