@@ -24,7 +24,7 @@ export function useBizList<T = any>(
       const q = supabase.from(table as any).select(opts?.select ?? "*").eq("business_id", active!.id);
       if (opts?.order) q.order(opts.order, { ascending: opts.ascending ?? false });
       const { data, error } = await q;
-      if (error) throw error;
+      if (error) { toast.error(error.message ?? "Error al cargar datos"); throw error; }
       return (data ?? []) as T[];
     },
   });
@@ -79,7 +79,7 @@ export function useBizPage<T = any>(
       if (opts?.order) q.order(opts.order, { ascending: opts.ascending ?? false });
 
       const { data, error, count } = await q;
-      if (error) throw error;
+      if (error) { toast.error(error.message ?? "Error al cargar datos"); throw error; }
 
       return {
         rows: (data ?? []) as T[],

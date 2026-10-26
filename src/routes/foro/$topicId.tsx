@@ -60,7 +60,9 @@ function TopicDetail() {
         .eq("id", topicId)
         .single();
       if (error) throw error;
-      supabase.rpc("increment_forum_topic_views", { topic_id: topicId }).then();
+      Promise.resolve(supabase.rpc("increment_forum_topic_views", { topic_id: topicId })).catch((error: unknown) => {
+        console.error("Error incrementando vistas del tema:", error);
+      });
       return data as Topic;
     },
   });

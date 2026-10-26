@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBizInsert, useBizList, useBizDelete } from "@/lib/biz-data";
+import { useMyRole } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -18,6 +19,9 @@ export const Route = createFileRoute("/_authenticated/people-payroll")({ compone
 const emptyInput = { overtime_hours: 0, taxable_bonus: 0, non_taxable_bonus: 0, absences_days: 0, other_deductions: 0, advance_payment: 0, gratification_amount: 0, medical_leave_days: 0, medical_leave_rima: 0, notes: "" };
 
 function PeoplePayroll() {
+  const { data: role } = useMyRole();
+  const isAuthorized = role === "owner" || role === "admin";
+
   const { data: employees = [] } = useBizList<any>("people_employees", { order: "last_name" });
   const { data: contracts = [] } = useBizList<any>("people_contracts", { order: "start_date" });
   const { data: periods = [] } = useBizList<any>("people_payroll_periods", { order: "period_year" });
@@ -26,7 +30,14 @@ function PeoplePayroll() {
   const { data: liquidations = [] } = useBizList<any>("people_payroll_liquidations");
   const { data: lre = [] } = useBizList<any>("people_lre_rows");
   const queryClient = useQueryClient();
-  const { data: params = [] } = useQuery({ queryKey: ["people_legal_parameters"], queryFn: async () => { const { data, error } = await supabase.from("people_legal_parameters" as any).select("*").eq("country_code", "CL").order("effective_from", { ascending: false }); if (error) throw error; return data ?? []; } });
+  const { data: params = [] } = useQuery({
+    queryKey: ["people_legal_parameters"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("people_legal_parameters" as any).select("*").eq("country_code", "CL").order("effective_from", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   const insertPeriod = useBizInsert("people_payroll_periods");
   const insertInput = useBizInsert("people_payroll_inputs");
   const deleteInput = useBizDelete("people_payroll_inputs");
@@ -38,6 +49,21 @@ function PeoplePayroll() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [engineMessage, setEngineMessage] = useState<string | null>(null);
   const latestParams = useMemo(() => params.slice(0, 12), [params]);
+
+  if (!isAuthorized) {
+    return (
+      <ModuleGuard module="people">
+        <div className="p-4 md:p-6">
+          <PageHeader title="Remuneraciones" description="Acceso restringido a remuneraciones." actions={<PeopleBackLink />} />
+          <Card className="rounded-2xl p-8 text-center border-amber-500/30 bg-amber-500/5">
+            <LockKeyhole className="mx-auto h-10 w-10 text-amber-600 mb-3" />
+            <h2 className="font-semibold text-amber-900">Sin acceso a remuneraciones</h2>
+            <p className="mt-2 text-sm text-amber-800">Solo el dueño y administrador del negocio pueden ver y gestionar remuneraciones.</p>
+          </Card>
+        </div>
+      </ModuleGuard>
+    );
+  }
 
   async function createPeriod() {
     try { const created = await insertPeriod.mutateAsync({ period_year: year, period_month: month, status: "draft", calculation_version: "cl-2026.12" }); setSelectedPeriod(created.id); setEngineMessage(`Período ${month}/${year} creado.`); }

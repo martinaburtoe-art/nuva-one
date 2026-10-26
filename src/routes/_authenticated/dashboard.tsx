@@ -1,10 +1,9 @@
 import "@/resumen-premium.css";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
-import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangeFilter, dmyToIso } from "@/components/date-range-filter";
@@ -12,7 +11,8 @@ import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
-import { ArrowUpRight, X, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
+import { goalsLabel } from "@/lib/resumen-goals";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -30,7 +30,7 @@ function Dashboard() {
     catch { setOnboardingFocus("Todo"); }
   }, []);
 
-  const { data: kpis } = useQuery({
+  const { data: kpis, error: kpisError } = useQuery({
     enabled: !!active?.id,
     queryKey: ["kpis", active?.id],
     queryFn: async () => {
@@ -64,10 +64,12 @@ function Dashboard() {
     const d = new Date();
     d.setMonth(d.getMonth() - 5);
     d.setDate(1);
-    return d.toISOString().slice(0, 10);
+    // Fecha local (no UTC) para que el umbral del desplazamiento no se desplace un día
+    // según la hora en que se abra el dashboard en Chile (UTC-4).
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, [isoFrom]);
 
-  const { data: allTx } = useQuery({
+  const { data: allTx, error: txError } = useQuery({
     enabled: !!active?.id,
     queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories],
     staleTime: 60_000,
@@ -88,13 +90,16 @@ function Dashboard() {
     },
   });
 
+  const qc = useQueryClient();
+
+
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
     (allTx ?? []).forEach((t: any) => t.category && set.add(t.category));
     return Array.from(set).sort().map((c) => ({ value: c, label: c }));
   }, [allTx]);
 
-  const hasChartFilters = !!dateFrom || !!dateTo || categories.length > 0;
+
   const chartData = useMemo(() => {
     const rows = (allTx ?? []).filter((r: any) => {
       if (isoFrom && r.tx_date < isoFrom) return false;
@@ -118,7 +123,9 @@ function Dashboard() {
       byMonth[`${d.getFullYear()}-${d.getMonth()}`] = { mes: d.toLocaleDateString("es-CL", { month: "short" }), ingresos: 0, gastos: 0 };
     }
     rows.forEach((r: any) => {
-      const d = new Date(r.tx_date); const key = `${d.getFullYear()}-${d.getMonth()}`;
+      // Fecha local (no UTC): "2026-08-01" no debe agruparse bajo julio en UTC-4.
+      const [y, m] = r.tx_date.split("-").map(Number);
+      const key = `${y}-${m - 1}`;
       if (byMonth[key]) { if (r.type === "income") byMonth[key].ingresos += Number(r.amount); else byMonth[key].gastos += Number(r.amount); }
     });
     return Object.values(byMonth);
@@ -143,7 +150,7 @@ function Dashboard() {
 
   return (
     <ModuleGuard module="dashboard">
-      <main className="nuva-resumen-premium nuva-resumen-canvas">
+      <main className="nuva-resumen-canvas">
         <div className="nuva-resumen-ambient-word" aria-hidden="true">Resumen</div>
         <header className="nuva-resumen-header">
           <div className="nuva-resumen-brandline">
@@ -163,6 +170,38 @@ function Dashboard() {
           </div>
         </header>
 
+        {kpis === undefined && !kpisError && !txError && (
+          <div className="nuva-resumen-onboarding nuva-resumen-loading">
+            <div className="nuva-resumen-onboarding-copy">
+              <span className="nuva-resumen-section-label"><span className="animate-pulse" /></span>
+              <h2>Cargando indicadores del negocio</h2>
+              <p>Obteniendo los datos de tu panel ejecutivo. Un momento.</p>
+            </div>
+          </div>
+        )}
+
+        {kpisError && (
+          <div role="alert" className="nuva-resumen-onboarding">
+            <div className="nuva-resumen-onboarding-copy">
+              <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR INDICADORES</span>
+              <h2>No se pudieron cargar los indicadores del negocio</h2>
+              <p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p>
+              <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
+            </div>
+          </div>
+        )}
+
+        {txError && (
+          <div role="alert" className="nuva-resumen-onboarding">
+            <div className="nuva-resumen-onboarding-copy">
+              <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR MOVIMIENTOS</span>
+              <h2>No se pudo cargar el historial de transacciones</h2>
+              <p>{String(txError?.message ?? txError ?? "Error desconocido")}</p>
+              <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
+            </div>
+          </div>
+        )}
+
         {kpis !== undefined && !hasActivity && (
           <Card className="nuva-resumen-onboarding">
             <div className="nuva-resumen-onboarding-copy">
@@ -176,16 +215,6 @@ function Dashboard() {
         )}
 
         <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
-          <article className="nuva-resumen-device nuva-resumen-device-performance">
-            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">NÜVA ONE · FINANZAS</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-device-title"><span>Rendimiento</span><small>VISIÓN FINANCIERA</small></div><div className="nuva-resumen-filters nuva-resumen-device-filters"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /><MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} /></div>
-            <div className="nuva-resumen-device-chart"><Suspense fallback={<div className="nuva-resumen-chart-loading" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense></div>
-            <div className="nuva-resumen-device-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
-            <div className="nuva-resumen-device-divider" />
-            <div className="nuva-resumen-device-minirow"><span>Ventas registradas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
-            <div className="nuva-resumen-device-minirow"><span>Productos en catálogo</span><strong>{kpis?.productsCount ?? "—"}</strong></div>
-                      </article>
-
           <article className="nuva-resumen-device nuva-resumen-device-main">
             <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
             <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Todo en equilibrio.</h2><span>Una mirada clara a tu negocio.</span></div>
@@ -200,7 +229,20 @@ function Dashboard() {
               <div><span><i className="nuva-resumen-dot-indigo" /> Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
             </div>
             <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR ESTIMADO DE INVENTARIO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
-            <div className="nuva-resumen-status-card"><span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span><div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div><i className="nuva-resumen-status-light" /></div>
+            <div className="nuva-resumen-status-card">
+              {kpis === undefined ? (
+                <>
+                  <span className="nuva-resumen-status-symbol"><i className="nuva-resumen-dot-gold" /></span>
+                  <div><strong>—</strong><p>Esperando datos del negocio…</p></div>
+                </>
+              ) : (
+                <>
+                  <span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span>
+                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div>
+                </>
+              )}
+              <i className="nuva-resumen-status-light" />
+            </div>
                       </article>
 
           <article className="nuva-resumen-device nuva-resumen-device-operations">
@@ -221,6 +263,20 @@ function Dashboard() {
                       </article>
         </section>
 
+        <section className="nuva-resumen-chart-section" aria-label="Rendimiento financiero">
+          <div className="nuva-resumen-filters nuva-resumen-device-filters">
+            <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+            <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
+          </div>
+          <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
+            <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
+          </div>
+          <div className="nuva-resumen-chart-legend">
+            <span><i className="nuva-resumen-dot-gold" /> Ingresos</span>
+            <span><i className="nuva-resumen-dot-indigo" /> Gastos</span>
+          </div>
+        </section>
+
         <section className="nuva-resumen-refine-row"><div><p className="nuva-resumen-section-label">LECTURA FINANCIERA</p><h2>Explora tus movimientos</h2><p>Los filtros del gráfico permiten revisar períodos y categorías específicas.</p></div></section>
         <section className="nuva-resumen-score-section"><div><p className="nuva-resumen-section-label">INTELIGENCIA DE NEGOCIO</p><h2>Salud de tu empresa</h2><p>Indicadores complementarios para tomar mejores decisiones.</p></div><div className="nuva-resumen-score-card"><NuvaScoreCard /></div></section>
         <footer className="nuva-resumen-footer"><span>NÜVA ONE <span>·</span> CONTROL DE NEGOCIO</span><span>Los indicadores reflejan los movimientos registrados en tu cuenta.</span></footer>
@@ -234,4 +290,4 @@ function OperationalCard({ icon, label, value, description, href }: { icon: Reac
 }
 
 function ActivationStep({ done, title }: { done: boolean; title: string }) { return <div className="flex items-center gap-2 rounded-xl border bg-background/70 px-3 py-2 text-xs"><CheckCircle2 className={`h-4 w-4 ${done ? "text-primary" : "text-muted-foreground/40"}`} /><span className={done ? "font-medium" : "text-muted-foreground"}>{title}</span></div>; }
-function goalsLabel(value: string) { return value === "sales" ? "ventas" : value === "inventory" ? "inventario" : value === "finance" ? "finanzas" : value === "customers" ? "clientes" : "todo el negocio"; }
+

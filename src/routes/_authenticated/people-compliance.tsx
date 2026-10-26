@@ -4,13 +4,48 @@ import { ModuleGuard } from "@/components/module-guard";
 import { PageHeader } from "@/components/page-utils";
 import { PeopleBackLink } from "@/components/people-back-link";
 import { Card } from "@/components/ui/card";
-import { useBizList } from "@/lib/biz-data";
+import { useMyRole, useActiveBusinessId } from "@/lib/use-business";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/people-compliance")({ component: PeopleCompliance });
 
 function PeopleCompliance() {
-  const { data: items = [], isLoading } = useBizList<any>("people_compliance_items", { order: "due_date" });
-  const { data: contracts = [] } = useBizList<any>("people_contracts", { order: "end_date" });
+  const [activeId] = useActiveBusinessId();
+  const { data: role } = useMyRole();
+  const isAdmin = role === "owner" || role === "admin";
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: isAdmin ? ["people_compliance_items", activeId, "due_date"] : ["people_compliance_items_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_compliance_items").select("*").eq("business_id", bid).order("due_date");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_compliance_items_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: isAdmin ? ["people_contracts", activeId, "end_date"] : ["people_contracts_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_contracts").select("*").eq("business_id", bid).order("end_date");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_contracts_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
   const pending = items.filter((x: any) => !["compliant", "not_applicable"].includes(x.status));
   const expiring = contracts.filter((x: any) => { const days = x.end_date ? (new Date(x.end_date).getTime() - Date.now()) / 86400000 : Infinity; return x.end_date && x.status === "active" && days >= 0 && days <= 45; }).length;
   return <ModuleGuard module="people"><div className="p-4 md:p-6"><PageHeader title="Centro de cumplimiento" description="Obligaciones laborales, vencimientos y evidencias en un solo lugar." actions={<PeopleBackLink />} />

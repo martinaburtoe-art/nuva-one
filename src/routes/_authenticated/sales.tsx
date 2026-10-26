@@ -8,6 +8,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ModuleGuard } from "@/components/module-guard";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,9 @@ function Sales() {
       setManualTotal(null);
       setIsCredit(false);
       setDueDate("");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message ?? "No se pudo registrar la venta rápida.");
     }
   });
   const insert = useBizInsert("sales");
@@ -116,18 +120,24 @@ function Sales() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const validItems = items.filter((i) => i.name.trim() !== "");
-    await insert.mutateAsync({
-      customer_name: customerName,
-      customer_id: customerId,
-      channel,
-      payment_method: paymentMethod,
-      status,
-      total,
-      items: validItems as any,
-      notes: fd.get("notes") || null,
-      is_credit: isCredit,
-      due_date: isCredit && dueDate ? dueDate : null,
-    });
+    try {
+      await insert.mutateAsync({
+        customer_name: customerName,
+        customer_id: customerId,
+        channel,
+        payment_method: paymentMethod,
+        status,
+        total,
+        items: validItems as any,
+        notes: fd.get("notes") || null,
+        is_credit: isCredit,
+        due_date: isCredit && dueDate ? dueDate : null,
+      });
+    } catch (error: any) {
+      // El trigger sync_sale_effects rechaza si hay stock insuficiente u otro error de integridad.
+      toast.error(error?.message ?? "No se pudo registrar la venta. Verifica el stock disponible.");
+      return;
+    }
     setOpen(false);
     setCustomerName("");
     setCustomerId(null);
@@ -459,9 +469,19 @@ function Sales() {
                     <TableCell>
                       <select
                         value={s.status}
-                        onChange={(e) =>
-                          upd.mutate({ id: s.id, patch: { status: e.target.value } })
-                        }
+                        onChange={async (e) => {
+                          try {
+                            await upd.mutateAsync({
+                              id: s.id,
+                              patch: { status: e.target.value },
+                            });
+                            toast.success("Estado de venta actualizado");
+                          } catch (error: any) {
+                            toast.error(
+                              error?.message ?? "No se pudo cambiar el estado de la venta",
+                            );
+                          }
+                        }}
                         className="rounded-md border bg-background px-2 py-1 text-xs"
                       >
                         <option value="pending">Pendiente</option>

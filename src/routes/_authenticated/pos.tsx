@@ -267,7 +267,10 @@ function POS() {
     total > 0 &&
     (method !== "efectivo" || received >= total) &&
     !(method === "online" && !hasPaymentGateway);
-  const today = new Date().toISOString().slice(0, 10);
+  // Fecha local (zona del negocio, Chile) para evitar desplazamiento de día
+  // según el offset del dispositivo. Se usa construcción de componentes, no toISOString().
+  const todayLocal = new Date();
+  const today = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
   const todaySales = (sales ?? []).filter(
     (s: any) => (s.sale_date ?? s.created_at?.slice(0, 10)) === today,
   );
@@ -275,6 +278,14 @@ function POS() {
 
   async function checkout() {
     if (!canPay) return;
+    // Defensa en profundidad: validar stock disponible al momento del cobro,
+    // por si cambió entre agregar al carrito y hacer checkout.
+    for (const i of cart) {
+      if (i.stock < i.qty) {
+        toast.error(`Stock insuficiente para "${i.name}": solo quedan ${i.stock} unidad(es).`);
+        return;
+      }
+    }
     const notes = [
       `Caja · ${method}`,
       method === "efectivo" ? `Recibido ${fmtCLP(received)} · Vuelto ${fmtCLP(change)}` : null,
@@ -358,8 +369,10 @@ function POS() {
       setReceived(0);
       setMethod("efectivo");
       clearCustomer();
-    } catch {
-      /* hook handles persistence errors */
+    } catch (error: any) {
+      // El trigger sync_sale_effects rechaza si hay stock insuficiente u otro error de integridad.
+      // No se silencia: el usuario debe saber que la venta no se registró.
+      toast.error(error?.message ?? "No se pudo registrar la venta. Verifica el stock disponible.");
     }
   }
 

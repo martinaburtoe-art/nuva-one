@@ -8,13 +8,49 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useBizInsert, useBizList } from "@/lib/biz-data";
+import { useBizInsert } from "@/lib/biz-data";
+import { useMyRole, useActiveBusinessId } from "@/lib/use-business";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/people-attendance")({ component: PeopleAttendance });
 
 function PeopleAttendance() {
-  const { data: employees=[] } = useBizList<any>("people_employees",{order:"last_name"});
-  const { data: events=[],isLoading } = useBizList<any>("people_attendance_events",{order:"event_at"});
+  const [activeId] = useActiveBusinessId();
+  const { data: role } = useMyRole();
+  const isAdmin = role === "owner" || role === "admin";
+
+  const { data: employees=[] } = useQuery({
+    queryKey: isAdmin ? ["people_employees", activeId, "last_name"] : ["people_employees_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_employees").select("*").eq("business_id", bid).order("last_name");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_employees_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
+
+  const { data: events=[],isLoading } = useQuery({
+    queryKey: isAdmin ? ["people_attendance_events", activeId, "event_at"] : ["people_attendance_limited", activeId],
+    queryFn: async () => {
+      const bid = activeId as string;
+      if (isAdmin) {
+        const { data, error } = await supabase.from("people_attendance_events").select("*").eq("business_id", bid).order("event_at");
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any).rpc("people_attendance_limited", { p_business_id: bid });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!activeId,
+  });
   const insert=useBizInsert("people_attendance_events");
   const [form,setForm]=useState({employee_id:"",event_type:"check_in",event_at:new Date().toISOString().slice(0,16),source:"manual"});
   async function save(){if(!form.employee_id)return;await insert.mutateAsync({...form,event_at:new Date(form.event_at).toISOString(),metadata:{manual:true}});}
