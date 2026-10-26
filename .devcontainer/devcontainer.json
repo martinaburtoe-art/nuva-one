@@ -1,0 +1,39 @@
+{
+  "name": "Nüva One Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/curl:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "dsznajder.es7-react-js-snippets",
+        "ms-vscode.vscode-typescript-next",
+        "supabase.vscode-supabase"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install --ignore-scripts --no-audit --no-fund",
+  "remoteUser": "node",
+  "mounts": [
+    "source=${localWorkspaceFolder}/supabase,target=/home/node/supabase,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/src,target=/home/node/src,type=bind,consistency=cached"
+  ],
+  "forwardPorts": [3000, 5432],
+  "portsAttributes": {
+    "3000": {
+      "label": "Nüva One Dev Server",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "Supabase Local DB",
+      "onAutoForward": "silent"
+    }
+  }
+}
