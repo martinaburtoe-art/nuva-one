@@ -69,7 +69,7 @@ select ok(
 select ok(has_function_privilege('authenticated','private.has_business_role(uuid,uuid,member_role[])'::regprocedure,'EXECUTE'),'authenticated puede ejecutar private.has_business_role');
 
 -- 6. private.is_business_member existe (helper de miembro, se conserva para tablas no sensibles)
-select ok(to_regclass('private.is_business_member(uuid,uuid)'::regprocedure) is not null,'private.is_business_member existe');
+select ok(to_regprocedure('private.is_business_member(uuid,uuid)') is not null,'private.is_business_member existe');
 
 -- 7. people_legal_parameters mantiene SELECT para authenticated (datos de referencia públicos)
 select ok(has_function_privilege('authenticated','public.people_legal_parameters'::regclass,'SELECT'),'authenticated puede leer people_legal_parameters');
@@ -191,7 +191,7 @@ select ok(
 select ok(to_regclass('public.people_employees') is not null,'Tabla people_employees existe en el esquema');
 
 -- 21. (positiva) La RPC people_dashboard_summary(uuid) existe en el esquema public
-select ok(to_regclass('public.people_dashboard_summary(uuid)'::regprocedure) is not null,'Función people_dashboard_summary(uuid) existe en public');
+select ok(to_regprocedure('public.people_dashboard_summary(uuid)') is not null,'Función people_dashboard_summary(uuid) existe en public');
 
 -- 22. (positiva) La RPC es SECURITY DEFINER (ejecuta con privilegios del dueño, no del llamador)
 select ok(
