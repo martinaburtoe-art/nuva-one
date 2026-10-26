@@ -1,6 +1,6 @@
 {
   "name": "Nüva One Development",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
@@ -20,11 +20,7 @@
     }
   },
   "postCreateCommand": "npm install --ignore-scripts --no-audit --no-fund",
-  "remoteUser": "node",
-  "mounts": [
-    "source=${localWorkspaceFolder}/supabase,target=/home/node/supabase,type=bind,consistency=cached",
-    "source=${localWorkspaceFolder}/src,target=/home/node/src,type=bind,consistency=cached"
-  ],
+  "remoteUser": "vscode",
   "forwardPorts": [3000, 5432],
   "portsAttributes": {
     "3000": {
