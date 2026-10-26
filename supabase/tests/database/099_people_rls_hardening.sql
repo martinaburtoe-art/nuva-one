@@ -216,7 +216,7 @@ select ok(has_function_privilege('authenticated','public.people_dashboard_summar
 
 -- 26. (negativa) PUBLIC no tiene EXECUTE sobre la RPC (revocado explícitamente; por defecto PostgreSQL lo concede a PUBLIC)
 select ok(
-  not has_function_privilege('PUBLIC','public.people_dashboard_summary(uuid)'::regprocedure,'EXECUTE'),
+  not has_function_privilege(PUBLIC,'public.people_dashboard_summary(uuid)'::regprocedure,'EXECUTE'),
   'PUBLIC no tiene EXECUTE sobre people_dashboard_summary'
 );
 
