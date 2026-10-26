@@ -214,9 +214,17 @@ select ok(
 -- 25. (positiva) authenticated tiene EXECUTE sobre la RPC
 select ok(has_function_privilege('authenticated','public.people_dashboard_summary(uuid)'::regprocedure,'EXECUTE'),'authenticated puede ejecutar people_dashboard_summary');
 
--- 26. (negativa) PUBLIC no tiene EXECUTE sobre la RPC (revocado explícitamente; por defecto PostgreSQL lo concede a PUBLIC)
+-- 26. (negativa) PUBLIC no tiene EXECUTE sobre la RPC (revocado explícitamente; por defecto PostgreSQL lo concede a PUBLIC).
+-- PUBLIC es un pseudo-rol (OID 0), no una fila en pg_roles, por lo que has_function_privilege('PUBLIC', ...) falla.
+-- Se inspecciona el ACL de la función con aclexplode(): grantee = 0 es PUBLIC, privilegio 'X' es EXECUTE.
 select ok(
-  not has_function_privilege('PUBLIC','public.people_dashboard_summary(uuid)'::regprocedure,'EXECUTE'),
+  (select proacl from pg_proc where oid = 'public.people_dashboard_summary(uuid)'::regprocedure) IS NOT NULL
+  and not exists (
+    select 1 from aclexplode(
+      (select proacl from pg_proc where oid = 'public.people_dashboard_summary(uuid)'::regprocedure)
+    ) as a(grantor oid, grantee oid, privilege_type text, is_grantable boolean)
+    where a.grantee = 0 and a.privilege_type = 'X'
+  ),
   'PUBLIC no tiene EXECUTE sobre people_dashboard_summary'
 );
 
