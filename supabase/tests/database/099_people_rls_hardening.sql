@@ -72,10 +72,10 @@ select ok(has_function_privilege('authenticated','private.has_business_role(uuid
 select ok(to_regprocedure('private.is_business_member(uuid,uuid)') is not null,'private.is_business_member existe');
 
 -- 7. people_legal_parameters mantiene SELECT para authenticated (datos de referencia públicos)
-select ok(has_function_privilege('authenticated','public.people_legal_parameters'::regclass,'SELECT'),'authenticated puede leer people_legal_parameters');
+select ok(has_table_privilege('authenticated','public.people_legal_parameters','SELECT'),'authenticated puede leer people_legal_parameters');
 
 -- 8. people_afp_rates mantiene SELECT para authenticated (datos de referencia públicos)
-select ok(has_function_privilege('authenticated','public.people_afp_rates'::regclass,'SELECT'),'authenticated puede leer people_afp_rates');
+select ok(has_table_privilege('authenticated','public.people_afp_rates','SELECT'),'authenticated puede leer people_afp_rates');
 
 -- 9. Las tablas de nómina sensibles no tienen política INSERT/UPDATE/DELETE con is_business_member (escritura restringida)
 select ok(
@@ -172,7 +172,7 @@ select ok(
 
 -- 17. personas_legales no tiene políticas de escritura para authenticated (protegido)
 select ok(
-  not has_function_privilege('authenticated','public.people_legal_parameters'::regclass,'INSERT'),
+  not has_table_privilege('authenticated','public.people_legal_parameters','INSERT'),
   'authenticated no puede insertar en people_legal_parameters'
 );
 
