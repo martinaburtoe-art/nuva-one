@@ -223,13 +223,22 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
   if (!upstream) return deny("groq_proxy_upstream_failed", 502);
   // Normalizar los errores de tamaño/contexto sin exponer claves ni devolver cuerpos arbitrarios del proveedor.
   if (upstream.status === 413) {
-    await upstream.body?.cancel().catch(() => {});
+    const rawError = await upstream.text().catch(() => "");
+    let providerError: any = {};
+    try { providerError = JSON.parse(rawError)?.error ?? {}; } catch { /* respuesta no JSON */ }
+    // Solo se exponen campos de diagnóstico del proveedor; nunca headers ni credenciales.
+    const safeField = (value: unknown) => typeof value === "string"
+      ? value.replace(/[^a-zA-Z0-9_. -]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 160)
+      : undefined;
     return Response.json({
       ok: false,
       error: "groq_request_too_large",
       provider: "groq",
+      provider_code: safeField(providerError.code),
+      provider_type: safeField(providerError.type),
+      provider_message: safeField(providerError.message),
       request_bytes: new TextEncoder().encode(serializedBody).byteLength,
-      hint: "Reduce el historial o el número de herramientas y vuelve a intentar.",
+      hint: "Revisa provider_code/provider_message para distinguir límite de payload de límite de contexto.",
     }, { status: 413, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
   }
 
