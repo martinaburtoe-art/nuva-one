@@ -1,10 +1,6 @@
 {
   "name": "Nüva One Development",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
-  "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/curl:1": {}
-  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -16,8 +12,6 @@
       ]
     }
   },
-  "postCreateCommand": "npm install --ignore-scripts --no-audit --no-fund",
-  "remoteUser": "vscode",
   "forwardPorts": [3000, 5432],
   "portsAttributes": {
     "3000": {
