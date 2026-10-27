@@ -32,6 +32,23 @@ jobs:
         run: |
           docker version
           docker info
+      - name: Reduce parallel image pulls to avoid GHCR throttling
+        run: |
+          set -euo pipefail
+          # Supabase inicia varios servicios y Docker descarga capas en paralelo.
+          # En GH Actions esto ha provocado throttling de GHCR; limitar descargas
+          # evita ráfagas sin omitir imágenes ni pruebas.
+          sudo python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("/etc/docker/daemon.json")
+          config = json.loads(path.read_text()) if path.exists() and path.read_text().strip() else {}
+          config["max-concurrent-downloads"] = 1
+          path.write_text(json.dumps(config, indent=2) + "\\n")
+          PY
+          sudo systemctl restart docker
+          docker version
       - name: Authenticate to GitHub Container Registry
         env:
           GHCR_TOKEN: ${{ github.token }}
