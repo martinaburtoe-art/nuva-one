@@ -55,7 +55,11 @@ jobs:
             docker ps -a || true
             if [ "$attempt" -lt 3 ]; then
               supabase stop --no-backup || true
-              sleep 10
+              # Los registros muestran límites temporales del registry al descargar imágenes.
+              # Espera progresiva para evitar repetir los pulls durante el mismo periodo de rate limit.
+              delay=$((attempt * 30))
+              echo "Waiting ${delay}s before retrying Supabase image pulls"
+              sleep "$delay"
             fi
           done
           if [ "$started" != "true" ]; then
