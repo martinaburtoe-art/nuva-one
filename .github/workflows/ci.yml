@@ -36,9 +36,9 @@ jobs:
       - name: Start lean Supabase database test stack
         run: |
           set -o pipefail
-          # Limpieza de contenedores previos por si una ejecución anterior dejó residuos
-          docker system prune -f --volumes >/dev/null 2>&1 || true
-          docker rm -f $(docker ps -aq 2>/dev/null) 2>/dev/null || true
+          # GitHub-hosted runners son efímeros: no limpiar todos los volúmenes ni
+          # eliminar contenedores globalmente. Eso no aporta persistencia entre jobs
+          # y puede bloquear el arranque antes de aplicar los timeouts de Supabase.
           echo "=== Docker diagnostics ==="
           docker version
           docker info
