@@ -1,10 +1,7 @@
 {
   "name": "Nüva One Development",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "22"
-    },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/curl:1": {}
   },
@@ -20,7 +17,7 @@
     }
   },
   "postCreateCommand": "npm install --ignore-scripts --no-audit --no-fund",
-  "remoteUser": "vscode",
+  "remoteUser": "node",
   "forwardPorts": [3000, 5432],
   "portsAttributes": {
     "3000": {
