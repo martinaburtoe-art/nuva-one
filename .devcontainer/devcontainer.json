@@ -17,7 +17,7 @@
     }
   },
   "postCreateCommand": "npm install --ignore-scripts --no-audit --no-fund",
-  "remoteUser": "node",
+  "remoteUser": "vscode",
   "forwardPorts": [3000, 5432],
   "portsAttributes": {
     "3000": {
