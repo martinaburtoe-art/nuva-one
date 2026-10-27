@@ -78,10 +78,23 @@ jobs:
           fi
           echo "Resetting the local database from the repository migrations"
           supabase db reset --local
-      - name: Generate database types from clean schema
+      - name: Generate database types from clean schema (retry transient registry limits)
         run: |
-          supabase gen types typescript --local > /tmp/generated-supabase-types.ts
-          cp /tmp/generated-supabase-types.ts src/integrations/supabase/types.ts
+          set -euo pipefail
+          for attempt in 1 2 3 4; do
+            echo "Generating database types (attempt ${attempt}/4)"
+            if supabase gen types typescript --local > /tmp/generated-supabase-types.ts; then
+              cp /tmp/generated-supabase-types.ts src/integrations/supabase/types.ts
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              delay=$((attempt * 30))
+              echo "Type generation failed; retrying after ${delay}s to tolerate transient postgres-meta image registry limits"
+              sleep "$delay"
+            fi
+          done
+          echo "ERROR: Supabase type generation failed after retries"
+          exit 1
       - name: Run pgTAP tests
         run: |
           set -o pipefail
