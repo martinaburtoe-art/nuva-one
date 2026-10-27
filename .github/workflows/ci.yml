@@ -43,9 +43,9 @@ jobs:
           docker version
           docker info
           started=false
-          for attempt in 1 2 3; do
-            echo "Starting lean Supabase stack (attempt ${attempt}/3)"
-            if timeout 120s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+          for attempt in 1 2 3 4; do
+            echo "Starting lean Supabase stack (attempt ${attempt}/4)"
+            if timeout 240s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started"
               started=true
               break
@@ -53,11 +53,11 @@ jobs:
             echo "Supabase start failed; collecting diagnostics before retry"
             supabase status || true
             docker ps -a || true
-            if [ "$attempt" -lt 3 ]; then
+            if [ "$attempt" -lt 4 ]; then
               supabase stop --no-backup || true
-              # Los registros muestran límites temporales del registry al descargar imágenes.
-              # Espera progresiva para evitar repetir los pulls durante el mismo periodo de rate limit.
-              delay=$((attempt * 30))
+              # GHCR puede aplicar rate limits temporales incluso cuando los pulls indican retry-after mínimo.
+              # El backoff creciente evita reintentar inmediatamente contra el mismo límite del registry.
+              delay=$((attempt * 90))
               echo "Waiting ${delay}s before retrying Supabase image pulls"
               sleep "$delay"
             fi
@@ -65,7 +65,7 @@ jobs:
           if [ "$started" != "true" ]; then
             echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
             supabase stop --no-backup || true
-            if timeout 180s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+            if timeout 300s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started (ignore-health-check fallback)"
               started=true
             fi
