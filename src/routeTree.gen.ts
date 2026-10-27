@@ -14,33 +14,82 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SelectBusinessRouteImport } from './routes/select-business'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as OwnerRouteImport } from './routes/owner'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NoticiasRouteImport } from './routes/noticias'
+import { Route as ExperienciaRouteImport } from './routes/experiencia'
+import { Route as ExperienceParallelRouteImport } from './routes/experience-parallel'
+import { Route as ExperienceRouteImport } from './routes/experience'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as CheckoutDemoRouteImport } from './routes/checkout-demo'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NegociosIndexRouteImport } from './routes/negocios/index'
 import { Route as ForoIndexRouteImport } from './routes/foro/index'
+import { Route as PublicCatalogSlugRouteImport } from './routes/public-catalog.$slug'
+import { Route as OwnerControlTowerRouteImport } from './routes/owner/control-tower'
 import { Route as NegociosSlugRouteImport } from './routes/negocios/$slug'
 import { Route as ForoTopicIdRouteImport } from './routes/foro/$topicId'
+import { Route as ApiTelemetryRouteImport } from './routes/api/telemetry'
+import { Route as ApiStudioCampaignMetricsRouteImport } from './routes/api/studio-campaign-metrics'
+import { Route as ApiStudioCampaignRouteImport } from './routes/api/studio-campaign'
+import { Route as ApiStudioAgentRouteImport } from './routes/api/studio-agent'
+import { Route as ApiStudioRouteImport } from './routes/api/studio'
+import { Route as ApiN8nDeliveryRouteImport } from './routes/api/n8n-delivery'
+import { Route as ApiN8nRouteImport } from './routes/api/n8n'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
+import { Route as AuthenticatedShipmentsRouteImport } from './routes/_authenticated/shipments'
 import { Route as AuthenticatedShiftsRouteImport } from './routes/_authenticated/shifts'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authenticated/purchases'
+import { Route as AuthenticatedPricingCalculatorRouteImport } from './routes/_authenticated/pricing-calculator'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
+import { Route as AuthenticatedPeoplePayrollRouteImport } from './routes/_authenticated/people-payroll'
+import { Route as AuthenticatedPeopleLifecycleRouteImport } from './routes/_authenticated/people-lifecycle'
+import { Route as AuthenticatedPeopleEmployeesRouteImport } from './routes/_authenticated/people-employees'
+import { Route as AuthenticatedPeopleComplianceRouteImport } from './routes/_authenticated/people-compliance'
+import { Route as AuthenticatedPeopleAttendanceRouteImport } from './routes/_authenticated/people-attendance'
+import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
+import { Route as AuthenticatedNuvaIntelligenceRouteImport } from './routes/_authenticated/nuva-intelligence'
+import { Route as AuthenticatedMobileScannerRouteImport } from './routes/_authenticated/mobile-scanner'
 import { Route as AuthenticatedMfaRequiredRouteImport } from './routes/_authenticated/mfa-required'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedInventarioOperacionesRouteImport } from './routes/_authenticated/inventario-operaciones'
+import { Route as AuthenticatedInventarioConteoRouteImport } from './routes/_authenticated/inventario-conteo'
+import { Route as AuthenticatedHelpCenterRouteImport } from './routes/_authenticated/help-center'
+import { Route as AuthenticatedFinancialIntegrityRouteImport } from './routes/_authenticated/financial-integrity'
+import { Route as AuthenticatedFinancialDashboardRouteImport } from './routes/_authenticated/financial-dashboard'
+import { Route as AuthenticatedFinancialControlRouteImport } from './routes/_authenticated/financial-control'
+import { Route as AuthenticatedFinanceProfessionalRouteImport } from './routes/_authenticated/finance-professional'
+import { Route as AuthenticatedFinanceAccountingRouteImport } from './routes/_authenticated/finance-accounting'
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
+import { Route as AuthenticatedExecutiveCommandCenterRouteImport } from './routes/_authenticated/executive-command-center'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCustomersIntelligenceRouteImport } from './routes/_authenticated/customers-intelligence'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedCustomerIntelligenceRouteImport } from './routes/_authenticated/customer-intelligence'
+import { Route as AuthenticatedCustomerActionCenterRouteImport } from './routes/_authenticated/customer-action-center'
+import { Route as AuthenticatedConexionesRouteImport } from './routes/_authenticated/conexiones'
+import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
+import { Route as AuthenticatedCajaControlRouteImport } from './routes/_authenticated/caja-control'
+import { Route as AuthenticatedBusinessSimulatorRouteImport } from './routes/_authenticated/business-simulator'
+import { Route as AuthenticatedBusinessHealthRouteImport } from './routes/_authenticated/business-health'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as ApiWhatsappWebhookRouteImport } from './routes/api/whatsapp/webhook'
+import { Route as ApiStudioWorkflowRouteImport } from './routes/api/studio/workflow'
 import { Route as ApiQuotesFollowUpRouteImport } from './routes/api/quotes/follow-up'
 import { Route as ApiNotificationsLowStockCheckRouteImport } from './routes/api/notifications/low-stock-check'
+import { Route as ApiCronNuvaStudioWorkerRouteImport } from './routes/api/cron/nuva-studio-worker'
 import { Route as ApiCollectionsCheckOverdueRouteImport } from './routes/api/collections/check-overdue'
 import { Route as ApiBusinessExplainRouteImport } from './routes/api/business/explain'
 import { Route as ApiBillingSubscribeRunChargesRouteImport } from './routes/api/billing/subscribe/run-charges'
@@ -51,6 +100,9 @@ import { Route as ApiBillingPaymentsWebhookRouteImport } from './routes/api/bill
 import { Route as ApiBillingPaymentsDisconnectRouteImport } from './routes/api/billing/payments/disconnect'
 import { Route as ApiBillingPaymentsCreateRouteImport } from './routes/api/billing/payments/create'
 import { Route as ApiBillingPaymentsConnectRouteImport } from './routes/api/billing/payments/connect'
+import { Route as ApiBillingMercadopagoWebhookRouteImport } from './routes/api/billing/mercadopago/webhook'
+import { Route as ApiBillingMercadopagoManageRouteImport } from './routes/api/billing/mercadopago/manage'
+import { Route as ApiBillingMercadopagoCreateRouteImport } from './routes/api/billing/mercadopago/create'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -77,9 +129,54 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerRoute = OwnerRouteImport.update({
+  id: '/owner',
+  path: '/owner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticiasRoute = NoticiasRouteImport.update({
+  id: '/noticias',
+  path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExperienciaRoute = ExperienciaRouteImport.update({
+  id: '/experiencia',
+  path: '/experiencia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExperienceParallelRoute = ExperienceParallelRouteImport.update({
+  id: '/experience-parallel',
+  path: '/experience-parallel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExperienceRoute = ExperienceRouteImport.update({
+  id: '/experience',
+  path: '/experience',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutDemoRoute = CheckoutDemoRouteImport.update({
+  id: '/checkout-demo',
+  path: '/checkout-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -106,6 +203,16 @@ const ForoIndexRoute = ForoIndexRouteImport.update({
   path: '/foro/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicCatalogSlugRoute = PublicCatalogSlugRouteImport.update({
+  id: '/public-catalog/$slug',
+  path: '/public-catalog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerControlTowerRoute = OwnerControlTowerRouteImport.update({
+  id: '/control-tower',
+  path: '/control-tower',
+  getParentRoute: () => OwnerRoute,
+} as any)
 const NegociosSlugRoute = NegociosSlugRouteImport.update({
   id: '/negocios/$slug',
   path: '/negocios/$slug',
@@ -116,10 +223,61 @@ const ForoTopicIdRoute = ForoTopicIdRouteImport.update({
   path: '/foro/$topicId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTelemetryRoute = ApiTelemetryRouteImport.update({
+  id: '/api/telemetry',
+  path: '/api/telemetry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudioCampaignMetricsRoute =
+  ApiStudioCampaignMetricsRouteImport.update({
+    id: '/api/studio-campaign-metrics',
+    path: '/api/studio-campaign-metrics',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiStudioCampaignRoute = ApiStudioCampaignRouteImport.update({
+  id: '/api/studio-campaign',
+  path: '/api/studio-campaign',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudioAgentRoute = ApiStudioAgentRouteImport.update({
+  id: '/api/studio-agent',
+  path: '/api/studio-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudioRoute = ApiStudioRouteImport.update({
+  id: '/api/studio',
+  path: '/api/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiN8nDeliveryRoute = ApiN8nDeliveryRouteImport.update({
+  id: '/api/n8n-delivery',
+  path: '/api/n8n-delivery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiN8nRoute = ApiN8nRouteImport.update({
+  id: '/api/n8n',
+  path: '/api/n8n',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedShipmentsRoute = AuthenticatedShipmentsRouteImport.update({
+  id: '/shipments',
+  path: '/shipments',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedShiftsRoute = AuthenticatedShiftsRouteImport.update({
   id: '/shifts',
@@ -146,11 +304,64 @@ const AuthenticatedPurchasesRoute = AuthenticatedPurchasesRouteImport.update({
   path: '/purchases',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPricingCalculatorRoute =
+  AuthenticatedPricingCalculatorRouteImport.update({
+    id: '/pricing-calculator',
+    path: '/pricing-calculator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPeoplePayrollRoute =
+  AuthenticatedPeoplePayrollRouteImport.update({
+    id: '/people-payroll',
+    path: '/people-payroll',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleLifecycleRoute =
+  AuthenticatedPeopleLifecycleRouteImport.update({
+    id: '/people-lifecycle',
+    path: '/people-lifecycle',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleEmployeesRoute =
+  AuthenticatedPeopleEmployeesRouteImport.update({
+    id: '/people-employees',
+    path: '/people-employees',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleComplianceRoute =
+  AuthenticatedPeopleComplianceRouteImport.update({
+    id: '/people-compliance',
+    path: '/people-compliance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleAttendanceRoute =
+  AuthenticatedPeopleAttendanceRouteImport.update({
+    id: '/people-attendance',
+    path: '/people-attendance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPeopleRoute = AuthenticatedPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNuvaIntelligenceRoute =
+  AuthenticatedNuvaIntelligenceRouteImport.update({
+    id: '/nuva-intelligence',
+    path: '/nuva-intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMobileScannerRoute =
+  AuthenticatedMobileScannerRouteImport.update({
+    id: '/mobile-scanner',
+    path: '/mobile-scanner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMfaRequiredRoute =
   AuthenticatedMfaRequiredRouteImport.update({
     id: '/mfa-required',
@@ -162,21 +373,120 @@ const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInventarioOperacionesRoute =
+  AuthenticatedInventarioOperacionesRouteImport.update({
+    id: '/inventario-operaciones',
+    path: '/inventario-operaciones',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventarioConteoRoute =
+  AuthenticatedInventarioConteoRouteImport.update({
+    id: '/inventario-conteo',
+    path: '/inventario-conteo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHelpCenterRoute = AuthenticatedHelpCenterRouteImport.update({
+  id: '/help-center',
+  path: '/help-center',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFinancialIntegrityRoute =
+  AuthenticatedFinancialIntegrityRouteImport.update({
+    id: '/financial-integrity',
+    path: '/financial-integrity',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancialDashboardRoute =
+  AuthenticatedFinancialDashboardRouteImport.update({
+    id: '/financial-dashboard',
+    path: '/financial-dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancialControlRoute =
+  AuthenticatedFinancialControlRouteImport.update({
+    id: '/financial-control',
+    path: '/financial-control',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceProfessionalRoute =
+  AuthenticatedFinanceProfessionalRouteImport.update({
+    id: '/finance-professional',
+    path: '/finance-professional',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceAccountingRoute =
+  AuthenticatedFinanceAccountingRouteImport.update({
+    id: '/finance-accounting',
+    path: '/finance-accounting',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFinanceRoute = AuthenticatedFinanceRouteImport.update({
   id: '/finance',
   path: '/finance',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedExecutiveCommandCenterRoute =
+  AuthenticatedExecutiveCommandCenterRouteImport.update({
+    id: '/executive-command-center',
+    path: '/executive-command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCustomersIntelligenceRoute =
+  AuthenticatedCustomersIntelligenceRouteImport.update({
+    id: '/customers-intelligence',
+    path: '/customers-intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCustomerIntelligenceRoute =
+  AuthenticatedCustomerIntelligenceRouteImport.update({
+    id: '/customer-intelligence',
+    path: '/customer-intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCustomerActionCenterRoute =
+  AuthenticatedCustomerActionCenterRouteImport.update({
+    id: '/customer-action-center',
+    path: '/customer-action-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConexionesRoute = AuthenticatedConexionesRouteImport.update({
+  id: '/conexiones',
+  path: '/conexiones',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCajaControlRoute =
+  AuthenticatedCajaControlRouteImport.update({
+    id: '/caja-control',
+    path: '/caja-control',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBusinessSimulatorRoute =
+  AuthenticatedBusinessSimulatorRouteImport.update({
+    id: '/business-simulator',
+    path: '/business-simulator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBusinessHealthRoute =
+  AuthenticatedBusinessHealthRouteImport.update({
+    id: '/business-health',
+    path: '/business-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
   id: '/billing',
   path: '/billing',
@@ -203,6 +513,11 @@ const ApiWhatsappWebhookRoute = ApiWhatsappWebhookRouteImport.update({
   path: '/api/whatsapp/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStudioWorkflowRoute = ApiStudioWorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
+  getParentRoute: () => ApiStudioRoute,
+} as any)
 const ApiQuotesFollowUpRoute = ApiQuotesFollowUpRouteImport.update({
   id: '/api/quotes/follow-up',
   path: '/api/quotes/follow-up',
@@ -214,6 +529,11 @@ const ApiNotificationsLowStockCheckRoute =
     path: '/api/notifications/low-stock-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCronNuvaStudioWorkerRoute = ApiCronNuvaStudioWorkerRouteImport.update({
+  id: '/api/cron/nuva-studio-worker',
+  path: '/api/cron/nuva-studio-worker',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCollectionsCheckOverdueRoute =
   ApiCollectionsCheckOverdueRouteImport.update({
     id: '/api/collections/check-overdue',
@@ -273,11 +593,38 @@ const ApiBillingPaymentsConnectRoute =
     path: '/api/billing/payments/connect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiBillingMercadopagoWebhookRoute =
+  ApiBillingMercadopagoWebhookRouteImport.update({
+    id: '/api/billing/mercadopago/webhook',
+    path: '/api/billing/mercadopago/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingMercadopagoManageRoute =
+  ApiBillingMercadopagoManageRouteImport.update({
+    id: '/api/billing/mercadopago/manage',
+    path: '/api/billing/mercadopago/manage',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBillingMercadopagoCreateRoute =
+  ApiBillingMercadopagoCreateRouteImport.update({
+    id: '/api/billing/mercadopago/create',
+    path: '/api/billing/mercadopago/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/checkout-demo': typeof CheckoutDemoRoute
+  '/demo': typeof DemoRoute
+  '/experience': typeof ExperienceRoute
+  '/experience-parallel': typeof ExperienceParallelRoute
+  '/experiencia': typeof ExperienciaRoute
+  '/noticias': typeof NoticiasRoute
   '/onboarding': typeof OnboardingRoute
+  '/owner': typeof OwnerRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
@@ -287,27 +634,70 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
   '/billing': typeof AuthenticatedBillingRoute
+  '/business-health': typeof AuthenticatedBusinessHealthRoute
+  '/business-simulator': typeof AuthenticatedBusinessSimulatorRoute
+  '/caja-control': typeof AuthenticatedCajaControlRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
+  '/conexiones': typeof AuthenticatedConexionesRoute
+  '/customer-action-center': typeof AuthenticatedCustomerActionCenterRoute
+  '/customer-intelligence': typeof AuthenticatedCustomerIntelligenceRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/customers-intelligence': typeof AuthenticatedCustomersIntelligenceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/executive-command-center': typeof AuthenticatedExecutiveCommandCenterRoute
   '/finance': typeof AuthenticatedFinanceRoute
+  '/finance-accounting': typeof AuthenticatedFinanceAccountingRoute
+  '/finance-professional': typeof AuthenticatedFinanceProfessionalRoute
+  '/financial-control': typeof AuthenticatedFinancialControlRoute
+  '/financial-dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/financial-integrity': typeof AuthenticatedFinancialIntegrityRoute
+  '/help-center': typeof AuthenticatedHelpCenterRoute
+  '/inventario-conteo': typeof AuthenticatedInventarioConteoRoute
+  '/inventario-operaciones': typeof AuthenticatedInventarioOperacionesRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mfa-required': typeof AuthenticatedMfaRequiredRoute
+  '/mobile-scanner': typeof AuthenticatedMobileScannerRoute
+  '/nuva-intelligence': typeof AuthenticatedNuvaIntelligenceRoute
+  '/people': typeof AuthenticatedPeopleRoute
+  '/people-attendance': typeof AuthenticatedPeopleAttendanceRoute
+  '/people-compliance': typeof AuthenticatedPeopleComplianceRoute
+  '/people-employees': typeof AuthenticatedPeopleEmployeesRoute
+  '/people-lifecycle': typeof AuthenticatedPeopleLifecycleRoute
+  '/people-payroll': typeof AuthenticatedPeoplePayrollRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/pricing-calculator': typeof AuthenticatedPricingCalculatorRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
+  '/shipments': typeof AuthenticatedShipmentsRoute
+  '/studio': typeof AuthenticatedStudioRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/n8n': typeof ApiN8nRoute
+  '/api/n8n-delivery': typeof ApiN8nDeliveryRoute
+  '/api/studio': typeof ApiStudioRouteWithChildren
+  '/api/studio-agent': typeof ApiStudioAgentRoute
+  '/api/studio-campaign': typeof ApiStudioCampaignRoute
+  '/api/studio-campaign-metrics': typeof ApiStudioCampaignMetricsRoute
+  '/api/telemetry': typeof ApiTelemetryRoute
   '/foro/$topicId': typeof ForoTopicIdRoute
   '/negocios/$slug': typeof NegociosSlugRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
+  '/public-catalog/$slug': typeof PublicCatalogSlugRoute
   '/foro/': typeof ForoIndexRoute
   '/negocios/': typeof NegociosIndexRoute
   '/api/business/explain': typeof ApiBusinessExplainRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/cron/nuva-studio-worker': typeof ApiCronNuvaStudioWorkerRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
+  '/api/studio/workflow': typeof ApiStudioWorkflowRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
+  '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
+  '/api/billing/mercadopago/webhook': typeof ApiBillingMercadopagoWebhookRoute
   '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
@@ -320,7 +710,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/checkout-demo': typeof CheckoutDemoRoute
+  '/demo': typeof DemoRoute
+  '/experience': typeof ExperienceRoute
+  '/experience-parallel': typeof ExperienceParallelRoute
+  '/experiencia': typeof ExperienciaRoute
+  '/noticias': typeof NoticiasRoute
   '/onboarding': typeof OnboardingRoute
+  '/owner': typeof OwnerRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
@@ -330,27 +729,70 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
   '/billing': typeof AuthenticatedBillingRoute
+  '/business-health': typeof AuthenticatedBusinessHealthRoute
+  '/business-simulator': typeof AuthenticatedBusinessSimulatorRoute
+  '/caja-control': typeof AuthenticatedCajaControlRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
+  '/conexiones': typeof AuthenticatedConexionesRoute
+  '/customer-action-center': typeof AuthenticatedCustomerActionCenterRoute
+  '/customer-intelligence': typeof AuthenticatedCustomerIntelligenceRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/customers-intelligence': typeof AuthenticatedCustomersIntelligenceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/executive-command-center': typeof AuthenticatedExecutiveCommandCenterRoute
   '/finance': typeof AuthenticatedFinanceRoute
+  '/finance-accounting': typeof AuthenticatedFinanceAccountingRoute
+  '/finance-professional': typeof AuthenticatedFinanceProfessionalRoute
+  '/financial-control': typeof AuthenticatedFinancialControlRoute
+  '/financial-dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/financial-integrity': typeof AuthenticatedFinancialIntegrityRoute
+  '/help-center': typeof AuthenticatedHelpCenterRoute
+  '/inventario-conteo': typeof AuthenticatedInventarioConteoRoute
+  '/inventario-operaciones': typeof AuthenticatedInventarioOperacionesRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mfa-required': typeof AuthenticatedMfaRequiredRoute
+  '/mobile-scanner': typeof AuthenticatedMobileScannerRoute
+  '/nuva-intelligence': typeof AuthenticatedNuvaIntelligenceRoute
+  '/people': typeof AuthenticatedPeopleRoute
+  '/people-attendance': typeof AuthenticatedPeopleAttendanceRoute
+  '/people-compliance': typeof AuthenticatedPeopleComplianceRoute
+  '/people-employees': typeof AuthenticatedPeopleEmployeesRoute
+  '/people-lifecycle': typeof AuthenticatedPeopleLifecycleRoute
+  '/people-payroll': typeof AuthenticatedPeoplePayrollRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/pricing-calculator': typeof AuthenticatedPricingCalculatorRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
+  '/shipments': typeof AuthenticatedShipmentsRoute
+  '/studio': typeof AuthenticatedStudioRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/n8n': typeof ApiN8nRoute
+  '/api/n8n-delivery': typeof ApiN8nDeliveryRoute
+  '/api/studio': typeof ApiStudioRouteWithChildren
+  '/api/studio-agent': typeof ApiStudioAgentRoute
+  '/api/studio-campaign': typeof ApiStudioCampaignRoute
+  '/api/studio-campaign-metrics': typeof ApiStudioCampaignMetricsRoute
+  '/api/telemetry': typeof ApiTelemetryRoute
   '/foro/$topicId': typeof ForoTopicIdRoute
   '/negocios/$slug': typeof NegociosSlugRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
+  '/public-catalog/$slug': typeof PublicCatalogSlugRoute
   '/foro': typeof ForoIndexRoute
   '/negocios': typeof NegociosIndexRoute
   '/api/business/explain': typeof ApiBusinessExplainRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/cron/nuva-studio-worker': typeof ApiCronNuvaStudioWorkerRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
+  '/api/studio/workflow': typeof ApiStudioWorkflowRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
+  '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
+  '/api/billing/mercadopago/webhook': typeof ApiBillingMercadopagoWebhookRoute
   '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
@@ -365,7 +807,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/checkout-demo': typeof CheckoutDemoRoute
+  '/demo': typeof DemoRoute
+  '/experience': typeof ExperienceRoute
+  '/experience-parallel': typeof ExperienceParallelRoute
+  '/experiencia': typeof ExperienciaRoute
+  '/noticias': typeof NoticiasRoute
   '/onboarding': typeof OnboardingRoute
+  '/owner': typeof OwnerRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
@@ -375,27 +826,70 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
+  '/_authenticated/business-health': typeof AuthenticatedBusinessHealthRoute
+  '/_authenticated/business-simulator': typeof AuthenticatedBusinessSimulatorRoute
+  '/_authenticated/caja-control': typeof AuthenticatedCajaControlRoute
+  '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
+  '/_authenticated/conexiones': typeof AuthenticatedConexionesRoute
+  '/_authenticated/customer-action-center': typeof AuthenticatedCustomerActionCenterRoute
+  '/_authenticated/customer-intelligence': typeof AuthenticatedCustomerIntelligenceRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
+  '/_authenticated/customers-intelligence': typeof AuthenticatedCustomersIntelligenceRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/executive-command-center': typeof AuthenticatedExecutiveCommandCenterRoute
   '/_authenticated/finance': typeof AuthenticatedFinanceRoute
+  '/_authenticated/finance-accounting': typeof AuthenticatedFinanceAccountingRoute
+  '/_authenticated/finance-professional': typeof AuthenticatedFinanceProfessionalRoute
+  '/_authenticated/financial-control': typeof AuthenticatedFinancialControlRoute
+  '/_authenticated/financial-dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/_authenticated/financial-integrity': typeof AuthenticatedFinancialIntegrityRoute
+  '/_authenticated/help-center': typeof AuthenticatedHelpCenterRoute
+  '/_authenticated/inventario-conteo': typeof AuthenticatedInventarioConteoRoute
+  '/_authenticated/inventario-operaciones': typeof AuthenticatedInventarioOperacionesRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/mfa-required': typeof AuthenticatedMfaRequiredRoute
+  '/_authenticated/mobile-scanner': typeof AuthenticatedMobileScannerRoute
+  '/_authenticated/nuva-intelligence': typeof AuthenticatedNuvaIntelligenceRoute
+  '/_authenticated/people': typeof AuthenticatedPeopleRoute
+  '/_authenticated/people-attendance': typeof AuthenticatedPeopleAttendanceRoute
+  '/_authenticated/people-compliance': typeof AuthenticatedPeopleComplianceRoute
+  '/_authenticated/people-employees': typeof AuthenticatedPeopleEmployeesRoute
+  '/_authenticated/people-lifecycle': typeof AuthenticatedPeopleLifecycleRoute
+  '/_authenticated/people-payroll': typeof AuthenticatedPeoplePayrollRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
+  '/_authenticated/pricing-calculator': typeof AuthenticatedPricingCalculatorRoute
   '/_authenticated/purchases': typeof AuthenticatedPurchasesRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shifts': typeof AuthenticatedShiftsRoute
+  '/_authenticated/shipments': typeof AuthenticatedShipmentsRoute
+  '/_authenticated/studio': typeof AuthenticatedStudioRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/n8n': typeof ApiN8nRoute
+  '/api/n8n-delivery': typeof ApiN8nDeliveryRoute
+  '/api/studio': typeof ApiStudioRouteWithChildren
+  '/api/studio-agent': typeof ApiStudioAgentRoute
+  '/api/studio-campaign': typeof ApiStudioCampaignRoute
+  '/api/studio-campaign-metrics': typeof ApiStudioCampaignMetricsRoute
+  '/api/telemetry': typeof ApiTelemetryRoute
   '/foro/$topicId': typeof ForoTopicIdRoute
   '/negocios/$slug': typeof NegociosSlugRoute
+  '/owner/control-tower': typeof OwnerControlTowerRoute
+  '/public-catalog/$slug': typeof PublicCatalogSlugRoute
   '/foro/': typeof ForoIndexRoute
   '/negocios/': typeof NegociosIndexRoute
   '/api/business/explain': typeof ApiBusinessExplainRoute
   '/api/collections/check-overdue': typeof ApiCollectionsCheckOverdueRoute
+  '/api/cron/nuva-studio-worker': typeof ApiCronNuvaStudioWorkerRoute
   '/api/notifications/low-stock-check': typeof ApiNotificationsLowStockCheckRoute
   '/api/quotes/follow-up': typeof ApiQuotesFollowUpRoute
+  '/api/studio/workflow': typeof ApiStudioWorkflowRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
+  '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
+  '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
+  '/api/billing/mercadopago/webhook': typeof ApiBillingMercadopagoWebhookRoute
   '/api/billing/payments/connect': typeof ApiBillingPaymentsConnectRoute
   '/api/billing/payments/create': typeof ApiBillingPaymentsCreateRoute
   '/api/billing/payments/disconnect': typeof ApiBillingPaymentsDisconnectRoute
@@ -410,7 +904,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/checkout'
+    | '/checkout-demo'
+    | '/demo'
+    | '/experience'
+    | '/experience-parallel'
+    | '/experiencia'
+    | '/noticias'
     | '/onboarding'
+    | '/owner'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/select-business'
@@ -420,27 +923,70 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/automations'
     | '/billing'
+    | '/business-health'
+    | '/business-simulator'
+    | '/caja-control'
+    | '/catalog'
+    | '/conexiones'
+    | '/customer-action-center'
+    | '/customer-intelligence'
     | '/customers'
+    | '/customers-intelligence'
     | '/dashboard'
+    | '/executive-command-center'
     | '/finance'
+    | '/finance-accounting'
+    | '/finance-professional'
+    | '/financial-control'
+    | '/financial-dashboard'
+    | '/financial-integrity'
+    | '/help-center'
+    | '/inventario-conteo'
+    | '/inventario-operaciones'
     | '/inventory'
     | '/mfa-required'
+    | '/mobile-scanner'
+    | '/nuva-intelligence'
+    | '/people'
+    | '/people-attendance'
+    | '/people-compliance'
+    | '/people-employees'
+    | '/people-lifecycle'
+    | '/people-payroll'
     | '/pos'
+    | '/pricing-calculator'
     | '/purchases'
     | '/quotes'
     | '/sales'
     | '/settings'
     | '/shifts'
+    | '/shipments'
+    | '/studio'
     | '/api/chat'
+    | '/api/health'
+    | '/api/n8n'
+    | '/api/n8n-delivery'
+    | '/api/studio'
+    | '/api/studio-agent'
+    | '/api/studio-campaign'
+    | '/api/studio-campaign-metrics'
+    | '/api/telemetry'
     | '/foro/$topicId'
     | '/negocios/$slug'
+    | '/owner/control-tower'
+    | '/public-catalog/$slug'
     | '/foro/'
     | '/negocios/'
     | '/api/business/explain'
     | '/api/collections/check-overdue'
+    | '/api/cron/nuva-studio-worker'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
+    | '/api/studio/workflow'
     | '/api/whatsapp/webhook'
+    | '/api/billing/mercadopago/create'
+    | '/api/billing/mercadopago/manage'
+    | '/api/billing/mercadopago/webhook'
     | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
@@ -453,7 +999,16 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/checkout'
+    | '/checkout-demo'
+    | '/demo'
+    | '/experience'
+    | '/experience-parallel'
+    | '/experiencia'
+    | '/noticias'
     | '/onboarding'
+    | '/owner'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/select-business'
@@ -463,27 +1018,70 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/automations'
     | '/billing'
+    | '/business-health'
+    | '/business-simulator'
+    | '/caja-control'
+    | '/catalog'
+    | '/conexiones'
+    | '/customer-action-center'
+    | '/customer-intelligence'
     | '/customers'
+    | '/customers-intelligence'
     | '/dashboard'
+    | '/executive-command-center'
     | '/finance'
+    | '/finance-accounting'
+    | '/finance-professional'
+    | '/financial-control'
+    | '/financial-dashboard'
+    | '/financial-integrity'
+    | '/help-center'
+    | '/inventario-conteo'
+    | '/inventario-operaciones'
     | '/inventory'
     | '/mfa-required'
+    | '/mobile-scanner'
+    | '/nuva-intelligence'
+    | '/people'
+    | '/people-attendance'
+    | '/people-compliance'
+    | '/people-employees'
+    | '/people-lifecycle'
+    | '/people-payroll'
     | '/pos'
+    | '/pricing-calculator'
     | '/purchases'
     | '/quotes'
     | '/sales'
     | '/settings'
     | '/shifts'
+    | '/shipments'
+    | '/studio'
     | '/api/chat'
+    | '/api/health'
+    | '/api/n8n'
+    | '/api/n8n-delivery'
+    | '/api/studio'
+    | '/api/studio-agent'
+    | '/api/studio-campaign'
+    | '/api/studio-campaign-metrics'
+    | '/api/telemetry'
     | '/foro/$topicId'
     | '/negocios/$slug'
+    | '/owner/control-tower'
+    | '/public-catalog/$slug'
     | '/foro'
     | '/negocios'
     | '/api/business/explain'
     | '/api/collections/check-overdue'
+    | '/api/cron/nuva-studio-worker'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
+    | '/api/studio/workflow'
     | '/api/whatsapp/webhook'
+    | '/api/billing/mercadopago/create'
+    | '/api/billing/mercadopago/manage'
+    | '/api/billing/mercadopago/webhook'
     | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
@@ -497,7 +1095,16 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/checkout'
+    | '/checkout-demo'
+    | '/demo'
+    | '/experience'
+    | '/experience-parallel'
+    | '/experiencia'
+    | '/noticias'
     | '/onboarding'
+    | '/owner'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/select-business'
@@ -507,27 +1114,70 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/automations'
     | '/_authenticated/billing'
+    | '/_authenticated/business-health'
+    | '/_authenticated/business-simulator'
+    | '/_authenticated/caja-control'
+    | '/_authenticated/catalog'
+    | '/_authenticated/conexiones'
+    | '/_authenticated/customer-action-center'
+    | '/_authenticated/customer-intelligence'
     | '/_authenticated/customers'
+    | '/_authenticated/customers-intelligence'
     | '/_authenticated/dashboard'
+    | '/_authenticated/executive-command-center'
     | '/_authenticated/finance'
+    | '/_authenticated/finance-accounting'
+    | '/_authenticated/finance-professional'
+    | '/_authenticated/financial-control'
+    | '/_authenticated/financial-dashboard'
+    | '/_authenticated/financial-integrity'
+    | '/_authenticated/help-center'
+    | '/_authenticated/inventario-conteo'
+    | '/_authenticated/inventario-operaciones'
     | '/_authenticated/inventory'
     | '/_authenticated/mfa-required'
+    | '/_authenticated/mobile-scanner'
+    | '/_authenticated/nuva-intelligence'
+    | '/_authenticated/people'
+    | '/_authenticated/people-attendance'
+    | '/_authenticated/people-compliance'
+    | '/_authenticated/people-employees'
+    | '/_authenticated/people-lifecycle'
+    | '/_authenticated/people-payroll'
     | '/_authenticated/pos'
+    | '/_authenticated/pricing-calculator'
     | '/_authenticated/purchases'
     | '/_authenticated/quotes'
     | '/_authenticated/sales'
     | '/_authenticated/settings'
     | '/_authenticated/shifts'
+    | '/_authenticated/shipments'
+    | '/_authenticated/studio'
     | '/api/chat'
+    | '/api/health'
+    | '/api/n8n'
+    | '/api/n8n-delivery'
+    | '/api/studio'
+    | '/api/studio-agent'
+    | '/api/studio-campaign'
+    | '/api/studio-campaign-metrics'
+    | '/api/telemetry'
     | '/foro/$topicId'
     | '/negocios/$slug'
+    | '/owner/control-tower'
+    | '/public-catalog/$slug'
     | '/foro/'
     | '/negocios/'
     | '/api/business/explain'
     | '/api/collections/check-overdue'
+    | '/api/cron/nuva-studio-worker'
     | '/api/notifications/low-stock-check'
     | '/api/quotes/follow-up'
+    | '/api/studio/workflow'
     | '/api/whatsapp/webhook'
+    | '/api/billing/mercadopago/create'
+    | '/api/billing/mercadopago/manage'
+    | '/api/billing/mercadopago/webhook'
     | '/api/billing/payments/connect'
     | '/api/billing/payments/create'
     | '/api/billing/payments/disconnect'
@@ -542,22 +1192,44 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CheckoutRoute: typeof CheckoutRoute
+  CheckoutDemoRoute: typeof CheckoutDemoRoute
+  DemoRoute: typeof DemoRoute
+  ExperienceRoute: typeof ExperienceRoute
+  ExperienceParallelRoute: typeof ExperienceParallelRoute
+  ExperienciaRoute: typeof ExperienciaRoute
+  NoticiasRoute: typeof NoticiasRoute
   OnboardingRoute: typeof OnboardingRoute
+  OwnerRoute: typeof OwnerRouteWithChildren
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SelectBusinessRoute: typeof SelectBusinessRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiN8nRoute: typeof ApiN8nRoute
+  ApiN8nDeliveryRoute: typeof ApiN8nDeliveryRoute
+  ApiStudioRoute: typeof ApiStudioRouteWithChildren
+  ApiStudioAgentRoute: typeof ApiStudioAgentRoute
+  ApiStudioCampaignRoute: typeof ApiStudioCampaignRoute
+  ApiStudioCampaignMetricsRoute: typeof ApiStudioCampaignMetricsRoute
+  ApiTelemetryRoute: typeof ApiTelemetryRoute
   ForoTopicIdRoute: typeof ForoTopicIdRoute
   NegociosSlugRoute: typeof NegociosSlugRoute
+  PublicCatalogSlugRoute: typeof PublicCatalogSlugRoute
   ForoIndexRoute: typeof ForoIndexRoute
   NegociosIndexRoute: typeof NegociosIndexRoute
   ApiBusinessExplainRoute: typeof ApiBusinessExplainRoute
   ApiCollectionsCheckOverdueRoute: typeof ApiCollectionsCheckOverdueRoute
+  ApiCronNuvaStudioWorkerRoute: typeof ApiCronNuvaStudioWorkerRoute
   ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
   ApiQuotesFollowUpRoute: typeof ApiQuotesFollowUpRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
+  ApiBillingMercadopagoCreateRoute: typeof ApiBillingMercadopagoCreateRoute
+  ApiBillingMercadopagoManageRoute: typeof ApiBillingMercadopagoManageRoute
+  ApiBillingMercadopagoWebhookRoute: typeof ApiBillingMercadopagoWebhookRoute
   ApiBillingPaymentsConnectRoute: typeof ApiBillingPaymentsConnectRoute
   ApiBillingPaymentsCreateRoute: typeof ApiBillingPaymentsCreateRoute
   ApiBillingPaymentsDisconnectRoute: typeof ApiBillingPaymentsDisconnectRoute
@@ -605,11 +1277,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner': {
+      id: '/owner'
+      path: '/owner'
+      fullPath: '/owner'
+      preLoaderRoute: typeof OwnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/noticias': {
+      id: '/noticias'
+      path: '/noticias'
+      fullPath: '/noticias'
+      preLoaderRoute: typeof NoticiasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experiencia': {
+      id: '/experiencia'
+      path: '/experiencia'
+      fullPath: '/experiencia'
+      preLoaderRoute: typeof ExperienciaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experience-parallel': {
+      id: '/experience-parallel'
+      path: '/experience-parallel'
+      fullPath: '/experience-parallel'
+      preLoaderRoute: typeof ExperienceParallelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experience': {
+      id: '/experience'
+      path: '/experience'
+      fullPath: '/experience'
+      preLoaderRoute: typeof ExperienceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout-demo': {
+      id: '/checkout-demo'
+      path: '/checkout-demo'
+      fullPath: '/checkout-demo'
+      preLoaderRoute: typeof CheckoutDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -647,6 +1382,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/public-catalog/$slug': {
+      id: '/public-catalog/$slug'
+      path: '/public-catalog/$slug'
+      fullPath: '/public-catalog/$slug'
+      preLoaderRoute: typeof PublicCatalogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/control-tower': {
+      id: '/owner/control-tower'
+      path: '/control-tower'
+      fullPath: '/owner/control-tower'
+      preLoaderRoute: typeof OwnerControlTowerRouteImport
+      parentRoute: typeof OwnerRoute
+    }
     '/negocios/$slug': {
       id: '/negocios/$slug'
       path: '/negocios/$slug'
@@ -661,12 +1410,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForoTopicIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/telemetry': {
+      id: '/api/telemetry'
+      path: '/api/telemetry'
+      fullPath: '/api/telemetry'
+      preLoaderRoute: typeof ApiTelemetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/studio-campaign-metrics': {
+      id: '/api/studio-campaign-metrics'
+      path: '/api/studio-campaign-metrics'
+      fullPath: '/api/studio-campaign-metrics'
+      preLoaderRoute: typeof ApiStudioCampaignMetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/studio-campaign': {
+      id: '/api/studio-campaign'
+      path: '/api/studio-campaign'
+      fullPath: '/api/studio-campaign'
+      preLoaderRoute: typeof ApiStudioCampaignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/studio-agent': {
+      id: '/api/studio-agent'
+      path: '/api/studio-agent'
+      fullPath: '/api/studio-agent'
+      preLoaderRoute: typeof ApiStudioAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/studio': {
+      id: '/api/studio'
+      path: '/api/studio'
+      fullPath: '/api/studio'
+      preLoaderRoute: typeof ApiStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/n8n-delivery': {
+      id: '/api/n8n-delivery'
+      path: '/api/n8n-delivery'
+      fullPath: '/api/n8n-delivery'
+      preLoaderRoute: typeof ApiN8nDeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/n8n': {
+      id: '/api/n8n'
+      path: '/api/n8n'
+      fullPath: '/api/n8n'
+      preLoaderRoute: typeof ApiN8nRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/studio': {
+      id: '/_authenticated/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof AuthenticatedStudioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/shipments': {
+      id: '/_authenticated/shipments'
+      path: '/shipments'
+      fullPath: '/shipments'
+      preLoaderRoute: typeof AuthenticatedShipmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/shifts': {
       id: '/_authenticated/shifts'
@@ -703,11 +1522,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPurchasesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pricing-calculator': {
+      id: '/_authenticated/pricing-calculator'
+      path: '/pricing-calculator'
+      fullPath: '/pricing-calculator'
+      preLoaderRoute: typeof AuthenticatedPricingCalculatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/pos': {
       id: '/_authenticated/pos'
       path: '/pos'
       fullPath: '/pos'
       preLoaderRoute: typeof AuthenticatedPosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-payroll': {
+      id: '/_authenticated/people-payroll'
+      path: '/people-payroll'
+      fullPath: '/people-payroll'
+      preLoaderRoute: typeof AuthenticatedPeoplePayrollRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-lifecycle': {
+      id: '/_authenticated/people-lifecycle'
+      path: '/people-lifecycle'
+      fullPath: '/people-lifecycle'
+      preLoaderRoute: typeof AuthenticatedPeopleLifecycleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-employees': {
+      id: '/_authenticated/people-employees'
+      path: '/people-employees'
+      fullPath: '/people-employees'
+      preLoaderRoute: typeof AuthenticatedPeopleEmployeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-compliance': {
+      id: '/_authenticated/people-compliance'
+      path: '/people-compliance'
+      fullPath: '/people-compliance'
+      preLoaderRoute: typeof AuthenticatedPeopleComplianceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people-attendance': {
+      id: '/_authenticated/people-attendance'
+      path: '/people-attendance'
+      fullPath: '/people-attendance'
+      preLoaderRoute: typeof AuthenticatedPeopleAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people': {
+      id: '/_authenticated/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof AuthenticatedPeopleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/nuva-intelligence': {
+      id: '/_authenticated/nuva-intelligence'
+      path: '/nuva-intelligence'
+      fullPath: '/nuva-intelligence'
+      preLoaderRoute: typeof AuthenticatedNuvaIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mobile-scanner': {
+      id: '/_authenticated/mobile-scanner'
+      path: '/mobile-scanner'
+      fullPath: '/mobile-scanner'
+      preLoaderRoute: typeof AuthenticatedMobileScannerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/mfa-required': {
@@ -724,11 +1606,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventario-operaciones': {
+      id: '/_authenticated/inventario-operaciones'
+      path: '/inventario-operaciones'
+      fullPath: '/inventario-operaciones'
+      preLoaderRoute: typeof AuthenticatedInventarioOperacionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventario-conteo': {
+      id: '/_authenticated/inventario-conteo'
+      path: '/inventario-conteo'
+      fullPath: '/inventario-conteo'
+      preLoaderRoute: typeof AuthenticatedInventarioConteoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/help-center': {
+      id: '/_authenticated/help-center'
+      path: '/help-center'
+      fullPath: '/help-center'
+      preLoaderRoute: typeof AuthenticatedHelpCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financial-integrity': {
+      id: '/_authenticated/financial-integrity'
+      path: '/financial-integrity'
+      fullPath: '/financial-integrity'
+      preLoaderRoute: typeof AuthenticatedFinancialIntegrityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financial-dashboard': {
+      id: '/_authenticated/financial-dashboard'
+      path: '/financial-dashboard'
+      fullPath: '/financial-dashboard'
+      preLoaderRoute: typeof AuthenticatedFinancialDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financial-control': {
+      id: '/_authenticated/financial-control'
+      path: '/financial-control'
+      fullPath: '/financial-control'
+      preLoaderRoute: typeof AuthenticatedFinancialControlRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance-professional': {
+      id: '/_authenticated/finance-professional'
+      path: '/finance-professional'
+      fullPath: '/finance-professional'
+      preLoaderRoute: typeof AuthenticatedFinanceProfessionalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance-accounting': {
+      id: '/_authenticated/finance-accounting'
+      path: '/finance-accounting'
+      fullPath: '/finance-accounting'
+      preLoaderRoute: typeof AuthenticatedFinanceAccountingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/finance': {
       id: '/_authenticated/finance'
       path: '/finance'
       fullPath: '/finance'
       preLoaderRoute: typeof AuthenticatedFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/executive-command-center': {
+      id: '/_authenticated/executive-command-center'
+      path: '/executive-command-center'
+      fullPath: '/executive-command-center'
+      preLoaderRoute: typeof AuthenticatedExecutiveCommandCenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -738,11 +1683,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/customers-intelligence': {
+      id: '/_authenticated/customers-intelligence'
+      path: '/customers-intelligence'
+      fullPath: '/customers-intelligence'
+      preLoaderRoute: typeof AuthenticatedCustomersIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/customers': {
       id: '/_authenticated/customers'
       path: '/customers'
       fullPath: '/customers'
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customer-intelligence': {
+      id: '/_authenticated/customer-intelligence'
+      path: '/customer-intelligence'
+      fullPath: '/customer-intelligence'
+      preLoaderRoute: typeof AuthenticatedCustomerIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customer-action-center': {
+      id: '/_authenticated/customer-action-center'
+      path: '/customer-action-center'
+      fullPath: '/customer-action-center'
+      preLoaderRoute: typeof AuthenticatedCustomerActionCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/conexiones': {
+      id: '/_authenticated/conexiones'
+      path: '/conexiones'
+      fullPath: '/conexiones'
+      preLoaderRoute: typeof AuthenticatedConexionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/catalog': {
+      id: '/_authenticated/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof AuthenticatedCatalogRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/caja-control': {
+      id: '/_authenticated/caja-control'
+      path: '/caja-control'
+      fullPath: '/caja-control'
+      preLoaderRoute: typeof AuthenticatedCajaControlRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/business-simulator': {
+      id: '/_authenticated/business-simulator'
+      path: '/business-simulator'
+      fullPath: '/business-simulator'
+      preLoaderRoute: typeof AuthenticatedBusinessSimulatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/business-health': {
+      id: '/_authenticated/business-health'
+      path: '/business-health'
+      fullPath: '/business-health'
+      preLoaderRoute: typeof AuthenticatedBusinessHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/billing': {
@@ -780,6 +1781,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/studio/workflow': {
+      id: '/api/studio/workflow'
+      path: '/workflow'
+      fullPath: '/api/studio/workflow'
+      preLoaderRoute: typeof ApiStudioWorkflowRouteImport
+      parentRoute: typeof ApiStudioRoute
+    }
     '/api/quotes/follow-up': {
       id: '/api/quotes/follow-up'
       path: '/api/quotes/follow-up'
@@ -792,6 +1800,13 @@ declare module '@tanstack/react-router' {
       path: '/api/notifications/low-stock-check'
       fullPath: '/api/notifications/low-stock-check'
       preLoaderRoute: typeof ApiNotificationsLowStockCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/nuva-studio-worker': {
+      id: '/api/cron/nuva-studio-worker'
+      path: '/api/cron/nuva-studio-worker'
+      fullPath: '/api/cron/nuva-studio-worker'
+      preLoaderRoute: typeof ApiCronNuvaStudioWorkerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/collections/check-overdue': {
@@ -864,6 +1879,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBillingPaymentsConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/mercadopago/webhook': {
+      id: '/api/billing/mercadopago/webhook'
+      path: '/api/billing/mercadopago/webhook'
+      fullPath: '/api/billing/mercadopago/webhook'
+      preLoaderRoute: typeof ApiBillingMercadopagoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/mercadopago/manage': {
+      id: '/api/billing/mercadopago/manage'
+      path: '/api/billing/mercadopago/manage'
+      fullPath: '/api/billing/mercadopago/manage'
+      preLoaderRoute: typeof ApiBillingMercadopagoManageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/mercadopago/create': {
+      id: '/api/billing/mercadopago/create'
+      path: '/api/billing/mercadopago/create'
+      fullPath: '/api/billing/mercadopago/create'
+      preLoaderRoute: typeof ApiBillingMercadopagoCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -872,17 +1908,45 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
+  AuthenticatedBusinessHealthRoute: typeof AuthenticatedBusinessHealthRoute
+  AuthenticatedBusinessSimulatorRoute: typeof AuthenticatedBusinessSimulatorRoute
+  AuthenticatedCajaControlRoute: typeof AuthenticatedCajaControlRoute
+  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
+  AuthenticatedConexionesRoute: typeof AuthenticatedConexionesRoute
+  AuthenticatedCustomerActionCenterRoute: typeof AuthenticatedCustomerActionCenterRoute
+  AuthenticatedCustomerIntelligenceRoute: typeof AuthenticatedCustomerIntelligenceRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
+  AuthenticatedCustomersIntelligenceRoute: typeof AuthenticatedCustomersIntelligenceRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedExecutiveCommandCenterRoute: typeof AuthenticatedExecutiveCommandCenterRoute
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
+  AuthenticatedFinanceAccountingRoute: typeof AuthenticatedFinanceAccountingRoute
+  AuthenticatedFinanceProfessionalRoute: typeof AuthenticatedFinanceProfessionalRoute
+  AuthenticatedFinancialControlRoute: typeof AuthenticatedFinancialControlRoute
+  AuthenticatedFinancialDashboardRoute: typeof AuthenticatedFinancialDashboardRoute
+  AuthenticatedFinancialIntegrityRoute: typeof AuthenticatedFinancialIntegrityRoute
+  AuthenticatedHelpCenterRoute: typeof AuthenticatedHelpCenterRoute
+  AuthenticatedInventarioConteoRoute: typeof AuthenticatedInventarioConteoRoute
+  AuthenticatedInventarioOperacionesRoute: typeof AuthenticatedInventarioOperacionesRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMfaRequiredRoute: typeof AuthenticatedMfaRequiredRoute
+  AuthenticatedMobileScannerRoute: typeof AuthenticatedMobileScannerRoute
+  AuthenticatedNuvaIntelligenceRoute: typeof AuthenticatedNuvaIntelligenceRoute
+  AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
+  AuthenticatedPeopleAttendanceRoute: typeof AuthenticatedPeopleAttendanceRoute
+  AuthenticatedPeopleComplianceRoute: typeof AuthenticatedPeopleComplianceRoute
+  AuthenticatedPeopleEmployeesRoute: typeof AuthenticatedPeopleEmployeesRoute
+  AuthenticatedPeopleLifecycleRoute: typeof AuthenticatedPeopleLifecycleRoute
+  AuthenticatedPeoplePayrollRoute: typeof AuthenticatedPeoplePayrollRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
+  AuthenticatedPricingCalculatorRoute: typeof AuthenticatedPricingCalculatorRoute
   AuthenticatedPurchasesRoute: typeof AuthenticatedPurchasesRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShiftsRoute: typeof AuthenticatedShiftsRoute
+  AuthenticatedShipmentsRoute: typeof AuthenticatedShipmentsRoute
+  AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -890,42 +1954,119 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
+  AuthenticatedBusinessHealthRoute: AuthenticatedBusinessHealthRoute,
+  AuthenticatedBusinessSimulatorRoute: AuthenticatedBusinessSimulatorRoute,
+  AuthenticatedCajaControlRoute: AuthenticatedCajaControlRoute,
+  AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
+  AuthenticatedConexionesRoute: AuthenticatedConexionesRoute,
+  AuthenticatedCustomerActionCenterRoute:
+    AuthenticatedCustomerActionCenterRoute,
+  AuthenticatedCustomerIntelligenceRoute:
+    AuthenticatedCustomerIntelligenceRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
+  AuthenticatedCustomersIntelligenceRoute:
+    AuthenticatedCustomersIntelligenceRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedExecutiveCommandCenterRoute:
+    AuthenticatedExecutiveCommandCenterRoute,
   AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
+  AuthenticatedFinanceAccountingRoute: AuthenticatedFinanceAccountingRoute,
+  AuthenticatedFinanceProfessionalRoute: AuthenticatedFinanceProfessionalRoute,
+  AuthenticatedFinancialControlRoute: AuthenticatedFinancialControlRoute,
+  AuthenticatedFinancialDashboardRoute: AuthenticatedFinancialDashboardRoute,
+  AuthenticatedFinancialIntegrityRoute: AuthenticatedFinancialIntegrityRoute,
+  AuthenticatedHelpCenterRoute: AuthenticatedHelpCenterRoute,
+  AuthenticatedInventarioConteoRoute: AuthenticatedInventarioConteoRoute,
+  AuthenticatedInventarioOperacionesRoute:
+    AuthenticatedInventarioOperacionesRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMfaRequiredRoute: AuthenticatedMfaRequiredRoute,
+  AuthenticatedMobileScannerRoute: AuthenticatedMobileScannerRoute,
+  AuthenticatedNuvaIntelligenceRoute: AuthenticatedNuvaIntelligenceRoute,
+  AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
+  AuthenticatedPeopleAttendanceRoute: AuthenticatedPeopleAttendanceRoute,
+  AuthenticatedPeopleComplianceRoute: AuthenticatedPeopleComplianceRoute,
+  AuthenticatedPeopleEmployeesRoute: AuthenticatedPeopleEmployeesRoute,
+  AuthenticatedPeopleLifecycleRoute: AuthenticatedPeopleLifecycleRoute,
+  AuthenticatedPeoplePayrollRoute: AuthenticatedPeoplePayrollRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
+  AuthenticatedPricingCalculatorRoute: AuthenticatedPricingCalculatorRoute,
   AuthenticatedPurchasesRoute: AuthenticatedPurchasesRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShiftsRoute: AuthenticatedShiftsRoute,
+  AuthenticatedShipmentsRoute: AuthenticatedShipmentsRoute,
+  AuthenticatedStudioRoute: AuthenticatedStudioRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface OwnerRouteChildren {
+  OwnerControlTowerRoute: typeof OwnerControlTowerRoute
+}
+
+const OwnerRouteChildren: OwnerRouteChildren = {
+  OwnerControlTowerRoute: OwnerControlTowerRoute,
+}
+
+const OwnerRouteWithChildren = OwnerRoute._addFileChildren(OwnerRouteChildren)
+
+interface ApiStudioRouteChildren {
+  ApiStudioWorkflowRoute: typeof ApiStudioWorkflowRoute
+}
+
+const ApiStudioRouteChildren: ApiStudioRouteChildren = {
+  ApiStudioWorkflowRoute: ApiStudioWorkflowRoute,
+}
+
+const ApiStudioRouteWithChildren = ApiStudioRoute._addFileChildren(
+  ApiStudioRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CheckoutRoute: CheckoutRoute,
+  CheckoutDemoRoute: CheckoutDemoRoute,
+  DemoRoute: DemoRoute,
+  ExperienceRoute: ExperienceRoute,
+  ExperienceParallelRoute: ExperienceParallelRoute,
+  ExperienciaRoute: ExperienciaRoute,
+  NoticiasRoute: NoticiasRoute,
   OnboardingRoute: OnboardingRoute,
+  OwnerRoute: OwnerRouteWithChildren,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SelectBusinessRoute: SelectBusinessRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiN8nRoute: ApiN8nRoute,
+  ApiN8nDeliveryRoute: ApiN8nDeliveryRoute,
+  ApiStudioRoute: ApiStudioRouteWithChildren,
+  ApiStudioAgentRoute: ApiStudioAgentRoute,
+  ApiStudioCampaignRoute: ApiStudioCampaignRoute,
+  ApiStudioCampaignMetricsRoute: ApiStudioCampaignMetricsRoute,
+  ApiTelemetryRoute: ApiTelemetryRoute,
   ForoTopicIdRoute: ForoTopicIdRoute,
   NegociosSlugRoute: NegociosSlugRoute,
+  PublicCatalogSlugRoute: PublicCatalogSlugRoute,
   ForoIndexRoute: ForoIndexRoute,
   NegociosIndexRoute: NegociosIndexRoute,
   ApiBusinessExplainRoute: ApiBusinessExplainRoute,
   ApiCollectionsCheckOverdueRoute: ApiCollectionsCheckOverdueRoute,
+  ApiCronNuvaStudioWorkerRoute: ApiCronNuvaStudioWorkerRoute,
   ApiNotificationsLowStockCheckRoute: ApiNotificationsLowStockCheckRoute,
   ApiQuotesFollowUpRoute: ApiQuotesFollowUpRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
+  ApiBillingMercadopagoCreateRoute: ApiBillingMercadopagoCreateRoute,
+  ApiBillingMercadopagoManageRoute: ApiBillingMercadopagoManageRoute,
+  ApiBillingMercadopagoWebhookRoute: ApiBillingMercadopagoWebhookRoute,
   ApiBillingPaymentsConnectRoute: ApiBillingPaymentsConnectRoute,
   ApiBillingPaymentsCreateRoute: ApiBillingPaymentsCreateRoute,
   ApiBillingPaymentsDisconnectRoute: ApiBillingPaymentsDisconnectRoute,

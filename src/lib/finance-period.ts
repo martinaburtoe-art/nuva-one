@@ -12,16 +12,29 @@ export function getMonthBounds(year: number, monthIndex: number) {
   };
 }
 
+function taxDateComponents(documentDate: string | Date): { year: number; month: number } | null {
+  if (documentDate instanceof Date) {
+    if (Number.isNaN(documentDate.getTime())) return null;
+    return { year: documentDate.getFullYear(), month: documentDate.getMonth() };
+  }
+  if (typeof documentDate === "string") {
+    const isoDate = /^(\d{4})-(\d{2})-\d{2}$/.exec(documentDate);
+    if (isoDate) return { year: Number(isoDate[1]), month: Number(isoDate[2]) - 1 };
+    const parsed = new Date(documentDate);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return { year: parsed.getFullYear(), month: parsed.getMonth() };
+  }
+  return null;
+}
+
 export function isInTaxPeriod(
   documentDate: string | Date | null | undefined,
   year: number,
   monthIndex: number,
 ) {
   if (!documentDate) return false;
-  const date = new Date(documentDate);
-  if (Number.isNaN(date.getTime())) return false;
-  const { start, end } = getMonthBounds(year, monthIndex);
-  return date >= start && date < end;
+  const parts = taxDateComponents(documentDate);
+  return parts !== null && parts.year === year && parts.month === monthIndex;
 }
 
 export function filterTaxDocumentsForPeriod(
