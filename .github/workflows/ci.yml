@@ -83,7 +83,7 @@ jobs:
           set -euo pipefail
           for attempt in 1 2 3 4; do
             echo "Generating database types (attempt ${attempt}/4)"
-            if supabase gen types typescript --local > /tmp/generated-supabase-types.ts; then
+            if timeout 120s supabase gen types typescript --local > /tmp/generated-supabase-types.ts; then
               cp /tmp/generated-supabase-types.ts src/integrations/supabase/types.ts
               exit 0
             fi
@@ -115,7 +115,7 @@ jobs:
           set -o pipefail
           echo "Running destructive recovery drill against the ephemeral local database only"
           supabase db reset --local
-          supabase gen types typescript --local > /tmp/recovery-supabase-types.ts
+          timeout 120s supabase gen types typescript --local > /tmp/recovery-supabase-types.ts
           cp /tmp/recovery-supabase-types.ts src/integrations/supabase/types.ts
           supabase test db
       - name: Upload generated database types
