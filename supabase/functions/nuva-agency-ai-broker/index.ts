@@ -110,7 +110,7 @@ async function providerConfig(provider: string, cloudflareAccountId: string | nu
   }
   if (provider === "cloudflare") {
     const token = Deno.env.get("CLOUDFLARE_API_TOKEN");
-    const configuredAccount = cloudflareAccountId || Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
+    const configuredAccount = cloudflareAccountId || Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || null;
     if (!token) return null;
     const account = await resolveCloudflareAccount(token, configuredAccount);
     return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account.accountId + "/ai/run/" + account.model,
