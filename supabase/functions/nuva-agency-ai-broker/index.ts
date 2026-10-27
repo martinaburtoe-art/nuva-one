@@ -228,7 +228,7 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
     try { providerError = JSON.parse(rawError)?.error ?? {}; } catch { /* respuesta no JSON */ }
     // Solo se exponen campos de diagnóstico del proveedor; nunca headers ni credenciales.
     const safeField = (value: unknown) => typeof value === "string"
-      ? value.replace(/[^a-zA-Z0-9_. -]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 160)
+      ? value.replace(/[^a-zA-Z0-9_. -]/g, " ").replace(/\s+/g, " ").trim().slice(0, 160)
       : undefined;
     return Response.json({
       ok: false,
