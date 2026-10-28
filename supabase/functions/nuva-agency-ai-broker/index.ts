@@ -110,7 +110,7 @@ async function providerConfig(provider: string, cloudflareAccountId: string | nu
   }
   if (provider === "cloudflare") {
     const token = Deno.env.get("CLOUDFLARE_API_TOKEN");
-    const configuredAccount = cloudflareAccountId || Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
+    const configuredAccount = cloudflareAccountId || Deno.env.get("CLOUDFLARE_ACCOUNT_ID") || null;
     if (!token) return null;
     const account = await resolveCloudflareAccount(token, configuredAccount);
     return { endpoint: "https://api.cloudflare.com/client/v4/accounts/" + account.accountId + "/ai/run/" + account.model,
@@ -198,16 +198,49 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
     return compatibleMessage;
   });
   const upstreamBody = { ...input, messages: normalizedMessages, model };
-  const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      authorization: "Bearer " + key,
-      "content-type": "application/json",
-      accept: req.headers.get("accept") || "application/json",
-    },
-    body: JSON.stringify(upstreamBody),
-    signal: AbortSignal.timeout(120000),
-  });
+  const serializedBody = JSON.stringify(upstreamBody);
+  // Los límites del proveedor son distintos de nuestro límite HTTP local.
+  // Reintentar 429 y errores transitorios con backoff, respetando Retry-After si viene informado.
+  let upstream: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        authorization: "Bearer " + key,
+        "content-type": "application/json",
+        accept: req.headers.get("accept") || "application/json",
+      },
+      body: serializedBody,
+      signal: AbortSignal.timeout(120000),
+    });
+    if (![408, 425, 429, 500, 502, 503, 504].includes(upstream.status) || attempt === 2) break;
+    const retryAfter = Number(upstream.headers.get("retry-after") || 0);
+    const delayMs = retryAfter > 0 ? Math.min(retryAfter * 1000, 15000) : 1000 * (2 ** attempt);
+    await upstream.body?.cancel().catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  if (!upstream) return deny("groq_proxy_upstream_failed", 502);
+  // Normalizar los errores de tamaño/contexto sin exponer claves ni devolver cuerpos arbitrarios del proveedor.
+  if (upstream.status === 413) {
+    const rawError = await upstream.text().catch(() => "");
+    let providerError: any = {};
+    try { providerError = JSON.parse(rawError)?.error ?? {}; } catch { /* respuesta no JSON */ }
+    // Solo se exponen campos de diagnóstico del proveedor; nunca headers ni credenciales.
+    const safeField = (value: unknown) => typeof value === "string"
+      ? value.replace(/[^a-zA-Z0-9_. -]/g, " ").replace(/\s+/g, " ").trim().slice(0, 160)
+      : undefined;
+    return Response.json({
+      ok: false,
+      error: "groq_request_too_large",
+      provider: "groq",
+      provider_code: safeField(providerError.code),
+      provider_type: safeField(providerError.type),
+      provider_message: safeField(providerError.message),
+      request_bytes: new TextEncoder().encode(serializedBody).byteLength,
+      hint: "Revisa provider_code/provider_message para distinguir límite de payload de límite de contexto.",
+    }, { status: 413, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
+  }
 
   return new Response(upstream.body, {
     status: upstream.status,
@@ -215,6 +248,7 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
       "content-type": upstream.headers.get("content-type") || "application/json",
       "cache-control": "no-store",
       "x-content-type-options": "nosniff",
+      "x-nuva-provider-status": String(upstream.status),
     },
   });
 }

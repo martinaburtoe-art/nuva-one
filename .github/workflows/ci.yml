@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
   statuses: write
 
 concurrency:
@@ -19,7 +20,7 @@ jobs:
   database-tests:
     name: pgTAP database tests
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -31,21 +32,44 @@ jobs:
         run: |
           docker version
           docker info
+      - name: Reduce parallel image pulls to avoid GHCR throttling
+        run: |
+          set -euo pipefail
+          # Supabase inicia varios servicios y Docker descarga capas en paralelo.
+          # En GH Actions esto ha provocado throttling de GHCR; limitar descargas
+          # evita ráfagas sin omitir imágenes ni pruebas.
+          sudo python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("/etc/docker/daemon.json")
+          config = json.loads(path.read_text()) if path.exists() and path.read_text().strip() else {}
+          config["max-concurrent-downloads"] = 1
+          path.write_text(json.dumps(config, indent=2) + "\n")
+          PY
+          sudo systemctl restart docker
+          docker version
+      - name: Authenticate to GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
       - name: Verify Supabase migration integrity
         run: node scripts/verify-migrations.mjs
       - name: Start lean Supabase database test stack
         run: |
-          set -o pipefail
-          # Limpieza de contenedores previos por si una ejecución anterior dejó residuos
-          docker system prune -f --volumes >/dev/null 2>&1 || true
-          docker rm -f $(docker ps -aq 2>/dev/null) 2>/dev/null || true
+          set -euo pipefail
+          # Runner efímero: conservar el entorno y limitar el stack a los servicios necesarios.
           echo "=== Docker diagnostics ==="
           docker version
           docker info
           started=false
-          for attempt in 1 2 3; do
-            echo "Starting lean Supabase stack (attempt ${attempt}/3)"
-            if timeout 120s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+          # GHCR ha rechazado pulls incluso tras autenticación. Reintentar con esperas crecientes
+          # sin omitir imágenes, health checks ni pruebas de base de datos.
+          for attempt in 1 2 3 4 5; do
+            echo "Starting lean Supabase stack (attempt ${attempt}/5)"
+            if timeout 300s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started"
               started=true
               break
@@ -53,31 +77,46 @@ jobs:
             echo "Supabase start failed; collecting diagnostics before retry"
             supabase status || true
             docker ps -a || true
-            if [ "$attempt" -lt 3 ]; then
+            if [ "$attempt" -lt 5 ]; then
+              delay=$((attempt * 120))
+              echo "Waiting ${delay}s before retrying Supabase image pulls"
               supabase stop --no-backup || true
-              sleep 10
+              sleep "$delay"
             fi
           done
           if [ "$started" != "true" ]; then
-            echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
+            echo "Normal startup exhausted; one health-check fallback attempt (tests remain mandatory)"
             supabase stop --no-backup || true
-            if timeout 180s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+            if timeout 300s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started (ignore-health-check fallback)"
               started=true
             fi
           fi
           if [ "$started" != "true" ]; then
-            echo "ERROR: No se pudo iniciar el stack de Supabase tras todos los intentos"
+            echo "ERROR: Supabase stack did not start after extended GHCR backoff"
             supabase status || true
             docker ps -a || true
             exit 1
           fi
-          echo "Resetting the local database from the repository migrations"
+          echo "Resetting the local database from repository migrations"
           supabase db reset --local
-      - name: Generate database types from clean schema
+      - name: Generate database types from clean schema (retry transient registry limits)
         run: |
-          supabase gen types typescript --local > /tmp/generated-supabase-types.ts
-          cp /tmp/generated-supabase-types.ts src/integrations/supabase/types.ts
+          set -euo pipefail
+          for attempt in 1 2 3 4; do
+            echo "Generating database types (attempt ${attempt}/4)"
+            if timeout 120s supabase gen types typescript --local > /tmp/generated-supabase-types.ts; then
+              cp /tmp/generated-supabase-types.ts src/integrations/supabase/types.ts
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              delay=$((attempt * 30))
+              echo "Type generation failed; retrying after ${delay}s to tolerate transient postgres-meta image registry limits"
+              sleep "$delay"
+            fi
+          done
+          echo "ERROR: Supabase type generation failed after retries"
+          exit 1
       - name: Run pgTAP tests
         run: |
           set -o pipefail
@@ -98,7 +137,7 @@ jobs:
           set -o pipefail
           echo "Running destructive recovery drill against the ephemeral local database only"
           supabase db reset --local
-          supabase gen types typescript --local > /tmp/recovery-supabase-types.ts
+          timeout 120s supabase gen types typescript --local > /tmp/recovery-supabase-types.ts
           cp /tmp/recovery-supabase-types.ts src/integrations/supabase/types.ts
           supabase test db
       - name: Upload generated database types
@@ -126,7 +165,7 @@ jobs:
           node-version: "22"
           cache: "npm"
       - name: Install dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify Supabase migration integrity
         run: npm run verify:migrations
       - name: Verify Nüva One Factory control plane
@@ -198,7 +237,7 @@ jobs:
           node-version: "22"
           cache: "npm"
       - name: Install dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Generate release evidence
         run: npm run factory:release-evidence
       - name: Upload Factory release evidence
