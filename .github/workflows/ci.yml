@@ -20,7 +20,7 @@ jobs:
   database-tests:
     name: pgTAP database tests
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -59,17 +59,17 @@ jobs:
         run: node scripts/verify-migrations.mjs
       - name: Start lean Supabase database test stack
         run: |
-          set -o pipefail
-          # GitHub-hosted runners son efímeros: no limpiar todos los volúmenes ni
-          # eliminar contenedores globalmente. Eso no aporta persistencia entre jobs
-          # y puede bloquear el arranque antes de aplicar los timeouts de Supabase.
+          set -euo pipefail
+          # Runner efímero: conservar el entorno y limitar el stack a los servicios necesarios.
           echo "=== Docker diagnostics ==="
           docker version
           docker info
           started=false
-          for attempt in 1 2 3 4; do
-            echo "Starting lean Supabase stack (attempt ${attempt}/4)"
-            if timeout 240s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+          # GHCR ha rechazado pulls incluso tras autenticación. Reintentar con esperas crecientes
+          # sin omitir imágenes, health checks ni pruebas de base de datos.
+          for attempt in 1 2 3 4 5; do
+            echo "Starting lean Supabase stack (attempt ${attempt}/5)"
+            if timeout 300s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started"
               started=true
               break
@@ -77,17 +77,15 @@ jobs:
             echo "Supabase start failed; collecting diagnostics before retry"
             supabase status || true
             docker ps -a || true
-            if [ "$attempt" -lt 4 ]; then
-              supabase stop --no-backup || true
-              # GHCR puede aplicar rate limits temporales incluso cuando los pulls indican retry-after mínimo.
-              # El backoff creciente evita reintentar inmediatamente contra el mismo límite del registry.
-              delay=$((attempt * 90))
+            if [ "$attempt" -lt 5 ]; then
+              delay=$((attempt * 120))
               echo "Waiting ${delay}s before retrying Supabase image pulls"
+              supabase stop --no-backup || true
               sleep "$delay"
             fi
           done
           if [ "$started" != "true" ]; then
-            echo "Normal Supabase health checks did not complete; attempting a database-validated startup"
+            echo "Normal startup exhausted; one health-check fallback attempt (tests remain mandatory)"
             supabase stop --no-backup || true
             if timeout 300s supabase start --ignore-health-check -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
               echo "Lean Supabase stack started (ignore-health-check fallback)"
@@ -95,12 +93,12 @@ jobs:
             fi
           fi
           if [ "$started" != "true" ]; then
-            echo "ERROR: No se pudo iniciar el stack de Supabase tras todos los intentos"
+            echo "ERROR: Supabase stack did not start after extended GHCR backoff"
             supabase status || true
             docker ps -a || true
             exit 1
           fi
-          echo "Resetting the local database from the repository migrations"
+          echo "Resetting the local database from repository migrations"
           supabase db reset --local
       - name: Generate database types from clean schema (retry transient registry limits)
         run: |
