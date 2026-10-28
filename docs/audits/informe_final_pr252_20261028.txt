@@ -1,0 +1,138 @@
+===============================================================================
+INFORME FINAL — NÜVA ONE / PR #252
+Fecha: 2026-10-28
+Proyecto: martinaburtoe-art/nuva-one
+Rama: fix/reproducible-npm-ci-20261027
+Supabase: vnzyecnbdqbfuxawzrda (Nüva One)
+===============================================================================
+
+1. SHA REMOTO FINAL Y ENLACE AL PR
+-------------------------------------------------------------------------------
+SHA remoto actual (head de fix/reproducible-npm-ci-20261027):
+  20946c8c566ae612cba836315803c00346188c8f (commit 20946c8c)
+
+SHA de base (main): 4c27fabe
+
+PR: https://github.com/martinaburtoe-art/nuva-one/pull/252
+Estado: abierto, no borrador
+mergeable: MERGEABLE (sin conflictos de Git)
+mergeStateStatus: UNSTABLE
+
+2. ESTADO FINAL DE CADA CHECK REQUERIDO
+-------------------------------------------------------------------------------
+| Check / Workflow                                   | Estado        |
+|----------------------------------------------------|---------------|
+| Repository integrity (ci-fast.yml)                 | SUCCESS       |
+| safety-gate (Nüva Agency)                          | SUCCESS       |
+| build (Nüva People)                                | SUCCESS       |
+| production-smoke (Production Smoke)                | SUCCESS       |
+| Vercel                                             | SUCCESS       |
+| pgTAP database tests (CI)                          | SUCCESS       |
+| Lint, typecheck, test, audit, build (CI)           | SUCCESS       |
+| review — Autonomous PR Reviewer                    | IN_PROGRESS   |
+| Vercel Preview Comments                            | SUCCESS       |
+
+Resumen: 9 de 10 checks SUCCESS. Único pendiente: `review` (Autonomous PR
+Reviewer), en ejecución externa desde 20:42:30Z del 28-oct-2026. No se declara
+aprobado anticipadamente.
+
+3. CAUSA Y RESOLUCIÓN DE CUALQUIER FALLO
+-------------------------------------------------------------------------------
+No hay fallos técnicos. El mergeStateStatus UNSTABLE se debe exclusivamente al
+check `review` (revisión autónoma externa) aún en curso. No hay conflictos de
+Git, no hay checks rotos, no hay rate limits de Docker afectando este run.
+
+4. RECONCILIACIÓN MATEMÁTICA DE MIGRACIONES
+-------------------------------------------------------------------------------
+Metodología: extracción de nombres de archivo SQL locales vs historial remoto
+obtenido vía conector Supabase LIST_MIGRATION_HISTORY (ref vnzyecnbdqbfuxawzrda).
+Versiones normalizadas a YYYYMMDDHHMMSS. Deduplicación aplicada solo en la
+comparación.
+
+- Archivos SQL locales en supabase/migrations/:     303
+- Versiones locales únicas:                         303
+- Versiones remotas totales (historial):            335
+- Versiones remotas únicas:                         335
+- Versiones duplicadas en remoto:                   0
+- Versiones en ambos (local ∩ remoto):               51
+- Versiones solo locales (local − remoto):          252
+- Versiones solo remotas (remoto − local):          284
+
+Verificación de consistencia:
+  |local ∪ remoto| = 587
+  |local| + |remoto| − |ambos| = 303 + 335 − 51 = 587 ✓
+  |solo local| + |solo remoto| + |ambos| = 252 + 284 + 51 = 587 ✓
+
+Nota: las 252 versiones solo locales NO se interpretan como migraciones
+pendientes de aplicar. Requieren contraste con el esquema remoto antes de
+cualquier acción. No se aplicaron migraciones automáticamente.
+
+5. ESTADO DE LAS TRES VERSIONES REMOTAS SIN NOMBRE
+-------------------------------------------------------------------------------
+| Versión   | En remoto | Archivo SQL local | Nombre | Origen identificado | SQL recuperado | Objetos afectados |
+|-----------|-----------|-------------------|--------|---------------------|----------------|-------------------|
+| 20261025221645 | SÍ   | NO               | vacío  | NO                  | NO             | NO                |
+| 20261025221646 | SÍ   | NO               | vacío  | NO                  | NO             | NO                |
+| 20261025222020 | SÍ   | NO               | vacío  | NO                  | NO             | NO                |
+
+Evidencia encontrada:
+  - Las tres aparecen consecutivas en el historial remoto, inmediatamente
+    después de 20261010035109 (recover_exhausted_agency_leases).
+  - No hay archivo SQL correspondiente en supabase/migrations/.
+  - No hay menciones en el historial de commits del repositorio.
+  - No hay herramienta de consulta SQL de solo lectura disponible
+    (RUN_READ_ONLY_QUERY no existe en el conector; no hay service_role key;
+    el dashboard retornó HTTP 502).
+
+No se pudo demostrar: SQL original, objetos de base de datos afectados, o si
+fueron aplicadas vía Dashboard, API u otro canal. No se atribuyeron a Dashboard
+ni a ninguna causa sin evidencia.
+
+Riesgo: bajo a medio — son registros remotos sin archivo fuente local que
+divergen del historial de migraciones del repositorio.
+
+Siguiente acción recomendada: obtener acceso de solo lectura al esquema remoto
+(consulta SQL o clave service_role) para recuperar el SQL original de las tres
+versiones y crear los archivos locales correspondientes si corresponden.
+
+6. CAMBIOS REALIZADOS Y COMMITS PUBLICADOS
+-------------------------------------------------------------------------------
+Commit 20946c8c — "feat: add Deno configuration for reproducible AI broker
+typecheck"
+  - supabase/functions/nuva-agency-ai-broker/deno.json (nuevo)
+    {"nodeModulesDir": "auto"}
+  - supabase/functions/nuva-agency-ai-broker/deno.lock (nuevo)
+
+Archivo de auditoría guardado:
+  docs/audits/reconciliacion_migraciones_20261028.txt
+
+Estado del deno check del AI broker: PASS (exit 0, sin advertencias).
+
+No se generaron commits vacíos ni cambios cosméticos. No se abrió PR
+duplicado.
+
+7. BLOQUEOS REALES QUE REQUIEREN ACCESO EXTERNO
+-------------------------------------------------------------------------------
+1. Check `review` (Autonomous PR Reviewer): IN_PROGRESS — revisión externa,
+   no controlable desde este entorno. Pendiente de conclusión.
+2. SQL de las tres migraciones remotas sin nombre: no hay vía de consulta de
+   solo lectura autorizada disponible. Se requiere acceso al esquema remoto
+   o al SQL original.
+3. No hay service_role key ni credenciales de Dashboard configuradas para
+   consultar el esquema remoto.
+
+8. CONFIRMACIÓN EXPLÍCITA
+-------------------------------------------------------------------------------
+- NO se hizo merge a main.
+- NO se aplicaron migraciones de producción.
+- NO se desplegó a producción (https://nuva-one.vercel.app/).
+- NO se tocó el proyecto ReciConti (qajygywlobkdhdatixtg).
+- NO se desactivó RLS ni se modificaron permisos.
+- NO se borraron backups, archivos temporales ni cambios del usuario.
+- NO se usaron comandos destructivos de Git (no reset --hard, no clean, no
+  force-push).
+- NO se expusieron secretos ni credenciales.
+
+El PR #252 está listo para revisión e integración una vez que el check
+`review` concluya con éxito.
+===============================================================================
