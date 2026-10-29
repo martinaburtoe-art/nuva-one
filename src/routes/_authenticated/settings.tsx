@@ -54,6 +54,7 @@ function Settings() {
 
   async function deleteBusiness() {
     if (!active) return;
+    if (!isOwner) return;
     if (!confirm(`¿Eliminar el negocio "${active.name}"? Esta acción no se puede deshacer.`)) return;
     const { error } = await supabase.from("businesses").delete().eq("id", active.id);
     if (error) toast.error("Error");

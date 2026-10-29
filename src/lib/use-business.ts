@@ -37,8 +37,8 @@ export function useActiveBusinessId() {
 export function useActiveBusiness() {
   const [activeId, setActiveId] = useActiveBusinessId();
   const { data: businesses, isLoading } = useBusinesses();
-  const active = businesses?.find((b) => b.id === activeId) ?? businesses?.[0] ?? null;
-  useEffect(() => { if (!activeId && businesses && businesses.length > 0) setActiveId(businesses[0].id); }, [activeId, businesses, setActiveId]);
+  const active = businesses?.find((b) => b.id === activeId) ?? null;
+  // No auto-seleccionar negocio: el usuario elige explícitamente cuál usar.
   return { active, businesses: businesses ?? [], setActiveId, isLoading };
 }
 
@@ -86,8 +86,7 @@ export function useMyMembership() {
   // with the businesses list instead of waiting for the list to resolve.
   const [activeId] = useActiveBusinessId();
   const { data: businesses } = useBusinesses();
-  const fallbackId = businesses?.[0]?.id ?? null;
-  const businessId = activeId ?? fallbackId;
+  const businessId = activeId;
 
   return useQuery({
     enabled: !!businessId,

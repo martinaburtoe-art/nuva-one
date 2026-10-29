@@ -81,9 +81,10 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false 
 type MutationType = "delete" | "update";
 
 function MountHook({ table, mutationType, resultRef }: { table: string; mutationType: MutationType; resultRef?: { current: any } }) {
+  const del = useBizDelete(table);
+  const upd = useBizUpdate(table);
+  if (resultRef) resultRef.current = mutationType === "delete" ? del : upd;
   if (mutationType === "delete") {
-    const del = useBizDelete(table);
-    if (resultRef) resultRef.current = del;
     return (
       <button
         onClick={async () => {
@@ -96,8 +97,6 @@ function MountHook({ table, mutationType, resultRef }: { table: string; mutation
       </button>
     );
   }
-  const upd = useBizUpdate(table);
-  if (resultRef) resultRef.current = upd;
   return (
     <button
       onClick={async () => {
