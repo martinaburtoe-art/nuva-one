@@ -275,8 +275,7 @@ def sh_output(cmd: list[str], cwd: str = REPO_LOCAL, timeout: int = 60) -> str:
 
 
 def gh_available() -> bool:
-    r = sh(["where", "gh"], timeout=15)
-    return r.returncode == 0
+    return shutil.which("gh") is not None
 
 
 def gh_authenticated() -> tuple[bool, str]:
