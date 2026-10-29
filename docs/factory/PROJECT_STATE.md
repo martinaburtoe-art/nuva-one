@@ -6,7 +6,7 @@ Estado real del proyecto, verificado el 2026-10-29. Este archivo es la única fu
 - Repo: `martinaburtoe-art/nuva-one`
 - Directorio local: `C:\Users\marti\Documents\nuva-one`
 - Rama de trabajo: `fix/reproducible-npm-ci-20261027`
-- HEAD: `921fb2d6` (publicada en origen)
+- HEAD: `2aa31959` (publicada en origen)
 - Base `main`: `4c27fabe`
 - PR #252: abierto, sin merge, head `fix/reproducible-npm-ci-20261027` → base `main`
 - Working tree: limpio salvo `src/routeTree.gen.ts` (solo cambio LF/CRLF, excluido intencionadamente)
@@ -14,7 +14,8 @@ Estado real del proyecto, verificado el 2026-10-29. Este archivo es la única fu
 ## Últimos commits en la rama
 - `edbbce07` — `src/lib/biz-data.ts`: `useBizDelete`/`useBizUpdate` con guardia `if (!active) throw` y filtro `.eq("business_id", active.id)`
 - `b0656810` — `src/lib/biz-data.test.tsx` + `vitest.config.ts`: pruebas de regresión, include `*.test.tsx`, `// @vitest-environment happy-dom` scoped solo a ese test
-- `921fb2d6` — `src/lib/use-business.ts` (sin auto-fallback a `businesses?.[0]`, `active=null`, `businessId=activeId`), `src/routes/_authenticated/settings.tsx` (`deleteBusiness` con `if (!isOwner) return;`), `src/lib/biz-data.test.tsx` (hooks incondicionales en `MountHook`)
+- `921fb2d6` — `src/lib/use-business.ts` (sin auto-fallback, `active=null`, `businessId=activeId`), `src/routes/_authenticated/settings.tsx` (`deleteBusiness` con `if (!isOwner) return;`), `src/lib/biz-data.test.tsx` (hooks incondicionales en `MountHook`)
+- `2aa31959` — `docs/factory/BLOCKERS.md` (B-007: briefing matutino cron falla con deadlock de OpenAI), `docs/factory/ORCHESTRATOR.md` (orquestador mínimo viable de Nüva One Factory)
 
 ## Resultados de validación (vigentes, 2026-10-29)
 - `npx vitest run`: **350/350 PASS** (88 archivos), 14.5s
@@ -22,6 +23,13 @@ Estado real del proyecto, verificado el 2026-10-29. Este archivo es la única fu
 - `npm run build`: **PASS** (3.35s, output `.vercel/`)
 - `npm run lint`: **0 errores** (668-681 warnings preexistentes, sin nuevos)
 - ESLint en `src/lib/biz-data.test.tsx`: **0 errores**
+
+## Mutación testing — biz-data.test.tsx (verificado hoy, evidencia real)
+- Mutación aplicada: eliminado `.eq("business_id", active.id)` de `useBizDelete` y `useBizUpdate` en `src/lib/biz-data.ts`
+- Resultado: **6/8 fallan** (todos los que verifican `business_id="biz-activo"` en los filtros); **2/8 pasan** (guardia "sin negocio activo", independiente del filtro)
+- Mutación revertida: **8/8 pasan**
+- Conclusión: los tests **detectan correctamente regresiones** de `useBizUpdate`/`useBizDelete`; los mocks no permiten falsos positivos cuando falta el filtro `business_id`
+- `src/lib/biz-data.ts` sin cambios permanentes (working tree limpio salvo `routeTree.gen.ts`)
 
 ## Arquitectura y dependencias (runtime)
 - Frontend: React + TanStack Router, TanStack Query, shadcn/ui, Tailwind
@@ -49,6 +57,7 @@ Estado real del proyecto, verificado el 2026-10-29. Este archivo es la única fu
 | `happy-dom ^20.11.0` vulnerable (CVE-2026-33943) | Fix requiere mayor 21.0.4 (breaking change en tests) | Documentado como WARN pendiente |
 | `bun.lock` tiene zod 4.0.0 inconsistente con package.json ^4.6.6 | No se regenera por restricción de usuario | Decisión de usuario sobre `bun.lock` o `npm install` |
 | Branch protection en `main` no activada | Riesgo de push directo | Acción del propietario en GitHub |
+| Briefing matutino (cron) falla con deadlock de OpenAI (B-007) | Afecta automatización continua de Hermes | Diagnosticar deadlock del cliente OpenAI en el job cron; depende de B-001 |
 
 ## Producción
 - URL: `https://nuva-one.vercel.app/`

@@ -3,23 +3,22 @@
 Próxima tarea ejecutable. Se actualiza al finalizar cada bloque de trabajo y después de cada cambio relevante de estado.
 
 ## Próxima tarea seleccionada
-**Fase 3 — Inspeccionar la instalación real de Hermes y activar el orquestador multiagente mínimo.**
+**T-10 — Ejecutar `nuva-ci-diagnostics` en PR #252 para confirmar que CI sigue verde post-commit `2aa31959`.**
 
 ### Motivo de prioridad
-La memoria persistente (Fase 2) está creada. Antes de construir agentes, hay que verificar qué capacidades reales tiene Hermes en esta instalación: configuración, herramientas disponibles, subagentes, delegación, sesiones, ejecución en segundo plano, persistencia y recuperación. No asumir capacidades no verificadas.
+Se acaba de hacer commit `2aa31959` (documentación de Factory) en la rama `fix/reproducible-npm-ci-20261027`. Antes de seguir con nuevas tareas de código, hay que confirmar que el estado del repositorio sigue verde y que PR #252 mantiene sus checks pasados. Esto cierra el ciclo de verificación (Fase 4, pasos 2 y 8).
 
 ### Precondiciones
-- `docs/factory/PROJECT_STATE.md` vigente (estado verificado: rama `fix/reproducible-npm-ci-20261027`, HEAD `921fb2d6`, tests 350/350, typecheck PASS, build PASS)
-- `docs/factory/BLOCKERS.md` vigente (6 bloqueos documentados)
-- Rama de trabajo limpia salvo `routeTree.gen.ts` (LF/CRLF, excluido)
+- `docs/factory/PROJECT_STATE.md` vigente (HEAD `2aa31959`, rama `fix/reproducible-npm-ci-20261027`, tests 350/350, typecheck PASS, build PASS)
+- `gh` autenticado (verificado previamente con `gh pr checks/view` en sesión anterior)
+- PR #252 abierto, HEAD `fix/reproducible-npm-ci-20261027` → base `main`
 
 ### Criterio de finalización
-- Inventario real de herramientas de Hermes disponibles (no asumidas)
-- Orquestador mínimo definido con roles reales (mínimo viable, no 8 procesos permanentes si no se justifican)
-- Primera tarea delegada ejecutada con evidencia
-- Memoria persistente actualizada con resultados
+- `gh pr checks 252` muestra todos los checks en PASS (o se identifica cualquier regresión con evidencia)
+- `git status` confirma working tree limpio salvo `routeTree.gen.ts` (excluido)
+- Resultado registrado en `TASK_REGISTRY.md` (T-10 → COMPLETADA) y `PROJECT_STATE.md`
 
-### Tareas alternativas si la Fase 3 está bloqueada
-1. Completar auditoría de módulos restantes de `_authenticated/` no leídos aún (ai.tsx, billing.tsx, business-health.tsx, business-simulator.tsx, catalog.tsx, customer-action-center.tsx, customer-intelligence.tsx, customers-intelligence.tsx, executive-command-center.tsx, finance-accounting.tsx, finance-professional.tsx, financial-control.tsx, financial-dashboard.tsx, financial-integrity.tsx, help-center.tsx, mfa-required.tsx, mobile-scanner.tsx, people-attendance.tsx, people-compliance.tsx, people-employees.tsx, people-lifecycle.tsx, people-payroll.tsx, pricing-calculator.tsx, shifts.tsx, shipments.tsx)
-2. Crear `docs/factory/DECISIONS.md` y ampliar `docs/knowledge/` con registros de decisión
-3. Implementar skill `nuva-supabase-guardian` (roadmap item #8) o `nuva-ci-diagnostics` (item #9)
+### Tareas alternativas si T-10 está bloqueada (gh sin auth, etc.)
+1. T-08: Auditoría de módulos restantes `_authenticated/` no leídos (leer archivos, documentar hallazgos PASS/FAIL/BLOCKED)
+2. T-09: Crear `docs/factory/DECISIONS.md`
+3. T-11: Ejecutar 2 demostraciones más del ciclo de ejecución continua
