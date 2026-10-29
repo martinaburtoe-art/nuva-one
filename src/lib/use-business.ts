@@ -63,6 +63,7 @@ export const MODULES = [
   { key: "inventory", label: "Inventario" }, { key: "catalog", label: "Catálogo" }, { key: "finance", label: "Finanzas" },
   { key: "analytics", label: "Indicadores" }, { key: "quotes", label: "Cotizaciones" },
   { key: "ai", label: "Asistente IA" }, { key: "people", label: "Nüva People" },
+  { key: "conexiones", label: "Conexiones" },
 ] as const;
 export type ModuleKey = (typeof MODULES)[number]["key"];
 export type ModulePermissions = Partial<Record<ModuleKey, boolean>>;

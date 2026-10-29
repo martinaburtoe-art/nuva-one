@@ -202,7 +202,7 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
   }
 
   async function deleteShift(id: string) {
-    const { error } = await supabase.from("shifts").delete().eq("id", id);
+    const { error } = await supabase.from("shifts").delete().eq("id", id).eq("business_id", businessId);
     if (error) {
       toast.error("No se pudo eliminar");
       return;

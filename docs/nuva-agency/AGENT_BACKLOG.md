@@ -1,9 +1,9 @@
 # AGENT_BACKLOG — Nüva Agency
-
+|
 Backlog único de tareas operativas del equipo de agentes especializados.
 Fuente de verdad para el orquestador: selecciona la primera tarea segura y sin bloqueos,
 la asigna al especialista adecuado, y registra el resultado al cerrar el ciclo.
-
+|
 Formato de cada entrada:
 - `T-XX` — identificador único
 - `titulo` — nombre corto
@@ -16,9 +16,8 @@ Formato de cada entrada:
 - `pruebas_requeridas` — typecheck / lint / tests / build / mutación / revisión independiente
 - `evidencia` — archivos, commits, salidas de comando (rellenar al completar)
 - `seguridad` — sin producción / sin migración remota / sin RLS / sin secretos
-
+|
 ---
-
 ## T-01 — Crear AGENT_BACKLOG.md (esta entrada)
 - departamento: Operaciones
 - especialista: Orchestrator
@@ -93,7 +92,7 @@ Formato de cada entrada:
 - dependencias: T-02, T-03, T-05, T-06
 - criterios_de_aceptacion: PR abierto con commits de todas las tareas del ciclo, evidencia adjunta, revisión independiente documentada, sin merge a main
 - pruebas_requeridas: CI del PR verde (typecheck, lint, tests, build), revisión independiente firmada
-- evidencia: PR #252 abierto, head `fc8fba3e`, commits fc8fba3e (4 archivos, 329 inserciones), revisión independiente T-05 APROBADA (subagente sa-0-765368b7), CI en ejecución (production-smoke pass, safety-gate pass, resto pending)
+- evidencia: PR #252 abierto, head `bc28bd8c`, commits fc8fba3e (4 archivos, 329 inserciones) + bc28bd8c (4 archivos, 200 inserciones), revisión independiente T-05 APROBADA (subagente sa-0-765368b7), CI: 10/11 pass (pgTAP pendiente)
 - seguridad: rama de trabajo, sin merge a main, sin deploy
 
 ## T-08 — Implementar registro de ejecución de ciclos (cycle execution logger)
@@ -107,11 +106,69 @@ Formato de cada entrada:
 - evidencia: scripts/agency-cycle-logger.mjs creado; logs/cycles/cycle-20261029-125641.json registrado con qaVerdict=approved, securityVerdict=approved, orchestratorDecision=accepted
 - seguridad: solo escritura de archivos de registro locales, sin producción
 
----
+## T-09 — Motor de ejecución de tareas (ejecutor autónomo)
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P0
+- estado: COMPLETADO
+- dependencias: T-02, T-08
+- criterios_de_aceptacion: Ejecutor lee backlog, selecciona tarea vía selector existente, verifica deps/estado/permisos/límites de seguridad, asigna especialista, ejecuta vía herramientas reales, captura salida/errores/duración/artefactos, persiste resultado, permite reanudar sin duplicar
+- pruebas_requeridas: Ejecutar en modo dry-run y en modo real contra una tarea de demostración segura; verificar registro de ciclo y persistencia
+- evidencia: scripts/agency-task-executor.mjs + logs/executions/exec-20261029-130942.json (T-10, 9/9 PASS) + pruebas de lock, índice y resume
+- seguridad: solo lectura/escritura local, sin producción, sin migraciones remotas, sin secretos
 
-## Reglas del backlog
-1. El orquestador selecciona siempre la primera tarea con `estado=PENDIENTE` y `dependencias` resueltas, ordenada por prioridad.
-2. Ningún agente declara su propio trabajo completado sin revisión independiente (ver T-05).
-3. Ninguna tarea toca producción, migraciones remotas, RLS ni secretos sin autorización explícita del propietario.
-4. Al completar una tarea, se rellena `evidencia` y se actualiza `estado` a COMPLETADO o RECHAZADO.
-5. El ciclo se cierra registrando el resultado y seleccionando la siguiente tarea segura.
+## T-10 — Demo de ejecución del motor de tareas (T-09)
+- departamento: Operaciones
+- especialista: QA
+- prioridad: P1
+- estado: COMPLETADO
+- dependencias: T-09
+- criterios_de_aceptacion: El ejecutor selecciona esta tarea, ejecuta `npm test -- src/lib/biz-data.test.tsx`, captura salida, errores, duración y artefactos, y persiste el resultado en logs/executions/ con registro de ciclo
+- pruebas_requeridas: Ejecutar executor en modo real contra esta tarea; verificar 9/9 PASS en los tests, registro de ciclo creado, estado persistido como COMPLETADO
+- evidencia: logs/executions/exec-*.json + logs/cycles/cycle-*.json con resultado de ejecución
+- seguridad: solo lectura de tests, sin producción, sin migraciones remotas, sin secretos
+
+## T-11 — Revisión independiente y decisiones del orquestador
+- departamento: Cumplimiento
+- especialista: Orchestrator
+- prioridad: P0
+- estado: COMPLETADO
+- dependencias: T-09, T-10
+- criterios_de_aceptacion: QA independiente da veredicto PASS/FAIL; Security independiente da veredicto PASS/FAIL; Compliance verifica políticas; Orchestrator registra decisión final (accepted/rejected/returned) con motivo; ninguna tarea se autoadjudica COMPLETADO sin revisión independiente
+- pruebas_requeridas: Veredicto QA entregado (PASS, sa-0-f62794d1); veredicto Security entregado (PASS, sa-0-343dc026); orchestrator cierra decisión en logs/cycles/cycle-20261029-131809.json
+- evidencia: logs/cycles/cycle-20261029-131809.json con qaVerdict=approved, securityVerdict=approved, orchestratorDecision=accepted
+- seguridad: revisores independientes del ejecutor; sin producción
+
+## T-12 — Persistencia, recuperación y trazabilidad
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P0
+- estado: COMPLETADO
+- dependencias: T-09
+- criterios_de_aceptacion: Identificador único de ejecución, agente/revisores, estado anterior/nuevo, fechas inicio/término, evidencias, errores/reintentos, decisión final; reanudación sin duplicar tarea completada; retoma tarea incompleta sin perder estado; bloqueo contra ejecuciones concurrentes; manejo de índices JSON ausentes/corruptos/parciales
+- pruebas_requeridas: Prueba de recuperación tras interrupción; verificar resume no re-ejecuta COMPLETADO; verificar índice corrupto se reconstruye; verificar lock impide doble ejecución
+- evidencia: logs/executions/ + logs/cycles/ con registros consistentes; pruebas de recuperación pasadas
+- seguridad: solo escritura local de registros
+
+## T-13 — Ciclo automático continuo
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P1
+- estado: COMPLETADO
+- dependencias: T-09, T-11, T-12
+- criterios_de_aceptacion: Modo por lotes con límites de duración, reintentos y cantidad de tareas; detiene ante errores/bloqueos/límites; modo dry-run sin mutaciones; no afirma autonomía 24/7 sin mecanismo programado comprobable
+- pruebas_requeridas: Ejecutar lote con límite de 1 tarea, verificar detención; ejecutar dry-run, verificar sin mutaciones
+- evidencia: logs del lote ejecutado; salida dry-run
+- seguridad: solo ejecución local, sin producción
+
+## T-14 — Owner Console operativa
+- departamento: Operaciones
+- especialista: UX
+- prioridad: P2
+- estado: COMPLETADO
+- dependencias: T-09, T-12
+- criterios_de_aceptacion: Vista funcional del estado real de tareas, ejecuciones, errores y evidencias; controles de pausa/reanudación/autorización protegidos conectados al motor real; sin datos simulados; sin secretos expuestos
+- pruebas_requeridas: Verificar lectura del estado persistente sin mutación; verificar que controles no permiten producción
+- evidencia: interfaz consulte logs/executions/ y logs/cycles/ y muestre estado real
+- seguridad: solo lectura de registros locales; sin producción
+

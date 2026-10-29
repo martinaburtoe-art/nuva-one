@@ -37,16 +37,16 @@ Bloqueos vigentes con evidencia disponible, responsable y siguiente acción. Nun
 - **Siguiente acción:** Decidir si sincronizar `bun.lock` o dejar CI con npm reproducible.
 - **Dependencia:** Ninguna.
 
-## B-006: `happy-dom ^20.11.0` vulnerable (CVE-2026-33943)
-- **Estado:** WARN PENDIENTE
-- **Evidencia:** `npm audit --audit-level=high` reportó 2 vulnerabilidades high: `zod <4.6.6` (corregido en package.json a ^4.6.6) y `happy-dom <21.0.4`. Fix de happy-dom requiere mayor 21.0.4 (breaking change en entorno de tests).
-- **Responsable:** Equipo de desarrollo
-- **Siguiente acción:** Evaluar migración a happy-dom 21+ o alternativa de entorno de tests.
+## B-006: `happy-dom` versión vulnerable (CVE-2026-33943)
+- **Estado:** RESUELTO
+- **Evidencia:** `happy-dom` instalado en versión 21.0.4 (package.json `^21.0.4`, versión efectiva 21.0.4). `npm audit --audit-level=high` no reporta vulnerabilidad de happy-dom; solo 1 moderada en `seroval` (no relacionada). B-006 eliminado de bloqueos activos.
+- **Responsable:** Equipo de desarrollo.
+- **Siguiente acción:** Ninguna; versión segura vigente.
 - **Dependencia:** Ninguna.
 
 ## B-007: Briefing matutino (cron) falla con deadlock de OpenAI
-- **Estado:** BLOQUEADO
-- **Evidencia:** `hermes cron list` — job "Briefing matutino", every day at 10:30, profile default. Last run 2026-10-28T13:02:58: `RuntimeError: Failed to initialize OpenAI client: deadlock detected by _ModuleLock('openai.types.chat.chat_completion_message_tool_call')`. Dispatch 2h 32m late, execution failed. Next run: 2026-10-29T10:30:00-03:00. Usa skill google-workspace (Gmail+Calendar).
-- **Responsable:** Equipo de desarrollo / Usuario (Don Martín)
-- **Siguiente acción:** Diagnosticar deadlock del cliente OpenAI en el entorno del job cron; si no se resuelve, el briefing automatizado queda como UNKNOWN hasta tener fallback.
+- **Estado:** BLOQUEADO / UNKNOWN (infraestructura interna de Hermes)
+- **Evidencia:** `hermes cron list` — job "Briefing matutino", every day at 10:30, profile default. Last run 2026-10-28T13:02:58: `RuntimeError: Failed to initialize OpenAI client: deadlock detected by _ModuleLock('openai.types.chat.chat_completion_message_tool_call')`. Dispatch 2h 32m tarde, ejecución falló. Next run: 2026-10-29T10:30:00-03:00. Usa skill `google-workspace` (Gmail+Calendar).
+- **Responsable:** Equipo de desarrollo de Hermes / Usuario (Don Martín)
+- **Siguiente acción:** El deadlock ocurre en la inicialización del cliente OpenAI de Hermes (infra interna, fuera del repositorio nuva-one). No es reproducible ni corrigible desde `src/` de Nüva One. Documentar como BLOCKED hasta que Hermes corrija el cliente OpenAI o se disponga de fallback. El briefing matutino queda como UNKNOWN para entregas automatizadas.
 - **Dependencia:** B-001 (credenciales de Google) para que el briefing tenga datos reales que leer.

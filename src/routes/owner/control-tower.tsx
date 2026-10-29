@@ -30,6 +30,49 @@ type DurableLease = { id: string; task_id: string; agent_id: string; status: str
 type DurableApproval = { id: string; action_type: string; risk_level: string; description: string; status: string; created_at: string };
 type DurableAgency = { generated_at: string; missions: DurableMission[]; tasks: DurableTask[]; events: DurableEvent[]; leases: DurableLease[]; approvals: DurableApproval[] };
 
+type AgencyLogExecution = {
+  id: string;
+  taskId: string | null;
+  specialist: string | null;
+  result: "PASS" | "FAIL" | "ERROR" | "BLOCKED" | "UNKNOWN" | null;
+  exitCode: number | null;
+  durationMs: number | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  evidenceFile: string | null;
+  errorSummary: string | null;
+  retryCount: number | null;
+  previousState: string | null;
+};
+
+type AgencyLogCycle = {
+  id: string;
+  taskId: string | null;
+  qaVerdict: string | null;
+  securityVerdict: string | null;
+  orchestratorDecision: string | null;
+  createdAt: string | null;
+  files: string[];
+};
+
+type AgencyLogsSummary = {
+  totalExecutions: number;
+  passExecutions: number;
+  failExecutions: number;
+  errorExecutions: number;
+  totalCycles: number;
+  pendingSecurity: number;
+  pendingDecision: number;
+};
+
+type AgencyLogsPayload = {
+  generated_at: string;
+  source: string;
+  summary: AgencyLogsSummary;
+  executions: AgencyLogExecution[];
+  cycles: AgencyLogCycle[];
+};
+
 export const Route = createFileRoute("/owner/control-tower")({
   ssr: false,
   beforeLoad: async () => {
@@ -103,6 +146,21 @@ async function loadDurableAgency() {
   return source;
 }
 
+async function loadAgencyLogs(): Promise<AgencyLogsPayload> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+  const response = await fetch("/api/owner/agency-logs", {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(body?.error ?? "No se pudo consultar los registros de Agency.");
+  }
+  return (await response.json()) as AgencyLogsPayload;
+}
+
 async function askWorker(agentId: string, messages: AgencyMessage[], signal: AbortSignal) {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
@@ -136,21 +194,31 @@ function ControlTower() {
   const [agencyLoading, setAgencyLoading] = useState(true);
   const [durableAgency, setDurableAgency] = useState<DurableAgency | null>(null);
   const [agencyError, setAgencyError] = useState<string | null>(null);
+  const [agencyLogs, setAgencyLogs] = useState<AgencyLogsPayload | null>(null);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const refresh = async () => {
     setLoading(true); setError(null);
+    setLogsLoading(true); setLogsError(null);
     try {
-      const [nextMetrics, nextAgency, nextDurable] = await Promise.all([loadMetrics(), loadAgencyStatus(), loadDurableAgency()]);
+      const [nextMetrics, nextAgency, nextDurable, nextLogs] = await Promise.all([
+        loadMetrics(),
+        loadAgencyStatus(),
+        loadDurableAgency(),
+        loadAgencyLogs().catch((e) => { setLogsError(e instanceof Error ? e.message : "No se pudieron cargar los registros."); return null; }),
+      ]);
       setMetrics(nextMetrics);
       setAgencyStatus(nextAgency);
       setDurableAgency(nextDurable);
+      setAgencyLogs(nextLogs);
       setAgencyError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
       try { setAgencyStatus(await loadAgencyStatus()); setAgencyError(null); }
       catch (agencyErr) { setAgencyError(agencyErr instanceof Error ? agencyErr.message : "Agency no disponible"); }
-    } finally { setLoading(false); setAgencyLoading(false); }
+    } finally { setLoading(false); setAgencyLoading(false); setLogsLoading(false); }
   };
 
   useEffect(() => {
@@ -189,6 +257,24 @@ function ControlTower() {
     }
   };
 
+  const executeTask = async (taskId: string, dryRun = false) => {
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+    const response = await fetch("/api/owner/agency-execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ task: taskId, dryRun }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null) as { error?: string } | null;
+      throw new Error(body?.error ?? "No se pudo iniciar la ejecución.");
+    }
+    const result = await response.json();
+    await refresh();
+    return result;
+  };
+
   const platform = metrics?.platform;
   const ai = metrics?.ai_telemetry;
   const fallbackCount = ai?.fallbacks_24h ?? 0;
@@ -209,6 +295,13 @@ function ControlTower() {
 
         <LiveAgencyPanel status={agencyStatus} loading={agencyLoading} error={agencyError} onRefresh={() => void refresh()} />
         <DurableAgencyPanel data={durableAgency} loading={agencyLoading} onRefresh={() => void refresh()} />
+        <AgencyLogsPanel
+          logs={agencyLogs}
+          loading={logsLoading}
+          error={logsError}
+          onRefresh={() => void refresh()}
+          onExecuteTask={executeTask}
+        />
 
         <AgencyTeam selectedWorker={selectedWorker} onSelectWorker={(agentId) => { setSelectedWorker(agentId); setMessages([{ role: "assistant", content: "Trabajador conectado. Puedo entregarte reportes verificables, revisar evidencia y mantener contexto operativo." }]); }} />
 
@@ -322,8 +415,8 @@ function DurableAgencyPanel({ data, loading, onRefresh }: { data: DurableAgency 
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3"><div className="text-[10px] uppercase tracking-[0.16em] text-white/30">{label}</div><div className="mt-1 text-lg font-semibold text-white/85">{value}</div></div>;
+function MiniStat({ label, value, tone = "normal" }: { label: string; value: string; tone?: "normal" | "warn" | "ok" }) {
+  return <div className="rounded-2xl border border-white/8 bg-white/[0.025] px-3 py-3"><div className="text-[10px] uppercase tracking-[0.16em] text-white/30">{label}</div><div className={`mt-1 text-lg font-semibold ${tone === "warn" ? "text-amber-200" : tone === "ok" ? "text-emerald-200" : "text-white/85"}`}>{value}</div></div>;
 }
 
 function LiveAgencyPanel({ status, loading, error, onRefresh }: { status: AgencyStatus | null; loading: boolean; error: string | null; onRefresh: () => void }) {
@@ -431,4 +524,187 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 function CheckRow({ text, ok }: { text: string; ok: boolean }) {
   return <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2 text-sm"><span className="text-white/55">{text}</span><span className={ok ? "text-emerald-300" : "text-amber-300"}>{ok ? "READY" : "PENDING"}</span></div>;
+}
+
+function AgencyLogsPanel({
+  logs,
+  loading,
+  error,
+  onRefresh,
+  onExecuteTask,
+}: {
+  logs: AgencyLogsPayload | null;
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+  onExecuteTask: (taskId: string, dryRun?: boolean) => Promise<unknown>;
+}) {
+  const summary = logs?.summary;
+  const executions = logs?.executions ?? [];
+  const cycles = logs?.cycles ?? [];
+
+  const resultTone = (result: string | null) => {
+    switch (result) {
+      case "PASS": return "ok";
+      case "FAIL": return "warn";
+      case "ERROR": return "warn";
+      case "BLOCKED": return "warn";
+      default: return "normal";
+    }
+  };
+
+  const resultLabel = (result: string | null) => {
+    switch (result) {
+      case "PASS": return "PASS";
+      case "FAIL": return "FAIL";
+      case "ERROR": return "ERROR";
+      case "BLOCKED": return "BLOQUEADO";
+      case "UNKNOWN": return "DESCONOCIDO";
+      default: return "—";
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="mt-5 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035]">
+        <div className="p-5 text-sm text-white/50">Cargando registros de Agency…</div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mt-5 overflow-hidden rounded-[28px] border border-red-400/20 bg-red-400/10 p-5 text-xs text-red-100">
+        {error}
+        <button onClick={onRefresh} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10">
+          <RefreshCw className="h-3.5 w-3.5" /> Reintentar
+        </button>
+      </section>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <section className="mt-5 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035] p-5">
+        <div className="mb-4 flex items-center gap-2 text-sm font-semibold"><Database className="h-4 w-4 text-white/50" /> Estado de tareas y ejecuciones</div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.025] p-4 text-xs text-white/40">Sin registros de Agency disponibles. Ejecuta una tarea desde el panel para generar evidencia.</div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-5 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035]">
+      <div className="border-b border-white/10 px-5 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-200"><Database className="h-4 w-4" /> Registros de Agency</div>
+            <h2 className="mt-1 text-xl font-semibold">Estado real de tareas, ejecuciones y evidencias</h2>
+            <p className="mt-1 text-xs text-white/45">Fuente: logs locales (logs/executions/, logs/cycles/). Sin datos simulados.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={onRefresh} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10"><RefreshCw className="h-3.5 w-3.5" /> Actualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 p-5 sm:p-6 lg:grid-cols-4">
+        <MiniStat label="Ejecuciones" value={String(summary.totalExecutions)} />
+        <MiniStat label="PASS" value={String(summary.passExecutions)} tone="ok" />
+        <MiniStat label="FAIL / ERROR" value={String(summary.failExecutions + summary.errorExecutions)} tone="warn" />
+        <MiniStat label="Ciclos pendientes" value={String(summary.pendingSecurity + summary.pendingDecision)} tone={summary.pendingSecurity > 0 || summary.pendingDecision > 0 ? "warn" : "ok"} />
+      </div>
+
+      <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.35fr_1fr]">
+        <div className="space-y-3">
+          <div className="rounded-xl border border-white/10 bg-white/[0.035] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-semibold text-white/70">Ejecuciones</div>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${executions.length ? "bg-white/5 border border-white/10" : "bg-white/10 border border-white/5 text-white/30"}`}>
+                {executions.length}
+              </span>
+            </div>
+            <div className="max-h-[400px] overflow-auto space-y-2 pr-1">
+              {executions.map((exec) => (
+                <div key={exec.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-2.5 text-xs">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="truncate font-medium text-white/80">{exec.taskId ?? "sin tarea"}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${resultTone(exec.result) === "ok" ? "text-emerald-300 border border-emerald-400/20 bg-emerald-400/5" : resultTone(exec.result) === "warn" ? "text-amber-300 border border-amber-400/20 bg-amber-400/5" : "text-white/30 border border-white/10 bg-white/5"}`}>
+                      {resultLabel(exec.result)}
+                    </span>
+                  </div>
+                  <div className="grid gap-1 text-[10px] text-white/40">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                      <span className="text-white/50">Especialista</span><span className="truncate">{exec.specialist ?? "—"}</span>
+                      <span className="text-white/50">Duración</span><span>{exec.durationMs != null ? exec.durationMs + " ms" : "—"}</span>
+                      <span className="text-white/50">Estado previo</span><span>{exec.previousState ?? "—"}</span>
+                      <span className="text-white/50">Reintentos</span><span>{exec.retryCount ?? 0}</span>
+                    </div>
+                    {exec.errorSummary && <div className="mt-1 text-red-300/60 truncate">{exec.errorSummary}</div>}
+                    {exec.evidenceFile && <div className="mt-1 text-cyan-300/60 text-[10px] truncate">Evidencia: {exec.evidenceFile}</div>}
+                  </div>
+                </div>
+              ))}
+              {!executions.length ? <div className="text-xs text-white/35">Sin ejecuciones registradas.</div> : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded-xl border border-white/10 bg-white/[0.035] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-semibold text-white/70">Ciclos de decisión</div>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cycles.length ? "bg-white/5 border border-white/10" : "bg-white/10 border border-white/5 text-white/30"}`}>
+                {cycles.length}
+              </span>
+            </div>
+            <div className="max-h-[400px] overflow-auto space-y-2 pr-1">
+              {cycles.map((cycle) => (
+                <div key={cycle.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-2.5 text-xs">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="truncate font-medium text-white/80">{cycle.taskId ?? "sin tarea"}</span>
+                    <span className="text-xs text-white/40">{new Date(cycle.createdAt ?? 0).toLocaleDateString("es-CL")}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-white/40">
+                    <div>
+                      <span className="block text-white/50">QA</span><span className="text-white/70">{cycle.qaVerdict ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-white/50">Security</span><span className="text-white/70">{cycle.securityVerdict ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-white/50">Orquestador</span><span className="text-white/70">{cycle.orchestratorDecision ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-white/50">Archivos</span><span className="text-white/70">{cycle.files.length}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!cycles.length ? <div className="text-xs text-white/35">Sin ciclos registrados.</div> : null}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.035] p-4">
+            <div className="text-xs font-semibold text-white/70 mb-3">Iniciar ejecución</div>
+            <p className="text-xs text-white/40 mb-3">Ejecuta el motor de tareas contra una tarea seleccionada del backlog. Los resultados se persisten y aparecen arriba.</p>
+            <button
+              onClick={() => void onExecuteTask("T-14", true)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-cyan-200 hover:bg-white/10 disabled:opacity-50"
+              disabled={!logs}
+            >
+              <Bot className="h-3.5 w-3.5" /> Ejecutar T-14 (dry-run)
+            </button>
+            <div className="mt-2 text-[10px] text-white/35">La ejecución real requiere una tarea con comando definido en el backlog. Los controles de producción están deshabilitados por defecto.</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 px-5 py-4 sm:px-6">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-white/30">
+          <span>Última actualización</span>
+          <span>{logs?.generated_at ? new Date(logs.generated_at).toLocaleString("es-CL") : "—"}</span>
+        </div>
+      </div>
+    </section>
+  );
 }

@@ -89,6 +89,8 @@ import { Route as ApiNotificationsLowStockCheckRouteImport } from './routes/api/
 import { Route as ApiOwnerAgencyChatRouteImport } from './routes/api/owner/agency-chat'
 import { Route as ApiOwnerAgencyControlRouteImport } from './routes/api/owner/agency-control'
 import { Route as ApiOwnerAgencyStatusRouteImport } from './routes/api/owner/agency-status'
+import { Route as ApiOwnerAgencyLogsRouteImport } from './routes/api/owner/agency-logs'
+import { Route as ApiOwnerAgencyExecuteRouteImport } from './routes/api/owner/agency-execute'
 import { Route as ApiOwnerOperationalMetricsRouteImport } from './routes/api/owner/operational-metrics'
 import { Route as ApiBillingMercadopagoCreateRouteImport } from './routes/api/billing/mercadopago/create'
 import { Route as ApiBillingMercadopagoManageRouteImport } from './routes/api/billing/mercadopago/manage'
@@ -526,6 +528,16 @@ const ApiOwnerAgencyStatusRoute = ApiOwnerAgencyStatusRouteImport.update({
   path: '/api/owner/agency-status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOwnerAgencyLogsRoute = ApiOwnerAgencyLogsRouteImport.update({
+  id: '/api/owner/agency-logs',
+  path: '/api/owner/agency-logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOwnerAgencyExecuteRoute = ApiOwnerAgencyExecuteRouteImport.update({
+  id: '/api/owner/agency-execute',
+  path: '/api/owner/agency-execute',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOwnerOperationalMetricsRoute =
   ApiOwnerOperationalMetricsRouteImport.update({
     id: '/api/owner/operational-metrics',
@@ -679,6 +691,8 @@ export interface FileRoutesByFullPath {
   '/api/owner/agency-chat': typeof ApiOwnerAgencyChatRoute
   '/api/owner/agency-control': typeof ApiOwnerAgencyControlRoute
   '/api/owner/agency-status': typeof ApiOwnerAgencyStatusRoute
+  '/api/owner/agency-logs': typeof ApiOwnerAgencyLogsRoute
+  '/api/owner/agency-execute': typeof ApiOwnerAgencyExecuteRoute
   '/api/owner/operational-metrics': typeof ApiOwnerOperationalMetricsRoute
   '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
   '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
@@ -772,6 +786,8 @@ export interface FileRoutesByTo {
   '/api/owner/agency-chat': typeof ApiOwnerAgencyChatRoute
   '/api/owner/agency-control': typeof ApiOwnerAgencyControlRoute
   '/api/owner/agency-status': typeof ApiOwnerAgencyStatusRoute
+  '/api/owner/agency-logs': typeof ApiOwnerAgencyLogsRoute
+  '/api/owner/agency-execute': typeof ApiOwnerAgencyExecuteRoute
   '/api/owner/operational-metrics': typeof ApiOwnerOperationalMetricsRoute
   '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
   '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
@@ -867,6 +883,8 @@ export interface FileRoutesById {
   '/api/owner/agency-chat': typeof ApiOwnerAgencyChatRoute
   '/api/owner/agency-control': typeof ApiOwnerAgencyControlRoute
   '/api/owner/agency-status': typeof ApiOwnerAgencyStatusRoute
+  '/api/owner/agency-logs': typeof ApiOwnerAgencyLogsRoute
+  '/api/owner/agency-execute': typeof ApiOwnerAgencyExecuteRoute
   '/api/owner/operational-metrics': typeof ApiOwnerOperationalMetricsRoute
   '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
   '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
@@ -962,6 +980,8 @@ export interface FileRouteTypes {
     | '/api/owner/agency-chat'
     | '/api/owner/agency-control'
     | '/api/owner/agency-status'
+    | '/api/owner/agency-logs'
+   | '/api/owner/agency-execute'
     | '/api/owner/operational-metrics'
     | '/api/billing/mercadopago/create'
     | '/api/billing/mercadopago/manage'
@@ -1055,6 +1075,8 @@ export interface FileRouteTypes {
     | '/api/owner/agency-chat'
     | '/api/owner/agency-control'
     | '/api/owner/agency-status'
+    | '/api/owner/agency-logs'
+   | '/api/owner/agency-execute'
     | '/api/owner/operational-metrics'
     | '/api/billing/mercadopago/create'
     | '/api/billing/mercadopago/manage'
@@ -1149,6 +1171,8 @@ export interface FileRouteTypes {
     | '/api/owner/agency-chat'
     | '/api/owner/agency-control'
     | '/api/owner/agency-status'
+    | '/api/owner/agency-logs'
+   | '/api/owner/agency-execute'
     | '/api/owner/operational-metrics'
     | '/api/billing/mercadopago/create'
     | '/api/billing/mercadopago/manage'
@@ -1200,9 +1224,10 @@ export interface RootRouteChildren {
   ApiCronNuvaIntelligenceWorkerRoute: typeof ApiCronNuvaIntelligenceWorkerRoute
   ApiNotificationsLowStockCheckRoute: typeof ApiNotificationsLowStockCheckRoute
   ApiOwnerAgencyChatRoute: typeof ApiOwnerAgencyChatRoute
-  ApiOwnerAgencyControlRoute: typeof ApiOwnerAgencyControlRoute
-  ApiOwnerAgencyStatusRoute: typeof ApiOwnerAgencyStatusRoute
-  ApiOwnerOperationalMetricsRoute: typeof ApiOwnerOperationalMetricsRoute
+  ApiOwnerAgencyControlRoute: typeof ApiOwnerAgencyControlRoute,
+  ApiOwnerAgencyStatusRoute: typeof ApiOwnerAgencyStatusRoute,
+  ApiOwnerAgencyExecuteRoute: typeof ApiOwnerAgencyExecuteRoute,
+  ApiOwnerOperationalMetricsRoute: typeof ApiOwnerOperationalMetricsRoute,
   ApiBillingMercadopagoCreateRoute: typeof ApiBillingMercadopagoCreateRoute
   ApiBillingMercadopagoManageRoute: typeof ApiBillingMercadopagoManageRoute
   ApiBillingMercadopagoWebhookRoute: typeof ApiBillingMercadopagoWebhookRoute
@@ -1772,12 +1797,26 @@ declare module '@tanstack/react-router' {
       parentRoute: typeof rootRouteImport
     }
     '/api/owner/agency-status': {
-      id: '/api/owner/agency-status'
-      path: '/api/owner/agency-status'
-      fullPath: '/api/owner/agency-status'
-      preLoaderRoute: typeof ApiOwnerAgencyStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+       id: '/api/owner/agency-status'
+       path: '/api/owner/agency-status'
+       fullPath: '/api/owner/agency-status'
+       preLoaderRoute: typeof ApiOwnerAgencyStatusRouteImport
+       parentRoute: typeof rootRouteImport
+     }
+    '/api/owner/agency-logs': {
+       id: '/api/owner/agency-logs'
+       path: '/api/owner/agency-logs'
+       fullPath: '/api/owner/agency-logs'
+       preLoaderRoute: typeof ApiOwnerAgencyLogsRouteImport
+       parentRoute: typeof rootRouteImport
+     }
+    '/api/owner/agency-execute': {
+       id: '/api/owner/agency-execute'
+       path: '/api/owner/agency-execute'
+       fullPath: '/api/owner/agency-execute'
+       preLoaderRoute: typeof ApiOwnerAgencyExecuteRouteImport
+       parentRoute: typeof rootRouteImport
+     }
     '/api/owner/operational-metrics': {
       id: '/api/owner/operational-metrics'
       path: '/api/owner/operational-metrics'
@@ -2010,6 +2049,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOwnerAgencyChatRoute: ApiOwnerAgencyChatRoute,
   ApiOwnerAgencyControlRoute: ApiOwnerAgencyControlRoute,
   ApiOwnerAgencyStatusRoute: ApiOwnerAgencyStatusRoute,
+  ApiOwnerAgencyExecuteRoute: ApiOwnerAgencyExecuteRoute,
   ApiOwnerOperationalMetricsRoute: ApiOwnerOperationalMetricsRoute,
   ApiBillingMercadopagoCreateRoute: ApiBillingMercadopagoCreateRoute,
   ApiBillingMercadopagoManageRoute: ApiBillingMercadopagoManageRoute,

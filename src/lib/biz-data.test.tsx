@@ -285,4 +285,21 @@ describe("useBizDelete/useBizUpdate — intento de operar sobre registro de otro
 
     unmount();
   });
+
+  it("usa el business_id del negocio activo, no uno hardcodeado (aislamiento cross-business)", async () => {
+    mockUseActiveBusiness.mockReturnValue(activeBizMock({ id: "biz-otro", name: "Biz Otro" }));
+
+    const { click, unmount } = renderHookComponent(
+      <MountHook table="sales" mutationType="delete" />
+    );
+    await click('[data-testid="btn-delete"]');
+
+    await vi.waitFor(() => {
+      const filters = mockSupabase.__businessIdFilters();
+      expect(filters).toContain('business_id="biz-otro"');
+      expect(filters).not.toContain('business_id="biz-activo"');
+    });
+
+    unmount();
+  });
 });
