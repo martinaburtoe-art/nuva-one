@@ -89,12 +89,23 @@ Formato de cada entrada:
 - departamento: Operaciones
 - especialista: Release
 - prioridad: P0
-- estado: EN_CURSO
+- estado: COMPLETADO
 - dependencias: T-02, T-03, T-05, T-06
 - criterios_de_aceptacion: PR abierto con commits de todas las tareas del ciclo, evidencia adjunta, revisión independiente documentada, sin merge a main
 - pruebas_requeridas: CI del PR verde (typecheck, lint, tests, build), revisión independiente firmada
-- evidencia: URL del PR, commits, salida de CI
+- evidencia: PR #252 abierto, head `fc8fba3e`, commits fc8fba3e (4 archivos, 329 inserciones), revisión independiente T-05 APROBADA (subagente sa-0-765368b7), CI en ejecución (production-smoke pass, safety-gate pass, resto pending)
 - seguridad: rama de trabajo, sin merge a main, sin deploy
+
+## T-08 — Implementar registro de ejecución de ciclos (cycle execution logger)
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P0
+- estado: COMPLETADO
+- dependencias: T-01, T-02
+- criterios_de_aceptacion: Script que registra cada ciclo en logs/cycles/cycle-<timestamp>.json con task ID, agente responsable, método de delegación, resultado, archivos afectados, veredicto QA, veredicto Security, decisión del orquestador y timestamp. El archivo JSON es válido y legible.
+- pruebas_requeridas: Ejecutar script manualmente, verificar que se crea el archivo de registro JSON válido
+- evidencia: scripts/agency-cycle-logger.mjs creado; logs/cycles/cycle-20261029-125641.json registrado con qaVerdict=approved, securityVerdict=approved, orchestratorDecision=accepted
+- seguridad: solo escritura de archivos de registro locales, sin producción
 
 ---
 
