@@ -23,6 +23,7 @@ Estado real del proyecto, verificado el 2026-10-29. Este archivo es la única fu
 - `npm run build`: **PASS** (3.35s, output `.vercel/`)
 - `npm run lint`: **0 errores** (668-681 warnings preexistentes, sin nuevos)
 - ESLint en `src/lib/biz-data.test.tsx`: **0 errores**
+- PR #252 CI checks: **11/11 PASS** (lint, typecheck, test, build, pgTAP, safety-gate, review, production-smoke, web-qa, Vercel preview, Factory release evidence) — verificado con `gh pr checks 252`
 
 ## Mutación testing — biz-data.test.tsx (verificado hoy, evidencia real)
 - Mutación aplicada: eliminado `.eq("business_id", active.id)` de `useBizDelete` y `useBizUpdate` en `src/lib/biz-data.ts`

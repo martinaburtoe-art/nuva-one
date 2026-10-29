@@ -21,7 +21,7 @@ Registro de tareas: pendientes, en curso, bloqueadas, completadas y verificadas.
 |---|---|---|---|---|
 | T-08 | PENDIENTE | Auditoría de módulos restantes `_authenticated/` no leídos (ai, billing, catalog, customer-*, finance-*, help-center, mfa-required, mobile-scanner, people-*, pricing-calculator, shifts, shipments) | Cerrar Fase 1 (auditoría completa) | T-04 completada |
 | T-09 | PENDIENTE | Crear `docs/factory/DECISIONS.md` con decisiones técnicas aprobadas | Complementar memoria persistente | T-05 completada |
-| T-10 | PENDIENTE | Ejecutar `nuva-ci-diagnostics` en PR #252 para confirmar CI verde post-commit `2aa31959` | Verificación CI real antes de seguir con código | gh autenticado, PR #252 abierto |
+| T-10 | COMPLETADA | Ejecutar `nuva-ci-diagnostics` en PR #252 para confirmar CI verde post-commit `2aa31959` | 11/11 checks PASS en PR #252 (lint, typecheck, test, build, pgTAP, safety-gate, review, production-smoke, web-qa, Vercel preview, Factory release evidence) | gh pr checks 252 → todos PASS |
 | T-11 | PENDIENTE | Ejecutar 2 demostraciones más del ciclo de ejecución continua (Fase 4, tareas independientes y reales) | Validar que el orquestador funciona antes de ampliar | T-06, T-07 completadas |
 | T-12 | PENDIENTE | Implementar skill `nuva-supabase-guardian` en un flujo real (revisar migraciones pendientes) | Capacidad de verificación de migraciones | Roadmap, T-06 |
 | T-13 | PENDIENTE | Implementar skill `nuva-ci-diagnostics` (roadmap item #9) | Diagnóstico de CI roto | Roadmap, T-06 |
