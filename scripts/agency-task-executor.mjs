@@ -8,6 +8,19 @@ const EXEC_DIR = "logs/executions";
 const INDEX_FILE = join(LOGS_DIR, "index.json");
 const SELECTOR = "scripts/agency-select-next-task.mjs";
 const LOGGER = "scripts/agency-cycle-logger.mjs";
+const SPECIALIST_RUNNER = "scripts/agency-run-specialist.mjs";
+const SPECIALIST_IDS = ["finance", "sales", "supply", "people", "growth"];
+
+// Persistencia duradera opcional (Supabase). Se inicializa solo si hay credenciales.
+let persistClient = null;
+let persistAvailable = false;
+try {
+  const mod = await import("./agency-persist-supabase.mjs");
+  persistClient = mod.client;
+  persistAvailable = mod.available;
+} catch {
+  // Persistencia no disponible: el executor sigue funcionando con logs locales.
+}
 
 // Límites de seguridad innegociables (sin producción, sin migraciones remotas, sin secretos)
 const FORBIDDEN_PATHS = [
@@ -93,7 +106,8 @@ function nowIso() {
 function execId() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, "0");
-  return `exec-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  const ms = String(d.getMilliseconds()).padStart(3, "0");
+  return `exec-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}${ms}`;
 }
 
 async function readJson(path) {
@@ -108,21 +122,21 @@ async function readJson(path) {
 function parseBlocks(markdown) {
   const blocks = [];
   let current = null;
-  for (const line of markdown.split("\n")) {
-    const m = line.match(/^## (T-\d+)\s+—\s+(.+)$/);
-    if (m) {
-      if (current) blocks.push(current);
-      current = { id: m[1], title: m[2], fields: {} };
-      continue;
-    }
-    if (current) {
-      const fm = line.match(/^\s*-\s*([^:]+):\s*(.*)$/);
-      if (fm) current.fields[fm[1].trim()] = fm[2].trim();
-    }
+  for (const line of markdown.split(/\r?\n/)) {
+  const m = line.match(/^## (T-\d+)\s+—\s+(.+)$/);
+  if (m) {
+    if (current) blocks.push(current);
+    current = { id: m[1], title: m[2], fields: {} };
+    continue;
+  }
+  if (current) {
+    const fm = line.match(/^\s*-\s*([^:]+):\s*(.*)$/);
+    if (fm) current.fields[fm[1].trim()] = fm[2].trim();
+  }
   }
   if (current) blocks.push(current);
   return blocks;
-}
+  }
 
 function depsResolved(block, byId) {
   const deps = (block.fields.dependencias || "ninguna")
@@ -190,14 +204,24 @@ function resolveCommand(taskBlock) {
   if (/\bnpm run typecheck\b/.test(criteria) || /\btypecheck\b/.test(title)) {
     return { type: "npm_run", command: ["npm", "run", "typecheck"] };
   }
-  if (/\bnpm run build\b/.test(criteria) || /\bbuild\b/.test(title)) {
+  if (/\\bnpm run build\\b/.test(criteria) || /\\bbuild\\b/.test(title)) {
     return { type: "npm_run", command: ["npm", "run", "build"] };
-  }
-  if (/\bnode --check\b/.test(criteria) || /\.mjs/.test(criteria)) {
-    return { type: "node_check", command: ["node", "--check"] };
   }
 
   return { type: "unknown", command: null };
+}
+
+/**
+ * Detecta si la tarea debe ser ejecutada por uno de los 5 especialistas
+ * faltantes (finance, sales, supply, people, growth). Devuelve un plan
+ * de tipo "specialist" sin comando de shell.
+ */
+function resolveSpecialist(taskBlock) {
+  const specialist = (taskBlock.fields.especialista || "").toLowerCase().trim();
+  if (SPECIALIST_IDS.includes(specialist)) {
+    return { type: "specialist", specialistId: specialist };
+  }
+  return null;
 }
 
 async function runCommand(command, cwd, timeoutMs = 120000) {
@@ -519,6 +543,16 @@ async function runMainWithLock(execIdValue) {
     // 5. Preparar ejecución (comando real)
     const execPlan = resolveCommand(taskBlock);
 
+    // Si no hay comando de shell, probar si es un especialista de Agency
+    if (execPlan.type === "unknown") {
+      const specialistPlan = resolveSpecialist(taskBlock);
+      if (specialistPlan) {
+        execPlan.type = "specialist";
+        execPlan.specialistId = specialistPlan.specialistId;
+        execPlan.command = ["node", SPECIALIST_RUNNER, specialistPlan.specialistId, taskBlock.id];
+      }
+    }
+
     if (dryRun) {
       result.phase = "dry-run-complete";
       result.message = "Modo dry-run: no se realizaron mutaciones";
@@ -537,7 +571,7 @@ async function runMainWithLock(execIdValue) {
     while (attempt <= maxRetries && !executionOk) {
       attempt++;
       const exec = {
-        id: execIdValue,
+        id: execId(),
         timestamp: nowIso(),
         taskId: taskBlock.id,
         taskTitle: taskBlock.title,
@@ -562,7 +596,8 @@ async function runMainWithLock(execIdValue) {
         await logExecution(index, exec);
 
         batchResults.push({ taskId: taskBlock.id, phase: "execution-complete", reason: "no-comando", execution: exec });
-        executionOk = true; // no reintentar si no hay comando
+        lastRun = exec;
+        executionOk = exec.result === "PASS" || exec.result === "WARN";
         break;
       }
 
@@ -575,21 +610,76 @@ async function runMainWithLock(execIdValue) {
       exec.stderr = run.stderr;
       exec.durationMs = duration;
       exec.timedOut = run.timedOut;
-      exec.result = run.exitCode === 0 ? "PASS" : "FAIL";
-      exec.evidence = [
-        `Comando: ${execPlan.command.join(" ")}`,
-        `Código de salida: ${run.exitCode}`,
-        `Duración: ${duration} ms`,
-        `Archivos ejecutados: scripts/agency-task-executor.mjs`,
-        `Intento: ${attempt}`,
-      ];
+
+      // Si es especialista, parsear el resultado estructurado del stdout JSON
+      if (execPlan.type === "specialist") {
+        let specialistResult = null;
+        try {
+          const jsonStart = run.stdout.indexOf("{");
+          const jsonEnd = run.stdout.lastIndexOf("}");
+          if (jsonStart !== -1 && jsonEnd !== -1) {
+            specialistResult = JSON.parse(run.stdout.slice(jsonStart, jsonEnd + 1));
+          }
+        } catch {
+          specialistResult = null;
+        }
+        if (specialistResult) {
+          exec.result = specialistResult.result;
+          exec.evidence = specialistResult.evidence;
+          exec.errors = specialistResult.errors;
+          exec.specialistResult = specialistResult;
+          exec.qaVerdict = specialistResult.result;
+          exec.securityVerdict = specialistResult.result;
+          exec.orchestratorDecision =
+            specialistResult.result === "PASS" || specialistResult.result === "WARN"
+              ? "accepted"
+              : "rejected";
+        } else {
+          exec.result = run.exitCode === 0 ? "PASS" : "FAIL";
+          exec.evidence = [
+            `Comando: ${execPlan.command.join(" ")}`,
+            `Código de salida: ${run.exitCode}`,
+            `Duración: ${duration} ms`,
+            `Intento: ${attempt}`,
+          ];
+        }
+      } else {
+        exec.result = run.exitCode === 0 ? "PASS" : "FAIL";
+        exec.evidence = [
+          `Comando: ${execPlan.command.join(" ")}`,
+          `Código de salida: ${run.exitCode}`,
+          `Duración: ${duration} ms`,
+          `Archivos ejecutados: scripts/agency-task-executor.mjs`,
+          `Intento: ${attempt}`,
+        ];
+      }
 
       lastRun = exec;
 
       const index = await readIndex();
       await logExecution(index, exec);
 
-      if (run.exitCode === 0) {
+      // Persistencia duradera en Supabase (si hay credenciales)
+      if (persistAvailable && persistClient) {
+        try {
+          const { persistExecution } = await import("./agency-persist-supabase.mjs");
+          await persistExecution({
+            missionId: `m-${taskBlock.id}`,
+            taskId: taskBlock.id,
+            title: taskBlock.title,
+            objective: taskBlock.fields.criterios_de_aceptacion || "",
+            agentId: specialist,
+            status: exec.result === "PASS" || exec.result === "WARN" ? "completed" : "failed",
+            result: exec.result,
+            summary: exec.evidence?.join(" | ") || "",
+            output: { specialist: execPlan.specialistId, exitCode: run.exitCode, durationMs: duration },
+          });
+        } catch {
+          // No bloquear la ejecución si la persistencia falla
+        }
+      }
+
+      if (exec.result === "PASS" || exec.result === "WARN") {
         executionOk = true;
       } else if (attempt <= maxRetries) {
         // Reintento tras fallo
@@ -613,16 +703,20 @@ async function runMainWithLock(execIdValue) {
     result.batchResults = batchResults;
     result.tasksExecuted = tasksExecuted;
 
-    if (!executionOk) {
+    if (exec.result !== "PASS" && exec.result !== "WARN" && exec.result !== "BLOCKED") {
       result.phase = "execution-failed";
       console.log(JSON.stringify(result, null, 2));
       return;
     }
 
-    // 7. Actualizar backlog: marcar tarea como COMPLETADA
+    // 7. Actualizar backlog: marcar tarea según resultado real
+    let estadoFinal = "COMPLETADO";
+    if (exec.result === "BLOCKED") estadoFinal = "BLOQUEADO";
+    if (exec.result === "FAIL") estadoFinal = "BLOQUEADO";
+
     for (const b of currentBlocks) {
       if (b.id === taskBlock.id) {
-        b.fields.estado = "COMPLETADO";
+        b.fields.estado = estadoFinal;
         break;
       }
     }

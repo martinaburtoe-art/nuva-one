@@ -6,7 +6,7 @@ const PRIORITY_ORDER = { P0: 0, P1: 1, P2: 2, P3: 3 };
 function parseBlocks(markdown) {
   const blocks = [];
   let current = null;
-  for (const line of markdown.split("\n")) {
+  for (const line of markdown.split(/\r?\n/)) {
     const m = line.match(/^## (T-\d+)\s+—\s+(.+)$/);
     if (m) {
       if (current) blocks.push(current);

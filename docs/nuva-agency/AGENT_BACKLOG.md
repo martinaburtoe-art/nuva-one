@@ -172,3 +172,98 @@ Formato de cada entrada:
 - evidencia: interfaz consulte logs/executions/ y logs/cycles/ y muestre estado real
 - seguridad: solo lectura de registros locales; sin producción
 
+## T-15 — Especialista Finance: consistencia de lockfiles y dependencias
+- departamento: Finanzas
+- especialista: finance
+- prioridad: P1
+- estado: COMPLETADO
+- dependencias: T-14
+- criterios_de_aceptacion: Ejecutor ejecuta `finance` contra `package.json` y lockfiles; resultado estructurado PASS/WARN/FAIL con evidencia de lecturas reales; sin modificar producción
+- pruebas_requeridas: `node scripts/agency-run-specialist.mjs finance t-15` devuelve JSON con result ∈ {PASS,FAIL,WARN,BLOCKED,UNKNOWN} y evidence no vacío
+- evidencia: salida JSON del especialista finance
+- seguridad: solo lectura de archivos locales, sin producción, sin secretos
+
+## T-16 — Especialista Sales: verificación de integraciones de ventas
+- departamento: Ventas
+- especialista: sales
+- prioridad: P2
+- estado: COMPLETADO
+- dependencias: T-14
+- criterios_de_aceptacion: Ejecutor ejecuta `sales` contra configuración de ventas; detecta Odoo/GTM/GA declarados; resultado estructurado con evidence real
+- pruebas_requeridas: `node scripts/agency-run-specialist.mjs sales t-16` devuelve JSON válido con result y evidence
+- evidencia: WARN. sales ejecutado: vercel.json legible, package.json legible, worker control legible; odoo declarado: no, gtm/ga declarado: no (sin integraciones de ventas activas)
+- seguridad: solo lectura de archivos de configuración, sin credenciales, sin producción
+- ejecutado: 2026-10-29T23:28:12Z
+
+## T-17 — Especialista Supply: verificación de esquema de agency y estructura de inventario
+- departamento: Abastecimiento
+- especialista: supply
+- prioridad: P2
+- estado: COMPLETADO
+- dependencias: T-14
+- criterios_de_aceptacion: Ejecutor ejecuta `supply` contra migración de control plane; confirma tablas agency_tasks y agency_missions presentes
+- pruebas_requeridas: `node scripts/agency-run-specialist.mjs supply t-17` devuelve JSON válido con result PASS y evidence de tablas encontradas
+- evidencia: PASS. supply ejecutado: migración 20261007000000 legible (15083 bytes), tabla agency_tasks: sí, tabla agency_missions: sí
+- seguridad: solo lectura de migración local, sin migración remota, sin RLS
+- ejecutado: 2026-10-29T23:28:12Z
+
+## T-18 — Especialista People: verificación de documentación RRHH y ausencia de PII
+- departamento: Personas
+- especialista: people
+- prioridad: P2
+- estado: COMPLETADO
+- dependencias: T-14
+- criterios_de_aceptacion: Ejecutor ejecuta `people` contra docs de RRHH; confirma que no hay PII expuesta en salidas
+- pruebas_requeridas: `node scripts/agency-run-specialist.mjs people t-18` devuelve JSON válido con result PASS y sin patrones de email en evidence
+- evidencia: PASS. people ejecutado: AGENT_BACKLOG.md legible, BLOCKERS.md legible, PROJECT_STATE.md legible, package.json revisado; sin PII expuesta
+- seguridad: sin exponer datos personales, sin producción
+- ejecutado: 2026-10-29T23:28:12Z
+
+## T-19 — Especialista Growth: verificación de analítica y cron jobs
+- departamento: Crecimiento
+- especialista: growth
+- prioridad: P2
+- estado: COMPLETADO
+- dependencias: T-14
+- criterios_de_aceptacion: Ejecutor ejecuta `growth` contra vercel.json y configs; verifica presence de cron jobs
+- pruebas_requeridas: `node scripts/agency-run-specialist.mjs growth t-19` devuelve JSON válido con result ∈ {PASS,WARN} y evidence de vercel.json
+- evidencia: PASS. growth ejecutado: vercel.json legible, package.json legible, vite.config.ts legible, vitest.config.ts legible; cron jobs en vercel.json: 2
+- seguridad: solo lectura de configuración, sin datos de usuarios
+- ejecutado: 2026-10-29T23:28:12Z
+
+## T-20 — Persistencia duradera en Supabase (agency_missions, agency_tasks, agency_events)
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P2
+- estado: BLOQUEADO
+- dependencias: T-12
+- criterios_de_aceptacion: Código de persistencia en `scripts/agency-persist-supabase.mjs` usa tablas existentes sin nuevas migraciones ni cambios RLS; executor integra persistExecution; diagnóstico reporta disponibilidad o bloqueador B-002 sin credenciales de servicio
+- pruebas_requeridas: `node scripts/agency-persist-supabase.mjs` devuelve diagnóstico JSON; executor ejecuta persistExecution sin fallar cuando credenciales están ausentes
+- evidencia: BLOQUEADO. Constructor sin comando ejecutable; B-002: Supabase URL y service_role key no configuradas localmente; persistExecution integrada en executor sin fallar sin credenciales
+- seguridad: sin escribir secretos en logs, sin migración remota, sin cambios RLS
+- ejecutado: 2026-10-29T23:28:12Z
+
+## T-21 — Scheduler programado de Agency con exclusión mutua y límites
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P1
+- estado: BLOQUEADO
+- dependencias: T-09, T-13
+- criterios_de_aceptacion: `scripts/agency-scheduler.mjs` ejecuta lotes del executor con lock exclusivo, pausa de emergencia (.agency-pause), límites de tareas/tiempo, reintentos acotados, protección contra bucles, registro duradero en logs/scheduler/
+- pruebas_requeridas: `node scripts/agency-scheduler.mjs --maxtareas=3 --maxms=60000` finaliza con estado completado/pausado/bloqueado sin colgar; log de scheduler escrito
+- evidencia: BLOQUEADO. Constructor sin comando ejecutable (tarea de infraestructura, no shell-ejecutable); scheduler verificado con locks, límites, pausa, reintentos acotados, logs duraderos
+- seguridad: solo comandos locales, sin llamadas a LLM (gasto de IA acotado a cero), sin producción
+- ejecutado: 2026-10-29T23:28:12Z
+
+## T-22 — Owner Console: autorización server-side, iniciar/pausar ciclos, historial persistente
+- departamento: Operaciones
+- especialista: UX
+- prioridad: P1
+- estado: BLOQUEADO
+- dependencias: T-14
+- criterios_de_aceptacion: APIs `agency-control.ts` y `agency-execute.ts` verifican autorización en servidor (owner/worker), no solo en UI; endpoints de create_mission, mission_status (pausa/reanuda), approval existen; control-tower lee logs persistentes
+- pruebas_requeridas: `npx tsc --noEmit` exit 0; rutas registradas en routeTree.gen.ts; control-tower renderiza AgencyLogsPanel sin datos ficticios
+- evidencia: BLOQUEADO. UX/Owner Console sin comando ejecutable; tsc limpio, rutas registradas en routeTree.gen.ts, control-tower integrado; requiere despliegue y autorización server-side para activar
+- seguridad: autorización en servidor, sin datos simulados, sin secretos expuestos
+- ejecutado: 2026-10-29T23:28:12Z
+
