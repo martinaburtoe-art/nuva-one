@@ -43,3 +43,10 @@ Bloqueos vigentes con evidencia disponible, responsable y siguiente acción. Nun
 - **Responsable:** Equipo de desarrollo
 - **Siguiente acción:** Evaluar migración a happy-dom 21+ o alternativa de entorno de tests.
 - **Dependencia:** Ninguna.
+
+## B-007: Briefing matutino (cron) falla con deadlock de OpenAI
+- **Estado:** BLOQUEADO
+- **Evidencia:** `hermes cron list` — job "Briefing matutino", every day at 10:30, profile default. Last run 2026-10-28T13:02:58: `RuntimeError: Failed to initialize OpenAI client: deadlock detected by _ModuleLock('openai.types.chat.chat_completion_message_tool_call')`. Dispatch 2h 32m late, execution failed. Next run: 2026-10-29T10:30:00-03:00. Usa skill google-workspace (Gmail+Calendar).
+- **Responsable:** Equipo de desarrollo / Usuario (Don Martín)
+- **Siguiente acción:** Diagnosticar deadlock del cliente OpenAI en el entorno del job cron; si no se resuelve, el briefing automatizado queda como UNKNOWN hasta tener fallback.
+- **Dependencia:** B-001 (credenciales de Google) para que el briefing tenga datos reales que leer.
