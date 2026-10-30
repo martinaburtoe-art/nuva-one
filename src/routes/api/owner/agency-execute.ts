@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/owner/agency-execute")({
           body = {};
         }
 
-        if (body.task !== undefined && (typeof body.task !== "string" || !/^T-\\d{1,4}$/.test(body.task))) {
+        if (body.task !== undefined && (typeof body.task !== "string" || !/^T-\d{1,4}$/.test(body.task))) {
           return Response.json({ error: "INVALID_TASK_ID" }, { status: 400 });
         }
         if (body.dryRun !== undefined && typeof body.dryRun !== "boolean") {
