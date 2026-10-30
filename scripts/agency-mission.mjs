@@ -17,7 +17,8 @@
  */
 
 import { execFile } from "node:child_process";
-import { readFile, writeFile, mkdir, readdir, stat, unlink } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 const MISSIONS_DIR = join("logs", "missions");
@@ -191,21 +192,11 @@ async function createMission(objective, tasksJson) {
 // --- Ejecución de misión ---
 
 function isCancelled() {
-  try {
-    require("node:fs").statSync(CANCEL_FILE);
-    return true;
-  } catch {
-    return false;
-  }
+  return existsSync(CANCEL_FILE);
 }
 
 function isPaused() {
-  try {
-    require("node:fs").statSync(PAUSE_FILE);
-    return true;
-  } catch {
-    return false;
-  }
+  return existsSync(PAUSE_FILE);
 }
 
 function recordDecision(mission, decision) {
@@ -218,44 +209,22 @@ function recordDecision(mission, decision) {
 async function runSpecialist(specialistId, taskId, timeoutMs) {
   return new Promise((resolve) => {
     const start = Date.now();
-    const child = execFile("node", [SPECIALIST_RUNNER, specialistId, taskId], {
-      timeout: timeoutMs,
-    });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", (c) => { stdout += c; });
-    child.stderr.on("data", (c) => { stderr += c; });
-    child.on("close", (code, signal) => {
-      resolve({
-        exitCode: code,
-        signal,
-        stdout,
-        stderr,
-        durationMs: Date.now() - start,
-        timedOut: false,
-      });
-    });
-    child.on("timeout", () => {
-      child.kill();
-      resolve({
-        exitCode: -1,
-        signal: "SIGTERM",
-        stdout,
-        stderr: "Command timed out",
-        durationMs: Date.now() - start,
-        timedOut: true,
-      });
-    });
-    child.on("error", (err) => {
-      resolve({
-        exitCode: -1,
-        signal: null,
-        stdout,
-        stderr: err.message || String(err),
-        durationMs: Date.now() - start,
-        timedOut: false,
-      });
-    });
+    execFile(
+      "node",
+      [SPECIALIST_RUNNER, specialistId, taskId],
+      { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        const timedOut = Boolean(error && (error.code === "ETIMEDOUT" || error.killed));
+        resolve({
+          exitCode: error ? (typeof error.code === "number" ? error.code : -1) : 0,
+          signal: error?.signal ?? null,
+          stdout: String(stdout ?? ""),
+          stderr: String(stderr ?? (error?.message || "")),
+          durationMs: Date.now() - start,
+          timedOut,
+        });
+      },
+    );
   });
 }
 
