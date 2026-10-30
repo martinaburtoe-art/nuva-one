@@ -36,6 +36,7 @@
 
 import { execFile } from "node:child_process";
 import { readFile, writeFile, mkdir, unlink, stat } from "node:fs/promises";
+import { statSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -83,7 +84,7 @@ async function appendLog(entry) {
 
 function isPaused() {
   try {
-    stat.sync(PAUSE_FILE);
+    statSync(PAUSE_FILE);
     return true;
   } catch {
     return false;
@@ -92,7 +93,7 @@ function isPaused() {
 
 function isResumed() {
   try {
-    stat.sync(RESUME_FILE);
+    statSync(RESUME_FILE);
     return true;
   } catch {
     return false;
