@@ -246,10 +246,10 @@ Formato de cada entrada:
 - especialista: Constructor
 - prioridad: P0
 - estado: BLOQUEADO
-- dependencias: T-20, T-31
+- dependencias: T-20, T-31, T-32
 - criterios_de_aceptacion: un solo scheduler durable activo, con leases, heartbeat, reintentos y recuperación verificados; no ejecutar dos workers competidores.
 - pruebas_requeridas: ejecución schedule real con tarea nueva, heartbeat y finish persistidos; verificación de concurrencia y reanudación.
-- evidencia: main ya contiene `.github/workflows/nuva-agent-durable-worker.yml` con cron `7,27,47 * * * *` y un workflow de 350 min. Último run schedule observado: `41030396490` (2026-10-30 09:01:23Z), concluyó success pero no reclamó trabajo: intentó los 13 agentes y todos devolvieron sin tarea elegible. Snapshot read-only de Supabase: 2 misiones, 14 tareas (3 completadas, 11 fallidas), 40 eventos task.claimed, 27 leases expirados y 13 liberados. La función Edge activa v16 no puede crear el siguiente ciclo porque faltan grants de service_role. El workflow nuevo `nuva-agency-durable-worker.yml` de esta PR sería un segundo scheduler; no activarlo hasta reconciliar el worker existente.
+- evidencia: main contiene `.github/workflows/nuva-agent-durable-worker.yml` con cron `7,27,47 * * * *` y timeout 350 min. Último run schedule observado `41030396490` (2026-10-30 09:01:23Z): concluyó success, pero intentó los 13 agentes y no reclamó ninguna tarea. Snapshot read-only Supabase: 2 misiones, 14 tareas (3 completadas, 11 fallidas), 40 eventos task.claimed, 27 leases expirados y 13 liberados. La Edge Function v16 no puede crear el siguiente ciclo por falta de grants. El workflow nuevo `nuva-agency-durable-worker.yml` de esta PR sería un segundo scheduler; no activarlo hasta reconciliar el worker existente y endurecer OIDC.
 - seguridad: sin merge/deploy, sin migraciones remotas, sin RLS ni secretos.
 
 ## T-22 — Owner Console durable con autorización server-side
@@ -312,10 +312,10 @@ Formato de cada entrada:
 - especialista: Release
 - prioridad: P0
 - estado: BLOQUEADO
-- dependencias: T-20, T-21, T-31
+- dependencias: T-20, T-21, T-31, T-32
 - criterios_de_aceptacion: el scheduler existente vuelve a reclamar y finalizar tareas nuevas; el resultado se verifica en Supabase y Owner Console.
-- pruebas_requeridas: ejecución schedule real posterior a los grants, con tarea nueva y lease liberado.
-- evidencia: hay un workflow programado en main, pero el último run observado terminó sin trabajo porque no existen tareas elegibles; las 14 tareas persistidas están completadas/fallidas. La migración T-29 pasa en CI, pero no se aplicó remotamente. El workflow de 5 min en PR #252 no se ha activado y no debe coexistir sin una decisión explícita de reemplazo.
+- pruebas_requeridas: ejecución schedule real posterior a los grants y al hardening OIDC, con tarea nueva y lease liberado.
+- evidencia: existe workflow schedule en main, pero el último run observado terminó sin trabajo porque no había tareas elegibles. Las 14 tareas persistidas están completadas/fallidas. T-29 prepara grants y pasa CI, pero no está aplicado remotamente. T-31 prepara validación estricta OIDC, pero no está desplegada. El workflow de 5 min en PR #252 no se ha activado y no debe coexistir sin una decisión explícita de reemplazo.
 - seguridad: requiere autorización expresa para aplicar migración/deploy/merge.
 
 ## T-28 — Verificar Owner Console durable con sesión real de propietario
@@ -360,5 +360,18 @@ Formato de cada entrada:
 - dependencias: T-21
 - criterios_de_aceptacion: la Edge Function valida audience, repository, repository_owner, actor, ref main, workflow_ref exacto, evento permitido, run_id y agent_id.
 - pruebas_requeridas: Vitest con claims válidos/alterados y Deno check de la Edge Function.
-- evidencia: versión desplegada 16 solo valida issuer, repository, run_id y agent_id; no comprueba audience, workflow_ref, ref, event_name ni actor. Se prepara hardening en la rama; no se despliega la función remota.
+- evidencia: versión desplegada 16 solo valida issuer, repository, run_id y agent_id; no comprueba audience, workflow_ref, ref, event_name ni actor. El commit `e28f67e` añade helper, 14 tests y Deno check en CI; aún no existe un workflow run para ese SHA, por lo que no se marca completado. La función remota permanece en v16.
 - seguridad: no desplegar Edge Function, no leer secretos, no cambiar RLS
+
+
+
+## T-32 — Desplegar hardening OIDC en la Edge Function
+- departamento: Seguridad
+- especialista: Release
+- prioridad: P0
+- estado: BLOQUEADO
+- dependencias: T-31
+- criterios_de_aceptacion: versión desplegada de `nuva-agency-worker-control` rechaza tokens con audience, workflow_ref, ref, actor, evento, run_id o agent_id no autorizados.
+- pruebas_requeridas: smoke real contra la función desplegada con token válido del workflow dedicado y tokens inválidos; verificar logs sin exponer JWT.
+- evidencia: la función remota está en versión 16. El código endurecido está preparado en PR #252; no se desplegó por la restricción explícita de no realizar despliegues.
+- seguridad: requiere autorización expresa para desplegar la Edge Function; no leer ni copiar secretos
