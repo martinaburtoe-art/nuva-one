@@ -14,6 +14,7 @@ import { authorizeAgencyOwner, isPlatformOwner } from "./owner-auth.server";
 describe("Agency server-side owner authorization", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getUserMock.mockReset();
     getEnvMock.mockReturnValue({
       url: "https://unit-test.supabase.co",
       anonKey: "unit-test-publishable-key",
