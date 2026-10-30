@@ -63,6 +63,7 @@ describe("agency-persist-supabase", () => {
     });
 
     expect(result.persisted).toBe(true);
+    if (!result.persisted) throw new Error(result.reason);
     expect(result.missionId).toMatch(/^[0-9a-f-]{36}$/i);
     expect(result.taskId).toMatch(/^[0-9a-f-]{36}$/i);
     const mission = calls.find((call) => call.table === "agency_missions" && call.method === "upsert")?.payload;
@@ -85,12 +86,14 @@ describe("agency-persist-supabase", () => {
       title: "Reintento",
       objective: "Idempotencia",
       agentId: "qa",
-      status: "failed",
+      status: "failed" as const,
       result: "FAIL",
       summary: "Intento 1",
     };
     const first = await persistExecution(input);
     const second = await persistExecution({ ...input, summary: "Intento 2", attemptCount: 2 });
+    if (!first.persisted) throw new Error(first.reason);
+    if (!second.persisted) throw new Error(second.reason);
     expect(first.missionId).toBe(second.missionId);
     expect(first.taskId).toBe(second.taskId);
   });
