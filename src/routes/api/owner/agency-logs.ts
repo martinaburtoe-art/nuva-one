@@ -27,7 +27,7 @@ type ExecutionRecord = {
 
 type CycleRecord = {
   id: string;
-  taskId: string;
+  taskId: string | null;
   qaVerdict: string | null;
   securityVerdict: string | null;
   orchestratorDecision: string | null;
@@ -78,9 +78,9 @@ export const Route = createFileRoute("/api/owner/agency-logs")({
 
             const executions: ExecutionRecord[] = (taskResult.data ?? []).map((task: any) => {
               const rawResult = typeof task.result?.result === "string" ? task.result.result : null;
-              const result = ["PASS", "FAIL", "ERROR", "BLOCKED", "UNKNOWN"].includes(rawResult)
+              const result = (["PASS", "FAIL", "ERROR", "BLOCKED", "UNKNOWN"].includes(rawResult)
                 ? rawResult
-                : task.status === "completed" ? "PASS" : task.status === "failed" ? "FAIL" : "UNKNOWN";
+                : task.status === "completed" ? "PASS" : task.status === "failed" ? "FAIL" : "UNKNOWN") as ExecutionRecord["result"];
               const error = task.error && typeof task.error === "object" ? task.error.message ?? task.error.details ?? null : null;
               return {
                 id: task.id,
