@@ -1,20 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
-
-vi.mock("node:child_process", () => {
-  return {
-    execFile: vi.fn((cmd: any, args: any[], opts: any, callback: any) => {
-      const isVitest = args.some((a) => String(a).includes("vitest"));
-      if (isVitest) {
-        const fakeOutput = "Test Files  1 passed (1)\n      Tests  39 passed (39)\n";
-        callback(null, fakeOutput, "");
-        return { kill: () => {}, unref: () => {} } as any;
-      }
-      // No-vitest: éxito genérico (constructor y release reciben resultado válido)
-      callback(null, "", "");
-      return { kill: () => {}, unref: () => {} } as any;
-    }),
-  };
-});
+import { describe, it, expect } from "vitest";
 
 import {
   SPECIALISTS,
@@ -22,10 +6,17 @@ import {
   type SpecialistResult,
 } from "@/lib/agency/specialists";
 
-const task = (agentId: string, id = "t-test-001") =>
-  ({ id, title: "Tarea de prueba", agent_id: agentId } as const);
+const task = (agentId: string, id = "t-test-001", input_context?: Record<string, unknown>) =>
+  ({ id, title: "Tarea de prueba", agent_id: agentId, input_context } as const);
 
 describe("Especialistas faltantes (ETAPA 1)", () => {
+  it("registra exactamente los 13 especialistas", () => {
+    const expected = ["compliance", "constructor", "finance", "growth", "orchestrator", "people", "qa", "release", "sales", "security", "sentinel", "supply", "ux"];
+    expect(Object.keys(SPECIALISTS).sort()).toEqual(expected);
+    expect(Object.keys(SPECIALIST_META).sort()).toEqual(expected);
+  });
+
+
   it.each([
     ["finance"],
     ["sales"],
@@ -53,7 +44,7 @@ describe("Especialistas faltantes (ETAPA 1)", () => {
     ["people"],
     ["growth"],
   ])("%s ejecuta y devuelve resultado estructurado válido", async (id) => {
-    const result: SpecialistResult = await SPECIALISTS[id](task(id));
+    const result: SpecialistResult = await SPECIALISTS[id](task(id, "t-test-001", id === "qa" ? { target: "tests/agency/qa-smoke.test.ts" } : undefined));
     expect(result.specialist).toBe(id);
     expect(result.taskId).toBe(task(id).id);
     expect(["PASS", "FAIL", "BLOCKED", "UNKNOWN", "WARN"]).toContain(result.result);
@@ -133,7 +124,7 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     ["ux"],
     ["release"],
   ])("%s ejecuta y devuelve resultado estructurado válido", async (id) => {
-    const result: SpecialistResult = await SPECIALISTS[id](task(id));
+    const result: SpecialistResult = await SPECIALISTS[id](task(id, "t-test-001", id === "qa" ? { target: "tests/agency/qa-smoke.test.ts" } : undefined));
     expect(result.specialist).toBe(id);
     expect(result.taskId).toBe(task(id).id);
     expect(["PASS", "FAIL", "BLOCKED", "UNKNOWN", "WARN"]).toContain(result.result);
@@ -176,11 +167,12 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(joined).not.toMatch(/service_role/);
   });
 
-  it("qa ejecuta vitest y reporta conteo", async () => {
-    const result = await SPECIALISTS.qa(task("qa"));
-    expect(["PASS", "FAIL", "WARN"]).toContain(result.result);
+  it("qa ejecuta Vitest real en un objetivo aislado y reporta conteo verificable", async () => {
+    const result = await SPECIALISTS.qa(task("qa", "t-qa-smoke", { target: "tests/agency/qa-smoke.test.ts" }));
+    expect(result.result).toBe("PASS");
     const joined = result.evidence.join(" ");
-    expect(joined).toMatch(/pruebas pasadas|pruebas fallidas|código de salida/);
+    expect(joined).toMatch(/pruebas: 1\/1 aprobadas; 0 fallidas/);
+    expect(joined).toMatch(/salida JSON válida/);
   });
 
   it("sentinel escanea logs y detecta pausa", async () => {
