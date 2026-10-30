@@ -360,7 +360,7 @@ Formato de cada entrada:
 - dependencias: T-21
 - criterios_de_aceptacion: la Edge Function valida audience, repository, repository_owner, actor, ref main, workflow_ref exacto, evento permitido, run_id y agent_id.
 - pruebas_requeridas: Vitest con claims válidos/alterados y Deno check de la Edge Function.
-- evidencia: versión desplegada 16 solo valida issuer, repository, run_id y agent_id; no comprueba audience, workflow_ref, ref, event_name ni actor. El commit `e28f67e` añade helper, 14 tests y Deno check en CI; aún no existe un workflow run para ese SHA, por lo que no se marca completado. La función remota permanece en v16.
+- evidencia: versión desplegada 16 solo valida issuer, repository, run_id y agent_id; no comprueba audience, workflow_ref, ref, event_name ni actor. El commit `e28f67e` añade helper, 14 tests y Deno check en CI. A fecha de 2026-10-30 12:25Z no existe workflow run para ese SHA; por tanto el hardening sigue EN_CURSO y no se afirma validación. La función remota permanece en v16.
 - seguridad: no desplegar Edge Function, no leer secretos, no cambiar RLS
 
 
