@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
+import { readFile, writeFile, mkdir, unlink, readdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 const BACKLOG = "docs/nuva-agency/AGENT_BACKLOG.md";
@@ -103,13 +104,7 @@ async function releaseLock() {
 }
 
 function isLockHeld() {
-  // Comprobación sincrónica ligera: si el archivo existe y no es stale, se considera ocupado
-  try {
-    require("node:fs").statSync(LOCK_FILE);
-    return true;
-  } catch {
-    return false;
-  }
+  return existsSync(LOCK_FILE);
 }
 
 function nowIso() {
@@ -312,7 +307,7 @@ async function writeIndex(index) {
 async function scanExecutionFiles() {
   const executions = [];
   try {
-    const entries = await require("node:fs/promises").readdir(EXEC_DIR);
+    const entries = await readdir(EXEC_DIR);
     for (const entry of entries) {
       if (!entry.endsWith(".json") || entry.startsWith(".")) continue;
       const data = await readJson(join(EXEC_DIR, entry));
@@ -340,7 +335,7 @@ async function scanExecutionFiles() {
 async function scanCycleFiles() {
   const cycles = [];
   try {
-    const entries = await require("node:fs/promises").readdir(LOGS_DIR);
+    const entries = await readdir(LOGS_DIR);
     for (const entry of entries) {
       if (!entry.startsWith("cycle-") || !entry.endsWith(".json")) continue;
       const data = await readJson(join(LOGS_DIR, entry));
