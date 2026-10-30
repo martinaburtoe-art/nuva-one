@@ -27,7 +27,7 @@ type DurableMission = { id: string; title: string; objective: string; status: st
 type DurableTask = { id: string; mission_id: string; title: string; objective: string; agent_id: string; status: string; attempt_count: number; max_attempts: number; output_summary: string | null; created_at: string };
 type DurableEvent = { id: number; mission_id: string | null; task_id: string | null; agent_id: string | null; event_type: string; level: string; message: string; created_at: string };
 type DurableLease = { id: string; task_id: string; agent_id: string; status: string; heartbeat_at: string; expires_at: string };
-type DurableApproval = { id: string; action_type: string; risk_level: string; description: string; status: string; created_at: string };
+type DurableApproval = { id: string; mission_id?: string | null; task_id?: string | null; action_type: string; risk_level: string; description: string; status: string; created_at: string };
 type DurableAgency = { generated_at: string; missions: DurableMission[]; tasks: DurableTask[]; events: DurableEvent[]; leases: DurableLease[]; approvals: DurableApproval[] };
 
 type AgencyLogExecution = {
@@ -140,7 +140,7 @@ async function loadDurableAgency() {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
-  const response = await fetch("https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  const response = await fetch("/api/owner/agency-status?view=durable", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
   const source = await response.json().catch(() => null) as DurableAgency & { error?: string };
   if (!response.ok) throw new Error(source?.error ?? "No se pudo consultar la misión durable.");
   return source;
@@ -197,6 +197,8 @@ function ControlTower() {
   const [agencyLogs, setAgencyLogs] = useState<AgencyLogsPayload | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState<string | null>(null);
+  const [agencyActionLoading, setAgencyActionLoading] = useState(false);
+  const [agencyActionError, setAgencyActionError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const refresh = async () => {
@@ -275,6 +277,31 @@ function ControlTower() {
     return result;
   };
 
+  const controlAgency = async (payload: Record<string, unknown>): Promise<boolean> => {
+    if (agencyActionLoading) return false;
+    setAgencyActionLoading(true);
+    setAgencyActionError(null);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      if (!token) throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+      const response = await fetch("/api/owner/agency-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const body = await response.json().catch(() => null) as { error?: string } | null;
+      if (!response.ok) throw new Error(body?.error ?? "No se pudo completar la acción de Agency.");
+      await refresh();
+      return true;
+    } catch (err) {
+      setAgencyActionError(err instanceof Error ? err.message : "No se pudo completar la acción.");
+      return false;
+    } finally {
+      setAgencyActionLoading(false);
+    }
+  };
+
   const platform = metrics?.platform;
   const ai = metrics?.ai_telemetry;
   const fallbackCount = ai?.fallbacks_24h ?? 0;
@@ -294,7 +321,16 @@ function ControlTower() {
         </header>
 
         <LiveAgencyPanel status={agencyStatus} loading={agencyLoading} error={agencyError} onRefresh={() => void refresh()} />
-        <DurableAgencyPanel data={durableAgency} loading={agencyLoading} onRefresh={() => void refresh()} />
+        <DurableAgencyPanel
+          data={durableAgency}
+          loading={agencyLoading}
+          onRefresh={() => void refresh()}
+          actionLoading={agencyActionLoading}
+          actionError={agencyActionError}
+          onCreateMission={(title, objective) => controlAgency({ action: "create_mission", title, objective })}
+          onMissionStatus={(missionId, status) => controlAgency({ action: "mission_status", missionId, status })}
+          onApproval={(approvalId, status, note) => controlAgency({ action: "approval", approvalId, status, note })}
+        />
         <AgencyLogsPanel
           logs={agencyLogs}
           loading={logsLoading}
@@ -363,14 +399,40 @@ function ControlTower() {
   );
 }
 
-function DurableAgencyPanel({ data, loading, onRefresh }: { data: DurableAgency | null; loading: boolean; onRefresh: () => void }) {
-  const mission = data?.missions.find((item) => !["completed","cancelled"].includes(item.status)) ?? data?.missions[0] ?? null;
+function DurableAgencyPanel({
+  data, loading, onRefresh, actionLoading, actionError, onCreateMission, onMissionStatus, onApproval,
+}: {
+  data: DurableAgency | null;
+  loading: boolean;
+  onRefresh: () => void;
+  actionLoading: boolean;
+  actionError: string | null;
+  onCreateMission: (title: string, objective: string) => Promise<boolean>;
+  onMissionStatus: (missionId: string, status: "paused" | "queued" | "cancelled") => Promise<boolean>;
+  onApproval: (approvalId: string, status: "approved" | "rejected", note: string) => Promise<boolean>;
+}) {
+  const [missionTitle, setMissionTitle] = useState("");
+  const [missionObjective, setMissionObjective] = useState("");
+  const mission = data?.missions.find((item) => !["completed", "cancelled", "failed"].includes(item.status)) ?? data?.missions[0] ?? null;
   const missionTasks = data?.tasks.filter((task) => task.mission_id === mission?.id) ?? [];
   const activeAgents = new Set((data?.leases ?? []).filter((lease) => lease.status === "active" && new Date(lease.expires_at).getTime() > Date.now()).map((lease) => lease.agent_id));
-  const pendingApprovals = (data?.approvals ?? []).filter((approval) => approval.status === "pending").length;
+  const pendingApprovals = (data?.approvals ?? []).filter((approval) => approval.status === "pending");
   const completed = missionTasks.filter((task) => task.status === "completed").length;
   const total = missionTasks.length;
   const progress = total ? Math.round((completed / total) * 100) : 0;
+  const missionCanChange = mission && !["completed", "cancelled", "failed"].includes(mission.status);
+
+  const submitMission = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const title = missionTitle.trim();
+    const objective = missionObjective.trim();
+    if (title.length < 3 || objective.length < 10) return;
+    const created = await onCreateMission(title, objective);
+    if (created) {
+      setMissionTitle("");
+      setMissionObjective("");
+    }
+  };
 
   return (
     <section className="mt-5 overflow-hidden rounded-[28px] border border-indigo-300/15 bg-indigo-400/[0.035]">
@@ -378,25 +440,42 @@ function DurableAgencyPanel({ data, loading, onRefresh }: { data: DurableAgency 
         <div>
           <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-200">Control Plane durable</div>
           <h2 className="mt-2 text-2xl font-semibold">Misión persistente · agentes autónomos</h2>
-          <p className="mt-1 max-w-3xl text-sm text-white/45">Estado almacenado en Supabase: misiones, tareas, leases, eventos y aprobaciones. Un worker puede morir y otro puede reanudar el trabajo desde el estado persistido.</p>
+          <p className="mt-1 max-w-3xl text-sm text-white/45">Estado y acciones validadas server-side: misiones, tareas, leases, eventos y aprobaciones.</p>
         </div>
-        <button onClick={onRefresh} disabled={loading} className="inline-flex items-center gap-2 self-start rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10 disabled:opacity-50"><RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Actualizar</button>
+        <button onClick={onRefresh} disabled={loading || actionLoading} className="inline-flex items-center gap-2 self-start rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10 disabled:opacity-50"><RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Actualizar</button>
       </div>
+
+      {actionError ? <div role="alert" className="border-b border-red-300/15 bg-red-300/[0.06] px-5 py-3 text-xs text-red-100">{actionError}</div> : null}
+
       <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-5">
         <MiniStat label="Misión" value={mission?.status ?? "—"} />
         <MiniStat label="Tareas" value={`${completed}/${total}`} />
         <MiniStat label="Progreso" value={`${progress}%`} />
         <MiniStat label="Agentes activos" value={String(activeAgents.size)} />
-        <MiniStat label="Aprobaciones" value={String(pendingApprovals)} />
+        <MiniStat label="Aprobaciones" value={String(pendingApprovals.length)} />
       </div>
+
       <div className="grid gap-4 px-5 pb-5 sm:px-6 lg:grid-cols-[1.15fr_1fr]">
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <div className="flex items-center justify-between gap-3"><div className="font-medium">{mission?.title ?? "Sin misión persistente"}</div><span className="rounded-full border border-indigo-300/15 px-2 py-1 text-[10px] text-indigo-200">{mission?.current_agent_id ?? "orchestrator"}</span></div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="font-medium">{mission?.title ?? "Sin misión persistente"}</div>
+            <span className="rounded-full border border-indigo-300/15 px-2 py-1 text-[10px] text-indigo-200">{mission?.current_agent_id ?? "orchestrator"}</span>
+          </div>
+          <div className="mt-2 text-xs leading-5 text-white/40">{mission?.objective ?? "Crea una misión para iniciar el flujo durable."}</div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-indigo-300 transition-all" style={{ width: `${progress}%` }} /></div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {missionTasks.slice(0, 13).map((task) => <div key={task.id} className="rounded-xl bg-white/[0.03] p-3"><div className="flex items-center justify-between gap-2"><span className="text-xs font-medium text-white/75">{task.agent_id}</span><span className="text-[10px] text-white/30">{task.status}</span></div><div className="mt-1 text-[11px] text-white/40">{task.title}</div></div>)}
           </div>
+          {missionCanChange ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {mission?.status === "paused"
+                ? <button type="button" disabled={actionLoading} onClick={() => void onMissionStatus(mission.id, "queued")} className="rounded-lg border border-emerald-300/20 bg-emerald-300/[0.08] px-3 py-2 text-xs text-emerald-100 disabled:opacity-50">Reanudar</button>
+                : <button type="button" disabled={actionLoading} onClick={() => void onMissionStatus(mission!.id, "paused")} className="rounded-lg border border-amber-300/20 bg-amber-300/[0.08] px-3 py-2 text-xs text-amber-100 disabled:opacity-50">Pausar</button>}
+              <button type="button" disabled={actionLoading} onClick={() => void onMissionStatus(mission!.id, "cancelled")} className="rounded-lg border border-red-300/20 bg-red-300/[0.08] px-3 py-2 text-xs text-red-100 disabled:opacity-50">Cancelar misión</button>
+            </div>
+          ) : null}
         </div>
+
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
           <div className="font-medium">Timeline de colaboración</div>
           <div className="mt-3 max-h-[300px] space-y-2 overflow-auto">
@@ -405,10 +484,37 @@ function DurableAgencyPanel({ data, loading, onRefresh }: { data: DurableAgency 
           </div>
         </div>
       </div>
+
+      <div className="grid gap-4 border-t border-white/10 px-5 py-5 sm:px-6 lg:grid-cols-2">
+        <form onSubmit={(event) => void submitMission(event)} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="font-medium">Crear misión durable</div>
+          <label className="mt-3 block text-xs text-white/55" htmlFor="agency-mission-title">Título</label>
+          <input id="agency-mission-title" value={missionTitle} onChange={(event) => setMissionTitle(event.target.value)} maxLength={120} required minLength={3} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-indigo-300/40" placeholder="Ej. Preparar release candidato" />
+          <label className="mt-3 block text-xs text-white/55" htmlFor="agency-mission-objective">Objetivo verificable</label>
+          <textarea id="agency-mission-objective" value={missionObjective} onChange={(event) => setMissionObjective(event.target.value)} maxLength={4000} required minLength={10} rows={3} className="mt-1 w-full resize-y rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-indigo-300/40" placeholder="Describe el resultado y cómo se comprobará." />
+          <button type="submit" disabled={actionLoading || missionTitle.trim().length < 3 || missionObjective.trim().length < 10} className="mt-3 rounded-xl bg-indigo-300 px-4 py-2.5 text-xs font-semibold text-slate-950 disabled:opacity-40">{actionLoading ? "Procesando…" : "Crear misión"}</button>
+        </form>
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="font-medium">Aprobaciones del propietario</div>
+          <div className="mt-3 space-y-2">
+            {pendingApprovals.map((approval) => <div key={approval.id} className="rounded-xl bg-white/[0.03] p-3">
+              <div className="flex items-center justify-between gap-2"><span className="text-xs font-medium text-white/75">{approval.action_type}</span><span className="text-[10px] text-amber-200">{approval.risk_level}</span></div>
+              <p className="mt-1 text-xs text-white/55">{approval.description}</p>
+              <div className="mt-3 flex gap-2">
+                <button type="button" disabled={actionLoading} onClick={() => void onApproval(approval.id, "approved", "Aprobado desde Owner Console")} className="rounded-lg border border-emerald-300/20 px-3 py-2 text-[11px] text-emerald-100 disabled:opacity-50">Aprobar</button>
+                <button type="button" disabled={actionLoading} onClick={() => void onApproval(approval.id, "rejected", "Rechazado desde Owner Console")} className="rounded-lg border border-red-300/20 px-3 py-2 text-[11px] text-red-100 disabled:opacity-50">Rechazar</button>
+              </div>
+            </div>)}
+            {!pendingApprovals.length ? <div className="text-xs text-white/30">No hay aprobaciones pendientes.</div> : null}
+          </div>
+        </div>
+      </div>
+
       <div className="border-t border-white/10 px-5 py-4 sm:px-6">
         <div className="flex flex-wrap gap-2">
           {(data?.leases ?? []).filter((lease) => lease.status === "active").slice(0, 13).map((lease) => <span key={lease.id} className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.04] px-2.5 py-1.5 text-[10px] text-emerald-200">{lease.agent_id} · lease activo</span>)}
-          {pendingApprovals > 0 ? <span className="rounded-full border border-amber-300/15 bg-amber-300/[0.04] px-2.5 py-1.5 text-[10px] text-amber-200">{pendingApprovals} aprobación(es) requieren Owner</span> : <span className="rounded-full border border-white/10 px-2.5 py-1.5 text-[10px] text-white/35">Sin aprobaciones pendientes</span>}
+          {pendingApprovals.length > 0 ? <span className="rounded-full border border-amber-300/15 bg-amber-300/[0.04] px-2.5 py-1.5 text-[10px] text-amber-200">{pendingApprovals.length} aprobación(es) requieren Owner</span> : <span className="rounded-full border border-white/10 px-2.5 py-1.5 text-[10px] text-white/35">Sin aprobaciones pendientes</span>}
         </div>
       </div>
     </section>
