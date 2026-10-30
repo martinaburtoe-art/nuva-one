@@ -52,18 +52,22 @@ function parseBlocks(
   markdown: string
 ): Array<{ id: string; title: string; fields: Record<string, string> }> {
   const blocks: Array<{ id: string; title: string; fields: Record<string, string> }> = [];
-  const lines = markdown.split(/\r?\n/);
   let current: { id: string; title: string; fields: Record<string, string> } | null = null;
-  for (const line of lines) {
-    const m = line.match(/^### T-(\d+)\s+(.+)$/);
-    if (m) {
-      current = { id: `T-${m[1]}`, title: m[2].trim(), fields: {} };
+
+  for (const line of markdown.split(/\r?\n/)) {
+    const heading = line.match(/^##\s+(T-\d+)\s+—\s+(.+)$/);
+    if (heading) {
+      current = { id: heading[1], title: heading[2].trim(), fields: {} };
       blocks.push(current);
-    } else if (current) {
-      const fm = line.match(/^- \*\*([^*]+)\*\*:\s*(.*)$/);
-      if (fm) current.fields[fm[1].trim()] = fm[2].trim();
+      continue;
+    }
+
+    if (current) {
+      const field = line.match(/^\s*-\s*([^:]+):\s*(.*)$/);
+      if (field) current.fields[field[1].trim().toLowerCase()] = field[2].trim();
     }
   }
+
   return blocks;
 }
 
@@ -71,16 +75,14 @@ function depsResolved(
   block: { fields: Record<string, string>; id: string },
   byId: Record<string, any>
 ): boolean {
-  const deps = block.fields.dependencias;
-  if (!deps || deps.trim() === "") return true;
-  const depIds = deps.split(",").map((d: string) => d.trim()).filter(Boolean);
-  return depIds.every((d: string) => {
-    const dep = byId[d];
-    return dep && dep.fields.estado === "COMPLETADO";
-  });
+  const raw = block.fields.dependencias?.trim() ?? "";
+  if (!raw || /^(ninguna|ninguno|none|n\/a|-)$/i.test(raw)) return true;
+
+  const depIds = raw.split(/[,;]/).map((value) => value.trim()).filter(Boolean);
+  return depIds.every((id) => byId[id]?.fields.estado === "COMPLETADO");
 }
 
-const PRIORITY_ORDER: Record<string, number> = { P0: 0, P1: 1, P2: 2 };
+const PRIORITY_ORDER: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
 
 /* ──────────────────────────────────────────────────────────────
    Comando real: leer un archivo y devolver su hash + tamaño.
