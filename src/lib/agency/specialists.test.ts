@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { describe, it, expect } from "vitest";
 
 import {
@@ -136,11 +137,21 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(result.timestamp).toMatch(/\d{4}-\d{2}-\d{2}T/);
   });
 
-  it("orchestrator selecciona tarea elegante del backlog", async () => {
+  it("orchestrator cuenta las tareas reales del backlog y verifica dependencias", async () => {
+    const backlog = await readFile("docs/nuva-agency/AGENT_BACKLOG.md", "utf8");
+    const expectedPending = backlog
+      .split(/^## T-\d+ — /m)
+      .slice(1)
+      .filter((block) => /^- estado: PENDIENTE$/m.test(block)).length;
+
     const result = await SPECIALISTS.orchestrator(task("orchestrator"));
+    const pendingEvidence = result.evidence.find((item) => item.startsWith("tareas PENDIENTE:"));
+    const eligibleEvidence = result.evidence.find((item) => item.startsWith("tareas elegibles"));
+
+    expect(pendingEvidence).toBe(`tareas PENDIENTE: ${expectedPending}`);
+    expect(eligibleEvidence).toBeDefined();
     expect(["PASS", "WARN", "BLOCKED"]).toContain(result.result);
-    const joined = result.evidence.join(" ");
-    expect(joined).toMatch(/tareas PENDIENTE|tareas elegibles|seleccionada/);
+    if (expectedPending === 0) expect(result.result).toBe("WARN");
   });
 
   it("constructor verifica sintaxis de archivo ejecutable", async () => {
@@ -150,11 +161,13 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(joined).toMatch(/node --check|sintaxis/);
   });
 
-  it("compliance verifica DECISIONS.md y backlog", async () => {
+  it("compliance valida DECISIONS.md y el formato real del backlog", async () => {
     const result = await SPECIALISTS.compliance(task("compliance"));
     expect(["PASS", "WARN", "BLOCKED"]).toContain(result.result);
     const joined = result.evidence.join(" ");
-    expect(joined).toMatch(/DECISIONS\.md|backlog/);
+    expect(joined).toMatch(/DECISIONS\.md/);
+    expect(joined).toMatch(/backlog leído/);
+    expect(joined).toMatch(/tareas sin estado definido: 0/);
   });
 
   it("security escanea archivos .env y verifica autorización", async () => {
