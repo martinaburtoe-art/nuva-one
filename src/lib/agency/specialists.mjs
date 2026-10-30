@@ -35,32 +35,31 @@ function nodeCheck(target) {
 
 function parseBlocks(md) {
   const blocks = [];
-  const lines = md.split(/\r?\n/);
   let current = null;
-  for (const line of lines) {
-    const m = line.match(/^##\s+(.+)/);
-    if (m) {
-      if (current) blocks.push(current);
-      current = { title: m[1].trim(), fields: {} };
+
+  for (const line of md.split(/\r?\n/)) {
+    const heading = line.match(/^##\s+(T-\d+)\s+—\s+(.+)$/);
+    if (heading) {
+      current = { id: heading[1], title: heading[2].trim(), fields: {} };
+      blocks.push(current);
       continue;
     }
+
     if (current) {
-      const fm = line.match(/^-\s*\*\*([^*]+)\*\*:\s*(.*)/);
-      if (fm) current.fields[fm[1].trim()] = fm[2].trim();
+      const field = line.match(/^\s*-\s*([^:]+):\s*(.*)$/);
+      if (field) current.fields[field[1].trim().toLowerCase()] = field[2].trim();
     }
   }
-  if (current) blocks.push(current);
+
   return blocks;
 }
 
 function depsResolved(block, byId) {
-  const depsRaw = block.fields.dependencias || "";
-  const deps = depsRaw.split(",").map((d) => d.trim()).filter(Boolean);
-  for (const dep of deps) {
-    const d = byId[dep];
-    if (!d || d.fields.estado !== "COMPLETADO") return false;
-  }
-  return true;
+  const raw = (block.fields.dependencias || "").trim();
+  if (!raw || /^(ninguna|ninguno|none|n\/a|-)$/i.test(raw)) return true;
+
+  const deps = raw.split(/[,;]/).map((value) => value.trim()).filter(Boolean);
+  return deps.every((id) => byId[id]?.fields.estado === "COMPLETADO");
 }
 
 function makeResult(specialist, taskId, result, evidence, errors, start) {
@@ -356,7 +355,7 @@ export const orchestrator = {
       return makeResult("orchestrator", task.id, "WARN", [...evidence, "sin tareas elegibles en este ciclo"], errors, start);
     }
 
-    const PRIORITY_ORDER = { P0: 0, P1: 1, P2: 2 };
+    const PRIORITY_ORDER = { P0: 0, P1: 1, P2: 2, P3: 3 };
     elegibles.sort((a, b) => (PRIORITY_ORDER[a.fields.prioridad] ?? 99) - (PRIORITY_ORDER[b.fields.prioridad] ?? 99));
     const next = elegibles[0];
     evidence.push(`siguiente tarea seleccionada: ${next.id} — ${next.title} (prioridad ${next.fields.prioridad})`);
