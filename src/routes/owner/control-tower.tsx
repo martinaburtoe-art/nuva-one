@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Activity, AlertTriangle, Bot, Database, Gauge, RefreshCw, ShieldCheck, Send, Square, Terminal, ExternalLink, Radio, Clock3, GitBranch, CheckCircle2, CircleDashed, XCircle, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AgencyTeam } from "@/components/owner/agency-team";
@@ -422,7 +422,7 @@ function DurableAgencyPanel({
   const progress = total ? Math.round((completed / total) * 100) : 0;
   const missionCanChange = mission && !["completed", "cancelled", "failed"].includes(mission.status);
 
-  const submitMission = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submitMission = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const title = missionTitle.trim();
     const objective = missionObjective.trim();
