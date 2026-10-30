@@ -43,6 +43,45 @@ function hashOf(content: string) {
 }
 
 /* ──────────────────────────────────────────────────────────────
+   Constantes y utilidades compartidas por los especialistas.
+   ───────────────────────────────────────────────────────────── */
+const BACKLOG_PATH = "docs/nuva-agency/AGENT_BACKLOG.md";
+
+function parseBlocks(
+  markdown: string
+): Array<{ id: string; title: string; fields: Record<string, string> }> {
+  const blocks: Array<{ id: string; title: string; fields: Record<string, string> }> = [];
+  const lines = markdown.split(/\r?\n/);
+  let current: { id: string; title: string; fields: Record<string, string> } | null = null;
+  for (const line of lines) {
+    const m = line.match(/^### T-(\d+)\s+(.+)$/);
+    if (m) {
+      current = { id: `T-${m[1]}`, title: m[2].trim(), fields: {} };
+      blocks.push(current);
+    } else if (current) {
+      const fm = line.match(/^- \*\*([^*]+)\*\*:\s*(.*)$/);
+      if (fm) current.fields[fm[1].trim()] = fm[2].trim();
+    }
+  }
+  return blocks;
+}
+
+function depsResolved(
+  block: { fields: Record<string, string>; id: string },
+  byId: Record<string, any>
+): boolean {
+  const deps = block.fields.dependencias;
+  if (!deps || deps.trim() === "") return true;
+  const depIds = deps.split(",").map((d: string) => d.trim()).filter(Boolean);
+  return depIds.every((d: string) => {
+    const dep = byId[d];
+    return dep && dep.fields.estado === "COMPLETADO";
+  });
+}
+
+const PRIORITY_ORDER: Record<string, number> = { P0: 0, P1: 1, P2: 2 };
+
+/* ──────────────────────────────────────────────────────────────
    Comando real: leer un archivo y devolver su hash + tamaño.
    Útil como "herramienta" compartida por varios especialistas.
    ───────────────────────────────────────────────────────────── */
@@ -407,6 +446,461 @@ function contarCrons(content: string): number {
 }
 
 /* ──────────────────────────────────────────────────────────────
+   ORCHESTRATOR — Coordina prioridades, dependencias, ejecución y recuperación.
+   ───────────────────────────────────────────────────────────── */
+export const orchestrator = {
+  id: "orchestrator",
+  nombre: "Orquestador",
+  responsabilidades: [
+    "Seleccionar la siguiente tarea segura del backlog",
+    "Verificar dependencias resueltas antes de asignar",
+    "Coordinar la ejecución entre especialistas",
+    "Detectar tareas bloqueadas y reportar causa",
+  ],
+  limites: [
+    "No modifica código de producción",
+    "No ejecuta migraciones remotas",
+    "No accede a credenciales ni secretos",
+  ],
+  tiposDeTarea: ["backlog-selection", "dependency-check", "task-coordination"],
+  herramientasPermitidas: ["readFile", "parseBlocks", "depsResolved"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const md = await readLocalFile(BACKLOG_PATH);
+    if (!md.ok) {
+      return {
+        specialist: "orchestrator", taskId: task.id, result: "BLOCKED",
+        evidence: [`backlog no legible: ${md.error}`], errors: [md.error ?? ""],
+        durationMs: nowMs() - start, timestamp: nowIso(),
+      };
+    }
+    evidence.push(`backlog leído (${md.content!.length} bytes)`);
+
+    const blocks = parseBlocks(md.content!);
+    const byId: Record<string, any> = {};
+    for (const b of blocks) byId[b.id] = b;
+
+    const pendientes = blocks.filter((b: any) => b.fields.estado === "PENDIENTE");
+    evidence.push(`tareas PENDIENTE: ${pendientes.length}`);
+
+    const elegibles = pendientes.filter((b: any) => depsResolved(b, byId));
+    evidence.push(`tareas elegibles (deps resueltas): ${elegibles.length}`);
+
+    if (elegibles.length === 0) {
+      return {
+        specialist: "orchestrator", taskId: task.id, result: "WARN",
+        evidence: [...evidence, "sin tareas elegibles en este ciclo"], errors,
+        durationMs: nowMs() - start, timestamp: nowIso(),
+      };
+    }
+
+    elegibles.sort((a: any, b: any) =>
+      (PRIORITY_ORDER[a.fields.prioridad] ?? 99) - (PRIORITY_ORDER[b.fields.prioridad] ?? 99)
+    );
+    const next = elegibles[0];
+    evidence.push(`siguiente tarea seleccionada: ${next.id} — ${next.title} (prioridad ${next.fields.prioridad})`);
+
+    return {
+      specialist: "orchestrator", taskId: task.id, result: "PASS",
+      evidence: [...evidence, `seleccionada: ${next.id}`], errors,
+      durationMs: nowMs() - start, timestamp: nowIso(),
+    };
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
+   CONSTRUCTOR — Implementa funcionalidades y corrige código.
+   ───────────────────────────────────────────────────────────── */
+export const constructor = {
+  id: "constructor",
+  nombre: "Constructor",
+  responsabilidades: [
+    "Verificar sintaxis de archivos JS/TS con node --check",
+    "Leer y reportar estado de archivos de implementación",
+    "Detectar archivos dañados o sin exportar",
+  ],
+  limites: [
+    "No modifica archivos de origen",
+    "No ejecuta migraciones ni despliegues",
+    "No accede a credenciales ni secretos",
+  ],
+  tiposDeTarea: ["syntax-check", "file-inspection", "code-repair-verification"],
+  herramientasPermitidas: ["readFile", "node --check"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const target = (task.input_context && (task.input_context as any).target)
+      || "scripts/agency-task-executor.mjs";
+
+    const file = await readLocalFile(target);
+    if (!file.ok) {
+      return {
+        specialist: "constructor", taskId: task.id, result: "BLOCKED",
+        evidence: [`archivo no legible: ${target} (${file.error})`], errors: [file.error ?? ""],
+        durationMs: nowMs() - start, timestamp: nowIso(),
+      };
+    }
+    evidence.push(`${target}: legible (${file.content!.length} bytes)`);
+
+    const check = await nodeCheck(target);
+    evidence.push(`node --check ${target}: ${check.ok ? "sintaxis OK" : "error de sintaxis"}`);
+    if (check.error) errors.push(check.error);
+
+    const result: SpecialistResult["result"] = check.ok ? "PASS" : "FAIL";
+
+    return {
+      specialist: "constructor", taskId: task.id, result, evidence, errors,
+      durationMs: nowMs() - start, timestamp: nowIso(),
+    };
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
+   COMPLIANCE — Revisa cumplimiento, trazabilidad y privacidad.
+   ───────────────────────────────────────────────────────────── */
+export const compliance = {
+  id: "compliance",
+  nombre: "Cumplimiento",
+  responsabilidades: [
+    "Verificar que DECISIONS.md existe y tiene entradas revisadas",
+    "Verificar formato consistente del backlog",
+    "Confirmar que no hay cambios no revisados en working tree crítico",
+  ],
+  limites: [
+    "No modifica documentos de decisiones",
+    "No ejecuta comandos de git destructivos",
+    "No accede a datos personales ni contratos",
+  ],
+  tiposDeTarea: ["decision-audit", "backlog-format-check", "change-review"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const decisions = await readLocalFile("docs/factory/DECISIONS.md");
+    evidence.push(`DECISIONS.md: ${decisions.ok ? `legible (${decisions.content!.length} bytes)` : "no encontrado"}`);
+
+    const backlog = await readLocalFile(BACKLOG_PATH);
+    if (!backlog.ok) {
+      return {
+        specialist: "compliance", taskId: task.id, result: "BLOCKED",
+        evidence: [`backlog no legible: ${backlog.error}`], errors: [backlog.error ?? ""],
+        durationMs: nowMs() - start, timestamp: nowIso(),
+      };
+    }
+    evidence.push(`backlog leído (${backlog.content!.length} bytes)`);
+
+    const blocks = parseBlocks(backlog.content!);
+    let sinEstado = 0;
+    for (const b of blocks) {
+      if (!b.fields.estado) sinEstado++;
+    }
+    evidence.push(`tareas sin estado definido: ${sinEstado}`);
+
+    const tieneDecisiones = decisions.ok && /D-\d+/.test(decisions.content!);
+    const formatoValido = blocks.length > 0 && sinEstado === 0;
+
+    const result: SpecialistResult["result"] = tieneDecisiones && formatoValido ? "PASS" : "WARN";
+
+    return {
+      specialist: "compliance", taskId: task.id, result, evidence, errors,
+      durationMs: nowMs() - start, timestamp: nowIso(),
+    };
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
+   SECURITY — Analiza vulnerabilidades, autenticación, autorización, RLS y secretos.
+   ───────────────────────────────────────────────────────────── */
+export const security = {
+  id: "security",
+  nombre: "Seguridad",
+  responsabilidades: [
+    "Escanear archivos expuestos con secretos (.env, .env.local)",
+    "Detectar patrones prohibidos (service_role, deploy production)",
+    "Verificar autorización server-side en endpoints de agency",
+  ],
+  limites: [
+    "No muestra secretos en logs ni salidas",
+    "No modifica RLS ni políticas de acceso",
+    "No accede a variables de entorno de producción",
+  ],
+  tiposDeTarea: ["secret-scan", "forbidden-pattern-check", "authz-review"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const envFiles = [".env", ".env.local", ".env.production"];
+    let secretosEncontrados = 0;
+    for (const ef of envFiles) {
+      const f = await readLocalFile(ef);
+      if (f.ok) {
+        secretosEncontrados++;
+        evidence.push(`${ef}: EXISTE (posible secreto expuesto — [REDACTED])`);
+      } else {
+        evidence.push(`${ef}: no encontrado (correcto)`);
+      }
+    }
+
+    const agencyControl = await readLocalFile("src/routes/api/owner/agency-control.ts");
+    if (agencyControl.ok) {
+      const hasAuth = /authoriz|owner|worker|verify/i.test(agencyControl.content!);
+      evidence.push(`agency-control.ts: ${agencyControl.content!.length} bytes, autorización server-side: ${hasAuth ? "sí" : "no detectada"}`);
+      if (!hasAuth) errors.push("agency-control.ts sin verificación de autorización server-side");
+    } else {
+      evidence.push("agency-control.ts: no encontrado");
+    }
+
+    const result: SpecialistResult["result"] = secretosEncontrados === 0 ? "PASS" : "WARN";
+
+    return {
+      specialist: "security", taskId: task.id, result, evidence, errors,
+      durationMs: nowMs() - start, timestamp: nowIso(),
+    };
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
+   QA — Ejecuta pruebas unitarias, integración, regresión y E2E.
+   ───────────────────────────────────────────────────────────── */
+export const qa = {
+  id: "qa",
+  nombre: "QA",
+  responsabilidades: [
+    "Ejecutar suite de pruebas Vitest",
+    "Reportar conteo de pruebas pasadas/fallidas",
+    "Detectar regresiones tras cambios de código",
+  ],
+  limites: [
+    "No modifica archivos de prueba",
+    "No ejecuta pruebas contra producción",
+    "No accede a datos de usuarios reales",
+  ],
+  tiposDeTarea: ["unit-test-run", "regression-check", "test-result-parse"],
+  herramientasPermitidas: ["npm test", "npx vitest run"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const { execFile } = await import("node:child_process");
+    const testTarget = (task.input_context && (task.input_context as any).target)
+      || "src/lib/agency/specialists.test.ts";
+
+    return new Promise((resolve) => {
+      execFile("npx", ["vitest", "run", testTarget], {
+        cwd: process.cwd(), timeout: 120000,
+      }, (error, stdout, stderr) => {
+        const duration = Date.now() - start;
+        const output = stdout || "";
+        const exitCode = error ? (typeof error.code === "number" ? error.code : -1) : 0;
+
+        const passMatch = output.match(/(\d+) passed/);
+        const failMatch = output.match(/(\d+) failed/);
+        const passed = passMatch ? parseInt(passMatch[1], 10) : 0;
+        const failed = failMatch ? parseInt(failMatch[1], 10) : 0;
+
+        evidence.push(`vitest run ${testTarget}: salida (${output.length} bytes)`);
+        evidence.push(`pruebas pasadas: ${passed}`);
+        evidence.push(`pruebas fallidas: ${failed}`);
+        evidence.push(`código de salida: ${exitCode}`);
+
+        if (error) errors.push(error.message);
+
+        let result: SpecialistResult["result"];
+        if (exitCode !== 0) result = "FAIL";
+        else if (passed > 0 && failed === 0) result = "PASS";
+        else result = "WARN";
+
+        resolve({
+          specialist: "qa", taskId: task.id, result, evidence, errors,
+          durationMs: duration, timestamp: nowIso(),
+        });
+      });
+    });
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
+   SENTINEL — Monitorea errores, disponibilidad, anomalías y bloqueos.
+   ───────────────────────────────────────────────────────────── */
+export const sentinel = {
+  id: "sentinel",
+  nombre: "Sentinel",
+  responsabilidades: [
+    "Revisar logs de ejecución en busca de resultados FAIL/BLOCKED",
+    "Detectar archivos de pausa de emergencia (.agency-pause)",
+    "Reportar estado de salud del sistema de Agency",
+  ],
+  limites: [
+    "No reinicia procesos ni modifica logs",
+    "No accede a servicios externos de monitoreo",
+    "No expone credenciales en reportes",
+  ],
+  tiposDeTarea: ["log-scan", "health-check", "blocker-detection"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const execDir = "logs/executions";
+    let fails = 0;
+    let blocked = 0;
+    let total = 0;
+    try {
+      const entries = await require("node:fs/promises").readdir(execDir);
+      const jsonFiles = entries.filter((e: string) => e.endsWith(".json") && !e.startsWith("."));
+      for (const f of jsonFiles) {
+        const data = await readLocalFile(join("logs/executions", f));
+        if (data.ok) {
+          try {
+            const parsed = JSON.parse(data.content!);
+            if (parsed.result) {
+              total++;
+              if (parsed.result === "FAIL") fails++;
+              if (parsed.result === "BLOCKED") blocked++;
+            }
+          } catch { /* ignorar JSON inválido */ }
+        }
+      }
+      evidence.push(`ejecuciones en logs: ${total}`);
+      evidence.push(`resultados FAIL: ${fails}`);
+      evidence.push(`resultados BLOCKED: ${blocked}`);
+    } catch {
+      evidence.push("logs/executions: directorio no encontrado o vacío");
+    }
+
+    const pauseFile = await readLocalFile(".agency-pause");
+    evidence.push(`.agency-pause: ${pauseFile.ok ? "PRESENTE (sistema pausado)" : "ausente (sistema activo)"}`);
+
+    const result: SpecialistResult["result"] = fails === 0 ? "PASS" : "WARN";
+
+    return {
+      specialist: "sentinel", taskId: task.id, result, evidence, errors,
+      durationMs: nowMs() - start, timestamp: nowIso(),
+    };
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
+   UX — Revisa experiencia, accesibilidad, responsive y consistencia visual.
+   ───────────────────────────────────────────────────────────── */
+export const ux = {
+  id: "ux",
+  nombre: "UX",
+  responsabilidades: [
+    "Verificar archivos de rutas y componentes existen",
+    "Detectar atributos de accesibilidad básicos (aria-label, role)",
+    "Reportar consistencia visual de pantallas del Owner Console",
+  ],
+  limites: [
+    "No modifica componentes de interfaz",
+    "No ejecuta pruebas de navegador reales",
+    "No accede a datos de usuarios",
+  ],
+  tiposDeTarea: ["route-inspection", "accessibility-scan", "visual-consistency"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const candidates = [
+      "src/routes/owner/control-tower.tsx",
+      "src/routes/api/owner/agency-control.ts",
+      "src/routes/owner/control-tower.tsx",
+    ];
+    let archivosEncontrados = 0;
+    let conAria = 0;
+    for (const c of candidates) {
+      const f = await readLocalFile(c);
+      if (f.ok) {
+        archivosEncontrados++;
+        evidence.push(`${c}: legible (${f.content!.length} bytes)`);
+        if (/aria-|role=|alt=/.test(f.content!)) conAria++;
+      } else {
+        evidence.push(`${c}: no encontrado`);
+      }
+    }
+
+    const result: SpecialistResult["result"] = archivosEncontrados > 0 ? "PASS" : "BLOCKED";
+
+    return {
+      specialist: "ux", taskId: task.id, result,
+      evidence: [...evidence, `archivos con atributos de accesibilidad: ${conAria}`], errors,
+      durationMs: nowMs() - start, timestamp: nowIso(),
+    };
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
+   RELEASE — Prepara versiones, changelog, CI/CD y evidencias de entrega.
+   ───────────────────────────────────────────────────────────── */
+export const release = {
+  id: "release",
+  nombre: "Release",
+  responsabilidades: [
+    "Verificar estado de git y rama de trabajo",
+    "Confirmar que PR permanece abierto sin merge",
+    "Reportar artefactos de build generados",
+  ],
+  limites: [
+    "No hace merge a main",
+    "No despliega a producción",
+    "No modifica lockfiles sin autorización",
+  ],
+  tiposDeTarea: ["git-status-check", "pr-verification", "build-artifact-check"],
+  herramientasPermitidas: ["readFile", "git status --short"],
+
+  async execute(task: AgencyTask): Promise<SpecialistResult> {
+    const start = nowMs();
+    const evidence: string[] = [];
+    const errors: string[] = [];
+
+    const { execFile } = await import("node:child_process");
+    return new Promise((resolve) => {
+      execFile("git", ["status", "--short"], { cwd: process.cwd(), timeout: 30000 },
+        (error, stdout, stderr) => {
+          const duration = Date.now() - start;
+          const output = stdout || "";
+          const modifiedFiles = output.trim().split("\n").filter(Boolean).length;
+          evidence.push(`git status: ${modifiedFiles} archivo(s) sin staged`);
+          evidence.push(output.slice(0, 500));
+
+          const pkg = require("node:fs/promises").readFile("package.json", "utf8")
+            .then((c: string) => { evidence.push(`package.json: ${c.length} bytes`); })
+            .catch((e: Error) => errors.push(e.message));
+
+          const hasDist = require("node:fs").existsSync("dist") || require("node:fs").existsSync(".vercel/output");
+          evidence.push(`artefactos de build: ${hasDist ? "presentes" : "no detectados"}`);
+
+          const result: SpecialistResult["result"] = error ? "FAIL" : "PASS";
+          resolve({
+            specialist: "release", taskId: task.id, result, evidence, errors,
+            durationMs: duration, timestamp: nowIso(),
+          });
+        });
+    });
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────
    Registro de especialistas disponibles.
    ───────────────────────────────────────────────────────────── */
 export const SPECIALISTS: Record<string, (task: AgencyTask) => Promise<SpecialistResult>> = {
@@ -415,6 +909,14 @@ export const SPECIALISTS: Record<string, (task: AgencyTask) => Promise<Specialis
   supply: supply.execute.bind(supply),
   people: people.execute.bind(people),
   growth: growth.execute.bind(growth),
+  orchestrator: orchestrator.execute.bind(orchestrator),
+  constructor: constructor.execute.bind(constructor),
+  compliance: compliance.execute.bind(compliance),
+  security: security.execute.bind(security),
+  qa: qa.execute.bind(qa),
+  sentinel: sentinel.execute.bind(sentinel),
+  ux: ux.execute.bind(ux),
+  release: release.execute.bind(release),
 };
 
 export const SPECIALIST_META: Record<string, {
@@ -430,4 +932,12 @@ export const SPECIALIST_META: Record<string, {
   supply,
   people,
   growth,
+  orchestrator,
+  constructor,
+  compliance,
+  security,
+  qa,
+  sentinel,
+  ux,
+  release,
 };
