@@ -1,20 +1,37 @@
 /**
- * agency-scheduler.mjs — ETAPA 3: Ejecución programada de Nüva Agency.
+ * agency-scheduler.mjs — Scheduler recurrente de Nüva Agency.
  *
- * Implementa un scheduler por lotes sobre el executor existente
- * (scripts/agency-task-executor.mjs) con:
+ * Implementa programación recurrente real sobre el executor/misiones de Agency:
  *
- *   - Exclusión mutua: lock file .scheduler.lock, stale > 5 min se sobrescribe.
- *   - Límites: maxTareasPorCiclo y maxMsPorCiclo.
- *   - Reintentos acotados: maxReintentosCiclo (default 3).
- *   - Pausa de emergencia: archivo .agency-pause (presencia = pausado).
- *   - Registro duradero: escribe en logs/scheduler/ y delega al executor.
- *   - Protección contra bucles: contador de ciclos sin progreso, parada forzada.
- *   - Protección contra gasto ilimitado de IA: no hay llamadas a LLM; solo comandos locales.
+ *   - Frecuencias configurables por job (config/agency-scheduler.json)
+ *   - Persistencia del próximo ciclo (logs/scheduler/state.json)
+ *   - Prevención de ejecuciones duplicadas (lock file + state)
+ *   - Heartbeat (logs/scheduler/heartbeat.json)
+ *   - Reintentos acotados por job
+ *   - Registro de ejecuciones omitidas o fallidas (logs/scheduler/)
+ *   - Pausa y reanudación (.agency-pause / .agency-resume)
+ *   - Recuperación tras reinicios (lee state, no duplica ejecuciones)
  *
- * No declara ejecución continua: es un comando batch. Para ejecución programada
- * real se requiere configurar externamente (cron de SO, GitHub Actions schedule,
- * o Vercel cron). Documentado al final.
+ * Uso:
+ *   node scripts/agency-scheduler.mjs          # ciclo recurrente (para Task Scheduler)
+ *   node scripts/agency-scheduler.mjs --once   # una sola ejecución (batch)
+ *   node scripts/agency-scheduler.mjs --status # mostrar estado
+ *
+ * Configuración en config/agency-scheduler.json (ejemplo):
+ *   {
+ *     "enabled": true,
+ *     "timezone": "America/Santiago",
+ *     "jobs": [
+ *       {
+ *         "id": "agency-cycle",
+ *         "type": "executor",
+ *         "intervalMinutes": 15,
+ *         "args": ["--batch=true", "--maxtasks=3"],
+ *         "enabled": true,
+ *         "maxAttempts": 3
+ *       }
+ *     ]
+ *   }
  */
 
 import { execFile } from "node:child_process";
@@ -22,41 +39,70 @@ import { readFile, writeFile, mkdir, unlink, stat } from "node:fs/promises";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
-const LOCK_FILE = join(ROOT, "logs", "scheduler", ".scheduler.lock");
+const CONFIG_FILE = join(ROOT, "config", "agency-scheduler.json");
+const STATE_DIR = join(ROOT, "logs", "scheduler");
+const STATE_FILE = join(STATE_DIR, "state.json");
+const HEARTBEAT_FILE = join(STATE_DIR, "heartbeat.json");
+const LOCK_FILE = join(STATE_DIR, ".scheduler.lock");
 const PAUSE_FILE = join(ROOT, ".agency-pause");
-const SCHEDULER_LOG_DIR = join(ROOT, "logs", "scheduler");
+const RESUME_FILE = join(ROOT, ".agency-resume");
+const LOG_FILE = join(STATE_DIR, `scheduler-${new Date().toISOString().slice(0, 10)}.log`);
 const EXECUTOR = join(ROOT, "scripts", "agency-task-executor.mjs");
-const LOCK_STALE_MS = 300000; // 5 min
+const MISSION_RUNNER = join(ROOT, "scripts", "agency-mission.mjs");
 
-const DEFAULT_MAX_TAREAS = 3;
-const DEFAULT_MAX_MS = 180000; // 3 min
-const DEFAULT_MAX_REINTENTOS = 3;
-const MAX_CICLOS_SIN_PROGRESO = 5;
+const LOCK_STALE_MS = 300000; // 5 min
+const HEARTBEAT_TTL_MS = 600000; // 10 min sin heartbeat = scheduler caído
 
 function nowIso() {
   return new Date().toISOString();
 }
 
-function logDir() {
-  return SCHEDULER_LOG_DIR;
+async function ensureDir() {
+  await mkdir(STATE_DIR, { recursive: true });
 }
 
-async function ensureDir() {
-  await mkdir(SCHEDULER_LOG_DIR, { recursive: true });
+async function readJson(path, def) {
+  try {
+    const raw = await readFile(path, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return def;
+  }
+}
+
+async function writeJson(path, data) {
+  await ensureDir();
+  await writeFile(path, JSON.stringify(data, null, 2) + "\n");
 }
 
 async function appendLog(entry) {
   await ensureDir();
-  const file = join(SCHEDULER_LOG_DIR, `scheduler-${new Date().toISOString().slice(0, 10)}.log`);
   const line = JSON.stringify({ ts: nowIso(), ...entry }) + "\n";
-  await writeFile(file, line, { flag: "a" });
+  await writeFile(LOG_FILE, line, { flag: "a" });
 }
 
+function isPaused() {
+  try {
+    stat.sync(PAUSE_FILE);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isResumed() {
+  try {
+    stat.sync(RESUME_FILE);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// --- Lock ---
+
 async function acquireLock() {
-  const lockContent = JSON.stringify({
-    pid: process.pid,
-    acquiredAt: nowIso(),
-  }) + "\n";
+  const lockContent = JSON.stringify({ pid: process.pid, acquiredAt: nowIso() }) + "\n";
   try {
     await writeFile(LOCK_FILE, lockContent, { flag: "wx" });
     return true;
@@ -85,182 +131,353 @@ async function acquireLock() {
 async function releaseLock() {
   try {
     await unlink(LOCK_FILE);
-  } catch {
-    // No crítico
-  }
+  } catch { /* no crítico */ }
 }
 
-function isPaused() {
-  try {
-    require("node:fs").statSync(PAUSE_FILE);
-    return true;
-  } catch {
-    return false;
-  }
+// --- Heartbeat ---
+
+async function writeHeartbeat(status = "active") {
+  await writeJson(HEARTBEAT_FILE, {
+    pid: process.pid,
+    lastBeat: nowIso(),
+    status,
+  });
 }
 
-async function runExecutor(args) {
+async function readHeartbeat() {
+  return await readJson(HEARTBEAT_FILE, null);
+}
+
+// --- Config y Estado ---
+
+function defaultConfig() {
+  return {
+    enabled: true,
+    timezone: "America/Santiago",
+    jobs: [
+      {
+        id: "agency-cycle",
+        type: "executor",
+        intervalMinutes: 15,
+        args: ["--batch=true", "--maxtasks=3"],
+        enabled: true,
+        maxAttempts: 3,
+      },
+    ],
+  };
+}
+
+async function loadConfig() {
+  const cfg = await readJson(CONFIG_FILE, null);
+  if (!cfg || !cfg.jobs) {
+    await writeJson(CONFIG_FILE, defaultConfig());
+    return defaultConfig();
+  }
+  return cfg;
+}
+
+function defaultState() {
+  return { jobs: {}, schedulerPid: null, lastCycle: null };
+}
+
+async function loadState() {
+  return await readJson(STATE_FILE, defaultState());
+}
+
+async function saveState(state) {
+  await writeJson(STATE_FILE, state);
+}
+
+// --- Utils de tiempo ---
+
+function addMinutes(date, minutes) {
+  return new Date(date.getTime() + minutes * 60000);
+}
+
+function isDue(nextRunIso) {
+  if (!nextRunIso) return true;
+  return new Date(nextRunIso) <= new Date();
+}
+
+// --- Ejecución de un job ---
+
+async function runExecutorJob(job) {
+  const args = job.args || ["--batch=true", "--maxtasks=3"];
   return new Promise((resolve) => {
-    execFile("node", [EXECUTOR, ...args], { cwd: ROOT, timeout: 240000 }, (error, stdout, stderr) => {
+    execFile("node", [EXECUTOR, ...args], {
+      cwd: ROOT,
+      timeout: 240000,
+    }, (error, stdout, stderr) => {
       resolve({
         exitCode: error ? (typeof error.code === "number" ? error.code : -1) : 0,
         stdout: stdout || "",
         stderr: stderr || "",
-        error: error ? error.message : null,
         timedOut: error ? error.killed === false : false,
       });
     });
   });
 }
 
-async function leerResultadoEjecucion(stdout) {
-  try {
-    const jsonStart = stdout.indexOf("{");
-    const jsonEnd = stdout.lastIndexOf("}");
-    if (jsonStart === -1 || jsonEnd === -1) return null;
-    return JSON.parse(stdout.slice(jsonStart, jsonEnd + 1));
-  } catch {
-    return null;
+async function runMissionJob(job) {
+  const missionId = job.missionId;
+  if (!missionId) {
+    return { exitCode: 1, stdout: "", stderr: "missionId requerido para job de tipo mission" };
   }
+  return new Promise((resolve) => {
+    execFile("node", [MISSION_RUNNER, "execute", missionId], {
+      cwd: ROOT,
+      timeout: 300000,
+    }, (error, stdout, stderr) => {
+      resolve({
+        exitCode: error ? (typeof error.code === "number" ? error.code : -1) : 0,
+        stdout: stdout || "",
+        stderr: stderr || "",
+        timedOut: error ? error.killed === false : false,
+      });
+    });
+  });
 }
 
-async function main() {
-  const args = process.argv.slice(2);
-  const opts = {};
-  for (const arg of args) {
-    const cleanArg = arg.startsWith("--") ? arg.slice(2) : arg;
-    const eq = cleanArg.indexOf("=");
-    if (eq === -1) opts[cleanArg] = true;
-    else opts[cleanArg.slice(0, eq)] = cleanArg.slice(eq + 1);
+// --- Ciclo principal del scheduler ---
+
+async function runCycle() {
+  const start = nowIso();
+  const cfg = await loadConfig();
+
+  if (!cfg.enabled) {
+    await appendLog({ evento: "scheduler.deshabilitado" });
+    console.log(JSON.stringify({ estado: "deshabilitado", motivo: "scheduler.enabled = false" }));
+    return;
   }
 
-  const maxTareas = parseInt(opts["maxtareas"] || opts["max-tareas"] || DEFAULT_MAX_TAREAS, 10);
-  const maxMs = parseInt(opts["maxms"] || opts["max-ms"] || DEFAULT_MAX_MS, 10);
-  const maxReintentos = parseInt(opts["maxreintentos"] || opts["max-retries"] || DEFAULT_MAX_REINTENTOS, 10);
-
-  const resultado = {
-    inicio: nowIso(),
-    scheduler: "agency-scheduler",
-    modo: "batch",
-    maxTareasPorCiclo: maxTareas,
-    maxMsPorCiclo: maxMs,
-    maxReintentosCiclo: maxReintentos,
-    ciclos: [],
-    estado: "iniciado",
-  };
-
-  await appendLog({ evento: "scheduler.iniciado", config: { maxTareas, maxMs, maxReintentos } });
-
   // Pausa de emergencia
-  if (isPaused()) {
-    resultado.estado = "pausado";
-        await appendLog({ evento: "scheduler.pausado", motivo: "archivo .agency-pause presente" });
-    console.log(JSON.stringify(resultado, null, 2));
+  if (isPaused() && !isResumed()) {
+    await appendLog({ evento: "scheduler.pausado", motivo: ".agency-pause presente" });
+    console.log(JSON.stringify({ estado: "pausado", motivo: "archivo .agency-pause presente; usar .agency-resume para reanudar" }));
     return;
+  }
+
+  // Si había una pausa y ahora hay resume, borrar archivos de pausa/resume
+  if (isResumed()) {
+    try { await unlink(RESUME_FILE); } catch {}
+    try { await unlink(PAUSE_FILE); } catch {}
+    await appendLog({ evento: "scheduler.reanudado" });
   }
 
   // Exclusión mutua
   const lockAcquired = await acquireLock();
   if (!lockAcquired) {
-    resultado.estado = "bloqueado";
-    resultado.motivo = "Otra instancia del scheduler ya está en curso";
-    await appendLog({ evento: "scheduler.bloqueado", motivo: "lock activo" });
-    console.log(JSON.stringify(resultado, null, 2));
+    await appendLog({ evento: "scheduler.bloqueado", motivo: "otra instancia en curso" });
+    console.log(JSON.stringify({ estado: "bloqueado", motivo: "otra instancia del scheduler ya está en curso" }));
     process.exitCode = 1;
     return;
   }
 
   try {
-    let ciclosSinProgreso = 0;
-    let reintento = 0;
+    await writeHeartbeat("active");
+    const state = await loadState();
+    const results = [];
 
-    while (reintento <= maxReintentos) {
-      const cicloInicio = Date.now();
-      const ciclo = {
-        numero: reintento + 1,
-        inicio: nowIso(),
+    for (const job of cfg.jobs) {
+      if (!job.enabled) continue;
+
+      const jobState = state.jobs[job.id] || {
+        lastRun: null,
+        nextRun: null,
+        intervalMinutes: job.intervalMinutes || 60,
+        consecutiveFailures: 0,
+        totalRuns: 0,
+        totalSkipped: 0,
+        totalFailures: 0,
       };
 
-      // Verificar pausa antes de cada ciclo
-      if (isPaused()) {
-        resultado.estado = "pausado";
-        await appendLog({ evento: "scheduler.pausado_durante_ciclo", ciclo: reintento + 1 });
-        break;
+      // Sincronizar intervalo si cambió en la config
+      if (job.intervalMinutes) jobState.intervalMinutes = job.intervalMinutes;
+
+      // Calcular próximo ciclo si no existe
+      if (!jobState.nextRun) {
+        jobState.nextRun = addMinutes(new Date(), jobState.intervalMinutes).toISOString();
       }
 
-      // Ejecutar executor en modo batch con límites
-      const exec = await runExecutor([
-        "--batch=true",
-        `--maxtasks=${maxTareas}`,
-        `--maxms=${maxMs}`,
-        "--dry-run=false",
-      ]);
+      const due = isDue(jobState.nextRun);
 
-      const duracion = Date.now() - cicloInicio;
-      ciclo.duracionMs = duracion;
-      ciclo.salida = exec.stdout;
-      ciclo.error = exec.stderr;
-      ciclo.exitCode = exec.exitCode;
-      ciclo.timedOut = exec.timedOut;
-
-      const parseado = await leerResultadoEjecucion(exec.stdout);
-      ciclo.resultadoParseado = parseado;
-
-      const progreso = parseado && parseado.tasksExecuted > 0;
-      if (progreso) {
-        ciclosSinProgreso = 0;
-      } else {
-        ciclosSinProgreso++;
+      if (!due) {
+        results.push({ jobId: job.id, action: "skip", reason: "notDue", nextRun: jobState.nextRun });
+        continue;
       }
 
-      // Protección contra bucles: si no hay progreso en N ciclos seguidos, parar
-      if (ciclosSinProgreso >= MAX_CICLOS_SIN_PROGRESO) {
-        resultado.estado = "detenido";
-        resultado.motivo = `Sin progreso en ${MAX_CICLOS_SIN_PROGRESO} ciclos consecutivos`;
-        await appendLog({
-          evento: "scheduler.detenido_bucles",
-          ciclosSinProgreso,
-          ciclo: reintento + 1,
-        });
-        break;
-      }
+      // Ejecutar job con reintentos
+      let lastRunResult = null;
+      let success = false;
+      const maxAttempts = job.maxAttempts || 3;
 
-      // Si el executor terminó normalmente (phase complete o batch-complete), salir con éxito
-      if (parseado && (parseado.phase === "complete" || parseado.phase === "batch-complete")) {
-        resultado.estado = "completado";
-        resultado.mensaje = parseado.message || "Ciclo completado sin tareas pendientes";
-        break;
-      }
-
-      // Si falló, reintentar acotadamente
-      if (exec.exitCode !== 0 || !progreso) {
-        reintento++;
-        if (reintento <= maxReintentos) {
-          await appendLog({
-            evento: "scheduler.reintentando",
-            reintento,
-            maxReintentos,
-            exitCode: exec.exitCode,
-          });
-          await new Promise((r) => setTimeout(r, 2000 * reintento));
-          continue;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (isPaused() && !isResumed()) {
+          await appendLog({ evento: "scheduler.pausado_durante_job", jobId: job.id, attempt });
+          jobState.totalSkipped = (jobState.totalSkipped || 0) + 1;
+          await saveState(state);
+          console.log(JSON.stringify({ estado: "pausado", jobId: job.id }));
+          return;
         }
-        resultado.estado = "fallido";
-        resultado.motivo = `Executor falló tras ${maxReintentos} reintentos`;
-        await appendLog({ evento: "scheduler.fallido", reintentos: maxReintentos, exitCode: exec.exitCode });
-        break;
+
+        let run;
+        if (job.type === "mission") {
+          run = await runMissionJob(job);
+        } else {
+          run = await runExecutorJob(job);
+        }
+
+        lastRunResult = run;
+        if (run.exitCode === 0) {
+          success = true;
+          break;
+        }
+
+        jobState.consecutiveFailures = (jobState.consecutiveFailures || 0) + 1;
+        await appendLog({
+          evento: "scheduler.jobReintento",
+          jobId: job.id,
+          attempt,
+          maxAttempts,
+          exitCode: run.exitCode,
+        });
+
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+        }
       }
 
-      break;
+      const now = new Date();
+      jobState.lastRun = now.toISOString();
+      jobState.nextRun = addMinutes(now, jobState.intervalMinutes).toISOString();
+      jobState.totalRuns = (jobState.totalRuns || 0) + 1;
+
+      if (success) {
+        jobState.consecutiveFailures = 0;
+        results.push({
+          jobId: job.id,
+          action: "executed",
+          exitCode: lastRunResult.exitCode,
+          nextRun: jobState.nextRun,
+        });
+        await appendLog({ evento: "scheduler.jobEjecutado", jobId: job.id, exitCode: lastRunResult.exitCode, nextRun: jobState.nextRun });
+      } else {
+        jobState.totalFailures = (jobState.totalFailures || 0) + 1;
+        results.push({
+          jobId: job.id,
+          action: "failed",
+          exitCode: lastRunResult ? lastRunResult.exitCode : -1,
+          stderr: lastRunResult ? lastRunResult.stderr : "no execution",
+          nextRun: jobState.nextRun,
+        });
+        await appendLog({ evento: "scheduler.jobFallido", jobId: job.id, exitCode: lastRunResult ? lastRunResult.exitCode : -1, nextRun: jobState.nextRun });
+      }
+
+      state.jobs[job.id] = jobState;
     }
 
-    resultado.ciclos.push(...[]); // placeholder para compatibilidad
-    resultado.fin = nowIso();
-    await appendLog({ evento: "scheduler.finalizado", estado: resultado.estado });
-    console.log(JSON.stringify(resultado, null, 2));
+    state.schedulerPid = process.pid;
+    state.lastCycle = start;
+    await saveState(state);
+    await writeHeartbeat("active");
+
+    console.log(JSON.stringify({
+      estado: "completado",
+      inicio: start,
+      fin: nowIso(),
+      jobs: results,
+    }, null, 2));
   } finally {
     await releaseLock();
   }
+}
+
+// --- Modo --once (batch único, retrocompatibilidad) ---
+
+async function runOnce() {
+  const cfg = await loadConfig();
+  const job = cfg.jobs.find((j) => j.enabled);
+  if (!job) {
+    console.log(JSON.stringify({ estado: "sinJobsHabilitados" }));
+    return;
+  }
+
+  const args = job.args || ["--batch=true", "--maxtasks=3"];
+  const run = await new Promise((resolve) => {
+    execFile("node", [EXECUTOR, ...args], { cwd: ROOT, timeout: 240000 }, (error, stdout, stderr) => {
+      resolve({
+        exitCode: error ? (typeof error.code === "number" ? error.code : -1) : 0,
+        stdout: stdout || "",
+        stderr: stderr || "",
+      });
+    });
+  });
+
+  console.log(JSON.stringify({
+    estado: run.exitCode === 0 ? "completado" : "fallido",
+    modo: "once",
+    jobId: job.id,
+    exitCode: run.exitCode,
+    salida: run.stdout.slice(0, 2000),
+  }, null, 2));
+}
+
+// --- Estado ---
+
+async function showStatus() {
+  const cfg = await loadConfig();
+  const state = await loadState();
+  const hb = await readHeartbeat();
+
+  let schedulerStatus = "inactivo";
+  if (hb) {
+    const age = Date.now() - new Date(hb.lastBeat).getTime();
+    schedulerStatus = age < HEARTBEAT_TTL_MS ? "activo" : "caído";
+  }
+
+  const jobsStatus = cfg.jobs.map((job) => {
+    const js = state.jobs[job.id] || {};
+    return {
+      id: job.id,
+      type: job.type,
+      enabled: job.enabled,
+      intervalMinutes: job.intervalMinutes || 60,
+      lastRun: js.lastRun || null,
+      nextRun: js.nextRun || null,
+      totalRuns: js.totalRuns || 0,
+      totalFailures: js.totalFailures || 0,
+      consecutiveFailures: js.consecutiveFailures || 0,
+    };
+  });
+
+  console.log(JSON.stringify({
+    scheduler: {
+      status: schedulerStatus,
+      pid: hb ? hb.pid : null,
+      lastBeat: hb ? hb.lastBeat : null,
+      paused: isPaused(),
+    },
+    config: CONFIG_FILE,
+    jobs: jobsStatus,
+  }, null, 2));
+}
+
+// --- CLI ---
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  if (args.includes("--once")) {
+    await runOnce();
+    return;
+  }
+
+  if (args.includes("--status")) {
+    await showStatus();
+    return;
+  }
+
+  await runCycle();
 }
 
 main().catch((error) => {

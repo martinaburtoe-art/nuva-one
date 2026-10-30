@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "timezone": "America/Santiago",
+  "jobs": [
+    {
+      "id": "agency-cycle",
+      "type": "executor",
+      "intervalMinutes": 5,
+      "args": [
+        "--batch=true",
+        "--maxtasks=3"
+      ],
+      "enabled": true,
+      "maxAttempts": 3
+    }
+  ]
+}

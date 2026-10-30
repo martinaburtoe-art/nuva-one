@@ -9,7 +9,7 @@ const INDEX_FILE = join(LOGS_DIR, "index.json");
 const SELECTOR = "scripts/agency-select-next-task.mjs";
 const LOGGER = "scripts/agency-cycle-logger.mjs";
 const SPECIALIST_RUNNER = "scripts/agency-run-specialist.mjs";
-const SPECIALIST_IDS = ["finance", "sales", "supply", "people", "growth"];
+const SPECIALIST_IDS = ["finance", "sales", "supply", "people", "growth", "orchestrator", "constructor", "compliance", "security", "qa", "sentinel", "ux", "release"];
 
 // Persistencia duradera opcional (Supabase). Se inicializa solo si hay credenciales.
 let persistClient = null;
@@ -204,7 +204,7 @@ function resolveCommand(taskBlock) {
   if (/\bnpm run typecheck\b/.test(criteria) || /\btypecheck\b/.test(title)) {
     return { type: "npm_run", command: ["npm", "run", "typecheck"] };
   }
-  if (/\\bnpm run build\\b/.test(criteria) || /\\bbuild\\b/.test(title)) {
+  if (/\bnpm run build\b/.test(criteria) || /\bbuild\b/.test(title)) {
     return { type: "npm_run", command: ["npm", "run", "build"] };
   }
 
@@ -212,9 +212,8 @@ function resolveCommand(taskBlock) {
 }
 
 /**
- * Detecta si la tarea debe ser ejecutada por uno de los 5 especialistas
- * faltantes (finance, sales, supply, people, growth). Devuelve un plan
- * de tipo "specialist" sin comando de shell.
+ * Detecta si la tarea debe ser ejecutada por uno de los especialistas de Agency.
+ * Devuelve un plan de tipo "specialist" sin comando de shell.
  */
 function resolveSpecialist(taskBlock) {
   const specialist = (taskBlock.fields.especialista || "").toLowerCase().trim();
