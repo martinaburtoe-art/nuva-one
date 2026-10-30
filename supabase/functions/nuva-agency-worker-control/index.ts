@@ -1,9 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@6";
-
-const REPO = "martinaburtoe-art/nuva-one";
-const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release"];
+import { AGENCY_WORKER_AGENT_IDS, AGENCY_WORKER_AUDIENCE, isTrustedAgencyWorkerClaims } from "./worker-claims.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json", "cache-control": "no-store", "access-control-allow-origin": "*" }
@@ -22,22 +20,29 @@ const admin = () => createClient(Deno.env.get("SUPABASE_URL")!, key("secret"), {
 
 const GITHUB_JWKS = createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 async function githubRun(token: string, runId: string, agentId: string) {
-  const { payload } = await jwtVerify(token, GITHUB_JWKS, { issuer: "https://token.actions.githubusercontent.com" });
-  if (payload.repository !== REPO || String(payload.run_id ?? "") !== runId || !AGENTS.includes(agentId)) {
+  const { payload } = await jwtVerify(token, GITHUB_JWKS, {
+    issuer: "https://token.actions.githubusercontent.com",
+    audience: AGENCY_WORKER_AUDIENCE,
+  });
+  if (!isTrustedAgencyWorkerClaims(payload as Record<string, unknown>, runId, agentId)) {
     throw new Error("WORKER_OIDC_CLAIMS_DENIED");
   }
-  return { repository: { full_name: REPO } };
 }
 
 async function authorize(request: Request) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? request.headers.get("x-agency-github-token") ?? request.headers.get("x-agency-oidc-token");
+  const workerToken = request.headers.get("x-agency-github-token") ?? request.headers.get("x-agency-oidc-token");
+  const bearerToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const token = workerToken ?? bearerToken;
   if (!token) return { kind: "deny" as const, status: 401 };
-  const runId = request.headers.get("x-agency-run-id") ?? "0";
-  const agentId = request.headers.get("x-agency-agent-id");
-  if ((request.headers.get("x-agency-github-token") || request.headers.get("x-agency-oidc-token")) && agentId && AGENTS.includes(agentId)) {
+
+  if (workerToken) {
+    const runId = request.headers.get("x-agency-run-id") ?? "0";
+    const agentId = request.headers.get("x-agency-agent-id");
+    if (!agentId) return { kind: "deny" as const, status: 403 };
     await githubRun(token, runId, agentId);
     return { kind: "worker" as const, agentId, runId };
   }
+
   const userClient = createClient(Deno.env.get("SUPABASE_URL")!, key("publishable"), { auth: { persistSession: false } });
   const { data } = await userClient.auth.getUser(token);
   if (data.user?.app_metadata?.platform_role === "owner") return { kind: "owner" as const, userId: data.user.id };

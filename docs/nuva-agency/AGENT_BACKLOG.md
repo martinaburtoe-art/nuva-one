@@ -238,19 +238,19 @@ Formato de cada entrada:
 - dependencias: T-12, T-29
 - criterios_de_aceptacion: Service role con privilegios mínimos en las seis tablas y secuencia; worker reclama/termina tarea y registra eventos; recuperación tras reinicio; Owner Console lee estado persistente.
 - pruebas_requeridas: pgTAP de privilegios; claim/finish en entorno Preview autorizado; recuperación sin duplicados.
-- evidencia: Vercel tiene `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` configuradas para Preview y Production (solo se verificó presencia; valores no leídos). Supabase ACTIVE_HEALTHY; seis tablas con RLS habilitado y RPC existentes. Auditoría read-only 2026-10-30: `service_role` carece de SELECT/INSERT/UPDATE en las tablas Agency y de USAGE/SELECT en `agency_events_id_seq`; las RPC tienen EXECUTE limitado a service_role. La migración de grants se prepara en T-29; no se aplicó remotamente.
+- evidencia: Vercel tiene `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` configuradas para Preview y Production (solo se verificó presencia; valores no leídos). Supabase ACTIVE_HEALTHY; seis tablas con RLS habilitado y RPC existentes. Auditoría read-only 2026-10-30 encontró grants faltantes. T-29 prepara la corrección y CI local valida 30 aserciones; la migración no se ha aplicado remotamente, por lo que los permisos efectivos del proyecto siguen bloqueando el CRUD y la recuperación.
 - seguridad: no leer secretos, no aplicar migraciones remotas, no cambiar RLS.
 
-## T-21 — Scheduler programado de Agency con exclusión mutua y límites
+## T-21 — Scheduler durable de Agency: reconciliar el worker existente
 - departamento: Operaciones
 - especialista: Constructor
 - prioridad: P0
 - estado: BLOQUEADO
-- dependencias: T-09, T-13, T-20
-- criterios_de_aceptacion: Workflow programado activo en main, lock/concurrency, heartbeat, reintentos y recuperación.
-- pruebas_requeridas: primera ejecución schedule real en main con evidencia de Actions y Supabase.
-- evidencia: `.github/workflows/nuva-agency-durable-worker.yml` está preparado en PR #252 con cron cada cinco minutos y GITHUB_TOKEN; el archivo no existe en main. GitHub activa eventos schedule solo desde la rama por defecto. No se autorizó merge ni despliegue.
-- seguridad: sin secretos nuevos; sin merge ni deploy sin autorización.
+- dependencias: T-20, T-31
+- criterios_de_aceptacion: un solo scheduler durable activo, con leases, heartbeat, reintentos y recuperación verificados; no ejecutar dos workers competidores.
+- pruebas_requeridas: ejecución schedule real con tarea nueva, heartbeat y finish persistidos; verificación de concurrencia y reanudación.
+- evidencia: main ya contiene `.github/workflows/nuva-agent-durable-worker.yml` con cron `7,27,47 * * * *` y un workflow de 350 min. Último run schedule observado: `41030396490` (2026-10-30 09:01:23Z), concluyó success pero no reclamó trabajo: intentó los 13 agentes y todos devolvieron sin tarea elegible. Snapshot read-only de Supabase: 2 misiones, 14 tareas (3 completadas, 11 fallidas), 40 eventos task.claimed, 27 leases expirados y 13 liberados. La función Edge activa v16 no puede crear el siguiente ciclo porque faltan grants de service_role. El workflow nuevo `nuva-agency-durable-worker.yml` de esta PR sería un segundo scheduler; no activarlo hasta reconciliar el worker existente.
+- seguridad: sin merge/deploy, sin migraciones remotas, sin RLS ni secretos.
 
 ## T-22 — Owner Console durable con autorización server-side
 - departamento: Operaciones
@@ -307,16 +307,16 @@ Formato de cada entrada:
 - evidencia: commits `64e01c64`, `8be4e197`, `f7534575`, `288ad781`, `a4007197`, `3a1d8dba`, `b391041b`, `3f1b5429`, `18f26121`; worker usa GITHUB_TOKEN y el API server-side usa credenciales ya configuradas en Vercel
 - seguridad: sin nuevos secretos, sin merge, sin despliegue ni cambios remotos de base de datos
 
-## T-27 — Activar scheduler durable y verificar primera ejecución
+## T-27 — Recuperar la ejecución programada existente
 - departamento: Operaciones
 - especialista: Release
 - prioridad: P0
 - estado: BLOQUEADO
-- dependencias: T-26
-- criterios_de_aceptacion: workflow ejecutado desde main, reclama tarea real y persiste resultado en Supabase.
-- pruebas_requeridas: primera ejecución schedule real en main con evidencia de Actions y Owner Console.
-- evidencia: workflow preparado solo en PR #252; schedule requiere default branch. No se hizo merge ni deploy porque no hay autorización.
-- seguridad: requiere autorización expresa para merge/deploy.
+- dependencias: T-20, T-21, T-31
+- criterios_de_aceptacion: el scheduler existente vuelve a reclamar y finalizar tareas nuevas; el resultado se verifica en Supabase y Owner Console.
+- pruebas_requeridas: ejecución schedule real posterior a los grants, con tarea nueva y lease liberado.
+- evidencia: hay un workflow programado en main, pero el último run observado terminó sin trabajo porque no existen tareas elegibles; las 14 tareas persistidas están completadas/fallidas. La migración T-29 pasa en CI, pero no se aplicó remotamente. El workflow de 5 min en PR #252 no se ha activado y no debe coexistir sin una decisión explícita de reemplazo.
+- seguridad: requiere autorización expresa para aplicar migración/deploy/merge.
 
 ## T-28 — Verificar Owner Console durable con sesión real de propietario
 - departamento: Operaciones
@@ -333,11 +333,11 @@ Formato de cada entrada:
 - departamento: Seguridad
 - especialista: Security
 - prioridad: P0
-- estado: EN_CURSO
+- estado: COMPLETADO
 - dependencias: T-20
 - criterios_de_aceptacion: migración idempotente otorga solo privilegios de tabla/secuencia requeridos a service_role, mantiene RLS habilitado y mantiene anon/authenticated sin acceso.
 - pruebas_requeridas: pgTAP `115_agency_service_role_privileges.sql` y CI completo.
-- evidencia: auditoría read-only 2026-10-30 identificó ausencia de grants de tabla y secuencia. Migración y pgTAP preparados en esta rama; pendientes de CI y sin aplicar remotamente.
+- evidencia: commit `a3fa219d`; migración `20261030130000_agency_service_role_privileges.sql`; pgTAP 30/30 aserciones; CI database 454/454 tests PASS y recovery drill PASS. Solo se preparó en rama; no se aplicó remotamente.
 - seguridad: no cambiar RLS, no aplicar migración remota, no leer secretos
 
 ## T-30 — Escaneo real de PII en el especialista People
@@ -350,3 +350,15 @@ Formato de cada entrada:
 - pruebas_requeridas: fixtures positivos/negativos para email y RUT; directorio ausente UNKNOWN/WARN; suite de especialistas y CI.
 - evidencia: T-18 reabierto tras comprobar que la implementación actual no escanea el contenido.
 - seguridad: no leer secretos ni exponer PII
+
+
+## T-31 — Endurecer identidad OIDC del worker legado
+- departamento: Seguridad
+- especialista: Security
+- prioridad: P0
+- estado: EN_CURSO
+- dependencias: T-21
+- criterios_de_aceptacion: la Edge Function valida audience, repository, repository_owner, actor, ref main, workflow_ref exacto, evento permitido, run_id y agent_id.
+- pruebas_requeridas: Vitest con claims válidos/alterados y Deno check de la Edge Function.
+- evidencia: versión desplegada 16 solo valida issuer, repository, run_id y agent_id; no comprueba audience, workflow_ref, ref, event_name ni actor. Se prepara hardening en la rama; no se despliega la función remota.
+- seguridad: no desplegar Edge Function, no leer secretos, no cambiar RLS

@@ -33,8 +33,10 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - name: Typecheck Nüva Agency AI broker
-        run: deno check --node-modules-dir=auto supabase/functions/nuva-agency-ai-broker/index.ts
+      - name: Typecheck Nüva Agency Edge Functions
+        run: |
+          deno check --node-modules-dir=auto supabase/functions/nuva-agency-ai-broker/index.ts
+          deno check --node-modules-dir=auto supabase/functions/nuva-agency-worker-control/index.ts
       - name: Verify migrations
         run: npm run verify:migrations
       - name: Typecheck
