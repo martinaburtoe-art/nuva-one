@@ -1,0 +1,59 @@
+name: Nüva Agency — Durable Specialist Worker
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: "Especialista a ejecutar (vacío = rotación automática)"
+        required: false
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: nuva-agency-durable-specialist-worker
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    name: Claim and execute one durable specialist task
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Select specialist
+        id: specialist
+        shell: bash
+        env:
+          REQUESTED_AGENT: ${{ github.event.inputs.agent || '' }}
+        run: |
+          set -euo pipefail
+          agents=(orchestrator constructor finance sales supply people compliance growth security qa sentinel ux release)
+          if [[ -n "$REQUESTED_AGENT" ]]; then
+            agent="$REQUESTED_AGENT"
+          else
+            slot=$(( $(date -u +%s) / 300 ))
+            agent="${agents[$((slot % ${#agents[@]}))]}"
+          fi
+          printf 'agent=%s\n' "$agent" >> "$GITHUB_OUTPUT"
+      - name: Execute durable specialist
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          NUVA_AGENCY_AGENT_ID: ${{ steps.specialist.outputs.agent }}
+          NUVA_AGENCY_API_BASE_URL: https://nuva-one.vercel.app
+        run: node scripts/agency-durable-worker.mjs
