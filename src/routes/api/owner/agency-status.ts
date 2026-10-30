@@ -15,6 +15,7 @@ const AGENCY_WORKFLOWS = [
   "nuva-agency-autonomous-merge.yml",
   "nuva-agency-safe-merge.yml",
   "nuva-agent-health.yml",
+  "nuva-agency-durable-worker.yml",
 ];
 
 type GitHubRun = {
