@@ -1,5 +1,5 @@
 /**
- * specialists.mjs — Versión ES Modules (JS puro) de los 5 especialistas de Nüva Agency.
+ * specialists.mjs — Versión ES Modules (JS puro) de los 13 especialistas de Nüva Agency.
  * Usada por scripts/agency-run-specialist.mjs desde el executor. Sin tipos de TypeScript,
  * sin dependencias externas, solo node:fs/promises y node:crypto.
  */
@@ -137,12 +137,12 @@ export const sales = {
   id: "sales",
   nombre: "Ventas",
   responsabilidades: [
-    "Verificar declaraciones de integración de ventas (WhatsApp Business, Odoo, GTM/GA)",
+    "Verificar declaraciones de integración de ventas (mensajería comercial, Odoo, GTM/GA)",
     "Confirmar que los archivos de configuración de ventas existen y son legibles",
     "Reportar falta de configuración sin inventar credenciales",
   ],
   limites: [
-    "No accede a tokens de WhatsApp Business ni claves de Odoo",
+    "No accede a tokens de mensajería comercial ni claves de Odoo",
     "No realiza llamadas a APIs externas de ventas",
     "No modifica configuración de producción",
   ],
@@ -483,13 +483,13 @@ export const security = {
       }
     }
 
-    const agencyControl = await readLocalFile("src/routes/api/owner/agency-control.ts");
+    const agencyControl = await readLocalFile("src/routes/api/owner/agency-status.ts");
     if (agencyControl.ok) {
       const hasAuth = /authoriz|owner|worker|verify/i.test(agencyControl.content);
-      evidence.push(`agency-control.ts: ${agencyControl.content.length} bytes, autorización server-side: ${hasAuth ? "sí" : "no detectada"}`);
-      if (!hasAuth) errors.push("agency-control.ts sin verificación de autorización server-side");
+      evidence.push(`agency-status.ts: ${agencyControl.content.length} bytes, autorización server-side: ${hasAuth ? "sí" : "no detectada"}`);
+      if (!hasAuth) errors.push("agency-status.ts sin verificación de autorización server-side");
     } else {
-      evidence.push("agency-control.ts: no encontrado");
+      evidence.push("agency-status.ts: no encontrado");
     }
 
     return makeResult("security", task.id, secretosEncontrados === 0 ? "PASS" : "WARN", evidence, errors, start);
@@ -501,55 +501,60 @@ export const qa = {
   id: "qa",
   nombre: "QA",
   responsabilidades: [
-    "Ejecutar suite de pruebas Vitest",
-    "Reportar conteo de pruebas pasadas/fallidas",
-    "Detectar regresiones tras cambios de código",
+    "Ejecutar pruebas Vitest reales fuera de la suite que valida al propio especialista",
+    "Reportar conteo verificable de pruebas pasadas/fallidas",
+    "Detectar regresiones en pruebas locales sin acceder a producción",
   ],
   limites: [
     "No modifica archivos de prueba",
     "No ejecuta pruebas contra producción",
     "No accede a datos de usuarios reales",
+    "Rechaza rutas absolutas o rutas que salgan del repositorio",
   ],
   tiposDeTarea: ["unit-test-run", "regression-check", "test-result-parse"],
-  herramientasPermitidas: ["npm test", "npx vitest run"],
+  herramientasPermitidas: ["node", "vitest"],
 
   async execute(task) {
     const start = nowMs();
     const evidence = [];
     const errors = [];
+    const rawTarget = task.input_context?.target;
+    const testTarget = typeof rawTarget === "string" ? rawTarget.trim() : "";
 
-    const testTarget = (task.input_context && task.input_context.target) || "src/lib/agency/specialists.test.ts";
+    if (testTarget && (testTarget.length > 200 || testTarget.startsWith("/") || testTarget.charAt(0) === String.fromCharCode(92) || /^[A-Za-z]:/.test(testTarget) || testTarget.includes(".."))) {
+      return makeResult("qa", task.id, "BLOCKED", ["objetivo QA rechazado: debe ser una ruta relativa dentro del repositorio"], errors, start);
+    }
 
-    const vitestBin = process.platform === "win32"
-      ? "node_modules/vitest/vitest.mjs"
-      : "node_modules/.bin/vitest";
-
-    const execCommand = process.platform === "win32" ? "node" : vitestBin;
-    const execArgs = process.platform === "win32" ? [vitestBin, "run", testTarget] : ["run", testTarget];
+    const vitestBin = join(process.cwd(), "node_modules", "vitest", "vitest.mjs");
+    const args = [
+      vitestBin, "run", "--reporter=json",
+      "--exclude", "src/lib/agency/specialists.test.ts",
+      ...(testTarget ? [testTarget] : []),
+    ];
 
     return new Promise((resolve) => {
-      execFile(execCommand, execArgs, { cwd: process.cwd(), timeout: 120000 }, (error, stdout, stderr) => {
-        const duration = Date.now() - start;
-        const output = stdout || "";
+      execFile(process.execPath, args, {
+        cwd: process.cwd(), timeout: 120000, maxBuffer: 10 * 1024 * 1024,
+      }, (error, stdout, stderr) => {
+        const output = String(stdout ?? "");
         const exitCode = error ? (typeof error.code === "number" ? error.code : -1) : 0;
+        let report = null;
+        const jsonStart = output.indexOf("{");
+        const jsonEnd = output.lastIndexOf("}");
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+          try { report = JSON.parse(output.slice(jsonStart, jsonEnd + 1)); }
+          catch { report = null; }
+        }
+        const passed = typeof report?.numPassedTests === "number" ? report.numPassedTests : 0;
+        const failed = typeof report?.numFailedTests === "number" ? report.numFailedTests : 0;
+        const total = typeof report?.numTotalTests === "number" ? report.numTotalTests : passed + failed;
 
-        const passMatch = output.match(/(\d+) passed/);
-        const failMatch = output.match(/(\d+) failed/);
-        const passed = passMatch ? parseInt(passMatch[1], 10) : 0;
-        const failed = failMatch ? parseInt(failMatch[1], 10) : 0;
-
-        evidence.push(`vitest run ${testTarget}: salida (${output.length} bytes)`);
-        evidence.push(`pruebas pasadas: ${passed}`);
-        evidence.push(`pruebas fallidas: ${failed}`);
+        evidence.push(`vitest run ${testTarget || "(suite completa excluyendo specialists.test.ts")}: salida JSON ${report ? "válida" : "no interpretable"}`);
+        evidence.push(`pruebas: ${passed}/${total} aprobadas; ${failed} fallidas`);
         evidence.push(`código de salida: ${exitCode}`);
-
+        if (stderr?.trim()) evidence.push(`stderr: ${String(stderr).trim().slice(0, 300)}`);
         if (error) errors.push(error.message);
-
-        let result;
-        if (exitCode !== 0) result = "FAIL";
-        else if (passed > 0 && failed === 0) result = "PASS";
-        else result = "WARN";
-
+        const result = exitCode !== 0 || failed > 0 ? "FAIL" : passed > 0 && total > 0 ? "PASS" : "WARN";
         resolve(makeResult("qa", task.id, result, evidence, errors, start));
       });
     });
@@ -636,7 +641,7 @@ export const ux = {
 
     const candidates = [
       "src/routes/owner/control-tower.tsx",
-      "src/routes/api/owner/agency-control.ts",
+      "src/routes/api/owner/agency-status.ts",
     ];
     let archivosEncontrados = 0;
     let conAria = 0;
