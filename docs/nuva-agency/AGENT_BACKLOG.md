@@ -267,3 +267,68 @@ Formato de cada entrada:
 - seguridad: autorización en servidor, sin datos simulados, sin secretos expuestos
 - ejecutado: 2026-10-29T23:28:12Z
 
+## T-23 — Alinear el parser de especialistas con el formato real del backlog
+- departamento: Operaciones
+- especialista: Orchestrator
+- prioridad: P1
+- estado: COMPLETADO
+- dependencias: T-01
+- criterios_de_aceptacion: Los parsers TypeScript y ESM reconocen encabezados `## T-XX —`, campos `- clave: valor`, dependencias `ninguna` y prioridades P0–P3
+- pruebas_requeridas: Ejecutar Orchestrator y Compliance contra el backlog real; comprobar conteo exacto de tareas pendientes y cero tareas sin estado
+- evidencia: commits `536fb87e`, `b461ac13`, `42030de1`; CI Control Plane Verify: 409/409 tests y certificación 37/37
+- seguridad: solo lectura de documentación, sin producción
+
+## T-24 — Corregir controles ESM de misión y reconstrucción del executor
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P1
+- estado: COMPLETADO
+- dependencias: T-09, T-12
+- criterios_de_aceptacion: Pausa/cancelación funcionan en Node ESM; el executor puede consultar locks y reconstruir índices sin `require()`
+- pruebas_requeridas: Pruebas de proceso aislado para pausa/cancelación; node --check y suite completa
+- evidencia: commits `2fb50c15`, `e5a3f9c0`, `89002a70`; pruebas de misión agregadas a Vitest
+- seguridad: archivos temporales aislados, sin producción
+
+## T-25 — Hacer ejecutable la prueba QA aislada
+- departamento: Cumplimiento
+- especialista: QA
+- prioridad: P1
+- estado: COMPLETADO
+- dependencias: T-04, T-09
+- criterios_de_aceptacion: Vitest descubre el smoke test fuera de `src/`; QA ejecuta un proceso Vitest separado y reporta 1/1 aprobada
+- pruebas_requeridas: Suite completa y prueba QA del especialista sin mock de ejecución
+- evidencia: commit `4983a55f` amplía el patrón de descubrimiento; `42030de1` verifica el conteo del backlog; Control Plane Verify: 409/409
+- seguridad: test local aislado, sin datos de usuarios
+
+## T-26 — Preparar worker durable y scheduler de especialistas
+- departamento: Operaciones
+- especialista: Constructor
+- prioridad: P0
+- estado: COMPLETADO
+- dependencias: T-12, T-16
+- criterios_de_aceptacion: Worker reclama una tarea, ejecuta el especialista, libera lease con resultado estructurado; autenticación restringida al workflow autorizado en main; workflow programado cada cinco minutos con rotación de 13 agentes y sin secretos nuevos
+- pruebas_requeridas: Tests del worker con claim vacío, claim/finish, resultado bloqueado; tests de identidad de workflow; CI y verificación independiente
+- evidencia: commits `64e01c64`, `8be4e197`, `f7534575`, `288ad781`, `a4007197`, `3a1d8dba`, `b391041b`, `3f1b5429`, `18f26121`; worker usa GITHUB_TOKEN y el API server-side usa credenciales ya configuradas en Vercel
+- seguridad: sin nuevos secretos, sin merge, sin despliegue ni cambios remotos de base de datos
+
+## T-27 — Activar el scheduler durable y verificar su primera ejecución real
+- departamento: Operaciones
+- especialista: Release
+- prioridad: P0
+- estado: BLOQUEADO
+- dependencias: T-26
+- criterios_de_aceptacion: El workflow se ejecuta desde main, reclama una tarea real, registra el resultado en Supabase y deja evidencia verificable en Actions y Owner Console
+- pruebas_requeridas: Primera ejecución programada en main y verificación de persistencia
+- evidencia: `.github/workflows/nuva-agency-durable-worker.yml` está preparado en PR #252; los eventos schedule solo se activan desde la rama por defecto y no se ha autorizado merge ni despliegue
+- seguridad: requiere autorización explícita para merge y despliegue
+
+## T-28 — Verificar Owner Console durable con sesión real de propietario
+- departamento: Operaciones
+- especialista: Security
+- prioridad: P1
+- estado: BLOQUEADO
+- dependencias: T-26, T-27
+- criterios_de_aceptacion: Propietario autenticado crea misión, consulta tareas, pausa/reanuda/cancela y decide aprobaciones; todas las acciones quedan registradas en Supabase
+- pruebas_requeridas: Prueba integrada con sesión de propietario y lectura posterior de registros
+- evidencia: `authorizeAgencyOwner` valida `app_metadata.platform_role=owner`; tests de autorización pasan; tablas y RPC existen; no se realizó una sesión autenticada ni una escritura de prueba en producción
+- seguridad: sin solicitar credenciales, sin escrituras de prueba ni despliegue a producción
