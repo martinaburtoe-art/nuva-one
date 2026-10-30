@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -10,6 +11,7 @@ const SELECTOR = "scripts/agency-select-next-task.mjs";
 const LOGGER = "scripts/agency-cycle-logger.mjs";
 const SPECIALIST_RUNNER = "scripts/agency-run-specialist.mjs";
 const SPECIALIST_IDS = ["finance", "sales", "supply", "people", "growth", "orchestrator", "constructor", "compliance", "security", "qa", "sentinel", "ux", "release"];
+const PERSISTED_MISSION_KEY = `agency-batch-${randomUUID()}`;
 
 // Persistencia duradera opcional (Supabase). Se inicializa solo si hay credenciales.
 let persistClient = null;
@@ -41,6 +43,17 @@ const FORBIDDEN_PATTERNS = [
 ];
 
 const PRIORITY_ORDER = { P0: 0, P1: 1, P2: 2, P3: 3 };
+
+async function finalizePersistedMission(status, summary) {
+  if (!persistAvailable || !persistClient) return;
+  try {
+    const { finalizeMission } = await import("./agency-persist-supabase.mjs");
+    const persisted = await finalizeMission({ missionId: PERSISTED_MISSION_KEY, status, summary });
+    if (!persisted.persisted) console.warn(`Agency persistence finalization: ${persisted.reason}`);
+  } catch (error) {
+    console.warn(`Agency persistence finalization failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 // --- T-12: File locking contra ejecuciones concurrentes ---
 const LOCK_FILE = join(EXEC_DIR, ".executor.lock");
@@ -655,15 +668,12 @@ async function runMainWithLock(execIdValue) {
 
       lastRun = exec;
 
-      const index = await readIndex();
-      await logExecution(index, exec);
-
-      // Persistencia duradera en Supabase (si hay credenciales)
-      if (persistAvailable && persistClient) {
+      // Persistencia durable: no escribir dry-runs y conservar IDs lógicos como metadata.
+      if (!dryRun && persistAvailable && persistClient) {
         try {
           const { persistExecution } = await import("./agency-persist-supabase.mjs");
-          await persistExecution({
-            missionId: `m-${taskBlock.id}`,
+          const persisted = await persistExecution({
+            missionId: PERSISTED_MISSION_KEY,
             taskId: taskBlock.id,
             title: taskBlock.title,
             objective: taskBlock.fields.criterios_de_aceptacion || "",
@@ -672,11 +682,20 @@ async function runMainWithLock(execIdValue) {
             result: exec.result,
             summary: exec.evidence?.join(" | ") || "",
             output: { specialist: execPlan.specialistId, exitCode: run.exitCode, durationMs: duration },
+            attemptCount: attempt,
+            maxAttempts: maxRetries + 1,
+            inputContext: { source: "agency-task-executor", backlogTaskId: taskBlock.id },
           });
-        } catch {
-          // No bloquear la ejecución si la persistencia falla
+          exec.evidence.push(persisted.persisted
+            ? `Supabase durable: PASS (task ${persisted.taskId})`
+            : `Supabase durable: BLOCKED (${persisted.reason})`);
+        } catch (error) {
+          exec.evidence.push(`Supabase durable: ERROR (${error instanceof Error ? error.message : String(error)})`);
         }
       }
+
+      const index = await readIndex();
+      await logExecution(index, exec);
 
       if (exec.result === "PASS" || exec.result === "WARN") {
         executionOk = true;
@@ -704,6 +723,7 @@ async function runMainWithLock(execIdValue) {
 
     if (exec.result !== "PASS" && exec.result !== "WARN" && exec.result !== "BLOCKED") {
       result.phase = "execution-failed";
+      if (!dryRun) await finalizePersistedMission("failed", result.message || `Tarea ${taskBlock.id} falló`);
       console.log(JSON.stringify(result, null, 2));
       return;
     }
@@ -743,6 +763,10 @@ async function runMainWithLock(execIdValue) {
       result.phase = "complete";
       result.message = `Tarea ${taskBlock.id} ejecutada y marcada como COMPLETADO`;
       result.backlogUpdated = true;
+      if (!dryRun) {
+        const finalStatus = exec.result === "BLOCKED" ? "paused" : exec.result === "FAIL" ? "failed" : "completed";
+        await finalizePersistedMission(finalStatus, result.message);
+      }
       console.log(JSON.stringify(result, null, 2));
       return;
     }
@@ -752,6 +776,16 @@ async function runMainWithLock(execIdValue) {
   result.phase = result.phase || "batch-complete";
   result.message = `Lote finalizado: ${tasksExecuted} tarea(s) ejecutada(s)`;
   result.backlogUpdated = true;
+  if (!dryRun && tasksExecuted > 0) {
+    const finalStatus = batchResults.some((item) => item.result === "FAIL")
+      ? "failed"
+      : batchResults.some((item) => item.result === "BLOCKED")
+        ? "paused"
+        : result.phase === "batch-complete"
+          ? "completed"
+          : "queued";
+    await finalizePersistedMission(finalStatus, result.message);
+  }
   console.log(JSON.stringify(result, null, 2));
 }
 
