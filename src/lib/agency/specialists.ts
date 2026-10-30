@@ -1,7 +1,7 @@
 /**
  * Especialistas reales de Nüva Agency (ETAPA 1).
  *
- * Finance, Sales, Supply, People y Growth están conectados al mecanismo de
+ * Los 13 especialistas están conectados al mecanismo de
  * tareas de Agency. Cada uno expone `execute(task)` que realiza una
  * comprobación real sobre archivos y comandos locales, sin tocar producción,
  * sin migraciones remotas y sin secretos.
@@ -10,7 +10,8 @@
  * result ∈ PASS | FAIL | BLOCKED | UNKNOWN | WARN
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -193,18 +194,18 @@ export const finance = {
 };
 
 /* ──────────────────────────────────────────────────────────────
-   SALES — Ventas, CRM, WhatsApp Business, conversión.
+   SALES — Ventas, CRM, mensajería comercial, conversión.
    ───────────────────────────────────────────────────────────── */
 export const sales = {
   id: "sales",
   nombre: "Ventas",
   responsabilidades: [
-    "Verificar declaraciones de integración de ventas (WhatsApp Business, Odoo, GTM/GA)",
+    "Verificar declaraciones de integración de ventas (mensajería comercial, Odoo, GTM/GA)",
     "Confirmar que los archivos de configuración de ventas existen y son legibles",
     "Reportar falta de configuración sin inventar credenciales",
   ],
   limites: [
-    "No accede a tokens de WhatsApp Business ni claves de Odoo",
+    "No accede a tokens de mensajería comercial ni claves de Odoo",
     "No realiza llamadas a APIs externas de ventas",
     "No modifica configuración de producción",
   ],
@@ -654,13 +655,13 @@ export const security = {
       }
     }
 
-    const agencyControl = await readLocalFile("src/routes/api/owner/agency-control.ts");
+    const agencyControl = await readLocalFile("src/routes/api/owner/agency-status.ts");
     if (agencyControl.ok) {
       const hasAuth = /authoriz|owner|worker|verify/i.test(agencyControl.content!);
-      evidence.push(`agency-control.ts: ${agencyControl.content!.length} bytes, autorización server-side: ${hasAuth ? "sí" : "no detectada"}`);
-      if (!hasAuth) errors.push("agency-control.ts sin verificación de autorización server-side");
+      evidence.push(`agency-status.ts: ${agencyControl.content!.length} bytes, autorización server-side: ${hasAuth ? "sí" : "no detectada"}`);
+      if (!hasAuth) errors.push("agency-status.ts sin verificación de autorización server-side");
     } else {
-      evidence.push("agency-control.ts: no encontrado");
+      evidence.push("agency-status.ts: no encontrado");
     }
 
     const result: SpecialistResult["result"] = secretosEncontrados === 0 ? "PASS" : "WARN";
@@ -679,55 +680,69 @@ export const qa = {
   id: "qa",
   nombre: "QA",
   responsabilidades: [
-    "Ejecutar suite de pruebas Vitest",
-    "Reportar conteo de pruebas pasadas/fallidas",
-    "Detectar regresiones tras cambios de código",
+    "Ejecutar pruebas Vitest reales fuera de la suite que valida al propio especialista",
+    "Reportar conteo verificable de pruebas pasadas/fallidas",
+    "Detectar regresiones en pruebas locales sin acceder a producción",
   ],
   limites: [
     "No modifica archivos de prueba",
     "No ejecuta pruebas contra producción",
     "No accede a datos de usuarios reales",
+    "Rechaza rutas absolutas o rutas que salgan del repositorio",
   ],
   tiposDeTarea: ["unit-test-run", "regression-check", "test-result-parse"],
-  herramientasPermitidas: ["npm test", "npx vitest run"],
+  herramientasPermitidas: ["node", "vitest"],
 
   async execute(task: AgencyTask): Promise<SpecialistResult> {
     const start = nowMs();
     const evidence: string[] = [];
     const errors: string[] = [];
+    const rawTarget = task.input_context?.target;
+    const testTarget = typeof rawTarget === "string" ? rawTarget.trim() : "";
 
-    const { execFile } = await import("node:child_process");
-    const testTarget = (task.input_context && (task.input_context as any).target)
-      || "src/lib/agency/specialists.test.ts";
+    if (testTarget && (testTarget.length > 200 || testTarget.startsWith("/") || testTarget.charAt(0) === String.fromCharCode(92) || /^[A-Za-z]:/.test(testTarget) || testTarget.includes(".."))) {
+      return {
+        specialist: "qa", taskId: task.id, result: "BLOCKED",
+        evidence: ["objetivo QA rechazado: debe ser una ruta relativa dentro del repositorio"],
+        errors, durationMs: nowMs() - start, timestamp: nowIso(),
+      };
+    }
+
+    const vitestBin = join(process.cwd(), "node_modules", "vitest", "vitest.mjs");
+    const args = [
+      vitestBin, "run", "--reporter=json",
+      "--exclude", "src/lib/agency/specialists.test.ts",
+      ...(testTarget ? [testTarget] : []),
+    ];
 
     return new Promise((resolve) => {
-      execFile("npx", ["vitest", "run", testTarget], {
-        cwd: process.cwd(), timeout: 120000,
+      execFile(process.execPath, args, {
+        cwd: process.cwd(), timeout: 120000, maxBuffer: 10 * 1024 * 1024,
       }, (error, stdout, stderr) => {
-        const duration = Date.now() - start;
-        const output = stdout || "";
+        const output = String(stdout ?? "");
         const exitCode = error ? (typeof error.code === "number" ? error.code : -1) : 0;
+        let report: Record<string, unknown> | null = null;
+        const jsonStart = output.indexOf("{");
+        const jsonEnd = output.lastIndexOf("}");
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+          try { report = JSON.parse(output.slice(jsonStart, jsonEnd + 1)) as Record<string, unknown>; }
+          catch { report = null; }
+        }
+        const passed = typeof report?.numPassedTests === "number" ? report.numPassedTests : 0;
+        const failed = typeof report?.numFailedTests === "number" ? report.numFailedTests : 0;
+        const total = typeof report?.numTotalTests === "number" ? report.numTotalTests : passed + failed;
 
-        const passMatch = output.match(/(\d+) passed/);
-        const failMatch = output.match(/(\d+) failed/);
-        const passed = passMatch ? parseInt(passMatch[1], 10) : 0;
-        const failed = failMatch ? parseInt(failMatch[1], 10) : 0;
-
-        evidence.push(`vitest run ${testTarget}: salida (${output.length} bytes)`);
-        evidence.push(`pruebas pasadas: ${passed}`);
-        evidence.push(`pruebas fallidas: ${failed}`);
+        evidence.push(`vitest run ${testTarget || "(suite completa excluyendo specialists.test.ts")}: salida JSON ${report ? "válida" : "no interpretable"}`);
+        evidence.push(`pruebas: ${passed}/${total} aprobadas; ${failed} fallidas`);
         evidence.push(`código de salida: ${exitCode}`);
-
+        if (stderr?.trim()) evidence.push(`stderr: ${String(stderr).trim().slice(0, 300)}`);
         if (error) errors.push(error.message);
 
-        let result: SpecialistResult["result"];
-        if (exitCode !== 0) result = "FAIL";
-        else if (passed > 0 && failed === 0) result = "PASS";
-        else result = "WARN";
-
+        const result: SpecialistResult["result"] =
+          exitCode !== 0 || failed > 0 ? "FAIL" : passed > 0 && total > 0 ? "PASS" : "WARN";
         resolve({
           specialist: "qa", taskId: task.id, result, evidence, errors,
-          durationMs: duration, timestamp: nowIso(),
+          durationMs: nowMs() - start, timestamp: nowIso(),
         });
       });
     });
@@ -763,7 +778,7 @@ export const sentinel = {
     let blocked = 0;
     let total = 0;
     try {
-      const entries = await require("node:fs/promises").readdir(execDir);
+      const entries = await readdir(execDir);
       const jsonFiles = entries.filter((e: string) => e.endsWith(".json") && !e.startsWith("."));
       for (const f of jsonFiles) {
         const data = await readLocalFile(join("logs/executions", f));
@@ -823,7 +838,7 @@ export const ux = {
 
     const candidates = [
       "src/routes/owner/control-tower.tsx",
-      "src/routes/api/owner/agency-control.ts",
+      "src/routes/api/owner/agency-status.ts",
       "src/routes/owner/control-tower.tsx",
     ];
     let archivosEncontrados = 0;
@@ -872,28 +887,24 @@ export const release = {
     const start = nowMs();
     const evidence: string[] = [];
     const errors: string[] = [];
+    const pkg = await readLocalFile("package.json");
+    if (pkg.ok) evidence.push(`package.json: ${pkg.content!.length} bytes`);
+    else errors.push(pkg.error ?? "package.json no legible");
 
-    const { execFile } = await import("node:child_process");
+    const hasDist = existsSync("dist") || existsSync(".vercel/output");
+    evidence.push(`artefactos de build: ${hasDist ? "presentes" : "no detectados"}`);
+
     return new Promise((resolve) => {
       execFile("git", ["status", "--short"], { cwd: process.cwd(), timeout: 30000 },
-        (error, stdout, stderr) => {
-          const duration = Date.now() - start;
-          const output = stdout || "";
-          const modifiedFiles = output.trim().split("\n").filter(Boolean).length;
+        (error, stdout) => {
+          const output = String(stdout ?? "");
+          const modifiedFiles = output.trim() ? output.trim().split("\\n").filter(Boolean).length : 0;
           evidence.push(`git status: ${modifiedFiles} archivo(s) sin staged`);
-          evidence.push(output.slice(0, 500));
-
-          const pkg = require("node:fs/promises").readFile("package.json", "utf8")
-            .then((c: string) => { evidence.push(`package.json: ${c.length} bytes`); })
-            .catch((e: Error) => errors.push(e.message));
-
-          const hasDist = require("node:fs").existsSync("dist") || require("node:fs").existsSync(".vercel/output");
-          evidence.push(`artefactos de build: ${hasDist ? "presentes" : "no detectados"}`);
-
-          const result: SpecialistResult["result"] = error ? "FAIL" : "PASS";
+          if (output.trim()) evidence.push(output.slice(0, 500));
+          const result: SpecialistResult["result"] = error || !pkg.ok ? "FAIL" : "PASS";
           resolve({
             specialist: "release", taskId: task.id, result, evidence, errors,
-            durationMs: duration, timestamp: nowIso(),
+            durationMs: nowMs() - start, timestamp: nowIso(),
           });
         });
     });
