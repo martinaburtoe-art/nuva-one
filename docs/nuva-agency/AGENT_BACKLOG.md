@@ -210,14 +210,13 @@ Formato de cada entrada:
 ## T-18 — Especialista People: verificación de documentación RRHH y ausencia de PII
 - departamento: Personas
 - especialista: people
-- prioridad: P2
-- estado: COMPLETADO
+- prioridad: P1
+- estado: BLOQUEADO
 - dependencias: T-14
-- criterios_de_aceptacion: Ejecutor ejecuta `people` contra docs de RRHH; confirma que no hay PII expuesta en salidas
-- pruebas_requeridas: `node scripts/agency-run-specialist.mjs people t-18` devuelve JSON válido con result PASS y sin patrones de email en evidence
-- evidencia: PASS. people ejecutado: AGENT_BACKLOG.md legible, BLOCKERS.md legible, PROJECT_STATE.md legible, package.json revisado; sin PII expuesta
-- seguridad: sin exponer datos personales, sin producción
-- ejecutado: 2026-10-29T23:28:12Z
+- criterios_de_aceptacion: Escanear los artefactos definidos (logs y salidas) para detectar PII; nunca incluir valores encontrados en la evidencia.
+- pruebas_requeridas: fixture sintético con email/RUT detectado; salida redactada; fixture limpio PASS; directorio ausente UNKNOWN/WARN.
+- evidencia: revisión de `specialists.mjs` en SHA `819259e`: el especialista solo lee tres documentos y package.json, y devuelve PASS sin escanear contenido. El test actual solo verifica que la evidencia no contenga emails; no prueba detección de PII.
+- seguridad: no exponer datos personales ni valores coincidentes.
 
 ## T-19 — Especialista Growth: verificación de analítica y cron jobs
 - departamento: Crecimiento
@@ -231,41 +230,38 @@ Formato de cada entrada:
 - seguridad: solo lectura de configuración, sin datos de usuarios
 - ejecutado: 2026-10-29T23:28:12Z
 
-## T-20 — Persistencia duradera en Supabase (agency_missions, agency_tasks, agency_events)
+## T-20 — Persistencia durable de Agency en Supabase
 - departamento: Operaciones
 - especialista: Constructor
-- prioridad: P2
+- prioridad: P0
 - estado: BLOQUEADO
-- dependencias: T-12
-- criterios_de_aceptacion: Código de persistencia en `scripts/agency-persist-supabase.mjs` usa tablas existentes sin nuevas migraciones ni cambios RLS; executor integra persistExecution; diagnóstico reporta disponibilidad o bloqueador B-002 sin credenciales de servicio
-- pruebas_requeridas: `node scripts/agency-persist-supabase.mjs` devuelve diagnóstico JSON; executor ejecuta persistExecution sin fallar cuando credenciales están ausentes
-- evidencia: BLOQUEADO. Constructor sin comando ejecutable; B-002: Supabase URL y service_role key no configuradas localmente; persistExecution integrada en executor sin fallar sin credenciales
-- seguridad: sin escribir secretos en logs, sin migración remota, sin cambios RLS
-- ejecutado: 2026-10-29T23:28:12Z
+- dependencias: T-12, T-29
+- criterios_de_aceptacion: Service role con privilegios mínimos en las seis tablas y secuencia; worker reclama/termina tarea y registra eventos; recuperación tras reinicio; Owner Console lee estado persistente.
+- pruebas_requeridas: pgTAP de privilegios; claim/finish en entorno Preview autorizado; recuperación sin duplicados.
+- evidencia: Vercel tiene `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` configuradas para Preview y Production (solo se verificó presencia; valores no leídos). Supabase ACTIVE_HEALTHY; seis tablas con RLS habilitado y RPC existentes. Auditoría read-only 2026-10-30: `service_role` carece de SELECT/INSERT/UPDATE en las tablas Agency y de USAGE/SELECT en `agency_events_id_seq`; las RPC tienen EXECUTE limitado a service_role. La migración de grants se prepara en T-29; no se aplicó remotamente.
+- seguridad: no leer secretos, no aplicar migraciones remotas, no cambiar RLS.
 
 ## T-21 — Scheduler programado de Agency con exclusión mutua y límites
 - departamento: Operaciones
 - especialista: Constructor
-- prioridad: P1
+- prioridad: P0
 - estado: BLOQUEADO
-- dependencias: T-09, T-13
-- criterios_de_aceptacion: `scripts/agency-scheduler.mjs` ejecuta lotes del executor con lock exclusivo, pausa de emergencia (.agency-pause), límites de tareas/tiempo, reintentos acotados, protección contra bucles, registro duradero en logs/scheduler/
-- pruebas_requeridas: `node scripts/agency-scheduler.mjs --maxtareas=3 --maxms=60000` finaliza con estado completado/pausado/bloqueado sin colgar; log de scheduler escrito
-- evidencia: BLOQUEADO. Constructor sin comando ejecutable (tarea de infraestructura, no shell-ejecutable); scheduler verificado con locks, límites, pausa, reintentos acotados, logs duraderos
-- seguridad: solo comandos locales, sin llamadas a LLM (gasto de IA acotado a cero), sin producción
-- ejecutado: 2026-10-29T23:28:12Z
+- dependencias: T-09, T-13, T-20
+- criterios_de_aceptacion: Workflow programado activo en main, lock/concurrency, heartbeat, reintentos y recuperación.
+- pruebas_requeridas: primera ejecución schedule real en main con evidencia de Actions y Supabase.
+- evidencia: `.github/workflows/nuva-agency-durable-worker.yml` está preparado en PR #252 con cron cada cinco minutos y GITHUB_TOKEN; el archivo no existe en main. GitHub activa eventos schedule solo desde la rama por defecto. No se autorizó merge ni despliegue.
+- seguridad: sin secretos nuevos; sin merge ni deploy sin autorización.
 
-## T-22 — Owner Console: autorización server-side, iniciar/pausar ciclos, historial persistente
+## T-22 — Owner Console durable con autorización server-side
 - departamento: Operaciones
-- especialista: UX
+- especialista: Security
 - prioridad: P1
 - estado: BLOQUEADO
-- dependencias: T-14
-- criterios_de_aceptacion: APIs `agency-control.ts` y `agency-execute.ts` verifican autorización en servidor (owner/worker), no solo en UI; endpoints de create_mission, mission_status (pausa/reanuda), approval existen; control-tower lee logs persistentes
-- pruebas_requeridas: `npx tsc --noEmit` exit 0; rutas registradas en routeTree.gen.ts; control-tower renderiza AgencyLogsPanel sin datos ficticios
-- evidencia: BLOQUEADO. UX/Owner Console sin comando ejecutable; tsc limpio, rutas registradas en routeTree.gen.ts, control-tower integrado; requiere despliegue y autorización server-side para activar
-- seguridad: autorización en servidor, sin datos simulados, sin secretos expuestos
-- ejecutado: 2026-10-29T23:28:12Z
+- dependencias: T-20, T-21
+- criterios_de_aceptacion: Propietario autenticado crea misión, consulta tareas, pausa/reanuda/cancela y decide aprobaciones; todas las acciones quedan registradas en Supabase.
+- pruebas_requeridas: tests 401/403/503; sesión real de propietario en Preview; lectura posterior de registros.
+- evidencia: UI y APIs están en PR #252; `authorizeAgencyOwner` valida `app_metadata.platform_role=owner` y tiene tests unitarios. La ruta de control durable también verifica el rol server-side. No se ejecutó una sesión real; los grants service_role faltantes impiden confirmar CRUD.
+- seguridad: sin pedir credenciales, sin cambios RLS, sin escrituras en Production.
 
 ## T-23 — Alinear el parser de especialistas con el formato real del backlog
 - departamento: Operaciones
@@ -311,24 +307,46 @@ Formato de cada entrada:
 - evidencia: commits `64e01c64`, `8be4e197`, `f7534575`, `288ad781`, `a4007197`, `3a1d8dba`, `b391041b`, `3f1b5429`, `18f26121`; worker usa GITHUB_TOKEN y el API server-side usa credenciales ya configuradas en Vercel
 - seguridad: sin nuevos secretos, sin merge, sin despliegue ni cambios remotos de base de datos
 
-## T-27 — Activar el scheduler durable y verificar su primera ejecución real
+## T-27 — Activar scheduler durable y verificar primera ejecución
 - departamento: Operaciones
 - especialista: Release
 - prioridad: P0
 - estado: BLOQUEADO
 - dependencias: T-26
-- criterios_de_aceptacion: El workflow se ejecuta desde main, reclama una tarea real, registra el resultado en Supabase y deja evidencia verificable en Actions y Owner Console
-- pruebas_requeridas: Primera ejecución programada en main y verificación de persistencia
-- evidencia: `.github/workflows/nuva-agency-durable-worker.yml` está preparado en PR #252; los eventos schedule solo se activan desde la rama por defecto y no se ha autorizado merge ni despliegue
-- seguridad: requiere autorización explícita para merge y despliegue
+- criterios_de_aceptacion: workflow ejecutado desde main, reclama tarea real y persiste resultado en Supabase.
+- pruebas_requeridas: primera ejecución schedule real en main con evidencia de Actions y Owner Console.
+- evidencia: workflow preparado solo en PR #252; schedule requiere default branch. No se hizo merge ni deploy porque no hay autorización.
+- seguridad: requiere autorización expresa para merge/deploy.
 
 ## T-28 — Verificar Owner Console durable con sesión real de propietario
 - departamento: Operaciones
 - especialista: Security
 - prioridad: P1
 - estado: BLOQUEADO
-- dependencias: T-26, T-27
-- criterios_de_aceptacion: Propietario autenticado crea misión, consulta tareas, pausa/reanuda/cancela y decide aprobaciones; todas las acciones quedan registradas en Supabase
-- pruebas_requeridas: Prueba integrada con sesión de propietario y lectura posterior de registros
-- evidencia: `authorizeAgencyOwner` valida `app_metadata.platform_role=owner`; tests de autorización pasan; tablas y RPC existen; no se realizó una sesión autenticada ni una escritura de prueba en producción
-- seguridad: sin solicitar credenciales, sin escrituras de prueba ni despliegue a producción
+- dependencias: T-26, T-27, T-29
+- criterios_de_aceptacion: Propietario crea misión, consulta, pausa/reanuda/cancela y aprueba; todos los cambios quedan registrados.
+- pruebas_requeridas: sesión real de propietario en Preview y verificación posterior en Supabase.
+- evidencia: autorización server-side y tests unitarios existen; no se usó sesión real; persistencia bloqueada por grants ausentes y scheduler no activo.
+- seguridad: sin secretos, sin escrituras Production
+
+## T-29 — Grants mínimos de service_role para Agency
+- departamento: Seguridad
+- especialista: Security
+- prioridad: P0
+- estado: EN_CURSO
+- dependencias: T-20
+- criterios_de_aceptacion: migración idempotente otorga solo privilegios de tabla/secuencia requeridos a service_role, mantiene RLS habilitado y mantiene anon/authenticated sin acceso.
+- pruebas_requeridas: pgTAP `115_agency_service_role_privileges.sql` y CI completo.
+- evidencia: auditoría read-only 2026-10-30 identificó ausencia de grants de tabla y secuencia. Migración y pgTAP preparados en esta rama; pendientes de CI y sin aplicar remotamente.
+- seguridad: no cambiar RLS, no aplicar migración remota, no leer secretos
+
+## T-30 — Escaneo real de PII en el especialista People
+- departamento: Personas
+- especialista: people
+- prioridad: P1
+- estado: PENDIENTE
+- dependencias: T-18
+- criterios_de_aceptacion: el especialista detecta PII en fixtures controlados y artefactos configurados, redacta coincidencias y nunca devuelve valores personales.
+- pruebas_requeridas: fixtures positivos/negativos para email y RUT; directorio ausente UNKNOWN/WARN; suite de especialistas y CI.
+- evidencia: T-18 reabierto tras comprobar que la implementación actual no escanea el contenido.
+- seguridad: no leer secretos ni exponer PII
