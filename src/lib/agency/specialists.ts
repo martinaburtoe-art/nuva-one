@@ -732,7 +732,8 @@ export const qa = {
         const failed = typeof report?.numFailedTests === "number" ? report.numFailedTests : 0;
         const total = typeof report?.numTotalTests === "number" ? report.numTotalTests : passed + failed;
 
-        evidence.push(`vitest run ${testTarget || "(suite completa excluyendo specialists.test.ts")}: salida JSON ${report ? "válida" : "no interpretable"}`);
+        const targetLabel = testTarget || "suite completa (excluyendo specialists.test.ts)";
+        evidence.push(`vitest run ${targetLabel}: salida JSON ${report ? "válida" : "no interpretable"}`);
         evidence.push(`pruebas: ${passed}/${total} aprobadas; ${failed} fallidas`);
         evidence.push(`código de salida: ${exitCode}`);
         if (stderr?.trim()) evidence.push(`stderr: ${String(stderr).trim().slice(0, 300)}`);
