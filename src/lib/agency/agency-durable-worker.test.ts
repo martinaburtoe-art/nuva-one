@@ -76,6 +76,8 @@ describe("durable agency worker", () => {
 
     const result = await runDurableWorker({ ...baseOptions, fetchImpl, executeSpecialist });
     expect(JSON.parse(fetchImpl.mock.calls[1][1].body).status).toBe("blocked");
+    expect(result.status).toBe("executed");
+    if (result.status !== "executed") throw new Error("worker did not execute the claimed task");
     expect(result.taskStatus).toBe("blocked");
   });
 
