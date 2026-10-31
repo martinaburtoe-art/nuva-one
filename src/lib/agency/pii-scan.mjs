@@ -3,7 +3,7 @@ import { extname } from "node:path";
 
 const TEXT_EXTENSIONS = new Set([".json", ".md", ".txt", ".log"]);
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
-const RUT_PATTERN = /(?<![\d])(?:\d{1,2}\.?)?\d{3}\.\d{3}-?[\dkK](?![\dkK])/g;
+const RUT_PATTERN = /(?<![\d])(?:\d{1,2}\.?)?\d{3}\.?\d{3}-?[\dkK](?![\dkK])/g;
 
 export function isValidChileanRut(value) {
   const normalized = String(value).replace(/[^\dkK]/gi, "").toUpperCase();
