@@ -8,6 +8,7 @@ const DEFAULT_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
 const DEFAULT_HEARTBEAT_EXTEND_SECONDS = 15 * 60;
 const DEFAULT_HEARTBEAT_RETRIES = 3;
 const DEFAULT_HEARTBEAT_RETRY_DELAY_MS = 10 * 1000;
+const DEFAULT_HEARTBEAT_REQUEST_TIMEOUT_MS = 30 * 1000;
 
 async function postAgencyAction(endpoint, headers, payload, fetchImpl) {
   const response = await fetchImpl(endpoint, {
@@ -39,6 +40,7 @@ function startHeartbeat({
   extendSeconds = DEFAULT_HEARTBEAT_EXTEND_SECONDS,
   maxRetries = DEFAULT_HEARTBEAT_RETRIES,
   retryDelayMs = DEFAULT_HEARTBEAT_RETRY_DELAY_MS,
+  requestTimeoutMs = DEFAULT_HEARTBEAT_REQUEST_TIMEOUT_MS,
 }) {
   const stopped = new AbortController();
   const leaseLost = createDeferred();
@@ -71,7 +73,7 @@ function startHeartbeat({
             action: "heartbeat",
             leaseToken,
             extendSeconds,
-          }, fetchImpl);
+          }, (url, init) => fetchImpl(url, { ...init, signal: AbortSignal.timeout(requestTimeoutMs) }));
           const response = await heartbeatInFlight;
           if (response?.ok !== true) {
             throw new Error("AGENCY_LEASE_LOST");
@@ -167,11 +169,14 @@ export async function runDurableWorker(options = {}) {
     extendSeconds: options.heartbeatExtendSeconds ?? DEFAULT_HEARTBEAT_EXTEND_SECONDS,
     maxRetries: options.heartbeatMaxRetries ?? DEFAULT_HEARTBEAT_RETRIES,
     retryDelayMs: options.heartbeatRetryDelayMs ?? DEFAULT_HEARTBEAT_RETRY_DELAY_MS,
+    requestTimeoutMs: options.heartbeatRequestTimeoutMs ?? DEFAULT_HEARTBEAT_REQUEST_TIMEOUT_MS,
   });
 
   let result;
+  const executionController = new AbortController();
+  let execution;
   try {
-    const execution = Promise.resolve().then(() => executeSpecialist(taskInput)).catch((error) => ({
+    execution = Promise.resolve().then(() => executeSpecialist(taskInput, { signal: executionController.signal })).catch((error) => ({
       specialist: agentId,
       taskId: task.id,
       result: "FAIL",
@@ -180,7 +185,14 @@ export async function runDurableWorker(options = {}) {
       durationMs: 0,
       timestamp: new Date().toISOString(),
     }));
-    result = await Promise.race([execution, heartbeat.leaseLost.then((error) => { throw error; })]);
+    result = await Promise.race([execution, heartbeat.leaseLost.then((error) => {
+      executionController.abort(error);
+      throw error;
+    })]);
+  } catch (error) {
+    executionController.abort(error);
+    if (execution) await execution.catch(() => {});
+    throw error;
   } finally {
     await heartbeat.stop();
   }
