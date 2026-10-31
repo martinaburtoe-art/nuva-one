@@ -56,6 +56,7 @@ describe("agency durable worker heartbeat", () => {
 
   it("does not finish a task after the server reports that its lease was lost", async () => {
     const actions = [];
+    let specialistSignal;
     const fetchImpl = vi.fn(async (_url, init) => {
       const body = JSON.parse(init.body);
       actions.push(body.action);
@@ -68,12 +69,14 @@ describe("agency durable worker heartbeat", () => {
     await expect(runDurableWorker({
       ...baseOptions,
       fetchImpl,
-      executeSpecialist: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 40));
+      executeSpecialist: async (_task, { signal }) => {
+        specialistSignal = signal;
+        await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
         return { result: "PASS", evidence: [], errors: [] };
       },
     })).rejects.toThrow("AGENCY_LEASE_LOST");
 
+    expect(specialistSignal?.aborted).toBe(true);
     expect(actions).not.toContain("finish_task");
   });
 
