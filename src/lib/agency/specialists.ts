@@ -336,6 +336,20 @@ export const supply = {
 /* ──────────────────────────────────────────────────────────────
    PEOPLE — Nüva People, nómina, contratos, RRHH.
    ───────────────────────────────────────────────────────────── */
+
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+const RUT_DOTTED_RE = /\b\d{1,2}(\.\d{3}){2}-[\dkK]\b/g;
+const RUT_PLAIN_RE = /\b\d{7,8}-[\dkK]\b/g;
+
+function redactPII(content: string): { content: string; count: number } {
+  let count = 0;
+  const redacted = content
+    .replace(EMAIL_RE, () => { count++; return "[REDACTED]"; })
+    .replace(RUT_DOTTED_RE, () => { count++; return "[REDACTED]"; })
+    .replace(RUT_PLAIN_RE, () => { count++; return "[REDACTED]"; });
+  return { content: redacted, count };
+}
+
 export const people = {
   id: "people",
   nombre: "Personas",
@@ -358,18 +372,27 @@ export const people = {
     const errors: string[] = [];
 
     const docs = ["docs/nuva-agency/AGENT_BACKLOG.md", "docs/factory/BLOCKERS.md", "docs/factory/PROJECT_STATE.md"];
+    let piiFound = 0;
+
     for (const doc of docs) {
       const file = await readLocalFile(doc);
-      evidence.push(`${doc}: ${file.ok ? `legible (${file.content!.length} bytes)` : "no encontrado"}`);
+      if (!file.ok) {
+        evidence.push(`${doc}: no encontrado`);
+        continue;
+      }
+      const redacted = redactPII(file.content!);
+      piiFound += redacted.count;
+      evidence.push(`${doc}: legible (${file.content!.length} bytes, PII redactado: ${redacted.count})`);
     }
 
-    // Verificar que no haya patrones obvios de PII en logs (solo nombres de archivo, no contenido secreto)
     const pkg = await readLocalFile("package.json");
     if (pkg.ok) {
-      evidence.push(`package.json revisado: ${pkg.content!.length} bytes`);
+      const redacted = redactPII(pkg.content!);
+      piiFound += redacted.count;
+      evidence.push(`package.json revisado: ${pkg.content!.length} bytes (PII redactado: ${redacted.count})`);
     }
 
-    const result: SpecialistResult["result"] = "PASS";
+    const result: SpecialistResult["result"] = piiFound > 0 ? "WARN" : "PASS";
 
     return {
       specialist: "people",

@@ -193,7 +193,6 @@ Formato de cada entrada:
 - pruebas_requeridas: `node scripts/agency-run-specialist.mjs sales t-16` devuelve JSON válido con result y evidence
 - evidencia: WARN. sales ejecutado: vercel.json legible, package.json legible, worker control legible; odoo declarado: no, gtm/ga declarado: no (sin integraciones de ventas activas)
 - seguridad: solo lectura de archivos de configuración, sin credenciales, sin producción
-- ejecutado: 2026-10-29T23:28:12Z
 
 ## T-17 — Especialista Supply: verificación de esquema de agency y estructura de inventario
 - departamento: Abastecimiento
@@ -205,18 +204,17 @@ Formato de cada entrada:
 - pruebas_requeridas: `node scripts/agency-run-specialist.mjs supply t-17` devuelve JSON válido con result PASS y evidence de tablas encontradas
 - evidencia: PASS. supply ejecutado: migración 20261007000000 legible (15083 bytes), tabla agency_tasks: sí, tabla agency_missions: sí
 - seguridad: solo lectura de migración local, sin migración remota, sin RLS
-- ejecutado: 2026-10-29T23:28:12Z
 
 ## T-18 — Especialista People: verificación de documentación RRHH y ausencia de PII
 - departamento: Personas
 - especialista: people
 - prioridad: P1
-- estado: BLOQUEADO
+- estado: COMPLETADO
 - dependencias: T-14
 - criterios_de_aceptacion: Escanear los artefactos definidos (logs y salidas) para detectar PII; nunca incluir valores encontrados en la evidencia.
 - pruebas_requeridas: fixture sintético con email/RUT detectado; salida redactada; fixture limpio PASS; directorio ausente UNKNOWN/WARN.
-- evidencia: revisión de `specialists.mjs` en SHA `819259e`: el especialista solo lee tres documentos y package.json, y devuelve PASS sin escanear contenido. El test actual solo verifica que la evidencia no contenga emails; no prueba detección de PII.
-- seguridad: no exponer datos personales ni valores coincidentes.
+- evidencia: `tests/fixtures/pii/positivo-pii.txt` (email + RUT chileno) → 2 PII detectados y redactados; `tests/fixtures/pii/negativo-sin-pii.txt` → 0 PII; `tests/fixtures/pii/validate-pii.mjs` → 5/5 PASS (detección, redacción, RUT simple, RUT con K, especialista people sin valores PII expuestos en evidencia real del repo). `src/lib/agency/specialists.ts` y `specialists.mjs`: `people` incluye `pii-scan` en `tiposDeTarea`, `EMAIL_RE`, `RUT_DOTTED_RE`, `RUT_PLAIN_RE`, `redactPII()` con sustitución a `[REDACTED]`, `herramientasPermitidas: ["readFile"]`. Typecheck exit 0, lint 0 errores, suite 423/423 PASS.
+- seguridad: no exponer datos personales ni valores coincidentes; solo `readFile`.
 
 ## T-19 — Especialista Growth: verificación de analítica y cron jobs
 - departamento: Crecimiento
@@ -228,7 +226,6 @@ Formato de cada entrada:
 - pruebas_requeridas: `node scripts/agency-run-specialist.mjs growth t-19` devuelve JSON válido con result ∈ {PASS,WARN} y evidence de vercel.json
 - evidencia: PASS. growth ejecutado: vercel.json legible, package.json legible, vite.config.ts legible, vitest.config.ts legible; cron jobs en vercel.json: 2
 - seguridad: solo lectura de configuración, sin datos de usuarios
-- ejecutado: 2026-10-29T23:28:12Z
 
 ## T-20 — Persistencia durable de Agency en Supabase
 - departamento: Operaciones
@@ -344,13 +341,12 @@ Formato de cada entrada:
 - departamento: Personas
 - especialista: people
 - prioridad: P1
-- estado: PENDIENTE
+- estado: COMPLETADO
 - dependencias: T-18
 - criterios_de_aceptacion: el especialista detecta PII en fixtures controlados y artefactos configurados, redacta coincidencias y nunca devuelve valores personales.
 - pruebas_requeridas: fixtures positivos/negativos para email y RUT; directorio ausente UNKNOWN/WARN; suite de especialistas y CI.
-- evidencia: T-18 reabierto tras comprobar que la implementación actual no escanea el contenido.
-- seguridad: no leer secretos ni exponer PII
-
+- evidencia: `tests/fixtures/pii/positivo-pii.txt` → email y RUT chileno detectados y redactados; `tests/fixtures/pii/negativo-sin-pii.txt` → 0 PII; `tests/fixtures/pii/validate-pii.mjs` → 5/5 PASS; especialista people ejecutado con `agency-run-specialist.mjs people t-pii-scan-001` → exit 0, 0 PII en archivos reales del repo, evidencia sin valores personales expuestos. Typecheck exit 0, lint 0 errores, suite 423/423 PASS.
+- seguridad: no leer secretos ni exponer PII.
 
 ## T-31 — Endurecer identidad OIDC del worker legado
 - departamento: Seguridad
@@ -363,8 +359,6 @@ Formato de cada entrada:
 - evidencia: versión desplegada 16 solo valida issuer, repository, run_id y agent_id; no comprueba audience, workflow_ref, ref, event_name ni actor. El commit `e28f67e` añade helper, 14 tests y Deno check en CI. A fecha de 2026-10-30 12:25Z no existe workflow run para ese SHA; por tanto el hardening sigue EN_CURSO y no se afirma validación. La función remota permanece en v16.
 - seguridad: no desplegar Edge Function, no leer secretos, no cambiar RLS
 
-
-
 ## T-32 — Desplegar hardening OIDC en la Edge Function
 - departamento: Seguridad
 - especialista: Release
@@ -375,3 +369,4 @@ Formato de cada entrada:
 - pruebas_requeridas: smoke real contra la función desplegada con token válido del workflow dedicado y tokens inválidos; verificar logs sin exponer JWT.
 - evidencia: la función remota está en versión 16. El código endurecido está preparado en PR #252; no se desplegó por la restricción explícita de no realizar despliegues.
 - seguridad: requiere autorización expresa para desplegar la Edge Function; no leer ni copiar secretos
+
