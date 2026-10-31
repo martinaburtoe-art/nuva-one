@@ -17,6 +17,7 @@ afterEach(async () => {
 describe("Nüva Agency People PII scanner", () => {
   it("validates Chilean RUT check digits without retaining the value", () => {
     expect(isValidChileanRut("12.345.678-5")).toBe(true);
+    expect(isValidChileanRut("12345678-5")).toBe(true);
     expect(isValidChileanRut("12.345.678-9")).toBe(false);
   });
 
@@ -62,5 +63,6 @@ describe("Nüva Agency People PII scanner", () => {
 
   it("ignores invalid RUT check digits", () => {
     expect(scanPiiText("RUT de fixture: 12.345.678-9").rutMatches).toBe(0);
+    expect(scanPiiText("RUT de fixture: 12345678-5").rutMatches).toBe(1);
   });
 });
