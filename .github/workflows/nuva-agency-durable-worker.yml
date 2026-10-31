@@ -1,3 +1,4 @@
+
 name: Nüva Agency — Durable Specialist Worker
 
 on:
@@ -23,18 +24,22 @@ jobs:
     name: Claim and execute one durable specialist task
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || 'fix/reproducible-npm-ci-20261027' }}
+          ref: main
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
+
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Select specialist
         id: specialist
         shell: bash
@@ -42,14 +47,46 @@ jobs:
           REQUESTED_AGENT: ${{ github.event.inputs.agent || '' }}
         run: |
           set -euo pipefail
-          agents=(orchestrator constructor finance sales supply people compliance growth security qa sentinel ux release)
+
+          agents=(
+            orchestrator
+            constructor
+            finance
+            sales
+            supply
+            people
+            compliance
+            growth
+            security
+            qa
+            sentinel
+            ux
+            release
+          )
+
           if [[ -n "$REQUESTED_AGENT" ]]; then
             agent="$REQUESTED_AGENT"
+
+            valid=false
+            for candidate in "${agents[@]}"; do
+              if [[ "$candidate" == "$agent" ]]; then
+                valid=true
+                break
+              fi
+            done
+
+            if [[ "$valid" != true ]]; then
+              echo "::error::Especialista no válido: $agent"
+              exit 1
+            fi
           else
             slot=$(( $(date -u +%s) / 300 ))
             agent="${agents[$((slot % ${#agents[@]}))]}"
           fi
+
           printf 'agent=%s\n' "$agent" >> "$GITHUB_OUTPUT"
+          echo "Especialista seleccionado: $agent"
+
       - name: Execute durable specialist
         env:
           GITHUB_TOKEN: ${{ github.token }}
