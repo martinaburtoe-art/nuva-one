@@ -1,0 +1,25 @@
+=== RECONCILIACIÓN DE MIGRACIONES SUPABASE ===
+Proyecto: vnzyecnbdqbfuxawzrda (Nüva One)
+Fecha: 2026-10-28
+
+Archivos SQL locales: 303
+Versiones locales únicas: 303
+Versiones remotas totales: 335
+Versiones remotas únicas: 335
+Versiones duplicadas en remoto: []
+Versiones en ambos: 51
+Versiones solo locales: 252
+Versiones solo remotas: 284
+
+Consistencia matemática:
+  |local ∪ remoto| = 587
+  |local| + |remoto| − |ambos| = 587
+  Coherente: True
+
+Tres versiones sin nombre:
+  20261025221645: remoto=SÍ, local=NO, nombre='(vacío)'
+  20261025221646: remoto=SÍ, local=NO, nombre='(vacío)'
+  20261025222020: remoto=SÍ, local=NO, nombre='(vacío)'
+
+Nota: las versiones solo locales no se interpretan automáticamente como
+migraciones pendientes de aplicar. Requieren contraste con el esquema remoto.

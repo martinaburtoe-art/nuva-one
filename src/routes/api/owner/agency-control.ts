@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
+import { isTrustedAgencyWorkerRun, type TrustedAgencyWorkerRun } from "@/lib/agency/worker-auth";
 
 const REPO = "martinaburtoe-art/nuva-one";
 const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release"];
@@ -11,7 +12,7 @@ async function githubRun(token: string, runId: string) {
     cache: "no-store",
   });
   if (!r.ok) throw new Error("WORKER_GITHUB_AUTH_FAILED");
-  return r.json() as Promise<{ repository?: { full_name?: string }; status?: string; id?: number }>;
+  return r.json() as Promise<TrustedAgencyWorkerRun>;
 }
 
 async function owner(request: Request) {
@@ -27,9 +28,11 @@ async function worker(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const runId = request.headers.get("x-agency-run-id");
   const agentId = request.headers.get("x-agency-agent-id");
-  if (!token || !runId || !agentId || !AGENTS.includes(agentId)) return { ok: false as const, status: 401 };
+  if (!token || !runId || !/^[0-9]+$/.test(runId) || !agentId || !AGENTS.includes(agentId)) {
+    return { ok: false as const, status: 401 };
+  }
   const run = await githubRun(token, runId);
-  if (run.repository?.full_name !== REPO) return { ok: false as const, status: 403 };
+  if (!isTrustedAgencyWorkerRun(run, runId)) return { ok: false as const, status: 403 };
   return { ok: true as const, agentId, runId };
 }
 
@@ -75,11 +78,15 @@ export const Route = createFileRoute("/api/owner/agency-control")({
       try {
         const client = db();
         if (action === "claim_task") {
-          const { data: initialData, error } = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: body.leaseSeconds ?? 1800 });
+          const leaseSeconds = body.leaseSeconds === undefined ? 1800 : Number(body.leaseSeconds);
+          if (!Number.isInteger(leaseSeconds) || leaseSeconds < 60 || leaseSeconds > 21600) {
+            return Response.json({ error: "INVALID_LEASE_SECONDS" }, { status: 400 });
+          }
+          const { data: initialData, error } = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: leaseSeconds });
           let data = initialData;
           if (error) throw error;
           if (!data) {
-            const { data: mission } = await client.from("agency_missions").select("id,objective,success_criteria").eq("metadata->>mode", "durable-autonomous-agency").not("status", "in", "('cancelled','failed')").order("priority", { ascending: false }).limit(1).maybeSingle();
+            const { data: mission } = await client.from("agency_missions").select("id,objective,success_criteria").eq("metadata->>mode", "durable-autonomous-agency").not("status", "in", "('completed','cancelled','failed')").order("priority", { ascending: false }).limit(1).maybeSingle();
             if (mission) {
               const { error: taskError } = await client.from("agency_tasks").insert({
                 mission_id: mission.id,
@@ -90,7 +97,7 @@ export const Route = createFileRoute("/api/owner/agency-control")({
                 input_context: { success_criteria: mission.success_criteria, source: "durable-cycle" },
               });
               if (taskError) throw taskError;
-              const claimed = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: body.leaseSeconds ?? 1800 });
+              const claimed = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: leaseSeconds });
               if (claimed.error) throw claimed.error;
               data = claimed.data;
             }
@@ -98,12 +105,24 @@ export const Route = createFileRoute("/api/owner/agency-control")({
           return Response.json({ claimed: data ?? null });
         }
         if (action === "heartbeat") {
-          const { data, error } = await client.rpc("agency_heartbeat", { p_lease_token: body.leaseToken, p_extend_seconds: body.extendSeconds ?? 900 });
+          const leaseToken = typeof body.leaseToken === "string" ? body.leaseToken : "";
+          const extendSeconds = body.extendSeconds === undefined ? 900 : Number(body.extendSeconds);
+          if (leaseToken.length < 16 || leaseToken.length > 256 || !Number.isInteger(extendSeconds) || extendSeconds < 60 || extendSeconds > 3600) {
+            return Response.json({ error: "INVALID_HEARTBEAT_PAYLOAD" }, { status: 400 });
+          }
+          const { data, error } = await client.rpc("agency_heartbeat", { p_lease_token: leaseToken, p_extend_seconds: extendSeconds });
           if (error) throw error;
           return Response.json({ ok: Boolean(data) });
         }
         if (action === "finish_task") {
-          const { data, error } = await client.rpc("agency_finish_task", { p_lease_token: body.leaseToken, p_status: body.status, p_summary: body.summary ?? null, p_result: body.result ?? {} });
+          const leaseToken = typeof body.leaseToken === "string" ? body.leaseToken : "";
+          const allowedStatuses = ["completed", "failed", "blocked", "waiting_approval"];
+          if (leaseToken.length < 16 || leaseToken.length > 256 || !allowedStatuses.includes(String(body.status))) {
+            return Response.json({ error: "INVALID_FINISH_TASK_PAYLOAD" }, { status: 400 });
+          }
+          const summary = typeof body.summary === "string" ? body.summary.slice(0, 4000) : null;
+          const resultPayload = body.result && typeof body.result === "object" && !Array.isArray(body.result) ? body.result : {};
+          const { data, error } = await client.rpc("agency_finish_task", { p_lease_token: leaseToken, p_status: body.status, p_summary: summary, p_result: resultPayload });
           if (error) throw error;
           return Response.json({ ok: Boolean(data) });
         }

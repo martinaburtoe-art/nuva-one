@@ -1,0 +1,1136 @@
+=== TABLA COMPARATIVA LOCAL vs REMOTO ===
+
+Versión          | Local    | Remoto   | Clasificación                                 | Acción segura
+------------------------------------------------------------------------------------------------------------------------------------------------------
+20260622002712   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260622002731   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260622002753   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260622010000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260622010100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260622020000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260622030000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260624051336   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260625000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260625001107   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260625003533   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260625010000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260708215325   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260708215754   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260709000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260709193948   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260709210000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260709220000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260710000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260711000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260712000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260714010000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260715000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260715120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260716225636   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225648   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225657   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225707   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225737   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225745   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225755   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225803   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225811   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225818   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225825   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225833   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225903   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225915   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225923   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225933   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225945   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716225956   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716230009   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716230024   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716230038   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716230118   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716230131   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260716230141   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260718060823   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260718060851   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260718060930   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260718061012   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260718162439   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260718202642   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260719000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260719223003   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260728120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260729032927   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260729090000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260729231248   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260731053017   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260731075816   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260731182140   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260731182204   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260731190000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260801000455   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260801000711   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260801000815   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260801034545   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260801150000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260801170000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260801180000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260801185252   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260801200000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260802012130   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260802012748   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260802013500   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260802120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260802140000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260803184504   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260803190000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260803193000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260804235433   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260804235511   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260805180000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260805190000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260806005602   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260806024349   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260806040137   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260806040147   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260807130000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260807140000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260808150355   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260808150407   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260808150413   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260809120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260809130000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260809170850   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260809170854   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260810173309   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260811150000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260811160000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260811194401   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260811203547   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260812002454   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260812200000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260812210428   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260812211533   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260813021908   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260813204745   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260813205905   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260814090000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260814093000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260815130000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260816000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260816010000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260816020000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260816150000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260816190500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260816220919   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816220937   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816221007   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816221032   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816221241   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816221336   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816224927   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816225216   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260816225820   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260817150847   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260817151249   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260817152000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260817164445   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260817200000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260817200100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260817210000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818052937   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818052953   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053013   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053038   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053148   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053245   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053250   | True     | True     | Coincidencia                                  | Ninguna
+20260818053356   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053454   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053528   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818053922   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818090000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818201000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818202000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818213440   | True     | True     | Coincidencia                                  | Ninguna
+20260818213447   | True     | True     | Coincidencia                                  | Ninguna
+20260818213759   | True     | True     | Coincidencia                                  | Ninguna
+20260818213818   | True     | True     | Coincidencia                                  | Ninguna
+20260818214500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818214706   | True     | True     | Coincidencia                                  | Ninguna
+20260818214750   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818214800   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818214900   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818215000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818215001   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818215100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818215200   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818215600   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818216000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260818225809   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818225827   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818225834   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818230149   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818230223   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818230236   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818230321   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818230333   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818231726   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818231746   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260818232730   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819005124   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819005305   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819005332   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819005836   | True     | True     | Coincidencia                                  | Ninguna
+20260819010004   | True     | True     | Coincidencia                                  | Ninguna
+20260819010038   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819010102   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819010537   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819010621   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819010836   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819011000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819012000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819012137   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819012355   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819012405   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819012451   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819012512   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819012549   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819013000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819013100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819013614   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819014000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819014500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819015000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819015100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819015500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819016000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819016500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819020000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819023441   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819030226   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819030439   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819030531   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819030547   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819030654   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819031000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819031432   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819031500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819031527   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819031541   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819031557   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819031616   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819031630   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819031639   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819032000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819032500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819033000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819035947   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819042306   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819042911   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819060000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819061000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819062000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819063000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819064000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819065000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819066000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819070000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819100000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819110000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819123000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819135140   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819135235   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819135307   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819135326   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819135346   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819135408   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819135439   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819142059   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819193000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819210000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819220000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260819220630   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819220637   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819220644   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260819221312   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260820004600   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260820024905   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260820025258   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260820030322   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260820110000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260820151317   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260820200800   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260820235949   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260821000041   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260821100000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260821131144   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260821143930   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260821143948   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260823000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260823233450   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260823233612   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260824015548   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260824015637   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260824020137   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260824021709   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260824170000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260825010220   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825010224   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825010233   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825020127   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825020300   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260825023000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260825023100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260825023200   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260825183014   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825183138   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825183402   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825183845   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260825190000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260825210000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260826003213   | True     | True     | Coincidencia                                  | Ninguna
+20260826003234   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260826003300   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260826023102   | True     | True     | Coincidencia                                  | Ninguna
+20260826023228   | True     | True     | Coincidencia                                  | Ninguna
+20260826031513   | True     | True     | Coincidencia                                  | Ninguna
+20260826031602   | True     | True     | Coincidencia                                  | Ninguna
+20260826031740   | True     | True     | Coincidencia                                  | Ninguna
+20260826032923   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260826210000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260826211000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260826212000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260826220331   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827001000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260827001100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260827035455   | True     | True     | Coincidencia                                  | Ninguna
+20260827035526   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827035941   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827040000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260827040057   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827040108   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827042006   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827042013   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827044049   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827044715   | True     | True     | Coincidencia                                  | Ninguna
+20260827044736   | True     | True     | Coincidencia                                  | Ninguna
+20260827044755   | True     | True     | Coincidencia                                  | Ninguna
+20260827045539   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827045546   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260827050000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260827050100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260827120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260829053557   | True     | True     | Coincidencia                                  | Ninguna
+20260829060000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260829141451   | True     | True     | Coincidencia                                  | Ninguna
+20260829141858   | True     | True     | Coincidencia                                  | Ninguna
+20260829141920   | True     | True     | Coincidencia                                  | Ninguna
+20260829141933   | True     | True     | Coincidencia                                  | Ninguna
+20260829142012   | True     | True     | Coincidencia                                  | Ninguna
+20260829142221   | True     | True     | Coincidencia                                  | Ninguna
+20260829145156   | True     | True     | Coincidencia                                  | Ninguna
+20260829145231   | True     | True     | Coincidencia                                  | Ninguna
+20260829145545   | True     | True     | Coincidencia                                  | Ninguna
+20260829150321   | True     | True     | Coincidencia                                  | Ninguna
+20260829150806   | True     | True     | Coincidencia                                  | Ninguna
+20260829154401   | True     | True     | Coincidencia                                  | Ninguna
+20260829154406   | True     | True     | Coincidencia                                  | Ninguna
+20260829154439   | True     | True     | Coincidencia                                  | Ninguna
+20260829154522   | True     | True     | Coincidencia                                  | Ninguna
+20260829170000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260829231116   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260829233000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260830010000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260830011000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260830012000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260830054649   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260830054724   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260830055019   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260830070000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260830180156   | True     | True     | Coincidencia                                  | Ninguna
+20260830230000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260830233000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260831020209   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260831025654   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260831031353   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260901033531   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260901041001   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260901043050   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260905030000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260905031750   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260905031858   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260905031922   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260905033000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260905034000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260905035000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260907123000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260907153705   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260908032249   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260908032331   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260908032500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260908032600   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260908034000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260908163721   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920010000   | True     | True     | Coincidencia                                  | Ninguna
+20260920011000   | True     | True     | Coincidencia                                  | Ninguna
+20260920012000   | True     | True     | Coincidencia                                  | Ninguna
+20260920012812   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920013000   | True     | True     | Coincidencia                                  | Ninguna
+20260920013150   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920013426   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920013431   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920013435   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920013609   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920015639   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920015704   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920020012   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920020610   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920023000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920023126   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920023135   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920024000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920024500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920030610   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920031000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920032000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920032516   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920032658   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920033456   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920033547   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920033617   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920040000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920041500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920043000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920043500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920044000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920050000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920050500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920054125   | True     | True     | Coincidencia                                  | Ninguna
+20260920054757   | True     | True     | Coincidencia                                  | Ninguna
+20260920054925   | True     | True     | Coincidencia                                  | Ninguna
+20260920120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920145946   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920150417   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260920150612   | True     | True     | Coincidencia                                  | Ninguna
+20260920200000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920201000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920204000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920204500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920205000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920220000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260920230000   | True     | True     | Coincidencia                                  | Ninguna
+20260921000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260921000001   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260921030000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260921031604   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260921032506   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260921032512   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260921032628   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922090000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922125634   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922150000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922153000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922160000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922160100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922170000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922171000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922173000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922174500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922180000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922182000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922183000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922184000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922185000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922193000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922194519   | True     | True     | Coincidencia                                  | Ninguna
+20260922194547   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922194600   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922194623   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922194635   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922194644   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922200000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922201000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922202000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922203000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922204000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922210000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922210200   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260922224713   | True     | True     | Coincidencia                                  | Ninguna
+20260922224910   | True     | True     | Coincidencia                                  | Ninguna
+20260922225108   | True     | True     | Coincidencia                                  | Ninguna
+20260922225334   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922225353   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922225405   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922225428   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922225527   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922225541   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260922225558   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923010758   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923010802   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923010809   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923013000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923015656   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923020242   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923020351   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923020549   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923020611   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923021000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923022000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923022017   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923022330   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923023000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923024000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923024619   | True     | True     | Coincidencia                                  | Ninguna
+20260923024850   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923024858   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923025000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923025238   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923025301   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923025343   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923025546   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923025706   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923031000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923032000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923033000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923034000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923035000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923036000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923037100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923038000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923038100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923039000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923039100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923040000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923041000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923042000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923043000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923044000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923045000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923046000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923047000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923048000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923049000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923050000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923050100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923051000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923052000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923052100   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923053000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923054000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923055000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923056000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923057000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923058000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923059000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923061000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923062000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260923130500   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923130520   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923130816   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923130840   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923131430   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923131638   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923131650   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923133603   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260923133640   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260926215357   | True     | True     | Coincidencia                                  | Ninguna
+20260926215858   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260926215912   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260926221500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260926221639   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260926230000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260926234500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260926234600   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260926234611   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260926234615   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260926235000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260926235409   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260926235500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260926235715   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927040000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260927044958   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927045026   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927045128   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927045929   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927050000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260927050010   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260927050020   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260927054942   | True     | True     | Coincidencia                                  | Ninguna
+20260927060000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260927190000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260927213120   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927213213   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927214703   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260927220000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260927230654   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260928031500   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20260928211330   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260928212449   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260928212635   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20260928212936   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20261005195525   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20261006155332   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20261006160000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261006170703   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20261006190000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261007000000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261007203000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261007232624   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20261009180000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261010033023   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20261010035109   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+20261010120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261025120000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261025130000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261025130001   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261025140000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261025140001   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261025150000   | True     | False    | Archivo local sin registro remoto             | Pendiente de aplicar
+20261025221645   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+  >>> SOSPECHOSA: nombre_remoto='', en_local=False, en_remoto=True
+20261025221646   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+  >>> SOSPECHOSA: nombre_remoto='', en_local=False, en_remoto=True
+20261025222020   | False    | True     | Registro remoto sin archivo fuente            | Investigar origen; NO crear sin SQL
+  >>> SOSPECHOSA: nombre_remoto='', en_local=False, en_remoto=True
+
+Total versiones locales: 303
+Total versiones remotas: 335
+Coincidencias: 51
+Remoto sin archivo fuente: 284
+  - 20260920033617 [20260920205000_nuva_action_queue_rls_initplan]
+  - 20260818230333 [finance_anon_exposure_lockdown]
+  - 20260803184504 [fiscal_payment_integrations]
+  - 20260819042911 [add_inventory_stocktakes_barcode_workflow]
+  - 20260907153705 [harden_business_plan_limits_view_security]
+  - 20260901041001 [harden_ai_quota_public_wrappers]
+  - 20260923025706 [20260923037100_people_cross_row_integrity]
+  - 20260716225818 [2891d037_dup_revoke]
+  - 20260716230141 [fix_stock_oversell_race_condition]
+  - 20260923020242 [20260923021000_people_rls_and_index_cleanup]
+  - 20260819005124 [finance_integrity_tax_control_v3]
+  - 20260731182204 [marketing_integrations]
+  - 20260926235715 [add_nuva_connect_events]
+  - 20260927045026 [harden_nuva_connect_rls_indexes]
+  - 20260920023135 [unique_active_shipment_per_sale]
+  - 20260804235433 [enable_pg_cron_and_schedule_jobs]
+  - 20260825010220 [shipments_module_baseline_20260817]
+  - 20260922225428 [20260922182000_fix_sis_effectivity]
+  - 20260811203547 [public_forum_and_directory]
+  - 20260817151249 [harden_platform_owner_metrics]
+  - 20260831031353 [fix_studio_job_asset_grants]
+  - 20261006155332 [nuva_telegram_agency_control_plane]
+  - 20260806040147 [backfill_compras_category]
+  - 20260801034545 [public_wrappers_for_invitation_rpcs]
+  - 20260819030547 [harden_private_membership_helper_public_grants]
+  - 20260716225933 [audit_log_insert_user_id_check]
+  - 20260819030439 [harden_internal_system_alerts_grants]
+  - 20260731075816 [team_invitations]
+  - 20260818230236 [finance_service_backfill_post_guard]
+  - 20260819031541 [optimize_rls_auth_initplan_platform_events_final]
+  - 20260824015637 [phase3posrevokevalidationexecute]
+  - 20260823233612 [lock_owner_grant_helper]
+  - 20260923131638 [people_leave_request_integrity]
+  - 20260825010224 [shipments_module_hardening_20260824]
+  - 20260928212936 [add_pos_today_summary]
+  - 20260716225923 [device_tokens]
+  - 20260830054649 [allow_self_membership_visibility]
+  - 20260818052953 [restore_checked_client_rpc_execution]
+  - 20260818231746 [finance_posting_control_security_hardening]
+  - 20260923020351 [20260923022000_people_leave_and_vacation_operational_fix]
+  - 20260816221241 [restrict_forum_security_definer_execute]
+  - 20260716225811 [business_owner_id_db_default]
+  - 20260819005305 [finance_rls_role_hardening_v4]
+  - 20260821131144 [define_saas_plan_economics_v1]
+  - 20260817150847 [platform_owner_metrics]
+  - 20260908032331 [fix_n8n_event_outbox_entity_id_text]
+  - 20260923020611 [20260923024000_people_leave_balance_and_overlap_guard]
+  - 20260718060930 [optimize_rls_auth_uid_initplan]
+  - 20260818225809 [finance_accounting_engine_v2_seed]
+  - 20260716225657 [a6650f50_touch_updated_at_search_path]
+  - 20260922194547 [20260922170000_nuva_people_payroll_engine]
+  - 20261025221645 []
+  - 20260816224927 [tighten_anon_surface_v2]
+  - 20260921031604 [harden_private_owner_console]
+  - 20260827035941 [create_costs_module]
+  - 20260801000455 [team_permissions_and_invitations]
+  - 20260818231726 [finance_posting_control_v1_retry]
+  - 20261010035109 [recover_exhausted_agency_leases]
+  - 20260922194623 [tighten_intelligence_policies_and_rpc]
+  - 20260818052937 [harden_public_security_definer_functions]
+  - 20260922225527 [20260922183000_restore_april_sis_rate]
+  - 20260818230149 [finance_operational_posting_v3]
+  - 20260819135307 [cash_register_tenant_integrity_v22]
+  - 20260816221007 [optimize_rls_policy_branches]
+  - 20260928211330 [add_sales_product_analytics_rpc]
+  - 20260824015548 [phase3posatomicguards]
+  - 20260827044049 [harden_security_definer_search_paths]
+  - 20260818053528 [restrict_sensitive_token_reads]
+  - 20260809170850 [flow_subscriptions]
+  - 20260819010102 [finance_rls_policy_shape_v9]
+  - 20260826032923 [add_mercadopago_billing]
+  - 20260818053454 [enforce_cross_entity_business_integrity]
+  - 20260718060851 [add_missing_foreign_key_indexes]
+  - 20260818230223 [finance_service_backfill_guard]
+  - 20260908163721 [20260908034000_add_n8n_outbox_retry_schedule]
+  - 20260716230131 [shifts_module]
+  - 20260818225827 [finance_security_hardening_v2]
+  - 20260819012512 [fix_sale_payment_accounting_alias_v17]
+  - 20260923130520 [people_minimum_wage_age_validation_2026]
+  - 20260920023126 [secure_sale_shipment_creation]
+  - 20260923010758 [people_chile_holidays_and_2026_rules]
+  - 20260813205905 [reconcile_missing_migrations]
+  - 20260827040108 [connect_costs_cashflow]
+  - 20260923130816 [people_payroll_reform_2026_3_5]
+  - 20260802013500 [billing_sii]
+  - 20260923133603 [20260923059000_people_gratification_full_settlement]
+  - 20261025221646 []
+  - 20260716225945 [billing_plan_enforcement]
+  - 20260819135140 [cash_inventory_control_v20]
+  - 20260830055019 [restore_authenticated_membership_select_grant]
+  - 20260920032516 [20260920200000_nuva_action_queue]
+  - 20260825183138 [fix_private_cash_register_summary_membership]
+  - 20260813021908 [security_audit_fix_search_path]
+  - 20260718061012 [revoke_public_execute_on_trigger_only_functions]
+  - 20260920020012 [quotes_discount_terms_validation]
+  - 20261007232624 [20261007203000_fix_demo_financial_accounts]
+  - 20260920032658 [20260920201000_nuva_action_queue_timestamps]
+  - 20260819220637 [product_resolver_and_sku_concurrency_v28_reconciled]
+  - 20260812211533 [add_business_networking_profile]
+  - 20260819023441 [fix_sale_payment_overpayment_guard_v19]
+  - 20260718060823 [security_hardening_search_path_and_execute_grants]
+  - 20260819012355 [finance_settlement_accounting_v14]
+  - 20260812210428 [add_views_to_forum_topics]
+  - 20260827045546 [normalize_platform_event_index]
+  - 20260819010621 [finance_reporting_graphql_hardening_v11]
+  - 20260716225915 [25e1eab3_dup_business_policy]
+  - 20260824020137 [phase4_cash_register_hardening]
+  - 20260928212635 [add_finance_dashboard_summary]
+  - 20260831020209 [align_studio_image_registry_with_nano_banana_2]
+  - 20260820024905 [harden_product_codes_trigger_search_path]
+  - 20260801185252 [marketing_integrations_ids]
+  - 20260920015704 [replenishment_recommendations_v2]
+  - 20261010033023 [index_agency_foreign_keys_20261010]
+  - 20260920020610 [collection_priorities_v2]
+  - 20260827042013 [harden_pricing_calculation_trigger_search_path]
+  - 20260901043050 [add_missing_fk_indexes_20260901]
+  - 20260923022017 [nuva_intelligence_v2_operating_system]
+  - 20260816225820 [harden_security_definer_functions]
+  - 20260926234615 [remove_redundant_people_indexes]
+  - 20260928212449 [add_people_dashboard_summary]
+  - 20260923025301 [20260923034000_people_payroll_and_state_guards]
+  - 20260816225216 [persist_100_client_readiness_hardening]
+  - 20260716225903 [move_helpers_to_private_schema]
+  - 20260923131650 [people_leave_request_constraint_cleanup]
+  - 20260825183014 [harden_exposed_security_definer_rpc_wrappers_20260825]
+  - 20260927044958 [remove_legacy_n8n_and_whatsapp_surface]
+  - 20260920150417 [ops_incidents_versioned_reconciliation]
+  - 20260923024850 [ops_findings_metrics_anomalies_llm_usage]
+  - 20260923025546 [20260923036000_people_json_shape_guards]
+  - 20260927213120 [seed_authenticated_demo_business]
+  - 20261006170703 [nuva_agency_audit_runs]
+  - 20260818053013 [protect_sensitive_credential_columns]
+  - 20260808150413 [sale_status_on_full_payment]
+  - 20260905031750 [harden_validate_shipment_event_business_execute]
+  - 20260830054724 [restore_membership_policy_function_execution]
+  - 20260716230118 [audit_log_admin_only_and_triggers]
+  - 20260920030610 [ops_incidents]
+  - 20260825020127 [shipping_label_customer_data]
+  - 20260718202642 [enable_pgtap_for_database_testing]
+  - 20260716225745 [audit_log_insert_only]
+  - 20260920012812 [add_public_catalog_rpc]
+  - 20260922194644 [optimize_people_rls_auth_calls]
+  - 20260927230654 [nuva_business_learning_foundation]
+  - 20261025222020 []
+  - 20260816221032 [add_dashboard_kpis_rpc]
+  - 20260922225558 [20260922185000_people_payroll_validation_gate]
+  - 20260818230321 [finance_rpc_lockdown]
+  - 20260819012405 [finance_purchase_settlement_cash_v15]
+  - 20260812002454 [system_alerts]
+  - 20260819010038 [finance_performance_indexes_v8]
+  - 20260927213213 [correct_authenticated_demo_business_seed]
+  - 20260921032628 [owner_operational_function_hardening]
+  - 20260819135326 [cash_ledger_duplicate_cleanup_v23]
+  - 20260905031858 [optimize_shipments_rls_initplans]
+  - 20260806024349 [business_fiscal_fields]
+  - 20260922225353 [20260922174500_people_payroll_legal_corrections]
+  - 20260821000041 [harden_scanner_product_onboarding_validation_v31]
+  - 20260926221639 [ops_ml_guardian_20260926]
+  - 20260819030226 [inventory_actions_in_customer_activities]
+  - 20260922225334 [20260922173000_people_lifecycle_lre_foundation]
+  - 20260813204745 [ai_usage_tenant_authorization]
+  - 20260819220644 [product_sku_active_business_guard_v29_reconciled]
+  - 20260920033456 [20260920204000_nuva_action_queue_manager_rls]
+  - 20260827035526 [fix_public_profile_update_access]
+  - 20260801000711 [consolidate_invitations_on_business_invites]
+  - 20260716225833 [business_select_owner_no_trigger_dependency]
+  - 20260923024858 [people_tenant_integrity_composite_fks]
+  - 20260716230024 [collections_module]
+  - 20260818232730 [finance_close_integrity_v2]
+  - 20260827040057 [harden_cost_triggers]
+  - 20261005195525 [add_ops_agent_learning_memory]
+  - 20260819031527 [optimize_rls_auth_initplan_device_tokens]
+  - 20260922225541 [20260922184000_add_2026_minimum_wage_parameter]
+  - 20260819031432 [security_remove_unused_graphql_surface]
+  - 20260923025343 [20260923035000_people_fk_performance_indexes]
+  - 20260923130840 [people_payroll_reform_2026_total_employer_fix]
+  - 20260926234611 [people_payroll_missing_rima_warning]
+  - 20260818225834 [finance_rpc_privilege_lockdown]
+  - 20260802012130 [drop_marketing_module]
+  - 20260920013150 [add_secure_fast_sale_rpc]
+  - 20260819030531 [harden_private_membership_helper_grants_v2]
+  - 20260827045539 [remove_remaining_duplicate_operational_indexes]
+  - 20260920013431 [sale_available_stock_guard]
+  - 20260920013609 [harden_n8n_outbox_policy_performance]
+  - 20260716225825 [6bca9335_dup_owner_default]
+  - 20260926215912 [harden_public_function_execute_grants_v2]
+  - 20260819012137 [finance_cash_tax_integrity_v13]
+  - 20260825010233 [shipments_rls_initplan_hardening_20260824]
+  - 20260819031630 [finalize_tax_accounting_rls_policy_shape]
+  - 20260923133640 [20260923060000_people_gratification_settlement_fk_index]
+  - 20260923131430 [people_harden_policies_authenticated_only]
+  - 20260819012549 [finance_paid_purchase_auto_settlement_v18]
+  - 20260831025654 [fix_public_quota_rpc_grants]
+  - 20260923130500 [people_minimum_wage_age_rules_2026]
+  - 20260818053922 [billing_subscription_charge_idempotency]
+  - 20260922194600 [optimize_rls_auth_uid_evaluation]
+  - 20260716230009 [whatsapp_connections]
+  - 20260923022330 [nuva_intelligence_v2_operating_system_policies_reconcile]
+  - 20260819012451 [fix_sale_payment_accounting_shadowing_v16]
+  - 20260819135235 [cash_register_operational_foundation_v21]
+  - 20260731053017 [product_images]
+  - 20260729032927 [ai_conversations_active_unique_index]
+  - 20260819035947 [harden_internal_rls_tables]
+  - 20260819042306 [add_product_barcodes_for_pos_scanning]
+  - 20260824021709 [phase7_financial_write_hardening]
+  - 20260806040137 [purchase_categories]
+  - 20260829231116 [post_financial_journal_optional_source_id]
+  - 20260825183402 [explicitly_deny_owner_account_grants_client_access]
+  - 20260920145946 [lock_internal_ops_tables_with_explicit_deny_policies]
+  - 20260927045128 [make_internal_ops_deny_explicit]
+  - 20260806005602 [billing_sii_manual_mode]
+  - 20260808150407 [payment_intents]
+  - 20260819030654 [enforce_activity_entity_tenant_integrity]
+  - 20260820004600 [mobile_scanner_bridge]
+  - 20260819135439 [cash_inventory_index_cleanup_v26]
+  - 20260819005332 [finance_journal_integrity_guard_v5]
+  - 20260819135408 [inventory_movement_trace_v25]
+  - 20260716225956 [ai_usage_limit]
+  - 20260716225707 [fix_member_role_escalation]
+  - 20260716225803 [73dbf4e9_idempotent_resnapshot]
+  - 20260818053356 [tighten_financial_and_integration_access]
+  - 20260820235949 [optimize_scanner_rls_and_operational_indexes]
+  - 20260905031922 [revoke_public_shipment_trigger_rpc]
+  - 20260816220919 [harden_100_client_readiness_v2]
+  - 20260827042006 [create_pricing_calculations]
+  - 20260927214703 [correct_demo_business_function_data]
+  - 20260921032512 [owner_operational_error_rollup]
+  - 20260816220937 [harden_public_showcase_view]
+  - 20260922194635 [20260922171000_harden_nuva_people_payroll_engine]
+  - 20260819031616 [finalize_rls_performance_shape_and_fk_indexes]
+  - 20260818053148 [harden_public_function_execute_privileges]
+  - 20260923010802 [people_finiquito_holiday_precision]
+  - 20260823233450 [owner_complimentary_accounts]
+  - 20260819010537 [finance_central_reporting_v10]
+  - 20260926235409 [add_nuva_connect_connections]
+  - 20260810173309 [customer_crm_activities]
+  - 20260819013614 [harden_financial_security_definer_grants_20260818]
+  - 20260718162439 [add_generic_rate_limit_function]
+  - 20260819010836 [finance_journal_idempotency_v12]
+  - 20260819220630 [product_codes_sku_registry_v27_reconciled]
+  - 20260826003234 [make_plan_catalog_client_deny_explicit]
+  - 20260716225648 [1958288f_restrict_function_execute]
+  - 20260716225755 [restrict_trigger_function_execute]
+  - 20260826220331 [restore_authenticated_rpc_execute_grants]
+  - 20260808150355 [remove_openfactura]
+  - 20260801000815 [get_business_members_include_position_permissions_v2]
+  - 20260908032249 [add_n8n_event_outbox]
+  - 20260819031639 [remove_unused_platform_events_policy]
+  - 20260811194401 [whatsapp_owner_links_unique_phone]
+  - 20260920013435 [sale_inventory_validation_available_stock]
+  - 20260921032506 [owner_operational_telemetry]
+  - 20260729231248 [whatsapp_owner_links]
+  - 20260821143948 [optimize_ai_usage_rls_auth_uid_initplan]
+  - 20260926215858 [harden_public_function_execute_grants]
+  - 20260923020549 [20260923023000_people_remove_redundant_vacation_index]
+  - 20260809170854 [lock_billing_columns]
+  - 20260818053245 [harden_public_rpc_security_context]
+  - 20260901033531 [remove_nuva_studio]
+  - 20260923010809 [people_finiquito_holiday_precision_fix]
+  - 20260820030322 [dedupe_operational_indexes_20260819]
+  - 20260816221336 [restore_public_forum_read_access]
+  - 20260819135346 [cash_ledger_user_insert_lock_v24]
+  - 20260920015639 [purchase_cost_replenishment_hardening]
+  - 20260922225405 [20260922180000_people_payroll_approval_close_liquidations]
+  - 20260920033547 [20260920204500_nuva_action_queue_transition_audit]
+  - 20260820025258 [harden_mobile_scanner_pairing_roles_v30]
+  - 20260819142059 [harden_cash_register_transactions_and_inventory_indexes]
+  - 20260716225737 [integrate_sales_purchases_inventory_finance]
+  - 20260820151317 [create_atomic_scanner_product_onboarding]
+  - 20260819031557 [optimize_rls_auth_initplans_finance_ai]
+  - 20260716230038 [quote_followups]
+  - 20260922125634 [harden_owner_operational_telemetry]
+  - 20260923015656 [harden_people_helper_search_paths]
+  - 20260819221312 [inventory_stocktake_atomic_finalize_v2]
+  - 20260821143930 [optimize_ai_usage_monthly_rls_policy]
+  - 20260825183845 [add_owner_account_grants_granted_by_index]
+  - 20260927045929 [20260927060000_nuva_core_integrity_audit]
+  - 20260817164445 [platform_product_telemetry]
+  - 20260716225636 [0649104d_base_schema]
+  - 20260818053038 [tighten_sensitive_tables_and_ai_rls]
+  - 20260802012748 [customers_crm_fields]
+  - 20260923025238 [20260923033000_people_additional_domain_guards]
+  - 20260920013426 [harden_fast_sale_available_stock]
+  - 20260804235511 [schedule_cron_jobs_for_alerts_and_push]
+Local sin registro remoto: 252
+  - 20260622002712
+  - 20260622002731
+  - 20260622002753
+  - 20260622010000
+  - 20260622010100
+  - 20260622020000
+  - 20260622030000
+  - 20260624051336
+  - 20260625000000
+  - 20260625001107
+  - 20260625003533
+  - 20260625010000
+  - 20260708215325
+  - 20260708215754
+  - 20260709000000
+  - 20260709193948
+  - 20260709210000
+  - 20260709220000
+  - 20260710000000
+  - 20260711000000
+  - 20260712000000
+  - 20260714010000
+  - 20260715000000
+  - 20260715120000
+  - 20260719000000
+  - 20260719223003
+  - 20260728120000
+  - 20260729090000
+  - 20260731182140
+  - 20260731190000
+  - 20260801150000
+  - 20260801170000
+  - 20260801180000
+  - 20260801200000
+  - 20260802120000
+  - 20260802140000
+  - 20260803190000
+  - 20260803193000
+  - 20260805180000
+  - 20260805190000
+  - 20260807130000
+  - 20260807140000
+  - 20260809120000
+  - 20260809130000
+  - 20260811150000
+  - 20260811160000
+  - 20260812200000
+  - 20260814090000
+  - 20260814093000
+  - 20260815130000
+  - 20260816000000
+  - 20260816010000
+  - 20260816020000
+  - 20260816150000
+  - 20260816190500
+  - 20260817152000
+  - 20260817200000
+  - 20260817200100
+  - 20260817210000
+  - 20260818090000
+  - 20260818201000
+  - 20260818202000
+  - 20260818214500
+  - 20260818214750
+  - 20260818214800
+  - 20260818214900
+  - 20260818215000
+  - 20260818215001
+  - 20260818215100
+  - 20260818215200
+  - 20260818215600
+  - 20260818216000
+  - 20260819011000
+  - 20260819012000
+  - 20260819013000
+  - 20260819013100
+  - 20260819014000
+  - 20260819014500
+  - 20260819015000
+  - 20260819015100
+  - 20260819015500
+  - 20260819016000
+  - 20260819016500
+  - 20260819020000
+  - 20260819031000
+  - 20260819031500
+  - 20260819032000
+  - 20260819032500
+  - 20260819033000
+  - 20260819060000
+  - 20260819061000
+  - 20260819062000
+  - 20260819063000
+  - 20260819064000
+  - 20260819065000
+  - 20260819066000
+  - 20260819070000
+  - 20260819100000
+  - 20260819110000
+  - 20260819123000
+  - 20260819193000
+  - 20260819210000
+  - 20260819220000
+  - 20260820110000
+  - 20260820200800
+  - 20260821100000
+  - 20260823000000
+  - 20260824170000
+  - 20260825020300
+  - 20260825023000
+  - 20260825023100
+  - 20260825023200
+  - 20260825190000
+  - 20260825210000
+  - 20260826003300
+  - 20260826210000
+  - 20260826211000
+  - 20260826212000
+  - 20260827001000
+  - 20260827001100
+  - 20260827040000
+  - 20260827050000
+  - 20260827050100
+  - 20260827120000
+  - 20260829060000
+  - 20260829170000
+  - 20260829233000
+  - 20260830010000
+  - 20260830011000
+  - 20260830012000
+  - 20260830070000
+  - 20260830230000
+  - 20260830233000
+  - 20260905030000
+  - 20260905033000
+  - 20260905034000
+  - 20260905035000
+  - 20260907123000
+  - 20260908032500
+  - 20260908032600
+  - 20260908034000
+  - 20260920023000
+  - 20260920024000
+  - 20260920024500
+  - 20260920031000
+  - 20260920032000
+  - 20260920040000
+  - 20260920041500
+  - 20260920043000
+  - 20260920043500
+  - 20260920044000
+  - 20260920050000
+  - 20260920050500
+  - 20260920120000
+  - 20260920200000
+  - 20260920201000
+  - 20260920204000
+  - 20260920204500
+  - 20260920205000
+  - 20260920220000
+  - 20260921000000
+  - 20260921000001
+  - 20260921030000
+  - 20260922090000
+  - 20260922150000
+  - 20260922153000
+  - 20260922160000
+  - 20260922160100
+  - 20260922170000
+  - 20260922171000
+  - 20260922173000
+  - 20260922174500
+  - 20260922180000
+  - 20260922182000
+  - 20260922183000
+  - 20260922184000
+  - 20260922185000
+  - 20260922193000
+  - 20260922200000
+  - 20260922201000
+  - 20260922202000
+  - 20260922203000
+  - 20260922204000
+  - 20260922210000
+  - 20260922210200
+  - 20260923013000
+  - 20260923021000
+  - 20260923022000
+  - 20260923023000
+  - 20260923024000
+  - 20260923025000
+  - 20260923031000
+  - 20260923032000
+  - 20260923033000
+  - 20260923034000
+  - 20260923035000
+  - 20260923036000
+  - 20260923037100
+  - 20260923038000
+  - 20260923038100
+  - 20260923039000
+  - 20260923039100
+  - 20260923040000
+  - 20260923041000
+  - 20260923042000
+  - 20260923043000
+  - 20260923044000
+  - 20260923045000
+  - 20260923046000
+  - 20260923047000
+  - 20260923048000
+  - 20260923049000
+  - 20260923050000
+  - 20260923050100
+  - 20260923051000
+  - 20260923052000
+  - 20260923052100
+  - 20260923053000
+  - 20260923054000
+  - 20260923055000
+  - 20260923056000
+  - 20260923057000
+  - 20260923058000
+  - 20260923059000
+  - 20260923061000
+  - 20260923062000
+  - 20260926221500
+  - 20260926230000
+  - 20260926234500
+  - 20260926234600
+  - 20260926235000
+  - 20260926235500
+  - 20260927040000
+  - 20260927050000
+  - 20260927050010
+  - 20260927050020
+  - 20260927060000
+  - 20260927190000
+  - 20260927220000
+  - 20260928031500
+  - 20261006160000
+  - 20261006190000
+  - 20261007000000
+  - 20261007203000
+  - 20261009180000
+  - 20261010120000
+  - 20261025120000
+  - 20261025130000
+  - 20261025130001
+  - 20261025140000
+  - 20261025140001
+  - 20261025150000

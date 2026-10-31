@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 const requiredFiles = [
   "docs/NUVA_AGENCY_ARCHITECTURE.md",
   "docs/nuva-agency/AGENT_POLICY.md",
+  "docs/nuva-agency/AGENT_BACKLOG.md",
   "docs/nuva-agency/CONSTRUCTION_AGENT.md",
   "src/lib/agency/types.ts",
   "src/lib/agency/policy.ts",

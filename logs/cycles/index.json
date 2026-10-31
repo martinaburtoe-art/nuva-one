@@ -1,0 +1,108 @@
+{
+  "cycles": [
+    {
+      "id": "20261029-194107",
+      "timestamp": "2026-10-29T22:41:07.389Z",
+      "cycle": "20261029-194107",
+      "taskId": "T-14",
+      "taskTitle": "Owner Console operativa",
+      "agent": "UX",
+      "result": "executed",
+      "qaVerdict": "approved",
+      "securityVerdict": "approved",
+      "orchestratorDecision": "accepted",
+      "file": "cycle-20261029-194107.json"
+    },
+    {
+      "id": "20261029-131809",
+      "timestamp": "2026-10-29T16:18:09.459Z",
+      "cycle": "20261029-131809",
+      "taskId": "T-10",
+      "taskTitle": "Demo de ejecución del motor de tareas (T-09)",
+      "agent": "QA",
+      "result": "PASS",
+      "qaVerdict": "approved",
+      "securityVerdict": "approved",
+      "securityReviewer": "sa-0-343dc026 (deleg_fc647d83)",
+      "orchestratorDecision": "accepted",
+      "file": "cycle-20261029-131809.json"
+    },
+    {
+      "id": "20261029-125719",
+      "timestamp": "2026-10-29T15:57:19.125Z",
+      "cycle": "20261029-125719",
+      "taskId": "T-08",
+      "taskTitle": "",
+      "agent": "Constructor",
+      "result": "executed",
+      "qaVerdict": "approved",
+      "securityVerdict": "approved",
+      "orchestratorDecision": "accepted",
+      "file": "cycle-20261029-125719.json"
+    },
+    {
+      "id": "20261029-125641",
+      "timestamp": "2026-10-29T15:56:41.245Z",
+      "cycle": "20261029-125641",
+      "taskId": "T-08",
+      "taskTitle": "",
+      "agent": "Constructor",
+      "result": "executed",
+      "qaVerdict": "pending",
+      "securityVerdict": "pending",
+      "orchestratorDecision": "pending",
+      "file": "cycle-20261029-125641.json"
+    }
+  ],
+  "executions": [
+    {
+      "id": "exec-20261029-193912",
+      "timestamp": "2026-10-29T22:39:12.141Z",
+      "taskId": "T-14",
+      "agent": "UX",
+      "result": "BLOCKED",
+      "qaVerdict": "UNKNOWN",
+      "securityVerdict": "UNKNOWN",
+      "orchestratorDecision": "rejected",
+      "file": "exec-20261029-193912.json"
+    },
+    {
+      "id": "exec-20261029-135321",
+      "timestamp": "2026-10-29T16:53:21.423Z",
+      "taskId": "T-13",
+      "agent": "Constructor",
+      "result": "BLOCKED",
+      "qaVerdict": "UNKNOWN",
+      "securityVerdict": "UNKNOWN",
+      "orchestratorDecision": "rejected",
+      "file": "exec-20261029-135321.json"
+    },
+    {
+      "id": "exec-20261029-135141",
+      "timestamp": "2026-10-29T16:51:41.031Z",
+      "taskId": "T-12",
+      "agent": "Constructor",
+      "result": "BLOCKED",
+      "qaVerdict": "UNKNOWN",
+      "securityVerdict": "UNKNOWN",
+      "orchestratorDecision": "rejected",
+      "file": "exec-20261029-135141.json"
+    },
+    {
+      "id": "exec-20261029-130942",
+      "timestamp": "2026-10-29T16:09:42.296Z",
+      "taskId": "T-10",
+      "agent": "QA",
+      "result": "PASS",
+      "file": "exec-20261029-130942.json"
+    },
+    {
+      "id": "exec-20261029-130836",
+      "timestamp": "2026-10-29T16:08:36.697Z",
+      "taskId": "T-10",
+      "agent": "QA",
+      "result": "FAIL",
+      "file": "exec-20261029-130836.json"
+    }
+  ]
+}

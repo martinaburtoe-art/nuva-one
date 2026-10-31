@@ -37,8 +37,8 @@ export function useActiveBusinessId() {
 export function useActiveBusiness() {
   const [activeId, setActiveId] = useActiveBusinessId();
   const { data: businesses, isLoading } = useBusinesses();
-  const active = businesses?.find((b) => b.id === activeId) ?? businesses?.[0] ?? null;
-  useEffect(() => { if (!activeId && businesses && businesses.length > 0) setActiveId(businesses[0].id); }, [activeId, businesses, setActiveId]);
+  const active = businesses?.find((b) => b.id === activeId) ?? null;
+  // No auto-seleccionar negocio: el usuario elige explícitamente cuál usar.
   return { active, businesses: businesses ?? [], setActiveId, isLoading };
 }
 
@@ -63,6 +63,7 @@ export const MODULES = [
   { key: "inventory", label: "Inventario" }, { key: "catalog", label: "Catálogo" }, { key: "finance", label: "Finanzas" },
   { key: "analytics", label: "Indicadores" }, { key: "quotes", label: "Cotizaciones" },
   { key: "ai", label: "Asistente IA" }, { key: "people", label: "Nüva People" },
+  { key: "conexiones", label: "Conexiones" },
 ] as const;
 export type ModuleKey = (typeof MODULES)[number]["key"];
 export type ModulePermissions = Partial<Record<ModuleKey, boolean>>;
@@ -86,8 +87,7 @@ export function useMyMembership() {
   // with the businesses list instead of waiting for the list to resolve.
   const [activeId] = useActiveBusinessId();
   const { data: businesses } = useBusinesses();
-  const fallbackId = businesses?.[0]?.id ?? null;
-  const businessId = activeId ?? fallbackId;
+  const businessId = activeId;
 
   return useQuery({
     enabled: !!businessId,
