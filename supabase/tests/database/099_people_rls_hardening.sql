@@ -4,7 +4,7 @@
 -- Estas pruebas solo inspeccionan el catálogo; no escriben datos ni aplican migraciones.
 -- Ejecutar con pg_prove contra una base de datos con el esquema aplicado.
 begin;
-select plan(26);
+select plan(28);
 
 -- 1. RLS habilitado en las 10 tablas endurecidas
 select ok(
@@ -228,6 +228,38 @@ select ok(
       and a.privilege_type = 'X'
   ),
   'PUBLIC no tiene EXECUTE sobre people_dashboard_summary'
+);
+
+-- 27. Todas las 14 tablas sensibles tienen exactamente una política SELECT owner/admin.
+select is(
+  (select count(*) from pg_policies p
+   where p.schemaname='public'
+     and p.tablename in (
+       'people_employees','people_contracts','people_documents','people_payroll_items',
+       'people_payroll_periods','people_payroll_postings','people_payroll_runs',
+       'people_payroll_liquidations','people_lre_rows','people_absences',
+       'people_payroll_inputs','people_vacation_balances','people_terminations','people_karin_cases'
+     )
+     and p.cmd='SELECT'
+     and p.qual like '%private.has_business_role%'
+     and p.qual like '%owner%'
+     and p.qual like '%admin%'), 14::bigint,
+  'Las 14 tablas sensibles tienen SELECT owner/admin'
+);
+
+-- 28. Ninguna tabla sensible conserva una política permisiva de SELECT por mera pertenencia al negocio.
+select is(
+  (select count(*) from pg_policies p
+   where p.schemaname='public'
+     and p.tablename in (
+       'people_employees','people_contracts','people_documents','people_payroll_items',
+       'people_payroll_periods','people_payroll_postings','people_payroll_runs',
+       'people_payroll_liquidations','people_lre_rows','people_absences',
+       'people_payroll_inputs','people_vacation_balances','people_terminations','people_karin_cases'
+     )
+     and p.cmd='SELECT'
+     and p.qual like '%private.is_business_member%'), 0::bigint,
+  'Ninguna de las 14 tablas permite SELECT a cualquier miembro'
 );
 
 select * from finish();
