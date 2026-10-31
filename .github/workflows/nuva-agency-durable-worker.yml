@@ -92,5 +92,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           NUVA_AGENCY_AGENT_ID: ${{ steps.specialist.outputs.agent }}
-          NUVA_AGENCY_API_BASE_URL: ${{ secrets.NUVA_AGENCY_API_BASE_URL || '' }}
+          NUVA_AGENCY_API_BASE_URL: ${{ secrets.NUVA_AGENCY_API_BASE_URL || 'https://nuva-one.vercel.app' }}
         run: node scripts/agency-durable-worker.mjs
