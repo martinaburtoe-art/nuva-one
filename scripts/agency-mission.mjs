@@ -153,6 +153,11 @@ async function createMission(objective, tasksJson) {
     tasks = decomposeObjective(objective);
   }
 
+  // Asignar IDs estables a tareas sin id (dependencias consistentes entre tareas)
+  for (let i = 0; i < tasks.length; i++) {
+    if (!tasks[i].id) tasks[i].id = `t-${String(i + 1).padStart(3, "0")}`;
+  }
+
   const now = nowIso();
   const mission = {
     id: missionId(),
