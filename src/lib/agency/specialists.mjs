@@ -25,9 +25,9 @@ async function readLocalFile(path) {
   }
 }
 
-function nodeCheck(target) {
+function nodeCheck(target, signal) {
   return new Promise((resolve) => {
-    execFile("node", ["--check", target], { cwd: process.cwd(), timeout: 30000 }, (error, stdout, stderr) => {
+    execFile("node", ["--check", target], { cwd: process.cwd(), timeout: 30000, ...(signal ? { signal } : {}) }, (error, stdout, stderr) => {
       resolve({ ok: !error, error: error ? (error.stderr || error.message) : undefined });
     });
   });
@@ -381,11 +381,12 @@ export const constructor = {
   tiposDeTarea: ["syntax-check", "file-inspection", "code-repair-verification"],
   herramientasPermitidas: ["readFile", "node --check"],
 
-  async execute(task) {
+  async execute(task, { signal } = {}) {
     const start = nowMs();
     const evidence = [];
     const errors = [];
 
+    if (signal?.aborted) return makeResult("constructor", task.id, "BLOCKED", ["ejecución cancelada antes de iniciar"], ["AGENCY_EXECUTION_ABORTED"], start);
     const target = (task.input_context && task.input_context.target) || "scripts/agency-task-executor.mjs";
 
     const file = await readLocalFile(target);
@@ -394,7 +395,7 @@ export const constructor = {
     }
     evidence.push(`${target}: legible (${file.content.length} bytes)`);
 
-    const check = await nodeCheck(target);
+    const check = await nodeCheck(target, signal);
     evidence.push(`node --check ${target}: ${check.ok ? "sintaxis OK" : "error de sintaxis"}`);
     if (check.error) errors.push(check.error);
 
@@ -513,7 +514,7 @@ export const qa = {
   tiposDeTarea: ["unit-test-run", "regression-check", "test-result-parse"],
   herramientasPermitidas: ["node", "vitest"],
 
-  async execute(task) {
+  async execute(task, { signal } = {}) {
     const start = nowMs();
     const evidence = [];
     const errors = [];
@@ -523,6 +524,8 @@ export const qa = {
     if (testTarget && (testTarget.length > 200 || testTarget.startsWith("/") || testTarget.charAt(0) === String.fromCharCode(92) || /^[A-Za-z]:/.test(testTarget) || testTarget.includes(".."))) {
       return makeResult("qa", task.id, "BLOCKED", ["objetivo QA rechazado: debe ser una ruta relativa dentro del repositorio"], errors, start);
     }
+
+    if (signal?.aborted) return makeResult("qa", task.id, "BLOCKED", ["ejecución cancelada antes de iniciar Vitest"], ["AGENCY_EXECUTION_ABORTED"], start);
 
     const vitestBin = join(process.cwd(), "node_modules", "vitest", "vitest.mjs");
     const args = [
@@ -534,6 +537,7 @@ export const qa = {
     return new Promise((resolve) => {
       execFile(process.execPath, args, {
         cwd: process.cwd(), timeout: 120000, maxBuffer: 10 * 1024 * 1024,
+        ...(signal ? { signal } : {}),
       }, (error, stdout, stderr) => {
         const output = String(stdout ?? "");
         const exitCode = error ? (typeof error.code === "number" ? error.code : -1) : 0;
@@ -554,7 +558,9 @@ export const qa = {
         evidence.push(`código de salida: ${exitCode}`);
         if (stderr?.trim()) evidence.push(`stderr: ${String(stderr).trim().slice(0, 300)}`);
         if (error) errors.push(error.message);
-        const result = exitCode !== 0 || failed > 0 ? "FAIL" : passed > 0 && total > 0 ? "PASS" : "WARN";
+        const cancelled = signal?.aborted === true;
+        const result = cancelled ? "BLOCKED" : exitCode !== 0 || failed > 0 ? "FAIL" : passed > 0 && total > 0 ? "PASS" : "WARN";
+        if (cancelled) errors.push("AGENCY_EXECUTION_ABORTED");
         resolve(makeResult("qa", task.id, result, evidence, errors, start));
       });
     });
