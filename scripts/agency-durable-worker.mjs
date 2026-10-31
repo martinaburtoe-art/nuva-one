@@ -121,7 +121,7 @@ export async function runDurableWorker(options = {}) {
   const agentId = options.agentId ?? process.env.NUVA_AGENCY_AGENT_ID;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
   const executeSpecialist = options.executeSpecialist
-    ?? (async (task) => SPECIALISTS[agentId].execute(task));
+    ?? (async (task, context) => SPECIALISTS[agentId].execute(task, context));
 
   if (typeof apiBaseUrl !== "string" || !apiBaseUrl.trim()) throw new Error("NUVA_AGENCY_API_BASE_URL_REQUIRED");
   const base = new URL(apiBaseUrl);
