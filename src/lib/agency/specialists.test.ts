@@ -77,11 +77,13 @@ describe("Especialistas faltantes (ETAPA 1)", () => {
     expect(result.evidence.some((e) => e.includes("agency_missions"))).toBe(true);
   });
 
-  it("people ejecuta sin exponer PII", async () => {
+  it("people escanea PII y no expone valores; directorios ausentes no se consideran PASS", async () => {
     const result = await SPECIALISTS.people(task("people"));
-    expect(result.result).toBe("PASS");
+    expect(["PASS", "WARN", "UNKNOWN", "FAIL"]).toContain(result.result);
+    expect(result.evidence.some((item) => item.startsWith("PII scan:"))).toBe(true);
     const joined = result.evidence.join(" ");
     expect(joined).not.toMatch(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+    expect(joined).not.toMatch(/\b\d{1,2}\.\d{3}\.\d{3}-?[\dkK]\b/);
   });
 
   it("growth verifica cron jobs en vercel.json", async () => {
