@@ -27,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.head_ref || 'fix/reproducible-npm-ci-20261027' }}
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -55,5 +55,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           NUVA_AGENCY_AGENT_ID: ${{ steps.specialist.outputs.agent }}
-          NUVA_AGENCY_API_BASE_URL: https://nuva-one.vercel.app
+          NUVA_AGENCY_API_BASE_URL: ${{ secrets.NUVA_AGENCY_API_BASE_URL || '' }}
         run: node scripts/agency-durable-worker.mjs
