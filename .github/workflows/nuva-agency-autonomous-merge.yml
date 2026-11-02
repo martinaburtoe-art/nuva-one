@@ -30,7 +30,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          number=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,headRefName,isDraft --jq '[.[] | select(.isDraft == false and (.headRefName | startswith("agent/agency-"))))][0].number // empty')
+          number=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,headRefName,isDraft --jq '[.[] | select(.isDraft == false and (.headRefName | startswith("agent/agency-")))][0].number // empty')
           if [ -z "$number" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
             exit 0
