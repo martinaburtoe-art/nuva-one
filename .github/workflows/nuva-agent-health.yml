@@ -63,12 +63,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue create --repo "$GITHUB_REPOSITORY" \\
-            --title "⚠️ Health auditor unavailable — $(date -u +%Y-%m-%d)" \\
-            --body "## Daily health audit not completed\\n\\nGemini CLI failed during the scheduled audit. The workflow preserves an explicit incident instead of silently skipping the health check. Inspect the failed Gemini step logs for authentication, quota, or provider availability details. No product health PASS is inferred from this failure.\\n\\nRun: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "⚠️ Health auditor unavailable — $(date -u +%Y-%m-%d)" \
+            --body "## Daily health audit not completed\n\nGemini CLI failed during the scheduled audit. The workflow preserves an explicit incident instead of silently skipping the health check. Inspect the failed Gemini step logs for authentication, quota, or provider availability details. No product health PASS is inferred from this failure.\n\nRun: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       - name: Create daily health issue when actionable
-        if: contains(steps.gemini.outputs.summary, 'NO_ACTIONABLE_FINDINGS') == false
+        if: steps.gemini.outcome == 'success' && contains(steps.gemini.outputs.summary, 'NO_ACTIONABLE_FINDINGS') == false
         env:
           GH_TOKEN: ${{ github.token }}
           REPORT: ${{ steps.gemini.outputs.summary }}
