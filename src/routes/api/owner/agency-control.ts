@@ -86,7 +86,8 @@ export const Route = createFileRoute("/api/owner/agency-control")({
           let data = initialData;
           if (error) throw error;
           if (!data) {
-            const { data: mission } = await client.from("agency_missions").select("id,objective,success_criteria").eq("metadata->>mode", "durable-autonomous-agency").not("status", "in", "('completed','cancelled','failed')").order("priority", { ascending: false }).limit(1).maybeSingle();
+            const { data: mission, error: missionError } = await client.from("agency_missions").select("id,objective,success_criteria").eq("metadata->>mode", "durable-autonomous-agency").not("status", "in", "('completed','cancelled','failed')").order("priority", { ascending: false }).limit(1).maybeSingle();
+            if (missionError) throw missionError;
             if (mission) {
               const { error: taskError } = await client.from("agency_tasks").insert({
                 mission_id: mission.id,
