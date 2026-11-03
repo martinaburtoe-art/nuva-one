@@ -132,4 +132,35 @@ describe("agency durable worker heartbeat", () => {
 
     expect(actions).not.toContain("finish_task");
   });
+ 
+  it("dispatches the registered specialist function when no test override is supplied", async () => {
+    const actions = [];
+    const finishPayloads = [];
+    const fetchImpl = vi.fn(async (_url, init) => {
+      const body = JSON.parse(init.body);
+      actions.push(body.action);
+      if (body.action === "claim_task") return claimResponse();
+      if (body.action === "heartbeat") return jsonResponse({ ok: true });
+      if (body.action === "finish_task") {
+        finishPayloads.push(body);
+        return jsonResponse({ ok: true });
+      }
+      throw new Error("unexpected_action");
+    });
+
+    const result = await runDurableWorker({
+      ...baseOptions,
+      agentId: "finance",
+      heartbeatIntervalMs: 1000,
+      fetchImpl,
+    });
+
+    expect(result.status).toBe("executed");
+    expect(result.agentId).toBe("finance");
+    expect(actions).toContain("finish_task");
+    expect(finishPayloads).toHaveLength(1);
+    expect(finishPayloads[0].result.specialist).toBe("finance");
+    expect(["PASS", "WARN"]).toContain(finishPayloads[0].result.verdict);
+  });
+
 });

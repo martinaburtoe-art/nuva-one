@@ -120,8 +120,10 @@ export async function runDurableWorker(options = {}) {
   const runId = options.runId ?? process.env.GITHUB_RUN_ID;
   const agentId = options.agentId ?? process.env.NUVA_AGENCY_AGENT_ID;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  const registeredSpecialist = SPECIALISTS[agentId];
+  if (typeof registeredSpecialist !== "function") throw new Error("AGENCY_SPECIALIST_NOT_REGISTERED");
   const executeSpecialist = options.executeSpecialist
-    ?? (async (task, context) => SPECIALISTS[agentId].execute(task, context));
+    ?? ((task, context) => registeredSpecialist(task, context));
 
   if (typeof apiBaseUrl !== "string" || !apiBaseUrl.trim()) throw new Error("NUVA_AGENCY_API_BASE_URL_REQUIRED");
   const base = new URL(apiBaseUrl);
