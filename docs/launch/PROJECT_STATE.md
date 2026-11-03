@@ -30,7 +30,7 @@ React + TypeScript, Vite, TanStack Router, Tailwind CSS, Supabase, PostgreSQL, G
 
 | PR | Título | Rama | Estado | Mergeable | Checks |
 |---|---|---|---|---|---|
-| #269 | feat: subir trabajo pendiente de Nüva Agency (B-003) | fix/reproducible-npm-ci-20261027 | OPEN | MERGEABLE | CI en ejecución (5 checks) |
+| #269 | feat: subir trabajo pendiente de Nüva Agency (B-003) | fix/reproducible-npm-ci-20261027 | OPEN | MERGEABLE | ✅ 8/8 PASS (todos los checks verdes) |
 | #270 | fix(agency): restore durable specialist execution | fix/agency-durable-specialist-dispatch-20261103 | OPEN | MERGEABLE | 1 FAIL (lint/typecheck/test/audit/build) |
 | #263 | fix(agency): surface durable mission query failures | fix/agency-worker-query-errors-20261102 | OPEN | MERGEABLE | ✅ Todos PASS |
 | #266 | fix(agency): skip draft PRs in autonomous merge controller | fix/agency-merge-exclude-drafts-20261102 | OPEN | MERGEABLE | ✅ Todos PASS |
