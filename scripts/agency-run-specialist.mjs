@@ -3,7 +3,7 @@
  *
  * Uso: node scripts/agency-run-specialist.mjs <specialistId> <taskId>
  *
- * Especialistas: finance, sales, supply, people, growth
+ * Especialistas: finance, sales, supply, people, growth, orchestrator, constructor, compliance, security, qa, sentinel, ux, release
  */
 
 import { SPECIALISTS, SPECIALIST_IDS } from "../src/lib/agency/specialists.mjs";
