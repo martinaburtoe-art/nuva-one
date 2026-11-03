@@ -24,19 +24,19 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 
 | ID | Especialista | Estado | Tarea actual | Sistema utilizado | Última actividad | Siguiente tarea |
 |---|---|---|---|---|---|---|
-| 1 | Constructor | IDLE | — | — | Commit cd8a4cea (fix CI people + AbortSignal) | Implementar tarea acotada en rama aislada cuando se asigne |
-| 2 | Orchestrator | WORKING | Ciclo autónomo INSPECT→NEXT TASK | GitHub, Supabase, Vercel, archivos locales | Revisión PRs #263/#266/#269, verificación CI, creación documentos AGENCY_*.md | Asignar próxima tarea desbloqueada |
-| 3 | Finance | IDLE | — | — | — | Modelo de costos de infraestructura (Supabase, Vercel, IA) |
-| 4 | Sales | IDLE | — | — | — | Estrategia comercial SaaS B2B pymes Chile |
-| 5 | Supply | IDLE | — | GitHub, Supabase (lectura) | Revisión de módulo inventario en homepage verificada | Validar esquema de inventario local |
-| 6 | People | IDLE | — | GitHub | 40/40 tests PASS, evidencia PII scan emitida | Escaneo PII en nuevos documentos |
-| 7 | Compliance | IDLE | — | GitHub | Lint 0 errores, revisión de límites de seguridad | Auditar nuevos cambios antes de merge |
-| 8 | Growth | IDLE | — | — | — | Plan de crecimiento y adquisición |
-| 9 | Security | IDLE | — | GitHub, Supabase | OIDC hardening commit e28f67e (14/14 PASS), Edge v16 desplegada | Verificar hardening OIDC en deploy remoto (pendiente autorización) |
-| 10 | QA | IDLE | — | GitHub | 429/429 PASS, lint 0, typecheck 0, agency:certify PASS | Revalidar tras próximos cambios |
-| 11 | Sentinel | IDLE | — | GitHub, Vercel, Supabase | CI #269 verificado (8/8), despliegues Vercel listados | Monitoreo continuo de sistemas |
-| 12 | UX | IDLE | — | Vercel (web) | https://nuva-one.vercel.app revisada (módulos ventas, inventario, finanzas, CRM) | Revisar flujos de usuario en previews |
-| 13 | Release | IDLE | — | GitHub, Vercel | PRs #263/#266/#269 MERGEABLE, CI 8/8 PASS, despliegues Ready | Preparar merge y despliegue (pendiente autorización owner) |
+| 1 | Constructor | COMPLETED | Misión individual: inspección task-executor | GitHub, archivos locales | Sintaxis OK en agency-task-executor.mjs (28764 bytes); issue #260 inspeccionado | Implementar tarea acotada en rama aislada cuando se asigne (T-27) |
+| 2 | Orchestrator | WORKING | Ciclo autónomo INSPECT→NEXT TASK | GitHub, Supabase, Vercel, archivos locales | 13 misiones individuales ejecutadas y verificadas; 0 tareas elegibles en backlog | Asignar próxima tarea desbloqueada; continuar ciclo autónomo |
+| 3 | Finance | COMPLETED | Misión individual: revisión dependencias y lockfiles | Archivos locales | Modelo de costos infraestructura creado (AGENCY_FINANCE_COST_MODEL.md); WARN: lockfiles duplicados | Revisar punto de equilibrio con modelo de costos |
+| 4 | Sales | COMPLETED | Misión individual: revisión configuración ventas | GitHub, archivos locales | Estrategia comercial SaaS B2B creada (AGENCY_SALES_STRATEGY.md); WARN: Odoo/GTM/GA no declarados | Ejecutar embudo de captación con primeros clientes piloto |
+| 5 | Supply | COMPLETED | Misión individual: revisión migración control plane | GitHub, Supabase | Tablas agency_tasks y agency_missions verificadas en migración | Validar esquema de inventario local |
+| 6 | People | COMPLETED | Misión individual: escaneo PII en documentos | GitHub, archivos locales | PII scan: 0 coincidencias en 4 documentos (commit cd8a4cea) | Escaneo PII en nuevos documentos |
+| 7 | Compliance | COMPLETED | Misión individual: revisión DECISIONS.md y backlog | GitHub | 11005 bytes leído, 0 tareas sin estado definido | Auditar nuevos cambios antes de merge |
+| 8 | Growth | COMPLETED | Misión individual: revisión vercel.json y cron jobs | GitHub, archivos locales | Plan de crecimiento creado (AGENCY_GROWTH_PLAN.md); 2 cron jobs verificados | Ejecutar plan de adquisición de clientes piloto |
+| 9 | Security | COMPLETED | Misión individual: revisión exposición de secretos | GitHub, Supabase | OIDC hardening commit e28f67e (14/14 PASS); .env.local detectado como posible secreto | Verificar hardening OIDC en deploy remoto (pendiente autorización T-32) |
+| 10 | QA | COMPLETED | Misión individual: suite de pruebas | GitHub | 389/389 PASS; CI PR #269 analizado (8/8 success) | Revalidar tras próximos cambios |
+| 11 | Sentinel | COMPLETED | Misión individual: inspección salud Edge Functions | GitHub, Supabase, Vercel | 6 Edge Functions ACTIVE inspeccionadas; despliegues Vercel listados; Google/Telegram verificados | Monitoreo continuo de sistemas |
+| 12 | UX | COMPLETED | Misión individual: revisión Owner Console | Vercel, archivos locales | control-tower.tsx y agency-status.ts legibles; homepage revisada | Revisar flujos de usuario en previews |
+| 13 | Release | COMPLETED | Misión individual: revisión artefactos build y git status | GitHub, Vercel | PRs #263/#266/#269 MERGEABLE, CI 8/8 PASS; evaluación de release sin merge | Preparar merge y despliegue (pendiente autorización owner) |
 
 ---
 
@@ -73,8 +73,31 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 | — | Release | Revisión PR #266 | GitHub | MERGEABLE, 6 líneas, checks verdes |
 | — | Sentinel | Monitoreo de despliegues Vercel | Vercel | `vercel ls nuva-one` — múltiples despliegues Ready, 2 producción 11h |
 | — | UX | Revisión de homepage | Vercel | https://nuva-one.vercel.app extraído y analizado |
+| — | People | Misión individual: escaneo PII | GitHub | 0 coincidencias en 4 documentos |
+| — | Security | Misión individual: revisión secretos | GitHub | .env.local detectado, [REDACTED] |
+| — | QA | Misión individual: suite de pruebas | GitHub | 389/389 PASS |
+| — | Compliance | Misión individual: revisión backlog | GitHub | DECISIONS.md leído, 0 tareas sin estado |
+| — | Sentinel | Misión individual: inspección sistema | GitHub | 4 ejecuciones, 0 FAIL, 0 BLOCKED |
+| — | Constructor | Misión individual: inspección task-executor | GitHub | Sintaxis OK, 28764 bytes |
+| — | Finance | Misión individual: revisión lockfiles | Archivos locales | bun.lock + package-lock.json, WARN posible inconsistencia |
+| — | Sales | Misión individual: revisión ventas | GitHub | Odoo/GTM/GA no declarados, WARN |
+| — | Supply | Misión individual: migración control plane | GitHub | agency_tasks y agency_missions presentes |
+| — | Growth | Misión individual: revisión cron | GitHub | 2 cron jobs en vercel.json |
+| — | UX | Misión individual: Owner Console | Archivos locales | control-tower.tsx y agency-status.ts legibles |
+| — | Release | Misión individual: artefactos build | GitHub | Artefactos presentes, 9 archivos sin staged |
+| — | Orchestrator | Misión individual: ciclo autónomo | GitHub | 0 tareas elegibles, WARN |
+| — | Constructor | Inspección issue #260 | GitHub | Issue leído, 12 tareas failed |
+| — | QA | Análisis CI PR #269 | GitHub | 8/8 checks pass |
+| — | Security | Revisión secretos en código | GitHub | 11 archivos con patrones de variable secreta, WARN |
+| — | Release | Evaluación de release sin merge | GitHub | 15 PRs MERGEABLE/CLEAN, #263/#266/#269 listos |
+| — | Sentinel | Inspección Edge Functions | Supabase | 6 funciones ACTIVE verificadas |
+| — | Security | Revisión grants RLS | Supabase | Migración local preparada, no aplicada remoto |
+| — | QA | Inspección deployments Vercel | Vercel | 10 despliegues Ready, 2 producción 11h |
+| — | Sentinel | Verificación disponibilidad Vercel | Vercel | Todos Ready, 0 errores |
+| — | Growth | Verificación OAuth Google | Google | OAuth OK, briefing 10:30 configurado |
+| — | Sentinel | Verificación bot Telegram | Telegram | @marti_manoderecha_bot activo |
 
----
+|---
 
 ## Tareas desbloqueadas y disponibles para asignar inmediatamente
 
@@ -82,11 +105,20 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 |---|---|---|---|---|---|
 | T-31 (continuación) | Security | Documentar permisos y cambios necesarios para eliminar bloqueos OIDC | Documentación | Bajo | No (documentación solamente) |
 | T-3 (preparación) | Constructor | Preparar cambios de código para T-27 (rama aislada) | GitHub | Bajo | No (rama de trabajo, sin merge) |
-| Finance | Finance | Modelo de costos de infraestructura | Local | Bajo | No |
-| Sales | Sales | Estrategia comercial SaaS B2B Chile | Local | Bajo | No |
-| Growth | Growth | Plan de crecimiento y adquisición | Local | Bajo | No |
+| Finance | Finance | Modelo de costos de infraestructura por cliente | Local | Bajo | No |
+| Finance | Finance | Margen por plan y costos variables | Local | Bajo | No |
+| Finance | Finance | Punto de equilibrio y escenarios 10/50/100 clientes | Local | Bajo | No |
+| Sales | Sales | Embudo de captación | Local | Bajo | No |
+| Sales | Sales | Proceso de demostración | Local | Bajo | No |
+| Sales | Sales | Seguimiento de oportunidades | Local | Bajo | No |
+| Sales | Sales | Propuesta comercial | Local | Bajo | No |
+| Sales | Sales | Métricas de conversión | Local | Bajo | No |
+| Growth | Growth | Plan de adquisición de clientes piloto | Local | Bajo | No |
+| Growth | Growth | Estrategia de posicionamiento | Local | Bajo | No |
+| Growth | Growth | Calendario de acciones | Local | Bajo | No |
+| Growth | Growth | Indicadores de adquisición y retención | Local | Bajo | No |
 
----
+|---
 
 ## Regla de asignación
 
