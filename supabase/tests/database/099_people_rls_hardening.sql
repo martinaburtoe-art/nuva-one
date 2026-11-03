@@ -4,7 +4,7 @@
 -- Estas pruebas solo inspeccionan el catálogo; no escriben datos ni aplican migraciones.
 -- Ejecutar con pg_prove contra una base de datos con el esquema aplicado.
 begin;
-select plan(26);
+select plan(28);
 
 -- 1. RLS habilitado en las 10 tablas endurecidas
 select ok(
@@ -228,6 +228,68 @@ select ok(
       and a.privilege_type = 'X'
   ),
   'PUBLIC no tiene EXECUTE sobre people_dashboard_summary'
+);
+
+-- 27. Cada una de las 14 tablas sensibles tiene exactamente una política SELECT
+-- aplicable a authenticated, y esa política limita la lectura a owner/admin.
+-- La comprobación es por tabla: un total agregado podría ocultar una tabla sin política.
+select is(
+  (
+    select count(*)::bigint
+    from (values
+      ('people_employees'),('people_contracts'),('people_documents'),
+      ('people_payroll_items'),('people_payroll_periods'),('people_payroll_postings'),
+      ('people_payroll_runs'),('people_payroll_liquidations'),('people_lre_rows'),
+      ('people_absences'),('people_payroll_inputs'),('people_vacation_balances'),
+      ('people_terminations'),('people_karin_cases')
+    ) as expected(tablename)
+    where (
+      select count(*)
+      from pg_policies p
+      where p.schemaname='public'
+        and p.tablename=expected.tablename
+        and p.cmd='SELECT'
+        and (
+          p.roles @> ARRAY['authenticated'::name]
+          or p.roles @> ARRAY['public'::name]
+        )
+        and p.qual like '%private.has_business_role%'
+        and p.qual like '%owner%'
+        and p.qual like '%admin%'
+    ) = 1
+  ),
+  14::bigint,
+  'Cada una de las 14 tablas tiene exactamente una política SELECT aplicable a authenticated y limitada a owner/admin'
+);
+
+-- 28. Ninguna de las 14 tablas conserva otra política SELECT PERMISSIVE
+-- aplicable a authenticated/PUBLIC que amplíe el acceso más allá de owner/admin.
+-- Las políticas RESTRICTIVE adicionales no amplían acceso y no se bloquean aquí.
+select is(
+  (
+    select count(*)::bigint
+    from pg_policies p
+    where p.schemaname='public'
+      and p.tablename in (
+        'people_employees','people_contracts','people_documents','people_payroll_items',
+        'people_payroll_periods','people_payroll_postings','people_payroll_runs',
+        'people_payroll_liquidations','people_lre_rows','people_absences',
+        'people_payroll_inputs','people_vacation_balances','people_terminations','people_karin_cases'
+      )
+      and p.cmd='SELECT'
+      and p.permissive='PERMISSIVE'
+      and (
+        p.roles @> ARRAY['authenticated'::name]
+        or p.roles @> ARRAY['public'::name]
+      )
+      and not (
+        coalesce(p.qual,'true') like '%private.has_business_role%'
+        and coalesce(p.qual,'true') like '%owner%'
+        and coalesce(p.qual,'true') like '%admin%'
+      )
+  ),
+  0::bigint,
+  'Ninguna tabla sensible conserva una política SELECT PERMISSIVE más amplia que owner/admin'
 );
 
 select * from finish();

@@ -53,7 +53,7 @@ describe("durable agency worker", () => {
       id: "00000000-0000-4000-8000-000000000123",
       agent_id: "qa",
       input_context: { target: "src/lib/example.test.ts" },
-    }));
+    }), expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(finishBody).toMatchObject({
       action: "finish_task",
       leaseToken: "0123456789abcdef0123456789abcdef",
