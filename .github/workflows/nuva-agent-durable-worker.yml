@@ -15,7 +15,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: nuva-durable-agent-${{ github.repository }}
+  # Database leases are atomic; a stalled worker must not block every later specialist cycle.
+  group: nuva-durable-agent-${{ github.repository }}-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
