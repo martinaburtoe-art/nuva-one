@@ -284,6 +284,8 @@ export const people = {
       evidence.push(`package.json revisado: ${pkg.content.length} bytes (PII redactado: ${redacted.count})`);
     }
 
+    evidence.push(`PII scan: ${piiFound} coincidencia(s) encontrada(s) y redactada(s) en documentos escaneados`);
+
     return makeResult("people", task.id, piiFound > 0 ? "WARN" : "PASS", evidence, errors, start);
   },
 };

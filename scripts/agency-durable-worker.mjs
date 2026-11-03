@@ -66,9 +66,10 @@ export async function runDurableWorker(options = {}) {
     input_context: task.input_context && typeof task.input_context === "object" ? task.input_context : {},
   };
 
+  const controller = new AbortController();
   let result;
   try {
-    result = await executeSpecialist(taskInput);
+    result = await executeSpecialist(taskInput, { signal: controller.signal });
   } catch (error) {
     result = {
       specialist: agentId,
