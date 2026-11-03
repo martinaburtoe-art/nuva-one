@@ -10,6 +10,7 @@ import { execFile } from "node:child_process";
 import { join } from "node:path";
 import * as fs from "node:fs";
 import { createHash } from "node:crypto";
+import { scanPiiDirectories } from "./pii-scan.mjs";
 
 const nowIso = () => new Date().toISOString();
 const nowMs = () => Date.now();
@@ -233,16 +234,17 @@ export const people = {
   nombre: "Personas",
   responsabilidades: [
     "Verificar documentación de RRHH y contratos en el repositorio",
-    "Confirmar que no haya datos personales expuestos en logs o código",
-    "Reportar cumplimiento básico de protección de datos",
+    "Detectar PII en artefactos operativos sin exponer valores personales",
+    "Reportar cobertura y hallazgos de protección de datos",
   ],
   limites: [
     "No accede a datos de empleados reales ni nómina",
     "No modifica contratos ni registros de personal",
-    "No expone PII en salidas",
+    "Nunca devuelve valores, fragmentos ni rutas con PII detectada",
+    "Solo escanea logs y artefactos operativos de Agency, nunca .env ni datos de clientes",
   ],
   tiposDeTarea: ["hr-docs-check", "pii-scan", "people-compliance"],
-  herramientasPermitidas: ["readFile"],
+  herramientasPermitidas: ["readFile", "readdir", "redactPii"],
 
   async execute(task) {
     const start = nowMs();
@@ -255,12 +257,19 @@ export const people = {
       evidence.push(`${doc}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`);
     }
 
-    const pkg = await readLocalFile("package.json");
-    if (pkg.ok) {
-      evidence.push(`package.json revisado: ${pkg.content.length} bytes`);
-    }
+    const piiScan = await scanPiiDirectories([
+      join(process.cwd(), "logs", "executions"),
+      join(process.cwd(), "logs", "cycles"),
+      join(process.cwd(), "artifacts", "nuva-agency"),
+    ]);
+    evidence.push(
+      `PII scan: ${piiScan.status}; archivos revisados: ${piiScan.scannedFiles}; archivos con hallazgos: ${piiScan.filesWithFindings}; emails: ${piiScan.emailMatches}; RUT válidos: ${piiScan.rutMatches}; directorios ausentes: ${piiScan.missingDirectories}; truncado: ${piiScan.truncated ? "sí" : "no"}`,
+    );
 
-    return makeResult("people", task.id, "PASS", evidence, errors, start);
+    const pkg = await readLocalFile("package.json");
+    if (pkg.ok) evidence.push(`package.json revisado: ${pkg.content.length} bytes`);
+
+    return makeResult("people", task.id, piiScan.status, evidence, errors, start);
   },
 };
 
