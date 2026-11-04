@@ -56,6 +56,1269 @@
   ],
   "executions": [
     {
+      "id": "exec-20261103-221608965",
+      "timestamp": "2026-11-04T01:16:08.965Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-221608965.json"
+    },
+    {
+      "id": "exec-20261103-220955278",
+      "timestamp": "2026-11-04T01:09:55.278Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-220955278.json"
+    },
+    {
+      "id": "exec-20261103-220348363",
+      "timestamp": "2026-11-04T01:03:48.363Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-220348363.json"
+    },
+    {
+      "id": "exec-20261103-215737940",
+      "timestamp": "2026-11-04T00:57:37.940Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-215737940.json"
+    },
+    {
+      "id": "exec-20261103-215122599",
+      "timestamp": "2026-11-04T00:51:22.599Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-215122599.json"
+    },
+    {
+      "id": "exec-20261103-214459412",
+      "timestamp": "2026-11-04T00:44:59.412Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-214459412.json"
+    },
+    {
+      "id": "exec-20261103-213819634",
+      "timestamp": "2026-11-04T00:38:19.634Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-213819634.json"
+    },
+    {
+      "id": "exec-20261103-213210567",
+      "timestamp": "2026-11-04T00:32:10.567Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-213210567.json"
+    },
+    {
+      "id": "exec-20261103-212602342",
+      "timestamp": "2026-11-04T00:26:02.342Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-212602342.json"
+    },
+    {
+      "id": "exec-20261103-211948241",
+      "timestamp": "2026-11-04T00:19:48.241Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-211948241.json"
+    },
+    {
+      "id": "exec-20261103-211341021",
+      "timestamp": "2026-11-04T00:13:41.021Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-211341021.json"
+    },
+    {
+      "id": "exec-20261103-210730438",
+      "timestamp": "2026-11-04T00:07:30.438Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-210730438.json"
+    },
+    {
+      "id": "exec-20261103-210124362",
+      "timestamp": "2026-11-04T00:01:24.362Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-210124362.json"
+    },
+    {
+      "id": "exec-20261103-205519645",
+      "timestamp": "2026-11-03T23:55:19.645Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-205519645.json"
+    },
+    {
+      "id": "exec-20261103-204905975",
+      "timestamp": "2026-11-03T23:49:05.975Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-204905975.json"
+    },
+    {
+      "id": "exec-20261103-204240867",
+      "timestamp": "2026-11-03T23:42:40.867Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-204240867.json"
+    },
+    {
+      "id": "exec-20261103-203439239",
+      "timestamp": "2026-11-03T23:34:39.240Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-203439239.json"
+    },
+    {
+      "id": "exec-20261103-202632232",
+      "timestamp": "2026-11-03T23:26:32.232Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-202632232.json"
+    },
+    {
+      "id": "exec-20261103-201824320",
+      "timestamp": "2026-11-03T23:18:24.320Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-201824320.json"
+    },
+    {
+      "id": "exec-20261103-201148958",
+      "timestamp": "2026-11-03T23:11:48.958Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-201148958.json"
+    },
+    {
+      "id": "exec-20261103-200344470",
+      "timestamp": "2026-11-03T23:03:44.470Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-200344470.json"
+    },
+    {
+      "id": "exec-20261103-195525857",
+      "timestamp": "2026-11-03T22:55:25.857Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-195525857.json"
+    },
+    {
+      "id": "exec-20261103-194721037",
+      "timestamp": "2026-11-03T22:47:21.037Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-194721037.json"
+    },
+    {
+      "id": "exec-20261103-193915959",
+      "timestamp": "2026-11-03T22:39:15.959Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-193915959.json"
+    },
+    {
+      "id": "exec-20261103-193112132",
+      "timestamp": "2026-11-03T22:31:12.132Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-193112132.json"
+    },
+    {
+      "id": "exec-20261103-192258927",
+      "timestamp": "2026-11-03T22:22:58.927Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-192258927.json"
+    },
+    {
+      "id": "exec-20261103-191855951",
+      "timestamp": "2026-11-03T22:18:55.951Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-191855951.json"
+    },
+    {
+      "id": "exec-20261103-191455310",
+      "timestamp": "2026-11-03T22:14:55.310Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-191455310.json"
+    },
+    {
+      "id": "exec-20261103-190558081",
+      "timestamp": "2026-11-03T22:05:58.081Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-190558081.json"
+    },
+    {
+      "id": "exec-20261103-185615070",
+      "timestamp": "2026-11-03T21:56:15.070Z",
+      "taskId": "T-138",
+      "agent": "constructor",
+      "result": "FAIL",
+      "file": "exec-20261103-185615070.json"
+    },
+    {
+      "id": "exec-20261103-185113157",
+      "timestamp": "2026-11-03T21:51:13.157Z",
+      "taskId": "T-137",
+      "agent": "qa",
+      "result": "PASS",
+      "file": "exec-20261103-185113157.json"
+    },
+    {
+      "id": "exec-20261103-172225825",
+      "timestamp": "2026-11-03T20:22:25.825Z",
+      "taskId": "T-137",
+      "agent": "constructor",
+      "result": "PASS",
+      "file": "exec-20261103-172225825.json"
+    },
+    {
+      "id": "exec-20261103-172157197",
+      "timestamp": "2026-11-03T20:21:57.197Z",
+      "taskId": "T-136",
+      "agent": "qa",
+      "result": "PASS",
+      "file": "exec-20261103-172157197.json"
+    },
+    {
+      "id": "exec-20261103-172121598",
+      "timestamp": "2026-11-03T20:21:21.598Z",
+      "taskId": "T-135",
+      "agent": "release",
+      "result": "PASS",
+      "file": "exec-20261103-172121598.json"
+    },
+    {
+      "id": "exec-20261103-172104343",
+      "timestamp": "2026-11-03T20:21:04.343Z",
+      "taskId": "T-130",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-172104343.json"
+    },
+    {
+      "id": "exec-20261103-172104042",
+      "timestamp": "2026-11-03T20:21:04.042Z",
+      "taskId": "T-129",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-172104042.json"
+    },
+    {
+      "id": "exec-20261103-172057699",
+      "timestamp": "2026-11-03T20:20:57.699Z",
+      "taskId": "T-128",
+      "agent": "orchestrator",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-172057699.json"
+    },
+    {
+      "id": "exec-20261103-171620673",
+      "timestamp": "2026-11-03T20:16:20.673Z",
+      "taskId": "T-126",
+      "agent": "compliance",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-171620673.json"
+    },
+    {
+      "id": "exec-20261103-171620334",
+      "timestamp": "2026-11-03T20:16:20.334Z",
+      "taskId": "T-122",
+      "agent": "growth",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-171620334.json"
+    },
+    {
+      "id": "exec-20261103-171619991",
+      "timestamp": "2026-11-03T20:16:19.991Z",
+      "taskId": "T-121",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-171619991.json"
+    },
+    {
+      "id": "exec-20261103-171119106",
+      "timestamp": "2026-11-03T20:11:19.106Z",
+      "taskId": "T-127",
+      "agent": "sentinel",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-171119106.json"
+    },
+    {
+      "id": "exec-20261103-171118854",
+      "timestamp": "2026-11-03T20:11:18.854Z",
+      "taskId": "T-125",
+      "agent": "people",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-171118854.json"
+    },
+    {
+      "id": "exec-20261103-171118581",
+      "timestamp": "2026-11-03T20:11:18.581Z",
+      "taskId": "T-124",
+      "agent": "supply",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-171118581.json"
+    },
+    {
+      "id": "exec-20261103-170617827",
+      "timestamp": "2026-11-03T20:06:17.827Z",
+      "taskId": "T-123",
+      "agent": "sales",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-170617827.json"
+    },
+    {
+      "id": "exec-20261103-170544352",
+      "timestamp": "2026-11-03T20:05:44.353Z",
+      "taskId": "T-120",
+      "agent": "qa",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-170544352.json"
+    },
+    {
+      "id": "exec-20261103-170506057",
+      "timestamp": "2026-11-03T20:05:06.057Z",
+      "taskId": "T-119",
+      "agent": "release",
+      "result": "PASS",
+      "file": "exec-20261103-170506057.json"
+    },
+    {
+      "id": "exec-20261103-165743662",
+      "timestamp": "2026-11-03T19:57:43.662Z",
+      "taskId": "T-116",
+      "agent": "sentinel",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165743662.json"
+    },
+    {
+      "id": "exec-20261103-165743417",
+      "timestamp": "2026-11-03T19:57:43.417Z",
+      "taskId": "T-113",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165743417.json"
+    },
+    {
+      "id": "exec-20261103-165740010",
+      "timestamp": "2026-11-03T19:57:40.010Z",
+      "taskId": "T-112",
+      "agent": "growth",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165740010.json"
+    },
+    {
+      "id": "exec-20261103-165739780",
+      "timestamp": "2026-11-03T19:57:39.780Z",
+      "taskId": "T-111",
+      "agent": "orchestrator",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165739780.json"
+    },
+    {
+      "id": "exec-20261103-165739552",
+      "timestamp": "2026-11-03T19:57:39.553Z",
+      "taskId": "T-108",
+      "agent": "compliance",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165739552.json"
+    },
+    {
+      "id": "exec-20261103-165714092",
+      "timestamp": "2026-11-03T19:57:14.092Z",
+      "taskId": "T-101",
+      "agent": "qa",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165714092.json"
+    },
+    {
+      "id": "exec-20261103-165713801",
+      "timestamp": "2026-11-03T19:57:13.801Z",
+      "taskId": "T-100",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165713801.json"
+    },
+    {
+      "id": "exec-20261103-165713563",
+      "timestamp": "2026-11-03T19:57:13.563Z",
+      "taskId": "T-99",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165713563.json"
+    },
+    {
+      "id": "exec-20261103-165708312",
+      "timestamp": "2026-11-03T19:57:08.312Z",
+      "taskId": "T-98",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165708312.json"
+    },
+    {
+      "id": "exec-20261103-165708081",
+      "timestamp": "2026-11-03T19:57:08.081Z",
+      "taskId": "T-96",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165708081.json"
+    },
+    {
+      "id": "exec-20261103-165643467",
+      "timestamp": "2026-11-03T19:56:43.467Z",
+      "taskId": "T-115",
+      "agent": "qa",
+      "result": "PASS",
+      "file": "exec-20261103-165643467.json"
+    },
+    {
+      "id": "exec-20261103-165639812",
+      "timestamp": "2026-11-03T19:56:39.812Z",
+      "taskId": "T-114",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165639812.json"
+    },
+    {
+      "id": "exec-20261103-165614304",
+      "timestamp": "2026-11-03T19:56:14.304Z",
+      "taskId": "T-110",
+      "agent": "release",
+      "result": "PASS",
+      "file": "exec-20261103-165614304.json"
+    },
+    {
+      "id": "exec-20261103-165613909",
+      "timestamp": "2026-11-03T19:56:13.909Z",
+      "taskId": "T-109",
+      "agent": "sentinel",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165613909.json"
+    },
+    {
+      "id": "exec-20261103-165609739",
+      "timestamp": "2026-11-03T19:56:09.739Z",
+      "taskId": "T-107",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165609739.json"
+    },
+    {
+      "id": "exec-20261103-165609322",
+      "timestamp": "2026-11-03T19:56:09.322Z",
+      "taskId": "T-106",
+      "agent": "supply",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165609322.json"
+    },
+    {
+      "id": "exec-20261103-165609000",
+      "timestamp": "2026-11-03T19:56:09.000Z",
+      "taskId": "T-105",
+      "agent": "sales",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165609000.json"
+    },
+    {
+      "id": "exec-20261103-165604393",
+      "timestamp": "2026-11-03T19:56:04.393Z",
+      "taskId": "T-104",
+      "agent": "people",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165604393.json"
+    },
+    {
+      "id": "exec-20261103-165604122",
+      "timestamp": "2026-11-03T19:56:04.122Z",
+      "taskId": "T-103",
+      "agent": "supply",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165604122.json"
+    },
+    {
+      "id": "exec-20261103-165603782",
+      "timestamp": "2026-11-03T19:56:03.782Z",
+      "taskId": "T-102",
+      "agent": "release",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165603782.json"
+    },
+    {
+      "id": "exec-20261103-165558862",
+      "timestamp": "2026-11-03T19:55:58.862Z",
+      "taskId": "T-97",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165558862.json"
+    },
+    {
+      "id": "exec-20261103-165558594",
+      "timestamp": "2026-11-03T19:55:58.594Z",
+      "taskId": "T-95",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165558594.json"
+    },
+    {
+      "id": "exec-20261103-165558230",
+      "timestamp": "2026-11-03T19:55:58.230Z",
+      "taskId": "T-94",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-165558230.json"
+    },
+    {
+      "id": "exec-20261103-164634046",
+      "timestamp": "2026-11-03T19:46:34.046Z",
+      "taskId": "T-93",
+      "agent": "orchestrator",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164634046.json"
+    },
+    {
+      "id": "exec-20261103-164630818",
+      "timestamp": "2026-11-03T19:46:30.818Z",
+      "taskId": "T-92",
+      "agent": "orchestrator",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164630818.json"
+    },
+    {
+      "id": "exec-20261103-164630604",
+      "timestamp": "2026-11-03T19:46:30.604Z",
+      "taskId": "T-91",
+      "agent": "orchestrator",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164630604.json"
+    },
+    {
+      "id": "exec-20261103-164630298",
+      "timestamp": "2026-11-03T19:46:30.298Z",
+      "taskId": "T-90",
+      "agent": "release",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164630298.json"
+    },
+    {
+      "id": "exec-20261103-164626522",
+      "timestamp": "2026-11-03T19:46:26.522Z",
+      "taskId": "T-89",
+      "agent": "release",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164626522.json"
+    },
+    {
+      "id": "exec-20261103-164626307",
+      "timestamp": "2026-11-03T19:46:26.307Z",
+      "taskId": "T-85",
+      "agent": "growth",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164626307.json"
+    },
+    {
+      "id": "exec-20261103-164626068",
+      "timestamp": "2026-11-03T19:46:26.068Z",
+      "taskId": "T-83",
+      "agent": "compliance",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164626068.json"
+    },
+    {
+      "id": "exec-20261103-164621799",
+      "timestamp": "2026-11-03T19:46:21.799Z",
+      "taskId": "T-82",
+      "agent": "compliance",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164621799.json"
+    },
+    {
+      "id": "exec-20261103-164621568",
+      "timestamp": "2026-11-03T19:46:21.568Z",
+      "taskId": "T-79",
+      "agent": "people",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164621568.json"
+    },
+    {
+      "id": "exec-20261103-164621335",
+      "timestamp": "2026-11-03T19:46:21.335Z",
+      "taskId": "T-77",
+      "agent": "supply",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164621335.json"
+    },
+    {
+      "id": "exec-20261103-164617766",
+      "timestamp": "2026-11-03T19:46:17.766Z",
+      "taskId": "T-75",
+      "agent": "sales",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164617766.json"
+    },
+    {
+      "id": "exec-20261103-164617544",
+      "timestamp": "2026-11-03T19:46:17.544Z",
+      "taskId": "T-74",
+      "agent": "sales",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164617544.json"
+    },
+    {
+      "id": "exec-20261103-164617312",
+      "timestamp": "2026-11-03T19:46:17.312Z",
+      "taskId": "T-71",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164617312.json"
+    },
+    {
+      "id": "exec-20261103-164612953",
+      "timestamp": "2026-11-03T19:46:12.953Z",
+      "taskId": "T-68",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164612953.json"
+    },
+    {
+      "id": "exec-20261103-164612740",
+      "timestamp": "2026-11-03T19:46:12.740Z",
+      "taskId": "T-67",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164612740.json"
+    },
+    {
+      "id": "exec-20261103-164612510",
+      "timestamp": "2026-11-03T19:46:12.510Z",
+      "taskId": "T-66",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164612510.json"
+    },
+    {
+      "id": "exec-20261103-164608568",
+      "timestamp": "2026-11-03T19:46:08.568Z",
+      "taskId": "T-65",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164608568.json"
+    },
+    {
+      "id": "exec-20261103-164608296",
+      "timestamp": "2026-11-03T19:46:08.296Z",
+      "taskId": "T-62",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164608296.json"
+    },
+    {
+      "id": "exec-20261103-164546435",
+      "timestamp": "2026-11-03T19:45:46.435Z",
+      "taskId": "T-58",
+      "agent": "qa",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164546435.json"
+    },
+    {
+      "id": "exec-20261103-164520443",
+      "timestamp": "2026-11-03T19:45:20.443Z",
+      "taskId": "T-57",
+      "agent": "qa",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164520443.json"
+    },
+    {
+      "id": "exec-20261103-164520147",
+      "timestamp": "2026-11-03T19:45:20.147Z",
+      "taskId": "T-55",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164520147.json"
+    },
+    {
+      "id": "exec-20261103-164519840",
+      "timestamp": "2026-11-03T19:45:19.840Z",
+      "taskId": "T-54",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164519840.json"
+    },
+    {
+      "id": "exec-20261103-164515651",
+      "timestamp": "2026-11-03T19:45:15.651Z",
+      "taskId": "T-51",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164515651.json"
+    },
+    {
+      "id": "exec-20261103-164436304",
+      "timestamp": "2026-11-03T19:44:36.304Z",
+      "taskId": "T-88",
+      "agent": "release",
+      "result": "PASS",
+      "file": "exec-20261103-164436304.json"
+    },
+    {
+      "id": "exec-20261103-164435937",
+      "timestamp": "2026-11-03T19:44:35.937Z",
+      "taskId": "T-87",
+      "agent": "sentinel",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164435937.json"
+    },
+    {
+      "id": "exec-20261103-164431135",
+      "timestamp": "2026-11-03T19:44:31.135Z",
+      "taskId": "T-86",
+      "agent": "sentinel",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164431135.json"
+    },
+    {
+      "id": "exec-20261103-164430864",
+      "timestamp": "2026-11-03T19:44:30.864Z",
+      "taskId": "T-84",
+      "agent": "growth",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164430864.json"
+    },
+    {
+      "id": "exec-20261103-164430559",
+      "timestamp": "2026-11-03T19:44:30.559Z",
+      "taskId": "T-81",
+      "agent": "compliance",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164430559.json"
+    },
+    {
+      "id": "exec-20261103-164424958",
+      "timestamp": "2026-11-03T19:44:24.958Z",
+      "taskId": "T-80",
+      "agent": "people",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164424958.json"
+    },
+    {
+      "id": "exec-20261103-164424680",
+      "timestamp": "2026-11-03T19:44:24.680Z",
+      "taskId": "T-78",
+      "agent": "people",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164424680.json"
+    },
+    {
+      "id": "exec-20261103-164424381",
+      "timestamp": "2026-11-03T19:44:24.381Z",
+      "taskId": "T-76",
+      "agent": "supply",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164424381.json"
+    },
+    {
+      "id": "exec-20261103-164415629",
+      "timestamp": "2026-11-03T19:44:15.629Z",
+      "taskId": "T-73",
+      "agent": "sales",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164415629.json"
+    },
+    {
+      "id": "exec-20261103-164415357",
+      "timestamp": "2026-11-03T19:44:15.357Z",
+      "taskId": "T-72",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164415357.json"
+    },
+    {
+      "id": "exec-20261103-164415064",
+      "timestamp": "2026-11-03T19:44:15.064Z",
+      "taskId": "T-70",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164415064.json"
+    },
+    {
+      "id": "exec-20261103-164409931",
+      "timestamp": "2026-11-03T19:44:09.931Z",
+      "taskId": "T-69",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164409931.json"
+    },
+    {
+      "id": "exec-20261103-164409660",
+      "timestamp": "2026-11-03T19:44:09.660Z",
+      "taskId": "T-61",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164409660.json"
+    },
+    {
+      "id": "exec-20261103-164409372",
+      "timestamp": "2026-11-03T19:44:09.372Z",
+      "taskId": "T-60",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164409372.json"
+    },
+    {
+      "id": "exec-20261103-164335417",
+      "timestamp": "2026-11-03T19:43:35.417Z",
+      "taskId": "T-59",
+      "agent": "qa",
+      "result": "PASS",
+      "file": "exec-20261103-164335417.json"
+    },
+    {
+      "id": "exec-20261103-164308162",
+      "timestamp": "2026-11-03T19:43:08.162Z",
+      "taskId": "T-56",
+      "agent": "qa",
+      "result": "PASS",
+      "file": "exec-20261103-164308162.json"
+    },
+    {
+      "id": "exec-20261103-164307768",
+      "timestamp": "2026-11-03T19:43:07.768Z",
+      "taskId": "T-53",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164307768.json"
+    },
+    {
+      "id": "exec-20261103-164245154",
+      "timestamp": "2026-11-03T19:42:45.154Z",
+      "taskId": "T-52",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164245154.json"
+    },
+    {
+      "id": "exec-20261103-164244879",
+      "timestamp": "2026-11-03T19:42:44.879Z",
+      "taskId": "T-64",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164244879.json"
+    },
+    {
+      "id": "exec-20261103-164244529",
+      "timestamp": "2026-11-03T19:42:44.529Z",
+      "taskId": "T-63",
+      "agent": "security",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-164244529.json"
+    },
+    {
+      "id": "exec-20261103-121149766",
+      "timestamp": "2026-11-03T15:11:49.766Z",
+      "taskId": "T-48",
+      "agent": "growth",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-121149766.json"
+    },
+    {
+      "id": "exec-20261103-121149566",
+      "timestamp": "2026-11-03T15:11:49.566Z",
+      "taskId": "T-47",
+      "agent": "supply",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-121149566.json"
+    },
+    {
+      "id": "exec-20261103-121108767",
+      "timestamp": "2026-11-03T15:11:08.767Z",
+      "taskId": "T-46",
+      "agent": "compliance",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-121108767.json"
+    },
+    {
+      "id": "exec-20261103-121108496",
+      "timestamp": "2026-11-03T15:11:08.496Z",
+      "taskId": "T-43",
+      "agent": "ux",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-121108496.json"
+    },
+    {
+      "id": "exec-20261103-121108129",
+      "timestamp": "2026-11-03T15:11:08.129Z",
+      "taskId": "T-44",
+      "agent": "release",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-121108129.json"
+    },
+    {
+      "id": "exec-20261103-121014496",
+      "timestamp": "2026-11-03T15:10:14.496Z",
+      "taskId": "T-41",
+      "agent": "qa",
+      "result": "PASS",
+      "file": "exec-20261103-121014496.json"
+    },
+    {
+      "id": "exec-20261103-121014223",
+      "timestamp": "2026-11-03T15:10:14.223Z",
+      "taskId": "T-37",
+      "agent": "sales",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-121014223.json"
+    },
+    {
+      "id": "exec-20261103-121013926",
+      "timestamp": "2026-11-03T15:10:13.926Z",
+      "taskId": "T-45",
+      "agent": "people",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-121013926.json"
+    },
+    {
+      "id": "exec-20261103-120956998",
+      "timestamp": "2026-11-03T15:09:56.998Z",
+      "taskId": "T-42",
+      "agent": "sentinel",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-120956998.json"
+    },
+    {
+      "id": "exec-20261103-120956638",
+      "timestamp": "2026-11-03T15:09:56.638Z",
+      "taskId": "T-39",
+      "agent": "constructor",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-120956638.json"
+    },
+    {
+      "id": "exec-20261103-120956343",
+      "timestamp": "2026-11-03T15:09:56.343Z",
+      "taskId": "T-38",
+      "agent": "growth",
+      "result": "PASS",
+      "qaVerdict": "PASS",
+      "securityVerdict": "PASS",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-120956343.json"
+    },
+    {
+      "id": "exec-20261103-120838548",
+      "timestamp": "2026-11-03T15:08:38.548Z",
+      "taskId": "T-36",
+      "agent": "sales",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-120838548.json"
+    },
+    {
+      "id": "exec-20261103-120838275",
+      "timestamp": "2026-11-03T15:08:38.275Z",
+      "taskId": "T-35",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-120838275.json"
+    },
+    {
+      "id": "exec-20261103-120837928",
+      "timestamp": "2026-11-03T15:08:37.928Z",
+      "taskId": "T-34",
+      "agent": "finance",
+      "result": "WARN",
+      "qaVerdict": "WARN",
+      "securityVerdict": "WARN",
+      "orchestratorDecision": "accepted",
+      "file": "exec-20261103-120837928.json"
+    },
+    {
       "id": "exec-20261031-012812287",
       "timestamp": "2026-10-31T04:28:12.287Z",
       "taskId": "T-07",
