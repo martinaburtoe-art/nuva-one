@@ -25,7 +25,7 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 | ID | Especialista | Estado | Tarea actual | Sistema utilizado | Última actividad | Siguiente tarea |
 |---|---|---|---|---|---|---|
 | 1 | Constructor | COMPLETED | Misión individual: inspección task-executor | GitHub, archivos locales | Sintaxis OK en agency-task-executor.mjs (28764 bytes); issue #260 inspeccionado | Implementar tarea acotada en rama aislada cuando se asigne (T-27) |
-| 2 | Orchestrator | WORKING | Ciclo autónomo INSPECT→NEXT TASK | GitHub, Supabase, Vercel, archivos locales | 13 misiones individuales ejecutadas y verificadas; 0 tareas elegibles en backlog | Asignar próxima tarea desbloqueada; continuar ciclo autónomo |
+|| 2 | Orchestrator | COMPLETED | Ciclo autónomo INSPECT→NEXT TASK — batch-complete | GitHub, Supabase, Vercel, archivos locales | 15 misiones ejecutadas (T-33 a T-48); ciclo batch-complete, 0 tareas elegibles; T-40/T-49/T-50 bloqueadas por dependencias | Continuar ciclo autónomo cuando se desbloqueen dependencias |
 | 3 | Finance | COMPLETED | Misión individual: revisión dependencias y lockfiles | Archivos locales | Modelo de costos infraestructura creado (AGENCY_FINANCE_COST_MODEL.md); WARN: lockfiles duplicados | Revisar punto de equilibrio con modelo de costos |
 | 4 | Sales | COMPLETED | Misión individual: revisión configuración ventas | GitHub, archivos locales | Estrategia comercial SaaS B2B creada (AGENCY_SALES_STRATEGY.md); WARN: Odoo/GTM/GA no declarados | Ejecutar embudo de captación con primeros clientes piloto |
 | 5 | Supply | COMPLETED | Misión individual: revisión migración control plane | GitHub, Supabase | Tablas agency_tasks y agency_missions verificadas en migración | Validar esquema de inventario local |
@@ -57,7 +57,10 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 | T-22 | Release | Owner Console (sesión real) | Supabase, Vercel | Depende de T-20 y T-21 | T-20 y T-21 resueltos + sesión real de owner |
 | T-27 | Constructor | Implementar tarea real en rama aislada | GitHub | Depende de T-20/T-21 (worker capaz de claim/finish) | Worker durable operativo |
 | T-28 | QA | Validar cambio real de constructor | GitHub, Vercel preview | Depende de T-27 | T-27 completado |
-| T-32 | Security | Desplegar hardening OIDC en Edge Function | Supabase Edge Function | Edge v16 desplegada pero hardening no aplicado remoto | Autorización de deploy del owner |
+|| T-32 | Security | Desplegar hardening OIDC en Edge Function | Supabase Edge Function | Edge v16 desplegada pero hardening no aplicado remoto | Autorización de deploy del owner |
+|| T-40 | Orchestrator | Preparar entorno duradero y sincronizar backlog | AGENT_BACKLOG.md | Depende de T-31 EN_CURSO (hardening OIDC) | T-31 resuelta + autorización de deploy |
+|| T-49 | Orchestrator | Continuar ciclo autónomo tras desbloqueo | GitHub, AGENT_BACKLOG.md | Depende de T-40 (bloqueada) | T-40 desbloqueada |
+|| T-50 | Orchestrator | Retrospectiva de operación productiva | AGENCY_EVIDENCE_LOG.md | Depende de T-49 | T-49 completada |
 
 ### Tareas completadas (COMPLETED) — esta sesión
 
@@ -103,20 +106,8 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 
 | ID | Especialista sugerido | Tarea | Sistema | Riesgo | Autorización requerida |
 |---|---|---|---|---|---|
-| T-31 (continuación) | Security | Documentar permisos y cambios necesarios para eliminar bloqueos OIDC | Documentación | Bajo | No (documentación solamente) |
-| T-3 (preparación) | Constructor | Preparar cambios de código para T-27 (rama aislada) | GitHub | Bajo | No (rama de trabajo, sin merge) |
-| Finance | Finance | Modelo de costos de infraestructura por cliente | Local | Bajo | No |
-| Finance | Finance | Margen por plan y costos variables | Local | Bajo | No |
-| Finance | Finance | Punto de equilibrio y escenarios 10/50/100 clientes | Local | Bajo | No |
-| Sales | Sales | Embudo de captación | Local | Bajo | No |
-| Sales | Sales | Proceso de demostración | Local | Bajo | No |
-| Sales | Sales | Seguimiento de oportunidades | Local | Bajo | No |
-| Sales | Sales | Propuesta comercial | Local | Bajo | No |
-| Sales | Sales | Métricas de conversión | Local | Bajo | No |
-| Growth | Growth | Plan de adquisición de clientes piloto | Local | Bajo | No |
-| Growth | Growth | Estrategia de posicionamiento | Local | Bajo | No |
-| Growth | Growth | Calendario de acciones | Local | Bajo | No |
-| Growth | Growth | Indicadores de adquisición y retención | Local | Bajo | No |
+|| T-31 (continuación) | Security | Documentar permisos y cambios necesarios para eliminar bloqueos OIDC | Documentación | Bajo | No (documentación solamente) |
+|| T-3 (preparación) | Constructor | Preparar cambios de código para T-27 (rama aislada) | GitHub | Bajo | No (rama de trabajo, sin merge) |
 
 |---
 
