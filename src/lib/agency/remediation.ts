@@ -19,7 +19,7 @@ const candidates: Record<RemediationKind, Candidate> = {
   retry_ci_failure: {
     kind: "retry_ci_failure",
     description: "Retry the failed CI workflow once.",
-    agentId: "devops",
+    agentId: "release",
     risk: "LOW",
     reversible: true,
     verificationPlan: [
@@ -30,7 +30,7 @@ const candidates: Record<RemediationKind, Candidate> = {
   refresh_preview: {
     kind: "refresh_preview",
     description: "Recreate a disposable preview deployment.",
-    agentId: "devops",
+    agentId: "release",
     risk: "LOW",
     reversible: true,
     verificationPlan: [
@@ -41,7 +41,7 @@ const candidates: Record<RemediationKind, Candidate> = {
   rebuild_generated_artifact: {
     kind: "rebuild_generated_artifact",
     description: "Regenerate a disposable generated artifact.",
-    agentId: "engineering",
+    agentId: "constructor",
     risk: "LOW",
     reversible: true,
     verificationPlan: [

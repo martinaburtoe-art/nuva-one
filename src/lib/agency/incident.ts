@@ -43,7 +43,7 @@ export function buildFinding(signal: SentinelSignal): Finding {
     title: `${signal.source}: ${signal.name}`,
     confidence: signal.status === "critical" ? 0.9 : 0.65,
     evidence: [buildEvidence(signal)],
-    department: signal.source === "github" ? "engineering" : "sentinel",
+    department: signal.source === "github" ? "security" : "sentinel",
     detectedAt: signal.observedAt,
     tenantSafe: true,
   };

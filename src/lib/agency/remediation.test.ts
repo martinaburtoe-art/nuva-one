@@ -30,7 +30,7 @@ describe("agency remediation planner", () => {
     const action = proposeRemediation(
       incident,
       "retry_ci_failure",
-      agencyAgents.find((agent) => agent.id === "devops")!,
+      agencyAgents.find((agent) => agent.id === "release")!,
     );
 
     expect(action?.risk).toBe("LOW");
@@ -42,7 +42,7 @@ describe("agency remediation planner", () => {
     const action = proposeRemediation(
       { ...incident, severity: "CRITICAL" },
       "retry_ci_failure",
-      agencyAgents.find((agent) => agent.id === "devops")!,
+      agencyAgents.find((agent) => agent.id === "release")!,
     );
 
     expect(action).toBeNull();
@@ -52,7 +52,7 @@ describe("agency remediation planner", () => {
     const action = proposeRemediation(
       incident,
       "retry_ci_failure",
-      agencyAgents.find((agent) => agent.id === "engineering")!,
+      agencyAgents.find((agent) => agent.id === "constructor")!,
     );
 
     expect(action).toBeNull();

@@ -5,8 +5,9 @@ export type FindingSeverity = "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type IncidentStatus = "OPEN" | "INVESTIGATING" | "PLANNED" | "EXECUTING" | "VERIFYING" | "RESOLVED" | "ESCALATED";
 
 export type AgencyDepartment =
-  | "sentinel" | "engineering" | "qa" | "security" | "data" | "devops"
-  | "performance" | "finops" | "growth" | "compliance" | "ai-reliability";
+  | "finance" | "sales" | "supply" | "people" | "growth"
+  | "orchestrator" | "constructor" | "compliance" | "security" | "qa"
+  | "sentinel" | "ux" | "release";
 
 export interface Evidence {
   id: string;
