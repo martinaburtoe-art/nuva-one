@@ -3,7 +3,7 @@
 Tablero persistente de Nüva Agency — estado de cada especialista, tarea actual, sistema utilizado, última actividad y siguiente tarea.
 
 Generado: 2026-11-03
-Actualizado: 2026-11-03 (sesión activa JARVIS)
+Actualizado: 2026-11-04 (sesión activa JARVIS)
 Fuente: evidencia de ejecución real en esta sesión y estados previos verificados.
 
 ---
@@ -25,7 +25,7 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 | ID | Especialista | Estado | Tarea actual | Sistema utilizado | Última actividad | Siguiente tarea |
 |---|---|---|---|---|---|---|
 | 1 | Constructor | COMPLETED | Misión individual: inspección task-executor | GitHub, archivos locales | Sintaxis OK en agency-task-executor.mjs (28764 bytes); issue #260 inspeccionado | Implementar tarea acotada en rama aislada cuando se asigne (T-27) |
-|| 2 | Orchestrator | COMPLETED | Ciclo autónomo INSPECT→NEXT TASK — batch-complete | GitHub, Supabase, Vercel, archivos locales | 15 misiones ejecutadas (T-33 a T-48); ciclo batch-complete, 0 tareas elegibles; T-40/T-49/T-50 bloqueadas por dependencias | Continuar ciclo autónomo cuando se desbloqueen dependencias |
+|| 2 | Orchestrator | COMPLETED | Ciclo autónomo INSPECT→NEXT TASK — batch-complete | GitHub, Supabase, Vercel, archivos locales | 15 misiones ejecutadas (T-33 a T-48); ciclo batch-complete; T-134 elegible tras corrección de dependencias (`dependencias: ninguna`); T-40/T-49/T-50 bloqueadas por dependencias | Ejecutar T-134 (evidencia de bloqueos documentada); continuar ciclo cuando se desbloqueen T-20/T-32 |
 | 3 | Finance | COMPLETED | Misión individual: revisión dependencias y lockfiles | Archivos locales | Modelo de costos infraestructura creado (AGENCY_FINANCE_COST_MODEL.md); WARN: lockfiles duplicados | Revisar punto de equilibrio con modelo de costos |
 | 4 | Sales | COMPLETED | Misión individual: revisión configuración ventas | GitHub, archivos locales | Estrategia comercial SaaS B2B creada (AGENCY_SALES_STRATEGY.md); WARN: Odoo/GTM/GA no declarados | Ejecutar embudo de captación con primeros clientes piloto |
 | 5 | Supply | COMPLETED | Misión individual: revisión migración control plane | GitHub, Supabase | Tablas agency_tasks y agency_missions verificadas en migración | Validar esquema de inventario local |

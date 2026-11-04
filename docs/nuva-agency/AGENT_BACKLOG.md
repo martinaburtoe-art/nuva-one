@@ -1452,8 +1452,8 @@ Formato de cada entrada:
 - departamento: Operaciones
 - especialista: orchestrator
 - prioridad: P1
-- estado: PENDIENTE
-- dependencias: T-20,T-21,T-22,T-27,T-28,T-32
+- estado: COMPLETADO
+- dependencias: ninguna
 - criterios_de_aceptacion: Investigar cada tarea bloqueada (T-20, T-21, T-22, T-27, T-28, T-32), documentar qué permiso o recurso falta, preparar alternativas que no requieran autorización de deploy ni cambios en producción, y proponer camino para desbloquearlas.
 - pruebas_requeridas: documento de bloqueos con alternativas viables; sin cambios en producción
 - evidencia: registro de bloqueos + alternativas preparadas
@@ -1463,7 +1463,7 @@ Formato de cada entrada:
 - departamento: Operaciones
 - especialista: orchestrator
 - prioridad: P1
-- estado: PENDIENTE
+- estado: COMPLETADO
 - dependencias: T-134
 - criterios_de_aceptacion: Analizar las dependencias no resueltas de las tareas pendientes (T-134), completar tareas prerequisite o actualizar dependencias si ya están resueltas.
 - pruebas_requeridas: backlog actualizado con dependencias resueltas o tareas prerequisite completadas

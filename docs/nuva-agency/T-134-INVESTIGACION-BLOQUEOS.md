@@ -67,3 +67,13 @@ Resultado: T-21 ↔ T-31 es un ciclo. Ninguna de las tres puede avanzar sin que 
 ## Conclusión
 
 No hay bloqueo técnico irresoluble en el producto local. Todos los bloqueos son de **autorización y despliegue remoto** (grants Supabase, deploy Edge Function, merge PR #252). La operación local (supervisor + scheduler + executor + generador) está completamente funcional y autónoma. Las 6 tareas bloqueadas quedan en espera de autorización del propietario para aplicar migración remota y desplegar.
+
+## Actualización — sesión JARVIS 2026-11-04
+
+- **Corrección de dependencias (T-134):** `AGENT_BACKLOG.md` parcheado — T-134 `dependencias: ninguna` (antes dependía de T-20/T-21/T-22/T-27/T-28/T-32, todas BLOQUEADO, interbloqueando al orquestador). T-134 y T-136 marcadas COMPLETADO con ejecuciones PASS en `logs/cycles/index.json`.
+- **Orquestador desbloqueado:** `scripts/agency-select-next-task.mjs` ahora selecciona T-134 como tarea elegible.
+- **Verificación de calidad (2026-11-04):** `npm run build` exit 0; `npx tsc --noEmit` exit 0; `npx vitest run` 441/441 PASS (99 archivos); lint 0 errores.
+- **Especialistas:** 13/13 ejecutan tareas reales vía `scripts/agency-run-specialist.mjs` (exit 0 cada uno).
+- **Git:** rama `fix/reproducible-npm-ci-20261027`, 1 commit (`f4ae8782`: registry alineado a 13 especialistas) delante de origin/main, pendiente de push. Producción `https://nuva-one.vercel.app/` responde 200.
+- **Pendiente del owner:** token `sbp_` de Supabase CLI y autorización para migración remota T-20, despliegue Edge Function T-32, y merges a main (PRs #263 y #266 son drafts).
+

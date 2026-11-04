@@ -159,3 +159,15 @@ No se declara operación exitosa sin salida de comando, archivo creado, URL veri
 - origen: agency-generate-tasks.mjs
 - inspección: TODOs=76, build=true, tests=false, typecheck=false
 - evidencia: AGENT_BACKLOG.md actualizado con 2 nuevas tareas PENDIENTE
+
+## #2 — Investigación de bloqueos T-20, T-21, T-22, T-27, T-28, T-32 (T-134)
+- timestamp: 2026-11-04
+- agente: JARVIS / orchestrator
+- resultado: 6 tareas BLOQUEADO en cadena por falta de token `sbp_` de Supabase CLI (0 coincidencias en C:\Users\marti) y autorización de migración/despliegue remoto; dependencia circular T-21 ↔ T-31 documentada; alternativas de trabajo local listadas
+- evidencia: docs/nuva-agency/T-134-INVESTIGACION-BLOQUEOS.md; T-134 dependencias corregidas a `ninguna` en AGENT_BACKLOG.md; T-134 y T-136 marcadas COMPLETADO
+
+## #3 — Verificación de calidad y estado de sincronización (2026-11-04)
+- agente: JARVIS
+- resultado: `npm run build` exit 0; `npx tsc --noEmit` exit 0; `npx vitest run` 441/441 PASS (99 archivos); lint 0 errores; 13/13 especialistas ejecutan tareas reales vía scripts/agency-run-specialist.mjs (exit 0 cada uno)
+- git: rama `fix/reproducible-npm-ci-20261027`, 1 commit (`f4ae8782`: registry alineado a 13 especialistas) delante de origin/main, pendiente de push; producción `https://nuva-one.vercel.app/` responde 200 (homepage y dashboard)
+- bloqueos abiertos: Supabase CLI sin login (token `sbp_` pendiente del owner); PRs #263 y #266 drafts sin merge; despliegues críticos y migraciones de producción pendientes de autorización del owner
