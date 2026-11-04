@@ -67,7 +67,11 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
             ? "annual"
             : "monthly";
 
-        const plan = NUVA_PLANS.pro;
+        const planKey: "starter" | "pro" =
+          body.plan === "starter" || body.plan === "pro" ? body.plan : "pro";
+        // El plan y el precio se resuelven siempre en el servidor. El cliente
+        // solo elige qué plan contratar; nunca puede modificar el monto.
+        const plan = NUVA_PLANS[planKey];
         const result = await createMercadoPagoSubscription({
           config: mercadoPago,
           businessId,

@@ -30,7 +30,6 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
         const today = new Date().toISOString().slice(0, 10);
         const period = today.slice(0, 7);
         const staleBefore = new Date(Date.now() - STALE_PROCESSING_MINUTES * 60_000).toISOString();
-        const parsedPrice = NUVA_PLANS.pro.monthlyPriceClp;
 
         // Pending subscriptions are card-registered but not yet paid. Active Pro
         // subscriptions are recurring charges. Both must enter the same idempotent
@@ -40,7 +39,7 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
           .select("id, name, flow_customer_id, billing_failed_attempts, plan, subscription_status")
           .eq("flow_card_status", "active")
           .lte("next_charge_date", today)
-          .or("subscription_status.eq.pending,and(subscription_status.eq.active,plan.eq.pro)");
+          .or("subscription_status.eq.pending,and(subscription_status.eq.active,(plan.eq.starter,plan.eq.pro))");
 
         if (error) {
           console.error("subscription_charge_query_failed", error);
@@ -74,13 +73,17 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
             continue;
           }
 
+          const planKey = (biz.plan as "starter" | "pro") ?? "pro";
+          const planPrice = NUVA_PLANS[planKey]?.monthlyPriceClp ?? NUVA_PLANS.pro.monthlyPriceClp;
+          const planName = planKey === "starter" ? "Starter" : "Pro";
+
           if (!existing) {
             const { error: reserveError } = await supabaseAdmin
               .from("subscription_charges")
               .insert({
                 business_id: biz.id,
                 commerce_order: commerceOrder,
-                amount: parsedPrice,
+                amount: planPrice,
                 status: "processing",
                 attempt_started_at: new Date().toISOString(),
               });
@@ -117,8 +120,8 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
 
           const charge = await chargeSubscription(creds, {
             customerId,
-            amount: parsedPrice,
-            subject: "Nüva One — Plan Pro (mensual)",
+            amount: planPrice,
+            subject: `Nüva One — Plan ${planName} (mensual)`,
             commerceOrder,
           });
 
@@ -144,7 +147,7 @@ export const Route = createFileRoute("/api/billing/subscribe/run-charges")({
             await supabaseAdmin
               .from("businesses")
               .update({
-                plan: NUVA_PLANS.pro.id,
+                plan: NUVA_PLANS[planKey].id,
                 subscription_status: "active",
                 billing_failed_attempts: 0,
                 next_charge_date: next.toISOString().slice(0, 10),

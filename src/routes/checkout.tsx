@@ -122,18 +122,12 @@ function CheckoutPage() {
       return;
     }
 
-    if (!isPro) {
-      toast.success("Tu cuenta está lista para comenzar Nüva Start.");
-      navigate({ to: "/dashboard" });
-      return;
-    }
-
     setProcessing(true);
     try {
       const response = await fetch("/api/billing/subscribe/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business_id: active.id }),
+        body: JSON.stringify({ business_id: active.id, plan: plan.id, billing }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
         ok?: boolean;
