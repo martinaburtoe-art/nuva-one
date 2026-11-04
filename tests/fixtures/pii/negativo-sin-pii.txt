@@ -1,0 +1,6 @@
+// Fixture negativo: contenido sin PII (solo datos del sistema)
+Sistema: Nüva Agency
+Módulo: People compliance
+Estado: operativo
+Versión: 1.0.0
+Fecha: 2026-10-31

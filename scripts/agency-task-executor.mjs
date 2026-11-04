@@ -11,6 +11,7 @@ const INDEX_FILE = join(LOGS_DIR, "index.json");
 const SELECTOR = "scripts/agency-select-next-task.mjs";
 const LOGGER = "scripts/agency-cycle-logger.mjs";
 const SPECIALIST_RUNNER = "scripts/agency-run-specialist.mjs";
+const ROOT = process.cwd();
 const SPECIALIST_IDS = ["finance", "sales", "supply", "people", "growth", "orchestrator", "constructor", "compliance", "security", "qa", "sentinel", "ux", "release"];
 const PERSISTED_MISSION_KEY = `agency-batch-${randomUUID()}`;
 
@@ -485,6 +486,47 @@ async function runMainWithLock(execIdValue) {
       }
       const selectorResult = JSON.parse(selectorOutput);
       if (!selectorResult.nextTask) {
+        // --- INTERRUPTOR DE PLANIFICACIÓN CONTINUA ---
+        // Cuando no hay tareas elegibles (tanto al inicio como tras batch-complete),
+        // autogenerar trabajo desde el estado real del producto antes de rendirse.
+        const { execFileSync } = await import("node:child_process");
+        let generated = false;
+        try {
+          const genOut = execFileSync("node", ["scripts/agency-generate-tasks.mjs"], {
+            cwd: ROOT, encoding: "utf8", timeout: 300000,
+          });
+          const genResult = JSON.parse(genOut);
+          if (genResult.phase === "tasks-generated" && genResult.tasksGenerated > 0) {
+            generated = true;
+            result.generationTriggered = true;
+            result.newTaskIds = genResult.taskIds;
+            result.message = `Se generaron ${genResult.tasksGenerated} nuevas tareas`;
+          }
+        } catch (genError) {
+          result.generationError = genError instanceof Error ? genError.message : String(genError);
+        }
+
+        if (generated) {
+          // Volver a leer el backlog y continuar el bucle para seleccionar una nueva tarea
+          const refreshedMd = await readFile(BACKLOG, "utf8");
+          const refreshedBlocks = parseBlocks(refreshedMd);
+          const refreshedById = {};
+          for (const b of refreshedBlocks) refreshedById[b.id] = b;
+          const newCandidates = refreshedBlocks.filter(
+            (b) => b.fields.estado === "PENDIENTE" && depsResolved(b, refreshedById)
+          );
+          if (newCandidates.length > 0) {
+            if (tasksExecuted === 0) {
+              result.phase = "tasks-regenerated";
+              result.message = `Se generaron tareas tras detectar cola vacía`;
+            } else {
+              result.phase = "tasks-regenerated";
+              result.message = `Se generaron ${genResult.tasksGenerated} nuevas tareas tras batch-complete`;
+            }
+            continue;
+          }
+        }
+
         if (tasksExecuted === 0) {
           result.phase = "complete";
           result.message = "No hay tareas PENDIENTE con dependencias resueltas";

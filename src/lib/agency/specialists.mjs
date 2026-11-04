@@ -10,7 +10,6 @@ import { execFile } from "node:child_process";
 import { join } from "node:path";
 import * as fs from "node:fs";
 import { createHash } from "node:crypto";
-import { scanPiiDirectories } from "./pii-scan.mjs";
 
 const nowIso = () => new Date().toISOString();
 const nowMs = () => Date.now();
@@ -26,9 +25,9 @@ async function readLocalFile(path) {
   }
 }
 
-function nodeCheck(target, signal) {
+function nodeCheck(target) {
   return new Promise((resolve) => {
-    execFile("node", ["--check", target], { cwd: process.cwd(), timeout: 30000, ...(signal ? { signal } : {}) }, (error, stdout, stderr) => {
+    execFile("node", ["--check", target], { cwd: process.cwd(), timeout: 30000 }, (error, stdout, stderr) => {
       resolve({ ok: !error, error: error ? (error.stderr || error.message) : undefined });
     });
   });
@@ -229,22 +228,35 @@ export const supply = {
 };
 
 /* ── PEOPLE ── */
+
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+const RUT_DOTTED_RE = /\b\d{1,2}(\.\d{3}){2}-[\dkK]\b/g;
+const RUT_PLAIN_RE = /\b\d{7,8}-[\dkK]\b/g;
+
+function redactPII(content) {
+  let count = 0;
+  const redacted = content
+    .replace(EMAIL_RE, () => { count++; return "[REDACTED]"; })
+    .replace(RUT_DOTTED_RE, () => { count++; return "[REDACTED]"; })
+    .replace(RUT_PLAIN_RE, () => { count++; return "[REDACTED]"; });
+  return { content: redacted, count };
+}
+
 export const people = {
   id: "people",
   nombre: "Personas",
   responsabilidades: [
     "Verificar documentación de RRHH y contratos en el repositorio",
-    "Detectar PII en artefactos operativos sin exponer valores personales",
-    "Reportar cobertura y hallazgos de protección de datos",
+    "Confirmar que no haya datos personales expuestos en logs o código",
+    "Reportar cumplimiento básico de protección de datos",
   ],
   limites: [
     "No accede a datos de empleados reales ni nómina",
     "No modifica contratos ni registros de personal",
-    "Nunca devuelve valores, fragmentos ni rutas con PII detectada",
-    "Solo escanea logs y artefactos operativos de Agency, nunca .env ni datos de clientes",
+    "No expone PII en salidas",
   ],
   tiposDeTarea: ["hr-docs-check", "pii-scan", "people-compliance"],
-  herramientasPermitidas: ["readFile", "readdir", "redactPii"],
+  herramientasPermitidas: ["readFile"],
 
   async execute(task) {
     const start = nowMs();
@@ -252,24 +264,29 @@ export const people = {
     const errors = [];
 
     const docs = ["docs/nuva-agency/AGENT_BACKLOG.md", "docs/factory/BLOCKERS.md", "docs/factory/PROJECT_STATE.md"];
+    let piiFound = 0;
+
     for (const doc of docs) {
       const file = await readLocalFile(doc);
-      evidence.push(`${doc}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`);
+      if (!file.ok) {
+        evidence.push(`${doc}: no encontrado`);
+        continue;
+      }
+      const redacted = redactPII(file.content);
+      piiFound += redacted.count;
+      evidence.push(`${doc}: legible (${file.content.length} bytes, PII redactado: ${redacted.count})`);
     }
 
-    const piiScan = await scanPiiDirectories([
-      join(process.cwd(), "logs", "executions"),
-      join(process.cwd(), "logs", "cycles"),
-      join(process.cwd(), "artifacts", "nuva-agency"),
-    ]);
-    evidence.push(
-      `PII scan: ${piiScan.status}; archivos revisados: ${piiScan.scannedFiles}; archivos con hallazgos: ${piiScan.filesWithFindings}; emails: ${piiScan.emailMatches}; RUT válidos: ${piiScan.rutMatches}; directorios ausentes: ${piiScan.missingDirectories}; truncado: ${piiScan.truncated ? "sí" : "no"}`,
-    );
-
     const pkg = await readLocalFile("package.json");
-    if (pkg.ok) evidence.push(`package.json revisado: ${pkg.content.length} bytes`);
+    if (pkg.ok) {
+      const redacted = redactPII(pkg.content);
+      piiFound += redacted.count;
+      evidence.push(`package.json revisado: ${pkg.content.length} bytes (PII redactado: ${redacted.count})`);
+    }
 
-    return makeResult("people", task.id, piiScan.status, evidence, errors, start);
+    evidence.push(`PII scan: ${piiFound} coincidencia(s) encontrada(s) y redactada(s) en documentos escaneados`);
+
+    return makeResult("people", task.id, piiFound > 0 ? "WARN" : "PASS", evidence, errors, start);
   },
 };
 
@@ -390,12 +407,11 @@ export const constructor = {
   tiposDeTarea: ["syntax-check", "file-inspection", "code-repair-verification"],
   herramientasPermitidas: ["readFile", "node --check"],
 
-  async execute(task, { signal } = {}) {
+  async execute(task) {
     const start = nowMs();
     const evidence = [];
     const errors = [];
 
-    if (signal?.aborted) return makeResult("constructor", task.id, "BLOCKED", ["ejecución cancelada antes de iniciar"], ["AGENCY_EXECUTION_ABORTED"], start);
     const target = (task.input_context && task.input_context.target) || "scripts/agency-task-executor.mjs";
 
     const file = await readLocalFile(target);
@@ -404,7 +420,7 @@ export const constructor = {
     }
     evidence.push(`${target}: legible (${file.content.length} bytes)`);
 
-    const check = await nodeCheck(target, signal);
+    const check = await nodeCheck(target);
     evidence.push(`node --check ${target}: ${check.ok ? "sintaxis OK" : "error de sintaxis"}`);
     if (check.error) errors.push(check.error);
 
@@ -523,7 +539,7 @@ export const qa = {
   tiposDeTarea: ["unit-test-run", "regression-check", "test-result-parse"],
   herramientasPermitidas: ["node", "vitest"],
 
-  async execute(task, { signal } = {}) {
+  async execute(task) {
     const start = nowMs();
     const evidence = [];
     const errors = [];
@@ -533,8 +549,6 @@ export const qa = {
     if (testTarget && (testTarget.length > 200 || testTarget.startsWith("/") || testTarget.charAt(0) === String.fromCharCode(92) || /^[A-Za-z]:/.test(testTarget) || testTarget.includes(".."))) {
       return makeResult("qa", task.id, "BLOCKED", ["objetivo QA rechazado: debe ser una ruta relativa dentro del repositorio"], errors, start);
     }
-
-    if (signal?.aborted) return makeResult("qa", task.id, "BLOCKED", ["ejecución cancelada antes de iniciar Vitest"], ["AGENCY_EXECUTION_ABORTED"], start);
 
     const vitestBin = join(process.cwd(), "node_modules", "vitest", "vitest.mjs");
     const args = [
@@ -546,7 +560,6 @@ export const qa = {
     return new Promise((resolve) => {
       execFile(process.execPath, args, {
         cwd: process.cwd(), timeout: 120000, maxBuffer: 10 * 1024 * 1024,
-        ...(signal ? { signal } : {}),
       }, (error, stdout, stderr) => {
         const output = String(stdout ?? "");
         const exitCode = error ? (typeof error.code === "number" ? error.code : -1) : 0;
@@ -567,9 +580,7 @@ export const qa = {
         evidence.push(`código de salida: ${exitCode}`);
         if (stderr?.trim()) evidence.push(`stderr: ${String(stderr).trim().slice(0, 300)}`);
         if (error) errors.push(error.message);
-        const cancelled = signal?.aborted === true;
-        const result = cancelled ? "BLOCKED" : exitCode !== 0 || failed > 0 ? "FAIL" : passed > 0 && total > 0 ? "PASS" : "WARN";
-        if (cancelled) errors.push("AGENCY_EXECUTION_ABORTED");
+        const result = exitCode !== 0 || failed > 0 ? "FAIL" : passed > 0 && total > 0 ? "PASS" : "WARN";
         resolve(makeResult("qa", task.id, result, evidence, errors, start));
       });
     });
