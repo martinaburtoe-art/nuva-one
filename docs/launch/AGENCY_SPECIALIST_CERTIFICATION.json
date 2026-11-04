@@ -1,0 +1,206 @@
+{
+  "generatedAt": "2026-11-04T21:37:09.570Z",
+  "total": 13,
+  "passed": 8,
+  "warn": 5,
+  "fail": 0,
+  "blocked": 0,
+  "allPass": true,
+  "specialists": [
+    {
+      "specialist": "finance",
+      "taskId": "cert-finance-001",
+      "result": "WARN",
+      "evidence": [
+        "package.json leído (4909 bytes, hash f1f42d189d8900d1)",
+        "dependencias: 66; devDependencies: 19",
+        "bun.lock: presente",
+        "package-lock.json: presente",
+        "ambos lockfiles presentes — posible inconsistencia si package.json cambió tras ellos"
+      ],
+      "errors": [],
+      "durationMs": 35,
+      "timestamp": "2026-11-04T21:37:07.113Z",
+      "taskType": "lockfile-check"
+    },
+    {
+      "specialist": "sales",
+      "taskId": "cert-sales-001",
+      "result": "WARN",
+      "evidence": [
+        "vercel.json: legible (1048 bytes)",
+        "package.json: legible (4909 bytes)",
+        "supabase/functions/nuva-agency-worker-control/index.ts: legible (9940 bytes)",
+        "odoo declarado: no",
+        "gtm/ga declarado: no"
+      ],
+      "errors": [],
+      "durationMs": 5,
+      "timestamp": "2026-11-04T21:37:07.122Z",
+      "taskType": "integration-verification"
+    },
+    {
+      "specialist": "supply",
+      "taskId": "cert-supply-001",
+      "result": "PASS",
+      "evidence": [
+        "supabase/migrations/20261007000000_durable_autonomous_agency_control_plane.sql: legible (15083 bytes)",
+        "package.json: legible (4909 bytes)",
+        "tabla agency_tasks en migración: sí",
+        "tabla agency_missions en migración: sí"
+      ],
+      "errors": [],
+      "durationMs": 3,
+      "timestamp": "2026-11-04T21:37:07.126Z",
+      "taskType": "inventory-check"
+    },
+    {
+      "specialist": "people",
+      "taskId": "cert-people-001",
+      "result": "PASS",
+      "evidence": [
+        "docs/nuva-agency/AGENT_BACKLOG.md: legible (85826 bytes, PII redactado: 0)",
+        "docs/factory/BLOCKERS.md: legible (4339 bytes, PII redactado: 0)",
+        "docs/factory/PROJECT_STATE.md: legible (10417 bytes, PII redactado: 0)",
+        "package.json revisado: 4909 bytes (PII redactado: 0)",
+        "PII scan: 0 coincidencia(s) encontrada(s) y redactada(s) en documentos escaneados"
+      ],
+      "errors": [],
+      "durationMs": 12,
+      "timestamp": "2026-11-04T21:37:07.138Z",
+      "taskType": "pii-scan"
+    },
+    {
+      "specialist": "growth",
+      "taskId": "cert-growth-001",
+      "result": "PASS",
+      "evidence": [
+        "vercel.json: legible (1048 bytes)",
+        "package.json: legible (4909 bytes)",
+        "vite.config.ts: legible (1993 bytes)",
+        "vitest.config.ts: legible (441 bytes)",
+        "cron jobs en vercel.json: 2"
+      ],
+      "errors": [],
+      "durationMs": 16,
+      "timestamp": "2026-11-04T21:37:07.154Z",
+      "taskType": "analytics-check"
+    },
+    {
+      "specialist": "orchestrator",
+      "taskId": "cert-orchestrator-001",
+      "result": "WARN",
+      "evidence": [
+        "backlog leído (85826 bytes)",
+        "tareas PENDIENTE: 0",
+        "tareas elegibles (deps resueltas): 0",
+        "sin tareas elegibles en este ciclo"
+      ],
+      "errors": [],
+      "durationMs": 8,
+      "timestamp": "2026-11-04T21:37:07.162Z",
+      "taskType": "backlog-selection"
+    },
+    {
+      "specialist": "constructor",
+      "taskId": "cert-constructor-001",
+      "result": "PASS",
+      "evidence": [
+        "scripts/agency-task-executor.mjs: legible (30783 bytes)",
+        "node --check scripts/agency-task-executor.mjs: sintaxis OK"
+      ],
+      "errors": [],
+      "durationMs": 153,
+      "timestamp": "2026-11-04T21:37:07.315Z",
+      "taskType": "syntax-check"
+    },
+    {
+      "specialist": "compliance",
+      "taskId": "cert-compliance-001",
+      "result": "PASS",
+      "evidence": [
+        "DECISIONS.md: legible (11005 bytes)",
+        "backlog leído (85826 bytes)",
+        "tareas sin estado definido: 0"
+      ],
+      "errors": [],
+      "durationMs": 6,
+      "timestamp": "2026-11-04T21:37:07.321Z",
+      "taskType": "decision-audit"
+    },
+    {
+      "specialist": "security",
+      "taskId": "cert-security-001",
+      "result": "WARN",
+      "evidence": [
+        ".env: no encontrado (correcto)",
+        ".env.local: EXISTE (posible secreto expuesto — [REDACTED])",
+        ".env.production: no encontrado (correcto)",
+        "agency-status.ts: 18025 bytes, autorización server-side: sí"
+      ],
+      "errors": [],
+      "durationMs": 4,
+      "timestamp": "2026-11-04T21:37:07.325Z",
+      "taskType": "secret-scan"
+    },
+    {
+      "specialist": "qa",
+      "taskId": "cert-qa-001",
+      "result": "PASS",
+      "evidence": [
+        "vitest run src/lib/agency/policy.test.ts: salida JSON válida",
+        "pruebas: 4/4 aprobadas; 0 fallidas",
+        "código de salida: 0",
+        "stderr: \u001b[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:\n  - `__dirname` (vitest.config.ts:7:25). Use `import.meta.dirname` instead\nSet `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this"
+      ],
+      "errors": [],
+      "durationMs": 1841,
+      "timestamp": "2026-11-04T21:37:09.166Z",
+      "taskType": "unit-test-run"
+    },
+    {
+      "specialist": "sentinel",
+      "taskId": "cert-sentinel-001",
+      "result": "WARN",
+      "evidence": [
+        "ejecuciones en logs: 135",
+        "resultados FAIL: 32",
+        "resultados BLOCKED: 0",
+        ".agency-pause: ausente (sistema activo)"
+      ],
+      "errors": [],
+      "durationMs": 245,
+      "timestamp": "2026-11-04T21:37:09.411Z",
+      "taskType": "health-check"
+    },
+    {
+      "specialist": "ux",
+      "taskId": "cert-ux-001",
+      "result": "PASS",
+      "evidence": [
+        "src/routes/owner/control-tower.tsx: legible (54275 bytes)",
+        "src/routes/api/owner/agency-status.ts: legible (18025 bytes)",
+        "archivos con atributos de accesibilidad: 1"
+      ],
+      "errors": [],
+      "durationMs": 2,
+      "timestamp": "2026-11-04T21:37:09.414Z",
+      "taskType": "route-inspection"
+    },
+    {
+      "specialist": "release",
+      "taskId": "cert-release-001",
+      "result": "PASS",
+      "evidence": [
+        "package.json: 4909 bytes",
+        "artefactos de build: presentes",
+        "git status: 7 archivo(s) sin staged",
+        "?? bun.lock.backup\n?? docs/launch/AGENCY_SPECIALIST_CERTIFICATION.json\n?? package.json.bak\n?? scripts/agency-certify-specialists.mjs\n?? supabase/.temp/\n?? tsconfig.json.bak\n?? vite.config.ts.bak\n"
+      ],
+      "errors": [],
+      "durationMs": 156,
+      "timestamp": "2026-11-04T21:37:09.570Z",
+      "taskType": "git-status-check"
+    }
+  ]
+}
