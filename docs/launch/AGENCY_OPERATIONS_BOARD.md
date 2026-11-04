@@ -106,8 +106,8 @@ Fuente: evidencia de ejecución real en esta sesión y estados previos verificad
 
 | ID | Especialista sugerido | Tarea | Sistema | Riesgo | Autorización requerida |
 |---|---|---|---|---|---|
-|| T-31 (continuación) | Security | Documentar permisos y cambios necesarios para eliminar bloqueos OIDC | Documentación | Bajo | No (documentación solamente) |
-|| T-3 (preparación) | Constructor | Preparar cambios de código para T-27 (rama aislada) | GitHub | Bajo | No (rama de trabajo, sin merge) |
+|| T-31 (documentación OIDC) | Security | Documentar permisos y cambios necesarios para eliminar bloqueos OIDC | Documentación | COMPLETADO | No (documentación solamente) |
+|| T-3 (preparación) | Constructor | Preparar cambios de código para T-27 (rama `t-27-constructor-prep`) | GitHub | Bajo | No (rama de trabajo, sin merge) |
 
 |---
 
