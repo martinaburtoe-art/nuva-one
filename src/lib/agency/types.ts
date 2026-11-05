@@ -7,7 +7,8 @@ export type IncidentStatus = "OPEN" | "INVESTIGATING" | "PLANNED" | "EXECUTING" 
 export type AgencyDepartment =
   | "finance" | "sales" | "supply" | "people" | "growth"
   | "orchestrator" | "constructor" | "compliance" | "security" | "qa"
-  | "sentinel" | "ux" | "release";
+  | "sentinel" | "ux" | "release"
+  | "product" | "customer_success" | "support" | "marketing" | "seo" | "analytics" | "accounting" | "tax_chile" | "integrations" | "data_bi";
 
 export interface Evidence {
   id: string;

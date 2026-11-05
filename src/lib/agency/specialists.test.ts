@@ -10,9 +10,14 @@ import {
 const task = (agentId: string, id = "t-test-001", input_context?: Record<string, unknown>) =>
   ({ id, title: "Tarea de prueba", agent_id: agentId, input_context } as const);
 
-describe("Especialistas faltantes (ETAPA 1)", () => {
-  it("registra exactamente los 13 especialistas", () => {
-    const expected = ["compliance", "constructor", "finance", "growth", "orchestrator", "people", "qa", "release", "sales", "security", "sentinel", "supply", "ux"];
+describe("Especialistas (Orden Maestra 23)", () => {
+  it("registra los 23 especialistas de la Orden Maestra", () => {
+    const expected = [
+      "accounting", "analytics", "compliance", "constructor", "customer_success",
+      "data_bi", "finance", "growth", "integrations", "marketing", "orchestrator",
+      "people", "product", "qa", "release", "sales", "security", "sentinel", "seo",
+      "supply", "support", "tax_chile", "ux",
+    ];
     expect(Object.keys(SPECIALISTS).sort()).toEqual(expected);
     expect(Object.keys(SPECIALIST_META).sort()).toEqual(expected);
   });
@@ -209,5 +214,36 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(["PASS", "FAIL"]).toContain(result.result);
     const joined = result.evidence.join(" ");
     expect(joined).toMatch(/git status|package\.json/);
+  });
+});
+
+describe("Especialistas nuevos (Orden Maestra 23 — producto, negocio, datos)", () => {
+  const NUEVOS = ["product", "customer_success", "support", "marketing", "seo", "analytics", "accounting", "tax_chile", "integrations", "data_bi"];
+
+  it.each(NUEVOS.map((id) => [id]))("%s expone metadatos completos", (id) => {
+    const meta = SPECIALIST_META[id];
+    expect(meta).toBeDefined();
+    expect(meta.id).toBe(id);
+    expect(Array.isArray(meta.responsabilidades)).toBe(true);
+    expect(meta.responsabilidades.length).toBeGreaterThan(0);
+    expect(Array.isArray(meta.limites)).toBe(true);
+    expect(meta.limites.length).toBeGreaterThan(0);
+    expect(Array.isArray(meta.tiposDeTarea)).toBe(true);
+    expect(meta.tiposDeTarea.length).toBeGreaterThan(0);
+    expect(Array.isArray(meta.herramientasPermitidas)).toBe(true);
+    expect(meta.herramientasPermitidas.length).toBeGreaterThan(0);
+  });
+
+  it.each(NUEVOS.map((id) => [id]))("%s ejecuta y devuelve resultado estructurado válido", async (id) => {
+    const result: SpecialistResult = await SPECIALISTS[id](task(id, "t-test-001"));
+    expect(result.specialist).toBe(id);
+    expect(result.taskId).toBe(task(id).id);
+    expect(["PASS", "FAIL", "BLOCKED", "UNKNOWN", "WARN"]).toContain(result.result);
+    expect(Array.isArray(result.evidence)).toBe(true);
+    expect(result.evidence.length).toBeGreaterThan(0);
+    expect(Array.isArray(result.errors)).toBe(true);
+    expect(typeof result.durationMs).toBe("number");
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
+    expect(result.timestamp).toMatch(/\d{4}-\d{2}-\d{2}T/);
   });
 });

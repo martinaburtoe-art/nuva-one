@@ -28,7 +28,7 @@ async function worker(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const runId = request.headers.get("x-agency-run-id");
   const agentId = request.headers.get("x-agency-agent-id");
-  if (!token || !runId || !/^[0-9]+$/.test(runId) || !agentId || !AGENTS.includes(agentId)) {
+  if (!token || !runId || !/^[0-9]+$/.test(runId) || !agentId || !AGENTS.includes(agentId as typeof AGENTS[number])) {
     return { ok: false as const, status: 401 };
   }
   const run = await githubRun(token, runId);
