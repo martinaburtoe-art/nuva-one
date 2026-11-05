@@ -145,3 +145,12 @@ El run [42006106717](https://github.com/martinaburtoe-art/nuva-one/actions/runs/
 ### Límites del corte
 
 Lecturas de Slack/GitHub y SQL SELECT. Se actualizó únicamente documentación en la rama del PR #273. No se ejecutaron migraciones, escrituras en Supabase, cambios de permisos, despliegues, merges, activaciones de workers/schedulers ni acciones irreversibles.
+
+
+### 6. Sentinel y Web QA — hallazgos adicionales del 2026-11-05
+
+- [Sentinel run 42005776226](https://github.com/martinaburtoe-art/nuva-one/actions/runs/42005776226), job 127172011614: el workflow concluyó SUCCESS, pero el artefacto Sentinel reporta status=warning, 1 warning y 0 critical. Producción respondió HTTP 200. GitHub Actions detectó 1 workflow fallido/timeout reciente (el run durable 42001794314).
+- La comprobación Supabase del Sentinel quedó SKIPPED: el log muestra NUVA_SUPABASE_URL vacío en el job. El paso de persistencia también quedó SKIPPED; scripts/nuva-agency-persist-incidents.mjs informó que falta NUVA_SUPABASE_URL o NUVA_SUPABASE_SERVICE_ROLE_KEY. Como NUVA_SUPABASE_URL está vacío, no se puede concluir si la service-role key también falta.
+- El workflow .github/workflows/nuva-agency-sentinel.yml toma esas variables de GitHub Actions Secrets, no del .env.local de Windows. El script de persistencia hace POST a public.ops_incidents cuando dispone de las credenciales. Por respeto a la prohibición de escrituras productivas, no se configuraron secrets ni se habilitó esa escritura. Antes de configurar NUVA_SUPABASE_SERVICE_ROLE_KEY debe autorizarse expresamente el comportamiento de persistencia automática.
+- [Web QA run 42024983442](https://github.com/martinaburtoe-art/nuva-one/actions/runs/42024983442), job 127236813278: status=healthy, 0 warning y 0 critical. Las rutas públicas /, /directorio, /foro y /news respondieron HTTP 200; assets del mismo origen y headers base pasaron. Esto no cubre login, sesiones ni flujos autenticados.
+- Se solicitó a Hermes en Slack que concilie estos hallazgos: [addendum del Sentinel y Web QA](https://nvaone.slack.com/archives/C0CE9B0AG7N/p1793881311108079?thread_ts=1793675448.274509). Sin respuesta observada al corte.
