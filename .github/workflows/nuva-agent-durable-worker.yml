@@ -31,6 +31,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Ensure npm global binaries are on PATH
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm_prefix="$(npm config get prefix)"
+          if [ -z "$npm_prefix" ]; then
+            echo "::error::npm global prefix is empty"
+            exit 1
+          fi
+          echo "$npm_prefix/bin" >> "$GITHUB_PATH"
+          echo "Registered npm global binary path: $npm_prefix/bin"
+
       - name: Select specialist
         id: role
         shell: bash
@@ -142,7 +154,9 @@ jobs:
         env:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+          oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -er .value)"
+          echo "::add-mask::$oidc"
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $oidc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY"             -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID"             -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 1
@@ -171,7 +185,9 @@ jobs:
         env:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+          oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -er .value)"
+          echo "::add-mask::$oidc"
+          curl -fsS -X POST "$AGENCY_URL"             -H "X-Agency-OIDC-Token: $oidc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 2
@@ -199,7 +215,9 @@ jobs:
         env:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+          oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -er .value)"
+          echo "::add-mask::$oidc"
+          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $oidc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 3
@@ -227,7 +245,9 @@ jobs:
         env:
           AGENCY_URL: https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-worker-control
         run: |
-          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+          oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -er .value)"
+          echo "::add-mask::$oidc"
+          curl -fsS -X POST "$AGENCY_URL" -H "X-Agency-OIDC-Token: $oidc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json"             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" -H "X-Agency-Agent-Id: ${{ steps.claim.outputs.active_role }}"             --data "$(jq -n --arg token "$AGENCY_LEASE_TOKEN" '{action:"heartbeat",leaseToken:$token,extendSeconds:21600}')" | jq .
 
       - name: Continue durable objective — pass 4
@@ -294,8 +314,10 @@ jobs:
           # Keep the durable lease alive while OpenCode is working for several minutes.
           (
             while sleep 240; do
+              oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -er .value)"
+              echo "::add-mask::$oidc"
               curl --fail-with-body -sS -X POST "$AGENCY_URL" \
-                -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+                -H "X-Agency-OIDC-Token: $oidc" \
                 -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
                 -H "Content-Type: application/json" \
                 -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
@@ -364,6 +386,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          oidc="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nuva-one-agency" | jq -er .value)"
+          echo "::add-mask::$oidc"
 
           status="completed"
           gemini_ok=true
@@ -400,7 +424,7 @@ jobs:
           http_code="$(curl --silent --show-error --output "$response_file" --write-out "%{http_code}" \
             --retry 5 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
             -X POST "$AGENCY_URL" \
-            -H "X-Agency-OIDC-Token: $AGENCY_OIDC_TOKEN" \
+            -H "X-Agency-OIDC-Token: $oidc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             -H "Content-Type: application/json" \
             -H "X-Agency-Run-Id: $GITHUB_RUN_ID" \
@@ -408,6 +432,11 @@ jobs:
             --data "$payload")"
           if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
             echo "::error::finish_task failed after retries (HTTP $http_code); response follows."
+            cat "$response_file"
+            exit 1
+          fi
+          if ! jq -e '.ok == true' "$response_file" >/dev/null; then
+            echo "::error::finish_task returned HTTP 2xx without ok=true; response follows."
             cat "$response_file"
             exit 1
           fi
