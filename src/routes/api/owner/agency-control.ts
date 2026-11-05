@@ -83,26 +83,10 @@ export const Route = createFileRoute("/api/owner/agency-control")({
             return Response.json({ error: "INVALID_LEASE_SECONDS" }, { status: 400 });
           }
           const { data: initialData, error } = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: leaseSeconds });
-          let data = initialData;
           if (error) throw error;
-          if (!data) {
-            const { data: mission } = await client.from("agency_missions").select("id,objective,success_criteria").eq("metadata->>mode", "durable-autonomous-agency").not("status", "in", "('completed','cancelled','failed')").order("priority", { ascending: false }).limit(1).maybeSingle();
-            if (mission) {
-              const { error: taskError } = await client.from("agency_tasks").insert({
-                mission_id: mission.id,
-                title: `Autonomous ${workerAgentId} cycle`,
-                objective: mission.objective,
-                agent_id: workerAgentId,
-                priority: workerAgentId === "security" ? 100 : 70,
-                input_context: { success_criteria: mission.success_criteria, source: "durable-cycle" },
-              });
-              if (taskError) throw taskError;
-              const claimed = await client.rpc("agency_claim_task", { p_agent_id: workerAgentId, p_lease_seconds: leaseSeconds });
-              if (claimed.error) throw claimed.error;
-              data = claimed.data;
-            }
-          }
-          return Response.json({ claimed: data ?? null });
+          // An empty queue is an idle worker, not permission to manufacture another task.
+          // New work must be explicitly delegated by Orchestrator or created by the owner.
+          return Response.json({ claimed: initialData ?? null });
         }
         if (action === "heartbeat") {
           const leaseToken = typeof body.leaseToken === "string" ? body.leaseToken : "";
