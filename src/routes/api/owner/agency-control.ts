@@ -4,7 +4,7 @@ import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { isTrustedAgencyWorkerRun, type TrustedAgencyWorkerRun } from "@/lib/agency/worker-auth";
 
 const REPO = "martinaburtoe-art/nuva-one";
-const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release"];
+const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release","product","customer_success","support","marketing","seo","analytics","accounting","tax_chile","integrations","data_bi"] as const;
 
 async function githubRun(token: string, runId: string) {
   const r = await fetch(`https://api.github.com/repos/${REPO}/actions/runs/${runId}`, {

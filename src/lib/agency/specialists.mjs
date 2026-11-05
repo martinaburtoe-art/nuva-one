@@ -732,6 +732,428 @@ export const release = {
   },
 };
 
+/* ── PRODUCT ── */
+export const product = {
+  id: "product",
+  nombre: "Producto",
+  responsabilidades: [
+    "Estrategia de producto y roadmap de Nüva Agency",
+    "Priorización de funcionalidades y validación de backlog contra Nüva One",
+    "Definición de criterios de aceptación de cada entrega",
+  ],
+  limites: [
+    "No modifica código de producción",
+    "No aprueba despliegues ni releases",
+    "No accede a credenciales ni secretos",
+  ],
+  tiposDeTarea: ["product-strategy", "roadmap-review", "backlog-validation"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = [
+      "docs/nuva-agency/AGENT_BACKLOG.md",
+      "docs/factory/DECISIONS.md",
+      "package.json",
+    ];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`,
+      );
+    }
+
+    const backlog = await readLocalFile("docs/nuva-agency/AGENT_BACKLOG.md");
+    let backlogValido = false;
+    if (backlog.ok) {
+      try {
+        const bloques = backlog.content.match(/^##\s+T-\d+/m);
+        backlogValido = bloques && bloques.length > 0;
+      } catch {
+        errors.push("backlog no interpretable");
+      }
+    }
+
+    const result = backlog.ok && backlogValido ? "PASS" : "WARN";
+    return makeResult("product", task.id, result, evidence, errors, start);
+  },
+};
+
+/* ── CUSTOMER_SUCCESS ── */
+export const customer_success = {
+  id: "customer_success",
+  nombre: "Customer Success",
+  responsabilidades: [
+    "Documentación de incorporación (onboarding) de clientes",
+    "Métricas de retención y satisfacción",
+    "Experiencia del cliente en Nüva One",
+  ],
+  limites: [
+    "No accede a datos de clientes reales",
+    "No modifica contratos ni registros de clientes",
+    "No envía comunicaciones comerciales",
+  ],
+  tiposDeTarea: ["onboarding-docs", "retention-metrics", "customer-experience"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = [
+      "docs/nuva-agency/AGENT_BACKLOG.md",
+      "README.md",
+    ];
+    let encontrados = 0;
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      if (file.ok) {
+        encontrados++;
+        evidence.push(`${candidate}: legible (${file.content.length} bytes)`);
+      } else {
+        evidence.push(`${candidate}: no encontrado`);
+      }
+    }
+
+    const result = encontrados > 0 ? "PASS" : "WARN";
+    return makeResult("customer_success", task.id, result, evidence, errors, start);
+  },
+};
+
+/* ── SUPPORT ── */
+export const support = {
+  id: "support",
+  nombre: "Soporte",
+  responsabilidades: [
+    "Documentación de soporte técnico",
+    "Gestión de incidencias y canales de escalación",
+    "Resolución de incidencias de usuarios de Nüva One",
+  ],
+  limites: [
+    "No accede a tickets de producción reales",
+    "No modifica datos de usuarios",
+    "No expone credenciales de soporte",
+  ],
+  tiposDeTarea: ["support-docs", "incident-management", "escalation-channels"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = [
+      "docs/nuva-agency/AGENT_BACKLOG.md",
+      "docs/launch/AGENCY_OPERATIONS_BOARD.md",
+    ];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`,
+      );
+    }
+
+    return makeResult("support", task.id, "PASS", evidence, errors, start);
+  },
+};
+
+/* ── MARKETING ── */
+export const marketing = {
+  id: "marketing",
+  nombre: "Marketing",
+  responsabilidades: [
+    "Campañas y contenidos de marca de Nüva Agency",
+    "Comunicación y mensajes clave",
+    "Canales de marketing",
+  ],
+  limites: [
+    "No publica contenido externo sin autorización",
+    "No ejecuta campañas pagadas",
+    "No accede a datos de usuarios para segmentación",
+  ],
+  tiposDeTarea: ["brand-campaigns", "content-creation", "marketing-channels"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = ["vercel.json", "package.json"];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`,
+      );
+    }
+
+    const pkg = await readLocalFile("package.json");
+    let tieneMarca = false;
+    if (pkg.ok) {
+      try {
+        const pj = JSON.parse(pkg.content);
+        tieneMarca = Boolean(pj.name && /nuva/i.test(pj.name));
+      } catch {
+        errors.push("package.json no parseable");
+      }
+    }
+    evidence.push(`nombre de producto con marca Nüva: ${tieneMarca ? "sí" : "no"}`);
+
+    return makeResult("marketing", task.id, "PASS", evidence, errors, start);
+  },
+};
+
+/* ── SEO ── */
+export const seo = {
+  id: "seo",
+  nombre: "SEO",
+  responsabilidades: [
+    "Posicionamiento orgánico de Nüva One",
+    "Indexación y rendimiento técnico SEO",
+    "Sitemap y metaetiquetas",
+  ],
+  limites: [
+    "No modifica etiquetas de producción",
+    "No accede a datos de búsqueda reales",
+    "No envía consultas a motores de búsqueda",
+  ],
+  tiposDeTarea: ["organic-positioning", "technical-seo", "sitemap-meta"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = ["vercel.json", "vite.config.ts", "package.json"];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`,
+      );
+    }
+
+    const vercel = await readLocalFile("vercel.json");
+    let tieneDominio = false;
+    if (vercel.ok) {
+      try {
+        const vj = JSON.parse(vercel.content);
+        tieneDominio = Boolean(vj && (vj.domain || vj.domains));
+      } catch {
+        errors.push("vercel.json no parseable");
+      }
+    }
+    evidence.push(`dominios declarados en vercel.json: ${tieneDominio ? "sí" : "no detectados"}`);
+
+    return makeResult("seo", task.id, "WARN", evidence, errors, start);
+  },
+};
+
+/* ── ANALYTICS ── */
+export const analytics = {
+  id: "analytics",
+  nombre: "Analytics",
+  responsabilidades: [
+    "Métricas e indicadores de negocio de Nüva Agency",
+    "Experimentación y análisis",
+    "Cobertura de medición",
+  ],
+  limites: [
+    "No accede a datos de usuarios reales ni métricas de producción",
+    "No modifica etiquetas de analítica en producción",
+    "No envía eventos a terceros",
+  ],
+  tiposDeTarea: ["business-metrics", "experimentation", "measurement-coverage"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = ["vercel.json", "package.json", "vite.config.ts"];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`,
+      );
+    }
+
+    const pkg = await readLocalFile("package.json");
+    let tieneAnalitica = false;
+    if (pkg.ok) {
+      try {
+        const pj = JSON.parse(pkg.content);
+        const depsTexto = JSON.stringify(pj.dependencies ?? {});
+        tieneAnalitica = /analytics|gtm|google.?tag/i.test(depsTexto);
+      } catch {
+        errors.push("package.json no parseable");
+      }
+    }
+    evidence.push(`dependencias de analítica declaradas: ${tieneAnalitica ? "sí" : "no"}`);
+
+    return makeResult("analytics", task.id, "WARN", evidence, errors, start);
+  },
+};
+
+/* ── ACCOUNTING ── */
+export const accounting = {
+  id: "accounting",
+  nombre: "Contabilidad",
+  responsabilidades: [
+    "Registros contables y conciliación",
+    "Reportes financieros internos",
+    "Estado de contabilidad de Nüva Agency",
+  ],
+  limites: [
+    "No accede a datos financieros reales ni bancarios",
+    "No modifica registros contables de producción",
+    "No maneja credenciales de pago",
+  ],
+  tiposDeTarea: ["accounting-records", "reconciliation", "financial-reporting"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = ["package.json", "bun.lock", "package-lock.json"];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `presente (${file.content.length} bytes)` : "ausente"}`,
+      );
+    }
+
+    return makeResult("accounting", task.id, "PASS", evidence, errors, start);
+  },
+};
+
+/* ── TAX_CHILE ── */
+export const tax_chile = {
+  id: "tax_chile",
+  nombre: "Impuestos Chile",
+  responsabilidades: [
+    "Procesos tributarios chilenos y SII",
+    "Cumplimiento fiscal para pymes",
+    "Obligaciones tributarias de Nüva One",
+  ],
+  limites: [
+    "No accede a datos fiscales reales ni claves del SII",
+    "No presenta declaraciones tributarias",
+    "No modifica configuración fiscal de producción",
+  ],
+  tiposDeTarea: ["sii-processes", "tax-compliance", "tax-obligations"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = ["docs/nuva-agency/AGENT_BACKLOG.md", "docs/launch/AGENCY_OPERATIONS_BOARD.md"];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`,
+      );
+    }
+
+    return makeResult("tax_chile", task.id, "PASS", evidence, errors, start);
+  },
+};
+
+/* ── INTEGRATIONS ── */
+export const integrations = {
+  id: "integrations",
+  nombre: "Integraciones",
+  responsabilidades: [
+    "Integraciones externas, APIs y conectores",
+    "Servidores MCP",
+    "Configuración de integraciones de Nüva Agency",
+  ],
+  limites: [
+    "No inventa endpoints MCP ni formatos de credenciales",
+    "No accede a tokens de integraciones de producción",
+    "No modifica integraciones activas",
+  ],
+  tiposDeTarea: ["external-integrations", "mcp-servers", "integration-config"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const candidates = ["package.json", "vercel.json"];
+    for (const candidate of candidates) {
+      const file = await readLocalFile(candidate);
+      evidence.push(
+        `${candidate}: ${file.ok ? `legible (${file.content.length} bytes)` : "no encontrado"}`,
+      );
+    }
+
+    const pkg = await readLocalFile("package.json");
+    let tieneConectores = false;
+    if (pkg.ok) {
+      try {
+        const pj = JSON.parse(pkg.content);
+        const depsTexto = JSON.stringify(pj.dependencies ?? {});
+        tieneConectores = /supabase|vercel|github|mcp/i.test(depsTexto);
+      } catch {
+        errors.push("package.json no parseable");
+      }
+    }
+    evidence.push(`conectores de integración declarados: ${tieneConectores ? "sí" : "no"}`);
+
+    return makeResult("integrations", task.id, "PASS", evidence, errors, start);
+  },
+};
+
+/* ── DATA_BI ── */
+export const data_bi = {
+  id: "data_bi",
+  nombre: "Data BI",
+  responsabilidades: [
+    "Esquema de base de datos y calidad de datos",
+    "Migraciones de Supabase",
+    "Modelos de información analítica",
+  ],
+  limites: [
+    "No accede a datos de producción",
+    "No ejecuta migraciones remotas",
+    "No modifica políticas RLS",
+  ],
+  tiposDeTarea: ["database-schema", "data-quality", "analytical-models"],
+  herramientasPermitidas: ["readFile"],
+
+  async execute(task) {
+    const start = nowMs();
+    const evidence = [];
+    const errors = [];
+
+    const mig = await readLocalFile(
+      "supabase/migrations/20261007000000_durable_autonomous_agency_control_plane.sql",
+    );
+    if (!mig.ok) {
+      return makeResult("data_bi", task.id, "BLOCKED", ["migración de control plane no local"], [mig.error ?? ""], start);
+    }
+
+    const hasTasks = /create table if not exists public\.agency_tasks/.test(mig.content);
+    const hasMissions = /create table if not exists public\.agency_missions/.test(mig.content);
+    evidence.push(`tabla agency_tasks en migración: ${hasTasks ? "sí" : "no"}`);
+    evidence.push(`tabla agency_missions en migración: ${hasMissions ? "sí" : "no"}`);
+
+    const result = hasTasks && hasMissions ? "PASS" : "FAIL";
+    return makeResult("data_bi", task.id, result, evidence, errors, start);
+  },
+};
+
 export const SPECIALISTS = {
   finance: finance.execute.bind(finance),
   sales: sales.execute.bind(sales),
@@ -746,9 +1168,19 @@ export const SPECIALISTS = {
   sentinel: sentinel.execute.bind(sentinel),
   ux: ux.execute.bind(ux),
   release: release.execute.bind(release),
+  product: product.execute.bind(product),
+  customer_success: customer_success.execute.bind(customer_success),
+  support: support.execute.bind(support),
+  marketing: marketing.execute.bind(marketing),
+  seo: seo.execute.bind(seo),
+  analytics: analytics.execute.bind(analytics),
+  accounting: accounting.execute.bind(accounting),
+  tax_chile: tax_chile.execute.bind(tax_chile),
+  integrations: integrations.execute.bind(integrations),
+  data_bi: data_bi.execute.bind(data_bi),
 };
 
-export const SPECIALIST_IDS = ["finance", "sales", "supply", "people", "growth", "orchestrator", "constructor", "compliance", "security", "qa", "sentinel", "ux", "release"];
+export const SPECIALIST_IDS = ["finance", "sales", "supply", "people", "growth", "orchestrator", "constructor", "compliance", "security", "qa", "sentinel", "ux", "release", "product", "customer_success", "support", "marketing", "seo", "analytics", "accounting", "tax_chile", "integrations", "data_bi"];
 
 export const SPECIALIST_META = {
   finance,
@@ -764,4 +1196,14 @@ export const SPECIALIST_META = {
   sentinel,
   ux,
   release,
+  product,
+  customer_success,
+  support,
+  marketing,
+  seo,
+  analytics,
+  accounting,
+  tax_chile,
+  integrations,
+  data_bi,
 };
