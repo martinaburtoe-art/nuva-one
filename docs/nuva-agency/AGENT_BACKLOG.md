@@ -1492,3 +1492,14 @@ Formato de cada entrada:
 - evidencia: salida del typecheck corregido
 - seguridad: solo typecheck local
 
+## T-139 — Corregir fallo de build de producción
+- departamento: Release
+- especialista: release
+- prioridad: P0
+- estado: COMPLETADO
+- dependencias: ninguna
+- criterios_de_aceptacion: El comando `npm run build` falla con: 1949cf8c6b5b557f\oxc_allocator-0.155.0\src\arena\utils.rs:112:5:
+- pruebas_requeridas: npm run build exit 0; artefactos en dist/
+- evidencia: salida del build corregido
+- seguridad: solo build local, sin despliegue
+
