@@ -87,3 +87,61 @@ Se publicó una nueva solicitud de resumen técnico con los IDs y fallos anterio
 ## Límites de esta revisión
 
 Solo lecturas de Slack/GitHub y consultas SQL `SELECT`. No se ejecutaron migraciones, escrituras en Supabase, cambios de permisos, despliegues, merges, activaciones de workers/schedulers ni acciones irreversibles.
+
+
+## Actualización operativa — 2026-11-05 09:12 CLST (12:12 UTC)
+
+### 1. Hermes: ausencia de respuesta e integración no demostrada
+
+- La lectura completa del hilo de cambio de mando (Slack, canal C0CE9B0AG7N, thread 1793675448.274509) confirma que no hay respuesta de Hermes después de sus mensajes de gateway del 2026-11-04 00:11 CLST. La búsqueda de mensajes del bot Hermes posteriores al 2026-11-04 no devuelve resultados.
+- Se publicó una nueva solicitud técnica en el mismo hilo a las 2026-11-05 09:10 CLST: [solicitud a Hermes con la evidencia nueva](https://nvaone.slack.com/archives/C0CE9B0AG7N/p1793881043472489?thread_ts=1793675448.274509).
+- El run [42001794314](https://github.com/martinaburtoe-art/nuva-one/actions/runs/42001794314), job 127158569364, demuestra que el worker autónomo actual descarga google-github-actions/run-gemini-cli@v0.1.22 y configura GEMINI_MODEL=gemini-3.1-flash-lite. No ejecuta Hermes.
+- El job reportó worker y cuatro continuaciones Gemini como SUCCESS, pero finish_task terminó con HTTP 502 y el error "exp claim timestamp check failed". No hay prueba de ejecución Hermes ni de subagentes Hermes.
+
+**Bloqueo operativo confirmado:** el runtime de producción automatizado observado sigue siendo GitHub Actions + Gemini CLI. Hermes no respondió en Slack y no existe evidencia en los workflows revisados de una llamada a su runtime. El estado "gateway online" no prueba una tarea ejecutada.
+
+### 2. Estado durable actualizado (consultas SELECT)
+
+- Conteo actual de agency_tasks: 8 completed, 13 failed, 6 queued y 1 claimed (28 tareas).
+- QA task 79927c95-7540-4fc4-83b9-0cbdf23a4033: status=claimed, attempt_count=1, result vacío, error nulo. El evento 107 registra task.claimed a las 09:22:21Z y un lease activo con expiración 15:22:21Z.
+- El run 42001794314 empezó a las 09:22:09Z, seleccionó agente qa y terminó a las 09:36:38Z. La coincidencia temporal y de agente apunta a que es la tarea reclamada, pero el log del workflow no imprime task_id; por tanto, la correlación run_id ↔ task_id no es exacta ni auditable todavía.
+- Aunque el workflow terminó FAILURE, el registro sigue claimed y el lease continúa activo hasta su expiración. No se modificó ni se intentó liberar el lease.
+- La tarea release fee6a6c0-b8cb-44af-a450-84b793dbdbf5 agotó 3/3 intentos y quedó failed por max_attempts_exhausted; evento 104 task.recovery_exhausted.
+- QA task f9132296-c736-47c3-9a21-b5782a98c682 sí terminó completed: run [41950533904](https://github.com/martinaburtoe-art/nuva-one/actions/runs/41950533904), job 126993148341, registra 401/401 tests PASS, pero excluye specialists.test.ts. No equivale a la suite completa.
+- Orchestrator task 914f3792-99d1-4a33-a763-dad823dd5f2b sí terminó completed con verdict PASS en run [41995189997](https://github.com/martinaburtoe-art/nuva-one/actions/runs/41995189997), job 127136541421. Leyó 85.845 bytes de backlog y seleccionó T-138 (corregir errores de typecheck, P1); no implementó T-138.
+- Run [41966482368](https://github.com/martinaburtoe-art/nuva-one/actions/runs/41966482368) terminó success usando Gemini, con Groq skipped y Create autonomous PR skipped. Run [41998207376](https://github.com/martinaburtoe-art/nuva-one/actions/runs/41998207376) terminó success, pero las etapas de checkout, reparación, verificación y push quedaron skipped; no hubo reparación.
+
+### 3. PRs y CI actualizados
+
+| PR | Estado al 2026-11-05 | Evidencia |
+|---|---|---|
+| [#270](https://github.com/martinaburtoe-art/nuva-one/pull/270) | Open, no draft, mergeable=false | CI run 41638309419 FAILURE; no integrable. |
+| [#271](https://github.com/martinaburtoe-art/nuva-one/pull/271) | Open, draft, mergeable=false | Checks asociados SUCCESS, pero estado dirty; candidato duplicado del despacho de especialistas. |
+| [#272](https://github.com/martinaburtoe-art/nuva-one/pull/272) | Open, listo para revisión, mergeable=true | Commit aea4dee4a99e960f51c65fec3839d68c16c24808; siete workflows asociados SUCCESS. Codex registró revisión de código completada sin hallazgos. Corrige tokens OIDC frescos por heartbeat/finish y exige ok=true. |
+| [#273](https://github.com/martinaburtoe-art/nuva-one/pull/273) | Open, draft | Este documento de auditoría; actualización agregada en esta rama, sin merge. |
+| [#274](https://github.com/martinaburtoe-art/nuva-one/pull/274) | Open, listo para revisión, mergeable=true | Commit final 5d6f3bb6b172cea814a2a18e674949e8f8d5733d; ocho checks asociados SUCCESS. Elimina la creación automática de tareas cuando la cola durable está vacía y añade regresión. Autor GitHub: martinaburtoe-art; no hay evidencia de autoría Hermes. |
+
+El run [42006106717](https://github.com/martinaburtoe-art/nuva-one/actions/runs/42006106717) del Autonomous Merge Controller terminó SUCCESS, pero tanto Final autonomous policy check como Merge verified Agency PR quedaron SKIPPED. No se produjo merge. Los PR #272 y #274 siguen sin fusionarse.
+
+### 4. Matriz C1–C5 al 2026-11-05
+
+| Criterio | Estado | Evidencia / límite |
+|---|---|---|
+| C1 — Integridad de código | WARN | #272 y #274 tienen CI asociado verde; #270 falla y #271 permanece dirty. #274 aún no está integrado en main. |
+| C2 — Integración de runtime | FAIL | El worker de IA ejecuta Gemini CLI; no hay llamada Hermes demostrada ni respuesta del bot Hermes posterior al 04-nov 00:11 CLST. |
+| C3 — Integridad de negocio | WARN | Hay tareas deterministas completadas, pero son inspecciones/selección de backlog; no prueban operaciones comerciales reales. |
+| C4 — Experiencia | UNKNOWN | No se realizó validación visual ni sesión de usuario en este corte. |
+| C5 — Operación durable | FAIL | El run 42001794314 falló en finish_task; su tarea QA asociada temporalmente permanece claimed con lease activo. Release agotó 3/3 intentos. |
+
+### 5. Siguiente trabajo y responsables
+
+1. **Hermes/runtime:** responder con host/runtime, proveedor/modelo, run_id/task_id, logs claim → ejecución → finish, commits y causa verificable de reinicios. Responsable: Hermes; bloqueado por ausencia de respuesta y falta de integración en workflows.
+2. **Worker durable:** corregir el uso de token OIDC expirado y propagar correlación explícita run_id/task_id en eventos/logs. PR #272 contiene la corrección de token; requiere revisión y autorización del owner para merge.
+3. **Cola y leases:** añadir recuperación segura de leases huérfanos tras fallo de workflow, con prueba que impida dejar tareas claimed después de un run terminado. Responsable: mantenedor de Agency.
+4. **Control plane:** revisar #274 para evitar auto-enqueue infinito cuando la cola está vacía. Requiere revisión y autorización del owner para merge.
+5. **Especialistas:** consolidar #270/#271 en un único candidato y ejecutar también specialists.test.ts; los 401/401 excluyen ese archivo.
+6. **Owner:** cualquier merge, migración, escritura productiva, cambio de permisos, deploy o activación de worker/scheduler requiere autorización explícita.
+
+### Límites del corte
+
+Lecturas de Slack/GitHub y SQL SELECT. Se actualizó únicamente documentación en la rama del PR #273. No se ejecutaron migraciones, escrituras en Supabase, cambios de permisos, despliegues, merges, activaciones de workers/schedulers ni acciones irreversibles.
