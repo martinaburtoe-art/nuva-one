@@ -1,4 +1,4 @@
-import { Bot, CheckCircle2, ShieldCheck, Wrench, Database, LineChart, Users, ShoppingCart, Scale, Code2, Search, Palette, Activity, LockKeyhole } from "lucide-react";
+import { Bot, CheckCircle2, ShieldCheck, Wrench, Database, LineChart, Users, ShoppingCart, Scale, Code2, Search, Palette, Activity, LockKeyhole, Layout, Users2, MessageCircle, Megaphone, Compass, BarChart3, CreditCard, FileText, GitBranch } from "lucide-react";
 
 type AgencyWorker = {
   name: string;
@@ -26,6 +26,16 @@ const workers: AgencyWorker[] = [
   { id: "sentinel", name: "Sentinel", role: "Observabilidad", specialty: "Salud y anomalías", status: "watching", icon: Activity, description: "Monitorea señales de producción y genera alertas verificables.", autonomy: "L0 · observación", capabilities: ["telemetría","anomalías","incidentes","evidencia"] },
   { id: "ux", name: "UX", role: "Experiencia", specialty: "UI, accesibilidad y responsive", status: "standby", icon: Palette, description: "Audita la experiencia visual y accesibilidad de Nüva One.", autonomy: "L1 · recomendación", capabilities: ["UI","responsive","a11y","visual QA"] },
   { id: "release", name: "Release", role: "Release Engineering", specialty: "Gates y certificación", status: "watching", icon: Code2, description: "Consolida evidencia y protege los criterios de salida.", autonomy: "L2 · gates controlados", capabilities: ["CI","Vercel","release","rollback"] },
+  { id: "product", name: "Product", role: "Producto", specialty: "Roadmap, funcionalidades y priorización", status: "standby", icon: Layout, description: "Define la estrategia de producto y prioriza el backlog de valor.", autonomy: "L2 · estrategia", capabilities: ["roadmap","priorización","funcionalidades","producto"] },
+  { id: "customer_success", name: "Customer Success", role: "Éxito del cliente", specialty: "Incorporación, retención y satisfacción", status: "standby", icon: Users2, description: "Acompaña al cliente desde el onboarding hasta la renovación.", autonomy: "L1 · recomendación", capabilities: ["onboarding","retención","satisfacción","CS"] },
+  { id: "support", name: "Support", role: "Soporte técnico", specialty: "Resolución de incidencias y documentación", status: "watching", icon: MessageCircle, description: "Gestiona tickets, incidentes y la base de conocimiento.", autonomy: "L2 · resolución", capabilities: ["tickets","incidencias","documentación","ayuda"] },
+  { id: "marketing", name: "Marketing", role: "Marketing", specialty: "Campañas, contenidos y marca", status: "standby", icon: Megaphone, description: "Planea y ejecuta campañas de comunicación y posicionamiento de marca.", autonomy: "L1 · recomendación", capabilities: ["campañas","contenidos","marca","comunicación"] },
+  { id: "seo", name: "SEO", role: "Posicionamiento", specialty: "Indexación orgánica y rendimiento SEO", status: "standby", icon: Compass, description: "Mejora la visibilidad orgánica y el rendimiento de búsqueda.", autonomy: "L1 · recomendación", capabilities: ["SEO","indexación","rendimiento","orgánico"] },
+  { id: "analytics", name: "Analytics", role: "Analítica", specialty: "Métricas, indicadores y experimentación", status: "watching", icon: BarChart3, description: "Mide KPIs, diseña experimentos y analiza el negocio.", autonomy: "L2 · análisis", capabilities: ["métricas","KPI","experimentos","análisis"] },
+  { id: "accounting", name: "Accounting", role: "Contabilidad", specialty: "Registros, conciliación y reportes", status: "standby", icon: CreditCard, description: "Mantiene los registros contables y la conciliación al día.", autonomy: "L2 · registros", capabilities: ["contabilidad","conciliación","reportes","registros"] },
+  { id: "tax_chile", name: "Tax Chile", role: "Tributación", specialty: "SII y procesos fiscales chilenos", status: "standby", icon: FileText, description: "Gestión tributaria alineada al SII y normativa fiscal chilena.", autonomy: "L2 · tributación", capabilities: ["SII","impuestos","fiscal","declaraciones"] },
+  { id: "integrations", name: "Integrations", role: "Integraciones", specialty: "APIs externas, MCP y conectores", status: "standby", icon: GitBranch, description: "Conecta Nüva Agency con servicios externos y el ecosistema MCP.", autonomy: "L2 · integración", capabilities: ["APIs","MCP","conectores","webhooks"] },
+  { id: "data_bi", name: "Data BI", role: "Datos y BI", specialty: "PostgreSQL, calidad de datos y modelos", status: "standby", icon: Database, description: "Gestiona datos, calidad de información y modelos de negocio.", autonomy: "L3 · datos", capabilities: ["PostgreSQL","calidad de datos","modelos","BI"] },
 ];
 
 const statusLabel = { online: "TRABAJANDO", watching: "MONITOREANDO", standby: "EN ESPERA" } as const;
@@ -58,7 +68,7 @@ export function AgencyTeam({ selectedWorker, onSelectWorker }: { selectedWorker?
         })}
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-[10px] text-white/30">
-        <span className="rounded-full border border-white/8 px-2.5 py-1">13 especialistas</span><span className="rounded-full border border-white/8 px-2.5 py-1">13 identidades especializadas</span>
+        <span className="rounded-full border border-white/8 px-2.5 py-1">23 especialistas</span><span className="rounded-full border border-white/8 px-2.5 py-1">23 identidades especializadas</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Owner-only</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Evidence-first</span>
         <span className="rounded-full border border-white/8 px-2.5 py-1">Producción protegida</span>
