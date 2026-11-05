@@ -5,19 +5,29 @@ export const AGENCY_WORKER_WORKFLOW_REF =
   "martinaburtoe-art/nuva-one/.github/workflows/nuva-agent-durable-worker.yml@refs/heads/main";
 
 export const AGENCY_WORKER_AGENT_IDS = [
-  "orchestrator",
-  "constructor",
-  "finance",
-  "sales",
-  "supply",
-  "people",
+  "accounting",
+  "analytics",
   "compliance",
+  "constructor",
+  "customer_success",
+  "data_bi",
+  "finance",
   "growth",
-  "security",
+  "integrations",
+  "marketing",
+  "orchestrator",
+  "people",
+  "product",
   "qa",
-  "sentinel",
-  "ux",
   "release",
+  "sales",
+  "security",
+  "seo",
+  "sentinel",
+  "support",
+  "supply",
+  "tax_chile",
+  "ux",
 ] as const;
 
 const ALLOWED_EVENTS = new Set(["schedule", "workflow_dispatch", "push"]);

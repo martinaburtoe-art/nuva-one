@@ -4,7 +4,7 @@ import { createRemoteJWKSet, jwtVerify } from "npm:jose@6";
 import { AGENCY_WORKER_AGENT_IDS, AGENCY_WORKER_AUDIENCE, isTrustedAgencyWorkerClaims } from "./worker-claims.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
-  status, headers: { "content-type": "application/json", "cache-control": "no-store", "access-control-allow-origin": "*" }
+  status, headers: { "content-type": "application/json", "cache-control": "no-store", "access-control-allow-origin": "https://nuva-one.vercel.app" }
 });
 
 function key(name: "publishable" | "secret") {
