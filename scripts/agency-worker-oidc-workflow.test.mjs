@@ -20,4 +20,12 @@ describe("durable worker OIDC contract", () => {
   it("requires finish_task to return an explicit ok=true body", () => {
     expect(workflow).toContain("if ! jq -e '.ok == true' \"$response_file\" >/dev/null; then");
   });
+
+  it("logs the claimed task id and persists run/task correlation on finish", () => {
+    expect(workflow).toContain("jq -r '.claimed.task.id // empty' .agency/claim-response.json");
+    expect(workflow).toContain('echo "active_task_id=$task_id" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("ACTIVE_TASK_ID: ${{ steps.claim.outputs.active_task_id }}");
+    expect(workflow).toContain("task_id:$task");
+    expect(workflow).toContain("task_id=$task_id run_id=$GITHUB_RUN_ID");
+  });
 });
