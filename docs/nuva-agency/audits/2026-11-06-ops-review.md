@@ -4,7 +4,7 @@
 **Repositorio:** `martinaburtoe-art/nuva-one`
 **`main` observado:** `b0e91154ac6611a0129f94b64e3aec3aaeb6a23c` (merge de PR #269)
 **Supabase:** proyecto `vnzyecnbdqbfuxawzrda`; consultas exclusivamente `SELECT`
-**Alcance:** Slack #nuva-agency-bridge, GitHub Actions, PRs y estado durable. La única escritura de esta revisión es este documento en la rama de auditoría; no hubo escrituras en Supabase.
+**Alcance:** Slack #nuva-agency-bridge, GitHub Actions, PRs y estado durable. Escrituras no productivas limitadas a documentación en PR #273, instrumentación/pruebas en la rama de PR #272, comentario de evidencia en #272 y solicitudes en Slack. No hubo escrituras en Supabase.
 
 ## Dictamen
 
@@ -122,4 +122,32 @@ El merge controller no integró ningún PR en el run 42211432437. No se realizó
 
 ## Límites
 
-Solo se realizaron lecturas de Slack/GitHub y consultas SQL `SELECT`. Se añadió documentación en una rama de PR existente y un comentario de evidencia en #272. No se ejecutaron migraciones, escrituras en Supabase, cambios de permisos, despliegues, merges, activaciones de workers/schedulers ni acciones irreversibles.
+Las lecturas de Supabase fueron exclusivamente `SELECT`. Las escrituras se limitaron a ramas de PR, comentario de revisión y mensajes Slack. No se ejecutaron migraciones, escrituras en Supabase, cambios de permisos, despliegues, merges, activaciones de workers/schedulers ni acciones irreversibles.
+## Actualización de esta revisión — 2026-11-06 09:16 CLST (12:16 UTC)
+
+### Instrumentación añadida a PR #272
+
+- Commit `d02b5b289130ab0ee115593d708111e4b7beec98`: el workflow extrae `claimed.task.id`, falla de forma cerrada si falta, lo expone como `active_task_id` y registra `task_id`, `run_id` y agente en el log de claim.
+- Commit `a305e87123f74e23f0504790bdcbf885caa26db6`: añade una prueba contractual para la instrumentación y agrega `task_id` al objeto `result` enviado por `finish_task`, junto con `run_id`.
+- Archivos modificados: `.github/workflows/nuva-agent-durable-worker.yml` y `scripts/agency-worker-oidc-workflow.test.mjs`.
+- Verificación remota: ambos archivos se volvieron a leer desde la rama `fix/agency-worker-oidc-refresh-20261103`; las cadenas de extracción, salida, persistencia y prueba están presentes.
+- CI del commit `a305e87123f74e23f0504790bdcbf885caa26db6`: Safety Verification, Web QA y Production Smoke `success`; People build `in_progress`; CI Fast, CI principal y reviewer `pending` al último sondeo. No se declara CI completo.
+- PR #272 continúa abierto, no draft y `mergeable=true`; no se fusionó ni desplegó.
+
+### Estado del PR documental #273
+
+- Documento creado en commit `e616b97eca68690e1df92e017089c09105187b6d`.
+- CI Fast, Control Plane Verify, People build, Safety Verification y Production Smoke `success`; CI principal y reviewer seguían en progreso al último sondeo.
+- PR #273 continúa draft y abierto.
+
+### Seguimiento Hermes
+
+- Se publicó la actualización de evidencia y la solicitud de respuesta en [Slack #nuva-agency-bridge](https://nvaone.slack.com/archives/C0CE9B0AG7N/p1793967388788309?thread_ts=1793675448.274509&cid=C0CE9B0AG7N).
+- La lectura posterior del hilo no encontró respuesta de Hermes.
+- La notificación al hilo padre mediante Automations devolvió `404 Action not found`; no se pudo entregar desde esta sesión.
+
+### Persistencia al último sondeo
+
+- La tarea security `c236aac0-929c-4ba7-8155-88648cef5d17` seguía `running`, sin `task.completed`; lease `3b784208-762a-4981-b5bf-c1a45f0d3937` seguía `active` hasta `12:19:14 UTC`.
+- Conteos sin cambios: 12 completed, 13 failed, 7 queued, 1 running.
+- No se liberó ni modificó el lease.
