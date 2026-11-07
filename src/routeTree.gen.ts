@@ -72,6 +72,7 @@ import { Route as AuthenticatedShiftsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedShipmentsRouteImport } from './routes/_authenticated/shipments'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiIntegrationsRouteImport } from './routes/api/integrations'
 import { Route as ApiIntegrationsEventsRouteImport } from './routes/api/integrations-events'
 import { Route as ApiIntegrationsWebhookRouteImport } from './routes/api/integrations-webhook'
@@ -441,6 +442,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInngestRoute = ApiInngestRouteImport.update({
+  id: '/api/inngest',
+  path: '/api/inngest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiIntegrationsRoute = ApiIntegrationsRouteImport.update({
   id: '/api/integrations',
   path: '/api/integrations',
@@ -674,6 +680,7 @@ export interface FileRoutesByFullPath {
   '/shipments': typeof AuthenticatedShipmentsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/integrations': typeof ApiIntegrationsRoute
   '/api/integrations-events': typeof ApiIntegrationsEventsRoute
   '/api/integrations-webhook': typeof ApiIntegrationsWebhookRoute
@@ -769,6 +776,7 @@ export interface FileRoutesByTo {
   '/shipments': typeof AuthenticatedShipmentsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/integrations': typeof ApiIntegrationsRoute
   '/api/integrations-events': typeof ApiIntegrationsEventsRoute
   '/api/integrations-webhook': typeof ApiIntegrationsWebhookRoute
@@ -866,6 +874,7 @@ export interface FileRoutesById {
   '/_authenticated/shipments': typeof AuthenticatedShipmentsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/inngest': typeof ApiInngestRoute
   '/api/integrations': typeof ApiIntegrationsRoute
   '/api/integrations-events': typeof ApiIntegrationsEventsRoute
   '/api/integrations-webhook': typeof ApiIntegrationsWebhookRoute
@@ -963,6 +972,7 @@ export interface FileRouteTypes {
     | '/shipments'
     | '/api/chat'
     | '/api/health'
+    | '/api/inngest'
     | '/api/integrations'
     | '/api/integrations-events'
     | '/api/integrations-webhook'
@@ -1058,6 +1068,7 @@ export interface FileRouteTypes {
     | '/shipments'
     | '/api/chat'
     | '/api/health'
+    | '/api/inngest'
     | '/api/integrations'
     | '/api/integrations-events'
     | '/api/integrations-webhook'
@@ -1154,6 +1165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/shipments'
     | '/api/chat'
     | '/api/health'
+    | '/api/inngest'
     | '/api/integrations'
     | '/api/integrations-events'
     | '/api/integrations-webhook'
@@ -1210,6 +1222,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  ApiInngestRoute: typeof ApiInngestRoute
   ApiIntegrationsRoute: typeof ApiIntegrationsRoute
   ApiIntegrationsEventsRoute: typeof ApiIntegrationsEventsRoute
   ApiIntegrationsWebhookRoute: typeof ApiIntegrationsWebhookRoute
@@ -1685,6 +1698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/inngest': {
+      id: '/api/inngest'
+      path: '/api/inngest'
+      fullPath: '/api/inngest'
+      preLoaderRoute: typeof ApiInngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/integrations': {
       id: '/api/integrations'
       path: '/api/integrations'
@@ -2034,6 +2054,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiHealthRoute: ApiHealthRoute,
+  ApiInngestRoute: ApiInngestRoute,
   ApiIntegrationsRoute: ApiIntegrationsRoute,
   ApiIntegrationsEventsRoute: ApiIntegrationsEventsRoute,
   ApiIntegrationsWebhookRoute: ApiIntegrationsWebhookRoute,
