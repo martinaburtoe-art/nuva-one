@@ -12,7 +12,7 @@ const task = (agentId: string, id = "t-test-001", input_context?: Record<string,
 
 describe("Especialistas faltantes (ETAPA 1)", () => {
   it("registra exactamente los 13 especialistas", () => {
-    const expected = ["compliance", "constructor", "finance", "growth", "orchestrator", "people", "qa", "release", "sales", "security", "sentinel", "supply", "ux"];
+    const expected = ["accounting", "analytics", "compliance", "constructor", "customer_success", "data_bi", "finance", "growth", "integrations", "marketing", "orchestrator", "people", "product", "qa", "release", "sales", "security", "seo", "sentinel", "support", "supply", "tax_chile", "ux"];
     expect(Object.keys(SPECIALISTS).sort()).toEqual(expected);
     expect(Object.keys(SPECIALIST_META).sort()).toEqual(expected);
   });
@@ -209,5 +209,21 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(["PASS", "FAIL"]).toContain(result.result);
     const joined = result.evidence.join(" ");
     expect(joined).toMatch(/git status|package\.json/);
+  });
+
+  it.each(["product", "customer_success", "support", "marketing", "seo", "analytics", "accounting", "tax_chile", "integrations", "data_bi"])("%s expone metadatos completos", (id) => {
+    const meta = SPECIALIST_META[id];
+    expect(meta).toBeDefined();
+    expect(meta.id).toBe(id);
+    expect(meta.responsabilidades.length).toBeGreaterThan(0);
+    expect(meta.limites.length).toBeGreaterThan(0);
+    expect(meta.tiposDeTarea.length).toBeGreaterThan(0);
+    expect(meta.herramientasPermitidas.length).toBeGreaterThan(0);
+  });
+
+  it.each(["customer_success", "support", "marketing"])("%s no declara PASS sin evidencia específica", async (id) => {
+    const result = await SPECIALISTS[id](task(id));
+    expect(result.result).toBe("WARN");
+    expect(result.evidence.length).toBeGreaterThan(0);
   });
 });
