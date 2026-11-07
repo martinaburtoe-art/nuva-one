@@ -5,7 +5,7 @@
 - The server-only client uses the application ID `nuva-one`.
 - The TanStack Start endpoint is `/api/inngest` and supports GET, POST and PUT.
 - The route runs on Vercel's Node.js serverless runtime.
-- If a read-only specialist needs a repository file that is not bundled, its reader fetches only an explicit allowlist from `raw.githubusercontent.com` at the exact `VERCEL_GIT_COMMIT_SHA` of that deployment. No `.env` files or arbitrary paths are remotely readable.
+- If a read-only specialist needs a repository file that is not bundled, its reader fetches only an explicit allowlist from `raw.githubusercontent.com` at the exact `VERCEL_GIT_COMMIT_SHA` of that deployment. Vercel system environment variables must be exposed; the worker fails closed before claiming a task if the deployment SHA is missing. No `.env` files or arbitrary paths are remotely readable.
 
 ## Registered functions
 
