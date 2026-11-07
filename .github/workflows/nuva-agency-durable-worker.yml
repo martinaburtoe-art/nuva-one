@@ -17,7 +17,6 @@ permissions:
 jobs:
   execute:
     name: Claim and execute durable task (${{ matrix.agent }})
-    if: ${{ !github.event.inputs.agent || github.event.inputs.agent == matrix.agent }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
@@ -59,6 +58,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Execute durable specialist
+        if: ${{ !inputs.agent || inputs.agent == matrix.agent }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_RUN_ID: ${{ github.run_id }}
