@@ -16,12 +16,45 @@ const nowMs = () => Date.now();
 const hashOf = (content) =>
   createHash("sha256").update(content).digest("hex").slice(0, 16);
 
+const REMOTE_SOURCE_ALLOWLIST = new Set([
+  "package.json",
+  "package-lock.json",
+  "bun.lock",
+  "vercel.json",
+  "vite.config.ts",
+  "vitest.config.ts",
+  "supabase/functions/nuva-agency-worker-control/index.ts",
+  "supabase/migrations/20261007000000_durable_autonomous_agency_control_plane.sql",
+  "docs/nuva-agency/AGENT_BACKLOG.md",
+  "docs/factory/BLOCKERS.md",
+  "docs/factory/PROJECT_STATE.md",
+  "docs/factory/DECISIONS.md",
+  "src/routes/api/owner/agency-status.ts",
+  "src/routes/owner/control-tower.tsx",
+]);
+
 async function readLocalFile(path) {
   try {
     const content = await readFile(path, "utf8");
     return { ok: true, content };
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  } catch (localError) {
+    const normalizedPath = typeof path === "string" ? path.replace(/\\\\/g, "/") : "";
+    const commitSha = process.env.VERCEL_GIT_COMMIT_SHA;
+    if (!REMOTE_SOURCE_ALLOWLIST.has(normalizedPath) || !/^[a-f0-9]{40}$/i.test(commitSha ?? "")) {
+      return { ok: false, error: localError instanceof Error ? localError.message : String(localError) };
+    }
+
+    try {
+      const encodedPath = normalizedPath.split("/").map(encodeURIComponent).join("/");
+      const response = await fetch(
+        `https://raw.githubusercontent.com/martinaburtoe-art/nuva-one/${commitSha}/${encodedPath}`,
+        { cache: "no-store", signal: AbortSignal.timeout(10000) },
+      );
+      if (!response.ok) return { ok: false, error: `remote_source_http_${response.status}` };
+      return { ok: true, content: await response.text() };
+    } catch (remoteError) {
+      return { ok: false, error: remoteError instanceof Error ? remoteError.message : String(remoteError) };
+    }
   }
 }
 
