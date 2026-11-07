@@ -8,7 +8,7 @@ import {
 
 function makeStep(): InngestStepRunner {
   return {
-    run: async <T>(_id: string, handler: () => T | Promise<T>) => await handler(),
+    run: async (_id: string, handler: () => Promise<unknown>) => await handler(),
   };
 }
 
