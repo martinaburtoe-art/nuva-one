@@ -1,47 +1,38 @@
 # T-134 — Investigación de bloqueos de Agency (Supabase)
 
-**Estado:** investigado y documentado  
-**Especialista:** Orchestrator  
-**Dependencias investigadas:** T-20, T-21, T-22, T-27, T-28, T-32  
-**Fecha:** 2026-11-07  
+**Estado:** investigado; estado remoto corregido con evidencia actual  
+**Fecha de verificación:** 2026-11-07  
+**Proyecto:** `vnzyecnbdqbfuxawzrda` (Nüva One)  
 **Rama:** `integ/agency-272-274`
 
-## Hallazgo raíz común
+## Hechos verificados en el proyecto remoto
 
-Todas las tareas bloqueadas dependen de Supabase y ninguna puede avanzar sin uno o más de estos tres recursos que faltan:
+1. **Los grants de Agency ya tienen una migración registrada como aplicada.** El historial remoto de Supabase incluye `20261103022653 agency_service_role_privileges`. No se debe documentar T-29 como pendiente ni volver a aplicar esa migración. El historial fue consultado; no se ejecutó ninguna migración.
+2. **La Edge Function `nuva-agency-worker-control` está ACTIVE en versión 16.** La verificación OIDC/hardening prevista para T-31/T-32 no se considera desplegada por esta evidencia. No se hizo deploy.
+3. **Las credenciales locales del runner no quedan verificadas por una consulta remota.** Este documento no afirma que `SUPABASE_URL` o `SUPABASE_SERVICE_ROLE_KEY` estén ausentes: ese dato debe obtenerse ejecutando el diagnóstico de solo lectura en el entorno local de Hermes, sin mostrar valores secretos.
 
-1. **Credenciales de entorno no configuradas:** `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` no están definidas en el entorno server-side. `.env.local` existe pero no se lee por política de secretos (no se exponen valores). `agency-integrations-check.mjs` confirma `credentialsConfigured: false` para Supabase.
-2. **Grants de `service_role` no aplicados remotamente:** la migración `20261030130000_agency_service_role_privileges.sql` (T-29) está preparada localmente y concede privilegios mínimos (`select/insert/update` sobre `agency_missions`, `agency_tasks`, etc.) a `service_role`, manteniendo RLS habilitado, pero **no se ha aplicado en el proyecto remoto**. Sin ella, el worker no puede reclamar/terminar tareas ni registrar eventos.
-3. **Autorización de deploy pendiente:** el endurecimiento OIDC de la Edge Function `nuva-agency-worker-control` (T-31) está preparado en código con tests, pero la versión desplegada sigue en v16 (valida solo issuer, repository, run_id, agent_id). Desplegar requiere autorización expresa (T-32).
+## Estado corregido por tarea
 
-## Estado por tarea bloqueada
+| Tarea | Estado | Bloqueo que sí está sustentado |
+|---|---|---|
+| T-20 — Persistencia durable | UNKNOWN / pendiente de verificación local | Confirmar desde el runner si las credenciales requeridas están disponibles y probar el flujo autorizado de lectura/escritura de Agency. No atribuir el bloqueo a T-29. |
+| T-21 — Scheduler durable | BLOQUEADO | Depende de T-20 y de validar la cadena de ejecución durable. |
+| T-22 — Owner Console durable | BLOQUEADO | Depende de la persistencia y del scheduler durable. |
+| T-27 — Recuperar ejecución programada | BLOQUEADO | Requiere verificar el worker y su acceso efectivo al control plane. |
+| T-28 — Owner Console con sesión real | BLOQUEADO | Requiere completar y validar la cadena T-20/T-27. |
+| T-31/T-32 — Hardening OIDC y deploy | BLOQUEADO | La función remota continúa en v16; el despliegue no se ha autorizado ni ejecutado en esta revisión. |
 
-| Tarea | Título | Prioridad | Estado | Qué falta | Bloqueante principal |
-|-------|--------|-----------|--------|-----------|----------------------|
-| T-20 | Persistencia durable de Agency en Supabase | P0 | BLOQUEADO | Grants `service_role` en 6 tablas + secuencia; credenciales de entorno | Migración T-29 no aplicada remotamente + no hay `SUPABASE_URL`/`SERVICE_ROLE_KEY` |
-| T-21 | Scheduler durable de Agency | P0 | BLOQUEADO | T-20, T-31, T-32 | Cadena bloqueada por T-20 y despliegue OIDC |
-| T-22 | Owner Console durable con autorización server-side | P1 | BLOQUEADO | T-20, T-21 | Sin persistencia ni scheduler duradero |
-| T-27 | Recuperar la ejecución programada existente | P0 | BLOQUEADO | T-20, T-21, T-31, T-32 | Worker no puede reclamar tareas sin grants |
-| T-28 | Verificar Owner Console con sesión real | P1 | BLOQUEADO | T-26, T-27, T-29 | Depende de tareas bloqueadas arriba |
-| T-32 | Desplegar hardening OIDC en la Edge Function | P0 | BLOQUEADO | T-31, autorización de deploy | Requieren deploy explícito (prohibido sin autorización) |
+## Próximos pasos seguros
 
-## Alternativas que NO requieren deploy ni cambios en producción
+1. Ejecutar `node scripts/agency-integrations-check.mjs` desde el repositorio local y revisar únicamente los estados redactados; nunca copiar valores de secretos.
+2. Contrastar las credenciales detectadas con el entorno que realmente ejecuta el worker. No inferir que la presencia de un archivo local implica que el runner lo carga.
+3. Revisar el diff y las pruebas de T-31 antes de solicitar autorización para cualquier despliegue.
+4. Retomar T-20/T-21/T-27 solo después de verificar el acceso efectivo al control plane.
 
-1. **Persistencia local-only:** El ciclo de ejecución ya registra en `logs/cycles/` y `logs/executions/` (T-08, T-09, T-12 funcionan localmente). Seguir usando este mecanismo para trazabilidad mientras Supabase esté bloqueado.
-2. **No introducir `service_role_key` en configuraciones ni archivos:** restricción del usuario respetada; no se crean archivos con credenciales.
-3. **Documentar y esperar:** registrar el bloqueo, continuar con tareas independientes no dependientes de Supabase, y volver a T-20..T-32 cuando el usuario autorice deploy y/o proporcione credenciales de entorno.
-4. **No aplicar migraciones remotas ni cambiar RLS:** restricción respetada; la migración T-29 permanece preparada localmente sin aplicarse.
+## Límites de esta verificación
 
-## Camino propuesto para desbloquear
-
-1. El usuario autoriza el deploy de la Edge Function endurecida (T-31 → T-32) y/o proporciona credenciales de entorno `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`.
-2. Se aplica la migración T-29 (`20261030130000_agency_service_role_privileges.sql`) en el proyecto remoto (solo grants, sin cambiar RLS).
-3. Una vez resueltos T-20 y T-32, se desbloquean en cadena T-21, T-22, T-27, T-28.
-4. Re-ejecutar `agency-integrations-check.mjs` para confirmar `credentialsConfigured: true` y reintentar el ciclo de Agency.
-
-## Seguridad
-
-- No se leyeron ni expusieron valores de `.env.local`.
-- No se aplicó ninguna migración remotamente.
-- No se cambió RLS ni permisos de producción.
-- No se introdujo `service_role_key` en nuevos archivos ni configuraciones.
+- Se consultó el historial remoto de migraciones y el listado de Edge Functions.
+- No se aplicaron migraciones ni se ejecutaron escrituras en Supabase.
+- No se modificó RLS, grants ni datos.
+- No se desplegó ninguna Edge Function.
+- No se leyeron ni expusieron valores de secretos locales.
