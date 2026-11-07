@@ -1485,7 +1485,7 @@ Formato de cada entrada:
 - departamento: Construcción
 - especialista: constructor
 - prioridad: P1
-- estado: PENDIENTE
+- estado: COMPLETADO
 - dependencias: ninguna
 - criterios_de_aceptacion: El comando `npx tsc --noEmit` falla con: Command failed: cmd /c npx tsc --noEmit. Corregir tipos sin usar `any` ni `@ts-ignore` como solución general.
 - pruebas_requeridas: npx tsc --noEmit exit 0
