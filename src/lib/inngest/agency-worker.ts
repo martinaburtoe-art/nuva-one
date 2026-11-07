@@ -22,7 +22,7 @@ export type AgencyRpcClient = {
 };
 
 export type InngestStepRunner = {
-  run: <T>(id: string, handler: () => T | Promise<T>) => Promise<T>;
+  run: (id: string, handler: () => Promise<unknown>) => Promise<unknown>;
 };
 
 type SpecialistResult = {
@@ -103,7 +103,7 @@ export async function runInngestAgencyWorker(
     });
     if (error) throw error;
     return data;
-  });
+  }) as unknown;
 
   if (claim === null) return { status: "idle" as const, agentId };
   if (!isRecord(claim) || !isRecord(claim.task) || !isRecord(claim.lease)) {
@@ -135,7 +135,7 @@ export async function runInngestAgencyWorker(
         timestamp: new Date().toISOString(),
       };
     }
-  });
+  }) as SpecialistResult;
 
   const verdict = ALLOWED_VERDICTS.has(specialistResult?.result ?? "")
     ? specialistResult.result!
@@ -168,7 +168,7 @@ export async function runInngestAgencyWorker(
     });
     if (error) throw error;
     return data;
-  });
+  }) as unknown;
 
   if (finished !== true) throw new Error("AGENCY_TASK_FINISH_REJECTED");
 
