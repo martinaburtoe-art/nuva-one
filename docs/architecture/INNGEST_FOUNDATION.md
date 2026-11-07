@@ -1,37 +1,41 @@
 # Inngest foundation — Nüva One
 
-## Scope
+## Runtime and endpoint
 
-This change introduces the Inngest SDK and the TanStack Start HTTP serving
-endpoint at `/api/inngest`. It registers one deliberately side-effect-free
-function, `nuva-system-ping`, triggered by `nuva/system.ping`.
+- The server-only client uses the application ID `nuva-one`.
+- The TanStack Start endpoint is `/api/inngest` and supports GET, POST and PUT.
+- The route runs on Vercel's Node.js serverless runtime.
+- If a read-only specialist needs a repository file that is not bundled, its reader fetches only an explicit allowlist from `raw.githubusercontent.com` at the exact `VERCEL_GIT_COMMIT_SHA` of that deployment. Vercel's **Automatically expose System Environment Variables** setting is enabled for this project; the worker fails closed before claiming a task if the deployment SHA is missing. No `.env` files or arbitrary paths are remotely readable.
 
-The function only returns an acknowledgement and timestamp. It does not call
-Supabase, claim or finish Agency tasks, access Mercado Pago, modify inventory,
-send notifications, or invoke external providers.
+## Registered functions
 
-## Runtime setup
+- `nuva-system-ping`: side-effect-free event delivery check.
+- Nine read-only Agency specialists (finance, sales, supply, people, growth, orchestrator, compliance, security and UX) run on a five-minute cron.
+- Each specialist claims at most one task through `public.agency_claim_task`, executes the registered read-only specialist, and persists its result through `public.agency_finish_task`.
+- Claims use the existing 30-minute Supabase lease. The database's atomic claim and unique active-lease constraints remain authoritative.
+- Inngest limits Agency work to five concurrent steps globally and one active step per specialist.
 
-- Local development: run the Nüva app and the Inngest Dev Server, then point
-  the Dev Server at the local `/api/inngest` endpoint.
-- Hosted environment: configure the Inngest app to sync with
-  `https://<deployment-host>/api/inngest`.
-- Keep `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` in server-side
-  environment configuration only. Never expose them through Vite-prefixed
-  variables or client bundles.
+## Staged activation and fallback
 
-## Explicitly not migrated
+- `NUVA_INNGEST_AGENCY_ENABLED` defaults to disabled. Workers return before accessing Supabase unless this value is exactly `true`.
+- The existing GitHub Actions worker remains available as a fallback during certification. Both systems use the same Supabase claim/lease RPCs, so they cannot claim the same task.
+- The constructor, QA and release specialists remain on GitHub Actions because they depend on local syntax/test/git execution. They are intentionally not registered as Vercel Inngest workers.
+- No migration, RLS policy, inventory, billing or business data is changed by this integration.
 
-The existing GitHub Actions Agency worker, Supabase task/lease RPCs,
-agency scheduler/supervisor, Owner Console execution path, Vercel cron jobs,
-billing, and Intelligence jobs remain unchanged. Do not enable production
-Agency task processing through Inngest until a separate migration plan covers
-idempotency, lease ownership, retries, concurrency limits, observability,
-rollback, and duplicate execution protection.
+## Required environment
 
-## Verification gate
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: already configured server-side for both Vercel Preview and Production; used only to call the restricted Agency RPCs.
+- `INNGEST_SIGNING_KEY`: required to sync and authenticate the hosted Inngest endpoint.
+- `NUVA_INNGEST_AGENCY_ENABLED`: keep unset or `false` until the Inngest app has synced and the preview has been certified; set to `true` only for the intended environment.
+- `INNGEST_EVENT_KEY`: not required for the current cron-only workers. Add it only when Nüva begins sending outbound events from the application.
 
-Before enabling hosted sync, confirm the dependency lockfile is regenerated
-from this branch with the repository's pinned npm version, then run
-`npm ci`, `npm run typecheck`, `npm test -- --run`, and `npm run build`.
-No production secrets or deployment configuration are changed by this PR.
+## Activation gate
+
+1. Add the Inngest signing key to Vercel Preview.
+2. Sync the Preview endpoint at `https://<preview-host>/api/inngest`.
+3. Confirm all ten registered functions appear and the ping function succeeds.
+4. Enable `NUVA_INNGEST_AGENCY_ENABLED=true` in Preview only.
+5. Verify claims, execution results, retries, concurrency and lease recovery in Supabase and Inngest.
+6. Promote the same configuration to Production only after Preview certification.
+
+Do not remove the GitHub Actions fallback until the Inngest workers have passed the production observation window and rollback has been tested.
