@@ -123,7 +123,27 @@ describe("Inngest Agency worker", () => {
     }));
   });
 
-  it("rejects specialists that depend on local shell or GitHub Actions execution", async () => {
+  it("fails closed on Vercel when the exact deployment source SHA is unavailable", async () => {
+    const previousEnv = process.env.VERCEL_ENV;
+    const previousSha = process.env.VERCEL_GIT_COMMIT_SHA;
+    process.env.VERCEL_ENV = "preview";
+    delete process.env.VERCEL_GIT_COMMIT_SHA;
+    const db = makeDb([]);
+    try {
+      await expect(runInngestAgencyWorker("finance", makeStep(), {
+        enabled: true,
+        db,
+      })).rejects.toThrow("NUVA_INNGEST_SOURCE_REVISION_REQUIRED");
+      expect(db.rpc).not.toHaveBeenCalled();
+    } finally {
+      if (previousEnv === undefined) delete process.env.VERCEL_ENV;
+      else process.env.VERCEL_ENV = previousEnv;
+      if (previousSha === undefined) delete process.env.VERCEL_GIT_COMMIT_SHA;
+      else process.env.VERCEL_GIT_COMMIT_SHA = previousSha;
+    }
+  });
+
+  it("rejects specialists that depend on local shell or GitHub Actions execution", async () =>
     const db = makeDb([]);
     await expect(runInngestAgencyWorker("qa", makeStep(), {
       enabled: true,
