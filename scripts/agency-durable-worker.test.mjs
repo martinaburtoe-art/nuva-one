@@ -133,3 +133,34 @@ describe("agency durable worker heartbeat", () => {
     expect(actions).not.toContain("finish_task");
   });
 });
+
+
+describe("agency durable worker specialist dispatch", () => {
+  it("dispatches the registered specialist function and persists its verdict", async () => {
+    const actions = [];
+    const finishPayloads = [];
+    const fetchImpl = vi.fn(async (_url, init) => {
+      const body = JSON.parse(init.body);
+      actions.push(body.action);
+      if (body.action === "claim_task") return claimResponse();
+      if (body.action === "finish_task") {
+        finishPayloads.push(body);
+        return jsonResponse({ ok: true });
+      }
+      throw new Error("unexpected_action");
+    });
+
+    const result = await runDurableWorker({
+      ...baseOptions,
+      agentId: "finance",
+      fetchImpl,
+    });
+
+    expect(result.status).toBe("executed");
+    expect(result.agentId).toBe("finance");
+    expect(actions).toContain("finish_task");
+    expect(finishPayloads).toHaveLength(1);
+    expect(finishPayloads[0].result.specialist).toBe("finance");
+    expect(["PASS", "WARN", "FAIL", "BLOCKED", "UNKNOWN"]).toContain(finishPayloads[0].result.verdict);
+  });
+});
