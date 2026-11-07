@@ -55,7 +55,7 @@ Cambios locales no commiteados (conservados en rama):
 
 ---
 
-## 5. Bloqueos reales de la demo (P0) — requieren autorizacion
+## 5. Bloqueos reales de la demo (P0) — requieren verificacion tecnica y despliegue controlado
 
 Los siguientes P0 requieren pruebas end-to-end y despliegue controlado. La migración `20261103022653 agency_service_role_privileges` ya figura aplicada en Supabase; no reaplicar T-29.
 
@@ -64,9 +64,9 @@ Los siguientes P0 requieren pruebas end-to-end y despliegue controlado. La migra
 | T-20 — Persistencia durable de Agency en Supabase | BLOQUEADO | T-21, T-27 | Validar acceso efectivo del worker y claim/finish; grants constan aplicados en historial remoto |
 | T-21 — Scheduler durable | BLOQUEADO | T-27 | T-20 desbloqueado |
 | T-27 — Recuperar ejecucion programada | BLOQUEADO | demo (worker) | T-20, T-21 desbloqueados |
-| T-31 — Endurecer identidad OIDC worker legado | EN_CURSO | T-32 | Autorizacion de deploy de Edge Function |
+| T-31 — Endurecer identidad OIDC worker legado | EN_CURSO | T-32 | Revision tecnica y prueba de la Edge Function antes del despliegue |
 | T-32 — Desplegar hardening OIDC | BLOQUEADO | demo (seguridad) | T-31 terminado + autorizacion de deploy |
-| T-40 — Documentar permisos OIDC (T-31/T-32) | BLOCKED | T-49, T-50 | Autorizacion de deploy + grants remotos T-20 |
+| T-40 — Documentar permisos OIDC (T-31/T-32) | BLOCKED | T-49, T-50 | T-20/T-21 validados + evidencia de permisos OIDC |
 | T-49 / T-50 — Ciclos del orchestrator | BLOCKED | operacion continua | T-40 desbloqueado |
 
 Recomendación: completar verificación de worker, scheduler único y hardening OIDC. No reaplicar T-29; no declarar T-20/T-21/T-27 listos sin evidencia end-to-end.
