@@ -11,8 +11,8 @@ const task = (agentId: string, id = "t-test-001", input_context?: Record<string,
   ({ id, title: "Tarea de prueba", agent_id: agentId, input_context } as const);
 
 describe("Especialistas faltantes (ETAPA 1)", () => {
-  it("registra exactamente los 13 especialistas", () => {
-    const expected = ["accounting", "analytics", "compliance", "constructor", "customer_success", "data_bi", "finance", "growth", "integrations", "marketing", "orchestrator", "people", "product", "qa", "release", "sales", "security", "seo", "sentinel", "support", "supply", "tax_chile", "ux"];
+  it("registra exactamente los 23 especialistas TypeScript", () => {
+    const expected = ["accounting", "analytics", "compliance", "constructor", "customer_success", "data_bi", "finance", "growth", "integrations", "marketing", "orchestrator", "people", "product", "qa", "release", "sales", "security", "sentinel", "seo", "supply", "support", "tax_chile", "ux"];
     expect(Object.keys(SPECIALISTS).sort()).toEqual(expected);
     expect(Object.keys(SPECIALIST_META).sort()).toEqual(expected);
   });
@@ -80,7 +80,7 @@ describe("Especialistas faltantes (ETAPA 1)", () => {
   it("people escanea PII y no expone valores; directorios ausentes no se consideran PASS", async () => {
     const result = await SPECIALISTS.people(task("people"));
     expect(["PASS", "WARN", "UNKNOWN", "FAIL"]).toContain(result.result);
-    expect(result.evidence.some((item) => item.startsWith("PII scan:"))).toBe(true);
+    expect(result.evidence.some((item) => item.includes("PII redactado:"))).toBe(true);
     const joined = result.evidence.join(" ");
     expect(joined).not.toMatch(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
     expect(joined).not.toMatch(/\b\d{1,2}\.\d{3}\.\d{3}-?[\dkK]\b/);
