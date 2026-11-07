@@ -5,10 +5,7 @@ const baseOptions = {
   apiBaseUrl: "https://nuva-one.vercel.app",
   githubToken: "ghs_test_token_123456789",
   runId: "123456789",
-  agentId: "qa",
-  heartbeatIntervalMs: 5,
-  heartbeatRetryDelayMs: 2,
-  heartbeatMaxRetries: 2,
+  agentId: "finance",
 };
 
 function jsonResponse(data, status = 200) {
@@ -19,80 +16,67 @@ function jsonResponse(data, status = 200) {
   };
 }
 
-function claimResponse() {
+function claimResponse(overrides = {}) {
   return jsonResponse({
     claimed: {
-      task: { id: "task-1", title: "QA", input_context: {} },
+      task: { id: "task-1", title: "Finance", input_context: {} },
       lease: { token: "lease-token-1234567890" },
+      ...overrides,
     },
   });
 }
 
-describe("agency durable worker heartbeat", () => {
-  it("renews the lease while the specialist runs and finishes once", async () => {
+describe("agency durable worker", () => {
+  it("returns idle and does not finish when the queue is empty", async () => {
     const actions = [];
     const fetchImpl = vi.fn(async (_url, init) => {
       const body = JSON.parse(init.body);
       actions.push(body.action);
-      if (body.action === "claim_task") return claimResponse();
-      if (body.action === "heartbeat") return jsonResponse({ ok: true });
-      if (body.action === "finish_task") return jsonResponse({ ok: true });
+      if (body.action === "claim_task") return jsonResponse({ claimed: null });
       throw new Error("unexpected_action");
     });
 
-    const result = await runDurableWorker({
-      ...baseOptions,
-      fetchImpl,
-      executeSpecialist: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 24));
-        return { result: "PASS", evidence: ["qa passed"], errors: [] };
-      },
-    });
+    const result = await runDurableWorker({ ...baseOptions, fetchImpl });
 
-    expect(result.status).toBe("executed");
-    expect(actions.filter((action) => action === "heartbeat").length).toBeGreaterThan(0);
-    expect(actions.filter((action) => action === "finish_task")).toHaveLength(1);
+    expect(result).toEqual({ status: "idle", agentId: "finance" });
+    expect(actions).toEqual(["claim_task"]);
   });
 
-  it("does not finish a task after the server reports that its lease was lost", async () => {
+  it("dispatches the registered specialist and persists its verdict", async () => {
     const actions = [];
-    let specialistSignal;
+    const finishPayloads = [];
     const fetchImpl = vi.fn(async (_url, init) => {
       const body = JSON.parse(init.body);
       actions.push(body.action);
       if (body.action === "claim_task") return claimResponse();
-      if (body.action === "heartbeat") return jsonResponse({ ok: false });
-      if (body.action === "finish_task") return jsonResponse({ ok: true });
-      throw new Error("unexpected_action");
-    });
-
-    await expect(runDurableWorker({
-      ...baseOptions,
-      fetchImpl,
-      executeSpecialist: async (_task, { signal }) => {
-        specialistSignal = signal;
-        await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
-        return { result: "PASS", evidence: [], errors: [] };
-      },
-    })).rejects.toThrow("AGENCY_LEASE_LOST");
-
-    expect(specialistSignal?.aborted).toBe(true);
-    expect(actions).not.toContain("finish_task");
-  });
-
-  it("retries a transient heartbeat failure and continues when renewal succeeds", async () => {
-    const actions = [];
-    let heartbeatCalls = 0;
-    const fetchImpl = vi.fn(async (_url, init) => {
-      const body = JSON.parse(init.body);
-      actions.push(body.action);
-      if (body.action === "claim_task") return claimResponse();
-      if (body.action === "heartbeat") {
-        heartbeatCalls += 1;
-        if (heartbeatCalls === 1) return jsonResponse({ error: "temporary" }, 503);
+      if (body.action === "finish_task") {
+        finishPayloads.push(body);
         return jsonResponse({ ok: true });
       }
-      if (body.action === "finish_task") return jsonResponse({ ok: true });
+      throw new Error("unexpected_action");
+    });
+
+    const result = await runDurableWorker({ ...baseOptions, fetchImpl });
+
+    expect(result.status).toBe("executed");
+    expect(result.agentId).toBe("finance");
+    expect(actions).toEqual(["claim_task", "finish_task"]);
+    expect(finishPayloads).toHaveLength(1);
+    expect(finishPayloads[0].result.specialist).toBe("finance");
+    expect(["PASS", "WARN", "FAIL", "BLOCKED", "UNKNOWN"]).toContain(
+      finishPayloads[0].result.verdict,
+    );
+  });
+
+  it("persists FAIL when the specialist throws", async () => {
+    const finishPayloads = [];
+    const fetchImpl = vi.fn(async (_url, init) => {
+      const body = JSON.parse(init.body);
+      if (body.action === "claim_task") return claimResponse();
+      if (body.action === "finish_task") {
+        finishPayloads.push(body);
+        return jsonResponse({ ok: true });
+      }
       throw new Error("unexpected_action");
     });
 
@@ -100,36 +84,45 @@ describe("agency durable worker heartbeat", () => {
       ...baseOptions,
       fetchImpl,
       executeSpecialist: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 25));
-        return { result: "WARN", evidence: ["warning recorded"], errors: [] };
+        throw new Error("specialist_failed_for_test");
       },
     });
 
-    expect(result.status).toBe("executed");
-    expect(heartbeatCalls).toBeGreaterThanOrEqual(2);
-    expect(actions.filter((action) => action === "finish_task")).toHaveLength(1);
+    expect(result.verdict).toBe("FAIL");
+    expect(finishPayloads).toHaveLength(1);
+    expect(finishPayloads[0].status).toBe("failed");
+    expect(finishPayloads[0].result.errors).toContain("specialist_failed_for_test");
   });
 
-  it("fails closed when heartbeat retries are exhausted and never finishes", async () => {
-    const actions = [];
+  it("maps an unknown specialist verdict to UNKNOWN and blocks the task", async () => {
+    const finishPayloads = [];
     const fetchImpl = vi.fn(async (_url, init) => {
       const body = JSON.parse(init.body);
-      actions.push(body.action);
       if (body.action === "claim_task") return claimResponse();
-      if (body.action === "heartbeat") return jsonResponse({ error: "unavailable" }, 503);
-      if (body.action === "finish_task") return jsonResponse({ ok: true });
+      if (body.action === "finish_task") {
+        finishPayloads.push(body);
+        return jsonResponse({ ok: true });
+      }
       throw new Error("unexpected_action");
     });
 
-    await expect(runDurableWorker({
+    const result = await runDurableWorker({
       ...baseOptions,
       fetchImpl,
-      executeSpecialist: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 40));
-        return { result: "PASS", evidence: [], errors: [] };
-      },
-    })).rejects.toThrow("AGENCY_HEARTBEAT_RETRIES_EXHAUSTED");
+      executeSpecialist: async () => ({ result: "NOT_A_VERDICT", evidence: [], errors: [] }),
+    });
 
-    expect(actions).not.toContain("finish_task");
+    expect(result.verdict).toBe("UNKNOWN");
+    expect(result.taskStatus).toBe("blocked");
+    expect(finishPayloads[0].status).toBe("blocked");
+  });
+
+  it("fails closed when the claim has no valid lease token", async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({
+      claimed: { task: { id: "task-1" }, lease: { token: "short" } },
+    }));
+
+    await expect(runDurableWorker({ ...baseOptions, fetchImpl }))
+      .rejects.toThrow("AGENCY_CLAIM_RESPONSE_INVALID");
   });
 });
