@@ -28,6 +28,12 @@ describe("durable agency worker identity", () => {
     expect(isTrustedAgencyWorkerRun({ ...validRun, repository: { full_name: "someone/else" } }, "123456")).toBe(false);
   });
 
+  it("accepts a main-branch push only for the exact trusted worker workflow", () => {
+    expect(isTrustedAgencyWorkerRun({ ...validRun, event: "push" }, "123456")).toBe(true);
+    expect(isTrustedAgencyWorkerRun({ ...validRun, event: "push", head_branch: "feature/test" }, "123456")).toBe(false);
+    expect(isTrustedAgencyWorkerRun({ ...validRun, event: "push", path: ".github/workflows/ci.yml" }, "123456")).toBe(false);
+  });
+
   it("rejects completed, mismatched, and malformed run IDs", () => {
     expect(isTrustedAgencyWorkerRun({ ...validRun, status: "completed" }, "123456")).toBe(false);
     expect(isTrustedAgencyWorkerRun(validRun, "123457")).toBe(false);
