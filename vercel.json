@@ -2,65 +2,26 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "redirects": [
-    {
-      "source": "/finance",
-      "destination": "/finance-professional",
-      "permanent": false
-    },
-    {
-      "source": "/news",
-      "destination": "/noticias",
-      "permanent": false
-    },
-    {
-      "source": "/directorio",
-      "destination": "/negocios",
-      "permanent": false
-    }
+    { "source": "/finance", "destination": "/finance-professional", "permanent": false },
+    { "source": "/news", "destination": "/noticias", "permanent": false },
+    { "source": "/directorio", "destination": "/negocios", "permanent": false }
   ],
   "rewrites": [
-    {
-      "source": "/home-editorial/:path*",
-      "destination": "/home-cinematic/:path*"
-    }
+    { "source": "/home-editorial/:path*", "destination": "/home-cinematic/:path*" }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "Strict-Transport-Security",
-          "value": "max-age=31536000; includeSubDomains"
-        }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
       ]
     }
   ],
   "crons": [
-    {
-      "path": "/api/billing/subscribe/run-charges",
-      "schedule": "0 13 * * *"
-    },
-    {
-      "path": "/api/cron/nuva-intelligence-worker",
-      "schedule": "0 0 * * *"
-    }
-  ],
-  "functions": {
-    "src/routes/api/inngest.ts": {
-      "maxDuration": 60,
-      "includeFiles": "{package*.json,bun.lock,vercel.json,vite.config.ts,vitest.config.ts,docs/**/*,src/routes/**/*,supabase/functions/**/*,supabase/migrations/20261007000000_durable_autonomous_agency_control_plane.sql}"
-    }
-  }
+    { "path": "/api/billing/subscribe/run-charges", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/nuva-intelligence-worker", "schedule": "0 0 * * *" }
+  ]
 }
