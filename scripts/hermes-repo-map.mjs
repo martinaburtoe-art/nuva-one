@@ -125,7 +125,8 @@ function buildSymbolCrossRef(files, symbolIndex) {
       const symText = file.symbols.map((s) => s.name).join(" ");
       const importsText = (file.dependencies || []).join(" ");
       const combined = symText + " " + importsText;
-      if (combined.includes(symName)) {
+      const wordRegex = new RegExp(`\\b${symName.replace(/[.*+?^${}()|[\]\\\\]/g, "\\$&")}\\b`);
+      if (wordRegex.test(combined)) {
         usedIn.push(file.path);
       }
     }

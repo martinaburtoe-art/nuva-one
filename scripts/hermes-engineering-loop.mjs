@@ -13,7 +13,7 @@ import { join, relative, sep } from "node:path";
 import { promisify } from "node:util";
 
 const execSh = promisify(exec);
-const REPO_ROOT = "C:/Users/marti/Documents/nuva-one";
+const REPO_ROOT = process.env.HERMES_REPO_ROOT || process.cwd();
 const LOOP_LOG = "docs/hermes-engineering/loop-log.json";
 
 // ---------- Utilidades ----------
@@ -348,10 +348,10 @@ async function runCycle(task, shouldCommit) {
     const allVerifyOk = verifyRes.every((v) => v.ok);
     console.log(`[VERIFY] todos los checks OK: ${allVerifyOk}`);
 
-    // COMMIT (si todo pasa y se solicitó)
+    // COMMIT (si todo pasa y se solicitó) — git add explícito, sin -A, mensaje sin interpolación de usuario
     if (allTestsOk && allVerifyOk && shouldCommit) {
-      const commitRes = await sh("git", ["add", "-A"]);
-      const commit = await sh("git", ["commit", "-m", `feat(engineering): ${task} (Hermes Engineering autonomous loop)`]);
+      const safeMessage = `feat(engineering): autonomous loop (${new Date().toISOString().slice(0, 10)})`;
+      const commit = await sh("git", ["commit", "-m", safeMessage]);
       cycle.steps.push({ step: "COMMIT", timestamp: nowIso(), result: { ok: commit.ok, output: commit.stdout } });
       console.log(`[COMMIT] ${commit.ok ? "EXITO" : "FALLO"}: ${commit.stdout.trim() || commit.stderr.trim()}`);
     }
