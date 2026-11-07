@@ -143,7 +143,7 @@ describe("Inngest Agency worker", () => {
     }
   });
 
-  it("rejects specialists that depend on local shell or GitHub Actions execution", async () =>
+  it("rejects specialists that depend on local shell or GitHub Actions execution", async () => {
     const db = makeDb([]);
     await expect(runInngestAgencyWorker("qa", makeStep(), {
       enabled: true,
