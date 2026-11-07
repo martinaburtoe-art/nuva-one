@@ -5,7 +5,7 @@ import {
   SPECIALISTS,
   SPECIALIST_META,
   type SpecialistResult,
-} from "@/lib/agency/specialists";
+} from "@/lib/agency/specialists.ts";
 
 const task = (agentId: string, id = "t-test-001", input_context?: Record<string, unknown>) =>
   ({ id, title: "Tarea de prueba", agent_id: agentId, input_context } as const);
