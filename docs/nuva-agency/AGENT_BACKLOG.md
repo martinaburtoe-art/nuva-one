@@ -235,7 +235,7 @@ Formato de cada entrada:
 - dependencias: T-12, T-29
 - criterios_de_aceptacion: Service role con privilegios mínimos en las seis tablas y secuencia; worker reclama/termina tarea y registra eventos; recuperación tras reinicio; Owner Console lee estado persistente.
 - pruebas_requeridas: pgTAP de privilegios; claim/finish en entorno Preview autorizado; recuperación sin duplicados.
-- evidencia: Vercel tiene `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` configuradas para Preview y Production (solo se verificó presencia; valores no leídos). Supabase ACTIVE_HEALTHY; seis tablas con RLS habilitado y RPC existentes. Auditoría read-only 2026-10-30 encontró grants faltantes. T-29 prepara la corrección y CI local valida 30 aserciones; la migración no se ha aplicado remotamente, por lo que los permisos efectivos del proyecto siguen bloqueando el CRUD y la recuperación.
+- evidencia: Supabase ACTIVE_HEALTHY; historial remoto consultado el 2026-11-07 registra `20261103022653 agency_service_role_privileges` como aplicada. No atribuir el bloqueo a grants pendientes ni reaplicar T-29. La presencia de variables en Vercel fue verificada previamente, pero no acredita que el proceso local de Hermes las herede ni que el worker complete claim/finish. Falta una prueba autorizada de claim/finish y recuperación end-to-end.
 - seguridad: no leer secretos, no aplicar migraciones remotas, no cambiar RLS.
 
 ## T-21 — Scheduler durable de Agency: reconciliar el worker existente
@@ -246,7 +246,7 @@ Formato de cada entrada:
 - dependencias: T-20, T-31, T-32
 - criterios_de_aceptacion: un solo scheduler durable activo, con leases, heartbeat, reintentos y recuperación verificados; no ejecutar dos workers competidores.
 - pruebas_requeridas: ejecución schedule real con tarea nueva, heartbeat y finish persistidos; verificación de concurrencia y reanudación.
-- evidencia: main contiene `.github/workflows/nuva-agent-durable-worker.yml` con cron `7,27,47 * * * *` y timeout 350 min. Último run schedule observado `41030396490` (2026-10-30 09:01:23Z): concluyó success, pero intentó los 13 agentes y no reclamó ninguna tarea. Snapshot read-only Supabase: 2 misiones, 14 tareas (3 completadas, 11 fallidas), 40 eventos task.claimed, 27 leases expirados y 13 liberados. La Edge Function v16 no puede crear el siguiente ciclo por falta de grants. El workflow nuevo `nuva-agency-durable-worker.yml` de esta PR sería un segundo scheduler; no activarlo hasta reconciliar el worker existente y endurecer OIDC.
+- evidencia: main contiene `.github/workflows/nuva-agent-durable-worker.yml` con cron `7,27,47 * * * *`. El último run histórico observado terminó sin reclamar tareas; el snapshot histórico registró 2 misiones y 14 tareas, por lo que requiere una nueva prueba. La Edge Function `nuva-agency-worker-control` sigue ACTIVE en v16 según consulta remota del 2026-11-07. Los grants de Agency ya figuran aplicados; el bloqueo pendiente es validar el flujo claim/finish y el hardening OIDC, no volver a aplicar T-29. No activar un segundo scheduler hasta reconciliar el existente.
 - seguridad: sin merge/deploy, sin migraciones remotas, sin RLS ni secretos.
 
 ## T-22 — Owner Console durable con autorización server-side
@@ -257,7 +257,7 @@ Formato de cada entrada:
 - dependencias: T-20, T-21
 - criterios_de_aceptacion: Propietario autenticado crea misión, consulta tareas, pausa/reanuda/cancela y decide aprobaciones; todas las acciones quedan registradas en Supabase.
 - pruebas_requeridas: tests 401/403/503; sesión real de propietario en Preview; lectura posterior de registros.
-- evidencia: UI y APIs están en PR #252; `authorizeAgencyOwner` valida `app_metadata.platform_role=owner` y tiene tests unitarios. La ruta de control durable también verifica el rol server-side. No se ejecutó una sesión real; los grants service_role faltantes impiden confirmar CRUD.
+- evidencia: UI y APIs están en PR #252; `authorizeAgencyOwner` valida `app_metadata.platform_role=owner` y tiene tests unitarios. La ruta de control durable también verifica el rol server-side. No se ejecutó una sesión real ni se verificó el CRUD end-to-end. Los grants ya figuran aplicados en el historial remoto; no presentar su ausencia como bloqueo actual.
 - seguridad: sin pedir credenciales, sin cambios RLS, sin escrituras en Production.
 
 ## T-23 — Alinear el parser de especialistas con el formato real del backlog
@@ -312,7 +312,7 @@ Formato de cada entrada:
 - dependencias: T-20, T-21, T-31, T-32
 - criterios_de_aceptacion: el scheduler existente vuelve a reclamar y finalizar tareas nuevas; el resultado se verifica en Supabase y Owner Console.
 - pruebas_requeridas: ejecución schedule real posterior a los grants y al hardening OIDC, con tarea nueva y lease liberado.
-- evidencia: existe workflow schedule en main, pero el último run observado terminó sin trabajo porque no había tareas elegibles. Las 14 tareas persistidas están completadas/fallidas. T-29 prepara grants y pasa CI, pero no está aplicado remotamente. T-31 prepara validación estricta OIDC, pero no está desplegada. El workflow de 5 min en PR #252 no se ha activado y no debe coexistir sin una decisión explícita de reemplazo.
+- evidencia: existe workflow schedule en main; el run histórico terminó sin reclamar tareas elegibles. El historial remoto registra grants aplicados mediante `20261103022653 agency_service_role_privileges`. La Edge Function `nuva-agency-worker-control` continúa ACTIVE en v16; el hardening OIDC no se considera desplegado. Falta ejecutar una prueba posterior de claim/finish y verificar persistencia en Owner Console. El workflow alternativo de PR #252 no debe coexistir sin una decisión explícita de reemplazo.
 - seguridad: requiere autorización expresa para aplicar migración/deploy/merge.
 
 ## T-28 — Verificar Owner Console durable con sesión real de propietario
@@ -323,7 +323,7 @@ Formato de cada entrada:
 - dependencias: T-26, T-27, T-29
 - criterios_de_aceptacion: Propietario crea misión, consulta, pausa/reanuda/cancela y aprueba; todos los cambios quedan registrados.
 - pruebas_requeridas: sesión real de propietario en Preview y verificación posterior en Supabase.
-- evidencia: autorización server-side y tests unitarios existen; no se usó sesión real; persistencia bloqueada por grants ausentes y scheduler no activo.
+- evidencia: autorización server-side y tests unitarios existen; no se usó sesión real. Los grants figuran aplicados en remoto; aún falta probar una sesión real de propietario y el ciclo durable de scheduler/worker.
 - seguridad: sin secretos, sin escrituras Production
 
 ## T-29 — Grants mínimos de service_role para Agency
@@ -334,7 +334,7 @@ Formato de cada entrada:
 - dependencias: T-20
 - criterios_de_aceptacion: migración idempotente otorga solo privilegios de tabla/secuencia requeridos a service_role, mantiene RLS habilitado y mantiene anon/authenticated sin acceso.
 - pruebas_requeridas: pgTAP `115_agency_service_role_privileges.sql` y CI completo.
-- evidencia: commit `a3fa219d`; migración `20261030130000_agency_service_role_privileges.sql`; pgTAP 30/30 aserciones; CI database 454/454 tests PASS y recovery drill PASS. Solo se preparó en rama; no se aplicó remotamente.
+- evidencia: commit `a3fa219d`; pgTAP 30/30 aserciones. El historial remoto consultado el 2026-11-07 incluye `20261103022653 agency_service_role_privileges` como aplicada. No se ha demostrado aquí que el archivo local histórico `20261030130000_agency_service_role_privileges.sql` sea el artefacto exacto registrado con esa versión; no reaplicar ni crear otra migración hasta reconciliar el historial con los archivos. No cambiar RLS.
 - seguridad: no cambiar RLS, no aplicar migración remota, no leer secretos
 
 ## T-30 — Escaneo real de PII en el especialista People
