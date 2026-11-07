@@ -86,6 +86,9 @@ export async function runInngestAgencyWorker(
 
   const enabled = dependencies.enabled ?? process.env.NUVA_INNGEST_AGENCY_ENABLED === "true";
   if (!enabled) return { status: "disabled" as const, agentId };
+  if (process.env.VERCEL_ENV && !/^[a-f0-9]{40}$/i.test(process.env.VERCEL_GIT_COMMIT_SHA ?? "")) {
+    throw new Error("NUVA_INNGEST_SOURCE_REVISION_REQUIRED");
+  }
 
   const db = dependencies.db ?? createServiceRoleClient();
   const executeSpecialist = dependencies.executeSpecialist ?? specialistMap[agentId];
