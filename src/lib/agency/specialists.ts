@@ -1034,7 +1034,8 @@ export const customer_success = {
       }
     }
 
-    const result = encontrados > 0 ? "PASS" : "WARN";
+    evidence.push("Evidencia genérica de README/backlog no acredita onboarding, retención ni experiencia de cliente.");
+    const result: SpecialistResult["result"] = "WARN";
     return {
       specialist: "customer_success",
       taskId: task.id,
@@ -1080,10 +1081,11 @@ export const support = {
       );
     }
 
+    evidence.push("La presencia de backlog/board no acredita documentación de soporte ni resolución de incidencias.");
     return {
       specialist: "support",
       taskId: task.id,
-      result: "PASS",
+      result: "WARN",
       evidence,
       errors,
       durationMs: nowMs() - start,
@@ -1133,11 +1135,12 @@ export const marketing = {
       }
     }
     evidence.push(`nombre de producto con marca Nüva: ${tieneMarca ? "sí" : "no"}`);
+    evidence.push("La marca en package.json no acredita campañas, contenidos ni canales de marketing; requiere evidencia específica.");
 
     return {
       specialist: "marketing",
       taskId: task.id,
-      result: "PASS",
+      result: "WARN",
       evidence,
       errors,
       durationMs: nowMs() - start,
