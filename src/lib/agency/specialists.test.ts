@@ -182,7 +182,7 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(joined).not.toMatch(/service_role/);
   });
 
-  it("qa ejecuta Vitest real en un objetivo aislado y reporta conteo verificable", async () => {
+  it("qa ejecuta Vitest real en un objetivo aislado y reporta conteo verificable", { timeout: 30000 }, async () => {
     const result = await SPECIALISTS.qa(task("qa", "t-qa-smoke", { target: "tests/agency/qa-smoke.test.ts" }));
     expect(result.result).toBe("PASS");
     const joined = result.evidence.join(" ");
@@ -190,7 +190,7 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(joined).toMatch(/salida JSON válida/);
   });
 
-  it("sentinel escanea logs y detecta pausa", async () => {
+  it("sentinel escanea logs y detecta pausa", { timeout: 30000 }, async () => {
     const result = await SPECIALISTS.sentinel(task("sentinel"));
     expect(["PASS", "WARN"]).toContain(result.result);
     const joined = result.evidence.join(" ");

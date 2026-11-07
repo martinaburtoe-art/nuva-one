@@ -806,8 +806,10 @@ export const sentinel = {
     try {
       const entries = await readdir(execDir);
       const jsonFiles = entries.filter((e: string) => e.endsWith(".json") && !e.startsWith("."));
-      for (const f of jsonFiles) {
-        const data = await readLocalFile(join("logs/executions", f));
+      const readResults = await Promise.all(
+        jsonFiles.map(async (f) => ({ f, data: await readLocalFile(join("logs/executions", f)) })),
+      );
+      for (const { data } of readResults) {
         if (data.ok) {
           try {
             const parsed = JSON.parse(data.content!);
