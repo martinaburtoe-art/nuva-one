@@ -1,4 +1,3 @@
-
 name: Nüva Agency — Durable Specialist Worker
 
 on:
@@ -7,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       agent:
-        description: "Especialista a ejecutar (vacío = rotación automática)"
+        description: "Especialista específico (vacío = ejecutar los 13)"
         required: false
         type: string
 
@@ -15,15 +14,34 @@ permissions:
   actions: read
   contents: read
 
-concurrency:
-  group: nuva-agency-durable-specialist-worker
-  cancel-in-progress: false
-
 jobs:
   execute:
-    name: Claim and execute one durable specialist task
+    name: Claim and execute durable task (${{ matrix.agent }})
+    if: ${{ !github.event.inputs.agent || github.event.inputs.agent == matrix.agent }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      # One in-flight worker per specialist; different specialists run in parallel.
+      group: nuva-agency-durable-worker-${{ matrix.agent }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        agent:
+          - orchestrator
+          - constructor
+          - finance
+          - sales
+          - supply
+          - people
+          - compliance
+          - growth
+          - security
+          - qa
+          - sentinel
+          - ux
+          - release
 
     steps:
       - name: Checkout
@@ -40,57 +58,10 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Select specialist
-        id: specialist
-        shell: bash
-        env:
-          REQUESTED_AGENT: ${{ github.event.inputs.agent || '' }}
-        run: |
-          set -euo pipefail
-
-          agents=(
-            orchestrator
-            constructor
-            finance
-            sales
-            supply
-            people
-            compliance
-            growth
-            security
-            qa
-            sentinel
-            ux
-            release
-          )
-
-          if [[ -n "$REQUESTED_AGENT" ]]; then
-            agent="$REQUESTED_AGENT"
-
-            valid=false
-            for candidate in "${agents[@]}"; do
-              if [[ "$candidate" == "$agent" ]]; then
-                valid=true
-                break
-              fi
-            done
-
-            if [[ "$valid" != true ]]; then
-              echo "::error::Especialista no válido: $agent"
-              exit 1
-            fi
-          else
-            slot=$(( $(date -u +%s) / 300 ))
-            agent="${agents[$((slot % ${#agents[@]}))]}"
-          fi
-
-          printf 'agent=%s\n' "$agent" >> "$GITHUB_OUTPUT"
-          echo "Especialista seleccionado: $agent"
-
       - name: Execute durable specialist
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_RUN_ID: ${{ github.run_id }}
-          NUVA_AGENCY_AGENT_ID: ${{ steps.specialist.outputs.agent }}
+          NUVA_AGENCY_AGENT_ID: ${{ matrix.agent }}
           NUVA_AGENCY_API_BASE_URL: ${{ secrets.NUVA_AGENCY_API_BASE_URL || 'https://nuva-one.vercel.app' }}
         run: node scripts/agency-durable-worker.mjs
