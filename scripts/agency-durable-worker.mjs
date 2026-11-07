@@ -26,9 +26,6 @@ export async function runDurableWorker(options = {}) {
   const runId = options.runId ?? process.env.GITHUB_RUN_ID;
   const agentId = options.agentId ?? process.env.NUVA_AGENCY_AGENT_ID;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
-  const executeSpecialist = options.executeSpecialist
-    ?? (async (task) => SPECIALISTS[agentId](task));
-
   if (typeof apiBaseUrl !== "string" || !apiBaseUrl.trim()) throw new Error("NUVA_AGENCY_API_BASE_URL_REQUIRED");
   const base = new URL(apiBaseUrl);
   if (base.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(base.hostname)) {
@@ -38,6 +35,11 @@ export async function runDurableWorker(options = {}) {
   if (typeof runId !== "string" || !/^[0-9]+$/.test(runId)) throw new Error("GITHUB_RUN_ID_INVALID");
   if (typeof agentId !== "string" || !AGENT_IDS.has(agentId)) throw new Error("AGENCY_AGENT_ID_INVALID");
   if (typeof fetchImpl !== "function") throw new Error("FETCH_UNAVAILABLE");
+
+  const registeredSpecialist = SPECIALISTS[agentId];
+  if (typeof registeredSpecialist !== "function") throw new Error("AGENCY_SPECIALIST_NOT_REGISTERED");
+  const executeSpecialist = options.executeSpecialist
+    ?? ((task, context) => registeredSpecialist(task, context));
 
   const endpoint = new URL("/api/owner/agency-control", base).toString();
   const headers = {
