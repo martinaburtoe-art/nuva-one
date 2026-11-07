@@ -77,19 +77,10 @@ Deno.serve(async (request) => {
     if (auth.kind === "worker") {
       if (action === "claim_task") {
         const { data: initialData, error } = await client.rpc("agency_claim_task", { p_agent_id: auth.agentId, p_lease_seconds: body.leaseSeconds ?? 21600 });
-        let data = initialData;
         if (error) throw error;
-        if (!data) {
-          const { data: mission } = await client.from("agency_missions").select("id,objective,success_criteria").eq("metadata->>mode", "durable-autonomous-agency").not("status", "in", "('cancelled','failed')").order("priority", { ascending: false }).limit(1).maybeSingle();
-          if (mission) {
-            const { error: taskError } = await client.from("agency_tasks").insert({ mission_id: mission.id, title: `Autonomous ${auth.agentId} cycle`, objective: mission.objective, agent_id: auth.agentId, priority: auth.agentId === "security" ? 100 : 70, input_context: { success_criteria: mission.success_criteria, source: "durable-cycle" } });
-            if (taskError) throw taskError;
-            const claimed = await client.rpc("agency_claim_task", { p_agent_id: auth.agentId, p_lease_seconds: body.leaseSeconds ?? 21600 });
-            if (claimed.error) throw claimed.error;
-            data = claimed.data;
-          }
-        }
-        return json({ claimed: data ?? null });
+        // An empty queue is an idle worker, not permission to manufacture another task.
+        // New work must be explicitly delegated by Orchestrator or created by the owner.
+        return json({ claimed: initialData ?? null });
       }
       if (action === "heartbeat") {
         const { data, error } = await client.rpc("agency_heartbeat", { p_lease_token: body.leaseToken, p_extend_seconds: body.extendSeconds ?? 3600 });
