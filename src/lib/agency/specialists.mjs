@@ -38,7 +38,7 @@ async function readLocalFile(path) {
     const content = await readFile(path, "utf8");
     return { ok: true, content };
   } catch (localError) {
-    const normalizedPath = typeof path === "string" ? path.replaceAll("\\\\", "/") : "";
+    const normalizedPath = typeof path === "string" ? path : "";
     const commitSha = process.env.VERCEL_GIT_COMMIT_SHA;
     if (!REMOTE_SOURCE_ALLOWLIST.has(normalizedPath) || !/^[a-f0-9]{40}$/i.test(commitSha ?? "")) {
       return { ok: false, error: localError instanceof Error ? localError.message : String(localError) };
