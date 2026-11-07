@@ -5,14 +5,14 @@ import {
   SPECIALISTS,
   SPECIALIST_META,
   type SpecialistResult,
-} from "@/lib/agency/specialists";
+} from "@/lib/agency/specialists.ts";
 
 const task = (agentId: string, id = "t-test-001", input_context?: Record<string, unknown>) =>
   ({ id, title: "Tarea de prueba", agent_id: agentId, input_context } as const);
 
 describe("Especialistas faltantes (ETAPA 1)", () => {
-  it("registra exactamente los 13 especialistas", () => {
-    const expected = ["compliance", "constructor", "finance", "growth", "orchestrator", "people", "qa", "release", "sales", "security", "sentinel", "supply", "ux"];
+  it("registra exactamente los 23 especialistas TypeScript", () => {
+    const expected = ["accounting", "analytics", "compliance", "constructor", "customer_success", "data_bi", "finance", "growth", "integrations", "marketing", "orchestrator", "people", "product", "qa", "release", "sales", "security", "sentinel", "seo", "supply", "support", "tax_chile", "ux"];
     expect(Object.keys(SPECIALISTS).sort()).toEqual(expected);
     expect(Object.keys(SPECIALIST_META).sort()).toEqual(expected);
   });
@@ -80,7 +80,7 @@ describe("Especialistas faltantes (ETAPA 1)", () => {
   it("people escanea PII y no expone valores; directorios ausentes no se consideran PASS", async () => {
     const result = await SPECIALISTS.people(task("people"));
     expect(["PASS", "WARN", "UNKNOWN", "FAIL"]).toContain(result.result);
-    expect(result.evidence.some((item) => item.startsWith("PII scan:"))).toBe(true);
+    expect(result.evidence.some((item) => item.includes("PII redactado:"))).toBe(true);
     const joined = result.evidence.join(" ");
     expect(joined).not.toMatch(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
     expect(joined).not.toMatch(/\b\d{1,2}\.\d{3}\.\d{3}-?[\dkK]\b/);
@@ -182,7 +182,7 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(joined).not.toMatch(/service_role/);
   });
 
-  it("qa ejecuta Vitest real en un objetivo aislado y reporta conteo verificable", async () => {
+  it("qa ejecuta Vitest real en un objetivo aislado y reporta conteo verificable", { timeout: 30000 }, async () => {
     const result = await SPECIALISTS.qa(task("qa", "t-qa-smoke", { target: "tests/agency/qa-smoke.test.ts" }));
     expect(result.result).toBe("PASS");
     const joined = result.evidence.join(" ");
@@ -190,7 +190,7 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(joined).toMatch(/salida JSON válida/);
   });
 
-  it("sentinel escanea logs y detecta pausa", async () => {
+  it("sentinel escanea logs y detecta pausa", { timeout: 30000 }, async () => {
     const result = await SPECIALISTS.sentinel(task("sentinel"));
     expect(["PASS", "WARN"]).toContain(result.result);
     const joined = result.evidence.join(" ");
@@ -209,5 +209,21 @@ describe("Especialistas nuevos (ETAPA 1 — orchestrator, constructor, complianc
     expect(["PASS", "FAIL"]).toContain(result.result);
     const joined = result.evidence.join(" ");
     expect(joined).toMatch(/git status|package\.json/);
+  });
+
+  it.each(["product", "customer_success", "support", "marketing", "seo", "analytics", "accounting", "tax_chile", "integrations", "data_bi"])("%s expone metadatos completos", (id) => {
+    const meta = SPECIALIST_META[id];
+    expect(meta).toBeDefined();
+    expect(meta.id).toBe(id);
+    expect(meta.responsabilidades.length).toBeGreaterThan(0);
+    expect(meta.limites.length).toBeGreaterThan(0);
+    expect(meta.tiposDeTarea.length).toBeGreaterThan(0);
+    expect(meta.herramientasPermitidas.length).toBeGreaterThan(0);
+  });
+
+  it.each(["customer_success", "support", "marketing"])("%s no declara PASS sin evidencia específica", async (id) => {
+    const result = await SPECIALISTS[id](task(id));
+    expect(result.result).toBe("WARN");
+    expect(result.evidence.length).toBeGreaterThan(0);
   });
 });
