@@ -1,9 +1,9 @@
+import { cron } from "inngest";
 import { inngest } from "./client";
+import { INNGEST_AGENCY_AGENT_IDS, runInngestAgencyWorker } from "./agency-worker";
 
 /**
- * Deliberately side-effect-free foundation function.
- * This validates event delivery and durable execution without touching
- * Supabase, agency leases, billing, inventory, or external integrations.
+ * Safe connectivity check. It has no side effects outside Inngest.
  */
 export const nuvaSystemPing = inngest.createFunction(
   {
@@ -18,4 +18,24 @@ export const nuvaSystemPing = inngest.createFunction(
   }),
 );
 
-export const inngestFunctions = [nuvaSystemPing];
+/**
+ * Read-only Agency specialists are scheduled independently.
+ * Database leases remain authoritative, so GitHub Actions and Inngest
+ * can coexist during the staged rollout without claiming the same task.
+ */
+export const nuvaAgencyWorkers = INNGEST_AGENCY_AGENT_IDS.map((agentId) =>
+  inngest.createFunction(
+    {
+      id: `nuva-agency-${agentId}-worker`,
+      triggers: [cron("*/5 * * * *")],
+      retries: 2,
+      concurrency: [
+        { limit: 5, scope: "env", key: '"nuva-agency"' },
+        { limit: 1, scope: "fn" },
+      ],
+    },
+    async ({ step }) => runInngestAgencyWorker(agentId, step),
+  ),
+);
+
+export const inngestFunctions = [nuvaSystemPing, ...nuvaAgencyWorkers];
