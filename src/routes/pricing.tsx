@@ -57,7 +57,7 @@ const plans = [
       "Compras y entregas",
       "Nüva Score básico",
       "IA para consultas y explicaciones",
-      "15 días de prueba gratuita",
+      "Demo de negocio con datos ficticios disponible",
     ],
   },
   {
@@ -217,9 +217,11 @@ function PricingPage() {
             acompañamiento quieres tener sobre tu empresa.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-xs text-muted-foreground shadow-sm">
-            <ShieldCheck className="h-4 w-4 text-primary" /> 15 días gratis · Sin tarjeta · Cancela
-            cuando quieras
+            <ShieldCheck className="h-4 w-4 text-primary" /> Demo gratuita · Sin tarjeta · Activa tu plan cuando quieras
           </div>
+          <p className="relative mt-3 text-xs leading-relaxed text-muted-foreground">
+            Explora primero un negocio de demostración con datos ficticios. La contratación de Start o Pro se confirma por separado en el entorno seguro de Mercado Pago.
+          </p>
         </div>
       </section>
 
@@ -405,12 +407,12 @@ function PricingPage() {
             </div>
             <div className="mt-8 text-center">
               <Link
-                to="/checkout"
-                search={{ plan: "pro", billing }}
+                to="/auth"
+                search={{ mode: "signup" }}
                 className="inline-flex"
               >
                 <Button size="lg" className="rounded-xl">
-                  Probar Nüva One gratis
+                  Crear cuenta y explorar la demo
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
