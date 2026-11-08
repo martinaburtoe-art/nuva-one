@@ -125,8 +125,14 @@ export async function runInngestAgencyWorker(
   const task = claim.task;
   const taskId = task.id;
   const leaseToken = claim.lease.token;
-  if (typeof taskId !== "string" || typeof leaseToken !== "string" || leaseToken.length < 16) {
+  if (typeof taskId !== "string" || typeof leaseToken !== "string" || !/^[a-f0-9]{32,64}$/i.test(leaseToken)) {
     throw new Error("AGENCY_CLAIM_RESPONSE_INVALID");
+  }
+  if (scopedTaskId && taskId.toLowerCase() !== scopedTaskId.toLowerCase()) {
+    throw new Error("AGENCY_CLAIM_TASK_SCOPE_MISMATCH");
+  }
+  if (task.agent_id !== agentId) {
+    throw new Error("AGENCY_CLAIM_AGENT_MISMATCH");
   }
 
   const taskInput = {
