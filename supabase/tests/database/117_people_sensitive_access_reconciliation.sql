@@ -1,6 +1,6 @@
 -- Nüva People sensitive-access reconciliation (pgTAP)
 BEGIN;
-SELECT plan(17);
+SELECT plan(15);
 
 -- All seven exposed sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
