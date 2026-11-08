@@ -36,7 +36,7 @@ SELECT is((
       'people_gratification_settlements','people_payroll_liquidations',
       'people_attendance_events','people_compliance_items')
     AND cmd='SELECT' AND permissive='PERMISSIVE'
-    AND policyname IN ('people_member_select','people_gratification_settings_select','people_gratification_settlements_select')
+    AND policyname IN ('people_member_select','people_payroll_inputs_select','people_terminations_select','people_vacation_select','people_gratification_settings_select','people_gratification_settlements_select')
 ), 0, 'no broad member SELECT policy remains on sensitive tables');
 
 -- Staff/viewer must not write employee PII, contracts or documents.
