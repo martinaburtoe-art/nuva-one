@@ -40,7 +40,7 @@ function Dashboard() {
       const [sales, expenses, products, salesCount] = await Promise.all([
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income"),
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense"),
-        supabase.from("products").select("stock, price, low_stock_threshold, reorder_point").eq("business_id", bid),
+        supabase.from("products").select("stock, cost, low_stock_threshold, reorder_point").eq("business_id", bid),
         supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
       return buildDashboardMetrics({ sales, expenses, products, salesCount });
