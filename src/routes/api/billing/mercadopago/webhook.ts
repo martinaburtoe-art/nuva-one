@@ -133,7 +133,13 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
                 : {}),
               ...(status === "cancelled" || status === "canceled" ? { plan: "starter" } : {}),
             };
-            await supabaseAdmin.from("businesses").update(update).eq("id", businessId);
+            const { error: subscriptionUpdateError } = await supabaseAdmin
+              .from("businesses")
+              .update(update)
+              .eq("id", businessId);
+            if (subscriptionUpdateError) {
+              return new Response("Unable to persist Mercado Pago subscription state", { status: 500 });
+            }
           }
         }
 
@@ -169,11 +175,15 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
             }
             const { businessId } = parseMercadoPagoExternalReference(externalReference);
             if (isValidMercadoPagoBusinessId(businessId)) {
-              await supabaseAdmin.from("subscription_charges").upsert(
+              const amount = Number(payment.transaction_amount);
+              if (!Number.isFinite(amount) || amount <= 0) {
+                return new Response("Invalid Mercado Pago payment amount", { status: 422 });
+              }
+              const { error: chargeUpsertError } = await supabaseAdmin.from("subscription_charges").upsert(
                 {
                   business_id: businessId,
                   commerce_order: `mp-${String(payment.id ?? paymentId)}`,
-                  amount: Number(payment.transaction_amount ?? 0),
+                  amount,
                   status: String(payment.status ?? authorized?.status ?? "pending"),
                   provider: "mercadopago",
                   provider_payment_id: String(payment.id ?? paymentId),
@@ -182,6 +192,9 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
                 },
                 { onConflict: "commerce_order" },
               );
+              if (chargeUpsertError) {
+                return new Response("Unable to persist Mercado Pago payment", { status: 500 });
+              }
             }
           }
         }
