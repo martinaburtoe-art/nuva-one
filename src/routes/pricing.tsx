@@ -57,7 +57,7 @@ const plans = [
       "Compras y entregas",
       "Nüva Score básico",
       "IA para consultas y explicaciones",
-      "Demo de negocio con datos ficticios disponible",
+      "15 días de prueba gratuita en Start",
     ],
   },
   {
@@ -217,10 +217,10 @@ function PricingPage() {
             acompañamiento quieres tener sobre tu empresa.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-xs text-muted-foreground shadow-sm">
-            <ShieldCheck className="h-4 w-4 text-primary" /> Demo gratuita · Sin tarjeta · Activa tu plan cuando quieras
+            <ShieldCheck className="h-4 w-4 text-primary" /> 15 días de prueba en Start · Demo Pro · Sin tarjeta
           </div>
           <p className="relative mt-3 text-xs leading-relaxed text-muted-foreground">
-            Explora primero un negocio de demostración con datos ficticios. La contratación de Start o Pro se confirma por separado en el entorno seguro de Mercado Pago.
+            Prueba Nüva Start durante 15 días y explora un negocio de demostración Pro con datos ficticios. La contratación pagada se confirma por separado en Mercado Pago.
           </p>
         </div>
       </section>
