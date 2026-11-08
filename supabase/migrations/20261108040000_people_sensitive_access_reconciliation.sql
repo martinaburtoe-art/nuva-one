@@ -33,6 +33,10 @@ BEGIN
           'people_employees','people_contracts','people_documents',
           'people_attendance_events','people_compliance_items','people_leave_requests'
         ]::text[]) AND cmd IN ('INSERT','UPDATE'))
+        OR
+        (tablename = ANY (ARRAY[
+          'people_employees','people_contracts','people_documents'
+        ]::text[]) AND cmd = 'DELETE')
       )
   LOOP
     EXECUTE format('DROP POLICY %I ON %I.%I', pol.policyname, pol.schemaname, pol.tablename);
@@ -40,7 +44,26 @@ BEGIN
 END;
 $$;
 
+-- Recreate explicit owner/admin DELETE policies for employee PII.
+-- Earlier broad ALL policies are removed above; DELETE must not be lost or
+-- reintroduced as a member-wide policy.
+DROP POLICY IF EXISTS people_employees_delete_owner_admin ON public.people_employees;
+CREATE POLICY people_employees_delete_owner_admin ON public.people_employees
+  FOR DELETE TO authenticated
+  USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+
+DROP POLICY IF EXISTS people_contracts_delete_owner_admin ON public.people_contracts;
+CREATE POLICY people_contracts_delete_owner_admin ON public.people_contracts
+  FOR DELETE TO authenticated
+  USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+
+DROP POLICY IF EXISTS people_documents_delete_owner_admin ON public.people_documents;
+CREATE POLICY people_documents_delete_owner_admin ON public.people_documents
+  FOR DELETE TO authenticated
+  USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+
 -- Remove broad member SELECT policies. Owner/admin SELECT policies already exist
+-- on these tables and remain the sole permissive SELECT path. Owner/admin SELECT policies already exist
 -- on these tables and remain the sole permissive SELECT path.
 DROP POLICY IF EXISTS people_member_select ON public.people_employees;
 DROP POLICY IF EXISTS people_member_select ON public.people_contracts;
