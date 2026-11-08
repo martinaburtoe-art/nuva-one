@@ -1,10 +1,18 @@
 -- Subscription-aware enforcement for the 15-day Starter trial.
 BEGIN;
-SELECT plan(14);
+SELECT plan(16);
 
 SELECT ok(
   to_regprocedure('public.enforce_business_active()') IS NOT NULL,
   'database trial enforcement trigger function is installed'
+);
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.business_is_active(uuid)', 'EXECUTE'),
+  'anon cannot query arbitrary business subscription/trial status'
+);
+SELECT ok(
+  NOT has_function_privilege('authenticated', 'public.business_is_active(uuid)', 'EXECUTE'),
+  'authenticated users cannot query arbitrary business subscription/trial status'
 );
 SELECT is((
   SELECT count(*)::int
