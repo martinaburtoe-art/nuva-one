@@ -2,7 +2,7 @@
 BEGIN;
 SELECT plan(28);
 
--- All eighteen sensitive tables must have one owner/admin SELECT policy.
+-- All nineteen sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
   SELECT count(*)::int FROM (
     SELECT expected.tablename
@@ -11,7 +11,7 @@ SELECT is((
       ('people_payroll_items'),('people_payroll_periods'),
       ('people_payroll_postings'),('people_payroll_runs'),
       ('people_payroll_inputs'),('people_lre_exports'),('people_lre_rows'),
-      ('people_leave_requests'),('people_terminations'),('people_vacation_balances'),
+      ('people_leave_requests'),('people_absences'),('people_terminations'),('people_vacation_balances'),
       ('people_gratification_settings'),('people_gratification_settlements'),('people_payroll_liquidations'),
       ('people_attendance_events'),('people_compliance_items')
     ) AS expected(tablename)
@@ -24,7 +24,7 @@ SELECT is((
         AND p.qual LIKE '%owner%' AND p.qual LIKE '%admin%'
     ) = 1
   ) verified
-), 18, 'each sensitive table has exactly one owner/admin SELECT policy');
+), 19, 'each sensitive table has exactly one owner/admin SELECT policy');
 
 SELECT is((
   SELECT count(*)::int FROM pg_policies
@@ -32,7 +32,7 @@ SELECT is((
     AND tablename IN ('people_employees','people_contracts','people_documents',
       'people_attendance_events','people_compliance_items','people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
       'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
-      'people_terminations','people_vacation_balances','people_gratification_settings',
+      'people_terminations','people_absences','people_vacation_balances','people_gratification_settings',
       'people_gratification_settlements','people_payroll_liquidations')
     AND cmd='SELECT' AND permissive='PERMISSIVE'
     AND policyname IN ('people_member_select','people_payroll_inputs_select','people_terminations_select','people_vacation_select','people_gratification_settings_select','people_gratification_settlements_select')
@@ -149,14 +149,14 @@ SELECT is((
   WHERE schemaname='public'
     AND tablename IN (
       'people_employees','people_contracts','people_documents',
-      'people_attendance_events','people_compliance_items',
+      'people_attendance_events','people_compliance_items','people_absences',
       'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
       'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
       'people_terminations','people_vacation_balances','people_gratification_settings',
       'people_gratification_settlements','people_payroll_liquidations'
     )
     AND cmd='SELECT' AND permissive='PERMISSIVE'
-), 18, 'each sensitive People table has exactly one permissive SELECT policy total');
+), 19, 'each sensitive People table has exactly one permissive SELECT policy total');
 SELECT is((
   SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
@@ -189,7 +189,7 @@ SELECT is((
       'people_gratification_settlements','people_payroll_liquidations',
       'people_attendance_events','people_compliance_items')
     AND c.relrowsecurity
-), 18, 'RLS remains enabled on all eighteen sensitive tables');
+), 19, 'RLS remains enabled on all nineteen sensitive tables');
 
 SELECT * FROM finish();
 ROLLBACK;
