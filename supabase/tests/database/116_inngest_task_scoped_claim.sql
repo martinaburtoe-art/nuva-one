@@ -1,5 +1,5 @@
 begin;
-select plan(3);
+select plan(4);
 
 select ok(
   has_function_privilege('service_role', 'public.agency_claim_task_by_id(text, uuid, integer)', 'EXECUTE'),
@@ -12,6 +12,11 @@ select ok(
 select ok(
   not has_function_privilege('authenticated', 'public.agency_claim_task_by_id(text, uuid, integer)', 'EXECUTE'),
   'authenticated cannot execute the task-scoped claim RPC'
+);
+select ok(
+  position('extensions.gen_random_bytes(32)' in pg_get_functiondef('public.agency_claim_task_by_id(text, uuid, integer)'::regprocedure)) > 0
+  and position('md5(' in pg_get_functiondef('public.agency_claim_task_by_id(text, uuid, integer)'::regprocedure)) = 0,
+  'task-scoped lease token uses cryptographically secure random bytes'
 );
 
 select * from finish();
