@@ -144,6 +144,12 @@ function Dashboard() {
     }
   }
   const attentionCount = (kpis?.lowStockCount ?? 0) + ((kpis?.net ?? 0) < 0 ? 1 : 0);
+  const attentionDetails = [
+    (kpis?.lowStockCount ?? 0) > 0
+      ? `${kpis!.lowStockCount} productos están en su nivel de reposición o por debajo.`
+      : null,
+    (kpis?.net ?? 0) < 0 ? "El resultado acumulado está bajo cero." : null,
+  ].filter(Boolean).join(" ");
 
   return (
     <ModuleGuard module="dashboard">
@@ -235,7 +241,7 @@ function Dashboard() {
               ) : (
                 <>
                   <span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span>
-                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div>
+                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} puntos de atención`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : attentionDetails}</p></div>
                 </>
               )}
               <i className="nuva-resumen-status-light" />
