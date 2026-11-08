@@ -188,6 +188,7 @@ SELECT is((
       'people_contracts_select_owner_admin','people_employees_select_owner_admin',
       'people_documents_select_owner_admin','people_lre_rows_select_owner_admin',
       'people_payroll_items_select_owner_admin','people_payroll_periods_select_owner_admin',
+      'people_payroll_postings_select_owner_admin','people_payroll_runs_select_owner_admin',
       'people_payroll_liquidations_select_owner_admin','people_absences_select_owner_admin'
     )
     AND qual LIKE '%SELECT auth.uid()%'
