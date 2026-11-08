@@ -222,14 +222,14 @@ export function HomeFixedExperience() {
                         </div>
                         <div className="absolute left-[10%] right-[10%] top-[18%] h-0.5 animate-[scan_1.8s_ease-in-out_infinite] bg-fuchsia-500 shadow-[0_0_14px_rgba(217,70,239,0.95)] motion-reduce:animate-none" />
                         <div className="absolute inset-x-7 bottom-5 h-12 rounded-lg bg-white/95 p-2 text-[8px] shadow-lg transition-all duration-500">
-                          <p className="font-bold">Café Molido 250g</p><p className="mt-1 text-slate-500">$5.990 · Stock 24</p>
+                          <p className="font-bold">Café de especialidad 250 g</p><p className="mt-1 text-slate-500">$8.990 · Stock 18</p>
                         </div>
                       </div>
                     </div>
                     <div className="mt-3 rounded-2xl bg-[#11131a] p-3 text-white shadow-lg">
                       <div className="flex items-center gap-2 text-[9px] font-semibold"><CheckCircle2 size={12} className="text-emerald-400" /> Producto identificado</div>
-                      <div className="mt-2 flex justify-between text-[9px] text-white/60"><span>Stock</span><span className="font-bold text-white">24 → 23</span></div>
-                      <div className="mt-1 flex justify-between text-[9px] text-white/60"><span>Venta</span><span className="font-bold text-white">+$5.990</span></div>
+                      <div className="mt-2 flex justify-between text-[9px] text-white/60"><span>Stock</span><span className="font-bold text-white">18 → 17</span></div>
+                      <div className="mt-1 flex justify-between text-[9px] text-white/60"><span>Venta</span><span className="font-bold text-white">+$8.990</span></div>
                     </div>
                   </div>
                 </div>
@@ -248,7 +248,7 @@ export function HomeFixedExperience() {
           <div className="order-1 lg:order-2">
             <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#6366F1]">NÜVA ONE · SMART SCAN</p>
             <h2 className="mt-5 max-w-xl text-5xl font-semibold leading-[0.95] tracking-[-0.045em] sm:text-7xl">Escanea.<br />Vende.<br /><span className="text-[#6366F1]">Controla.</span></h2>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-black/60">Tu teléfono puede convertirse en una herramienta de punto de venta e inventario. Escanea un producto y deja que Nüva One conecte la venta con el stock en segundos.</p>
+            <p className="mt-7 max-w-xl text-lg leading-8 text-black/60">Tu teléfono puede convertirse en una herramienta de punto de venta e inventario. Escanea un producto y deja que Nüva One conecte la venta con el stock en segundos. La imagen muestra el flujo; el escaneo real se ejecuta con la cámara en vivo o un lector compatible desde Caja.</p>
             <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-[#11131a]"><ScanLine size={18} className="text-[#6366F1]" /> Sin hardware complejo. Sin equipos adicionales.</div>
             <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-3">
               {[
