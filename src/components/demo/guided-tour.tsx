@@ -23,7 +23,7 @@ export const DEMO_STEPS: DemoStep[] = [
 
 type Spotlight = { top: number; left: number; width: number; height: number } | null;
 
-export function GuidedTour({ step, onStep, onClose }: { step: number; onStep: (next: number) => void; onClose: () => void }) {
+export function GuidedTour({ step, onStep, onClose, canAdvance = true }: { step: number; onStep: (next: number) => void; onClose: () => void; canAdvance?: boolean }) {
   const current = DEMO_STEPS[step];
   const [spotlight, setSpotlight] = useState<Spotlight>(null);
 
@@ -63,7 +63,7 @@ export function GuidedTour({ step, onStep, onClose }: { step: number; onStep: (n
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={step === 0} onClick={() => onStep(step - 1)}><ArrowLeft className="mr-1 h-4 w-4" />Atrás</Button>
-            <Button size="sm" onClick={() => step === DEMO_STEPS.length - 1 ? onClose() : onStep(step + 1)}>{step === DEMO_STEPS.length - 1 ? "Explorar libremente" : "Siguiente"}<ArrowRight className="ml-1 h-4 w-4" /></Button>
+            <Button size="sm" disabled={!canAdvance} onClick={() => step === DEMO_STEPS.length - 1 ? onClose() : onStep(step + 1)}>{!canAdvance ? "Simula la venta para continuar" : step === DEMO_STEPS.length - 1 ? "Explorar libremente" : "Siguiente"}{canAdvance && <ArrowRight className="ml-1 h-4 w-4" />}</Button>
           </div>
         </div>
       </div>
