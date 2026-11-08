@@ -47,7 +47,7 @@ select throws_ok(
   $$ insert into public.products (business_id, name, price, stock)
      values ('00000000-0000-0000-0000-0000000000b3', 'Late product', 1000, 10) $$,
   '42501',
-  'Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One.',
+  'Tu prueba gratuita de 15 días terminó. Elige un plan para seguir usando Nüva One.',
   'inserting a product is rejected once the Starter trial has expired'
 );
 
