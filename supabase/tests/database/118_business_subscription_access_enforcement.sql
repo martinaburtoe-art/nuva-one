@@ -12,10 +12,15 @@ SELECT is((
   JOIN pg_class rel ON rel.oid = tr.tgrelid
   JOIN pg_namespace ns ON ns.oid = rel.relnamespace
   WHERE ns.nspname = 'public'
-    AND rel.relname IN ('products','customers','suppliers','sales','purchases','quotes','transactions')
+    AND rel.relname IN (
+      'products','customers','suppliers','sales','purchases','quotes','transactions',
+      'cash_registers','cash_register_movements','costs','customer_activities',
+      'inventory_stocktakes','inventory_stocktake_lines','product_codes',
+      'purchase_payments','shifts','shipments'
+    )
     AND tr.tgname = 'trg_enforce_business_active'
     AND NOT tr.tgisinternal
-), 7, 'trial enforcement is installed on all seven billable operational tables');
+), 17, 'trial enforcement is installed on all 17 billable operational tables');
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-0000000000c0');
