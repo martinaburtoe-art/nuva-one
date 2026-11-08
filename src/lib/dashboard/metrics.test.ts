@@ -10,8 +10,8 @@ describe("buildDashboardMetrics", () => {
       expenses: { data: [{ amount: 40000 }], error: null },
       products: {
         data: [
-          { stock: 2, price: 10000, low_stock_threshold: 3 },
-          { stock: 8, price: 5000, reorder_point: 4 },
+          { stock: 2, price: 10000, cost: 6000, low_stock_threshold: 3 },
+          { stock: 8, price: 5000, cost: 2000, reorder_point: 4 },
         ],
         error: null,
       },
@@ -22,7 +22,7 @@ describe("buildDashboardMetrics", () => {
       income: 150000,
       expense: 40000,
       net: 110000,
-      inventoryValue: 60000,
+      inventoryValue: 28000,
       salesCount: 7,
       productsCount: 2,
       lowStockCount: 1,
