@@ -175,6 +175,7 @@ const featureDescriptions: Record<string, { title: string; description: string; 
 
 function PricingPage() {
   const [openFeature, setOpenFeature] = useState<string | null>(null);
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   return (
     <main className="min-h-screen bg-background">
@@ -223,7 +224,14 @@ function PricingPage() {
       </section>
 
       <section id="pricing" className="scroll-mt-24 px-4 pb-16 sm:px-6">
-        <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-2">
+        <div className="mx-auto max-w-5xl">
+          <div role="group" aria-label="Periodicidad de pago" className="mx-auto mb-8 flex w-fit items-center gap-1 rounded-full border bg-card p-1 shadow-sm">
+            <button type="button" aria-pressed={billing === "monthly"} onClick={() => setBilling("monthly")} className={billing === "monthly" ? "rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm" : "rounded-full px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground"}>Mensual</button>
+            <button type="button" aria-pressed={billing === "annual"} onClick={() => setBilling("annual")} className={billing === "annual" ? "flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm" : "flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground"}>
+              Anual <span className={billing === "annual" ? "rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-current" : "rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700"}>2 meses gratis</span>
+            </button>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
           {plans.map((plan) => (
             <article
               key={plan.id}
@@ -249,11 +257,13 @@ function PricingPage() {
               </div>
               <div className="mt-7">
                 <span className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  {formatClp(plan.monthlyPriceClp)}
+                  {formatClp(billing === "annual" ? plan.annualPriceClp : plan.monthlyPriceClp)}
                 </span>
-                <span className="ml-2 text-sm text-muted-foreground">/ mes</span>
+                <span className="ml-2 text-sm text-muted-foreground">/ {billing === "annual" ? "año" : "mes"}</span>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  o {formatClp(plan.annualPriceClp)} / año
+                  {billing === "annual"
+                    ? "Equivale a " + formatClp(Math.round(plan.annualPriceClp / 12)) + "/mes · Ahorras " + formatClp(plan.monthlyPriceClp * 12 - plan.annualPriceClp) + " al año."
+                    : "O " + formatClp(plan.annualPriceClp) + " al año · Ahorras dos meses al elegir pago anual."}
                 </div>
               </div>
               <div className="mt-6 grid grid-cols-2 gap-2">
@@ -268,7 +278,7 @@ function PricingPage() {
               </div>
               <Link
                 to="/checkout"
-                search={{ plan: plan.id, billing: "monthly" }}
+                search={{ plan: plan.id, billing }}
                 className="mt-6"
               >
                 <Button
@@ -294,6 +304,7 @@ function PricingPage() {
               </div>
             </article>
           ))}
+        </div>
         </div>
       </section>
 
@@ -395,7 +406,7 @@ function PricingPage() {
             <div className="mt-8 text-center">
               <Link
                 to="/checkout"
-                search={{ plan: "pro", billing: "monthly" }}
+                search={{ plan: "pro", billing }}
                 className="inline-flex"
               >
                 <Button size="lg" className="rounded-xl">
