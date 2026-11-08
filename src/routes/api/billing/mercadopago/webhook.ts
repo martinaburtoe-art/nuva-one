@@ -182,6 +182,9 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
               externalReference = String(subscriptionResult.data.external_reference ?? "");
             }
             const { businessId } = parseMercadoPagoExternalReference(externalReference);
+            if (type === "subscription_authorized_payment" && !isValidMercadoPagoBusinessId(businessId)) {
+              return new Response("Invalid Mercado Pago subscription business reference", { status: 422 });
+            }
             if (isValidMercadoPagoBusinessId(businessId)) {
               const amount = Number(payment.transaction_amount);
               if (!Number.isFinite(amount) || amount <= 0) {
