@@ -12,7 +12,7 @@
 -- operational submission tables, replace all INSERT/UPDATE rules with the
 -- explicit staff-submit and owner/admin-review rules below. DELETE policies
 -- are deliberately preserved.
-DO $
+DO $$
 DECLARE pol record;
 BEGIN
   FOR pol IN
@@ -38,7 +38,7 @@ BEGIN
     EXECUTE format('DROP POLICY %I ON %I.%I', pol.policyname, pol.schemaname, pol.tablename);
   END LOOP;
 END;
-$;
+$$;
 
 -- Remove broad member SELECT policies. Owner/admin SELECT policies already exist
 -- on these tables and remain the sole permissive SELECT path.
