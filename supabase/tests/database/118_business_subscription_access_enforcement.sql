@@ -1,6 +1,6 @@
 -- Subscription-aware enforcement for the 15-day Starter trial.
 BEGIN;
-SELECT plan(11);
+SELECT plan(12);
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-0000000000c0');
@@ -16,7 +16,8 @@ VALUES
   ('00000000-0000-0000-0000-0000000000c5', 'Paused Pro', '00000000-0000-0000-0000-0000000000c0', 'pro', now() - interval '90 days', 'paused', 'mercadopago'),
   ('00000000-0000-0000-0000-0000000000c6', 'Cancelled Pro', '00000000-0000-0000-0000-0000000000c0', 'pro', now() - interval '90 days', 'canceled', 'mercadopago'),
   ('00000000-0000-0000-0000-0000000000c7', 'Pending Starter', '00000000-0000-0000-0000-0000000000c0', 'starter', now() - interval '90 days', 'pending', 'mercadopago'),
-  ('00000000-0000-0000-0000-0000000000c8', 'Pending Trial Starter', '00000000-0000-0000-0000-0000000000c0', 'starter', now() - interval '2 days', 'pending', 'mercadopago');
+  ('00000000-0000-0000-0000-0000000000c8', 'Pending Trial Starter', '00000000-0000-0000-0000-0000000000c0', 'starter', now() - interval '2 days', 'pending', 'mercadopago'),
+  ('00000000-0000-0000-0000-0000000000c9', 'Pending Pro Checkout', '00000000-0000-0000-0000-0000000000c0', 'pro', now() - interval '90 days', 'pending', 'mercadopago');
 
 SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c1'), false, 'expired unpaid Starter is inactive');
 SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c2'), true, 'Starter remains active within its 15-day trial');
@@ -26,6 +27,7 @@ SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c5'), fal
 SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c6'), false, 'cancelled Pro subscription is inactive');
 SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c7'), false, 'pending paid subscription outside the trial is not treated as active');
 SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c8'), true, 'pending checkout does not interrupt a still-valid Starter trial');
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c9'), true, 'pending checkout preserves an existing Pro entitlement');
 
 SELECT lives_ok(
   $$INSERT INTO public.products (business_id, name, price, stock)
