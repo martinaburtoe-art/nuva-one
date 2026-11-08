@@ -1,6 +1,6 @@
 -- Nüva People sensitive-access reconciliation (pgTAP)
 BEGIN;
-SELECT plan(30);
+SELECT plan(32);
 
 -- All nineteen sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
@@ -131,6 +131,20 @@ SELECT ok(
   'limited attendance and compliance RPCs omit metadata and document references');
 SELECT ok(pg_get_functiondef('public.people_leave_requests_limited(uuid)'::regprocedure) NOT LIKE '%reason%', 'limited leave RPC omits free-text reason/health detail');
 SELECT ok(NOT has_function_privilege('authenticated','public.people_vacation_balances_limited(uuid)','EXECUTE'), 'vacation balance RPC is unavailable to non-admin members');
+SELECT ok(
+  NOT (SELECT prosecdef FROM pg_proc WHERE oid='public.review_people_leave_request(uuid,text,boolean)'::regprocedure)
+  AND position('private.has_business_role' in pg_get_functiondef('public.review_people_leave_request(uuid,text,boolean)'::regprocedure)) > 0
+  AND position('owner' in pg_get_functiondef('public.review_people_leave_request(uuid,text,boolean)'::regprocedure)) > 0
+  AND position('admin' in pg_get_functiondef('public.review_people_leave_request(uuid,text,boolean)'::regprocedure)) > 0,
+  'leave approval RPC runs as invoker and requires owner/admin'
+);
+SELECT ok(
+  NOT (SELECT prosecdef FROM pg_proc WHERE oid='public.calculate_people_termination(uuid,date,text,boolean)'::regprocedure)
+  AND position('private.has_business_role' in pg_get_functiondef('public.calculate_people_termination(uuid,date,text,boolean)'::regprocedure)) > 0
+  AND position('owner' in pg_get_functiondef('public.calculate_people_termination(uuid,date,text,boolean)'::regprocedure)) > 0
+  AND position('admin' in pg_get_functiondef('public.calculate_people_termination(uuid,date,text,boolean)'::regprocedure)) > 0,
+  'termination calculation runs as invoker and requires owner/admin'
+);
 SELECT ok(
   position('owner' in pg_get_functiondef('public.calculate_people_vacation_balance(uuid,date)'::regprocedure)) > 0
   AND position('admin' in pg_get_functiondef('public.calculate_people_vacation_balance(uuid,date)'::regprocedure)) > 0,
