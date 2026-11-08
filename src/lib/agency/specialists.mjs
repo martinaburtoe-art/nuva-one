@@ -34,16 +34,17 @@ const REMOTE_SOURCE_ALLOWLIST = new Set([
 ]);
 
 async function readLocalFile(path) {
-  try {
-    const content = await readFile(path, "utf8");
-    return { ok: true, content };
-  } catch (localError) {
-    const normalizedPath = typeof path === "string" ? path : "";
-    const commitSha = process.env.VERCEL_GIT_COMMIT_SHA;
-    if (!REMOTE_SOURCE_ALLOWLIST.has(normalizedPath) || !/^[a-f0-9]{40}$/i.test(commitSha ?? "")) {
-      return { ok: false, error: localError instanceof Error ? localError.message : String(localError) };
-    }
+  const normalizedPath = typeof path === "string" ? path : "";
+  const commitSha = process.env.VERCEL_GIT_COMMIT_SHA;
+  const hasPinnedRepositorySource =
+    Boolean(process.env.VERCEL_ENV) &&
+    REMOTE_SOURCE_ALLOWLIST.has(normalizedPath) &&
+    /^[a-f0-9]{40}$/i.test(commitSha ?? "");
 
+  // Vercel's function bundle may contain a generated package.json and other
+  // runtime artifacts. For allowlisted repository files, prefer the exact
+  // deployed commit so specialists never certify the bundle instead of source.
+  if (hasPinnedRepositorySource) {
     try {
       const encodedPath = normalizedPath.split("/").map(encodeURIComponent).join("/");
       const response = await fetch(
@@ -51,10 +52,24 @@ async function readLocalFile(path) {
         { cache: "no-store", signal: AbortSignal.timeout(10000) },
       );
       if (!response.ok) return { ok: false, error: `remote_source_http_${response.status}` };
-      return { ok: true, content: await response.text() };
+      return { ok: true, content: await response.text(), source: "pinned_repository_commit" };
     } catch (remoteError) {
-      return { ok: false, error: remoteError instanceof Error ? remoteError.message : String(remoteError) };
+      // Fail closed: never silently substitute generated deployment files.
+      return {
+        ok: false,
+        error: remoteError instanceof Error ? remoteError.message : String(remoteError),
+      };
     }
+  }
+
+  try {
+    const content = await readFile(path, "utf8");
+    return { ok: true, content, source: "local_filesystem" };
+  } catch (localError) {
+    return {
+      ok: false,
+      error: localError instanceof Error ? localError.message : String(localError),
+    };
   }
 }
 
