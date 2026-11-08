@@ -1,7 +1,7 @@
 export type DashboardMetricRow = {
   amount?: number | string | null;
   stock?: number | string | null;
-  price?: number | string | null;
+  cost?: number | string | null;
   low_stock_threshold?: number | string | null;
   reorder_point?: number | string | null;
 };
@@ -53,7 +53,7 @@ export function buildDashboardMetrics(input: {
     0,
   );
   const inventoryValue = (input.products.data ?? []).reduce(
-    (sum, row) => sum + Number(row.stock ?? 0) * Number(row.price ?? 0),
+    (sum, row) => sum + Number(row.stock ?? 0) * Number(row.cost ?? 0),
     0,
   );
   const lowStockCount = (input.products.data ?? []).filter((row) => {
