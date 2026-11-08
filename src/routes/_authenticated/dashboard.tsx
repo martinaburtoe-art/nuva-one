@@ -188,7 +188,7 @@ function Dashboard() {
             <div className="nuva-resumen-onboarding-copy">
               <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR INDICADORES</span>
               <h2>No se pudieron cargar los indicadores del negocio</h2>
-              <p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p>
+              <p>No pudimos consultar todos los indicadores del negocio. Intenta nuevamente.</p>
               <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
             </div>
           </div>
@@ -199,7 +199,7 @@ function Dashboard() {
             <div className="nuva-resumen-onboarding-copy">
               <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR MOVIMIENTOS</span>
               <h2>No se pudo cargar el historial de transacciones</h2>
-              <p>{String(txError?.message ?? txError ?? "Error desconocido")}</p>
+              <p>No pudimos consultar los movimientos financieros. Intenta nuevamente; si el problema continúa, contacta a soporte.</p>
               <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
             </div>
           </div>
