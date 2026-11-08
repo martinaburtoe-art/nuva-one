@@ -182,6 +182,10 @@ export async function getMercadoPagoPayment(config: MercadoPagoConfig, paymentId
   return { ok: true as const, data: result.json };
 }
 
+export function isMercadoPagoSubscriptionPreapprovalNotification(type: string | null | undefined) {
+  return type === "subscription_preapproval" || type === "preapproval";
+}
+
 export function isMercadoPagoSubscriptionActive(status: string | null | undefined) {
   return status === "authorized" || status === "active";
 }
