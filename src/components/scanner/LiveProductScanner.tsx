@@ -31,6 +31,7 @@ import {
 } from "@/lib/scanner-inventory-actions";
 import { validateScannerInventoryAction } from "@/lib/scanner-inventory-action-state";
 import { validateScannedCode } from "@/lib/scanner-code-validation";
+import { shouldAcceptScannerDetection } from "@/lib/scanner-detection-guard";
 import { createProductFromScanner as createProductFromScannerRpc } from "@/lib/scanner-product-onboarding";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusinessId, useMyRole, canWriteOperations } from "@/lib/use-business";
@@ -99,6 +100,7 @@ export function LiveProductScanner({
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<UnifiedScanEngine | null>(null);
   const lastHandledRef = useRef("");
+  const detectionInFlightRef = useRef(false);
   const onScanRef = useRef(onScan);
   const onResolvedRef = useRef(onResolved);
   const onProductFoundRef = useRef(onProductFound);
@@ -178,16 +180,23 @@ export function LiveProductScanner({
   const handleDetection = useCallback(
     async (result: UnifiedScanResult) => {
       const code = normalizeProductCode(result.rawValue);
-      if (!code || code === lastHandledRef.current) return;
+      if (!shouldAcceptScannerDetection({
+        code,
+        lastHandledCode: lastHandledRef.current,
+        inFlight: detectionInFlightRef.current,
+        operationOpen: Boolean(operationRef.current),
+        newProductOpen: newProductOpenRef.current,
+      })) return;
+      detectionInFlightRef.current = true;
       lastHandledRef.current = code;
       setLastCode(code);
       setManualCode(code);
       setLastFormat(result.format ?? result.input);
       setState("detected");
       if (typeof navigator !== "undefined") navigator.vibrate?.(35);
-      onScanRef.current?.(result);
       setState("resolving");
       try {
+        onScanRef.current?.(result);
         const resolution = await resolveProductCode(code);
         onResolvedRef.current?.(resolution);
         if (resolution.status === "FOUND" && resolution.product) {
@@ -219,6 +228,7 @@ export function LiveProductScanner({
         setState("camera_error");
         toast.error("No se pudo consultar el producto");
       } finally {
+        detectionInFlightRef.current = false;
         window.setTimeout(() => {
           lastHandledRef.current = "";
           if (
