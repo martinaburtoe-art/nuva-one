@@ -85,7 +85,7 @@ function CheckoutPage() {
             "Inventario, ventas y caja",
             "CRM y cotizaciones",
             "100 créditos IA mensuales",
-            "15 días de prueba gratuita",
+            "Demo de negocio disponible sin tarjeta",
           ],
     [isPro],
   );
