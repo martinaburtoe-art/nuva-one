@@ -39,6 +39,7 @@ type WorkerDependencies = {
   enabled?: boolean;
   /** Restricts this run to one exact task; used for production certification. */
   taskId?: string;
+  allowGeneralClaim?: boolean;
   db?: AgencyRpcClient;
   executeSpecialist?: Specialist;
 };
@@ -92,11 +93,15 @@ export async function runInngestAgencyWorker(
     throw new Error("NUVA_INNGEST_SOURCE_REVISION_REQUIRED");
   }
 
-  const db = dependencies.db ?? createServiceRoleClient();
-  const scopedTaskId = dependencies.taskId ?? process.env.NUVA_INNGEST_AGENCY_TEST_TASK_ID;
+  const scopedTaskId = dependencies.taskId?.trim() || process.env.NUVA_INNGEST_AGENCY_TEST_TASK_ID?.trim() || null;
+  const allowGeneralClaim = dependencies.allowGeneralClaim ?? process.env.NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM === "true";
   if (scopedTaskId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(scopedTaskId)) {
     throw new Error("NUVA_INNGEST_TEST_TASK_ID_INVALID");
   }
+  if (!scopedTaskId && !allowGeneralClaim) {
+    return { status: "blocked" as const, reason: "general-claim-disabled", agentId };
+  }
+  const db = dependencies.db ?? createServiceRoleClient();
   const executeSpecialist = dependencies.executeSpecialist ?? specialistMap[agentId];
   if (typeof executeSpecialist !== "function") {
     throw new Error("INNGEST_AGENCY_SPECIALIST_NOT_REGISTERED");
@@ -125,8 +130,14 @@ export async function runInngestAgencyWorker(
   const task = claim.task;
   const taskId = task.id;
   const leaseToken = claim.lease.token;
-  if (typeof taskId !== "string" || typeof leaseToken !== "string" || leaseToken.length < 16) {
+  if (typeof taskId !== "string" || typeof leaseToken !== "string" || !/^[a-f0-9]{32,64}$/i.test(leaseToken)) {
     throw new Error("AGENCY_CLAIM_RESPONSE_INVALID");
+  }
+  if (scopedTaskId && taskId.toLowerCase() !== scopedTaskId.toLowerCase()) {
+    throw new Error("AGENCY_CLAIM_TASK_SCOPE_MISMATCH");
+  }
+  if (task.agent_id !== agentId) {
+    throw new Error("AGENCY_CLAIM_AGENT_MISMATCH");
   }
 
   const taskInput = {
@@ -136,15 +147,21 @@ export async function runInngestAgencyWorker(
   };
 
   const specialistResult = await step.run(`execute-${taskId}`, async () => {
+    const startedAt = Date.now();
     try {
-      return await executeSpecialist(taskInput);
+      const result = await executeSpecialist(taskInput);
+      return {
+        ...result,
+        durationMs: Number.isFinite(result?.durationMs) ? result.durationMs : Date.now() - startedAt,
+        timestamp: typeof result?.timestamp === "string" ? result.timestamp : new Date(startedAt).toISOString(),
+      };
     } catch (error) {
       return {
         result: "FAIL",
         evidence: [],
         errors: [error instanceof Error ? error.message.slice(0, 500) : "specialist_execution_failed"],
-        durationMs: 0,
-        timestamp: new Date().toISOString(),
+        durationMs: Date.now() - startedAt,
+        timestamp: new Date(startedAt).toISOString(),
       };
     }
   }) as SpecialistResult;
@@ -181,7 +198,8 @@ export async function runInngestAgencyWorker(
       },
     });
     if (error) throw error;
-    return data;
+    if (data !== true) throw new Error("AGENCY_TASK_FINISH_REJECTED");
+    return true;
   }) as unknown;
 
   if (finished !== true) throw new Error("AGENCY_TASK_FINISH_REJECTED");

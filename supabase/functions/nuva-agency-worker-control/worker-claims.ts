@@ -43,3 +43,7 @@ export function isTrustedAgencyWorkerClaims(
     AGENCY_WORKER_AGENT_IDS.includes(agentId as (typeof AGENCY_WORKER_AGENT_IDS)[number])
   );
 }
+
+export function isGeneralAgencyClaimEnabled(value: string | undefined): boolean {
+  return value === "true";
+}

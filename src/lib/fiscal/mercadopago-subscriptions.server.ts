@@ -165,10 +165,25 @@ export async function updateMercadoPagoSubscription(
   };
 }
 
+export async function getMercadoPagoAuthorizedPayment(config: MercadoPagoConfig, authorizedPaymentId: string) {
+  const result = await mpFetch(config, `/authorized_payments/${encodeURIComponent(authorizedPaymentId)}`);
+  if (!result.ok || !result.json?.id) return { ok: false as const, data: null };
+  return { ok: true as const, data: result.json };
+}
+
+export function isValidMercadoPagoBusinessId(value: string | null | undefined): value is string {
+  return typeof value === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export async function getMercadoPagoPayment(config: MercadoPagoConfig, paymentId: string) {
   const result = await mpFetch(config, `/v1/payments/${encodeURIComponent(paymentId)}`);
   if (!result.ok || !result.json?.id) return { ok: false as const, data: null };
   return { ok: true as const, data: result.json };
+}
+
+export function isMercadoPagoSubscriptionPreapprovalNotification(type: string | null | undefined) {
+  return type === "subscription_preapproval" || type === "preapproval";
 }
 
 export function isMercadoPagoSubscriptionActive(status: string | null | undefined) {

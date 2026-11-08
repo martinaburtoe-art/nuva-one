@@ -21,6 +21,9 @@ concurrency:
 jobs:
   worker:
     name: Agency worker rotation
+    # Stop scheduled/push LLM execution while the live gateway is unhealthy.
+    # Manual dispatch remains available for a deliberate recovery run.
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.NUVA_AGENCY_AI_WORKERS_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
@@ -38,6 +41,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_AI_MODEL: ${{ vars.CLOUDFLARE_AI_MODEL }}
+          NUVA_GATEWAY_LIVE_TEST: "true"
         run: |
           set -euo pipefail
           npm ci --ignore-scripts --no-audit --no-fund

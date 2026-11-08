@@ -11,8 +11,8 @@ import "@/home-experience.css";
 
 
 const FAQ_ITEMS = [
-  { q: "¿Mis datos están seguros?", a: "Sí. Usamos cifrado en tránsito y en reposo, aislamiento por negocio con Row-Level Security, y cumplimos con la Ley 19.628 y Ley 21.719 de protección de datos personales en Chile." },
-  { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. Tienes 15 días de prueba gratuita con acceso completo, sin tarjeta." },
+  { q: "¿Mis datos están seguros?", a: "Protegemos la información con controles de acceso por negocio y medidas de seguridad de la plataforma. Estamos preparando nuestros procesos para la entrada en vigor de la Ley 21.719, prevista para el 1 de diciembre de 2026. Consulta la Política de Privacidad para conocer los tratamientos y responsabilidades aplicables." },
+  { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. Puedes probar Nüva Start durante 15 días sin ingresar una tarjeta y explorar un negocio de demostración Pro con datos ficticios. Si decides contratar un plan pagado, el pago se realiza mediante Mercado Pago." },
   { q: "¿Puedo conectar Instagram y Facebook?", a: "Sí, mediante tu propia cuenta de Meta Business. Te guiamos en la conexión." },
   { q: "¿Funciona para mi rubro?", a: "Sí. Nüva One está hecho para cualquier rubro: retail, servicios, manufactura, gastronomía, construcción, salud y más." },
   { q: "¿Puedo cancelar cuando quiera?", a: "Sí. Sin contratos ni cargos por cancelación." },
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Nüva One — La inteligencia de tu negocio, en un solo lugar" },
-      { name: "description", content: "Nüva One reúne gestión, inventario, ventas, finanzas e inteligencia artificial para que las PYMEs entiendan su negocio y tomen mejores decisiones. 15 días gratis, sin tarjeta." },
+      { name: "description", content: "Nüva One reúne gestión, inventario, ventas, finanzas e inteligencia artificial para que las PYMEs entiendan su negocio y tomen mejores decisiones. 15 días de prueba en Start y demo con datos ficticios, sin tarjeta." },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "es_CL" },
@@ -111,7 +111,7 @@ function FinalCta() {
       <div>
         <span>14 / NÜVA ONE</span>
         <h2>Tu negocio.<br /><em>Todo conectado.</em></h2>
-        <p>Empieza con 15 días gratis y descubre cómo cambia la forma en que gestionas y entiendes tu negocio.</p>
+        <p>Prueba Nüva Start durante 15 días y explora un negocio de demostración con datos ficticios, sin ingresar una tarjeta.</p>
         <div className="cinematic-final-cta__actions">
           <Link to="/auth" search={{ mode: "signup" }}>Empezar gratis</Link>
           <Link to="/pricing">Ver planes</Link>

@@ -11,6 +11,8 @@ import { Trash2, Shield, AlertTriangle, Lock, ClipboardList, Globe, ImagePlus, X
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveBusiness, useMyRole, canManageBusiness, isBusinessOwner } from "@/lib/use-business";
+import { getBusinessSubscriptionAccess } from "@/lib/business-subscription";
+import { NUVA_PLANS, formatClp } from "@/lib/plan-config";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MfaSetup } from "@/components/mfa-setup";
@@ -132,34 +134,160 @@ function BillingTab() {
   const { active } = useActiveBusiness();
   const { data: myRole } = useMyRole();
   const canManage = canManageBusiness(myRole);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const plan = (active as any)?.plan ?? "starter";
-  const status = (active as any)?.subscription_status ?? "active";
+  const plan = active?.plan ?? "starter";
+  const status = active?.subscription_status ?? "active";
+  const billingProvider = active?.billing_provider ?? "none";
   const isPro = plan === "pro";
-  const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
-  const trialDaysLeft = createdAt ? Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000)) : 15;
-  const trialExpired = !isPro && trialDaysLeft <= 0;
+  const planConfig = isPro ? NUVA_PLANS.pro : NUVA_PLANS.starter;
+  const access = getBusinessSubscriptionAccess({
+    plan,
+    subscriptionStatus: status,
+    billingProvider,
+    createdAt: active?.created_at,
+  });
 
-  async function callBillingEndpoint(path: "register") {
+  const statusLabel = access.isDemoPro
+    ? "Demo Pro · Sin cobro"
+    : access.hasActivePaidSubscription
+      ? "Suscripción activa"
+      : access.trialActive
+        ? status === "pending" ? "Checkout pendiente · Prueba activa" : `${access.trialDaysLeft} días restantes`
+        : status === "paused"
+          ? "Pausada"
+          : status === "pending"
+            ? "Pago pendiente"
+            : status === "canceled" || status === "cancelled"
+              ? "Cancelada"
+              : "Vencida";
+
+  const statusBadgeClass = status === "pending" || status === "paused"
+    ? "border-amber-300 bg-amber-50 text-amber-800"
+    : access.hasAccess
+      ? "border-primary/30 bg-primary/5 text-primary"
+      : "border-destructive/30 bg-destructive/5 text-destructive";
+
+  const description = access.isDemoPro
+    ? "Estás explorando Nüva Pro con datos ficticios. Esta demo no genera cobros ni requiere una tarjeta."
+    : access.trialActive
+      ? `Tu prueba de Nüva Start está activa. Te quedan ${access.trialDaysLeft} días y no necesitas ingresar una tarjeta.`
+      : access.hasActivePaidSubscription
+        ? `Tu suscripción ${planConfig.name} está activa. Los cobros recurrentes se gestionan mediante Mercado Pago.`
+        : status === "paused"
+          ? "Tu suscripción está pausada. Puedes reanudarla desde aquí para recuperar el acceso."
+          : status === "pending"
+            ? "Estamos esperando la confirmación de Mercado Pago. No vuelvas a contratar mientras el pago siga pendiente."
+            : status === "canceled" || status === "cancelled"
+              ? "Tu suscripción está cancelada. Elige un plan cuando quieras volver a activar el servicio."
+              : "Tu prueba de Nüva Start terminó. Elige Start o Pro para recuperar el acceso a las operaciones.";
+
+  const features = isPro
+    ? [
+        `Hasta ${planConfig.maxProducts.toLocaleString("es-CL")} productos`,
+        `${planConfig.includedUsers} usuarios incluidos`,
+        `${planConfig.aiMessagesMonthly} créditos IA mensuales`,
+        `${(planConfig.storageMb / 1024).toLocaleString("es-CL")} GB de almacenamiento`,
+        "Nüva Score avanzado, Radar y Copilot",
+        "Finanzas y reportes avanzados",
+        "Automatizaciones operativas",
+      ]
+    : [
+        `Hasta ${planConfig.maxProducts.toLocaleString("es-CL")} productos`,
+        `${planConfig.includedUsers} usuario incluido`,
+        `${planConfig.aiMessagesMonthly} créditos IA mensuales`,
+        `${(planConfig.storageMb / 1024).toLocaleString("es-CL")} GB de almacenamiento`,
+        "Ventas, compras, inventario, caja y cotizaciones",
+        "Escáner, clientes y envíos",
+        "Nüva Score y CRM básicos",
+      ];
+
+  async function manageSubscription(action: "resume" | "cancel") {
     if (!active) return;
     setLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      const res = await fetch(`/api/billing/subscribe/${path}`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ business_id: active.id }) });
+      const res = await fetch("/api/billing/mercadopago/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ business_id: active.id, action }),
+      });
       const json = await res.json();
-      if (json.url) window.location.href = json.url; else toast.error(json.error ?? "No se pudo iniciar el proceso de pago");
-    } catch { toast.error("Error de conexión con el sistema de pagos"); } finally { setLoading(false); }
+      if (json.ok) {
+        toast.success(action === "cancel" ? "Suscripción cancelada en Mercado Pago" : "Suscripción reanudada");
+        window.location.reload();
+      } else {
+        toast.error(json.error ?? "No se pudo actualizar la suscripción");
+      }
+    } catch {
+      toast.error("Error de conexión con Mercado Pago");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <Card className="p-4 sm:p-5">
-      <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Plan actual: {isPro ? "Pro" : "Prueba gratuita"}</h3><span className={isPro ? "rounded-full bg-gradient-primary px-2 py-0.5 text-xs font-medium text-primary-foreground" : trialExpired ? "rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive" : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"}>{isPro ? status === "active" ? "Activo" : status : trialExpired ? "Vencida" : `${trialDaysLeft} días restantes`}</span></div>
-      <p className="mt-1 text-sm text-muted-foreground">{isPro ? "Tienes acceso completo a todas las funciones de Nüva One." : trialExpired ? "Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One." : "Prueba gratuita de 15 días con acceso completo — sin tarjeta. Al terminar, necesitas el plan Pro para seguir usando la app."}</p>
-      <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2"><li className="flex items-center gap-2">✅ {isPro ? "Productos ilimitados" : "Hasta 50 productos (ilimitados en Pro)"}</li><li className="flex items-center gap-2">✅ Negocios ilimitados</li><li className="flex items-center gap-2">✅ Ventas, compras, inventario y Caja</li><li className="flex items-center gap-2">✅ Asistente IA</li><li className="flex items-center gap-2">✅ Automatizaciones operativas internas</li><li className="flex items-center gap-2">✅ Cotizaciones en PDF</li><li className="flex items-center gap-2">✅ Roles de equipo y auditoría</li></ul>
-      <p className="mt-2 text-xs text-muted-foreground">Todo Nüva One tiene el mismo set de funciones. Las únicas diferencias entre Prueba gratuita y Pro son el tiempo de acceso y el tope de 50 productos.</p>
-      {!canManage ? <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground"><Lock className="h-3 w-3" /> Solo el propietario o administradores pueden gestionar el plan.</p> : isPro ? <Button className="mt-4" variant="outline" disabled={loading} onClick={async () => { if (!active) return; setLoading(true); try { const { data: sessionData } = await supabase.auth.getSession(); const token = sessionData.session?.access_token; const res = await fetch("/api/billing/subscribe/cancel", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ business_id: active.id }) }); const json = await res.json(); if (json.ok) { toast.success("Suscripción cancelada — volviste al plan Starter"); window.location.reload(); } else toast.error(json.error ?? "No se pudo cancelar"); } catch { toast.error("Error de conexión"); } finally { setLoading(false); } }}>Cancelar suscripción</Button> : <Button className="mt-4" disabled={loading} onClick={() => callBillingEndpoint("register")}>Actualizar a Pro — $29.990/mes</Button>}
-      {!isPro && <p className="mt-2 text-xs text-muted-foreground">El pago se procesa con Flow. Te pediremos registrar una tarjeta para el cargo automático mensual — el cobro se realiza de inmediato al confirmar.</p>}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">Plan actual: {planConfig.name}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Estado de facturación</p>
+        </div>
+        <Badge variant="outline" className={statusBadgeClass}>
+          {statusLabel}
+        </Badge>
+      </div>
+
+      <p className="mt-4 text-sm text-muted-foreground">{description}</p>
+
+      <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+        {features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2">
+            <span className="text-primary">✓</span>
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+
+      {!access.isDemoPro && (
+        <div className="mt-4 rounded-xl border bg-muted/30 p-3">
+          <p className="text-sm font-medium">Precio de lista</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {formatClp(planConfig.monthlyPriceClp)} / mes · {formatClp(planConfig.annualPriceClp)} / año
+          </p>
+        </div>
+      )}
+
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        Las suscripciones se procesan mediante Mercado Pago. Los datos de tarjeta se ingresan en su entorno seguro, no en Nüva One.
+      </p>
+
+      {!canManage ? (
+        <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Lock className="h-3 w-3" /> Solo el propietario o administradores pueden gestionar el plan.
+        </p>
+      ) : status === "paused" && billingProvider === "mercadopago" ? (
+        <Button className="mt-4" disabled={loading} onClick={() => manageSubscription("resume")}>
+          {loading ? "Procesando…" : "Reanudar suscripción"}
+        </Button>
+      ) : access.hasActivePaidSubscription && billingProvider === "mercadopago" ? (
+        <Button className="mt-4" variant="outline" disabled={loading} onClick={() => manageSubscription("cancel")}>
+          {loading ? "Procesando…" : "Cancelar suscripción en Mercado Pago"}
+        </Button>
+      ) : status === "pending" && billingProvider === "mercadopago" ? (
+        <Button className="mt-4" variant="outline" disabled={loading} onClick={() => manageSubscription("cancel")}>
+          {loading ? "Procesando…" : "Cancelar intento pendiente"}
+        </Button>
+      ) : status === "pending" ? (
+        <Button className="mt-4" variant="outline" disabled>
+          Pago pendiente de confirmación
+        </Button>
+      ) : (
+        <Button className="mt-4" disabled={loading} onClick={() => navigate({ to: "/pricing" })}>
+          Ver planes y contratar
+        </Button>
+      )}
     </Card>
   );
 }

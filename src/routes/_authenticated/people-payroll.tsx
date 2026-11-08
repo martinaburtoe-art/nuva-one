@@ -22,13 +22,13 @@ function PeoplePayroll() {
   const { data: role } = useMyRole();
   const isAuthorized = role === "owner" || role === "admin";
 
-  const { data: employees = [] } = useBizList<any>("people_employees", { order: "last_name" });
-  const { data: contracts = [] } = useBizList<any>("people_contracts", { order: "start_date" });
-  const { data: periods = [] } = useBizList<any>("people_payroll_periods", { order: "period_year" });
-  const { data: inputs = [] } = useBizList<any>("people_payroll_inputs");
-  const { data: items = [] } = useBizList<any>("people_payroll_items");
-  const { data: liquidations = [] } = useBizList<any>("people_payroll_liquidations");
-  const { data: lre = [] } = useBizList<any>("people_lre_rows");
+  const { data: employees = [] } = useBizList<any>("people_employees", { order: "last_name", enabled: isAuthorized });
+  const { data: contracts = [] } = useBizList<any>("people_contracts", { order: "start_date", enabled: isAuthorized });
+  const { data: periods = [] } = useBizList<any>("people_payroll_periods", { order: "period_year", enabled: isAuthorized });
+  const { data: inputs = [] } = useBizList<any>("people_payroll_inputs", { enabled: isAuthorized });
+  const { data: items = [] } = useBizList<any>("people_payroll_items", { enabled: isAuthorized });
+  const { data: liquidations = [] } = useBizList<any>("people_payroll_liquidations", { enabled: isAuthorized });
+  const { data: lre = [] } = useBizList<any>("people_lre_rows", { enabled: isAuthorized });
   const queryClient = useQueryClient();
   const { data: params = [] } = useQuery({
     queryKey: ["people_legal_parameters"],
@@ -65,12 +65,12 @@ function PeoplePayroll() {
     );
   }
 
-  async function createPeriod() {
+  async function createPeriod() { if (!isAuthorized) return;
     try { const created = await insertPeriod.mutateAsync({ period_year: year, period_month: month, status: "draft", calculation_version: "cl-2026.12" }); setSelectedPeriod(created.id); setEngineMessage(`Período ${month}/${year} creado.`); }
     catch (error) { setEngineMessage(error instanceof Error ? error.message : "No fue posible crear el período."); }
   }
-  async function saveInput() { if (!selectedPeriod || !selectedEmployee) return; try { await insertInput.mutateAsync({ payroll_period_id: selectedPeriod, employee_id: selectedEmployee, ...Object.fromEntries(Object.entries(input).map(([k, v]) => [k, typeof v === "number" ? Number(v) || 0 : v])) }); setInput(emptyInput); setEngineMessage("Datos variables guardados."); } catch (error) { setEngineMessage(error instanceof Error ? error.message : "No fue posible guardar los datos."); } }
-  async function periodAction(periodId: string, action: "calculate" | "approve" | "lre" | "liquidate" | "finance" | "close") {
+  async function saveInput() { if (!isAuthorized) return; if (!selectedPeriod || !selectedEmployee) return; try { await insertInput.mutateAsync({ payroll_period_id: selectedPeriod, employee_id: selectedEmployee, ...Object.fromEntries(Object.entries(input).map(([k, v]) => [k, typeof v === "number" ? Number(v) || 0 : v])) }); setInput(emptyInput); setEngineMessage("Datos variables guardados."); } catch (error) { setEngineMessage(error instanceof Error ? error.message : "No fue posible guardar los datos."); } }
+  async function periodAction(periodId: string, action: "calculate" | "approve" | "lre" | "liquidate" | "finance" | "close") { if (!isAuthorized) return;
     setBusyId(periodId + action); setSelectedPeriod(periodId); setEngineMessage(null);
     try { const rpc = { calculate: "calculate_people_payroll_period", approve: "approve_people_payroll_period", lre: "prepare_people_lre", liquidate: "generate_people_liquidations", finance: "post_people_payroll_to_finance", close: "close_people_payroll_period" }[action]; const { data, error } = await supabase.rpc(rpc as any, { p_payroll_period_id: periodId }); if (error) throw error; const result = data as any;
       await Promise.all([

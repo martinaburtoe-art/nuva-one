@@ -22,8 +22,6 @@ import { NUVA_PLANS, formatClp } from "@/lib/plan-config";
 import { useActiveBusiness } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 const searchSchema = z.object({
@@ -51,7 +49,6 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { active, isLoading: businessLoading } = useActiveBusiness();
   const [billing, setBilling] = useState<"monthly" | "annual">(search.billing);
-  const [cardholder, setCardholder] = useState("");
   const [processing, setProcessing] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -88,7 +85,7 @@ function CheckoutPage() {
             "Inventario, ventas y caja",
             "CRM y cotizaciones",
             "100 créditos IA mensuales",
-            "15 días de prueba gratuita",
+            "Hasta 500 productos",
           ],
     [isPro],
   );
@@ -315,18 +312,16 @@ function CheckoutPage() {
                 <CreditCard className="h-5 w-5" />
               </div>
               <div className="relative mt-10 text-xl font-semibold tracking-[.18em] text-slate-700 sm:text-2xl">
-                •••• •••• •••• ••••
+                SUSCRIPCIÓN NÜVA ONE
               </div>
               <div className="relative mt-6 flex items-end justify-between gap-4 text-[10px] uppercase tracking-[.14em] text-slate-500">
                 <div>
-                  <div>Cardholder</div>
-                  <div className="mt-1 max-w-[170px] truncate text-xs font-semibold tracking-normal text-slate-700">
-                    {cardholder.trim() || "TU NOMBRE"}
-                  </div>
+                  <div>Plan seleccionado</div>
+                  <div className="mt-1 text-xs font-semibold tracking-normal text-slate-700">{plan.name}</div>
                 </div>
                 <div className="text-right">
                   <div>Secure checkout</div>
-                  <div className="mt-1 font-semibold tracking-normal text-slate-700">PAYMENT</div>
+                  <div className="mt-1 font-semibold tracking-normal text-slate-700">MERCADO PAGO</div>
                 </div>
               </div>
             </div>
@@ -335,7 +330,7 @@ function CheckoutPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-white/45">Pago seguro con</p>
-                  <p className="mt-1 text-sm font-semibold">Proveedor de pagos · Webpay</p>
+                  <p className="mt-1 text-sm font-semibold">Mercado Pago</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-semibold text-white/70">
                   CLP
@@ -343,17 +338,9 @@ function CheckoutPage() {
               </div>
 
               <div className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/[.045] p-4">
-                <div>
-                  <Label htmlFor="cardholder" className="text-xs text-white/60">
-                    Nombre del titular
-                  </Label>
-                  <Input
-                    id="cardholder"
-                    value={cardholder}
-                    onChange={(event) => setCardholder(event.target.value)}
-                    placeholder="Nombre y apellido"
-                    className="mt-1.5 border-white/10 bg-white/[.06] text-white placeholder:text-white/25 focus-visible:ring-violet-400"
-                  />
+                <div className="rounded-xl border border-white/10 bg-white/[.06] p-3.5">
+                  <p className="text-xs font-semibold text-white/85">Continuarás en Mercado Pago</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-white/45">El formulario de pago se abre en el entorno seguro de Mercado Pago. Nüva One no recibe ni almacena el número completo de tu tarjeta o CVV.</p>
                 </div>
 
                 <div className="rounded-xl border border-dashed border-white/10 bg-white/[.03] p-3.5">

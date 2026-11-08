@@ -3,9 +3,11 @@ import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
 import {
   createMercadoPagoSubscription,
+  updateMercadoPagoSubscription,
   getMercadoPagoConfig,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
 import { NUVA_PLANS } from "@/lib/plan-config";
+import { requireBusinessBillingManager } from "@/lib/fiscal/billing-access.server";
 
 // Mercado Pago is the only provider for the official Nüva One subscription
 // checkout. We intentionally do not fall back to /checkout-demo or Flow:
@@ -22,30 +24,35 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
         const businessId = body.business_id as string | undefined;
         if (!businessId) return new Response("business_id requerido", { status: 400 });
 
+        const billingAccess = await requireBusinessBillingManager(client, businessId);
+        if (!billingAccess.ok) {
+          return Response.json({ error: billingAccess.error }, { status: billingAccess.status });
+        }
+        const { business, user } = billingAccess;
+
         const allowed = await checkRateLimit(`subscribe-register:${businessId}`, 10, 3600);
         if (!allowed) {
-          return new Response(JSON.stringify({ error: "Demasiados intentos, intenta más tarde" }), {
-            status: 429,
-            headers: { "Content-Type": "application/json" },
-          });
+          return Response.json({ error: "Demasiados intentos, intenta más tarde" }, { status: 429 });
         }
 
-        const { data: business, error: bizError } = await client
-          .from("businesses")
-          .select("id, name")
-          .eq("id", businessId)
-          .maybeSingle();
-        if (bizError || !business) {
-          return new Response("Negocio no encontrado o sin acceso", { status: 403 });
+        // Never create a second recurring preapproval while another one is
+        // active, pending or paused; doing so could double-charge the business.
+        const currentProvider = business.billing_provider ?? "none";
+        const currentStatus = business.subscription_status ?? "active";
+        const canStartSubscription =
+          (currentProvider === "none" && currentStatus === "active") ||
+          currentStatus === "canceled" ||
+          currentStatus === "cancelled";
+        if (!canStartSubscription) {
+          return Response.json({
+            error: "Este negocio ya tiene una suscripción vinculada. Gestiona o cancela la suscripción actual antes de crear otra.",
+            code: "SUBSCRIPTION_ALREADY_LINKED",
+          }, { status: 409 });
         }
 
-        const { data: userData } = await client.auth.getUser();
-        const email = userData.user?.email;
+        const email = user.email;
         if (!email) {
-          return new Response(JSON.stringify({ error: "No encontramos un email para la cuenta" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          });
+          return Response.json({ error: "No encontramos un email para la cuenta" }, { status: 400 });
         }
 
         const mercadoPago = getMercadoPagoConfig();
@@ -92,7 +99,7 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error: billingUpdateError } = await supabaseAdmin
+        let attachQuery = supabaseAdmin
           .from("businesses")
           .update({
             billing_provider: "mercadopago",
@@ -100,12 +107,31 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
             subscription_status: "pending",
           })
           .eq("id", businessId);
+        attachQuery = business.billing_provider === null
+          ? attachQuery.is("billing_provider", null)
+          : attachQuery.eq("billing_provider", business.billing_provider);
+        attachQuery = business.subscription_status === null
+          ? attachQuery.is("subscription_status", null)
+          : attachQuery.eq("subscription_status", business.subscription_status);
+        const { data: attachedBusiness, error: billingUpdateError } = await attachQuery
+          .select("id")
+          .maybeSingle();
 
-        if (billingUpdateError) {
-          return new Response(
-            JSON.stringify({ error: "No pudimos guardar el estado de la suscripción." }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-          );
+        if (billingUpdateError || !attachedBusiness) {
+          const cleanup = await updateMercadoPagoSubscription(mercadoPago, result.preapprovalId, { status: "canceled" });
+          if (!cleanup.ok) {
+            console.error("[billing] Could not cancel orphaned Mercado Pago preapproval", {
+              businessId,
+              preapprovalId: result.preapprovalId,
+              error: cleanup.errorMessage,
+            });
+          }
+          return Response.json({
+            error: billingUpdateError
+              ? "No pudimos guardar el estado de la suscripción."
+              : "El estado de facturación cambió mientras se iniciaba el pago. Vuelve a intentarlo.",
+            code: billingUpdateError ? "BILLING_STATE_SYNC_FAILED" : "SUBSCRIPTION_STATE_CONFLICT",
+          }, { status: billingUpdateError ? 500 : 409 });
         }
 
         return new Response(

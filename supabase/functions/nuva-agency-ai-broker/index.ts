@@ -139,7 +139,7 @@ async function callProvider(provider: string, prompt: string, cloudflareAccountI
       if (provider === "cloudflare" && response.status === 404) {
         lastError += "_" + raw.replace(/[^a-zA-Z0-9_ -]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 180);
       }
-      if ([408, 425, 429, 500, 502, 503, 504].includes(response.status) && attempt < 2) {
+      if ([408, 425, 500, 502, 503, 504].includes(response.status) && attempt < 2) {
         await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
         continue;
       }
@@ -200,7 +200,7 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
   const upstreamBody = { ...input, messages: normalizedMessages, model };
   const serializedBody = JSON.stringify(upstreamBody);
   // Los límites del proveedor son distintos de nuestro límite HTTP local.
-  // Reintentar 429 y errores transitorios con backoff, respetando Retry-After si viene informado.
+  // Reintentar solo errores transitorios; 429 es cuota agotada y se propaga al caller sin reintentos.
   let upstream: Response | null = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -213,7 +213,7 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
       body: serializedBody,
       signal: AbortSignal.timeout(120000),
     });
-    if (![408, 425, 429, 500, 502, 503, 504].includes(upstream.status) || attempt === 2) break;
+    if (![408, 425, 500, 502, 503, 504].includes(upstream.status) || attempt === 2) break;
     const retryAfter = Number(upstream.headers.get("retry-after") || 0);
     const delayMs = retryAfter > 0 ? Math.min(retryAfter * 1000, 15000) : 1000 * (2 ** attempt);
     await upstream.body?.cancel().catch(() => {});
@@ -249,6 +249,7 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
       "cache-control": "no-store",
       "x-content-type-options": "nosniff",
       "x-nuva-provider-status": String(upstream.status),
+      ...(upstream.headers.get("retry-after") ? { "retry-after": upstream.headers.get("retry-after")! } : {}),
     },
   });
 }

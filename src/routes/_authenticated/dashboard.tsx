@@ -147,6 +147,13 @@ function Dashboard() {
     }
   }
   const attentionCount = (kpis?.lowStockCount ?? 0) + ((kpis?.net ?? 0) < 0 ? 1 : 0);
+  const attentionMessages = [
+    ...((kpis?.lowStockCount ?? 0) > 0 ? [String(kpis?.lowStockCount) + " productos con stock bajo"] : []),
+    ...((kpis?.net ?? 0) < 0 ? ["El resultado acumulado es negativo"] : []),
+  ];
+  const attentionDescription = attentionMessages.length > 0
+    ? attentionMessages.join(" · ")
+    : "Sin alertas prioritarias en los datos disponibles.";
 
   return (
     <ModuleGuard module="dashboard">
@@ -217,7 +224,7 @@ function Dashboard() {
         <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
           <article className="nuva-resumen-device nuva-resumen-device-main">
             <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Todo en equilibrio.</h2><span>Una mirada clara a tu negocio.</span></div>
+            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Tu negocio, en contexto.</h2><span>Una lectura clara de la operación.</span></div>
             <div className="nuva-resumen-balance-card">
               <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span><span className="nuva-resumen-balance-mark">↗</span></div>
               <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
@@ -238,7 +245,7 @@ function Dashboard() {
               ) : (
                 <>
                   <span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span>
-                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div>
+                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionDescription}</p></div>
                 </>
               )}
               <i className="nuva-resumen-status-light" />

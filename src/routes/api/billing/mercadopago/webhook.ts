@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  getMercadoPagoAuthorizedPayment,
   getMercadoPagoConfig,
   getMercadoPagoPayment,
   getMercadoPagoSubscription,
+  isValidMercadoPagoBusinessId,
   isMercadoPagoSubscriptionActive,
+  isMercadoPagoSubscriptionPreapprovalNotification,
   parseMercadoPagoExternalReference,
   validateMercadoPagoWebhookSignature,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
@@ -84,9 +87,9 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        if (type.includes("subscription") || type === "preapproval") {
+        if (isMercadoPagoSubscriptionPreapprovalNotification(type)) {
           const subscriptionResult = await getMercadoPagoSubscription(config, resourceId);
-          if (!subscriptionResult.ok || !subscriptionResult.data) return new Response("OK", { status: 200 });
+          if (!subscriptionResult.ok || !subscriptionResult.data) return new Response("Unable to retrieve Mercado Pago subscription", { status: 502 });
           const subscription = asSubscription(subscriptionResult.data);
           const { businessId, planId: referencedPlanId } = parseMercadoPagoExternalReference(
             subscription.external_reference,
@@ -131,30 +134,78 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
                 : {}),
               ...(status === "cancelled" || status === "canceled" ? { plan: "starter" } : {}),
             };
-            await supabaseAdmin.from("businesses").update(update).eq("id", businessId);
+            const { error: subscriptionUpdateError } = await supabaseAdmin
+              .from("businesses")
+              .update(update)
+              .eq("id", businessId);
+            if (subscriptionUpdateError) {
+              return new Response("Unable to persist Mercado Pago subscription state", { status: 500 });
+            }
           }
         }
 
-        if (type === "payment" || type === "merchant_order") {
-          const paymentResult = await getMercadoPagoPayment(config, resourceId);
-          if (paymentResult.ok && paymentResult.data) {
+        if (type === "payment" || type === "subscription_authorized_payment") {
+          const authorizedResult = type === "subscription_authorized_payment"
+            ? await getMercadoPagoAuthorizedPayment(config, resourceId)
+            : null;
+          const authorized = authorizedResult?.ok && authorizedResult.data
+            ? authorizedResult.data
+            : null;
+          const authorizedPaymentId = authorized && (
+            typeof authorized.payment_id === "string" || typeof authorized.payment_id === "number"
+              ? String(authorized.payment_id)
+              : isRecord(authorized.payment) && (typeof authorized.payment.id === "string" || typeof authorized.payment.id === "number")
+                ? String(authorized.payment.id)
+                : ""
+          );
+          const paymentId = type === "payment" ? resourceId : authorizedPaymentId;
+          if (!paymentId) {
+            return new Response("Unable to resolve Mercado Pago authorized payment", { status: 502 });
+          }
+          const paymentResult = await getMercadoPagoPayment(config, paymentId);
+          if (!paymentResult.ok || !paymentResult.data) {
+            return new Response("Unable to retrieve Mercado Pago payment", { status: 502 });
+          }
+          {
             const payment = asPayment(paymentResult.data);
-            const externalReference = String(payment.external_reference ?? "");
-            if (externalReference) {
-              await supabaseAdmin.from("subscription_charges").upsert(
+            const preapprovalId = authorized && (
+              typeof authorized.preapproval_id === "string" || typeof authorized.preapproval_id === "number"
+                ? String(authorized.preapproval_id)
+                : ""
+            );
+            let externalReference = String(payment.external_reference ?? authorized?.external_reference ?? "");
+            if (!externalReference && preapprovalId) {
+              const subscriptionResult = await getMercadoPagoSubscription(config, preapprovalId);
+              if (!subscriptionResult.ok || !subscriptionResult.data) {
+                return new Response("Unable to resolve Mercado Pago subscription reference", { status: 502 });
+              }
+              externalReference = String(subscriptionResult.data.external_reference ?? "");
+            }
+            const { businessId } = parseMercadoPagoExternalReference(externalReference);
+            if (type === "subscription_authorized_payment" && !isValidMercadoPagoBusinessId(businessId)) {
+              return new Response("Invalid Mercado Pago subscription business reference", { status: 422 });
+            }
+            if (isValidMercadoPagoBusinessId(businessId)) {
+              const amount = Number(payment.transaction_amount);
+              if (!Number.isFinite(amount) || amount <= 0) {
+                return new Response("Invalid Mercado Pago payment amount", { status: 422 });
+              }
+              const { error: chargeUpsertError } = await supabaseAdmin.from("subscription_charges").upsert(
                 {
-                  business_id: externalReference,
-                  commerce_order: `mp-${resourceId}`,
-                  amount: Number(payment.transaction_amount ?? 0),
-                  status: String(payment.status ?? "pending"),
+                  business_id: businessId,
+                  commerce_order: `mp-${String(payment.id ?? paymentId)}`,
+                  amount,
+                  status: String(payment.status ?? authorized?.status ?? "pending"),
                   provider: "mercadopago",
-                  provider_payment_id: String(payment.id),
-                  provider_subscription_id: payment.metadata?.preapproval_id
-                    ? String(payment.metadata.preapproval_id)
-                    : null,
+                  provider_payment_id: String(payment.id ?? paymentId),
+                  provider_subscription_id: preapprovalId
+                    || (payment.metadata?.preapproval_id ? String(payment.metadata.preapproval_id) : null),
                 },
                 { onConflict: "commerce_order" },
               );
+              if (chargeUpsertError) {
+                return new Response("Unable to persist Mercado Pago payment", { status: 500 });
+              }
             }
           }
         }

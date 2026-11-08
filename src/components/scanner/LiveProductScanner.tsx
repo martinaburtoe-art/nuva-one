@@ -31,6 +31,7 @@ import {
 } from "@/lib/scanner-inventory-actions";
 import { validateScannerInventoryAction } from "@/lib/scanner-inventory-action-state";
 import { validateScannedCode } from "@/lib/scanner-code-validation";
+import { shouldAcceptScannerDetection } from "@/lib/scanner-detection-guard";
 import { createProductFromScanner as createProductFromScannerRpc } from "@/lib/scanner-product-onboarding";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusinessId, useMyRole, canWriteOperations } from "@/lib/use-business";
@@ -99,7 +100,11 @@ export function LiveProductScanner({
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<UnifiedScanEngine | null>(null);
   const lastHandledRef = useRef("");
+  const detectionInFlightRef = useRef(false);
   const onScanRef = useRef(onScan);
+  const onResolvedRef = useRef(onResolved);
+  const onProductFoundRef = useRef(onProductFound);
+  const onCodeNotFoundRef = useRef(onCodeNotFound);
   const continuousRef = useRef(continuous);
   const [businessId] = useActiveBusinessId();
   const { data: role } = useMyRole();
@@ -125,9 +130,17 @@ export function LiveProductScanner({
     initialStock: "0",
   });
 
+  // Keep callback and UI-state refs current without restarting the camera engine.
+  const operationRef = useRef(operation);
+  const newProductOpenRef = useRef(newProductOpen);
   useEffect(() => {
     onScanRef.current = onScan;
-  }, [onScan]);
+    onResolvedRef.current = onResolved;
+    onProductFoundRef.current = onProductFound;
+    onCodeNotFoundRef.current = onCodeNotFound;
+    operationRef.current = operation;
+    newProductOpenRef.current = newProductOpen;
+  }, [onScan, onResolved, onProductFound, onCodeNotFound, operation, newProductOpen]);
   useEffect(() => {
     continuousRef.current = continuous;
   }, [continuous]);
@@ -136,6 +149,8 @@ export function LiveProductScanner({
     scannerRef.current = null;
     setTorch(false);
     setTorchSupported(false);
+    operationRef.current = null;
+    newProductOpenRef.current = false;
     setOperation(null);
     setOperationProduct(null);
     setNewProductOpen(false);
@@ -145,6 +160,7 @@ export function LiveProductScanner({
     (action: ScannerAction, product?: ScannerProduct) => {
       onAction?.(action, { code: lastCode, product });
       if ((action === "entry" || action === "exit" || action === "count") && product?.id) {
+        operationRef.current = action;
         setOperation(action);
         setOperationProduct(product);
         setQuantity("1");
@@ -158,6 +174,7 @@ export function LiveProductScanner({
       }
       if (action === "new_product") {
         setNewProductForm({ name: "", sku: "", cost: "", price: "", initialStock: "0" });
+        newProductOpenRef.current = true;
         setNewProductOpen(true);
       }
     },
@@ -167,23 +184,30 @@ export function LiveProductScanner({
   const handleDetection = useCallback(
     async (result: UnifiedScanResult) => {
       const code = normalizeProductCode(result.rawValue);
-      if (!code || code === lastHandledRef.current) return;
+      if (!shouldAcceptScannerDetection({
+        code,
+        lastHandledCode: lastHandledRef.current,
+        inFlight: detectionInFlightRef.current,
+        operationOpen: Boolean(operationRef.current),
+        newProductOpen: newProductOpenRef.current,
+      })) return;
+      detectionInFlightRef.current = true;
       lastHandledRef.current = code;
       setLastCode(code);
       setManualCode(code);
       setLastFormat(result.format ?? result.input);
       setState("detected");
       if (typeof navigator !== "undefined") navigator.vibrate?.(35);
-      onScanRef.current?.(result);
       setState("resolving");
       try {
+        onScanRef.current?.(result);
         const resolution = await resolveProductCode(code);
-        onResolved?.(resolution);
+        onResolvedRef.current?.(resolution);
         if (resolution.status === "FOUND" && resolution.product) {
           const product = resolution.product as ScannerProduct;
           setOperationProduct(product);
           setState("found");
-          onProductFound?.(product, result);
+          onProductFoundRef.current?.(product, result);
           toast.success(`${product.name ?? "Producto"} encontrado`);
         } else if (resolution.status === "DUPLICATE") {
           setOperationProduct(null);
@@ -192,7 +216,7 @@ export function LiveProductScanner({
         } else if (resolution.status === "NOT_FOUND") {
           setOperationProduct(null);
           setState("not_found");
-          onCodeNotFound?.(code, result);
+          onCodeNotFoundRef.current?.(code, result);
           toast.info("Código nuevo detectado");
         } else if (resolution.status === "UNAUTHORIZED") {
           setOperationProduct(null);
@@ -208,14 +232,21 @@ export function LiveProductScanner({
         setState("camera_error");
         toast.error("No se pudo consultar el producto");
       } finally {
+        detectionInFlightRef.current = false;
         window.setTimeout(() => {
           lastHandledRef.current = "";
-          if (continuousRef.current && scannerRef.current && !operation && !newProductOpen)
+          if (
+            continuousRef.current &&
+            scannerRef.current &&
+            !operationRef.current &&
+            !newProductOpenRef.current
+          ) {
             setState("scanning");
+          }
         }, 900);
       }
     },
-    [onCodeNotFound, onProductFound, onResolved, operation, newProductOpen],
+    [],
   );
 
   useEffect(() => {
@@ -294,6 +325,7 @@ export function LiveProductScanner({
       toast.success(
         `Movimiento registrado · stock ${stockBefore} → ${stockAfter ?? "actualizado"}`,
       );
+      operationRef.current = null;
       setOperation(null);
       setQuantity("1");
       setReason("");
@@ -316,6 +348,7 @@ export function LiveProductScanner({
       return;
     }
     setNewProductForm({ name: "", sku: "", cost: "", price: "", initialStock: "0" });
+    newProductOpenRef.current = true;
     setNewProductOpen(true);
   };
 
@@ -381,6 +414,7 @@ export function LiveProductScanner({
         stock: result.stock_after,
       } as ScannerProduct;
       setOperationProduct(product);
+      newProductOpenRef.current = false;
       setNewProductOpen(false);
       setState("found");
       toast.success(
@@ -558,7 +592,7 @@ export function LiveProductScanner({
                 <Input type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Cantidad" inputMode="numeric" />
                 <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo del movimiento" />
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" onClick={() => setOperation(null)} disabled={savingOperation}>Cancelar</Button>
+                  <Button variant="outline" onClick={() => { operationRef.current = null; setOperation(null); }} disabled={savingOperation}>Cancelar</Button>
                   <Button onClick={() => void submitOperation()} disabled={savingOperation}>
                     {savingOperation ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Registrando…</> : "Confirmar movimiento"}
                   </Button>
@@ -590,7 +624,7 @@ export function LiveProductScanner({
           {state === "scanning" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Camera className="h-4 w-4" />Cámara en vivo · lector HID · búsqueda manual</div>}
           {state === "stopped" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><CameraOff className="h-4 w-4" />Cámara detenida</div>}
         </div>
-        <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
+        <Dialog open={newProductOpen} onOpenChange={(value) => { newProductOpenRef.current = value; setNewProductOpen(value); }}>
           <DialogContent>
             <DialogHeader><DialogTitle>Crear producto desde código</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -603,7 +637,7 @@ export function LiveProductScanner({
               </div>
               <div><Label htmlFor="scanner-product-stock">Stock inicial</Label><Input id="scanner-product-stock" type="number" min="0" step="1" inputMode="numeric" value={newProductForm.initialStock} onChange={(e) => setNewProductForm((f) => ({ ...f, initialStock: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => setNewProductOpen(false)} disabled={newProductSaving}>Cancelar</Button>
+                <Button variant="outline" onClick={() => { newProductOpenRef.current = false; setNewProductOpen(false); }} disabled={newProductSaving}>Cancelar</Button>
                 <Button onClick={() => void createProductFromScanner()} disabled={newProductSaving || !canWrite}>{newProductSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creando…</> : "Crear producto"}</Button>
               </div>
             </div>
