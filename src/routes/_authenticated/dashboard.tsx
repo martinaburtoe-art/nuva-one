@@ -164,7 +164,7 @@ function Dashboard() {
           <div className="nuva-resumen-heading">
             <div>
               <p className="nuva-resumen-overline">UNA VISIÓN MÁS CLARA</p>
-              <h1>Todo en equilibrio.</h1>
+              <h1>Tu negocio, con claridad.</h1>
               <p className="nuva-resumen-subtitle">El estado de tu negocio, con la claridad que necesitas para avanzar.</p>
             </div>
             <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
@@ -220,12 +220,12 @@ function Dashboard() {
         <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
           <article className="nuva-resumen-device nuva-resumen-device-main">
             <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Todo en equilibrio.</h2><span>Una mirada clara a tu negocio.</span></div>
+            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Tu negocio, con claridad.</h2><span>Una mirada clara a tu negocio.</span></div>
             <div className="nuva-resumen-balance-card">
-              <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span><span className="nuva-resumen-balance-mark">↗</span></div>
+              <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span></div>
               <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
               <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Requiere atención" : "Resultado acumulado"}</p>
-              <svg className="nuva-resumen-balance-sparkline" viewBox="0 0 220 49" fill="none" aria-hidden="true"><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3 V49 H0Z" fill="currentColor" opacity=".08"/></svg>
+              
             </div>
             <div className="nuva-resumen-device-money-grid">
               <div><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
