@@ -149,6 +149,8 @@ export function LiveProductScanner({
     scannerRef.current = null;
     setTorch(false);
     setTorchSupported(false);
+    operationRef.current = null;
+    newProductOpenRef.current = false;
     setOperation(null);
     setOperationProduct(null);
     setNewProductOpen(false);
@@ -158,6 +160,7 @@ export function LiveProductScanner({
     (action: ScannerAction, product?: ScannerProduct) => {
       onAction?.(action, { code: lastCode, product });
       if ((action === "entry" || action === "exit" || action === "count") && product?.id) {
+        operationRef.current = action;
         setOperation(action);
         setOperationProduct(product);
         setQuantity("1");
@@ -171,6 +174,7 @@ export function LiveProductScanner({
       }
       if (action === "new_product") {
         setNewProductForm({ name: "", sku: "", cost: "", price: "", initialStock: "0" });
+        newProductOpenRef.current = true;
         setNewProductOpen(true);
       }
     },
@@ -321,6 +325,7 @@ export function LiveProductScanner({
       toast.success(
         `Movimiento registrado · stock ${stockBefore} → ${stockAfter ?? "actualizado"}`,
       );
+      operationRef.current = null;
       setOperation(null);
       setQuantity("1");
       setReason("");
@@ -343,6 +348,7 @@ export function LiveProductScanner({
       return;
     }
     setNewProductForm({ name: "", sku: "", cost: "", price: "", initialStock: "0" });
+    newProductOpenRef.current = true;
     setNewProductOpen(true);
   };
 
@@ -408,6 +414,7 @@ export function LiveProductScanner({
         stock: result.stock_after,
       } as ScannerProduct;
       setOperationProduct(product);
+      newProductOpenRef.current = false;
       setNewProductOpen(false);
       setState("found");
       toast.success(
@@ -585,7 +592,7 @@ export function LiveProductScanner({
                 <Input type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Cantidad" inputMode="numeric" />
                 <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo del movimiento" />
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" onClick={() => setOperation(null)} disabled={savingOperation}>Cancelar</Button>
+                  <Button variant="outline" onClick={() => { operationRef.current = null; setOperation(null); }} disabled={savingOperation}>Cancelar</Button>
                   <Button onClick={() => void submitOperation()} disabled={savingOperation}>
                     {savingOperation ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Registrando…</> : "Confirmar movimiento"}
                   </Button>
@@ -617,7 +624,7 @@ export function LiveProductScanner({
           {state === "scanning" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Camera className="h-4 w-4" />Cámara en vivo · lector HID · búsqueda manual</div>}
           {state === "stopped" && <div className="flex items-center gap-2 text-xs text-muted-foreground"><CameraOff className="h-4 w-4" />Cámara detenida</div>}
         </div>
-        <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
+        <Dialog open={newProductOpen} onOpenChange={(value) => { newProductOpenRef.current = value; setNewProductOpen(value); }}>
           <DialogContent>
             <DialogHeader><DialogTitle>Crear producto desde código</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -630,7 +637,7 @@ export function LiveProductScanner({
               </div>
               <div><Label htmlFor="scanner-product-stock">Stock inicial</Label><Input id="scanner-product-stock" type="number" min="0" step="1" inputMode="numeric" value={newProductForm.initialStock} onChange={(e) => setNewProductForm((f) => ({ ...f, initialStock: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => setNewProductOpen(false)} disabled={newProductSaving}>Cancelar</Button>
+                <Button variant="outline" onClick={() => { newProductOpenRef.current = false; setNewProductOpen(false); }} disabled={newProductSaving}>Cancelar</Button>
                 <Button onClick={() => void createProductFromScanner()} disabled={newProductSaving || !canWrite}>{newProductSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creando…</> : "Crear producto"}</Button>
               </div>
             </div>
