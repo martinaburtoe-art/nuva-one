@@ -48,6 +48,14 @@ describe("buildDashboardMetrics", () => {
         products: empty,
         salesCount: { count: null, error: null },
       }),
-    ).toMatchObject({ income: 0, expense: 0, net: 0, inventoryValue: 0, salesCount: 0, productsCount: 0, lowStockCount: 0 });
+    ).toMatchObject({
+      income: 0,
+      expense: 0,
+      net: 0,
+      inventoryValue: 0,
+      salesCount: 0,
+      productsCount: 0,
+      lowStockCount: 0,
+    });
   });
 });
