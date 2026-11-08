@@ -164,6 +164,7 @@ BEGIN
       SELECT id, employee_id, leave_type, start_date, end_date, days, status, created_at
       FROM public.people_leave_requests
       WHERE business_id = p_business_id
+        AND leave_type <> 'medical'
       ORDER BY created_at DESC
       LIMIT 500
     ) lr
@@ -173,3 +174,7 @@ $$;
 
 -- Termination history is owner/admin-only; non-admin UI uses no RPC for it.
 REVOKE ALL ON FUNCTION public.people_terminations_limited(uuid) FROM PUBLIC, anon, authenticated;
+
+-- Vacation balances are compensation-related employee data. Non-admin users
+-- must not fetch the whole team's balances; the UI hides this panel for them.
+REVOKE ALL ON FUNCTION public.people_vacation_balances_limited(uuid) FROM PUBLIC, anon, authenticated;
