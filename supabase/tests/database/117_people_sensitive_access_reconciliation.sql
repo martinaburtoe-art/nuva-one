@@ -33,7 +33,8 @@ SELECT is((
       'people_attendance_events','people_compliance_items','people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
       'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
       'people_terminations','people_vacation_balances','people_gratification_settings',
-      'people_gratification_settlements','people_payroll_liquidations')
+      'people_gratification_settlements','people_payroll_liquidations',
+      'people_attendance_events','people_compliance_items')
     AND cmd='SELECT' AND permissive='PERMISSIVE'
     AND policyname IN ('people_member_select','people_gratification_settings_select','people_gratification_settlements_select')
 ), 0, 'no broad member SELECT policy remains on sensitive tables');
@@ -98,7 +99,7 @@ SELECT is((
 
 -- RLS must remain enabled on every affected table.
 SELECT is((
-  SELECT count(*) FROM pg_class c
+  SELECT count(*)::int FROM pg_class c
   JOIN pg_namespace n ON n.oid=c.relnamespace
   WHERE n.nspname='public' AND c.relkind='r'
     AND c.relname IN ('people_employees','people_contracts','people_documents',
