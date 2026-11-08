@@ -157,6 +157,63 @@ describe("Inngest Agency worker", () => {
     expect(db.rpc).toHaveBeenCalledTimes(1);
   });
 
+
+  it("does not execute a specialist when the atomic claim RPC fails", async () => {
+    const db = makeDb([{ data: null, error: new Error("claim failed") }]);
+    const execute = vi.fn();
+    await expect(runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      db,
+      executeSpecialist: execute,
+    })).rejects.toThrow("claim failed");
+    expect(execute).not.toHaveBeenCalled();
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("records specialist exceptions as failed durable tasks", async () => {
+    const db = makeDb([
+      { data: claim, error: null },
+      { data: true, error: null },
+    ]);
+    const result = await runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      db,
+      executeSpecialist: vi.fn().mockRejectedValue(new Error("specialist crash")),
+    });
+
+    expect(result).toMatchObject({ status: "executed", taskStatus: "failed", verdict: "FAIL" });
+    expect(db.rpc).toHaveBeenNthCalledWith(2, "agency_finish_task", expect.objectContaining({
+      p_status: "failed",
+      p_result: expect.objectContaining({ errors: ["specialist crash"] }),
+    }));
+  });
+
+  it("never reports success when the database rejects task finalization", async () => {
+    const db = makeDb([
+      { data: claim, error: null },
+      { data: false, error: null },
+    ]);
+    await expect(runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      db,
+      executeSpecialist: vi.fn().mockResolvedValue({ result: "PASS", evidence: [], errors: [] }),
+    })).rejects.toThrow("AGENCY_TASK_FINISH_REJECTED");
+    expect(db.rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("propagates task finalization RPC errors for Inngest retry", async () => {
+    const db = makeDb([
+      { data: claim, error: null },
+      { data: null, error: new Error("finish unavailable") },
+    ]);
+    await expect(runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      db,
+      executeSpecialist: vi.fn().mockResolvedValue({ result: "PASS", evidence: [], errors: [] }),
+    })).rejects.toThrow("finish unavailable");
+    expect(db.rpc).toHaveBeenCalledTimes(2);
+  });
+
   it("maps a BLOCKED specialist result to a blocked durable task", async () => {
     const db = makeDb([
       { data: claim, error: null },
