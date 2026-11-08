@@ -37,6 +37,8 @@ type Specialist = (task: Record<string, unknown>) => Promise<SpecialistResult>;
 
 type WorkerDependencies = {
   enabled?: boolean;
+  /** Restricts this run to one exact task; used for production certification. */
+  taskId?: string;
   db?: AgencyRpcClient;
   executeSpecialist?: Specialist;
 };
@@ -91,16 +93,26 @@ export async function runInngestAgencyWorker(
   }
 
   const db = dependencies.db ?? createServiceRoleClient();
+  const scopedTaskId = dependencies.taskId ?? process.env.NUVA_INNGEST_AGENCY_TEST_TASK_ID;
+  if (scopedTaskId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(scopedTaskId)) {
+    throw new Error("NUVA_INNGEST_TEST_TASK_ID_INVALID");
+  }
   const executeSpecialist = dependencies.executeSpecialist ?? specialistMap[agentId];
   if (typeof executeSpecialist !== "function") {
     throw new Error("INNGEST_AGENCY_SPECIALIST_NOT_REGISTERED");
   }
 
   const claim = await step.run(`claim-${agentId}`, async () => {
-    const { data, error } = await db.rpc("agency_claim_task", {
-      p_agent_id: agentId,
-      p_lease_seconds: 1800,
-    });
+    const { data, error } = scopedTaskId
+      ? await db.rpc("agency_claim_task_by_id", {
+          p_agent_id: agentId,
+          p_task_id: scopedTaskId,
+          p_lease_seconds: 1800,
+        })
+      : await db.rpc("agency_claim_task", {
+          p_agent_id: agentId,
+          p_lease_seconds: 1800,
+        });
     if (error) throw error;
     return data;
   }) as unknown;

@@ -53,6 +53,10 @@ describe("Inngest Agency worker", () => {
 
     expect(result).toEqual({ status: "idle", agentId: "finance" });
     expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(db.rpc).toHaveBeenCalledWith("agency_claim_task", {
+      p_agent_id: "finance",
+      p_lease_seconds: 1800,
+    });
     expect(execute).not.toHaveBeenCalled();
   });
 
@@ -71,6 +75,7 @@ describe("Inngest Agency worker", () => {
 
     const result = await runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      taskId: claim.task.id,
       db,
       executeSpecialist: execute,
     });
@@ -80,8 +85,9 @@ describe("Inngest Agency worker", () => {
       agent_id: "finance",
       input_context: { scope: "lockfile" },
     }));
-    expect(db.rpc).toHaveBeenNthCalledWith(1, "agency_claim_task", {
+    expect(db.rpc).toHaveBeenNthCalledWith(1, "agency_claim_task_by_id", {
       p_agent_id: "finance",
+      p_task_id: claim.task.id,
       p_lease_seconds: 1800,
     });
     expect(db.rpc).toHaveBeenNthCalledWith(2, "agency_finish_task", expect.objectContaining({
@@ -121,6 +127,16 @@ describe("Inngest Agency worker", () => {
     expect(db.rpc).toHaveBeenNthCalledWith(2, "agency_finish_task", expect.objectContaining({
       p_status: "blocked",
     }));
+  });
+
+  it("rejects malformed task-scoped certification IDs before touching Supabase", async () => {
+    const db = makeDb([]);
+    await expect(runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      taskId: "not-a-uuid",
+      db,
+    })).rejects.toThrow("NUVA_INNGEST_TEST_TASK_ID_INVALID");
+    expect(db.rpc).not.toHaveBeenCalled();
   });
 
   it("fails closed on Vercel when the exact deployment source SHA is unavailable", async () => {
