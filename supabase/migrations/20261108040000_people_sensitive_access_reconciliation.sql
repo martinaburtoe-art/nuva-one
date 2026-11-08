@@ -35,6 +35,12 @@ CREATE POLICY people_payroll_items_select_owner_admin ON public.people_payroll_i
 DROP POLICY IF EXISTS people_payroll_periods_select_owner_admin ON public.people_payroll_periods;
 CREATE POLICY people_payroll_periods_select_owner_admin ON public.people_payroll_periods
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_payroll_postings_select_owner_admin ON public.people_payroll_postings;
+CREATE POLICY people_payroll_postings_select_owner_admin ON public.people_payroll_postings
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_payroll_runs_select_owner_admin ON public.people_payroll_runs;
+CREATE POLICY people_payroll_runs_select_owner_admin ON public.people_payroll_runs
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 DROP POLICY IF EXISTS people_payroll_liquidations_select_owner_admin ON public.people_payroll_liquidations;
 CREATE POLICY people_payroll_liquidations_select_owner_admin ON public.people_payroll_liquidations
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
