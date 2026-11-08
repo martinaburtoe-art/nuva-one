@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
+import { requireBusinessBillingManager } from "@/lib/fiscal/billing-access.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
 import { NUVA_PLANS } from "@/lib/plan-config";
 import {
@@ -7,6 +8,8 @@ import {
   getMercadoPagoConfig,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
 
+// Compatibility endpoint retained for older clients. New clients use
+// /api/billing/subscribe/register; both paths enforce the same billing rules.
 export const Route = createFileRoute("/api/billing/mercadopago/create")({
   server: {
     handlers: {
@@ -18,19 +21,22 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
         const businessId = body.business_id as string | undefined;
         const planId = body.plan as "starter" | "pro" | undefined;
         const billing = body.billing === "annual" ? "annual" : "monthly";
-        if (!businessId || !planId) {
-          return Response.json({ error: "business_id y plan son requeridos" }, { status: 400 });
+        if (!businessId || (planId !== "starter" && planId !== "pro")) {
+          return Response.json({ error: "business_id y un plan válido son requeridos" }, { status: 400 });
         }
 
-        const config = getMercadoPagoConfig();
-        if (!config) {
-          return Response.json(
-            {
-              configured: false,
-              error: "Mercado Pago aún no está conectado. La experiencia demo está disponible.",
-            },
-            { status: 503 },
-          );
+        const billingAccess = await requireBusinessBillingManager(client, businessId);
+        if (!billingAccess.ok) {
+          return Response.json({ error: billingAccess.error }, { status: billingAccess.status });
+        }
+        const { business, user } = billingAccess;
+
+        const currentProvider = business.billing_provider ?? "none";
+        if (currentProvider !== "none" && ["active", "pending", "paused"].includes(business.subscription_status ?? "")) {
+          return Response.json({
+            error: "Este negocio ya tiene una suscripción vinculada. Gestiona o cancela la suscripción actual antes de crear otra.",
+            code: "SUBSCRIPTION_ALREADY_LINKED",
+          }, { status: 409 });
         }
 
         const allowed = await checkRateLimit(`mp-subscription:${businessId}`, 10, 3600);
@@ -38,20 +44,18 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
           return Response.json({ error: "Demasiados intentos, intenta más tarde" }, { status: 429 });
         }
 
-        const plan = NUVA_PLANS[planId];
-        const { data: business, error } = await client
-          .from("businesses")
-          .select("id,name")
-          .eq("id", businessId)
-          .maybeSingle();
-        if (error || !business) {
-          return Response.json({ error: "Negocio no encontrado o sin acceso" }, { status: 403 });
+        const config = getMercadoPagoConfig();
+        if (!config) {
+          return Response.json({
+            configured: false,
+            error: "Mercado Pago aún no está conectado. La experiencia demo está disponible.",
+          }, { status: 503 });
         }
 
-        const { data: userData } = await client.auth.getUser();
-        const email = userData.user?.email;
+        const email = user.email;
         if (!email) return Response.json({ error: "No encontramos un email para la cuenta" }, { status: 400 });
 
+        const plan = NUVA_PLANS[planId];
         const siteUrl = process.env.SITE_URL ?? "https://nuva-one.vercel.app";
         const result = await createMercadoPagoSubscription({
           config,
@@ -67,8 +71,8 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
 
         if (!result.ok) return Response.json({ error: result.errorMessage }, { status: 502 });
 
-        const { error: updateError } = await (await import("@/integrations/supabase/client.server"))
-          .supabaseAdmin
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { error: updateError } = await supabaseAdmin
           .from("businesses")
           .update({
             billing_provider: "mercadopago",
