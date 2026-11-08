@@ -235,6 +235,50 @@ describe("Inngest Agency worker", () => {
     expect(db.rpc).toHaveBeenCalledTimes(2);
   });
 
+
+  it("reuses the exact specialist result and finish payload after a transient finish rejection", async () => {
+    const cache = new Map<string, unknown>();
+    const step: InngestStepRunner = {
+      run: async (id, handler) => {
+        if (cache.has(id)) return cache.get(id);
+        const value = await handler();
+        cache.set(id, value);
+        return value;
+      },
+    };
+    const db = makeDb([
+      { data: claim, error: null },
+      { data: false, error: null },
+      { data: true, error: null },
+    ]);
+    const execute = vi.fn().mockResolvedValue({
+      result: "PASS",
+      evidence: ["stable evidence"],
+      errors: [],
+    });
+    await expect(runInngestAgencyWorker("finance", step, {
+      enabled: true,
+      allowGeneralClaim: true,
+      db,
+      executeSpecialist: execute,
+    })).rejects.toThrow("AGENCY_TASK_FINISH_REJECTED");
+
+    const firstFinish = db.rpc.mock.calls[1][1];
+    const result = await runInngestAgencyWorker("finance", step, {
+      enabled: true,
+      allowGeneralClaim: true,
+      db,
+      executeSpecialist: execute,
+    });
+    const secondFinish = db.rpc.mock.calls[2][1];
+
+    expect(result).toMatchObject({ status: "executed", verdict: "PASS" });
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(secondFinish).toEqual(firstFinish);
+    expect(typeof secondFinish.p_result.timestamp).toBe("string");
+    expect(Number.isFinite(secondFinish.p_result.durationMs)).toBe(true);
+  });
+
   it("maps a BLOCKED specialist result to a blocked durable task", async () => {
     const db = makeDb([
       { data: claim, error: null },
