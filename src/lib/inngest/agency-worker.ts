@@ -198,7 +198,8 @@ export async function runInngestAgencyWorker(
       },
     });
     if (error) throw error;
-    return data;
+    if (data !== true) throw new Error("AGENCY_TASK_FINISH_REJECTED");
+    return true;
   }) as unknown;
 
   if (finished !== true) throw new Error("AGENCY_TASK_FINISH_REJECTED");
