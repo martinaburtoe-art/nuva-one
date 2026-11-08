@@ -40,13 +40,13 @@ function DeferredDemo() {
   return (
     <div ref={containerRef} className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
       {shouldLoad ? (
-        <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/55" role="status">Preparando la demo interactiva…</div>}>
+        <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/65" role="status">Preparando la demo interactiva…</div>}>
           <DemoStateProvider>
             <DemoWorkspace onExit={() => undefined} />
           </DemoStateProvider>
         </Suspense>
       ) : (
-        <div className="flex min-h-[420px] items-center justify-center bg-white px-6 text-center text-sm text-black/55">
+        <div className="flex min-h-[420px] items-center justify-center bg-white px-6 text-center text-sm text-black/65">
           La demo interactiva se cargará al acercarte a esta sección.
         </div>
       )}
@@ -170,7 +170,7 @@ export function HomeFixedExperience() {
       <section id="demo" className="bg-[#f5f3ee] px-4 py-20 text-[#080809] md:px-8 md:py-28">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#6366F1]">DEMO INTERACTIVA</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#5558D6]">DEMO INTERACTIVA</p>
             <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Ahora pruébalo aquí mismo.</h2>
             <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación completa de Nüva One con datos ficticios. Navega por los módulos y entiende cómo se conecta la operación, sin salir de la homepage.</p>
           </div>
@@ -220,7 +220,7 @@ export function HomeFixedExperience() {
                 </div>
               </div>
               <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2">
-                <div className="rounded-full border border-white/80 bg-white/95 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6366F1] shadow-xl backdrop-blur">
+                <div className="rounded-full border border-white/80 bg-white/95 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-[#5558D6] shadow-xl backdrop-blur">
                   <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none" /> CELULAR
                 </div>
                 <div className="rounded-full border border-white/70 bg-[#11131a]/90 px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-lg backdrop-blur">
@@ -231,10 +231,10 @@ export function HomeFixedExperience() {
           </div>
 
           <div className="order-1 lg:order-2">
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#6366F1]">NÜVA ONE · SMART SCAN</p>
-            <h2 className="mt-5 max-w-xl text-5xl font-semibold leading-[0.95] tracking-[-0.045em] sm:text-7xl">Escanea.<br />Vende.<br /><span className="text-[#6366F1]">Controla.</span></h2>
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#5558D6]">NÜVA ONE · SMART SCAN</p>
+            <h2 className="mt-5 max-w-xl text-5xl font-semibold leading-[0.95] tracking-[-0.045em] sm:text-7xl">Escanea.<br />Vende.<br /><span className="text-[#5558D6]">Controla.</span></h2>
             <p className="mt-7 max-w-xl text-lg leading-8 text-black/60">Tu teléfono puede convertirse en una herramienta de punto de venta e inventario. Escanea un producto y deja que Nüva One conecte la venta con el stock en segundos.</p>
-            <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-[#11131a]"><ScanLine size={18} className="text-[#6366F1]" /> Sin hardware complejo. Sin equipos adicionales.</div>
+            <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-[#11131a]"><ScanLine size={18} className="text-[#5558D6]" /> Sin hardware complejo. Sin equipos adicionales.</div>
             <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-3">
               {[
                 { step: "01", title: "Escanea", text: "Lee el código del producto directamente desde tu teléfono." },
@@ -242,24 +242,24 @@ export function HomeFixedExperience() {
                 { step: "03", title: "Registra", text: "La venta actualiza el inventario y deja el movimiento disponible para tu operación." },
               ].map((item) => (
                 <div key={item.step} className="rounded-2xl border border-black/10 bg-white/70 p-4 shadow-sm backdrop-blur">
-                  <p className="text-[10px] font-bold tracking-[0.2em] text-[#6366F1]">{item.step}</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] text-[#5558D6]">{item.step}</p>
                   <p className="mt-2 text-sm font-bold">{item.title}</p>
-                  <p className="mt-1 text-xs leading-5 text-black/55">{item.text}</p>
+                  <p className="mt-1 text-xs leading-5 text-black/65">{item.text}</p>
                 </div>
               ))}
             </div>
             <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-[#6366F1]/15 bg-[#6366F1]/[0.05] p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#6366F1]">En segundos</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#5558D6]">En segundos</p>
                 <p className="mt-1 text-sm leading-6 text-black/60">Consulta stock y registra una venta desde el mismo flujo, sin cambiar de sistema.</p>
               </div>
               <div className="rounded-2xl border border-black/10 bg-white/65 p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-black/45">Más contexto</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-black/65">Más contexto</p>
                 <p className="mt-1 text-sm leading-6 text-black/60">Cada movimiento puede alimentar la visión de ventas, inventario y resultados del negocio.</p>
               </div>
             </div>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#6366F1] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Probar Nüva One <ArrowRight size={15} /></Link>
+              <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#5558D6] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Probar Nüva One <ArrowRight size={15} /></Link>
             </div>
           </div>
         </div>
@@ -276,7 +276,7 @@ export function HomeFixedExperience() {
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">Mientras otras soluciones resuelven una parte de la operación, Nüva One conecta el contexto para que ventas, inventario, clientes, caja e inteligencia trabajen juntos.</p>
           </div>
 
-          <div className="mt-14 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20">
+          <div className="mt-14 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20" role="region" aria-label="Comparativa de funcionalidades de Nüva One" tabIndex={0}>
             <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 bg-white/[0.025] text-sm">
               <div className="px-5 py-5 font-semibold text-white/55 md:px-7">Lo que necesita tu negocio</div>
               <div className="border-l border-white/10 px-4 py-5 text-center font-bold text-[#E6C687]">Nüva One</div>
