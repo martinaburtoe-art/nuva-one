@@ -20,6 +20,25 @@ DROP POLICY IF EXISTS people_member_select ON public.people_payroll_runs;
 -- compensation records. Non-admin operational screens use explicitly limited RPCs.
 DROP POLICY IF EXISTS people_member_select ON public.people_attendance_events;
 DROP POLICY IF EXISTS people_member_select ON public.people_compliance_items;
+-- Members may submit attendance/compliance/leave records, but cannot
+-- rewrite another person's record or self-approve a request.
+DROP POLICY IF EXISTS people_member_update ON public.people_attendance_events;
+DROP POLICY IF EXISTS people_member_update ON public.people_compliance_items;
+DROP POLICY IF EXISTS people_member_update ON public.people_leave_requests;
+
+CREATE POLICY people_attendance_update_owner_admin ON public.people_attendance_events
+  FOR UPDATE TO authenticated
+  USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
+  WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_compliance_update_owner_admin ON public.people_compliance_items
+  FOR UPDATE TO authenticated
+  USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
+  WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_leave_requests_update_owner_admin ON public.people_leave_requests
+  FOR UPDATE TO authenticated
+  USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
+  WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+
 CREATE POLICY people_attendance_select_owner_admin ON public.people_attendance_events
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 CREATE POLICY people_compliance_select_owner_admin ON public.people_compliance_items
