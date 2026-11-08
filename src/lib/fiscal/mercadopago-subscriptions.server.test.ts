@@ -181,3 +181,13 @@ describe("Mercado Pago recurring payment reconciliation", () => {
     expect(isValidMercadoPagoBusinessId(parsed.businessId)).toBe(true);
   });
 });
+
+
+describe("Mercado Pago webhook event routing", () => {
+  it("routes preapproval notifications separately from authorized recurring payments", () => {
+    expect(isMercadoPagoSubscriptionPreapprovalNotification("subscription_preapproval")).toBe(true);
+    expect(isMercadoPagoSubscriptionPreapprovalNotification("preapproval")).toBe(true);
+    expect(isMercadoPagoSubscriptionPreapprovalNotification("subscription_authorized_payment")).toBe(false);
+    expect(isMercadoPagoSubscriptionPreapprovalNotification("payment")).toBe(false);
+  });
+});
