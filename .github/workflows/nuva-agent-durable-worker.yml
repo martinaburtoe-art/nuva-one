@@ -21,6 +21,10 @@ concurrency:
 jobs:
   durable-agent:
     name: Durable autonomous agent
+    # Provider quota/credential failures are a hard stop. Keep scheduled and
+    # push-triggered LLM workers off until live gateway certification passes.
+    # A deliberate workflow_dispatch remains available for controlled recovery.
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.NUVA_AGENCY_AI_WORKERS_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
