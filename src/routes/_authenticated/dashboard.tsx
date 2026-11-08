@@ -12,6 +12,8 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
+import { buildDashboardMetrics } from "@/lib/dashboard/metrics";
+import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
@@ -41,15 +43,7 @@ function Dashboard() {
         supabase.from("products").select("stock, price, low_stock_threshold, reorder_point").eq("business_id", bid),
         supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
-      const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const inventoryValue = (products.data ?? []).reduce((s, r: any) => s + Number(r.stock) * Number(r.price), 0);
-      const lowStockCount = (products.data ?? []).filter((r: any) => {
-        const stock = Number(r.stock ?? 0);
-        const threshold = Number(r.low_stock_threshold ?? r.reorder_point ?? 0);
-        return threshold > 0 && stock <= threshold;
-      }).length;
-      return { income, expense, net: income - expense, inventoryValue, salesCount: salesCount.count ?? 0, productsCount: (products.data ?? []).length, lowStockCount };
+      return buildDashboardMetrics({ sales, expenses, products, salesCount });
     },
   });
 
@@ -140,8 +134,11 @@ function Dashboard() {
       if (error) throw error;
       localStorage.setItem("novaflow.active_business_id", data);
       window.location.assign("/dashboard");
-    } catch (error: any) {
-      console.error(error);
+    } catch (error) {
+      console.error("[dashboard] No se pudo preparar la empresa demo:", error);
+      toast.error("No pudimos preparar la demo", {
+        description: "Inténtalo nuevamente. Tu negocio actual no fue modificado.",
+      });
     } finally {
       setSeedingDemo(false);
     }
