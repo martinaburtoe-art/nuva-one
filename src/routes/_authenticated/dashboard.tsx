@@ -98,7 +98,7 @@ function Dashboard() {
     const rows = (allTx ?? []).filter((r) => {
       if (isoFrom && r.tx_date < isoFrom) return false;
       if (isoTo && r.tx_date > isoTo) return false;
-      if (categories.length > 0 && !categories.includes(r.category)) return false;
+      if (categories.length > 0 && (!r.category || !categories.includes(r.category))) return false;
       return true;
     });
     if (isoFrom || isoTo) {
