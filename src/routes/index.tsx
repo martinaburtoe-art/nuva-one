@@ -11,7 +11,7 @@ import "@/home-experience.css";
 
 
 const FAQ_ITEMS = [
-  { q: "¿Mis datos están seguros?", a: "Sí. Usamos cifrado en tránsito y en reposo, aislamiento por negocio con Row-Level Security, y cumplimos con la Ley 19.628 y Ley 21.719 de protección de datos personales en Chile." },
+  { q: "¿Mis datos están seguros?", a: "Protegemos la información con controles de acceso por negocio y medidas de seguridad de la plataforma. Estamos preparando nuestros procesos para la entrada en vigor de la Ley 21.719, prevista para el 1 de diciembre de 2026. Consulta la Política de Privacidad para conocer los tratamientos y responsabilidades aplicables." },
   { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. Tienes 15 días de prueba gratuita con acceso completo, sin tarjeta." },
   { q: "¿Puedo conectar Instagram y Facebook?", a: "Sí, mediante tu propia cuenta de Meta Business. Te guiamos en la conexión." },
   { q: "¿Funciona para mi rubro?", a: "Sí. Nüva One está hecho para cualquier rubro: retail, servicios, manufactura, gastronomía, construcción, salud y más." },
