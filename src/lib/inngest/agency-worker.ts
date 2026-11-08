@@ -39,6 +39,7 @@ type WorkerDependencies = {
   enabled?: boolean;
   /** Restricts this run to one exact task; used for production certification. */
   taskId?: string;
+  allowGeneralClaim?: boolean;
   db?: AgencyRpcClient;
   executeSpecialist?: Specialist;
 };
@@ -92,11 +93,15 @@ export async function runInngestAgencyWorker(
     throw new Error("NUVA_INNGEST_SOURCE_REVISION_REQUIRED");
   }
 
-  const db = dependencies.db ?? createServiceRoleClient();
-  const scopedTaskId = dependencies.taskId ?? process.env.NUVA_INNGEST_AGENCY_TEST_TASK_ID;
+  const scopedTaskId = dependencies.taskId?.trim() || process.env.NUVA_INNGEST_AGENCY_TEST_TASK_ID?.trim() || null;
+  const allowGeneralClaim = dependencies.allowGeneralClaim ?? process.env.NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM === "true";
   if (scopedTaskId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(scopedTaskId)) {
     throw new Error("NUVA_INNGEST_TEST_TASK_ID_INVALID");
   }
+  if (!scopedTaskId && !allowGeneralClaim) {
+    return { status: "blocked" as const, reason: "general-claim-disabled", agentId };
+  }
+  const db = dependencies.db ?? createServiceRoleClient();
   const executeSpecialist = dependencies.executeSpecialist ?? specialistMap[agentId];
   if (typeof executeSpecialist !== "function") {
     throw new Error("INNGEST_AGENCY_SPECIALIST_NOT_REGISTERED");
