@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  getMercadoPagoAuthorizedPayment,
   getMercadoPagoConfig,
   getMercadoPagoPayment,
   getMercadoPagoSubscription,
+  isValidMercadoPagoBusinessId,
   isMercadoPagoSubscriptionActive,
   parseMercadoPagoExternalReference,
   validateMercadoPagoWebhookSignature,
@@ -135,23 +137,48 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
           }
         }
 
-        if (type === "payment" || type === "merchant_order") {
-          const paymentResult = await getMercadoPagoPayment(config, resourceId);
-          if (paymentResult.ok && paymentResult.data) {
+        if (type === "payment" || type === "subscription_authorized_payment") {
+          const authorizedResult = type === "subscription_authorized_payment"
+            ? await getMercadoPagoAuthorizedPayment(config, resourceId)
+            : null;
+          const authorized = authorizedResult?.ok && authorizedResult.data
+            ? authorizedResult.data
+            : null;
+          const authorizedPaymentId = authorized && (
+            typeof authorized.payment_id === "string" || typeof authorized.payment_id === "number"
+              ? String(authorized.payment_id)
+              : isRecord(authorized.payment) && (typeof authorized.payment.id === "string" || typeof authorized.payment.id === "number")
+                ? String(authorized.payment.id)
+                : ""
+          );
+          const paymentId = type === "payment" ? resourceId : authorizedPaymentId;
+          const paymentResult = paymentId ? await getMercadoPagoPayment(config, paymentId) : null;
+          if (paymentResult?.ok && paymentResult.data) {
             const payment = asPayment(paymentResult.data);
-            const externalReference = String(payment.external_reference ?? "");
-            if (externalReference) {
+            const preapprovalId = authorized && (
+              typeof authorized.preapproval_id === "string" || typeof authorized.preapproval_id === "number"
+                ? String(authorized.preapproval_id)
+                : ""
+            );
+            let externalReference = String(payment.external_reference ?? authorized?.external_reference ?? "");
+            if (!externalReference && preapprovalId) {
+              const subscriptionResult = await getMercadoPagoSubscription(config, preapprovalId);
+              if (subscriptionResult.ok && subscriptionResult.data) {
+                externalReference = String(subscriptionResult.data.external_reference ?? "");
+              }
+            }
+            const { businessId } = parseMercadoPagoExternalReference(externalReference);
+            if (isValidMercadoPagoBusinessId(businessId)) {
               await supabaseAdmin.from("subscription_charges").upsert(
                 {
-                  business_id: externalReference,
-                  commerce_order: `mp-${resourceId}`,
+                  business_id: businessId,
+                  commerce_order: `mp-${String(payment.id ?? paymentId)}`,
                   amount: Number(payment.transaction_amount ?? 0),
-                  status: String(payment.status ?? "pending"),
+                  status: String(payment.status ?? authorized?.status ?? "pending"),
                   provider: "mercadopago",
-                  provider_payment_id: String(payment.id),
-                  provider_subscription_id: payment.metadata?.preapproval_id
-                    ? String(payment.metadata.preapproval_id)
-                    : null,
+                  provider_payment_id: String(payment.id ?? paymentId),
+                  provider_subscription_id: preapprovalId
+                    || (payment.metadata?.preapproval_id ? String(payment.metadata.preapproval_id) : null),
                 },
                 { onConflict: "commerce_order" },
               );
