@@ -61,10 +61,12 @@ jobs:
           const lock = JSON.parse(json);
           const root = lock.workspaces?.[''];
           if (!root) throw new Error('bun.lock is missing workspaces[""]');
+          // Bun preserves this legacy workspace name in existing lockfiles; normalize it to the package manifest.
+          root.name = pkg.name;
           const equal = (a, b) => JSON.stringify(Object.fromEntries(Object.entries(a ?? {}).sort())) === JSON.stringify(Object.fromEntries(Object.entries(b ?? {}).sort()));
-          if (root.name !== pkg.name) throw new Error(`workspace name mismatch: ${root.name} != ${pkg.name}`);
           if (!equal(root.dependencies, pkg.dependencies)) throw new Error('root dependencies differ from package.json');
           if (!equal(root.devDependencies, pkg.devDependencies)) throw new Error('root devDependencies differ from package.json');
+          fs.writeFileSync('bun.lock', JSON.stringify(lock, null, 2) + '\n');
           console.log('Bun lockfile root manifest matches package.json');
           NODE
       - name: Commit refreshed lockfile
