@@ -1,6 +1,6 @@
 -- Nüva People sensitive-access reconciliation (pgTAP)
 BEGIN;
-SELECT plan(15);
+SELECT plan(17);
 
 -- All seven exposed sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
@@ -76,7 +76,9 @@ SELECT ok(to_regprocedure('public.people_contracts_limited(uuid)') IS NOT NULL, 
 SELECT ok(to_regprocedure('public.people_compliance_items_limited(uuid)') IS NOT NULL, 'limited compliance RPC remains available');
 SELECT ok(to_regprocedure('public.people_attendance_limited(uuid)') IS NOT NULL, 'limited attendance RPC remains available');
 SELECT ok(to_regprocedure('public.people_leave_requests_limited(uuid)') IS NOT NULL, 'limited leave RPC remains available');
-SELECT ok(to_regprocedure('public.people_terminations_limited(uuid)') IS NOT NULL, 'limited termination RPC remains available');
+SELECT ok(NOT has_function_privilege('authenticated','public.people_terminations_limited(uuid)','EXECUTE'), 'limited termination RPC is not callable by non-admin members');
+SELECT ok(pg_get_functiondef('public.people_employees_limited(uuid)'::regprocedure) NOT LIKE '%email%', 'limited employee RPC omits personal email');
+SELECT ok(pg_get_functiondef('public.people_leave_requests_limited(uuid)'::regprocedure) NOT LIKE '%reason%', 'limited leave RPC omits free-text reason/health detail');
 SELECT ok(to_regprocedure('public.people_vacation_balances_limited(uuid)') IS NOT NULL, 'limited vacation RPC remains available');
 
 -- Owner/admin delete policies are preserved.
