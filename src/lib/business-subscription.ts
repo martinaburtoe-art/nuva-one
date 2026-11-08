@@ -36,12 +36,12 @@ export function getBusinessSubscriptionAccess(
     subscriptionStatus === "active" && billingProvider !== "none";
   const isDemoPro =
     plan === "pro" && subscriptionStatus === "active" && billingProvider === "none";
+  const isProPending = plan === "pro" && subscriptionStatus === "pending";
   const trialActive =
     plan === "starter" &&
-    subscriptionStatus === "active" &&
-    billingProvider === "none" &&
+    (subscriptionStatus === "active" || subscriptionStatus === "pending") &&
     trialDaysLeft > 0;
-  const hasAccess = hasActivePaidSubscription || isDemoPro || trialActive;
+  const hasAccess = hasActivePaidSubscription || isDemoPro || isProPending || trialActive;
 
   return {
     hasAccess,
