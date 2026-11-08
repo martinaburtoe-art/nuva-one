@@ -26,13 +26,20 @@ begin
   end if;
 
   -- Recover only this task's expired lease; never sweep unrelated agency work.
-  update public.agency_agent_leases
+  update public.agency_agent_leases l
     set status = 'expired'
-    where task_id = p_task_id and status = 'active' and expires_at < v_now;
+    where l.task_id = p_task_id
+      and l.status = 'active'
+      and l.expires_at < v_now
+      and exists (
+        select 1 from public.agency_tasks t
+        where t.id = p_task_id and t.agent_id = p_agent_id
+      );
 
   update public.agency_tasks t
     set status = 'queued', lease_id = null, updated_at = v_now
     where t.id = p_task_id
+      and t.agent_id = p_agent_id
       and t.status in ('claimed', 'running')
       and (t.lease_id is null or not exists (
         select 1 from public.agency_agent_leases l
