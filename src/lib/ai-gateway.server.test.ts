@@ -49,6 +49,39 @@ describe("AI gateway model selection", () => {
     expect(result.metadata).toMatchObject({ provider: "openai", fallbackUsed: true, attempts: 3 });
   });
 
+
+  it("opens the provider circuit after three consecutive quota failures", async () => {
+    vi.stubEnv("AI_PROVIDER", "groq");
+    vi.stubEnv("AI_FALLBACK_PROVIDERS", "openai");
+    vi.stubEnv("GROQ_API_KEY", "groq-test");
+    vi.stubEnv("GROQ_MODEL", "test-groq");
+    vi.stubEnv("OPENAI_API_KEY", "openai-test");
+    vi.stubEnv("OPENAI_MODEL", "test-openai");
+
+    const { generateTextWithFallback } = await import("./ai-gateway.server");
+    const attempted: string[] = [];
+    const generate = async (model: unknown) => {
+      const name = (model as { model: string }).model;
+      attempted.push(name);
+      if (name === "test-groq") throw Object.assign(new Error("quota exceeded"), { statusCode: 429 });
+      return { ok: true, usage: { inputTokens: 1, outputTokens: 1 } };
+    };
+
+    for (let index = 0; index < 3; index += 1) {
+      await generateTextWithFallback(generate);
+    }
+    const beforeOpen = attempted.length;
+    const result = await generateTextWithFallback(generate);
+
+    expect(attempted.slice(0, beforeOpen)).toEqual([
+      "test-groq", "test-openai",
+      "test-groq", "test-openai",
+      "test-groq", "test-openai",
+    ]);
+    expect(attempted.slice(beforeOpen)).toEqual(["test-openai"]);
+    expect(result.metadata).toMatchObject({ provider: "openai", fallbackUsed: false, attempts: 1 });
+  });
+
   it("does not fail over for a non-retryable request error", async () => {
     vi.stubEnv("AI_PROVIDER", "groq");
     vi.stubEnv("AI_FALLBACK_PROVIDERS", "openai");
