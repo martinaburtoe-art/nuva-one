@@ -5,6 +5,7 @@ import {
   encodeMercadoPagoExternalReference,
   getMercadoPagoAuthorizedPayment,
   isValidMercadoPagoBusinessId,
+  isMercadoPagoSubscriptionPreapprovalNotification,
   parseMercadoPagoExternalReference,
 } from "./mercadopago-subscriptions.server";
 
