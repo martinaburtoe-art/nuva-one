@@ -68,7 +68,8 @@ describe("Agency worker OIDC trust boundary", () => {
   });
 
   it("allows legacy tokens without job_workflow_ref only when workflow_ref is exact", () => {
-    const { job_workflow_ref: _ignored, ...legacyClaims } = validClaims;
+    const legacyClaims = { ...validClaims };
+    delete (legacyClaims as Record<string, unknown>).job_workflow_ref;
     expect(isTrustedAgencyWorkerClaims(legacyClaims, runId, agentId)).toBe(true);
   });
 });
