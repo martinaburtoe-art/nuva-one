@@ -6,6 +6,7 @@ import {
   getMercadoPagoSubscription,
   isValidMercadoPagoBusinessId,
   isMercadoPagoSubscriptionActive,
+  isMercadoPagoSubscriptionPreapprovalNotification,
   parseMercadoPagoExternalReference,
   validateMercadoPagoWebhookSignature,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
@@ -86,7 +87,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        if (type === "subscription_preapproval" || type === "preapproval") {
+        if (isMercadoPagoSubscriptionPreapprovalNotification(type)) {
           const subscriptionResult = await getMercadoPagoSubscription(config, resourceId);
           if (!subscriptionResult.ok || !subscriptionResult.data) return new Response("Unable to retrieve Mercado Pago subscription", { status: 502 });
           const subscription = asSubscription(subscriptionResult.data);
