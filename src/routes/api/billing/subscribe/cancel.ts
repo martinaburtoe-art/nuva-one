@@ -48,9 +48,18 @@ export const Route = createFileRoute("/api/billing/subscribe/cancel")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const pendingDemoOrTrial =
+          business.subscription_status === "pending" &&
+          (
+            business.plan === "pro" ||
+            (business.plan === "starter" && new Date(business.created_at).getTime() > Date.now() - 15 * 86_400_000)
+          );
+        const localUpdate = pendingDemoOrTrial
+          ? { subscription_status: "active", billing_provider: "none", mercadopago_preapproval_id: null }
+          : { plan: "starter", subscription_status: "canceled", next_charge_date: null };
         const { error } = await supabaseAdmin
           .from("businesses")
-          .update({ plan: "starter", subscription_status: "canceled", next_charge_date: null })
+          .update(localUpdate)
           .eq("id", businessId);
 
         if (error) {
