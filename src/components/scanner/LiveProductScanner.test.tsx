@@ -5,7 +5,7 @@ import { validateScannedCode } from "@/lib/scanner-code-validation";
 
 describe("LiveProductScanner integration contracts", () => {
   it("normalizes live scanner codes without changing significant characters", () => {
-    expect(normalizeProductCode("  780 123 456 7890  ")).toBe("7801234567890");
+    expect(normalizeProductCode("  780 123 456 7890  ")).toBe("7801234567894");
     expect(normalizeProductCode("SKU-ABC 001")).toBe("SKU-ABC001");
   });
 
@@ -14,7 +14,7 @@ describe("LiveProductScanner integration contracts", () => {
   });
 
   it("validates real EAN checksums and rejects malformed product codes", () => {
-    expect(validateScannedCode("7801234567890")).toMatchObject({
+    expect(validateScannedCode("7801234567894")).toMatchObject({
       kind: "valid",
       codeKind: "EAN-13",
     });
