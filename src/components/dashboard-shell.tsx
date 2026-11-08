@@ -6,6 +6,7 @@ import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, S
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness, useMyMembership, hasModulePermission, type ModuleKey } from "@/lib/use-business";
+import { getBusinessSubscriptionAccess } from "@/lib/business-subscription";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AiChatBubble } from "@/components/ai-chat-bubble";
@@ -56,10 +57,13 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   });
   const mobilePrimaryNav = visibleNav.filter((n) => ["/dashboard", "/pos", "/inventory", "/shipments", "/ai"].includes(n.to));
   const mobileMoreNav = visibleNav.filter((n) => !mobilePrimaryNav.includes(n));
-  const plan = (active as any)?.plan ?? "starter";
-  const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
-  const trialDaysLeft = createdAt ? Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000)) : 15;
-  const trialExpired = plan !== "pro" && trialDaysLeft <= 0;
+  const subscriptionAccess = getBusinessSubscriptionAccess({
+    plan: active?.plan,
+    subscriptionStatus: active?.subscription_status,
+    billingProvider: active?.billing_provider,
+    createdAt: active?.created_at,
+  });
+  const trialExpired = Boolean(active) && subscriptionAccess.trialExpired;
   const isSettingsRoute = pathname.startsWith("/settings");
   const showModuleInfo = MODULE_INFO_PATHS.has(pathname);
 
