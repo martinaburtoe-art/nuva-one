@@ -38,5 +38,6 @@ export default defineConfig({
   nitro: { preset: "vercel" },
   vite: {
     plugins: [homepageShowcasePlugin],
+    alias: { lodash: 'lodash-es' },
   },
 });

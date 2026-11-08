@@ -1,0 +1,345 @@
+{
+  "generatedAt": "2026-11-05T01:50:40.091Z",
+  "total": 23,
+  "passed": 17,
+  "warn": 6,
+  "fail": 0,
+  "blocked": 0,
+  "allPass": true,
+  "specialists": [
+    {
+      "specialist": "finance",
+      "taskId": "cert-finance-001",
+      "result": "WARN",
+      "evidence": [
+        "package.json leído (4909 bytes, hash f1f42d189d8900d1)",
+        "dependencias: 66; devDependencies: 19",
+        "bun.lock: presente",
+        "package-lock.json: presente",
+        "ambos lockfiles presentes — posible inconsistencia si package.json cambió tras ellos"
+      ],
+      "errors": [],
+      "durationMs": 27,
+      "timestamp": "2026-11-05T01:50:38.024Z",
+      "taskType": "lockfile-check"
+    },
+    {
+      "specialist": "sales",
+      "taskId": "cert-sales-001",
+      "result": "WARN",
+      "evidence": [
+        "vercel.json: legible (1048 bytes)",
+        "package.json: legible (4909 bytes)",
+        "supabase/functions/nuva-agency-worker-control/index.ts: legible (9940 bytes)",
+        "odoo declarado: no",
+        "gtm/ga declarado: no"
+      ],
+      "errors": [],
+      "durationMs": 5,
+      "timestamp": "2026-11-05T01:50:38.044Z",
+      "taskType": "integration-verification"
+    },
+    {
+      "specialist": "supply",
+      "taskId": "cert-supply-001",
+      "result": "PASS",
+      "evidence": [
+        "supabase/migrations/20261007000000_durable_autonomous_agency_control_plane.sql: legible (15083 bytes)",
+        "package.json: legible (4909 bytes)",
+        "tabla agency_tasks en migración: sí",
+        "tabla agency_missions en migración: sí"
+      ],
+      "errors": [],
+      "durationMs": 4,
+      "timestamp": "2026-11-05T01:50:38.048Z",
+      "taskType": "inventory-check"
+    },
+    {
+      "specialist": "people",
+      "taskId": "cert-people-001",
+      "result": "PASS",
+      "evidence": [
+        "docs/nuva-agency/AGENT_BACKLOG.md: legible (86585 bytes, PII redactado: 0)",
+        "docs/factory/BLOCKERS.md: legible (4339 bytes, PII redactado: 0)",
+        "docs/factory/PROJECT_STATE.md: legible (10417 bytes, PII redactado: 0)",
+        "package.json revisado: 4909 bytes (PII redactado: 0)",
+        "PII scan: 0 coincidencia(s) encontrada(s) y redactada(s) en documentos escaneados"
+      ],
+      "errors": [],
+      "durationMs": 8,
+      "timestamp": "2026-11-05T01:50:38.056Z",
+      "taskType": "pii-scan"
+    },
+    {
+      "specialist": "growth",
+      "taskId": "cert-growth-001",
+      "result": "PASS",
+      "evidence": [
+        "vercel.json: legible (1048 bytes)",
+        "package.json: legible (4909 bytes)",
+        "vite.config.ts: legible (1993 bytes)",
+        "vitest.config.ts: legible (441 bytes)",
+        "cron jobs en vercel.json: 2"
+      ],
+      "errors": [],
+      "durationMs": 2,
+      "timestamp": "2026-11-05T01:50:38.058Z",
+      "taskType": "analytics-check"
+    },
+    {
+      "specialist": "orchestrator",
+      "taskId": "cert-orchestrator-001",
+      "result": "PASS",
+      "evidence": [
+        "backlog leído (86585 bytes)",
+        "tareas PENDIENTE: 1",
+        "tareas elegibles (deps resueltas): 1",
+        "siguiente tarea seleccionada: T-139 — Corregir fallo de build de producción (prioridad P0)",
+        "seleccionada: T-139"
+      ],
+      "errors": [],
+      "durationMs": 5,
+      "timestamp": "2026-11-05T01:50:38.063Z",
+      "taskType": "backlog-selection"
+    },
+    {
+      "specialist": "constructor",
+      "taskId": "cert-constructor-001",
+      "result": "PASS",
+      "evidence": [
+        "scripts/agency-task-executor.mjs: legible (30783 bytes)",
+        "node --check scripts/agency-task-executor.mjs: sintaxis OK"
+      ],
+      "errors": [],
+      "durationMs": 70,
+      "timestamp": "2026-11-05T01:50:38.133Z",
+      "taskType": "syntax-check"
+    },
+    {
+      "specialist": "compliance",
+      "taskId": "cert-compliance-001",
+      "result": "PASS",
+      "evidence": [
+        "DECISIONS.md: legible (11005 bytes)",
+        "backlog leído (86585 bytes)",
+        "tareas sin estado definido: 0"
+      ],
+      "errors": [],
+      "durationMs": 6,
+      "timestamp": "2026-11-05T01:50:38.140Z",
+      "taskType": "decision-audit"
+    },
+    {
+      "specialist": "security",
+      "taskId": "cert-security-001",
+      "result": "WARN",
+      "evidence": [
+        ".env: no encontrado (correcto)",
+        ".env.local: EXISTE (posible secreto expuesto — [REDACTED])",
+        ".env.production: no encontrado (correcto)",
+        "agency-status.ts: 18025 bytes, autorización server-side: sí"
+      ],
+      "errors": [],
+      "durationMs": 5,
+      "timestamp": "2026-11-05T01:50:38.145Z",
+      "taskType": "secret-scan"
+    },
+    {
+      "specialist": "qa",
+      "taskId": "cert-qa-001",
+      "result": "PASS",
+      "evidence": [
+        "vitest run src/lib/agency/policy.test.ts: salida JSON válida",
+        "pruebas: 4/4 aprobadas; 0 fallidas",
+        "código de salida: 0",
+        "stderr: \u001b[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:\n  - `__dirname` (vitest.config.ts:7:25). Use `import.meta.dirname` instead\nSet `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this"
+      ],
+      "errors": [],
+      "durationMs": 1584,
+      "timestamp": "2026-11-05T01:50:39.729Z",
+      "taskType": "unit-test-run"
+    },
+    {
+      "specialist": "sentinel",
+      "taskId": "cert-sentinel-001",
+      "result": "WARN",
+      "evidence": [
+        "ejecuciones en logs: 135",
+        "resultados FAIL: 32",
+        "resultados BLOCKED: 0",
+        ".agency-pause: ausente (sistema activo)"
+      ],
+      "errors": [],
+      "durationMs": 229,
+      "timestamp": "2026-11-05T01:50:39.958Z",
+      "taskType": "health-check"
+    },
+    {
+      "specialist": "ux",
+      "taskId": "cert-ux-001",
+      "result": "PASS",
+      "evidence": [
+        "src/routes/owner/control-tower.tsx: legible (54275 bytes)",
+        "src/routes/api/owner/agency-status.ts: legible (18025 bytes)",
+        "archivos con atributos de accesibilidad: 1"
+      ],
+      "errors": [],
+      "durationMs": 1,
+      "timestamp": "2026-11-05T01:50:39.959Z",
+      "taskType": "route-inspection"
+    },
+    {
+      "specialist": "release",
+      "taskId": "cert-release-001",
+      "result": "PASS",
+      "evidence": [
+        "package.json: 4909 bytes",
+        "artefactos de build: presentes",
+        "git status: 17 archivo(s) sin staged",
+        " M docs/launch/AGENCY_EVIDENCE_LOG.md\n M docs/nuva-agency/AGENT_BACKLOG.md\n M src/lib/agency/registry.ts\n M src/lib/agency/specialists.mjs\n M src/routes/api/owner/agency-control.ts\n?? bun.lock.backup\n?? docs/auditoria-seguridad-agencia-frente-f.md\n?? docs/launch/.hermes-tmp.ZR3vft\n?? docs/launch/FRENTE_G_P2.md\n?? docs/launch/FRENTE_G_P3.md\n?? docs/launch/FRENTE_G_P4.md\n?? docs/launch/FRENTE_G_REVIEW_PRODUCTO_NEGOCIO.md\n?? docs/nuva-agency/FRENTE-B-ESTADO-COLA-RECUPERACION.md\n?? package.json.bak\n"
+      ],
+      "errors": [],
+      "durationMs": 104,
+      "timestamp": "2026-11-05T01:50:40.063Z",
+      "taskType": "git-status-check"
+    },
+    {
+      "specialist": "product",
+      "taskId": "cert-product-001",
+      "result": "PASS",
+      "evidence": [
+        "docs/nuva-agency/AGENT_BACKLOG.md: legible (86585 bytes)",
+        "docs/factory/DECISIONS.md: legible (11005 bytes)",
+        "package.json: legible (4909 bytes)"
+      ],
+      "errors": [],
+      "durationMs": 6,
+      "timestamp": "2026-11-05T01:50:40.069Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "customer_success",
+      "taskId": "cert-customer_success-001",
+      "result": "PASS",
+      "evidence": [
+        "docs/nuva-agency/AGENT_BACKLOG.md: legible (86585 bytes)",
+        "README.md: no encontrado"
+      ],
+      "errors": [],
+      "durationMs": 3,
+      "timestamp": "2026-11-05T01:50:40.072Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "support",
+      "taskId": "cert-support-001",
+      "result": "PASS",
+      "evidence": [
+        "docs/nuva-agency/AGENT_BACKLOG.md: legible (86585 bytes)",
+        "docs/launch/AGENCY_OPERATIONS_BOARD.md: legible (10761 bytes)"
+      ],
+      "errors": [],
+      "durationMs": 2,
+      "timestamp": "2026-11-05T01:50:40.074Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "marketing",
+      "taskId": "cert-marketing-001",
+      "result": "PASS",
+      "evidence": [
+        "vercel.json: legible (1048 bytes)",
+        "package.json: legible (4909 bytes)",
+        "nombre de producto con marca Nüva: sí"
+      ],
+      "errors": [],
+      "durationMs": 1,
+      "timestamp": "2026-11-05T01:50:40.075Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "seo",
+      "taskId": "cert-seo-001",
+      "result": "WARN",
+      "evidence": [
+        "vercel.json: legible (1048 bytes)",
+        "vite.config.ts: legible (1993 bytes)",
+        "package.json: legible (4909 bytes)",
+        "dominios declarados en vercel.json: no detectados"
+      ],
+      "errors": [],
+      "durationMs": 2,
+      "timestamp": "2026-11-05T01:50:40.077Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "analytics",
+      "taskId": "cert-analytics-001",
+      "result": "WARN",
+      "evidence": [
+        "vercel.json: legible (1048 bytes)",
+        "package.json: legible (4909 bytes)",
+        "vite.config.ts: legible (1993 bytes)",
+        "dependencias de analítica declaradas: no"
+      ],
+      "errors": [],
+      "durationMs": 1,
+      "timestamp": "2026-11-05T01:50:40.078Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "accounting",
+      "taskId": "cert-accounting-001",
+      "result": "PASS",
+      "evidence": [
+        "package.json: presente (4909 bytes)",
+        "bun.lock: presente (344984 bytes)",
+        "package-lock.json: presente (528016 bytes)"
+      ],
+      "errors": [],
+      "durationMs": 3,
+      "timestamp": "2026-11-05T01:50:40.081Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "tax_chile",
+      "taskId": "cert-tax_chile-001",
+      "result": "PASS",
+      "evidence": [
+        "docs/nuva-agency/AGENT_BACKLOG.md: legible (86585 bytes)",
+        "docs/launch/AGENCY_OPERATIONS_BOARD.md: legible (10761 bytes)"
+      ],
+      "errors": [],
+      "durationMs": 3,
+      "timestamp": "2026-11-05T01:50:40.084Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "integrations",
+      "taskId": "cert-integrations-001",
+      "result": "PASS",
+      "evidence": [
+        "package.json: legible (4909 bytes)",
+        "vercel.json: legible (1048 bytes)",
+        "conectores de integración declarados: sí"
+      ],
+      "errors": [],
+      "durationMs": 2,
+      "timestamp": "2026-11-05T01:50:40.086Z",
+      "taskType": "generic"
+    },
+    {
+      "specialist": "data_bi",
+      "taskId": "cert-data_bi-001",
+      "result": "PASS",
+      "evidence": [
+        "tabla agency_tasks en migración: sí",
+        "tabla agency_missions en migración: sí"
+      ],
+      "errors": [],
+      "durationMs": 5,
+      "timestamp": "2026-11-05T01:50:40.091Z",
+      "taskType": "generic"
+    }
+  ]
+}
