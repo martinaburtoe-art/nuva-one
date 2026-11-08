@@ -2,7 +2,7 @@
 BEGIN;
 SELECT plan(17);
 
--- All seven exposed sensitive tables must have one owner/admin SELECT policy.
+-- All eighteen sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
   SELECT count(*)::int FROM (
     SELECT expected.tablename
@@ -35,7 +35,6 @@ SELECT is((
       'people_terminations','people_vacation_balances','people_gratification_settings',
       'people_gratification_settlements','people_payroll_liquidations')
     AND cmd='SELECT' AND permissive='PERMISSIVE'
-    AND roles @> ARRAY['authenticated'::name]
     AND policyname IN ('people_member_select','people_gratification_settings_select','people_gratification_settlements_select')
 ), 0, 'no broad member SELECT policy remains on sensitive tables');
 
