@@ -4,7 +4,6 @@
 -- unrelated write/operational policies. Contracts, employee PII and documents
 -- are writable only by owner/admin.
 
-BEGIN;
 
 -- Remove broad member SELECT policies. Owner/admin SELECT policies already exist
 -- on these tables and remain the sole permissive SELECT path.
@@ -142,7 +141,6 @@ CREATE POLICY people_admin_update ON public.people_documents
   USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 
-COMMIT;
 
 -- Keep non-admin operational RPC payloads minimal and remove unnecessary PII.
 CREATE OR REPLACE FUNCTION public.people_employees_limited(p_business_id uuid)
