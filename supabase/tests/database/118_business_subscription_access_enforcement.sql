@@ -1,6 +1,6 @@
 -- Subscription-aware enforcement for the 15-day Starter trial.
 BEGIN;
-SELECT plan(12);
+SELECT plan(14);
 
 SELECT ok(
   to_regprocedure('public.enforce_business_active()') IS NOT NULL,
