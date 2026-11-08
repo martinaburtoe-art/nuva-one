@@ -46,8 +46,9 @@ COMMENT ON FUNCTION public.enforce_business_active() IS
   'Blocks new billable operational records when the business has no active paid subscription, Pro demo entitlement, or unexpired Starter trial.';
 
 -- Install the guard idempotently on direct user-initiated operational writes.
--- Shipment events and system/audit/billing tables are intentionally excluded
--- so external delivery updates, audit trails and subscription recovery continue.
+-- System/audit/billing tables are intentionally excluded so external delivery
+-- updates, audit trails and subscription recovery continue. Shipment records
+-- themselves remain billable operational writes.
 DO $$
 DECLARE
   t text;
