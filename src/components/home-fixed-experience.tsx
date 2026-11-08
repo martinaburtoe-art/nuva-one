@@ -18,6 +18,7 @@ const BENEFITS = [
 function DeferredDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [demoVisible, setDemoVisible] = useState(true);
 
   useEffect(() => {
     const node = containerRef.current;
@@ -40,11 +41,25 @@ function DeferredDemo() {
   return (
     <div ref={containerRef} className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
       {shouldLoad ? (
-        <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/55" role="status">Preparando la demo interactiva…</div>}>
-          <DemoStateProvider>
-            <DemoWorkspace onExit={() => undefined} />
-          </DemoStateProvider>
-        </Suspense>
+        <>
+          <div className={demoVisible ? "block" : "hidden"}>
+            <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/55" role="status">Preparando la demo interactiva…</div>}>
+              <DemoStateProvider>
+                <DemoWorkspace onExit={() => setDemoVisible(false)} />
+              </DemoStateProvider>
+            </Suspense>
+          </div>
+          {!demoVisible && (
+            <div className="flex min-h-[420px] flex-col items-center justify-center gap-4 bg-white px-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6366F1]/10 text-[#6366F1]"><CheckCircle2 className="h-6 w-6" /></div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#080809]">Demo pausada</h3>
+                <p className="mt-1 max-w-md text-sm leading-6 text-black/55">Tu recorrido quedó cerrado. Puedes volver a explorar el escenario cuando quieras.</p>
+              </div>
+              <button type="button" onClick={() => setDemoVisible(true)} className="inline-flex items-center gap-2 rounded-full bg-[#080809] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2">Volver a la demo <ArrowRight size={15} /></button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex min-h-[420px] items-center justify-center bg-white px-6 text-center text-sm text-black/55">
           La demo interactiva se cargará al acercarte a esta sección.
@@ -276,7 +291,7 @@ export function HomeFixedExperience() {
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">Mientras otras soluciones resuelven una parte de la operación, Nüva One conecta el contexto para que ventas, inventario, clientes, caja e inteligencia trabajen juntos.</p>
           </div>
 
-          <div className="mt-14 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20">
+          <div className="mt-14 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20" role="region" aria-label="Comparativa de capacidades; desplázate horizontalmente para comparar todas las columnas" tabIndex={0}>
             <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 bg-white/[0.025] text-sm">
               <div className="px-5 py-5 font-semibold text-white/55 md:px-7">Lo que necesita tu negocio</div>
               <div className="border-l border-white/10 px-4 py-5 text-center font-bold text-[#E6C687]">Nüva One</div>
