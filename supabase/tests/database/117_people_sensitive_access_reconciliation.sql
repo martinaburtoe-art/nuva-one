@@ -1,6 +1,6 @@
 -- Nüva People sensitive-access reconciliation (pgTAP)
 BEGIN;
-SELECT plan(24);
+SELECT plan(25);
 
 -- All eighteen sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
@@ -124,6 +124,17 @@ SELECT is((
     AND with_check LIKE '%owner%' AND with_check LIKE '%admin%'
 ), 3, 'attendance, compliance and leave updates are owner/admin only');
 
+SELECT is((
+  SELECT count(*)::int FROM pg_policies
+  WHERE schemaname='public'
+    AND policyname IN (
+      'people_contracts_select_owner_admin','people_employees_select_owner_admin',
+      'people_documents_select_owner_admin','people_lre_rows_select_owner_admin',
+      'people_payroll_items_select_owner_admin','people_payroll_periods_select_owner_admin',
+      'people_payroll_liquidations_select_owner_admin','people_absences_select_owner_admin'
+    )
+    AND qual LIKE '%SELECT auth.uid()%'
+), 8, 'owner/admin People RLS policies evaluate auth.uid once per statement');
 -- Owner/admin delete policies are preserved.
 SELECT is((
   SELECT count(*)::int FROM pg_policies
