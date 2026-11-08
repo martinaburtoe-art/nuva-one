@@ -39,7 +39,7 @@ const plans = [
   {
     ...NUVA_PLANS.starter,
     description: "Para ordenar y controlar la operación diaria de tu PYME.",
-    cta: "Comenzar con Start",
+    cta: "Contratar Start",
     featured: false,
     highlights: [
       `${NUVA_PLANS.starter.includedUsers} usuario incluido`,
@@ -291,6 +291,15 @@ function PricingPage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
+              {!plan.featured && (
+                <Link
+                  to="/auth"
+                  search={{ mode: "signup" }}
+                  className="mt-3 text-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  O prueba Start gratis durante 15 días, sin tarjeta
+                </Link>
+              )}
               <div className="mt-7 border-t pt-6">
                 <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Qué obtienes
