@@ -2,6 +2,7 @@ export type DashboardMetricRow = {
   amount?: number | string | null;
   stock?: number | string | null;
   cost?: number | string | null;
+  price?: number | string | null;
   low_stock_threshold?: number | string | null;
   reorder_point?: number | string | null;
 };
