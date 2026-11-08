@@ -100,6 +100,9 @@ export function LiveProductScanner({
   const scannerRef = useRef<UnifiedScanEngine | null>(null);
   const lastHandledRef = useRef("");
   const onScanRef = useRef(onScan);
+  const onResolvedRef = useRef(onResolved);
+  const onProductFoundRef = useRef(onProductFound);
+  const onCodeNotFoundRef = useRef(onCodeNotFound);
   const continuousRef = useRef(continuous);
   const [businessId] = useActiveBusinessId();
   const { data: role } = useMyRole();
@@ -125,9 +128,15 @@ export function LiveProductScanner({
     initialStock: "0",
   });
 
-  useEffect(() => {
-    onScanRef.current = onScan;
-  }, [onScan]);
+  // Keep callback and UI-state refs current without restarting the camera engine.
+  onScanRef.current = onScan;
+  onResolvedRef.current = onResolved;
+  onProductFoundRef.current = onProductFound;
+  onCodeNotFoundRef.current = onCodeNotFound;
+  const operationRef = useRef(operation);
+  const newProductOpenRef = useRef(newProductOpen);
+  operationRef.current = operation;
+  newProductOpenRef.current = newProductOpen;
   useEffect(() => {
     continuousRef.current = continuous;
   }, [continuous]);
@@ -178,12 +187,12 @@ export function LiveProductScanner({
       setState("resolving");
       try {
         const resolution = await resolveProductCode(code);
-        onResolved?.(resolution);
+        onResolvedRef.current?.(resolution);
         if (resolution.status === "FOUND" && resolution.product) {
           const product = resolution.product as ScannerProduct;
           setOperationProduct(product);
           setState("found");
-          onProductFound?.(product, result);
+          onProductFoundRef.current?.(product, result);
           toast.success(`${product.name ?? "Producto"} encontrado`);
         } else if (resolution.status === "DUPLICATE") {
           setOperationProduct(null);
@@ -192,7 +201,7 @@ export function LiveProductScanner({
         } else if (resolution.status === "NOT_FOUND") {
           setOperationProduct(null);
           setState("not_found");
-          onCodeNotFound?.(code, result);
+          onCodeNotFoundRef.current?.(code, result);
           toast.info("Código nuevo detectado");
         } else if (resolution.status === "UNAUTHORIZED") {
           setOperationProduct(null);
@@ -210,12 +219,12 @@ export function LiveProductScanner({
       } finally {
         window.setTimeout(() => {
           lastHandledRef.current = "";
-          if (continuousRef.current && scannerRef.current && !operation && !newProductOpen)
+          if (continuousRef.current && scannerRef.current && !operationRef.current && !newProductOpenRef.current)
             setState("scanning");
         }, 900);
       }
     },
-    [onCodeNotFound, onProductFound, onResolved, operation, newProductOpen],
+    [],
   );
 
   useEffect(() => {
