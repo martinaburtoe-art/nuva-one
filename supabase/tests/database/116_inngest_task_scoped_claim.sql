@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(18);
+SELECT plan(20);
 
 SELECT ok(
   has_function_privilege('service_role', 'public.agency_claim_task_by_id(text, uuid, integer)', 'EXECUTE'),
@@ -12,6 +12,15 @@ SELECT ok(
 SELECT ok(
   NOT has_function_privilege('authenticated', 'public.agency_claim_task_by_id(text, uuid, integer)', 'EXECUTE'),
   'authenticated cannot execute the task-scoped claim RPC'
+);
+SELECT ok(
+  has_function_privilege('service_role', 'public.agency_claim_task(text, integer)', 'EXECUTE'),
+  'service_role can execute the general Agency claim RPC'
+);
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.agency_claim_task(text, integer)', 'EXECUTE')
+  AND NOT has_function_privilege('authenticated', 'public.agency_claim_task(text, integer)', 'EXECUTE'),
+  'general Agency claim RPC is not executable by public client roles'
 );
 SELECT ok(
   position('extensions.gen_random_bytes(32)' in pg_get_functiondef('public.agency_claim_task_by_id(text, uuid, integer)'::regprocedure)) > 0
