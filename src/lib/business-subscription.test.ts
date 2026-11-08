@@ -54,6 +54,18 @@ describe("business subscription access", () => {
     });
   });
 
+  it("keeps a valid Starter trial available while Mercado Pago checkout is pending", () => {
+    const access = getBusinessSubscriptionAccess({
+      plan: "starter",
+      subscriptionStatus: "pending",
+      billingProvider: "mercadopago",
+      createdAt: new Date(now - 2 * 86_400_000).toISOString(),
+      nowMs: now,
+    });
+
+    expect(access).toMatchObject({ hasAccess: true, trialActive: true, trialExpired: false });
+  });
+
   it("allows the no-payment Pro demo business", () => {
     const access = getBusinessSubscriptionAccess({
       plan: "pro",
