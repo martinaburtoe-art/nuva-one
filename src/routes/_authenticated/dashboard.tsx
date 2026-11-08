@@ -219,7 +219,7 @@ function Dashboard() {
 
         <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
           <article className="nuva-resumen-device nuva-resumen-device-main">
-            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
+            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, CON CLARIDAD</span><span className="nuva-resumen-notification">⌁</span></div>
             <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Tu negocio, con claridad.</h2><span>Una mirada clara a tu negocio.</span></div>
             <div className="nuva-resumen-balance-card">
               <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span></div>
@@ -233,7 +233,12 @@ function Dashboard() {
             </div>
             <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR DEL INVENTARIO · A COSTO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
             <div className="nuva-resumen-status-card">
-              {kpis === undefined ? (
+              {kpisError ? (
+                <>
+                  <span className="nuva-resumen-status-symbol"><ShieldAlert className="h-4 w-4" /></span>
+                  <div><strong>Indicadores no disponibles</strong><p>Reintenta la consulta para recuperar el resumen.</p></div>
+                </>
+              ) : kpis === undefined ? (
                 <>
                   <span className="nuva-resumen-status-symbol"><i className="nuva-resumen-dot-gold" /></span>
                   <div><strong>—</strong><p>Esperando datos del negocio…</p></div>
