@@ -129,14 +129,16 @@ export function LiveProductScanner({
   });
 
   // Keep callback and UI-state refs current without restarting the camera engine.
-  onScanRef.current = onScan;
-  onResolvedRef.current = onResolved;
-  onProductFoundRef.current = onProductFound;
-  onCodeNotFoundRef.current = onCodeNotFound;
   const operationRef = useRef(operation);
   const newProductOpenRef = useRef(newProductOpen);
-  operationRef.current = operation;
-  newProductOpenRef.current = newProductOpen;
+  useEffect(() => {
+    onScanRef.current = onScan;
+    onResolvedRef.current = onResolved;
+    onProductFoundRef.current = onProductFound;
+    onCodeNotFoundRef.current = onCodeNotFound;
+    operationRef.current = operation;
+    newProductOpenRef.current = newProductOpen;
+  }, [onScan, onResolved, onProductFound, onCodeNotFound, operation, newProductOpen]);
   useEffect(() => {
     continuousRef.current = continuous;
   }, [continuous]);
@@ -219,8 +221,14 @@ export function LiveProductScanner({
       } finally {
         window.setTimeout(() => {
           lastHandledRef.current = "";
-          if (continuousRef.current && scannerRef.current && !operationRef.current && !newProductOpenRef.current)
+          if (
+            continuousRef.current &&
+            scannerRef.current &&
+            !operationRef.current &&
+            !newProductOpenRef.current
+          ) {
             setState("scanning");
+          }
         }, 900);
       }
     },
