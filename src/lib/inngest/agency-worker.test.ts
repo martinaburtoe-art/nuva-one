@@ -263,14 +263,15 @@ describe("Inngest Agency worker", () => {
       executeSpecialist: execute,
     })).rejects.toThrow("AGENCY_TASK_FINISH_REJECTED");
 
-    const firstFinish = db.rpc.mock.calls[1][1];
+    const rpcCalls = db.rpc.mock.calls as unknown as Array<[string, Record<string, unknown>]>;
+    const firstFinish = rpcCalls[1][1];
     const result = await runInngestAgencyWorker("finance", step, {
       enabled: true,
       allowGeneralClaim: true,
       db,
       executeSpecialist: execute,
     });
-    const secondFinish = db.rpc.mock.calls[2][1];
+    const secondFinish = rpcCalls[2][1];
 
     expect(result).toMatchObject({ status: "executed", verdict: "PASS" });
     expect(execute).toHaveBeenCalledTimes(1);
