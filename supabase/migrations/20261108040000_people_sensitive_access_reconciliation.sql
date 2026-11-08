@@ -18,32 +18,42 @@ DROP POLICY IF EXISTS people_member_select ON public.people_payroll_runs;
 -- Evaluate auth.uid() once per statement rather than once per row on
 -- the existing owner/admin policies; this preserves authorization semantics.
 DROP POLICY IF EXISTS people_contracts_select_owner_admin ON public.people_contracts;
+DROP POLICY IF EXISTS people_contracts_select_owner_admin ON public.people_contracts;
 CREATE POLICY people_contracts_select_owner_admin ON public.people_contracts
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_employees_select_owner_admin ON public.people_employees;
 DROP POLICY IF EXISTS people_employees_select_owner_admin ON public.people_employees;
 CREATE POLICY people_employees_select_owner_admin ON public.people_employees
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 DROP POLICY IF EXISTS people_documents_select_owner_admin ON public.people_documents;
+DROP POLICY IF EXISTS people_documents_select_owner_admin ON public.people_documents;
 CREATE POLICY people_documents_select_owner_admin ON public.people_documents
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_lre_rows_select_owner_admin ON public.people_lre_rows;
 DROP POLICY IF EXISTS people_lre_rows_select_owner_admin ON public.people_lre_rows;
 CREATE POLICY people_lre_rows_select_owner_admin ON public.people_lre_rows
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 DROP POLICY IF EXISTS people_payroll_items_select_owner_admin ON public.people_payroll_items;
+DROP POLICY IF EXISTS people_payroll_items_select_owner_admin ON public.people_payroll_items;
 CREATE POLICY people_payroll_items_select_owner_admin ON public.people_payroll_items
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_payroll_periods_select_owner_admin ON public.people_payroll_periods;
 DROP POLICY IF EXISTS people_payroll_periods_select_owner_admin ON public.people_payroll_periods;
 CREATE POLICY people_payroll_periods_select_owner_admin ON public.people_payroll_periods
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 DROP POLICY IF EXISTS people_payroll_postings_select_owner_admin ON public.people_payroll_postings;
+DROP POLICY IF EXISTS people_payroll_postings_select_owner_admin ON public.people_payroll_postings;
 CREATE POLICY people_payroll_postings_select_owner_admin ON public.people_payroll_postings
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_payroll_runs_select_owner_admin ON public.people_payroll_runs;
 DROP POLICY IF EXISTS people_payroll_runs_select_owner_admin ON public.people_payroll_runs;
 CREATE POLICY people_payroll_runs_select_owner_admin ON public.people_payroll_runs
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 DROP POLICY IF EXISTS people_payroll_liquidations_select_owner_admin ON public.people_payroll_liquidations;
+DROP POLICY IF EXISTS people_payroll_liquidations_select_owner_admin ON public.people_payroll_liquidations;
 CREATE POLICY people_payroll_liquidations_select_owner_admin ON public.people_payroll_liquidations
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_absences_select_owner_admin ON public.people_absences;
 DROP POLICY IF EXISTS people_absences_select_owner_admin ON public.people_absences;
 CREATE POLICY people_absences_select_owner_admin ON public.people_absences
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
@@ -58,21 +68,26 @@ DROP POLICY IF EXISTS people_member_update ON public.people_attendance_events;
 DROP POLICY IF EXISTS people_member_update ON public.people_compliance_items;
 DROP POLICY IF EXISTS people_member_update ON public.people_leave_requests;
 
+DROP POLICY IF EXISTS people_attendance_update_owner_admin ON public.people_attendance_events;
 CREATE POLICY people_attendance_update_owner_admin ON public.people_attendance_events
   FOR UPDATE TO authenticated
   USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_compliance_update_owner_admin ON public.people_compliance_items;
 CREATE POLICY people_compliance_update_owner_admin ON public.people_compliance_items
   FOR UPDATE TO authenticated
   USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_leave_requests_update_owner_admin ON public.people_leave_requests;
 CREATE POLICY people_leave_requests_update_owner_admin ON public.people_leave_requests
   FOR UPDATE TO authenticated
   USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 
+DROP POLICY IF EXISTS people_attendance_select_owner_admin ON public.people_attendance_events;
 CREATE POLICY people_attendance_select_owner_admin ON public.people_attendance_events
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_compliance_select_owner_admin ON public.people_compliance_items;
 CREATE POLICY people_compliance_select_owner_admin ON public.people_compliance_items
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 DROP POLICY IF EXISTS people_payroll_inputs_select ON public.people_payroll_inputs;
@@ -89,22 +104,31 @@ DROP POLICY IF EXISTS people_member_select ON public.people_vacation_balances;
 DROP POLICY IF EXISTS people_gratification_settings_select ON public.people_gratification_settings;
 DROP POLICY IF EXISTS people_gratification_settlements_select ON public.people_gratification_settlements;
 
+DROP POLICY IF EXISTS people_payroll_inputs_select_owner_admin ON public.people_payroll_inputs;
 CREATE POLICY people_payroll_inputs_select_owner_admin ON public.people_payroll_inputs
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_payroll_postings_select_owner_admin ON public.people_payroll_postings;
 CREATE POLICY people_payroll_postings_select_owner_admin ON public.people_payroll_postings
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_payroll_runs_select_owner_admin ON public.people_payroll_runs;
 CREATE POLICY people_payroll_runs_select_owner_admin ON public.people_payroll_runs
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_lre_exports_select_owner_admin ON public.people_lre_exports;
 CREATE POLICY people_lre_exports_select_owner_admin ON public.people_lre_exports
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_leave_requests_select_owner_admin ON public.people_leave_requests;
 CREATE POLICY people_leave_requests_select_owner_admin ON public.people_leave_requests
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_terminations_select_owner_admin ON public.people_terminations;
 CREATE POLICY people_terminations_select_owner_admin ON public.people_terminations
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_vacation_balances_select_owner_admin ON public.people_vacation_balances;
 CREATE POLICY people_vacation_balances_select_owner_admin ON public.people_vacation_balances
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_gratification_settings_select_owner_admin ON public.people_gratification_settings;
 CREATE POLICY people_gratification_settings_select_owner_admin ON public.people_gratification_settings
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_gratification_settlements_select_owner_admin ON public.people_gratification_settlements;
 CREATE POLICY people_gratification_settlements_select_owner_admin ON public.people_gratification_settlements
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 
@@ -113,9 +137,11 @@ DROP POLICY IF EXISTS people_member_insert ON public.people_employees;
 DROP POLICY IF EXISTS people_member_update ON public.people_employees;
 DROP POLICY IF EXISTS people_admin_insert ON public.people_employees;
 DROP POLICY IF EXISTS people_admin_update ON public.people_employees;
+DROP POLICY IF EXISTS people_admin_insert ON public.people_employees;
 CREATE POLICY people_admin_insert ON public.people_employees
   FOR INSERT TO authenticated
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_admin_update ON public.people_employees;
 CREATE POLICY people_admin_update ON public.people_employees
   FOR UPDATE TO authenticated
   USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
@@ -126,9 +152,11 @@ DROP POLICY IF EXISTS people_member_insert ON public.people_contracts;
 DROP POLICY IF EXISTS people_member_update ON public.people_contracts;
 DROP POLICY IF EXISTS people_admin_insert ON public.people_contracts;
 DROP POLICY IF EXISTS people_admin_update ON public.people_contracts;
+DROP POLICY IF EXISTS people_admin_insert ON public.people_contracts;
 CREATE POLICY people_admin_insert ON public.people_contracts
   FOR INSERT TO authenticated
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_admin_update ON public.people_contracts;
 CREATE POLICY people_admin_update ON public.people_contracts
   FOR UPDATE TO authenticated
   USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
@@ -139,9 +167,11 @@ DROP POLICY IF EXISTS people_member_insert ON public.people_documents;
 DROP POLICY IF EXISTS people_member_update ON public.people_documents;
 DROP POLICY IF EXISTS people_admin_insert ON public.people_documents;
 DROP POLICY IF EXISTS people_admin_update ON public.people_documents;
+DROP POLICY IF EXISTS people_admin_insert ON public.people_documents;
 CREATE POLICY people_admin_insert ON public.people_documents
   FOR INSERT TO authenticated
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_admin_update ON public.people_documents;
 CREATE POLICY people_admin_update ON public.people_documents
   FOR UPDATE TO authenticated
   USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]))
