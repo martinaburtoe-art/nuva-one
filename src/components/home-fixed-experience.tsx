@@ -76,37 +76,21 @@ export function HomeFixedExperience() {
 
     const events = ["loadedmetadata", "loadeddata", "canplay", "canplaythrough"];
     events.forEach((event) => video.addEventListener(event, play));
-    document.addEventListener("visibilitychange", play);
+    document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("pageshow", play);
 
-    let lastTime = video.currentTime;
-    let stalledTicks = 0;
-    const watchdog = window.setInterval(() => {
-      if (video.paused || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
-        play();
-        return;
-      }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") play();
+    };
 
-      if (video.currentTime === lastTime) {
-        stalledTicks += 1;
-        if (stalledTicks >= 3) {
-          stalledTicks = 0;
-          video.load();
-          play();
-        }
-      } else {
-        stalledTicks = 0;
-        lastTime = video.currentTime;
-      }
-    }, 1000);
-
+    // No forzar video.load(): el navegador ya recupera el buffer y un reload
+    // reinicia la descarga completa, duplicando tráfico en conexiones móviles.
     play();
 
     return () => {
       events.forEach((event) => video.removeEventListener(event, play));
-      document.removeEventListener("visibilitychange", play);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pageshow", play);
-      window.clearInterval(watchdog);
     };
   }, []);
 
