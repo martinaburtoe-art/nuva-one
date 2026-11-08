@@ -298,6 +298,7 @@ export function HomeFixedExperience() {
             <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#E6C687]">NÜVA ONE · FRENTE A LA FRAGMENTACIÓN</p>
             <h2 className="mt-5 text-4xl font-semibold leading-[0.98] tracking-[-0.04em] sm:text-6xl">Todo lo que tu negocio necesita. <span className="text-[#E6C687]">Sin fragmentarlo.</span></h2>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">Mientras otras soluciones resuelven una parte de la operación, Nüva One conecta el contexto para que ventas, inventario, clientes, caja e inteligencia trabajen juntos.</p>
+            <p className="mt-3 text-xs text-white/45 md:hidden">Desliza horizontalmente para comparar todas las columnas.</p>
           </div>
 
           <div className="mt-14 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20" role="region" aria-label="Comparativa de capacidades; desplázate horizontalmente para comparar todas las columnas" tabIndex={0}>
