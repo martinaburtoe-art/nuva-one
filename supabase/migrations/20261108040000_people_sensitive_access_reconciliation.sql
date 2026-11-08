@@ -18,6 +18,12 @@ DROP POLICY IF EXISTS people_member_select ON public.people_payroll_runs;
 
 -- Extend owner/admin-only access to payroll, LRE, leave, termination and
 -- compensation records. Non-admin operational screens use explicitly limited RPCs.
+DROP POLICY IF EXISTS people_member_select ON public.people_attendance_events;
+DROP POLICY IF EXISTS people_member_select ON public.people_compliance_items;
+CREATE POLICY people_attendance_select_owner_admin ON public.people_attendance_events
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_compliance_select_owner_admin ON public.people_compliance_items
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_inputs;
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_postings;
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_runs;
