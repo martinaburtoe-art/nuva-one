@@ -46,12 +46,27 @@ describe("Inngest Agency worker", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
+
+  it("blocks the global queue unless general claims are explicitly enabled", async () => {
+    vi.stubEnv("NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM", "false");
+    vi.stubEnv("NUVA_INNGEST_AGENCY_TEST_TASK_ID", "");
+    const db = makeDb([]);
+    const result = await runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      db,
+      executeSpecialist: vi.fn(),
+    });
+    expect(result).toEqual({ status: "blocked", reason: "general-claim-disabled", agentId: "finance" });
+    expect(db.rpc).not.toHaveBeenCalled();
+  });
+
   it("returns idle when the atomic claim RPC finds no eligible task", async () => {
     const db = makeDb([{ data: null, error: null }]);
     const execute = vi.fn();
 
     const result = await runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: execute,
     });
@@ -137,6 +152,7 @@ describe("Inngest Agency worker", () => {
     const execute = vi.fn();
     await expect(runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: execute,
     })).rejects.toThrow("AGENCY_CLAIM_AGENT_MISMATCH");
@@ -150,6 +166,7 @@ describe("Inngest Agency worker", () => {
     const execute = vi.fn();
     await expect(runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: execute,
     })).rejects.toThrow("AGENCY_CLAIM_RESPONSE_INVALID");
@@ -163,6 +180,7 @@ describe("Inngest Agency worker", () => {
     const execute = vi.fn();
     await expect(runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: execute,
     })).rejects.toThrow("claim failed");
@@ -177,6 +195,7 @@ describe("Inngest Agency worker", () => {
     ]);
     const result = await runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: vi.fn().mockRejectedValue(new Error("specialist crash")),
     });
@@ -195,6 +214,7 @@ describe("Inngest Agency worker", () => {
     ]);
     await expect(runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: vi.fn().mockResolvedValue({ result: "PASS", evidence: [], errors: [] }),
     })).rejects.toThrow("AGENCY_TASK_FINISH_REJECTED");
@@ -208,6 +228,7 @@ describe("Inngest Agency worker", () => {
     ]);
     await expect(runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: vi.fn().mockResolvedValue({ result: "PASS", evidence: [], errors: [] }),
     })).rejects.toThrow("finish unavailable");
@@ -221,6 +242,7 @@ describe("Inngest Agency worker", () => {
     ]);
     const result = await runInngestAgencyWorker("finance", makeStep(), {
       enabled: true,
+      allowGeneralClaim: true,
       db,
       executeSpecialist: vi.fn().mockResolvedValue({
         result: "BLOCKED",
