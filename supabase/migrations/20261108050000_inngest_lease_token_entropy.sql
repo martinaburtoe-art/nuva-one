@@ -107,7 +107,7 @@ begin
     )
   );
 end;
-$function$
+$function$;
 
 REVOKE ALL ON FUNCTION public.agency_claim_task_by_id(text, uuid, integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.agency_claim_task_by_id(text, uuid, integer) TO service_role;
@@ -269,7 +269,7 @@ begin
     )
   );
 end;
-$function$
+$function$;
 
 REVOKE ALL ON FUNCTION public.agency_claim_task(text, integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.agency_claim_task(text, integer) TO service_role;
