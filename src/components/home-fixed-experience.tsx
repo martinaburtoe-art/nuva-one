@@ -65,8 +65,13 @@ export function HomeFixedExperience() {
     video.muted = true;
     video.defaultMuted = true;
     video.playsInline = true;
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const play = () => {
+      if (motionPreference.matches) {
+        video.pause();
+        return;
+      }
       if (video.paused) {
         void video.play().catch(() => {
           // Reintentos adicionales en eventos de carga/visibilidad.
@@ -75,7 +80,13 @@ export function HomeFixedExperience() {
     };
 
     const events = ["loadedmetadata", "loadeddata", "canplay", "canplaythrough"];
+    const handleMotionPreference = () => {
+      if (motionPreference.matches) video.pause();
+      else play();
+    };
+
     events.forEach((event) => video.addEventListener(event, play));
+    motionPreference.addEventListener("change", handleMotionPreference);
     document.addEventListener("visibilitychange", play);
     window.addEventListener("pageshow", play);
 
@@ -104,6 +115,7 @@ export function HomeFixedExperience() {
 
     return () => {
       events.forEach((event) => video.removeEventListener(event, play));
+      motionPreference.removeEventListener("change", handleMotionPreference);
       document.removeEventListener("visibilitychange", play);
       window.removeEventListener("pageshow", play);
       window.clearInterval(watchdog);
@@ -114,11 +126,14 @@ export function HomeFixedExperience() {
     const video = heroVideoRef.current;
     if (!video) return;
 
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !motionPreference.matches) {
           video.muted = true;
           void video.play().catch(() => undefined);
+        } else if (motionPreference.matches) {
+          video.pause();
         }
       },
       { threshold: 0.01 },
@@ -131,7 +146,7 @@ export function HomeFixedExperience() {
   return (
     <>
       <section className="home-hero relative isolate min-h-[100svh] overflow-hidden bg-[#080809] text-white">
-        <video ref={heroVideoRef} className="home-hero__video absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" aria-hidden="true" autoPlay loop muted playsInline preload="metadata" />
+        <video ref={heroVideoRef} className="home-hero__video absolute inset-0 h-full w-full object-cover" src="/Chilean_retail_shop_opens_morning_20260918131053.mp4" aria-hidden="true" loop muted playsInline preload="metadata" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 mx-auto flex min-h-[min(860px,100vh)] max-w-7xl items-end px-6 pb-16 pt-32 md:px-10 md:pb-20">
           <div className="max-w-4xl">
