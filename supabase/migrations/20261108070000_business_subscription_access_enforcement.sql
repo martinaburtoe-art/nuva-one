@@ -1,7 +1,7 @@
 -- Reconcile the 15-day Starter trial boundary with real subscription state.
--- A paid Starter subscriber must not be locked after day 15; paused, cancelled,
--- or pending subscriptions must not keep billable writes open. The no-payment
--- Pro business is the explicit demo experience.
+-- A paid Starter subscriber must not be locked after day 15. Paused and
+-- cancelled subscriptions lose access; a pending checkout may preserve an
+-- existing Pro/demo entitlement or an unexpired Starter trial, but never extend it.
 CREATE OR REPLACE FUNCTION public.business_is_active(p_business_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -26,4 +26,4 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.business_is_active(uuid) IS
-  'Returns whether billable business writes are allowed: active paid subscriptions, active Pro demo, or active Starter trial within 15 days.';
+  'Returns whether billable business writes are allowed: active paid subscriptions, Pro entitlement during active/pending checkout, or an unexpired Starter trial during active/pending checkout.';
