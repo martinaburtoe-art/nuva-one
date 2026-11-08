@@ -27,6 +27,10 @@ $$;
 COMMENT ON FUNCTION public.business_is_active(uuid) IS
   'Allows active paid subscriptions, Pro demo/current entitlement during pending checkout, and Starter trials within 15 days.';
 
+-- This helper is used only by the SECURITY DEFINER write guard. Do not expose
+-- another business' subscription/trial state through the public RPC surface.
+REVOKE ALL ON FUNCTION public.business_is_active(uuid) FROM PUBLIC, anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.enforce_business_active()
 RETURNS trigger
 LANGUAGE plpgsql
