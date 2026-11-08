@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { HomeFixedExperience } from "@/components/home-fixed-experience";
@@ -45,7 +45,19 @@ export const Route = createFileRoute("/")({
 
 function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [menuOpen]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#080809]/85 text-white backdrop-blur-xl">
@@ -61,14 +73,14 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <Link to="/auth" search={{ mode: "signup" }} className="rounded-full bg-[#E6C687] px-4 py-2 text-xs font-bold text-[#080809]">Empezar gratis</Link>
-          <button type="button" aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 md:hidden">
+          <button ref={menuButtonRef} type="button" aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuOpen} aria-controls="mobile-primary-navigation" onClick={() => setMenuOpen((open) => !open)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 md:hidden">
             <span className="sr-only">{menuOpen ? "Cerrar menú" : "Abrir menú"}</span>
             <span className="text-lg">{menuOpen ? "×" : "☰"}</span>
           </button>
         </div>
       </div>
       {menuOpen && (
-        <nav className="border-t border-white/10 bg-[#080809]/95 px-5 py-4 backdrop-blur-xl md:hidden" aria-label="Menú móvil">
+        <nav id="mobile-primary-navigation" className="border-t border-white/10 bg-[#080809]/95 px-5 py-4 backdrop-blur-xl md:hidden" aria-label="Menú móvil">
           <div className="mx-auto flex max-w-7xl flex-col gap-1 text-sm">
             <a href="#demo" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">Demo</a>
             <Link to="/foro" onClick={closeMenu} className="rounded-xl px-3 py-3 text-white/75">Foro</Link>
