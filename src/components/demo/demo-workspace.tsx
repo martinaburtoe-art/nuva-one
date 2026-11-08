@@ -139,9 +139,9 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
-      <div className="absolute inset-x-0 top-0 z-[70] flex items-center justify-center gap-2 border-b bg-primary px-3 py-2 text-xs text-primary-foreground shadow-sm">
+      <div className="sticky top-0 z-[70] flex min-h-8 items-center justify-center gap-2 border-b bg-primary px-3 py-2 text-xs text-primary-foreground shadow-sm">
         <Sparkles className="h-3.5 w-3.5" />
-        <span><strong>Modo demo:</strong> estás explorando una copia segura de Nüva One con datos ficticios. Nada aquí afecta un negocio real.</span>
+        <span><strong>Modo demo:</strong> datos ficticios. Nada afecta un negocio real.</span>
         <button className="ml-2 hidden font-semibold underline sm:inline" onClick={onExit}>Salir del demo</button>
       </div>
 
@@ -187,7 +187,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
         <header className="sticky top-8 z-40 flex h-14 items-center gap-2 border-b bg-background/90 px-3 backdrop-blur md:px-6">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></Button>
           <div className="min-w-0 flex-1"><div className="text-sm font-semibold">{current.label}</div><div className="hidden text-[11px] text-muted-foreground sm:block">{DEMO_BUSINESS.name} · Datos de demostración</div></div>
-          <div className="hidden items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs text-muted-foreground lg:flex"><span className="h-2 w-2 rounded-full bg-success" /> Sistema operativo</div>
+          <div className="hidden items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs text-muted-foreground lg:flex"><span className="h-2 w-2 rounded-full bg-primary" /> Entorno simulado</div>
           <Button variant="ghost" size="icon" onClick={() => setNotice("En la versión real, aquí aparecerán alertas de stock, cobranza, facturación y actividad.")}><Bell className="h-4 w-4" /></Button>
           <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-primary-foreground" onClick={() => select("settings")}><UserRound className="h-4 w-4" /></button>
         </header>
