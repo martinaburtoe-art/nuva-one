@@ -44,8 +44,14 @@ export function buildDashboardMetrics(input: {
     throw new Error("No fue posible obtener todos los indicadores. Vuelve a intentarlo.");
   }
 
-  const income = (input.sales.data ?? []).reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
-  const expense = (input.expenses.data ?? []).reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
+  const income = (input.sales.data ?? []).reduce(
+    (sum, row) => sum + Number(row.amount ?? 0),
+    0,
+  );
+  const expense = (input.expenses.data ?? []).reduce(
+    (sum, row) => sum + Number(row.amount ?? 0),
+    0,
+  );
   const inventoryValue = (input.products.data ?? []).reduce(
     (sum, row) => sum + Number(row.stock ?? 0) * Number(row.price ?? 0),
     0,
