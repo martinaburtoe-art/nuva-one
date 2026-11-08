@@ -218,7 +218,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
             {active === "settings" && <SettingsView />}
           </div>
         </main>
-        <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground md:px-8">Nüva One Demo · Experiencia interactiva con datos ficticios · <button className="font-medium text-primary" onClick={onExit}>Volver a la página pública</button></footer>      </div>
+        <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground md:px-8">Nüva One Demo · Experiencia interactiva con datos ficticios · <button className="font-medium text-primary" onClick={onExit}>Cerrar demo</button></footer>      </div>
 
       {tourStep !== null && <GuidedTour step={tourStep} onStep={moveTourTo} onClose={() => setTourStep(null)} canAdvance={tourStep !== 5 || simulatedSales > tourSalesBaseline} />}
 
