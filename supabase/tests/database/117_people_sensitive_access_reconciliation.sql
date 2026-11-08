@@ -12,7 +12,7 @@ SELECT is((
       ('people_payroll_postings'),('people_payroll_runs')
     ) AS expected(tablename)
     WHERE (
-      SELECT count(*) FROM pg_policies p
+      SELECT count(*)::int FROM pg_policies p
       WHERE p.schemaname='public' AND p.tablename=expected.tablename
         AND p.cmd='SELECT' AND p.permissive='PERMISSIVE'
         AND p.roles @> ARRAY['authenticated'::name]
@@ -23,7 +23,7 @@ SELECT is((
 ), 7, 'each sensitive table has exactly one owner/admin SELECT policy');
 
 SELECT is((
-  SELECT count(*) FROM pg_policies
+  SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents',
       'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs')
@@ -34,14 +34,14 @@ SELECT is((
 
 -- Staff/viewer must not write employee PII, contracts or documents.
 SELECT is((
-  SELECT count(*) FROM pg_policies
+  SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents')
     AND policyname IN ('people_member_insert','people_member_update')
 ), 0, 'broad member INSERT/UPDATE policies are removed from PII tables');
 
 SELECT is((
-  SELECT count(*) FROM pg_policies
+  SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents')
     AND cmd='INSERT' AND roles @> ARRAY['authenticated'::name]
@@ -51,7 +51,7 @@ SELECT is((
 ), 3, 'employee, contract and document INSERT is owner/admin only');
 
 SELECT is((
-  SELECT count(*) FROM pg_policies
+  SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents')
     AND cmd='UPDATE' AND roles @> ARRAY['authenticated'::name]
@@ -62,7 +62,7 @@ SELECT is((
 ), 3, 'employee, contract and document UPDATE is owner/admin only');
 
 SELECT is((
-  SELECT count(*) FROM pg_policies
+  SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents')
     AND cmd IN ('INSERT','UPDATE')
@@ -83,7 +83,7 @@ SELECT ok(to_regprocedure('public.people_vacation_balances_limited(uuid)') IS NO
 
 -- Owner/admin delete policies are preserved.
 SELECT is((
-  SELECT count(*) FROM pg_policies
+  SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents')
     AND cmd='DELETE' AND qual LIKE '%private.has_business_role%'
