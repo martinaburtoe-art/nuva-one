@@ -98,6 +98,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
   const [aiAnswer, setAiAnswer] = useState(() => demoAiAnswer("¿Qué debería hacer primero con mi negocio?"));
   const [demoOrder, setDemoOrder] = useState(0);
   const [tourStep, setTourStep] = useState<number | null>(null);
+  const [tourSalesBaseline, setTourSalesBaseline] = useState(0);
   const { products, customers, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, emittedDtes, convertedQuotes, emitDte, convertQuote, purchase, sell, reset } = useDemoState();
 
   const lowStock = useMemo(() => products.filter((p) => p.stock <= p.reorderAt), [products]);  const revenue = DEMO_BUSINESS.monthlyRevenue + revenueDelta;  const visibleNav = NAV.filter((item) => !search || item.label.toLowerCase().includes(search.toLowerCase()));
@@ -127,9 +128,12 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
     reset();
     setDemoOrder(0);
     setNotice("Demo reiniciada con datos ficticios iniciales.");
+    setTourStep(null);
+    setTourSalesBaseline(0);
   };
 
   const moveTourTo = (step: number) => {
+    if (step === 0) setTourSalesBaseline(simulatedSales);
     const nextModule: ModuleKey =
       step === 3 ? "inventory" : step === 6 ? "finance" : step === 7 ? "ai" : "dashboard";
     setActive(nextModule);
@@ -216,7 +220,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
         </main>
         <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground md:px-8">Nüva One Demo · Experiencia interactiva con datos ficticios · <button className="font-medium text-primary" onClick={onExit}>Volver a la página pública</button></footer>      </div>
 
-      {tourStep !== null && <GuidedTour step={tourStep} onStep={moveTourTo} onClose={() => setTourStep(null)} canAdvance={tourStep !== 5 || simulatedSales > 0} />}
+      {tourStep !== null && <GuidedTour step={tourStep} onStep={moveTourTo} onClose={() => setTourStep(null)} canAdvance={tourStep !== 5 || simulatedSales > tourSalesBaseline} />}
 
       {mobileOpen && <div className="fixed inset-0 z-[80] bg-background md:hidden"><div className="flex h-full flex-col"><div className="flex h-14 items-center justify-between border-b px-4"><div className="flex items-center gap-2 font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span>Nüva One <Badge variant="secondary">DEMO</Badge></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></Button></div><div className="p-4"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar módulo..." className="pl-9" /></div></div><nav className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto p-4">{visibleNav.map((item) => { const Icon = item.icon; return <button key={item.key} onClick={() => select(item.key)} className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-xs ${active === item.key ? "border-primary bg-primary/5 text-primary" : "text-muted-foreground"}`}><Icon className="h-5 w-5" />{item.label}</button>; })}</nav></div></div>}
     </div>
