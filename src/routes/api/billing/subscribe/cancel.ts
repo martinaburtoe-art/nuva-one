@@ -1,9 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
+import { requireBusinessBillingManager } from "@/lib/fiscal/billing-access.server";
+import { checkRateLimit } from "@/lib/rate-limit.server";
+import {
+  getMercadoPagoConfig,
+  updateMercadoPagoSubscription,
+} from "@/lib/fiscal/mercadopago-subscriptions.server";
 
-// Cancela la suscripción Pro: downgrade inmediato a Starter (no hay
-// "período ya pagado que se aprovecha", el cobro es simple mes a mes).
-// La tarjeta queda registrada en Flow por si el negocio reactiva después.
+// Backwards-compatible cancellation endpoint. Cancellation is confirmed with
+// Mercado Pago first; local access is downgraded only after provider success.
 export const Route = createFileRoute("/api/billing/subscribe/cancel")({
   server: {
     handlers: {
@@ -13,32 +18,53 @@ export const Route = createFileRoute("/api/billing/subscribe/cancel")({
 
         const body = await request.json().catch(() => ({}));
         const businessId = body.business_id as string | undefined;
-        if (!businessId) return new Response("business_id requerido", { status: 400 });
+        if (!businessId) return Response.json({ error: "business_id requerido" }, { status: 400 });
 
-        // RLS (vía el client con el JWT del usuario) confirma que el
-        // caller realmente pertenece a este negocio -- recién después se
-        // usa supabaseAdmin para el UPDATE real, porque plan/
-        // subscription_status son columnas bloqueadas para el rol
-        // authenticated (ver migración lock_billing_columns): nadie puede
-        // dárselas a sí mismo con su propio JWT, ni siquiera el dueño.
-        const { data: business, error: bizError } = await client
-          .from("businesses")
-          .select("id")
-          .eq("id", businessId)
-          .maybeSingle();
-        if (bizError || !business)
-          return new Response("Negocio no encontrado o sin acceso", { status: 403 });
+        const billingAccess = await requireBusinessBillingManager(client, businessId);
+        if (!billingAccess.ok) {
+          return Response.json({ error: billingAccess.error }, { status: billingAccess.status });
+        }
+        const { business } = billingAccess;
+
+        if (business.billing_provider !== "mercadopago" || !business.mercadopago_preapproval_id) {
+          return Response.json({ error: "No existe una suscripción Mercado Pago activa para cancelar" }, { status: 409 });
+        }
+
+        const allowed = await checkRateLimit(`mp-manage:${businessId}`, 20, 3600);
+        if (!allowed) {
+          return Response.json({ error: "Demasiados intentos, intenta más tarde" }, { status: 429 });
+        }
+
+        const config = getMercadoPagoConfig();
+        if (!config) return Response.json({ error: "Mercado Pago no está configurado" }, { status: 503 });
+
+        const result = await updateMercadoPagoSubscription(
+          config,
+          business.mercadopago_preapproval_id,
+          { status: "canceled" },
+        );
+        if (!result.ok) {
+          return Response.json({ error: result.errorMessage ?? "Mercado Pago rechazó la cancelación" }, { status: 502 });
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { error } = await supabaseAdmin
           .from("businesses")
           .update({ plan: "starter", subscription_status: "canceled", next_charge_date: null })
           .eq("id", businessId);
-        if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
 
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { "Content-Type": "application/json" },
-        });
+        if (error) {
+          console.error("[billing] Mercado Pago cancellation succeeded but local downgrade failed", {
+            businessId,
+            message: error.message,
+          });
+          return Response.json({
+            error: "Mercado Pago canceló la suscripción, pero no pudimos sincronizar Nüva One. Contacta soporte antes de volver a contratar.",
+            code: "BILLING_STATE_SYNC_FAILED",
+          }, { status: 500 });
+        }
+
+        return Response.json({ ok: true, status: "canceled" });
       },
     },
   },
