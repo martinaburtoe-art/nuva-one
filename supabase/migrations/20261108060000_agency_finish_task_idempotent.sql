@@ -47,7 +47,7 @@ begin
  elsif p_status in ('failed','blocked','waiting_approval') then update agency_missions set status=case when p_status='waiting_approval' then 'blocked' else p_status end,last_heartbeat_at=v_now,updated_at=v_now where id=v_task.mission_id;
  end if;
  return true;
-end; $function$
+end; $function$;
 
 REVOKE ALL ON FUNCTION public.agency_finish_task(text, text, text, jsonb) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.agency_finish_task(text, text, text, jsonb) TO service_role;
