@@ -54,13 +54,21 @@ export const Route = createFileRoute("/api/billing/mercadopago/manage")({
         }
 
         const localStatus = action === "cancel" ? "canceled" : action === "pause" ? "paused" : "active";
+        const pendingDemoOrTrial = action === "cancel" &&
+          business.subscription_status === "pending" &&
+          (
+            business.plan === "pro" ||
+            (business.plan === "starter" && new Date(business.created_at).getTime() > Date.now() - 15 * 86_400_000)
+          );
+        const localUpdate = action !== "cancel"
+          ? { subscription_status: localStatus }
+          : pendingDemoOrTrial
+            ? { subscription_status: "active", billing_provider: "none", mercadopago_preapproval_id: null }
+            : { plan: "starter", subscription_status: "canceled", next_charge_date: null };
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { error: updateError } = await supabaseAdmin
           .from("businesses")
-          .update({
-            subscription_status: localStatus,
-            ...(action === "cancel" ? { plan: "starter", next_charge_date: null } : {}),
-          })
+          .update(localUpdate)
           .eq("id", businessId);
 
         if (updateError) {
