@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  createMercadoPagoSubscription,
   encodeMercadoPagoExternalReference,
   parseMercadoPagoExternalReference,
 } from "./mercadopago-subscriptions.server";
@@ -38,6 +39,78 @@ describe("Mercado Pago subscription plan reference", () => {
     expect(parseMercadoPagoExternalReference("biz-123|plan=enterprise")).toEqual({
       businessId: "biz-123",
       planId: null,
+    });
+  });
+});
+
+
+describe("Mercado Pago subscription billing cadence", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const config = { accessToken: "test-access-token", environment: "test" as const };
+
+  it("creates a monthly preapproval with one-month recurrence", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ id: "preapproval-monthly", init_point: "https://www.mercadopago.com/checkout/monthly" }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const result = await createMercadoPagoSubscription({
+      config,
+      businessId: "business-1",
+      businessName: "Demo",
+      email: "owner@example.cl",
+      planName: "Nüva Start",
+      planId: "starter",
+      amount: 11_990,
+      billing: "monthly",
+      backUrl: "https://nuva-one.vercel.app/settings?billing=mercadopago",
+    });
+
+    const request = fetchSpy.mock.calls[0]?.[1];
+    const payload = JSON.parse(String(request?.body));
+    expect(result.ok).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledWith("https://api.mercadopago.com/preapproval", expect.objectContaining({ method: "POST" }));
+    expect(payload.auto_recurring).toEqual({
+      frequency: 1,
+      frequency_type: "months",
+      transaction_amount: 11_990,
+      currency_id: "CLP",
+    });
+  });
+
+  it("creates an annual preapproval with twelve-month recurrence and annual amount", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ id: "preapproval-annual", init_point: "https://www.mercadopago.com/checkout/annual" }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const result = await createMercadoPagoSubscription({
+      config,
+      businessId: "business-2",
+      businessName: "Demo",
+      email: "owner@example.cl",
+      planName: "Nüva Pro",
+      planId: "pro",
+      amount: 279_900,
+      billing: "annual",
+      backUrl: "https://nuva-one.vercel.app/settings?billing=mercadopago",
+    });
+
+    const request = fetchSpy.mock.calls[0]?.[1];
+    const payload = JSON.parse(String(request?.body));
+    expect(result.ok).toBe(true);
+    expect(payload.auto_recurring).toEqual({
+      frequency: 12,
+      frequency_type: "months",
+      transaction_amount: 279_900,
+      currency_id: "CLP",
     });
   });
 });
