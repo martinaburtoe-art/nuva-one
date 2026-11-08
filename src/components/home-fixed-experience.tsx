@@ -42,7 +42,7 @@ function DeferredDemo() {
       {shouldLoad ? (
         <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/65" role="status">Preparando la demo interactiva…</div>}>
           <DemoStateProvider>
-            <DemoWorkspace onExit={() => undefined} />
+            <DemoWorkspace />
           </DemoStateProvider>
         </Suspense>
       ) : (
