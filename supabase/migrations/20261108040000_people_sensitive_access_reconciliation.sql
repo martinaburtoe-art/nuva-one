@@ -197,6 +197,13 @@ BEGIN
 END;
 $$;
 
+-- Explicitly scope the two sanitized member RPCs to authenticated users.
+-- Do not rely on PostgreSQL's default PUBLIC EXECUTE privilege for new functions.
+REVOKE ALL ON FUNCTION public.people_employees_limited(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.people_leave_requests_limited(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.people_employees_limited(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.people_leave_requests_limited(uuid) TO authenticated;
+
 -- Termination history is owner/admin-only; non-admin UI uses no RPC for it.
 REVOKE ALL ON FUNCTION public.people_terminations_limited(uuid) FROM PUBLIC, anon, authenticated;
 
