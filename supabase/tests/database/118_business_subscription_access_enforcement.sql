@@ -22,13 +22,13 @@ SELECT is((
   WHERE ns.nspname = 'public'
     AND rel.relname IN (
       'products','customers','suppliers','sales','purchases','quotes','transactions',
-      'cash_registers','cash_register_movements','costs','customer_activities',
+      'marketing_posts','automations','cash_registers','cash_register_movements','costs','customer_activities',
       'inventory_stocktakes','inventory_stocktake_lines','product_codes',
       'purchase_payments','shifts','shipments'
     )
     AND tr.tgname = 'trg_enforce_business_active'
     AND NOT tr.tgisinternal
-), 17, 'trial enforcement is installed on all 17 billable operational tables');
+), 19, 'trial enforcement is installed on all 19 billable operational tables');
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-0000000000c0');
