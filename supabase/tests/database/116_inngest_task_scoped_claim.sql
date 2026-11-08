@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(20);
+SELECT plan(22);
 
 SELECT ok(
   has_function_privilege('service_role', 'public.agency_claim_task_by_id(text, uuid, integer)', 'EXECUTE'),
@@ -110,6 +110,25 @@ SELECT public.agency_finish_task(
 );
 
 SELECT is((SELECT ok FROM agency_finish_result), true, 'task-scoped lease can finish the exact claimed task');
+CREATE TEMP TABLE agency_finish_retry_result (ok boolean) ON COMMIT DROP;
+INSERT INTO agency_finish_retry_result
+SELECT public.agency_finish_task(
+  (SELECT data->'lease'->>'token' FROM agency_proper_claim),
+  'completed',
+  'pgTAP scoped claim completed',
+  jsonb_build_object('engine', 'pgTAP', 'scope', 'exact-task')
+);
+SELECT is((SELECT ok FROM agency_finish_retry_result), true, 'repeating the exact committed finish is idempotent');
+
+CREATE TEMP TABLE agency_finish_mismatch_result (ok boolean) ON COMMIT DROP;
+INSERT INTO agency_finish_mismatch_result
+SELECT public.agency_finish_task(
+  (SELECT data->'lease'->>'token' FROM agency_proper_claim),
+  'completed',
+  'different summary',
+  jsonb_build_object('engine', 'pgTAP', 'scope', 'different-result')
+);
+SELECT is((SELECT ok FROM agency_finish_mismatch_result), false, 'a different finish payload is not accepted as an idempotent retry');
 SELECT is(
   (SELECT status FROM public.agency_tasks WHERE id=(SELECT target_task_id FROM agency_claim_test_ids)),
   'completed'::text,
