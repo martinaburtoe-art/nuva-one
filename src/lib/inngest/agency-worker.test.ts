@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   INNGEST_AGENCY_AGENT_IDS,
   runInngestAgencyWorker,
@@ -16,6 +16,10 @@ function makeDb(responses: Array<{ data: unknown; error: unknown }>) {
   const rpc = vi.fn(async () => responses.shift() ?? { data: null, error: null });
   return { rpc } as unknown as AgencyRpcClient & { rpc: ReturnType<typeof vi.fn> };
 }
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 const claim = {
   task: {
@@ -60,7 +64,9 @@ describe("Inngest Agency worker", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
-  it("executes and finishes a claimed task using the service-role RPC contract", async () => {
+  it("executes and finishes a claimed task with exact deployment provenance", async () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "a".repeat(40));
     const db = makeDb([
       { data: claim, error: null },
       { data: true, error: null },
@@ -96,6 +102,8 @@ describe("Inngest Agency worker", () => {
       p_result: expect.objectContaining({
         engine: "inngest",
         specialist: "finance",
+        sourceRevision: "a".repeat(40),
+        sourceEnvironment: "production",
         verdict: "PASS",
       }),
     }));
