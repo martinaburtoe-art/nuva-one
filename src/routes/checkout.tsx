@@ -85,7 +85,7 @@ function CheckoutPage() {
             "Inventario, ventas y caja",
             "CRM y cotizaciones",
             "100 créditos IA mensuales",
-            "Hasta 500 productos y 100 créditos IA mensuales",
+            "Hasta 500 productos",
           ],
     [isPro],
   );
