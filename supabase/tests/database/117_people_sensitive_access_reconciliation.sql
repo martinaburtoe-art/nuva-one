@@ -33,8 +33,7 @@ SELECT is((
       'people_attendance_events','people_compliance_items','people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
       'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
       'people_terminations','people_vacation_balances','people_gratification_settings',
-      'people_gratification_settlements','people_payroll_liquidations',
-      'people_attendance_events','people_compliance_items')
+      'people_gratification_settlements','people_payroll_liquidations')
     AND cmd='SELECT' AND permissive='PERMISSIVE'
     AND policyname IN ('people_member_select','people_payroll_inputs_select','people_terminations_select','people_vacation_select','people_gratification_settings_select','people_gratification_settlements_select')
 ), 0, 'no broad member SELECT policy remains on sensitive tables');
