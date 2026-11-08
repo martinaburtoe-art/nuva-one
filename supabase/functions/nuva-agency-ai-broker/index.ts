@@ -200,7 +200,7 @@ async function proxyGroqChatCompletions(req: Request, identity: Record<string, u
   const upstreamBody = { ...input, messages: normalizedMessages, model };
   const serializedBody = JSON.stringify(upstreamBody);
   // Los límites del proveedor son distintos de nuestro límite HTTP local.
-  // Reintentar 429 y errores transitorios con backoff, respetando Retry-After si viene informado.
+  // Reintentar solo errores transitorios; 429 es cuota agotada y se propaga al caller sin reintentos.
   let upstream: Response | null = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
