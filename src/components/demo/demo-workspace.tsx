@@ -117,6 +117,10 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
     }
     setNotice("Venta simulada registrada: el stock, ingresos e indicadores cambiaron dentro de esta demo.");
     trackDemoEvent("simulated_sale", { product: "coffee", module: active });
+    if (tourStep === 5) {
+      setActive("finance");
+      setTourStep(6);
+    }
   };
 
   const resetAll = () => {
@@ -212,7 +216,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
         </main>
         <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground md:px-8">Nüva One Demo · Experiencia interactiva con datos ficticios · <button className="font-medium text-primary" onClick={onExit}>Volver a la página pública</button></footer>      </div>
 
-      {tourStep !== null && <GuidedTour step={tourStep} onStep={moveTourTo} onClose={() => setTourStep(null)} />}
+      {tourStep !== null && <GuidedTour step={tourStep} onStep={moveTourTo} onClose={() => setTourStep(null)} canAdvance={tourStep !== 5 || simulatedSales > 0} />}
 
       {mobileOpen && <div className="fixed inset-0 z-[80] bg-background md:hidden"><div className="flex h-full flex-col"><div className="flex h-14 items-center justify-between border-b px-4"><div className="flex items-center gap-2 font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span>Nüva One <Badge variant="secondary">DEMO</Badge></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></Button></div><div className="p-4"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar módulo..." className="pl-9" /></div></div><nav className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto p-4">{visibleNav.map((item) => { const Icon = item.icon; return <button key={item.key} onClick={() => select(item.key)} className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-xs ${active === item.key ? "border-primary bg-primary/5 text-primary" : "text-muted-foreground"}`}><Icon className="h-5 w-5" />{item.label}</button>; })}</nav></div></div>}
     </div>
