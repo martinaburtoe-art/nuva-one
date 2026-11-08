@@ -4,7 +4,7 @@ import { buildDashboardMetrics } from "./metrics";
 const empty = { data: [], error: null };
 
 describe("buildDashboardMetrics", () => {
-  it("calculates financial, inventory and operational KPIs", () => {
+  it("values inventory at unit cost, not selling price, and calculates operational KPIs", () => {
     const result = buildDashboardMetrics({
       sales: { data: [{ amount: "125000" }, { amount: 25000 }], error: null },
       expenses: { data: [{ amount: 40000 }], error: null },
