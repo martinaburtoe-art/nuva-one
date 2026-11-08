@@ -66,7 +66,7 @@ function PeopleLifecycle() {
       if (error) throw error;
       return (data ?? []) as any[];
     },
-    enabled: !!activeId,
+    enabled: isAdmin && !!activeId,
   });
 
   const { data: balances=[] }=useQuery({
