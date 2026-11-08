@@ -25,6 +25,7 @@ const claim = {
   task: {
     id: "00000000-0000-4000-8000-000000000123",
     title: "Finance audit",
+    agent_id: "finance",
     input_context: { scope: "lockfile" },
   },
   lease: { token: "0123456789abcdef0123456789abcdef" },
@@ -114,6 +115,46 @@ describe("Inngest Agency worker", () => {
       verdict: "PASS",
       taskStatus: "completed",
     });
+  });
+
+
+  it("rejects a task ID that differs from the requested scoped UUID", async () => {
+    const db = makeDb([{ data: claim, error: null }]);
+    const execute = vi.fn();
+    await expect(runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      taskId: "00000000-0000-4000-8000-000000000124",
+      db,
+      executeSpecialist: execute,
+    })).rejects.toThrow("AGENCY_CLAIM_TASK_SCOPE_MISMATCH");
+    expect(execute).not.toHaveBeenCalled();
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a claim returned for a different specialist", async () => {
+    const mismatched = { ...claim, task: { ...claim.task, agent_id: "sales" } };
+    const db = makeDb([{ data: mismatched, error: null }]);
+    const execute = vi.fn();
+    await expect(runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      db,
+      executeSpecialist: execute,
+    })).rejects.toThrow("AGENCY_CLAIM_AGENT_MISMATCH");
+    expect(execute).not.toHaveBeenCalled();
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects malformed lease bearer tokens before specialist execution", async () => {
+    const malformed = { ...claim, lease: { token: "not-a-token" } };
+    const db = makeDb([{ data: malformed, error: null }]);
+    const execute = vi.fn();
+    await expect(runInngestAgencyWorker("finance", makeStep(), {
+      enabled: true,
+      db,
+      executeSpecialist: execute,
+    })).rejects.toThrow("AGENCY_CLAIM_RESPONSE_INVALID");
+    expect(execute).not.toHaveBeenCalled();
+    expect(db.rpc).toHaveBeenCalledTimes(1);
   });
 
   it("maps a BLOCKED specialist result to a blocked durable task", async () => {
