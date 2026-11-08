@@ -86,9 +86,9 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        if (type.includes("subscription") || type === "preapproval") {
+        if (type === "subscription_preapproval" || type === "preapproval") {
           const subscriptionResult = await getMercadoPagoSubscription(config, resourceId);
-          if (!subscriptionResult.ok || !subscriptionResult.data) return new Response("OK", { status: 200 });
+          if (!subscriptionResult.ok || !subscriptionResult.data) return new Response("Unable to retrieve Mercado Pago subscription", { status: 502 });
           const subscription = asSubscription(subscriptionResult.data);
           const { businessId, planId: referencedPlanId } = parseMercadoPagoExternalReference(
             subscription.external_reference,
@@ -158,8 +158,14 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
                 : ""
           );
           const paymentId = type === "payment" ? resourceId : authorizedPaymentId;
-          const paymentResult = paymentId ? await getMercadoPagoPayment(config, paymentId) : null;
-          if (paymentResult?.ok && paymentResult.data) {
+          if (!paymentId) {
+            return new Response("Unable to resolve Mercado Pago authorized payment", { status: 502 });
+          }
+          const paymentResult = await getMercadoPagoPayment(config, paymentId);
+          if (!paymentResult.ok || !paymentResult.data) {
+            return new Response("Unable to retrieve Mercado Pago payment", { status: 502 });
+          }
+          {
             const payment = asPayment(paymentResult.data);
             const preapprovalId = authorized && (
               typeof authorized.preapproval_id === "string" || typeof authorized.preapproval_id === "number"
