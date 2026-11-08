@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ExternalLink, Landmark, Newspaper, Search, Scale, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,14 +33,34 @@ const SOURCES = [
 const CATEGORIES = ["Todas", "Economía", "PyMEs", "Impuestos", "Empresas", "Emprendimiento", "Financiamiento"];
 
 function Noticias() {
+  const newsVideoRef = useRef<HTMLVideoElement>(null);
   const [activeCategory, setActiveCategory] = useState("Todas");
   const [searchTerm, setSearchTerm] = useState("");
   const filteredNews = useMemo(() => { const term = searchTerm.trim().toLowerCase(); return NEWS.filter((item) => { const category = activeCategory === "Todas" || item.category === activeCategory; const search = !term || `${item.title} ${item.summary} ${item.detail} ${item.impact} ${item.source}`.toLowerCase().includes(term); return category && search; }); }, [activeCategory, searchTerm]);
+
+  useEffect(() => {
+    const video = newsVideoRef.current;
+    if (!video) return;
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPlayback = () => {
+      if (motionPreference.matches) {
+        video.pause();
+        return;
+      }
+      void video.play().catch(() => undefined);
+    };
+    syncPlayback();
+    motionPreference.addEventListener("change", syncPlayback);
+    return () => {
+      motionPreference.removeEventListener("change", syncPlayback);
+      video.pause();
+    };
+  }, []);
   return <div className="min-h-screen bg-background">
     <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur"><div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4"><Link to="/" className="font-semibold tracking-tight">Nüva One</Link><div className="flex items-center gap-2"><Link to="/foro"><Button variant="ghost" size="sm">Comunidad</Button></Link><Link to="/negocios"><Button variant="outline" size="sm">Red de negocios</Button></Link></div></div></header>
     <main>
       <section className="relative isolate min-h-[min(720px,82vh)] overflow-hidden bg-[#080809] text-white">
-        <video className="absolute inset-0 h-full w-full object-cover" src="/news/noticias-pestel.mp4" autoPlay loop muted playsInline preload="metadata" aria-hidden="true" />
+        <video ref={newsVideoRef} className="absolute inset-0 h-full w-full object-cover" src="/news/noticias-pestel.mp4" loop muted playsInline preload="metadata" aria-hidden="true" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#080809]/90 via-[#080809]/55 to-[#080809]/25" /><div className="absolute inset-0 bg-gradient-to-t from-[#080809] via-transparent to-[#080809]/20" />
         <div className="relative z-10 mx-auto flex min-h-[min(720px,82vh)] max-w-7xl items-end px-6 pb-14 pt-32 md:px-10 md:pb-20"><div className="max-w-4xl"><Badge variant="outline" className="border-white/25 bg-white/10 text-white backdrop-blur">NOTICIAS PARA NEGOCIOS · CHILE</Badge><h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-[.94] tracking-[-.045em] sm:text-7xl lg:text-[clamp(4.5rem,7vw,7.5rem)]">Todo lo que pasa afuera. <span className="text-[#E6C687]">Importa adentro.</span></h1><p className="mt-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">Política, economía, sociedad, tecnología, medioambiente y regulación reunidos en un solo contexto para tu empresa.</p><div className="mt-7 flex flex-wrap gap-2">{["POLÍTICO","ECONÓMICO","SOCIAL","TECNOLÓGICO","ECOLÓGICO","LEGAL"].map((x) => <span key={x} className="rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[10px] font-bold tracking-[.16em] text-white/75 backdrop-blur">{x}</span>)}</div></div></div>
       </section>
