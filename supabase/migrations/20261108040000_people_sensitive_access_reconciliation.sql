@@ -72,13 +72,12 @@ BEGIN
   END IF;
   RETURN COALESCE((
     SELECT jsonb_agg(jsonb_build_object(
-      'id', id, 'first_name', first_name, 'last_name', last_name,
-      'job_title', job_title, 'department', department,
-      'employment_status', employment_status
-    ))
-    FROM public.people_employees
-    WHERE business_id = p_business_id
-    ORDER BY last_name, first_name
+      'id', e.id, 'first_name', e.first_name, 'last_name', e.last_name,
+      'job_title', e.job_title, 'department', e.department,
+      'employment_status', e.employment_status
+    ) ORDER BY e.last_name, e.first_name)
+    FROM public.people_employees e
+    WHERE e.business_id = p_business_id
   ), '[]'::jsonb);
 END;
 $$;
@@ -97,14 +96,17 @@ BEGIN
   END IF;
   RETURN COALESCE((
     SELECT jsonb_agg(jsonb_build_object(
-      'id', id, 'employee_id', employee_id, 'leave_type', leave_type,
-      'start_date', start_date, 'end_date', end_date, 'days', days,
-      'status', status, 'created_at', created_at
-    ))
-    FROM public.people_leave_requests
-    WHERE business_id = p_business_id
-    ORDER BY created_at DESC
-    LIMIT 500
+      'id', lr.id, 'employee_id', lr.employee_id, 'leave_type', lr.leave_type,
+      'start_date', lr.start_date, 'end_date', lr.end_date, 'days', lr.days,
+      'status', lr.status, 'created_at', lr.created_at
+    ) ORDER BY lr.created_at DESC)
+    FROM (
+      SELECT id, employee_id, leave_type, start_date, end_date, days, status, created_at
+      FROM public.people_leave_requests
+      WHERE business_id = p_business_id
+      ORDER BY created_at DESC
+      LIMIT 500
+    ) lr
   ), '[]'::jsonb);
 END;
 $$;
