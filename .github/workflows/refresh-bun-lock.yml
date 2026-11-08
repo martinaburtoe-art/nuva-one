@@ -42,7 +42,7 @@ jobs:
             if (inString) {
               json += char;
               if (escaped) escaped = false;
-              else if (char === '\\\\') escaped = true;
+              else if (char.charCodeAt(0) === 92) escaped = true;
               else if (char === '"') inString = false;
               continue;
             }
@@ -53,7 +53,7 @@ jobs:
             }
             if (char === ',') {
               let next = i + 1;
-              while (/\\s/.test(raw[next] ?? '')) next += 1;
+              while ([9, 10, 13, 32].includes(raw.charCodeAt(next))) next += 1;
               if (raw[next] === '}' || raw[next] === ']') continue;
             }
             json += char;
