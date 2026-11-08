@@ -12,7 +12,8 @@ SELECT is((
       ('people_payroll_postings'),('people_payroll_runs'),
       ('people_payroll_inputs'),('people_lre_exports'),('people_lre_rows'),
       ('people_leave_requests'),('people_terminations'),('people_vacation_balances'),
-      ('people_gratification_settings'),('people_gratification_settlements'),('people_payroll_liquidations')
+      ('people_gratification_settings'),('people_gratification_settlements'),('people_payroll_liquidations'),
+      ('people_attendance_events'),('people_compliance_items')
     ) AS expected(tablename)
     WHERE (
       SELECT count(*)::int FROM pg_policies p
@@ -23,13 +24,13 @@ SELECT is((
         AND p.qual LIKE '%owner%' AND p.qual LIKE '%admin%'
     ) = 1
   ) verified
-), 16, 'each sensitive table has exactly one owner/admin SELECT policy');
+), 18, 'each sensitive table has exactly one owner/admin SELECT policy');
 
 SELECT is((
   SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents',
-      'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
+      'people_attendance_events','people_compliance_items','people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
       'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
       'people_terminations','people_vacation_balances','people_gratification_settings',
       'people_gratification_settlements','people_payroll_liquidations')
@@ -107,7 +108,7 @@ SELECT is((
       'people_terminations','people_vacation_balances','people_gratification_settings',
       'people_gratification_settlements','people_payroll_liquidations')
     AND c.relrowsecurity
-), 16, 'RLS remains enabled on all sixteen sensitive tables');
+), 18, 'RLS remains enabled on all eighteen sensitive tables');
 
 SELECT * FROM finish();
 ROLLBACK;
