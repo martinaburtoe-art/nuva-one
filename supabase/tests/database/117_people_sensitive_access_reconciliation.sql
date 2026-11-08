@@ -139,7 +139,8 @@ SELECT is((
       'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
       'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
       'people_terminations','people_vacation_balances','people_gratification_settings',
-      'people_gratification_settlements','people_payroll_liquidations')
+      'people_gratification_settlements','people_payroll_liquidations',
+      'people_attendance_events','people_compliance_items')
     AND c.relrowsecurity
 ), 18, 'RLS remains enabled on all eighteen sensitive tables');
 
