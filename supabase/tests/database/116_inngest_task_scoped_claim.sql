@@ -64,7 +64,7 @@ INSERT INTO agency_wrong_claim
 SELECT public.agency_claim_task_by_id('sales', target_task_id, 1800)
 FROM agency_claim_test_ids;
 
-SELECT is((SELECT data FROM agency_wrong_claim), NULL::jsonb, 'wrong specialist cannot claim another agent task');
+SELECT ok((SELECT data IS NULL FROM agency_wrong_claim), 'wrong specialist cannot claim another agent task');
 SELECT is(
   (SELECT status FROM public.agency_tasks WHERE id=(SELECT target_task_id FROM agency_claim_test_ids)),
   'queued'::text,
