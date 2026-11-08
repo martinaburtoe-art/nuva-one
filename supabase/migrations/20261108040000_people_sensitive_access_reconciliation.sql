@@ -27,7 +27,7 @@ BEGIN
           'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
           'people_terminations','people_vacation_balances','people_gratification_settings',
           'people_gratification_settlements','people_payroll_liquidations'
-        ]::text[]) AND cmd = 'SELECT')
+        ]::text[]) AND cmd IN ('SELECT','ALL'))
         OR
         (tablename = ANY (ARRAY[
           'people_employees','people_contracts','people_documents',
