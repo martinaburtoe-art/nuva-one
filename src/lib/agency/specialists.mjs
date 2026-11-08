@@ -16,6 +16,58 @@ const nowMs = () => Date.now();
 const hashOf = (content) =>
   createHash("sha256").update(content).digest("hex").slice(0, 16);
 
+function parseJsonWithTrailingCommas(input) {
+  let output = "";
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < input.length; i += 1) {
+    const char = input[i];
+    if (inString) {
+      output += char;
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      output += char;
+      continue;
+    }
+    if (char === ",") {
+      let next = i + 1;
+      while (/\s/.test(input[next] ?? "")) next += 1;
+      if (input[next] === "}" || input[next] === "]") continue;
+    }
+    output += char;
+  }
+  return JSON.parse(output);
+}
+
+function compareDependencyMaps(expected, actual) {
+  const expectedMap = expected && typeof expected === "object" && !Array.isArray(expected) ? expected : {};
+  const actualMap = actual && typeof actual === "object" && !Array.isArray(actual) ? actual : {};
+  return {
+    missing: Object.keys(expectedMap).filter((name) => !(name in actualMap)),
+    mismatched: Object.keys(expectedMap)
+      .filter((name) => name in actualMap && actualMap[name] !== expectedMap[name])
+      .map((name) => `${name} (${expectedMap[name]} -> ${actualMap[name]})`),
+    extra: Object.keys(actualMap).filter((name) => !(name in expectedMap)),
+  };
+}
+
+function hasDependencyDrift(drift) {
+  return drift.missing.length > 0 || drift.mismatched.length > 0 || drift.extra.length > 0;
+}
+
+function formatDependencyDrift(drift) {
+  const parts = [];
+  if (drift.missing.length) parts.push(`missing: ${drift.missing.slice(0, 8).join(", ")}`);
+  if (drift.mismatched.length) parts.push(`mismatched: ${drift.mismatched.slice(0, 8).join(", ")}`);
+  if (drift.extra.length) parts.push(`extra: ${drift.extra.slice(0, 8).join(", ")}`);
+  return parts.length ? parts.join("; ") : "none";
+}
+
 const REMOTE_SOURCE_ALLOWLIST = new Set([
   "package.json",
   "package-lock.json",
@@ -167,12 +219,62 @@ export const finance = {
     evidence.push(`package-lock.json: ${lockNpm.ok ? "presente" : "ausente"}`);
 
     let result = "PASS";
-    if (lockBun.ok && lockNpm.ok) {
-      evidence.push("ambos lockfiles presentes — posible inconsistencia si package.json cambió tras ellos");
+    if (!lockBun.ok && !lockNpm.ok) {
+      evidence.push("ningún lockfile presente — npm ci no es reproducible");
       result = "WARN";
-    } else if (!lockBun.ok && !lockNpm.ok) {
-      evidence.push("ningún lockfile presente — npm ci puede no ser reproducible");
-      result = "WARN";
+    }
+
+    if (lockNpm.ok) {
+      try {
+        const npmLock = JSON.parse(lockNpm.content);
+        const root = npmLock.packages?.[""];
+        if (!root) {
+          evidence.push("package-lock.json no contiene packages[\"\"]");
+          result = "FAIL";
+        } else {
+          const dependencies = compareDependencyMaps(deps, root.dependencies ?? {});
+          const devDependencies = compareDependencyMaps(devDeps, root.devDependencies ?? {});
+          if (hasDependencyDrift(dependencies) || hasDependencyDrift(devDependencies)) {
+            evidence.push(`package-lock.json drift: dependencies [${formatDependencyDrift(dependencies)}]; devDependencies [${formatDependencyDrift(devDependencies)}]`);
+            result = "FAIL";
+          } else {
+            evidence.push("package-lock.json root manifest matches package.json");
+          }
+          if (root.name && pkgJson.name && root.name !== pkgJson.name) {
+            evidence.push(`package-lock.json name mismatch: ${root.name} != ${pkgJson.name}`);
+            result = "FAIL";
+          }
+        }
+      } catch (error) {
+        evidence.push("package-lock.json no es JSON válido");
+        errors.push(error instanceof Error ? error.message : String(error));
+        result = "FAIL";
+      }
+    }
+
+    if (lockBun.ok) {
+      try {
+        const bunLock = parseJsonWithTrailingCommas(lockBun.content);
+        const root = bunLock.workspaces?.[""];
+        if (!root) {
+          evidence.push("bun.lock no contiene workspaces[\"\"]");
+          if (result === "PASS") result = "WARN";
+        } else {
+          const dependencies = compareDependencyMaps(deps, root.dependencies ?? {});
+          const devDependencies = compareDependencyMaps(devDeps, root.devDependencies ?? {});
+          const nameMismatch = Boolean(root.name && pkgJson.name && root.name !== pkgJson.name);
+          if (hasDependencyDrift(dependencies) || hasDependencyDrift(devDependencies) || nameMismatch) {
+            evidence.push(`bun.lock root manifest drift: name ${nameMismatch ? `${root.name} != ${pkgJson.name}` : "matches"}; dependencies [${formatDependencyDrift(dependencies)}]; devDependencies [${formatDependencyDrift(devDependencies)}]`);
+            if (result === "PASS") result = "WARN";
+          } else {
+            evidence.push("bun.lock root manifest matches package.json");
+          }
+        }
+      } catch (error) {
+        evidence.push("bun.lock no se pudo analizar como JSON");
+        errors.push(error instanceof Error ? error.message : String(error));
+        if (result === "PASS") result = "WARN";
+      }
     }
 
     return makeResult("finance", task.id, result, evidence, errors, start);
