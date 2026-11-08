@@ -13,6 +13,7 @@
 - Nine read-only Agency specialists (finance, sales, supply, people, growth, orchestrator, compliance, security and UX) run on a five-minute cron.
 - Each specialist claims at most one task through `public.agency_claim_task`, executes the registered read-only specialist, and persists its result through `public.agency_finish_task`.
 - Claims use the existing 30-minute Supabase lease. The database's atomic claim and unique active-lease constraints remain authoritative.
+- For certification, set `NUVA_INNGEST_AGENCY_TEST_TASK_ID` to one exact UUID. Workers then call `agency_claim_task_by_id`, which can claim, recover and lease only that task; it never sweeps unrelated leases or claims another queued task. Remove the variable after the one-task test. Leave it unset for the normal queue path.
 - Inngest limits Agency work to five concurrent steps globally and one active step per specialist.
 
 ## Staged activation and fallback
@@ -31,11 +32,14 @@
 
 ## Activation gate
 
-1. Add the Inngest signing key to Vercel Preview.
-2. Sync the Preview endpoint at `https://<preview-host>/api/inngest`.
-3. Confirm all ten registered functions appear and the ping function succeeds.
-4. Enable `NUVA_INNGEST_AGENCY_ENABLED=true` in Preview only.
-5. Verify claims, execution results, retries, concurrency and lease recovery in Supabase and Inngest.
-6. Promote the same configuration to Production only after Preview certification.
+1. Keep `NUVA_INNGEST_AGENCY_ENABLED=false` while preparing certification. Do not enable the global queue against production backlog.
+2. Apply the task-scoped claim migration and create one clearly labelled, read-only certification mission/task assigned to a single specialist.
+3. Set `NUVA_INNGEST_AGENCY_TEST_TASK_ID` to that task UUID and enable the worker flag only for the short certification window. All specialist cron functions are constrained to that same UUID; only the matching agent can claim it.
+4. Verify the exact task's claim, execution, completion event, released lease and unchanged status/counts for every other task. Then set the flag back to `false`, remove the task ID variable, and confirm no active leases remain.
+5. Add the Inngest signing key to Vercel Preview.
+6. Sync the Preview endpoint at `https://<preview-host>/api/inngest` when the preview endpoint is reachable by Inngest.
+7. Confirm all ten registered functions appear and the ping function succeeds.
+8. Verify claims, execution results, retries, concurrency and lease recovery in Supabase and Inngest using a task-scoped certification task.
+9. Promote the same configuration to Production only after certification and an explicit rollout decision.
 
 Do not remove the GitHub Actions fallback until the Inngest workers have passed the production observation window and rollback has been tested.
