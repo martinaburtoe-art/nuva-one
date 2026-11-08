@@ -9,7 +9,10 @@ SELECT is((
     FROM (VALUES
       ('people_employees'),('people_contracts'),('people_documents'),
       ('people_payroll_items'),('people_payroll_periods'),
-      ('people_payroll_postings'),('people_payroll_runs')
+      ('people_payroll_postings'),('people_payroll_runs'),
+      ('people_payroll_inputs'),('people_lre_exports'),('people_lre_rows'),
+      ('people_leave_requests'),('people_terminations'),('people_vacation_balances'),
+      ('people_gratification_settings'),('people_gratification_settlements'),('people_payroll_liquidations')
     ) AS expected(tablename)
     WHERE (
       SELECT count(*)::int FROM pg_policies p
@@ -20,13 +23,16 @@ SELECT is((
         AND p.qual LIKE '%owner%' AND p.qual LIKE '%admin%'
     ) = 1
   ) verified
-), 7, 'each sensitive table has exactly one owner/admin SELECT policy');
+), 16, 'each sensitive table has exactly one owner/admin SELECT policy');
 
 SELECT is((
   SELECT count(*)::int FROM pg_policies
   WHERE schemaname='public'
     AND tablename IN ('people_employees','people_contracts','people_documents',
-      'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs')
+      'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
+      'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
+      'people_terminations','people_vacation_balances','people_gratification_settings',
+      'people_gratification_settlements','people_payroll_liquidations')
     AND cmd='SELECT' AND permissive='PERMISSIVE'
     AND roles @> ARRAY['authenticated'::name]
     AND policyname='people_member_select'
@@ -98,7 +104,7 @@ SELECT is((
     AND c.relname IN ('people_employees','people_contracts','people_documents',
       'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs')
     AND c.relrowsecurity
-), 7, 'RLS remains enabled on all seven sensitive tables');
+), 16, 'RLS remains enabled on all sixteen sensitive tables');
 
 SELECT * FROM finish();
 ROLLBACK;
