@@ -99,7 +99,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
   const [demoOrder, setDemoOrder] = useState(0);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourSalesBaseline, setTourSalesBaseline] = useState(0);
-  const { products, customers, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, emittedDtes, convertedQuotes, emitDte, convertQuote, purchase, sell, reset } = useDemoState();
+  const { products, customers, sales, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, emittedDtes, convertedQuotes, emitDte, convertQuote, purchase, sell, reset } = useDemoState();
 
   const lowStock = useMemo(() => products.filter((p) => p.stock <= p.reorderAt), [products]);  const revenue = DEMO_BUSINESS.monthlyRevenue + revenueDelta;  const visibleNav = NAV.filter((item) => !search || item.label.toLowerCase().includes(search.toLowerCase()));
   const current = NAV.find((item) => item.key === active) ?? NAV[0];
@@ -203,7 +203,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
 
             {active === "dashboard" && <DashboardView revenue={revenue} lowStock={lowStock.length} customers={customers.length} simulatedSales={simulatedSales} onSale={simulateSale} onSelect={select} />}
             {active === "pos" && <PosView onSale={simulateSale} stock={products.find((p) => p.id === "coffee")?.stock ?? 0} />}
-            {active === "sales" && <SalesView revenue={revenue} onSale={simulateSale} simulatedSales={simulatedSales} />}
+            {active === "sales" && <SalesView revenue={revenue} onSale={simulateSale} simulatedSales={simulatedSales} sales={sales} />}
             {active === "customers" && <CustomersView customers={customers} />}
             {active === "billing" && <BillingView emitted={emittedDtes} onEmit={emitDte} />}
             {active === "purchases" && <PurchasesView simulatedPurchases={simulatedPurchases} onPurchase={() => { purchase("beans", 5); setNotice("Reposición simulada recibida: aumentó el stock de Granos Colombia y disminuyó la caja de la demo."); trackDemoEvent("simulated_purchase", { product: "beans", quantity: 5 }); }} />}
@@ -238,9 +238,68 @@ function DashboardView({ revenue, lowStock, customers, simulatedSales, onSale, o
 
 function PosView({ onSale, stock }: { onSale: () => void; stock: number }) { return <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]"><Card className="p-5"><SectionTitle icon={<Calculator />} title="Caja / POS" subtitle="Vende, cobra y controla tu caja desde un solo lugar" /><div className="mt-5 grid gap-3 sm:grid-cols-2">{productNames.slice(0, 4).map(([name, cat, , , price]) => <button key={name} onClick={onSale} className="rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5"><div className="flex items-center justify-between"><span className="font-medium">{name}</span><Plus className="h-4 w-4 text-primary" /></div><div className="mt-1 text-xs text-muted-foreground">{cat}</div><div className="mt-3 font-semibold">{money(price)}</div></button>)}</div></Card><Card className="p-5"><SectionTitle icon={<ShoppingCart />} title="Venta actual" subtitle="Sesión de demostración" /><div className="mt-6 rounded-xl bg-secondary/40 p-4"><div className="flex justify-between"><span>Café de especialidad 250 g</span><strong>{money(8990)}</strong></div><div className="mt-2 text-xs text-muted-foreground">Stock disponible: {stock}</div><div className="my-4 border-t" /><div className="flex justify-between text-lg font-bold"><span>Total</span><span>{money(8990)}</span></div><Button className="mt-4 w-full" onClick={onSale}>Confirmar venta simulada</Button></div></Card></div>; }
 
-function SalesView({ revenue, onSale, simulatedSales }: { revenue: number; onSale: () => void; simulatedSales: number }) { return <div className="space-y-6"><div className="grid gap-4 md:grid-cols-3"><Kpi label="Ventas" value={money(revenue)} delta={`${simulatedSales} simuladas`} icon={<ShoppingCart />} /><Kpi label="Ticket promedio" value="$18.450" delta="+7,2%" icon={<CircleDollarSign />} /><Kpi label="Ventas pendientes" value="8" delta="2 requieren seguimiento" icon={<Activity />} /></div><Card className="p-5"><SectionTitle icon={<ShoppingCart />} title="Actividad comercial" subtitle="Las ventas alimentan inventario, caja, finanzas y CRM" /><div className="mt-5 overflow-x-auto"><DataTable headers={["Cliente", "Documento", "Total", "Estado", "Acción"]} rows={[["Constructora Maule", "V-1042", "$184.500", "Pagada", "Ver"],["Café Central", "V-1041", "$92.300", "Pagada", "Ver"],["Hotel Valle", "V-1040", "$341.800", "Por cobrar", "Seguimiento"],["Pedro Rojas", "V-1039", "$45.900", "Pagada", "Ver"]]} /></div><Button className="mt-5" onClick={onSale}>Registrar una venta de prueba <ArrowRight className="ml-1 h-4 w-4" /></Button></Card></div>; }
+function SalesView({ revenue, onSale, simulatedSales, sales }: { revenue: number; onSale: () => void; simulatedSales: number; sales: typeof DEMO_SALES }) {
+  const averageTicket = sales.length
+    ? sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length
+    : 0;
+  const pendingSales = sales.filter((sale) => sale.status !== "Pagada").length;
+  const rows = sales.slice(0, 8).map((sale) => [
+    sale.customer,
+    sale.id.startsWith("demo-") ? `SIM-${sale.id.slice(-6).toUpperCase()}` : sale.id.toUpperCase(),
+    money(sale.total),
+    sale.status,
+    "Ver",
+  ]);
 
-function CustomersView({ customers }: { customers: typeof DEMO_CUSTOMERS }) { return <div className="space-y-6"><div className="grid gap-4 md:grid-cols-3"><Kpi label="Clientes" value={String(customers.length + 124)} delta="+12 este mes" icon={<Users />} /><Kpi label="Recurrentes" value="68%" delta="+4,1 pts" icon={<Activity />} /><Kpi label="Valor cartera" value="$12,8 M" delta="+9,4%" icon={<CircleDollarSign />} /></div><Card className="p-5"><SectionTitle icon={<Users />} title="CRM" subtitle="Cada cliente conserva contexto, actividad, compras y seguimiento" /><div className="mt-5 grid gap-3 md:grid-cols-2">{customers.map((customer) => <div key={customer.id} className="rounded-xl border p-4"><div className="flex items-start justify-between"><div><div className="font-medium">{customer.name}</div><div className="text-xs text-muted-foreground">{customer.company}</div></div><Badge variant="secondary">Activo</Badge></div><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><Stat label="Valor" value={money(customer.value)} /><Stat label="Última compra" value={customer.lastPurchase} /></div><Button variant="outline" size="sm" className="mt-4 w-full">Ver ficha y actividad</Button></div>)}</div></Card></div>; }
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Kpi label="Ventas registradas" value={String(sales.length)} delta={simulatedSales ? `${simulatedSales} simuladas` : "Escenario inicial"} icon={<ShoppingCart />} />
+        <Kpi label="Ticket promedio" value={money(averageTicket)} delta="Promedio de ventas visibles" icon={<CircleDollarSign />} />
+        <Kpi label="Ventas pendientes" value={String(pendingSales)} delta="Según estado registrado" icon={<Activity />} />
+      </div>
+      <Card className="p-5">
+        <SectionTitle icon={<ShoppingCart />} title="Actividad comercial" subtitle="Las ventas registradas actualizan inventario, caja, finanzas y ficha del cliente" />
+        <div className="mt-5 overflow-x-auto">
+          <DataTable headers={["Cliente", "Documento", "Total", "Estado", "Acción"]} rows={rows} />
+        </div>
+        <Button className="mt-5" onClick={onSale}>Registrar una venta de prueba <ArrowRight className="ml-1 h-4 w-4" /></Button>
+      </Card>
+    </div>
+  );
+}
+
+function CustomersView({ customers }: { customers: typeof DEMO_CUSTOMERS }) {
+  const portfolioValue = customers.reduce((sum, customer) => sum + customer.value, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Kpi label="Clientes del escenario" value={String(customers.length)} delta="Fichas visibles" icon={<Users />} />
+        <Kpi label="Recurrentes" value="68%" delta="Referencia ilustrativa" icon={<Activity />} />
+        <Kpi label="Valor de fichas visibles" value={money(portfolioValue)} delta="Suma de clientes mostrados" icon={<CircleDollarSign />} />
+      </div>
+      <Card className="p-5">
+        <SectionTitle icon={<Users />} title="CRM" subtitle="Cada cliente conserva contexto, actividad, compras y seguimiento" />
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {customers.map((customer) => (
+            <div key={customer.id} className="rounded-xl border p-4">
+              <div className="flex items-start justify-between">
+                <div><div className="font-medium">{customer.name}</div><div className="text-xs text-muted-foreground">{customer.company}</div></div>
+                <Badge variant="secondary">Activo</Badge>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <Stat label="Valor" value={money(customer.value)} />
+                <Stat label="Última compra" value={customer.lastPurchase} />
+              </div>
+              <Button variant="outline" size="sm" className="mt-4 w-full">Ver ficha y actividad</Button>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 function BillingView({ emitted, onEmit }: { emitted: number; onEmit: () => void }) { return <div className="space-y-6"><Card className="p-5"><SectionTitle icon={<Receipt />} title="Facturación SII" subtitle="Controla documentos tributarios y su estado desde Nüva One" /><div className="mt-5 grid gap-4 sm:grid-cols-4"><Stat label="Emitidos" value={String(184 + emitted)} /><Stat label="Pendientes" value={emitted ? String(Math.max(0, 7 - emitted)) : "7"} /><Stat label="Aceptados SII" value={emitted ? "100%" : "98,9%"} /><Stat label="Notas" value="3" /></div><div className="mt-6 overflow-x-auto"><DataTable headers={["Folio", "Tipo", "Cliente", "Monto", "Estado"]} rows={[[String(1042 + emitted), "Factura electrónica", "Constructora Maule", "$184.500", emitted ? "Aceptado SII" : "Aceptado SII"],["1041","Factura electrónica","Café Central","$92.300","Aceptado SII"],["1040","Factura electrónica","Hotel Valle","$341.800","Pendiente"],["1039","Boleta electrónica","Pedro Rojas","$45.900","Aceptado SII"]]} /></div><div className="mt-5 flex flex-wrap gap-2"><Button onClick={onEmit}><Plus className="mr-1 h-4 w-4" />Simular emisión DTE</Button><Button variant="outline"><ArrowDownToLine className="mr-1 h-4 w-4" />Descargar documentos</Button></div>{emitted > 0 && <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm"><strong>DTE de demostración emitido.</strong> En producción, este flujo se conecta al módulo tributario y al estado del documento frente al SII.</div>}</Card><div className="grid gap-4 md:grid-cols-3"><ActionCard icon={<ShieldCheck />} title="Control tributario" text="Detecta inconsistencias antes del cierre." /><ActionCard icon={<Receipt />} title="Trazabilidad" text="Conserva documento, folio y estado en el contexto de la operación." /><ActionCard icon={<CircleDollarSign />} title="Impacto financiero" text="Relaciona la facturación con ingresos y control de caja." /></div></div>; }
 
