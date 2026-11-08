@@ -21,7 +21,7 @@
 - `NUVA_INNGEST_AGENCY_ENABLED` defaults to disabled. Workers return before accessing Supabase unless this value is exactly `true`.
 - The existing GitHub Actions worker remains available as a fallback during certification. Both systems use the same Supabase claim/lease RPCs, so they cannot claim the same task.
 - The constructor, QA and release specialists remain on GitHub Actions because they depend on local syntax/test/git execution. They are intentionally not registered as Vercel Inngest workers.
-- No migration, RLS policy, inventory, billing or business data is changed by this integration.
+- The certification migration adds one additive, service-role-only RPC. It does not change existing RPCs, RLS policies, inventory, billing or business records.
 
 ## Required environment
 
@@ -36,10 +36,9 @@
 2. Apply the task-scoped claim migration and create one clearly labelled, read-only certification mission/task assigned to a single specialist.
 3. Set `NUVA_INNGEST_AGENCY_TEST_TASK_ID` to that task UUID and enable the worker flag only for the short certification window. All specialist cron functions are constrained to that same UUID; only the matching agent can claim it.
 4. Verify the exact task's claim, execution, completion event, released lease and unchanged status/counts for every other task. Then set the flag back to `false`, remove the task ID variable, and confirm no active leases remain.
-5. Add the Inngest signing key to Vercel Preview.
-6. Sync the Preview endpoint at `https://<preview-host>/api/inngest` when the preview endpoint is reachable by Inngest.
-7. Confirm all ten registered functions appear and the ping function succeeds.
-8. Verify claims, execution results, retries, concurrency and lease recovery in Supabase and Inngest using a task-scoped certification task.
-9. Promote the same configuration to Production only after certification and an explicit rollout decision.
+5. Confirm the already-synced Production endpoint still lists all ten functions and the system ping completes.
+6. Verify the one-task claim, specialist execution, completion event, released lease and unchanged backlog in Supabase and Inngest.
+7. Immediately restore `NUVA_INNGEST_AGENCY_ENABLED=false` and remove `NUVA_INNGEST_AGENCY_TEST_TASK_ID`.
+8. Do not switch to unrestricted queue processing until a separate rollout review approves it.
 
 Do not remove the GitHub Actions fallback until the Inngest workers have passed the production observation window and rollback has been tested.
