@@ -315,7 +315,7 @@ function InventoryView({ products, lowStock }: { products: ReturnType<typeof use
         <Kpi label="SKUs" value={String(products.length)} delta="Productos del escenario" icon={<Boxes />} />
         <Kpi label="Unidades" value={new Intl.NumberFormat("es-CL").format(totalUnits)} delta="Stock total simulado" icon={<Package />} />
         <Kpi label="Bajo stock" value={String(lowStock)} delta={lowStock > 0 ? "Requiere reposición" : "Sin alertas"} icon={<Activity />} />
-        <Kpi label="Valor inventario" value={money(inventoryValue)} delta="Unidades × costo unitario" icon={<CircleDollarSign />} />
+        <Kpi label="Inventario a costo" value={money(inventoryValue)} delta="Unidades × costo unitario" icon={<CircleDollarSign />} />
       </div>
       <Card className="p-5">
         <SectionTitle icon={<Boxes />} title="Inventario" subtitle="Stock, reposición, movimientos y trazabilidad" />
