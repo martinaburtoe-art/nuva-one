@@ -1,7 +1,6 @@
--- Reconcile the 15-day Starter trial boundary with real subscription state.
--- A paid Starter subscriber must not be locked after day 15. Paused and
--- cancelled subscriptions lose access; a pending checkout may preserve an
--- existing Pro/demo entitlement or an unexpired Starter trial, but never extend it.
+-- Subscription-aware enforcement for the 15-day Starter trial.
+-- Repair environments where the historical trial-hard-enforcement migration
+-- is absent, and reconcile paid/pending subscription states with the UI.
 CREATE OR REPLACE FUNCTION public.business_is_active(p_business_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -26,50 +25,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.business_is_active(uuid) IS
-  'Returns whether billable business writes are allowed: active paid subscriptions, Pro entitlement during active/pending checkout, or an unexpired Starter trial during active/pending checkout.';
-
-
--- The original trial-hardening migration is present in the repository but is
--- absent from the production migration ledger and its trigger/function are not
--- installed there. Recreate the enforcement boundary here instead of assuming
--- a historical migration ran successfully.
-CREATE OR REPLACE FUNCTION public.enforce_business_active()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  IF NOT COALESCE(public.business_is_active(NEW.business_id), false) THEN
-    RAISE EXCEPTION 'Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One.'
-      USING ERRCODE = 'insufficient_privilege';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
--- Only install triggers on billable operational tables that actually exist
--- in this schema. Do not reference legacy marketing/automation tables that
--- are not part of the current production schema.
-DO $$
-DECLARE
-  t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY[
-    'products', 'customers', 'suppliers', 'sales',
-    'purchases', 'quotes', 'transactions'
-  ]
-  LOOP
-    IF to_regclass(format('public.%I', t)) IS NOT NULL THEN
-      EXECUTE format('DROP TRIGGER IF EXISTS trg_enforce_business_active ON public.%I', t);
-      EXECUTE format(
-        'CREATE TRIGGER trg_enforce_business_active BEFORE INSERT ON public.%I FOR EACH ROW EXECUTE FUNCTION public.enforce_business_active()',
-        t
-      );
-    END IF;
-  END LOOP;
-END
-$$;
+  'Allows active paid subscriptions, Pro demo/current entitlement during pending checkout, and Starter trials within 15 days.';
 
 CREATE OR REPLACE FUNCTION public.enforce_business_active()
 RETURNS trigger
@@ -89,8 +45,9 @@ $$;
 COMMENT ON FUNCTION public.enforce_business_active() IS
   'Blocks new billable operational records when the business has no active paid subscription, Pro demo entitlement, or unexpired Starter trial.';
 
--- Install the guard idempotently. This also repairs environments where the
--- historical 20260719000000 migration was never applied.
+-- Install the guard idempotently. The production schema currently contains
+-- seven of these operational tables; legacy marketing/automation tables are
+-- included only when they exist in the target environment.
 DO $$
 DECLARE
   t text;
