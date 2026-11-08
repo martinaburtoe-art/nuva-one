@@ -5,6 +5,7 @@ import { checkRateLimit } from "@/lib/rate-limit.server";
 import { NUVA_PLANS } from "@/lib/plan-config";
 import {
   createMercadoPagoSubscription,
+  updateMercadoPagoSubscription,
   getMercadoPagoConfig,
 } from "@/lib/fiscal/mercadopago-subscriptions.server";
 
@@ -32,7 +33,12 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
         const { business, user } = billingAccess;
 
         const currentProvider = business.billing_provider ?? "none";
-        if (currentProvider !== "none" && ["active", "pending", "paused"].includes(business.subscription_status ?? "")) {
+        const currentStatus = business.subscription_status ?? "active";
+        const canStartSubscription =
+          (currentProvider === "none" && currentStatus === "active") ||
+          currentStatus === "canceled" ||
+          currentStatus === "cancelled";
+        if (!canStartSubscription) {
           return Response.json({
             error: "Este negocio ya tiene una suscripción vinculada. Gestiona o cancela la suscripción actual antes de crear otra.",
             code: "SUBSCRIPTION_ALREADY_LINKED",
@@ -72,7 +78,7 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
         if (!result.ok) return Response.json({ error: result.errorMessage }, { status: 502 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error: updateError } = await supabaseAdmin
+        let attachQuery = supabaseAdmin
           .from("businesses")
           .update({
             billing_provider: "mercadopago",
@@ -80,8 +86,31 @@ export const Route = createFileRoute("/api/billing/mercadopago/create")({
             subscription_status: "pending",
           })
           .eq("id", businessId);
-        if (updateError) {
-          return Response.json({ error: "No pudimos guardar el estado de la suscripción" }, { status: 500 });
+        attachQuery = business.billing_provider === null
+          ? attachQuery.is("billing_provider", null)
+          : attachQuery.eq("billing_provider", business.billing_provider);
+        attachQuery = business.subscription_status === null
+          ? attachQuery.is("subscription_status", null)
+          : attachQuery.eq("subscription_status", business.subscription_status);
+        const { data: attachedBusiness, error: updateError } = await attachQuery
+          .select("id")
+          .maybeSingle();
+
+        if (updateError || !attachedBusiness) {
+          const cleanup = await updateMercadoPagoSubscription(config, result.preapprovalId, { status: "canceled" });
+          if (!cleanup.ok) {
+            console.error("[billing] Could not cancel orphaned Mercado Pago preapproval", {
+              businessId,
+              preapprovalId: result.preapprovalId,
+              error: cleanup.errorMessage,
+            });
+          }
+          return Response.json({
+            error: updateError
+              ? "No pudimos guardar el estado de la suscripción"
+              : "El estado de facturación cambió mientras se iniciaba el pago. Vuelve a intentarlo.",
+            code: updateError ? "BILLING_STATE_SYNC_FAILED" : "SUBSCRIPTION_STATE_CONFLICT",
+          }, { status: updateError ? 500 : 409 });
         }
 
         return Response.json({
