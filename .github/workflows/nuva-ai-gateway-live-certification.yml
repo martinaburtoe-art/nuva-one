@@ -53,7 +53,12 @@ jobs:
           fi
           if [ -n "$account_id" ]; then echo "cloudflare_account_id_available=true"; else echo "cloudflare_account_id_available=false"; fi
           if [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then echo "cloudflare_api_token_configured=true"; else echo "cloudflare_api_token_configured=false"; fi
-          payload="$(CLOUDFLARE_ACCOUNT_ID="$account_id" node -e 'console.log(JSON.stringify({action:"health",providers:["gemini","groq","cloudflare"],cloudflareAccountId:process.env.CLOUDFLARE_ACCOUNT_ID || ""}))')"
+          if [[ ! "$account_id" =~ ^[a-fA-F0-9]{32}$ ]]; then account_id=""; fi
+          providers_json='["gemini","groq"]'
+          if [ -n "$account_id" ] && [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            providers_json='["gemini","groq","cloudflare"]'
+          fi
+          payload="$(PROVIDERS_JSON="$providers_json" CLOUDFLARE_ACCOUNT_ID="$account_id" node -e 'console.log(JSON.stringify({action:"health",providers:JSON.parse(process.env.PROVIDERS_JSON),cloudflareAccountId:process.env.CLOUDFLARE_ACCOUNT_ID || ""}))')"
           response="$(curl --fail-with-body -sS -X POST "https://vnzyecnbdqbfuxawzrda.supabase.co/functions/v1/nuva-agency-ai-broker" -H "Authorization: Bearer $oidc_token" -H "content-type: application/json" -d "$payload")"
           echo "$response" > /tmp/nuva-broker-results.json
           cat /tmp/nuva-broker-results.json
