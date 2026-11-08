@@ -276,8 +276,9 @@ describe("Inngest Agency worker", () => {
     expect(result).toMatchObject({ status: "executed", verdict: "PASS" });
     expect(execute).toHaveBeenCalledTimes(1);
     expect(secondFinish).toEqual(firstFinish);
-    expect(typeof secondFinish.p_result.timestamp).toBe("string");
-    expect(Number.isFinite(secondFinish.p_result.durationMs)).toBe(true);
+    const finishResult = secondFinish.p_result as { timestamp?: unknown; durationMs?: unknown };
+    expect(typeof finishResult.timestamp).toBe("string");
+    expect(Number.isFinite(finishResult.durationMs)).toBe(true);
   });
 
   it("maps a BLOCKED specialist result to a blocked durable task", async () => {
