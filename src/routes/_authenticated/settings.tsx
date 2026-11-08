@@ -162,6 +162,12 @@ function BillingTab() {
               ? "Cancelada"
               : "Vencida";
 
+  const statusBadgeClass = status === "pending" || status === "paused"
+    ? "border-amber-300 bg-amber-50 text-amber-800"
+    : access.hasAccess
+      ? "border-primary/30 bg-primary/5 text-primary"
+      : "border-destructive/30 bg-destructive/5 text-destructive";
+
   const description = access.isDemoPro
     ? "Estás explorando Nüva Pro con datos ficticios. Esta demo no genera cobros ni requiere una tarjeta."
     : access.trialActive
@@ -228,7 +234,7 @@ function BillingTab() {
           <h3 className="font-semibold">Plan actual: {planConfig.name}</h3>
           <p className="mt-1 text-xs text-muted-foreground">Estado de facturación</p>
         </div>
-        <Badge variant="outline" className={access.hasAccess ? "border-primary/30 bg-primary/5 text-primary" : "border-destructive/30 bg-destructive/5 text-destructive"}>
+        <Badge variant="outline" className={statusBadgeClass}>
           {statusLabel}
         </Badge>
       </div>
