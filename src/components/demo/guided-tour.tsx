@@ -57,11 +57,11 @@ export function GuidedTour({ step, onStep, onClose, canAdvance = true }: { step:
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Cerrar tour"><X className="h-4 w-4" /></Button>
         </div>
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-1" aria-label={`Paso ${step + 1} de ${DEMO_STEPS.length}`}>
             {DEMO_STEPS.map((item, index) => <span key={item.target} className={`h-1.5 w-5 rounded-full ${index === step ? "bg-primary" : "bg-muted"}`} />)}
           </div>
-          <div className="flex gap-2">
+          <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" disabled={step === 0} onClick={() => onStep(step - 1)}><ArrowLeft className="mr-1 h-4 w-4" />Atrás</Button>
             <Button size="sm" disabled={!canAdvance} onClick={() => step === DEMO_STEPS.length - 1 ? onClose() : onStep(step + 1)}>{!canAdvance ? "Simula la venta para continuar" : step === DEMO_STEPS.length - 1 ? "Explorar libremente" : "Siguiente"}{canAdvance && <ArrowRight className="ml-1 h-4 w-4" />}</Button>
           </div>
