@@ -70,19 +70,13 @@ function PeopleLifecycle() {
   });
 
   const { data: balances=[] }=useQuery({
-    queryKey: isAdmin ? ["people_vacation_balances", activeId, "as_of_date"] : ["people_vacation_balances_limited", activeId],
+    queryKey: ["people_vacation_balances", activeId, "as_of_date"],
     queryFn: async () => {
-      const bid = activeId as string;
-      if (isAdmin) {
-        const { data, error } = await supabase.from("people_vacation_balances").select("*").eq("business_id", bid).order("as_of_date");
-        if (error) throw error;
-        return (data ?? []) as any[];
-      }
-      const { data, error } = await (supabase as any).rpc("people_vacation_balances_limited", { p_business_id: bid });
+      const { data, error } = await supabase.from("people_vacation_balances").select("*").eq("business_id", activeId as string).order("as_of_date");
       if (error) throw error;
       return (data ?? []) as any[];
     },
-    enabled: !!activeId,
+    enabled: isAdmin && !!activeId,
   });
   const insertLeave=useBizInsert("people_leave_requests");
   const [leave,setLeave]=useState({employee_id:"",leave_type:"vacation",start_date:new Date().toISOString().slice(0,10),end_date:new Date().toISOString().slice(0,10),days:1,reason:""});
@@ -104,7 +98,7 @@ function PeopleLifecycle() {
     </div>
     {message&&<Card className="mt-5 rounded-2xl border-indigo-500/30 bg-indigo-500/5 p-4 text-sm">{message}</Card>}
     <Card className="mt-5 rounded-2xl p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Solicitudes recientes</h2><p className="text-sm text-muted-foreground">Aprobar crea la ausencia efectiva que alimenta vacaciones y remuneraciones.</p></div>{isAdmin && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={paid} onChange={e=>setPaid(e.target.checked)}/> Ausencia pagada</label>}</div><div className="mt-4 space-y-2">{leaves.slice(0,20).map((x:any)=><div key={x.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm"><span>{employees.find((e:any)=>e.id===x.employee_id)?.first_name} {employees.find((e:any)=>e.id===x.employee_id)?.last_name} · {x.leave_type} · {x.start_date} → {x.end_date} · {x.status}</span>{isAdmin && x.status==="pending"&&<div className="flex gap-2"><Button size="sm" variant="outline" disabled={busy===x.id+"approve"} onClick={()=>reviewLeave(x.id,"approve")}><Check className="mr-1 h-3.5 w-3.5"/>Aprobar</Button><Button size="sm" variant="ghost" disabled={busy===x.id+"reject"} onClick={()=>reviewLeave(x.id,"reject")}><X className="mr-1 h-3.5 w-3.5"/>Rechazar</Button></div>}</div>)}{leaves.length===0&&<p className="text-sm text-muted-foreground">No hay solicitudes registradas.</p>}</div></Card>
-    <Card className="mt-5 rounded-2xl p-5"><h2 className="font-semibold">Saldos de vacaciones</h2><div className="mt-4 space-y-2">{employees.map((e:any)=>{const b=balances.find((x:any)=>x.employee_id===e.id);return <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"><span>{e.first_name} {e.last_name}</span><div className="flex items-center gap-2 text-sm"><span>{b?.available_days==null?"—":Number(b.available_days).toFixed(2)} días disponibles</span>{isAdmin && <Button size="sm" variant="outline" disabled={busy==="vac-"+e.id} onClick={()=>calculateVacation(e.id)}>Actualizar</Button>}</div></div>})}{employees.length===0&&<p className="text-sm text-muted-foreground">Primero registra colaboradores.</p>}</div></Card>
+    {isAdmin &&     <Card className="mt-5 rounded-2xl p-5"><h2 className="font-semibold">Saldos de vacaciones</h2><div className="mt-4 space-y-2">{employees.map((e:any)=>{const b=balances.find((x:any)=>x.employee_id===e.id);return <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"><span>{e.first_name} {e.last_name}</span><div className="flex items-center gap-2 text-sm"><span>{b?.available_days==null?"—":Number(b.available_days).toFixed(2)} días disponibles</span>{isAdmin && <Button size="sm" variant="outline" disabled={busy==="vac-"+e.id} onClick={()=>calculateVacation(e.id)}>Actualizar</Button>}</div></div>})}{employees.length===0&&<p className="text-sm text-muted-foreground">Primero registra colaboradores.</p>}</div></Card>}
     {isAdmin && <div className="mt-5"><Card className="rounded-2xl p-5"><h2 className="font-semibold">Finiquitos registrados</h2><div className="mt-4 space-y-2">{terminations.slice(0,20).map((x:any)=><div key={x.id} className="rounded-xl border p-3 text-sm">{employees.find((e:any)=>e.id===x.employee_id)?.first_name} {employees.find((e:any)=>e.id===x.employee_id)?.last_name} · {x.termination_date} · CLP {Number(x.total_amount||0).toLocaleString("es-CL")}</div>)}</div></Card></div>}
   </div></ModuleGuard>;
 }
