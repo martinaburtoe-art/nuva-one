@@ -53,14 +53,14 @@ SELECT throws_ok(
   $$INSERT INTO public.products (business_id, name, price, stock)
     VALUES ('00000000-0000-0000-0000-0000000000c5', 'Paused Pro product', 1000, 10)$$,
   '42501',
-  'Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One.',
+  'Tu prueba gratuita de 15 días terminó. Elige un plan para seguir usando Nüva One.',
   'paused Pro cannot continue billable writes'
 );
 SELECT throws_ok(
   $$INSERT INTO public.products (business_id, name, price, stock)
     VALUES ('00000000-0000-0000-0000-0000000000c6', 'Cancelled Pro product', 1000, 10)$$,
   '42501',
-  'Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One.',
+  'Tu prueba gratuita de 15 días terminó. Elige un plan para seguir usando Nüva One.',
   'cancelled Pro cannot continue billable writes'
 );
 
