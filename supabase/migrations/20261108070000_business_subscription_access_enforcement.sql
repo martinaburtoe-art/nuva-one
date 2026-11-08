@@ -11,9 +11,9 @@ SET search_path = public
 AS $$
   SELECT COALESCE((
     SELECT
-      b.subscription_status = 'active'
+      b.subscription_status IN ('active', 'pending')
       AND (
-        COALESCE(b.billing_provider, 'none') <> 'none'
+        (b.subscription_status = 'active' AND COALESCE(b.billing_provider, 'none') <> 'none')
         OR b.plan = 'pro'
         OR (
           b.plan = 'starter'
