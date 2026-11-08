@@ -27,7 +27,8 @@
 
 - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: already configured server-side for both Vercel Preview and Production; used only to call the restricted Agency RPCs.
 - `INNGEST_SIGNING_KEY`: required to sync and authenticate the hosted Inngest endpoint.
-- `NUVA_INNGEST_AGENCY_ENABLED`: keep unset or `false` until the Inngest app has synced and the preview has been certified; set to `true` only for the intended environment.
+- `NUVA_INNGEST_AGENCY_ENABLED`: keep unset or `false` until the Inngest app has synced and the task-scoped test is prepared; set to `true` only for the short certification window.
+- `NUVA_INNGEST_AGENCY_TEST_TASK_ID`: optional exact UUID used to restrict all worker claims to one certification task; never point it at an existing business task.
 - `INNGEST_EVENT_KEY`: not required for the current cron-only workers. Add it only when Nüva begins sending outbound events from the application.
 
 ## Activation gate
