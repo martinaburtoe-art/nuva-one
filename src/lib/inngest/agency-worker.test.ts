@@ -53,6 +53,10 @@ describe("Inngest Agency worker", () => {
 
     expect(result).toEqual({ status: "idle", agentId: "finance" });
     expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(db.rpc).toHaveBeenCalledWith("agency_claim_task", {
+      p_agent_id: "finance",
+      p_lease_seconds: 1800,
+    });
     expect(execute).not.toHaveBeenCalled();
   });
 
