@@ -10,6 +10,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronDown,
+  Compass,
   CircleDollarSign,
   CreditCard,
   FileText,
@@ -40,6 +41,7 @@ import { DEMO_BUSINESS, DEMO_CUSTOMERS, money } from "@/lib/demo/demo-data";
 import { demoAiAnswer } from "@/lib/demo/demo-ai";
 import { useDemoState } from "@/lib/demo/demo-state";
 import { trackDemoEvent } from "@/lib/demo/demo-analytics";
+import { GuidedTour } from "@/components/demo/guided-tour";
 
 type ModuleKey =
   | "dashboard"
@@ -95,6 +97,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
   const [aiQuestion, setAiQuestion] = useState("¿Qué debería hacer primero con mi negocio?");
   const [aiAnswer, setAiAnswer] = useState(() => demoAiAnswer("¿Qué debería hacer primero con mi negocio?"));
   const [demoOrder, setDemoOrder] = useState(0);
+  const [tourStep, setTourStep] = useState<number | null>(null);
   const { products, customers, simulatedSales, revenueDelta, cashDelta, costDelta, purchaseCashDelta, simulatedPurchases, emittedDtes, convertedQuotes, emitDte, convertQuote, purchase, sell, reset } = useDemoState();
 
   const lowStock = useMemo(() => products.filter((p) => p.stock <= p.reorderAt), [products]);  const revenue = DEMO_BUSINESS.monthlyRevenue + revenueDelta;  const visibleNav = NAV.filter((item) => !search || item.label.toLowerCase().includes(search.toLowerCase()));
@@ -120,6 +123,14 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
     reset();
     setDemoOrder(0);
     setNotice("Demo reiniciada con datos ficticios iniciales.");
+  };
+
+  const moveTourTo = (step: number) => {
+    const nextModule: ModuleKey =
+      step === 3 ? "inventory" : step === 6 ? "finance" : step === 7 ? "ai" : "dashboard";
+    setActive(nextModule);
+    setTourStep(step);
+    setMobileOpen(false);
   };
 
   return (
@@ -180,7 +191,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
         <main className="min-h-[calc(100vh-7rem)] p-4 pb-16 md:p-8">
           <div className="mx-auto max-w-7xl">
             {notice && <div className="mb-5 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span className="flex-1">{notice}</span><button onClick={() => setNotice(null)}><X className="h-4 w-4 text-muted-foreground" /></button></div>}
-            <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><Badge variant="secondary" className="mb-2">Vista real de producto · Demo</Badge><h1 className="text-2xl font-bold tracking-tight md:text-3xl">{current.label}</h1><p className="mt-1 text-sm text-muted-foreground">Explora cómo se vería y cómo se relaciona con el resto de tu operación.</p></div><div className="flex gap-2"><Button variant="outline" size="sm" onClick={resetAll}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Reiniciar</Button><Link to="/auth" search={{ mode: "signup" }}><Button size="sm">Probar con mi negocio <ArrowRight className="ml-1 h-3.5 w-3.5" /></Button></Link></div></div>
+            <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><Badge variant="secondary" className="mb-2">Vista real de producto · Demo</Badge><h1 className="text-2xl font-bold tracking-tight md:text-3xl">{current.label}</h1><p className="mt-1 text-sm text-muted-foreground">Explora cómo se vería y cómo se relaciona con el resto de tu operación.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => moveTourTo(0)}><Compass className="mr-1.5 h-3.5 w-3.5" />Recorrido guiado</Button><Button variant="outline" size="sm" onClick={resetAll}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Reiniciar</Button><Link to="/auth" search={{ mode: "signup" }} data-demo="cta"><Button size="sm">Probar con mi negocio <ArrowRight className="ml-1 h-3.5 w-3.5" /></Button></Link></div></div>
 
             {active === "dashboard" && <DashboardView revenue={revenue} lowStock={lowStock.length} customers={customers.length} simulatedSales={simulatedSales} onSale={simulateSale} onSelect={select} />}
             {active === "pos" && <PosView onSale={simulateSale} stock={products.find((p) => p.id === "coffee")?.stock ?? 0} />}
@@ -200,6 +211,8 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
           </div>
         </main>
         <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground md:px-8">Nüva One Demo · Experiencia interactiva con datos ficticios · <button className="font-medium text-primary" onClick={onExit}>Volver a la página pública</button></footer>      </div>
+
+      {tourStep !== null && <GuidedTour step={tourStep} onStep={moveTourTo} onClose={() => setTourStep(null)} />}
 
       {mobileOpen && <div className="fixed inset-0 z-[80] bg-background md:hidden"><div className="flex h-full flex-col"><div className="flex h-14 items-center justify-between border-b px-4"><div className="flex items-center gap-2 font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span>Nüva One <Badge variant="secondary">DEMO</Badge></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></Button></div><div className="p-4"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar módulo..." className="pl-9" /></div></div><nav className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto p-4">{visibleNav.map((item) => { const Icon = item.icon; return <button key={item.key} onClick={() => select(item.key)} className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-xs ${active === item.key ? "border-primary bg-primary/5 text-primary" : "text-muted-foreground"}`}><Icon className="h-5 w-5" />{item.label}</button>; })}</nav></div></div>}
     </div>
