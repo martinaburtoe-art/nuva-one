@@ -177,7 +177,7 @@ SELECT is((
       'people_payroll_liquidations_select_owner_admin','people_absences_select_owner_admin'
     )
     AND qual LIKE '%SELECT auth.uid()%'
-), 8, 'owner/admin People RLS policies evaluate auth.uid once per statement');
+), 10, 'owner/admin People RLS policies evaluate auth.uid once per statement');
 -- Owner/admin delete policies are preserved.
 SELECT is((
   SELECT count(*)::int FROM pg_policies
