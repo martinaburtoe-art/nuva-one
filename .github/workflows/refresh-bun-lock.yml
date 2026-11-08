@@ -1,0 +1,56 @@
+name: Refresh Bun lockfile
+
+on:
+  push:
+    branches:
+      - chore/refresh-bun-lock-20261108
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-bun-lock-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.5"
+      - name: Regenerate lockfile from package.json
+        run: bun install --lockfile-only --ignore-scripts
+      - name: Verify lockfile root manifest
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const lock = JSON.parse(fs.readFileSync('bun.lock', 'utf8'));
+          const root = lock.workspaces?.[''];
+          if (!root) throw new Error('bun.lock is missing workspaces[""]');
+          const equal = (a, b) => JSON.stringify(Object.fromEntries(Object.entries(a ?? {}).sort())) === JSON.stringify(Object.fromEntries(Object.entries(b ?? {}).sort()));
+          if (root.name !== pkg.name) throw new Error(`workspace name mismatch: ${root.name} != ${pkg.name}`);
+          if (!equal(root.dependencies, pkg.dependencies)) throw new Error('root dependencies differ from package.json');
+          if (!equal(root.devDependencies, pkg.devDependencies)) throw new Error('root devDependencies differ from package.json');
+          console.log('Bun lockfile root manifest matches package.json');
+          NODE
+      - name: Commit refreshed lockfile
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- bun.lock; then
+            echo "bun.lock is already synchronized"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bun.lock
+          git commit -m "chore(deps): synchronize Bun lockfile with package manifest"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
