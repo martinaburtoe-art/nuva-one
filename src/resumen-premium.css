@@ -284,16 +284,6 @@
   font-size:10px!important;
   font-weight:650!important;
 }
-.nuva-resumen-canvas .nuva-resumen-balance-sparkline {
-  position:absolute!important;
-  z-index:0!important;
-  right:-8px!important;
-  bottom:10px!important;
-  width:54%!important;
-  height:70px!important;
-  color:var(--nr-gold)!important;
-  opacity:.7!important;
-}
 .nuva-resumen-canvas .nuva-resumen-device-money-grid {
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
