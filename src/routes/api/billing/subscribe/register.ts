@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
 
         const { data: business, error: bizError } = await client
           .from("businesses")
-          .select("id, name")
+          .select("id, name, subscription_status, billing_provider")
           .eq("id", businessId)
           .maybeSingle();
         if (bizError || !business) {
@@ -97,7 +97,13 @@ export const Route = createFileRoute("/api/billing/subscribe/register")({
           .update({
             billing_provider: "mercadopago",
             mercadopago_preapproval_id: result.preapprovalId,
-            subscription_status: "pending",
+            // Preserve an already-paid entitlement while a replacement/upgrade
+            // preapproval is pending. Unpaid trials remain governed by their
+            // original 15-day window and Pro demo remains available.
+            subscription_status:
+              business.subscription_status === "active" && business.billing_provider !== "none"
+                ? "active"
+                : "pending",
           })
           .eq("id", businessId);
 
