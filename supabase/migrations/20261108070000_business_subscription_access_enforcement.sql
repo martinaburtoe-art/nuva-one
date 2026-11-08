@@ -45,16 +45,19 @@ $$;
 COMMENT ON FUNCTION public.enforce_business_active() IS
   'Blocks new billable operational records when the business has no active paid subscription, Pro demo entitlement, or unexpired Starter trial.';
 
--- Install the guard idempotently. The production schema currently contains
--- seven of these operational tables; legacy marketing/automation tables are
--- included only when they exist in the target environment.
+-- Install the guard idempotently on direct user-initiated operational writes.
+-- Shipment events and system/audit/billing tables are intentionally excluded
+-- so external delivery updates, audit trails and subscription recovery continue.
 DO $$
 DECLARE
   t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'products', 'customers', 'suppliers', 'sales',
-    'purchases', 'quotes', 'transactions', 'marketing_posts', 'automations'
+    'purchases', 'quotes', 'transactions', 'marketing_posts', 'automations',
+    'cash_registers', 'cash_register_movements', 'costs', 'customer_activities',
+    'inventory_stocktakes', 'inventory_stocktake_lines', 'product_codes',
+    'purchase_payments', 'shifts', 'shipments'
   ]
   LOOP
     IF to_regclass(format('public.%I', t)) IS NOT NULL
