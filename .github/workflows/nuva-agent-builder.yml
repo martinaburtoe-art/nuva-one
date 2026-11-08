@@ -41,6 +41,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_AI_MODEL: ${{ vars.CLOUDFLARE_AI_MODEL }}
+          NUVA_GATEWAY_LIVE_TEST: "true"
         run: |
           set -euo pipefail
           npm ci --ignore-scripts --no-audit --no-fund
