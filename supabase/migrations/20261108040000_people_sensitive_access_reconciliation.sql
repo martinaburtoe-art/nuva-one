@@ -175,6 +175,62 @@ $$;
 -- Termination history is owner/admin-only; non-admin UI uses no RPC for it.
 REVOKE ALL ON FUNCTION public.people_terminations_limited(uuid) FROM PUBLIC, anon, authenticated;
 
+-- Balance calculation is an administrative payroll operation, not a staff RPC.
+CREATE OR REPLACE FUNCTION public.calculate_people_vacation_balance(
+  p_employee_id uuid,
+  p_as_of_date date DEFAULT CURRENT_DATE
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SET search_path = public, private
+AS $function$
+DECLARE
+  e record;
+  accrued numeric;
+  used numeric;
+  available numeric;
+BEGIN
+  SELECT * INTO e FROM public.people_employees WHERE id = p_employee_id;
+  IF NOT FOUND OR NOT private.has_business_role(
+    e.business_id,
+    (SELECT auth.uid()),
+    ARRAY['owner'::member_role, 'admin'::member_role]
+  ) THEN
+    RAISE EXCEPTION 'owner/admin role required';
+  END IF;
+
+  accrued := public.people_accrued_vacation_days(e.hire_date, p_as_of_date);
+  SELECT COALESCE(sum(public.people_working_days_between(a.starts_on, a.ends_on)), 0)
+    INTO used
+  FROM public.people_absences a
+  WHERE a.employee_id = p_employee_id
+    AND a.business_id = e.business_id
+    AND a.absence_type = 'vacation'
+    AND a.starts_on >= e.hire_date
+    AND a.ends_on <= p_as_of_date;
+
+  available := greatest(0, accrued - used);
+  INSERT INTO public.people_vacation_balances(
+    business_id, employee_id, as_of_date, accrued_days, used_days, available_days, progressive_days
+  )
+  VALUES(e.business_id, p_employee_id, p_as_of_date, accrued, used, available, 0)
+  ON CONFLICT(employee_id, as_of_date) DO UPDATE
+    SET accrued_days = EXCLUDED.accrued_days,
+        used_days = EXCLUDED.used_days,
+        available_days = EXCLUDED.available_days,
+        progressive_days = EXCLUDED.progressive_days;
+
+  RETURN jsonb_build_object(
+    'employee_id', p_employee_id,
+    'as_of_date', p_as_of_date,
+    'accrued_days', accrued,
+    'used_days', used,
+    'available_days', available,
+    'progressive_days', 0
+  );
+END
+$function$;
+
 -- Vacation balances are compensation-related employee data. Non-admin users
 -- must not fetch the whole team's balances; the UI hides this panel for them.
 REVOKE ALL ON FUNCTION public.people_vacation_balances_limited(uuid) FROM PUBLIC, anon, authenticated;
