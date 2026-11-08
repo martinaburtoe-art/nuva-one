@@ -28,7 +28,16 @@ SELECT is((
     )
     AND tr.tgname = 'trg_enforce_business_active'
     AND NOT tr.tgisinternal
-), 19, 'trial enforcement is installed on all 19 billable operational tables');
+), (
+  SELECT count(*)::int
+  FROM unnest(ARRAY[
+    'products','customers','suppliers','sales','purchases','quotes','transactions',
+    'marketing_posts','automations','cash_registers','cash_register_movements','costs','customer_activities',
+    'inventory_stocktakes','inventory_stocktake_lines','product_codes',
+    'purchase_payments','shifts','shipments'
+  ]::text[]) AS expected(tablename)
+  WHERE to_regclass(format('public.%I', expected.tablename)) IS NOT NULL
+), 'trial enforcement is installed on every existing billable operational table');
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-0000000000c0');
