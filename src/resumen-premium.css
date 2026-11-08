@@ -254,14 +254,6 @@
   font-weight:750!important;
   letter-spacing:.12em!important;
 }
-.nuva-resumen-canvas .nuva-resumen-balance-mark {
-  width:5px!important;
-  height:5px!important;
-  border-radius:50%!important;
-  background:var(--nr-gold)!important;
-  border-color:var(--nr-gold)!important;
-  background:#b99a5d!important;
-}
 .nuva-resumen-canvas .nuva-resumen-balance-card>strong {
   position:relative!important;
   z-index:1!important;
