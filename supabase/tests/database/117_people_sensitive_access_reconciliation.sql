@@ -35,7 +35,7 @@ SELECT is((
       'people_gratification_settlements','people_payroll_liquidations')
     AND cmd='SELECT' AND permissive='PERMISSIVE'
     AND roles @> ARRAY['authenticated'::name]
-    AND policyname='people_member_select'
+    AND policyname IN ('people_member_select','people_gratification_settings_select','people_gratification_settlements_select')
 ), 0, 'no broad member SELECT policy remains on sensitive tables');
 
 -- Staff/viewer must not write employee PII, contracts or documents.
@@ -102,7 +102,10 @@ SELECT is((
   JOIN pg_namespace n ON n.oid=c.relnamespace
   WHERE n.nspname='public' AND c.relkind='r'
     AND c.relname IN ('people_employees','people_contracts','people_documents',
-      'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs')
+      'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
+      'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
+      'people_terminations','people_vacation_balances','people_gratification_settings',
+      'people_gratification_settlements','people_payroll_liquidations')
     AND c.relrowsecurity
 ), 16, 'RLS remains enabled on all sixteen sensitive tables');
 
