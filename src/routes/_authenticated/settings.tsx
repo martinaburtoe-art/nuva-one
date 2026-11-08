@@ -269,6 +269,10 @@ function BillingTab() {
         <Button className="mt-4" variant="outline" disabled={loading} onClick={() => manageSubscription("cancel")}>
           {loading ? "Procesando…" : "Cancelar suscripción en Mercado Pago"}
         </Button>
+      ) : status === "pending" && billingProvider === "mercadopago" ? (
+        <Button className="mt-4" variant="outline" disabled={loading} onClick={() => manageSubscription("cancel")}>
+          {loading ? "Procesando…" : "Cancelar intento pendiente"}
+        </Button>
       ) : status === "pending" ? (
         <Button className="mt-4" variant="outline" disabled>
           Pago pendiente de confirmación
