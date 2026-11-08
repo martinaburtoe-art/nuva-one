@@ -21,7 +21,7 @@
 
 - `NUVA_INNGEST_AGENCY_ENABLED` defaults to disabled. Workers return before accessing Supabase unless this value is exactly `true`.
 - `NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM` defaults to `false`. Without a task-scoped UUID, workers remain blocked unless this second flag is explicitly set to `true` after a separate rollout approval.
-- The existing GitHub Actions worker remains available as a fallback during certification. Both systems use the same Supabase claim/lease RPCs, so they cannot claim the same task.
+- The GitHub Actions durable worker remains a fallback, but it also claims the global queue through worker-control. It is skipped unless the separate repository variable `NUVA_AGENCY_DURABLE_ALLOW_GENERAL_CLAIM=true`; keep that variable unset during one-task Inngest certification. Both systems use the same Supabase claim/lease RPCs, so they cannot claim the same task.
 - The constructor, QA and release specialists remain on GitHub Actions because they depend on local syntax/test/git execution. They are intentionally not registered as Vercel Inngest workers.
 - The migrations add the task-scoped claim RPC, replace MD5-derived lease tokens with 256-bit CSPRNG tokens in both claim RPCs, and make task finalization idempotent for durable retries. They do not change RLS, inventory, billing or business records.
 
@@ -31,7 +31,8 @@
 - `INNGEST_SIGNING_KEY`: required to sync and authenticate the hosted Inngest endpoint.
 - `NUVA_INNGEST_AGENCY_ENABLED`: keep unset or `false` until the Inngest app has synced and the task-scoped test is prepared; set to `true` only for the short certification window.
 - `NUVA_INNGEST_AGENCY_TEST_TASK_ID`: exact UUID used to restrict all worker claims to one certification task; never point it at an existing business task.
-- `NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM`: keep `false` through certification; set to `true` only after a separate explicit approval for unrestricted queue processing.
+- `NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM`: keep `false` through certification; set to `true` only after a separate explicit approval for unrestricted Inngest queue processing.
+- `NUVA_AGENCY_DURABLE_ALLOW_GENERAL_CLAIM`: GitHub repository variable, keep unset/`false`; set to `true` only for an explicitly approved global-queue fallback run.
 - `INNGEST_EVENT_KEY`: not required for the current cron-only workers. Add it only when Nüva begins sending outbound events from the application.
 
 ## Activation gate
@@ -45,4 +46,4 @@
 7. Immediately restore `NUVA_INNGEST_AGENCY_ENABLED=false` and remove `NUVA_INNGEST_AGENCY_TEST_TASK_ID`.
 8. Do not switch to unrestricted queue processing until a separate rollout review approves it and `NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM=true` is deliberately set.
 
-Do not remove the GitHub Actions fallback until the Inngest workers have passed the production observation window and rollback has been tested.
+Do not remove the GitHub Actions fallback until the Inngest workers have passed the production observation window and rollback has been tested. Keep both global-claim flags disabled until the corresponding rollout is explicitly approved.
