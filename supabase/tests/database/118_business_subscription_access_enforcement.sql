@@ -1,0 +1,49 @@
+-- Subscription-aware enforcement for the 15-day Starter trial.
+BEGIN;
+SELECT plan(10);
+
+INSERT INTO auth.users (id)
+VALUES ('00000000-0000-0000-0000-0000000000c0');
+
+INSERT INTO public.businesses (
+  id, name, owner_id, plan, created_at, subscription_status, billing_provider
+)
+VALUES
+  ('00000000-0000-0000-0000-0000000000c1', 'Expired Starter', '00000000-0000-0000-0000-0000000000c0', 'starter', now() - interval '20 days', 'active', 'none'),
+  ('00000000-0000-0000-0000-0000000000c2', 'Trial Starter', '00000000-0000-0000-0000-0000000000c0', 'starter', now() - interval '2 days', 'active', 'none'),
+  ('00000000-0000-0000-0000-0000000000c3', 'Paid Starter', '00000000-0000-0000-0000-0000000000c0', 'starter', now() - interval '90 days', 'active', 'mercadopago'),
+  ('00000000-0000-0000-0000-0000000000c4', 'Pro Demo', '00000000-0000-0000-0000-0000000000c0', 'pro', now() - interval '90 days', 'active', 'none'),
+  ('00000000-0000-0000-0000-0000000000c5', 'Paused Pro', '00000000-0000-0000-0000-0000000000c0', 'pro', now() - interval '90 days', 'paused', 'mercadopago'),
+  ('00000000-0000-0000-0000-0000000000c6', 'Cancelled Pro', '00000000-0000-0000-0000-0000000000c0', 'pro', now() - interval '90 days', 'canceled', 'mercadopago'),
+  ('00000000-0000-0000-0000-0000000000c7', 'Pending Starter', '00000000-0000-0000-0000-0000000000c0', 'starter', now() - interval '90 days', 'pending', 'mercadopago');
+
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c1'), false, 'expired unpaid Starter is inactive');
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c2'), true, 'Starter remains active within its 15-day trial');
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c3'), true, 'paid Starter remains active after day 15');
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c4'), true, 'active no-payment Pro demo remains available');
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c5'), false, 'paused Pro subscription is inactive');
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c6'), false, 'cancelled Pro subscription is inactive');
+SELECT is(public.business_is_active('00000000-0000-0000-0000-0000000000c7'), false, 'pending paid subscription is not treated as active');
+
+SELECT lives_ok(
+  $$INSERT INTO public.products (business_id, name, price, stock)
+    VALUES ('00000000-0000-0000-0000-0000000000c3', 'Paid Starter product', 1000, 10)$$,
+  'paid Starter can continue creating products after day 15'
+);
+SELECT throws_ok(
+  $$INSERT INTO public.products (business_id, name, price, stock)
+    VALUES ('00000000-0000-0000-0000-0000000000c5', 'Paused Pro product', 1000, 10)$$,
+  '42501',
+  'Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One.',
+  'paused Pro cannot continue billable writes'
+);
+SELECT throws_ok(
+  $$INSERT INTO public.products (business_id, name, price, stock)
+    VALUES ('00000000-0000-0000-0000-0000000000c6', 'Cancelled Pro product', 1000, 10)$$,
+  '42501',
+  'Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One.',
+  'cancelled Pro cannot continue billable writes'
+);
+
+SELECT * FROM finish();
+ROLLBACK;
