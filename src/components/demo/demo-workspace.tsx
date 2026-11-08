@@ -203,7 +203,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
 
             {active === "dashboard" && <DashboardView revenue={revenue} lowStock={lowStock.length} customers={customers.length} simulatedSales={simulatedSales} onSale={simulateSale} onSelect={select} />}
             {active === "pos" && <PosView onSale={simulateSale} stock={products.find((p) => p.id === "coffee")?.stock ?? 0} />}
-            {active === "sales" && <SalesView revenue={revenue} onSale={simulateSale} simulatedSales={simulatedSales} sales={sales} />}
+            {active === "sales" && <SalesView onSale={simulateSale} simulatedSales={simulatedSales} sales={sales} />}
             {active === "customers" && <CustomersView customers={customers} />}
             {active === "billing" && <BillingView emitted={emittedDtes} onEmit={emitDte} />}
             {active === "purchases" && <PurchasesView simulatedPurchases={simulatedPurchases} onPurchase={() => { purchase("beans", 5); setNotice("Reposición simulada recibida: aumentó el stock de Granos Colombia y disminuyó la caja de la demo."); trackDemoEvent("simulated_purchase", { product: "beans", quantity: 5 }); }} />}
@@ -238,7 +238,7 @@ function DashboardView({ revenue, lowStock, customers, simulatedSales, onSale, o
 
 function PosView({ onSale, stock }: { onSale: () => void; stock: number }) { return <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]"><Card className="p-5"><SectionTitle icon={<Calculator />} title="Caja / POS" subtitle="Vende, cobra y controla tu caja desde un solo lugar" /><div className="mt-5 grid gap-3 sm:grid-cols-2">{productNames.slice(0, 4).map(([name, cat, , , price]) => <button key={name} onClick={onSale} className="rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5"><div className="flex items-center justify-between"><span className="font-medium">{name}</span><Plus className="h-4 w-4 text-primary" /></div><div className="mt-1 text-xs text-muted-foreground">{cat}</div><div className="mt-3 font-semibold">{money(price)}</div></button>)}</div></Card><Card className="p-5"><SectionTitle icon={<ShoppingCart />} title="Venta actual" subtitle="Sesión de demostración" /><div className="mt-6 rounded-xl bg-secondary/40 p-4"><div className="flex justify-between"><span>Café de especialidad 250 g</span><strong>{money(8990)}</strong></div><div className="mt-2 text-xs text-muted-foreground">Stock disponible: {stock}</div><div className="my-4 border-t" /><div className="flex justify-between text-lg font-bold"><span>Total</span><span>{money(8990)}</span></div><Button className="mt-4 w-full" onClick={onSale}>Confirmar venta simulada</Button></div></Card></div>; }
 
-function SalesView({ revenue, onSale, simulatedSales, sales }: { revenue: number; onSale: () => void; simulatedSales: number; sales: typeof DEMO_SALES }) {
+function SalesView({ onSale, simulatedSales, sales }: { onSale: () => void; simulatedSales: number; sales: typeof DEMO_SALES }) {
   const averageTicket = sales.length
     ? sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length
     : 0;
