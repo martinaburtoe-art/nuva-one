@@ -1,6 +1,6 @@
 -- Nüva People sensitive-access reconciliation (pgTAP)
 BEGIN;
-SELECT plan(17);
+SELECT plan(19);
 
 -- All eighteen sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
@@ -87,6 +87,23 @@ SELECT ok(NOT has_function_privilege('authenticated','public.people_terminations
 SELECT ok(pg_get_functiondef('public.people_employees_limited(uuid)'::regprocedure) NOT LIKE '%email%', 'limited employee RPC omits personal email');
 SELECT ok(pg_get_functiondef('public.people_leave_requests_limited(uuid)'::regprocedure) NOT LIKE '%reason%', 'limited leave RPC omits free-text reason/health detail');
 SELECT ok(to_regprocedure('public.people_vacation_balances_limited(uuid)') IS NOT NULL, 'limited vacation RPC remains available');
+
+SELECT is((
+  SELECT count(*)::int FROM pg_policies
+  WHERE schemaname='public'
+    AND tablename IN ('people_attendance_events','people_compliance_items','people_leave_requests')
+    AND policyname='people_member_update'
+), 0, 'staff cannot update attendance, compliance or leave records directly');
+
+SELECT is((
+  SELECT count(*)::int FROM pg_policies
+  WHERE schemaname='public'
+    AND tablename IN ('people_attendance_events','people_compliance_items','people_leave_requests')
+    AND cmd='UPDATE' AND qual LIKE '%private.has_business_role%'
+    AND qual LIKE '%owner%' AND qual LIKE '%admin%'
+    AND with_check LIKE '%private.has_business_role%'
+    AND with_check LIKE '%owner%' AND with_check LIKE '%admin%'
+), 3, 'attendance, compliance and leave updates are owner/admin only');
 
 -- Owner/admin delete policies are preserved.
 SELECT is((
