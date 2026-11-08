@@ -32,7 +32,7 @@
 - `NUVA_INNGEST_AGENCY_ENABLED`: keep unset or `false` until the Inngest app has synced and the task-scoped test is prepared; set to `true` only for the short certification window.
 - `NUVA_INNGEST_AGENCY_TEST_TASK_ID`: exact UUID used to restrict all worker claims to one certification task; never point it at an existing business task.
 - `NUVA_INNGEST_AGENCY_ALLOW_GENERAL_CLAIM`: keep `false` through certification; set to `true` only after a separate explicit approval for unrestricted Inngest queue processing.
-- `NUVA_AGENCY_DURABLE_ALLOW_GENERAL_CLAIM`: GitHub repository variable, keep unset/`false`; set to `true` only for an explicitly approved global-queue fallback run.
+- `NUVA_AGENCY_DURABLE_ALLOW_GENERAL_CLAIM`: GitHub repository variable **and** Supabase Edge Function secret; keep both unset/`false`. Both must be exactly `true` for the GitHub durable worker to claim the global queue. Otherwise `nuva-agency-worker-control` returns HTTP 423 before calling the claim RPC.
 - `INNGEST_EVENT_KEY`: not required for the current cron-only workers. Add it only when Nüva begins sending outbound events from the application.
 
 ## Activation gate
