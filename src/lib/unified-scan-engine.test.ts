@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { UnifiedScanEngine } from "./unified-scan-engine";
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("UnifiedScanEngine", () => {
   it("emits native scans through the same normalized contract", () => {
     const onDetect = vi.fn();
