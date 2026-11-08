@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@6";
-import { AGENCY_WORKER_AGENT_IDS, AGENCY_WORKER_AUDIENCE, isTrustedAgencyWorkerClaims } from "./worker-claims.ts";
+import { AGENCY_WORKER_AGENT_IDS, AGENCY_WORKER_AUDIENCE, isGeneralAgencyClaimEnabled, isTrustedAgencyWorkerClaims } from "./worker-claims.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json", "cache-control": "no-store", "access-control-allow-origin": "*" }
@@ -76,6 +76,9 @@ Deno.serve(async (request) => {
 
     if (auth.kind === "worker") {
       if (action === "claim_task") {
+        if (!isGeneralAgencyClaimEnabled(Deno.env.get("NUVA_AGENCY_DURABLE_ALLOW_GENERAL_CLAIM"))) {
+          return json({ error: "GENERAL_QUEUE_CLAIM_DISABLED" }, 423);
+        }
         const { data: initialData, error } = await client.rpc("agency_claim_task", { p_agent_id: auth.agentId, p_lease_seconds: body.leaseSeconds ?? 21600 });
         if (error) throw error;
         // An empty queue is an idle worker, not permission to manufacture another task.
