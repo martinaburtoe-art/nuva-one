@@ -56,3 +56,58 @@ CREATE POLICY people_admin_update ON public.people_documents
   WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 
 COMMIT;
+
+-- Keep non-admin operational RPC payloads minimal and remove unnecessary PII.
+CREATE OR REPLACE FUNCTION public.people_employees_limited(p_business_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private
+AS $$
+DECLARE v_member boolean;
+BEGIN
+  SELECT private.is_business_member(p_business_id, auth.uid()) INTO v_member;
+  IF NOT v_member THEN
+    RAISE EXCEPTION 'No tiene acceso a este negocio' USING ERRCODE = '42501';
+  END IF;
+  RETURN COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+      'id', id, 'first_name', first_name, 'last_name', last_name,
+      'job_title', job_title, 'department', department,
+      'employment_status', employment_status
+    ))
+    FROM public.people_employees
+    WHERE business_id = p_business_id
+    ORDER BY last_name, first_name
+  ), '[]'::jsonb);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.people_leave_requests_limited(p_business_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private
+AS $$
+DECLARE v_member boolean;
+BEGIN
+  SELECT private.is_business_member(p_business_id, auth.uid()) INTO v_member;
+  IF NOT v_member THEN
+    RAISE EXCEPTION 'No tiene acceso a este negocio' USING ERRCODE = '42501';
+  END IF;
+  RETURN COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+      'id', id, 'employee_id', employee_id, 'leave_type', leave_type,
+      'start_date', start_date, 'end_date', end_date, 'days', days,
+      'status', status, 'created_at', created_at
+    ))
+    FROM public.people_leave_requests
+    WHERE business_id = p_business_id
+    ORDER BY created_at DESC
+    LIMIT 500
+  ), '[]'::jsonb);
+END;
+$$;
+
+-- Termination history is owner/admin-only; non-admin UI uses no RPC for it.
+REVOKE ALL ON FUNCTION public.people_terminations_limited(uuid) FROM PUBLIC, anon, authenticated;
