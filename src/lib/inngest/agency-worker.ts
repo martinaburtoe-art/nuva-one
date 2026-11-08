@@ -169,6 +169,8 @@ export async function runInngestAgencyWorker(
       p_result: {
         engine: "inngest",
         specialist: agentId,
+        sourceRevision: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+        sourceEnvironment: process.env.VERCEL_ENV ?? "unknown",
         verdict,
         evidence,
         errors,
