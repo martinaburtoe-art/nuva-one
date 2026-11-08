@@ -89,13 +89,13 @@ function Dashboard() {
 
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
-    (allTx ?? []).forEach((t: any) => t.category && set.add(t.category));
+    (allTx ?? []).forEach((t) => t.category && set.add(t.category));
     return Array.from(set).sort().map((c) => ({ value: c, label: c }));
   }, [allTx]);
 
 
   const chartData = useMemo(() => {
-    const rows = (allTx ?? []).filter((r: any) => {
+    const rows = (allTx ?? []).filter((r) => {
       if (isoFrom && r.tx_date < isoFrom) return false;
       if (isoTo && r.tx_date > isoTo) return false;
       if (categories.length > 0 && !categories.includes(r.category)) return false;
@@ -103,7 +103,7 @@ function Dashboard() {
     });
     if (isoFrom || isoTo) {
       const byDay: Record<string, { fecha: string; ingresos: number; gastos: number }> = {};
-      rows.forEach((r: any) => {
+      rows.forEach((r) => {
         const key = r.tx_date;
         if (!byDay[key]) byDay[key] = { fecha: new Date(key + "T00:00:00").toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }), ingresos: 0, gastos: 0 };
         if (r.type === "income") byDay[key].ingresos += Number(r.amount); else byDay[key].gastos += Number(r.amount);
@@ -116,7 +116,7 @@ function Dashboard() {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       byMonth[`${d.getFullYear()}-${d.getMonth()}`] = { mes: d.toLocaleDateString("es-CL", { month: "short" }), ingresos: 0, gastos: 0 };
     }
-    rows.forEach((r: any) => {
+    rows.forEach((r) => {
       // Fecha local (no UTC): "2026-08-01" no debe agruparse bajo julio en UTC-4.
       const [y, m] = r.tx_date.split("-").map(Number);
       const key = `${y}-${m - 1}`;
