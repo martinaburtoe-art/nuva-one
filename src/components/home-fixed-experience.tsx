@@ -74,14 +74,14 @@ export function HomeFixedExperience() {
       }
     };
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") play();
+    };
+
     const events = ["loadedmetadata", "loadeddata", "canplay", "canplaythrough"];
     events.forEach((event) => video.addEventListener(event, play));
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("pageshow", play);
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") play();
-    };
 
     // No forzar video.load(): el navegador ya recupera el buffer y un reload
     // reinicia la descarga completa, duplicando tráfico en conexiones móviles.
