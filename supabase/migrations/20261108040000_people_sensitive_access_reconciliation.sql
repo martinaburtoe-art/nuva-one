@@ -24,6 +24,9 @@ CREATE POLICY people_attendance_select_owner_admin ON public.people_attendance_e
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
 CREATE POLICY people_compliance_select_owner_admin ON public.people_compliance_items
   FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+DROP POLICY IF EXISTS people_payroll_inputs_select ON public.people_payroll_inputs;
+DROP POLICY IF EXISTS people_terminations_select ON public.people_terminations;
+DROP POLICY IF EXISTS people_vacation_select ON public.people_vacation_balances;
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_inputs;
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_postings;
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_runs;
