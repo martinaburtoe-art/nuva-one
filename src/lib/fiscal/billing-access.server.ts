@@ -2,6 +2,8 @@ type BillingBusiness = {
   id: string;
   name: string;
   owner_id: string | null;
+  plan: string;
+  created_at: string;
   subscription_status: string | null;
   billing_provider: string | null;
   mercadopago_preapproval_id: string | null;
@@ -27,7 +29,7 @@ export async function requireBusinessBillingManager(
 
   const { data: business, error: businessError } = await client
     .from("businesses")
-    .select("id, name, owner_id, subscription_status, billing_provider, mercadopago_preapproval_id")
+    .select("id, name, owner_id, plan, created_at, subscription_status, billing_provider, mercadopago_preapproval_id")
     .eq("id", businessId)
     .maybeSingle();
 
