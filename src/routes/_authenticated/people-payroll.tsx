@@ -25,10 +25,10 @@ function PeoplePayroll() {
   const { data: employees = [] } = useBizList<any>("people_employees", { order: "last_name", enabled: isAuthorized });
   const { data: contracts = [] } = useBizList<any>("people_contracts", { order: "start_date", enabled: isAuthorized });
   const { data: periods = [] } = useBizList<any>("people_payroll_periods", { order: "period_year", enabled: isAuthorized });
-  const { data: inputs = [] } = useBizList<any>("people_payroll_inputs");
-  const { data: items = [] } = useBizList<any>("people_payroll_items");
-  const { data: liquidations = [] } = useBizList<any>("people_payroll_liquidations");
-  const { data: lre = [] } = useBizList<any>("people_lre_rows");
+  const { data: inputs = [] } = useBizList<any>("people_payroll_inputs", { enabled: isAuthorized });
+  const { data: items = [] } = useBizList<any>("people_payroll_items", { enabled: isAuthorized });
+  const { data: liquidations = [] } = useBizList<any>("people_payroll_liquidations", { enabled: isAuthorized });
+  const { data: lre = [] } = useBizList<any>("people_lre_rows", { enabled: isAuthorized });
   const queryClient = useQueryClient();
   const { data: params = [] } = useQuery({
     queryKey: ["people_legal_parameters"],
