@@ -13,6 +13,7 @@
 - Nine read-only Agency specialists (finance, sales, supply, people, growth, orchestrator, compliance, security and UX) run on a five-minute cron.
 - Each specialist claims at most one task through `public.agency_claim_task`, executes the registered read-only specialist, and persists its result through `public.agency_finish_task`.
 - Claims use the existing 30-minute Supabase lease. The database's atomic claim and unique active-lease constraints remain authoritative.
+- Both general and task-scoped claim RPCs issue 256-bit cryptographically random lease tokens; claim RPC execution remains service-role-only.
 - For certification, set `NUVA_INNGEST_AGENCY_TEST_TASK_ID` to one exact UUID. Workers then call `agency_claim_task_by_id`, which can claim, recover and lease only that task; it never sweeps unrelated leases or claims another queued task. Remove the variable after the one-task test. Leave it unset for the normal queue path.
 - Inngest limits Agency work to five concurrent steps globally and one active step per specialist.
 
