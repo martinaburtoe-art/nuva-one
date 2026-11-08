@@ -16,6 +16,38 @@ DROP POLICY IF EXISTS people_member_select ON public.people_payroll_periods;
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_postings;
 DROP POLICY IF EXISTS people_member_select ON public.people_payroll_runs;
 
+-- Extend owner/admin-only access to payroll, LRE, leave, termination and
+-- compensation records. Non-admin operational screens use explicitly limited RPCs.
+DROP POLICY IF EXISTS people_member_select ON public.people_payroll_inputs;
+DROP POLICY IF EXISTS people_member_select ON public.people_payroll_postings;
+DROP POLICY IF EXISTS people_member_select ON public.people_payroll_runs;
+DROP POLICY IF EXISTS people_member_select ON public.people_lre_exports;
+DROP POLICY IF EXISTS people_member_select ON public.people_lre_rows;
+DROP POLICY IF EXISTS people_member_select ON public.people_leave_requests;
+DROP POLICY IF EXISTS people_member_select ON public.people_terminations;
+DROP POLICY IF EXISTS people_member_select ON public.people_vacation_balances;
+DROP POLICY IF EXISTS people_gratification_settings_select ON public.people_gratification_settings;
+DROP POLICY IF EXISTS people_gratification_settlements_select ON public.people_gratification_settlements;
+
+CREATE POLICY people_payroll_inputs_select_owner_admin ON public.people_payroll_inputs
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_payroll_postings_select_owner_admin ON public.people_payroll_postings
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_payroll_runs_select_owner_admin ON public.people_payroll_runs
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_lre_exports_select_owner_admin ON public.people_lre_exports
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_leave_requests_select_owner_admin ON public.people_leave_requests
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_terminations_select_owner_admin ON public.people_terminations
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_vacation_balances_select_owner_admin ON public.people_vacation_balances
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_gratification_settings_select_owner_admin ON public.people_gratification_settings
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+CREATE POLICY people_gratification_settlements_select_owner_admin ON public.people_gratification_settlements
+  FOR SELECT TO authenticated USING (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role]));
+
 -- Employee records contain personal, health and pension data.
 DROP POLICY IF EXISTS people_member_insert ON public.people_employees;
 DROP POLICY IF EXISTS people_member_update ON public.people_employees;
