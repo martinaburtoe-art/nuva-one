@@ -176,9 +176,10 @@ export const Route = createFileRoute("/api/billing/mercadopago/webhook")({
             let externalReference = String(payment.external_reference ?? authorized?.external_reference ?? "");
             if (!externalReference && preapprovalId) {
               const subscriptionResult = await getMercadoPagoSubscription(config, preapprovalId);
-              if (subscriptionResult.ok && subscriptionResult.data) {
-                externalReference = String(subscriptionResult.data.external_reference ?? "");
+              if (!subscriptionResult.ok || !subscriptionResult.data) {
+                return new Response("Unable to resolve Mercado Pago subscription reference", { status: 502 });
               }
+              externalReference = String(subscriptionResult.data.external_reference ?? "");
             }
             const { businessId } = parseMercadoPagoExternalReference(externalReference);
             if (isValidMercadoPagoBusinessId(businessId)) {
