@@ -71,6 +71,7 @@ function DeferredDemo() {
 
 export function HomeFixedExperience() {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const heroVisibleRef = useRef(false);
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
@@ -82,6 +83,7 @@ export function HomeFixedExperience() {
     video.playsInline = true;
 
     const play = () => {
+      if (!heroVisibleRef.current || document.visibilityState === "hidden") return;
       if (video.paused) {
         void video.play().catch(() => {
           // Reintentos adicionales en eventos de carga/visibilidad.
@@ -97,6 +99,10 @@ export function HomeFixedExperience() {
     let lastTime = video.currentTime;
     let stalledTicks = 0;
     const watchdog = window.setInterval(() => {
+      if (!heroVisibleRef.current || document.visibilityState === "hidden") {
+        if (!video.paused) video.pause();
+        return;
+      }
       if (video.paused || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
         play();
         return;
@@ -131,9 +137,12 @@ export function HomeFixedExperience() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        heroVisibleRef.current = entry.isIntersecting;
         if (entry.isIntersecting) {
           video.muted = true;
           void video.play().catch(() => undefined);
+        } else {
+          video.pause();
         }
       },
       { threshold: 0.01 },
