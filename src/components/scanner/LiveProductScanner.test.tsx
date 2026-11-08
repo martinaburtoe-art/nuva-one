@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { LiveScanner } from "@/lib/live-scanner";
 import { normalizeProductCode } from "@/lib/product-resolver";
 import { validateScannedCode } from "@/lib/scanner-code-validation";
