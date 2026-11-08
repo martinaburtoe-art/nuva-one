@@ -27,3 +27,46 @@ $$;
 
 COMMENT ON FUNCTION public.business_is_active(uuid) IS
   'Returns whether billable business writes are allowed: active paid subscriptions, Pro entitlement during active/pending checkout, or an unexpired Starter trial during active/pending checkout.';
+
+
+-- The original trial-hardening migration is present in the repository but is
+-- absent from the production migration ledger and its trigger/function are not
+-- installed there. Recreate the enforcement boundary here instead of assuming
+-- a historical migration ran successfully.
+CREATE OR REPLACE FUNCTION public.enforce_business_active()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT COALESCE(public.business_is_active(NEW.business_id), false) THEN
+    RAISE EXCEPTION 'Tu prueba gratuita de 15 días terminó. Actualiza a Pro para seguir usando Nüva One.'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Only install triggers on billable operational tables that actually exist
+-- in this schema. Do not reference legacy marketing/automation tables that
+-- are not part of the current production schema.
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'products', 'customers', 'suppliers', 'sales',
+    'purchases', 'quotes', 'transactions'
+  ]
+  LOOP
+    IF to_regclass(format('public.%I', t)) IS NOT NULL THEN
+      EXECUTE format('DROP TRIGGER IF EXISTS trg_enforce_business_active ON public.%I', t);
+      EXECUTE format(
+        'CREATE TRIGGER trg_enforce_business_active BEFORE INSERT ON public.%I FOR EACH ROW EXECUTE FUNCTION public.enforce_business_active()',
+        t
+      );
+    END IF;
+  END LOOP;
+END
+$$;
