@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEMO_BUSINESS, DEMO_CUSTOMERS, DEMO_PRODUCTS, money } from "./demo-data";
 import { demoAiAnswer } from "./demo-ai";
-import { DEMO_STEPS } from "@/components/demo/guided-tour";
+import { DEMO_STEPS } from "@/components/demo/guided-tour-steps";
 
 describe("guided demo", () => {
   it("uses the fictional Alma Café business", () => expect(DEMO_BUSINESS.name).toBe("Alma Café"));

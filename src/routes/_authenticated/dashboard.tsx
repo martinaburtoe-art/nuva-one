@@ -12,6 +12,8 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
+import { buildDashboardMetrics } from "@/lib/dashboard/metrics";
+import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
@@ -38,18 +40,10 @@ function Dashboard() {
       const [sales, expenses, products, salesCount] = await Promise.all([
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income"),
         supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense"),
-        supabase.from("products").select("stock, price, low_stock_threshold, reorder_point").eq("business_id", bid),
+        supabase.from("products").select("stock, cost, low_stock_threshold, reorder_point").eq("business_id", bid),
         supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
-      const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const inventoryValue = (products.data ?? []).reduce((s, r: any) => s + Number(r.stock) * Number(r.price), 0);
-      const lowStockCount = (products.data ?? []).filter((r: any) => {
-        const stock = Number(r.stock ?? 0);
-        const threshold = Number(r.low_stock_threshold ?? r.reorder_point ?? 0);
-        return threshold > 0 && stock <= threshold;
-      }).length;
-      return { income, expense, net: income - expense, inventoryValue, salesCount: salesCount.count ?? 0, productsCount: (products.data ?? []).length, lowStockCount };
+      return buildDashboardMetrics({ sales, expenses, products, salesCount });
     },
   });
 
@@ -95,21 +89,21 @@ function Dashboard() {
 
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
-    (allTx ?? []).forEach((t: any) => t.category && set.add(t.category));
+    (allTx ?? []).forEach((t) => t.category && set.add(t.category));
     return Array.from(set).sort().map((c) => ({ value: c, label: c }));
   }, [allTx]);
 
 
   const chartData = useMemo(() => {
-    const rows = (allTx ?? []).filter((r: any) => {
+    const rows = (allTx ?? []).filter((r) => {
       if (isoFrom && r.tx_date < isoFrom) return false;
       if (isoTo && r.tx_date > isoTo) return false;
-      if (categories.length > 0 && !categories.includes(r.category)) return false;
+      if (categories.length > 0 && (!r.category || !categories.includes(r.category))) return false;
       return true;
     });
     if (isoFrom || isoTo) {
       const byDay: Record<string, { fecha: string; ingresos: number; gastos: number }> = {};
-      rows.forEach((r: any) => {
+      rows.forEach((r) => {
         const key = r.tx_date;
         if (!byDay[key]) byDay[key] = { fecha: new Date(key + "T00:00:00").toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }), ingresos: 0, gastos: 0 };
         if (r.type === "income") byDay[key].ingresos += Number(r.amount); else byDay[key].gastos += Number(r.amount);
@@ -122,7 +116,7 @@ function Dashboard() {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       byMonth[`${d.getFullYear()}-${d.getMonth()}`] = { mes: d.toLocaleDateString("es-CL", { month: "short" }), ingresos: 0, gastos: 0 };
     }
-    rows.forEach((r: any) => {
+    rows.forEach((r) => {
       // Fecha local (no UTC): "2026-08-01" no debe agruparse bajo julio en UTC-4.
       const [y, m] = r.tx_date.split("-").map(Number);
       const key = `${y}-${m - 1}`;
@@ -140,13 +134,22 @@ function Dashboard() {
       if (error) throw error;
       localStorage.setItem("novaflow.active_business_id", data);
       window.location.assign("/dashboard");
-    } catch (error: any) {
-      console.error(error);
+    } catch (error) {
+      console.error("[dashboard] No se pudo preparar la empresa demo:", error);
+      toast.error("No pudimos preparar la demo", {
+        description: "Inténtalo nuevamente. Tu negocio actual no fue modificado.",
+      });
     } finally {
       setSeedingDemo(false);
     }
   }
   const attentionCount = (kpis?.lowStockCount ?? 0) + ((kpis?.net ?? 0) < 0 ? 1 : 0);
+  const attentionDetails = [
+    (kpis?.lowStockCount ?? 0) > 0
+      ? `${kpis!.lowStockCount} productos están en su nivel de reposición o por debajo.`
+      : null,
+    (kpis?.net ?? 0) < 0 ? "El resultado acumulado está bajo cero." : null,
+  ].filter(Boolean).join(" ");
 
   return (
     <ModuleGuard module="dashboard">
@@ -161,7 +164,7 @@ function Dashboard() {
           <div className="nuva-resumen-heading">
             <div>
               <p className="nuva-resumen-overline">UNA VISIÓN MÁS CLARA</p>
-              <h1>Todo en equilibrio.</h1>
+              <h1>Tu negocio, con claridad.</h1>
               <p className="nuva-resumen-subtitle">El estado de tu negocio, con la claridad que necesitas para avanzar.</p>
             </div>
             <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
@@ -185,7 +188,7 @@ function Dashboard() {
             <div className="nuva-resumen-onboarding-copy">
               <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR INDICADORES</span>
               <h2>No se pudieron cargar los indicadores del negocio</h2>
-              <p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p>
+              <p>No pudimos consultar todos los indicadores del negocio. Intenta nuevamente.</p>
               <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
             </div>
           </div>
@@ -196,7 +199,7 @@ function Dashboard() {
             <div className="nuva-resumen-onboarding-copy">
               <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR MOVIMIENTOS</span>
               <h2>No se pudo cargar el historial de transacciones</h2>
-              <p>{String(txError?.message ?? txError ?? "Error desconocido")}</p>
+              <p>No pudimos consultar los movimientos financieros. Intenta nuevamente; si el problema continúa, contacta a soporte.</p>
               <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
             </div>
           </div>
@@ -208,7 +211,7 @@ function Dashboard() {
               <span className="nuva-resumen-section-label"><Sparkles className="h-4 w-4" /> PRIMEROS PASOS</span>
               <h2>Tu espacio está listo.</h2>
               <p>Comienza con {goalsLabel(onboardingFocus).toLowerCase()} y convierte tus operaciones en una visión clara del negocio.</p>
-              <Link to={focusAction.href}><Button size="sm">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
+              <Button asChild size="sm"><Link to={focusAction.href}>{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Link></Button>
             </div>
             <div className="nuva-resumen-steps"><ActivationStep done title="Negocio creado" /><ActivationStep done={hasActivity} title="Primera operación" /><ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" /><ActivationStep done={false} title="Primer análisis" /></div>
           </Card>
@@ -216,21 +219,26 @@ function Dashboard() {
 
         <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
           <article className="nuva-resumen-device nuva-resumen-device-main">
-            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Todo en equilibrio.</h2><span>Una mirada clara a tu negocio.</span></div>
+            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, CON CLARIDAD</span><span className="nuva-resumen-notification">⌁</span></div>
+            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Tu negocio, con claridad.</h2><span>Una mirada clara a tu negocio.</span></div>
             <div className="nuva-resumen-balance-card">
-              <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span><span className="nuva-resumen-balance-mark">↗</span></div>
+              <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span></div>
               <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
               <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Requiere atención" : "Resultado acumulado"}</p>
-              <svg className="nuva-resumen-balance-sparkline" viewBox="0 0 220 49" fill="none" aria-hidden="true"><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3 V49 H0Z" fill="currentColor" opacity=".08"/></svg>
+              
             </div>
             <div className="nuva-resumen-device-money-grid">
               <div><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
               <div><span><i className="nuva-resumen-dot-indigo" /> Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
             </div>
-            <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR ESTIMADO DE INVENTARIO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
+            <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR DEL INVENTARIO · A COSTO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
             <div className="nuva-resumen-status-card">
-              {kpis === undefined ? (
+              {kpisError ? (
+                <>
+                  <span className="nuva-resumen-status-symbol"><ShieldAlert className="h-4 w-4" /></span>
+                  <div><strong>Indicadores no disponibles</strong><p>Reintenta la consulta para recuperar el resumen.</p></div>
+                </>
+              ) : kpis === undefined ? (
                 <>
                   <span className="nuva-resumen-status-symbol"><i className="nuva-resumen-dot-gold" /></span>
                   <div><strong>—</strong><p>Esperando datos del negocio…</p></div>
@@ -238,7 +246,7 @@ function Dashboard() {
               ) : (
                 <>
                   <span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span>
-                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div>
+                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} puntos de atención`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : attentionDetails}</p></div>
                 </>
               )}
               <i className="nuva-resumen-status-light" />

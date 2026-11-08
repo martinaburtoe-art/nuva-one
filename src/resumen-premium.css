@@ -254,14 +254,6 @@
   font-weight:750!important;
   letter-spacing:.12em!important;
 }
-.nuva-resumen-canvas .nuva-resumen-balance-mark {
-  width:5px!important;
-  height:5px!important;
-  border-radius:50%!important;
-  background:var(--nr-gold)!important;
-  border-color:var(--nr-gold)!important;
-  background:#b99a5d!important;
-}
 .nuva-resumen-canvas .nuva-resumen-balance-card>strong {
   position:relative!important;
   z-index:1!important;
@@ -283,16 +275,6 @@
   gap:6px!important;
   font-size:10px!important;
   font-weight:650!important;
-}
-.nuva-resumen-canvas .nuva-resumen-balance-sparkline {
-  position:absolute!important;
-  z-index:0!important;
-  right:-8px!important;
-  bottom:10px!important;
-  width:54%!important;
-  height:70px!important;
-  color:var(--nr-gold)!important;
-  opacity:.7!important;
 }
 .nuva-resumen-canvas .nuva-resumen-device-money-grid {
   display:grid!important;

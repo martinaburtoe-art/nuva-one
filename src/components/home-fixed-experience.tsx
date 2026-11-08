@@ -18,6 +18,7 @@ const BENEFITS = [
 function DeferredDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [demoVisible, setDemoVisible] = useState(true);
 
   useEffect(() => {
     const node = containerRef.current;
@@ -40,11 +41,25 @@ function DeferredDemo() {
   return (
     <div ref={containerRef} className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
       {shouldLoad ? (
-        <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/55" role="status">Preparando la demo interactiva…</div>}>
-          <DemoStateProvider>
-            <DemoWorkspace onExit={() => undefined} />
-          </DemoStateProvider>
-        </Suspense>
+        <>
+          <div className={demoVisible ? "block" : "hidden"}>
+            <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/55" role="status">Preparando la demo interactiva…</div>}>
+              <DemoStateProvider>
+                <DemoWorkspace onExit={() => setDemoVisible(false)} />
+              </DemoStateProvider>
+            </Suspense>
+          </div>
+          {!demoVisible && (
+            <div className="flex min-h-[420px] flex-col items-center justify-center gap-4 bg-white px-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6366F1]/10 text-[#6366F1]"><CheckCircle2 className="h-6 w-6" /></div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#080809]">Demo pausada</h3>
+                <p className="mt-1 max-w-md text-sm leading-6 text-black/55">Tu recorrido quedó cerrado. Puedes volver a explorar el escenario cuando quieras.</p>
+              </div>
+              <button type="button" onClick={() => setDemoVisible(true)} className="inline-flex items-center gap-2 rounded-full bg-[#080809] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2">Volver a la demo <ArrowRight size={15} /></button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex min-h-[420px] items-center justify-center bg-white px-6 text-center text-sm text-black/55">
           La demo interactiva se cargará al acercarte a esta sección.
@@ -56,6 +71,7 @@ function DeferredDemo() {
 
 export function HomeFixedExperience() {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const heroVisibleRef = useRef(false);
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
@@ -67,6 +83,7 @@ export function HomeFixedExperience() {
     video.playsInline = true;
 
     const play = () => {
+      if (!heroVisibleRef.current || document.visibilityState === "hidden") return;
       if (video.paused) {
         void video.play().catch(() => {
           // Reintentos adicionales en eventos de carga/visibilidad.
@@ -82,6 +99,10 @@ export function HomeFixedExperience() {
     let lastTime = video.currentTime;
     let stalledTicks = 0;
     const watchdog = window.setInterval(() => {
+      if (!heroVisibleRef.current || document.visibilityState === "hidden") {
+        if (!video.paused) video.pause();
+        return;
+      }
       if (video.paused || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
         play();
         return;
@@ -116,9 +137,12 @@ export function HomeFixedExperience() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        heroVisibleRef.current = entry.isIntersecting;
         if (entry.isIntersecting) {
           video.muted = true;
           void video.play().catch(() => undefined);
+        } else {
+          video.pause();
         }
       },
       { threshold: 0.01 },
@@ -207,24 +231,24 @@ export function HomeFixedExperience() {
                         </div>
                         <div className="absolute left-[10%] right-[10%] top-[18%] h-0.5 animate-[scan_1.8s_ease-in-out_infinite] bg-fuchsia-500 shadow-[0_0_14px_rgba(217,70,239,0.95)] motion-reduce:animate-none" />
                         <div className="absolute inset-x-7 bottom-5 h-12 rounded-lg bg-white/95 p-2 text-[8px] shadow-lg transition-all duration-500">
-                          <p className="font-bold">Café Molido 250g</p><p className="mt-1 text-slate-500">$5.990 · Stock 24</p>
+                          <p className="font-bold">Café de especialidad 250 g</p><p className="mt-1 text-slate-500">$8.990 · Stock 18</p>
                         </div>
                       </div>
                     </div>
                     <div className="mt-3 rounded-2xl bg-[#11131a] p-3 text-white shadow-lg">
                       <div className="flex items-center gap-2 text-[9px] font-semibold"><CheckCircle2 size={12} className="text-emerald-400" /> Producto identificado</div>
-                      <div className="mt-2 flex justify-between text-[9px] text-white/60"><span>Stock</span><span className="font-bold text-white">24 → 23</span></div>
-                      <div className="mt-1 flex justify-between text-[9px] text-white/60"><span>Venta</span><span className="font-bold text-white">+$5.990</span></div>
+                      <div className="mt-2 flex justify-between text-[9px] text-white/60"><span>Stock</span><span className="font-bold text-white">18 → 17</span></div>
+                      <div className="mt-1 flex justify-between text-[9px] text-white/60"><span>Venta</span><span className="font-bold text-white">+$8.990</span></div>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2">
                 <div className="rounded-full border border-white/80 bg-white/95 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6366F1] shadow-xl backdrop-blur">
-                  <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none" /> CELULAR
+                  <span className="mr-2 inline-block h-2 w-2 rounded-full bg-amber-500" /> CELULAR
                 </div>
                 <div className="rounded-full border border-white/70 bg-[#11131a]/90 px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-lg backdrop-blur">
-                  Live Scan
+                  VALIDACIÓN PENDIENTE
                 </div>
               </div>
             </div>
@@ -232,14 +256,14 @@ export function HomeFixedExperience() {
 
           <div className="order-1 lg:order-2">
             <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#6366F1]">NÜVA ONE · SMART SCAN</p>
-            <h2 className="mt-5 max-w-xl text-5xl font-semibold leading-[0.95] tracking-[-0.045em] sm:text-7xl">Escanea.<br />Vende.<br /><span className="text-[#6366F1]">Controla.</span></h2>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-black/60">Tu teléfono puede convertirse en una herramienta de punto de venta e inventario. Escanea un producto y deja que Nüva One conecte la venta con el stock en segundos.</p>
-            <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-[#11131a]"><ScanLine size={18} className="text-[#6366F1]" /> Sin hardware complejo. Sin equipos adicionales.</div>
+            <h2 className="mt-5 max-w-xl text-5xl font-semibold leading-[0.95] tracking-[-0.045em] sm:text-7xl">Lectura.<br />Identificación.<br /><span className="text-[#6366F1]">Operación.</span></h2>
+            <p className="mt-7 max-w-xl text-lg leading-8 text-black/60">El flujo Smart Scan está implementado para conectar lectura, identificación y operación de productos. Su certificación de extremo a extremo en dispositivos reales sigue pendiente; esta vista es ilustrativa y no demuestra disponibilidad de producción.</p>
+            <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-[#11131a]"><ScanLine size={18} className="text-[#6366F1]" /> Diseñado para cámara móvil y lectores compatibles.</div>
             <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-3">
               {[
-                { step: "01", title: "Escanea", text: "Lee el código del producto directamente desde tu teléfono." },
-                { step: "02", title: "Identifica", text: "Reconoce el producto, precio y stock disponible." },
-                { step: "03", title: "Registra", text: "La venta actualiza el inventario y deja el movimiento disponible para tu operación." },
+                { step: "01", title: "Lee", text: "Recibe el código desde cámara móvil o lector compatible." },
+                { step: "02", title: "Identifica", text: "Resuelve el producto asociado y consulta sus datos." },
+                { step: "03", title: "Conecta", text: "El flujo enlaza la operación con stock y caja; la certificación transaccional sigue pendiente." },
               ].map((item) => (
                 <div key={item.step} className="rounded-2xl border border-black/10 bg-white/70 p-4 shadow-sm backdrop-blur">
                   <p className="text-[10px] font-bold tracking-[0.2em] text-[#6366F1]">{item.step}</p>
@@ -250,16 +274,16 @@ export function HomeFixedExperience() {
             </div>
             <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-[#6366F1]/15 bg-[#6366F1]/[0.05] p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#6366F1]">En segundos</p>
-                <p className="mt-1 text-sm leading-6 text-black/60">Consulta stock y registra una venta desde el mismo flujo, sin cambiar de sistema.</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#6366F1]">Un solo flujo</p>
+                <p className="mt-1 text-sm leading-6 text-black/60">La experiencia conecta lectura, identificación y registro de productos en un mismo recorrido.</p>
               </div>
               <div className="rounded-2xl border border-black/10 bg-white/65 p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-black/45">Más contexto</p>
-                <p className="mt-1 text-sm leading-6 text-black/60">Cada movimiento puede alimentar la visión de ventas, inventario y resultados del negocio.</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-black/45">Validación requerida</p>
+                <p className="mt-1 text-sm leading-6 text-black/60">La disponibilidad real requiere pruebas en dispositivos, POS, stock, caja y auditoría.</p>
               </div>
             </div>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#6366F1] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Probar Nüva One <ArrowRight size={15} /></Link>
+              <Link to="/" hash="demo" className="inline-flex items-center gap-2 rounded-full bg-[#6366F1] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">Ver demo guiada <ArrowRight size={15} /></Link>
             </div>
           </div>
         </div>
@@ -274,9 +298,10 @@ export function HomeFixedExperience() {
             <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#E6C687]">NÜVA ONE · FRENTE A LA FRAGMENTACIÓN</p>
             <h2 className="mt-5 text-4xl font-semibold leading-[0.98] tracking-[-0.04em] sm:text-6xl">Todo lo que tu negocio necesita. <span className="text-[#E6C687]">Sin fragmentarlo.</span></h2>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">Mientras otras soluciones resuelven una parte de la operación, Nüva One conecta el contexto para que ventas, inventario, clientes, caja e inteligencia trabajen juntos.</p>
+            <p className="mt-3 text-xs text-white/45 md:hidden">Desliza horizontalmente para comparar todas las columnas.</p>
           </div>
 
-          <div className="mt-14 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20">
+          <div className="mt-14 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20" role="region" aria-label="Comparativa de capacidades; desplázate horizontalmente para comparar todas las columnas" tabIndex={0}>
             <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 bg-white/[0.025] text-sm">
               <div className="px-5 py-5 font-semibold text-white/55 md:px-7">Lo que necesita tu negocio</div>
               <div className="border-l border-white/10 px-4 py-5 text-center font-bold text-[#E6C687]">Nüva One</div>

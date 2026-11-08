@@ -3,27 +3,11 @@ import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackDemoEvent } from "@/lib/demo/demo-analytics";
 
-export type DemoStep = {
-  title: string;
-  description: string;
-  target: string;
-};
-
-export const DEMO_STEPS: DemoStep[] = [
-  { title: "1. Tu negocio, en un vistazo", description: "Parte con una visión clara de ingresos, gastos, ventas y stock.", target: "overview" },
-  { title: "2. Nüva Score", description: "Convierte tus datos en una lectura simple de la salud del negocio.", target: "score" },
-  { title: "3. Explícame mi negocio", description: "Obtén una explicación accionable sin revisar planillas una por una.", target: "explain" },
-  { title: "4. Inventario inteligente", description: "Detecta quiebres de stock y prioriza qué reponer.", target: "inventory" },
-  { title: "5. Recomendación", description: "Nüva conecta señales para sugerirte una acción concreta.", target: "recommendation" },
-  { title: "6. Una venta mueve todo", description: "Simula una venta y observa cómo cambian stock, ingresos y finanzas.", target: "sale" },
-  { title: "7. Finanzas y CRM conectados", description: "La venta queda reflejada en tus métricas y en la relación con clientes.", target: "finance" },
-  { title: "8. Pregúntale a la IA", description: "Consulta el negocio en lenguaje natural. Esta demo usa IA simulada, sin consumir cuota.", target: "ai" },
-  { title: "9. Tu siguiente paso", description: "Cuando el valor queda claro, puedes crear tu cuenta y comenzar con tus propios datos.", target: "cta" },
-];
+import { DEMO_STEPS } from "./guided-tour-steps";
 
 type Spotlight = { top: number; left: number; width: number; height: number } | null;
 
-export function GuidedTour({ step, onStep, onClose }: { step: number; onStep: (next: number) => void; onClose: () => void }) {
+export function GuidedTour({ step, onStep, onClose, canAdvance = true }: { step: number; onStep: (next: number) => void; onClose: () => void; canAdvance?: boolean }) {
   const current = DEMO_STEPS[step];
   const [spotlight, setSpotlight] = useState<Spotlight>(null);
 
@@ -57,13 +41,13 @@ export function GuidedTour({ step, onStep, onClose }: { step: number; onStep: (n
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Cerrar tour"><X className="h-4 w-4" /></Button>
         </div>
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-1" aria-label={`Paso ${step + 1} de ${DEMO_STEPS.length}`}>
             {DEMO_STEPS.map((item, index) => <span key={item.target} className={`h-1.5 w-5 rounded-full ${index === step ? "bg-primary" : "bg-muted"}`} />)}
           </div>
-          <div className="flex gap-2">
+          <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" disabled={step === 0} onClick={() => onStep(step - 1)}><ArrowLeft className="mr-1 h-4 w-4" />Atrás</Button>
-            <Button size="sm" onClick={() => step === DEMO_STEPS.length - 1 ? onClose() : onStep(step + 1)}>{step === DEMO_STEPS.length - 1 ? "Explorar libremente" : "Siguiente"}<ArrowRight className="ml-1 h-4 w-4" /></Button>
+            <Button size="sm" disabled={!canAdvance} onClick={() => step === DEMO_STEPS.length - 1 ? onClose() : onStep(step + 1)}>{!canAdvance ? "Simula la venta para continuar" : step === DEMO_STEPS.length - 1 ? "Explorar libremente" : "Siguiente"}{canAdvance && <ArrowRight className="ml-1 h-4 w-4" />}</Button>
           </div>
         </div>
       </div>
