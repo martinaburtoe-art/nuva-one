@@ -2,6 +2,21 @@
 BEGIN;
 SELECT plan(12);
 
+SELECT ok(
+  to_regprocedure('public.enforce_business_active()') IS NOT NULL,
+  'database trial enforcement trigger function is installed'
+);
+SELECT is((
+  SELECT count(*)::int
+  FROM pg_trigger tr
+  JOIN pg_class rel ON rel.oid = tr.tgrelid
+  JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+  WHERE ns.nspname = 'public'
+    AND rel.relname IN ('products','customers','suppliers','sales','purchases','quotes','transactions')
+    AND tr.tgname = 'trg_enforce_business_active'
+    AND NOT tr.tgisinternal
+), 7, 'trial enforcement is installed on all seven billable operational tables');
+
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-0000000000c0');
 
