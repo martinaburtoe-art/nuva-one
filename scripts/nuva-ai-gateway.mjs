@@ -20,7 +20,7 @@ const DEFAULT_MODELS = Object.freeze({
 });
 
 const PROVIDER_ORDER = ["gemini", "groq", "cloudflare", "deterministic"];
-const TRANSIENT_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
+const TRANSIENT_STATUS = new Set([408, 409, 425, 500, 502, 503, 504]);
 const MAX_RETRIES = 2;
 const MAX_PROMPT_CHARS = 12000;
 
