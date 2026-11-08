@@ -78,7 +78,7 @@ describe("business subscription access", () => {
     expect(access).toMatchObject({ hasAccess: true, isDemoPro: true, trialExpired: false });
   });
 
-  it.each(["paused", "canceled", "pending"])("blocks Pro when its subscription is %s", (status) => {
+  it.each(["paused", "canceled"])("blocks Pro when its subscription is %s", (status) => {
     const access = getBusinessSubscriptionAccess({
       plan: "pro",
       subscriptionStatus: status,
@@ -88,6 +88,18 @@ describe("business subscription access", () => {
     });
 
     expect(access).toMatchObject({ hasAccess: false, trialExpired: true });
+  });
+
+  it("preserves an existing Pro entitlement while a new checkout is pending", () => {
+    const access = getBusinessSubscriptionAccess({
+      plan: "pro",
+      subscriptionStatus: "pending",
+      billingProvider: "mercadopago",
+      createdAt: new Date(now - 90 * 86_400_000).toISOString(),
+      nowMs: now,
+    });
+
+    expect(access).toMatchObject({ hasAccess: true, trialExpired: false });
   });
 
   it("fails closed when a Starter business has no creation timestamp", () => {
