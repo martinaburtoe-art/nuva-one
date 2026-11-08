@@ -1,6 +1,6 @@
 -- Nüva People sensitive-access reconciliation (pgTAP)
 BEGIN;
-SELECT plan(26);
+SELECT plan(28);
 
 -- All eighteen sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
@@ -76,6 +76,26 @@ SELECT is((
       OR coalesce(with_check,'') LIKE '%private.is_business_member%')
 ), 0, 'PII write policies do not authorize all business members');
 
+-- Staff can submit operational records but cannot edit or self-approve them.
+SELECT is((
+  SELECT count(*)::int FROM pg_policies
+  WHERE schemaname='public'
+    AND tablename IN ('people_attendance_events','people_compliance_items','people_leave_requests')
+    AND cmd='UPDATE' AND permissive='PERMISSIVE'
+    AND roles @> ARRAY['authenticated'::name]
+    AND qual LIKE '%private.has_business_role%' AND qual LIKE '%owner%' AND qual LIKE '%admin%'
+    AND with_check LIKE '%private.has_business_role%' AND with_check LIKE '%owner%' AND with_check LIKE '%admin%'
+), 3, 'attendance, compliance and leave UPDATE is owner/admin-only');
+SELECT is((
+  SELECT count(*)::int FROM pg_policies
+  WHERE schemaname='public'
+    AND tablename IN ('people_attendance_events','people_compliance_items','people_leave_requests')
+    AND cmd='INSERT' AND permissive='PERMISSIVE'
+    AND roles @> ARRAY['authenticated'::name]
+    AND qual IS NULL
+    AND with_check LIKE '%private.has_business_role%'
+    AND with_check LIKE '%staff%'
+), 3, 'staff retain INSERT access to attendance, compliance and leave requests');
 -- Preserve the intended read-only operational RPCs for non-admin members.
 SELECT ok(to_regprocedure('public.people_employees_limited(uuid)') IS NOT NULL, 'limited employee RPC remains available');
 SELECT ok(to_regprocedure('public.people_contracts_limited(uuid)') IS NOT NULL, 'limited contract RPC remains available');
