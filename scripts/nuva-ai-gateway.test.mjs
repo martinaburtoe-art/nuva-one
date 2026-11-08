@@ -38,6 +38,7 @@ describe("Nüva AI gateway rate-limit handling", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(result.provider).toBe("deterministic");
     expect(result.failures).toEqual([expect.objectContaining({ provider: "groq", status: 429, attempts: 1 })]);
+  });
 
   it("requires both Gemini and Groq to pass before autonomous LLM work", async () => {
     process.env.GEMINI_API_KEY = "test-gemini-key";
@@ -56,6 +57,5 @@ describe("Nüva AI gateway rate-limit handling", () => {
 
     await expect(certifyRequiredProviders()).rejects.toThrow("no configured AI provider completed the request");
     expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
   });
 });
