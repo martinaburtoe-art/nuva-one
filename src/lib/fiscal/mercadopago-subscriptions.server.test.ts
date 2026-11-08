@@ -127,7 +127,7 @@ describe("Mercado Pago recurring payment reconciliation", () => {
 
   it("fetches subscription authorized payments from the dedicated API resource", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ id: 987, payment_id: 123, preapproval_id: "preapproval-1", status: "approved" }), {
+      new Response(JSON.stringify({ id: 987, payment: { id: 123, status: "approved" }, preapproval_id: "preapproval-1", status: "scheduled" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
@@ -139,7 +139,7 @@ describe("Mercado Pago recurring payment reconciliation", () => {
       "https://api.mercadopago.com/authorized_payments/987",
       expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }) }),
     );
-    expect(result).toMatchObject({ ok: true, data: { id: 987, payment_id: 123, preapproval_id: "preapproval-1" } });
+    expect(result).toMatchObject({ ok: true, data: { id: 987, payment: { id: 123, status: "approved" }, preapproval_id: "preapproval-1" } });
   });
 
   it("accepts only canonical UUID business identifiers before charge persistence", () => {
