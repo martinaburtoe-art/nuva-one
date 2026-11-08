@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createMercadoPagoSubscription,
+  updateMercadoPagoSubscription,
   encodeMercadoPagoExternalReference,
   getMercadoPagoAuthorizedPayment,
   isValidMercadoPagoBusinessId,
@@ -52,6 +53,26 @@ describe("Mercado Pago subscription billing cadence", () => {
   });
 
   const config = { accessToken: "test-access-token", environment: "test" as const };
+
+  it("sends cancellation to Mercado Pago before local downgrade", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ id: "preapproval-cancel", status: "canceled" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const result = await updateMercadoPagoSubscription(config, "preapproval-cancel", { status: "canceled" });
+
+    expect(result.ok).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://api.mercadopago.com/preapproval/preapproval-cancel",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({ status: "canceled" }),
+      }),
+    );
+  });
 
   it("creates a monthly preapproval with one-month recurrence", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
