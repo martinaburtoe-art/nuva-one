@@ -1,6 +1,6 @@
 -- Nüva People sensitive-access reconciliation (pgTAP)
 BEGIN;
-SELECT plan(23);
+SELECT plan(24);
 
 -- All eighteen sensitive tables must have one owner/admin SELECT policy.
 SELECT is((
@@ -101,6 +101,10 @@ SELECT ok(
   'limited attendance and compliance RPCs omit metadata and document references');
 SELECT ok(pg_get_functiondef('public.people_leave_requests_limited(uuid)'::regprocedure) NOT LIKE '%reason%', 'limited leave RPC omits free-text reason/health detail');
 SELECT ok(NOT has_function_privilege('authenticated','public.people_vacation_balances_limited(uuid)','EXECUTE'), 'vacation balance RPC is unavailable to non-admin members');
+SELECT ok(
+  position('owner' in pg_get_functiondef('public.calculate_people_vacation_balance(uuid,date)'::regprocedure)) > 0
+  AND position('admin' in pg_get_functiondef('public.calculate_people_vacation_balance(uuid,date)'::regprocedure)) > 0,
+  'vacation balance calculation enforces owner/admin role');
 SELECT ok(position('leave_type <> ''medical''' in pg_get_functiondef('public.people_leave_requests_limited(uuid)'::regprocedure)) > 0, 'limited leave RPC excludes medical leave details');
 
 SELECT is((
