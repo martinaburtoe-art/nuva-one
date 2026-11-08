@@ -30,7 +30,7 @@ describe("Nüva AI gateway rate-limit handling", () => {
       status: 429,
       headers: { "content-type": "application/json", "retry-after": "86400" },
     }));
-    globalThis.fetch = fetchMock as typeof fetch;
+    globalThis.fetch = fetchMock;
 
     const result = await generate("check provider fallback", { providers: ["groq", "deterministic"] });
 
