@@ -86,7 +86,7 @@ const productNames = [
   ["Taza Nüva edición", "Merchandising", 31, 10, 11990],
 ] as const;
 
-export function DemoWorkspace({ onExit }: { onExit: () => void }) {
+export function DemoWorkspace({ onExit }: { onExit?: () => void }) {
   const [active, setActive] = useState<ModuleKey>("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -127,7 +127,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
       <div className="absolute inset-x-0 top-0 z-[70] flex items-center justify-center gap-2 border-b bg-primary px-3 py-2 text-xs text-primary-foreground shadow-sm">
         <Sparkles className="h-3.5 w-3.5" />
         <span><strong>Modo demo:</strong> estás explorando una copia segura de Nüva One con datos ficticios. Nada aquí afecta un negocio real.</span>
-        <button className="ml-2 hidden font-semibold underline sm:inline" onClick={onExit}>Salir del demo</button>
+        {onExit && <button className="ml-2 hidden font-semibold underline sm:inline" onClick={onExit}>Salir del demo</button>}
       </div>
 
       <aside className={`absolute left-0 top-8 z-50 hidden h-[calc(100vh-2rem)] flex-col border-r bg-sidebar md:flex ${collapsed ? "w-16" : "w-60"}`}>
@@ -199,7 +199,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
             {active === "settings" && <SettingsView />}
           </div>
         </main>
-        <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground md:px-8">Nüva One Demo · Experiencia interactiva con datos ficticios · <button className="font-medium text-primary" onClick={onExit}>Volver a la página pública</button></footer>      </div>
+        <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground md:px-8">Nüva One Demo · Experiencia interactiva con datos ficticios · {onExit && <button className="font-medium text-primary" onClick={onExit}>Volver a la página pública</button>}</footer>      </div>
 
       {mobileOpen && <div className="fixed inset-0 z-[80] bg-background md:hidden"><div className="flex h-full flex-col"><div className="flex h-14 items-center justify-between border-b px-4"><div className="flex items-center gap-2 font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span>Nüva One <Badge variant="secondary">DEMO</Badge></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></Button></div><div className="p-4"><div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar módulo..." className="pl-9" /></div></div><nav className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto p-4">{visibleNav.map((item) => { const Icon = item.icon; return <button key={item.key} onClick={() => select(item.key)} className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-xs ${active === item.key ? "border-primary bg-primary/5 text-primary" : "text-muted-foreground"}`}><Icon className="h-5 w-5" />{item.label}</button>; })}</nav></div></div>}
     </div>
