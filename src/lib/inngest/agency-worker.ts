@@ -147,15 +147,21 @@ export async function runInngestAgencyWorker(
   };
 
   const specialistResult = await step.run(`execute-${taskId}`, async () => {
+    const startedAt = Date.now();
     try {
-      return await executeSpecialist(taskInput);
+      const result = await executeSpecialist(taskInput);
+      return {
+        ...result,
+        durationMs: Number.isFinite(result?.durationMs) ? result.durationMs : Date.now() - startedAt,
+        timestamp: typeof result?.timestamp === "string" ? result.timestamp : new Date(startedAt).toISOString(),
+      };
     } catch (error) {
       return {
         result: "FAIL",
         evidence: [],
         errors: [error instanceof Error ? error.message.slice(0, 500) : "specialist_execution_failed"],
-        durationMs: 0,
-        timestamp: new Date().toISOString(),
+        durationMs: Date.now() - startedAt,
+        timestamp: new Date(startedAt).toISOString(),
       };
     }
   }) as SpecialistResult;
