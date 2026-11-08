@@ -5,6 +5,40 @@
 -- are writable only by owner/admin.
 
 
+-- Reconcile policy state by command, not by historical policy names. Earlier
+-- migrations and hotfixes used several names for equivalent permissive rules;
+-- PostgreSQL ORs permissive policies, so every SELECT policy on these sensitive
+-- tables must be replaced with exactly one owner/admin policy below. For the
+-- operational submission tables, replace all INSERT/UPDATE rules with the
+-- explicit staff-submit and owner/admin-review rules below. DELETE policies
+-- are deliberately preserved.
+DO $
+DECLARE pol record;
+BEGIN
+  FOR pol IN
+    SELECT schemaname, tablename, policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND (
+        (tablename = ANY (ARRAY[
+          'people_employees','people_contracts','people_documents',
+          'people_attendance_events','people_compliance_items','people_absences',
+          'people_payroll_items','people_payroll_periods','people_payroll_postings','people_payroll_runs',
+          'people_payroll_inputs','people_lre_exports','people_lre_rows','people_leave_requests',
+          'people_terminations','people_vacation_balances','people_gratification_settings',
+          'people_gratification_settlements','people_payroll_liquidations'
+        ]::text[]) AND cmd = 'SELECT')
+        OR
+        (tablename = ANY (ARRAY[
+          'people_employees','people_contracts','people_documents',
+          'people_attendance_events','people_compliance_items','people_leave_requests'
+        ]::text[]) AND cmd IN ('INSERT','UPDATE'))
+      )
+  LOOP
+    EXECUTE format('DROP POLICY %I ON %I.%I', pol.policyname, pol.schemaname, pol.tablename);
+  END LOOP;
+END $;
+
 -- Remove broad member SELECT policies. Owner/admin SELECT policies already exist
 -- on these tables and remain the sole permissive SELECT path.
 DROP POLICY IF EXISTS people_member_select ON public.people_employees;
@@ -67,6 +101,18 @@ DROP POLICY IF EXISTS people_member_select ON public.people_compliance_items;
 DROP POLICY IF EXISTS people_member_update ON public.people_attendance_events;
 DROP POLICY IF EXISTS people_member_update ON public.people_compliance_items;
 DROP POLICY IF EXISTS people_member_update ON public.people_leave_requests;
+
+-- Members may submit their own operational events/requests. Review and
+-- modification remain restricted to owner/admin through the UPDATE policies.
+CREATE POLICY people_member_insert ON public.people_attendance_events
+  FOR INSERT TO authenticated
+  WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role, 'staff'::member_role]));
+CREATE POLICY people_member_insert ON public.people_compliance_items
+  FOR INSERT TO authenticated
+  WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role, 'staff'::member_role]));
+CREATE POLICY people_member_insert ON public.people_leave_requests
+  FOR INSERT TO authenticated
+  WITH CHECK (private.has_business_role(business_id, (SELECT auth.uid()), ARRAY['owner'::member_role, 'admin'::member_role, 'staff'::member_role]));
 
 DROP POLICY IF EXISTS people_attendance_update_owner_admin ON public.people_attendance_events;
 CREATE POLICY people_attendance_update_owner_admin ON public.people_attendance_events
