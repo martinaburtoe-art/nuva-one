@@ -176,7 +176,7 @@ function RootComponent() {
     const publicPaths = new Set([
       "/", "/news", "/noticias", "/social", "/foro", "/forum", "/directorio", "/directory",
       "/negocios", "/pricing", "/about", "/contact", "/privacy", "/terms",
-      "/public-catalog", "/checkout-demo", "/experience", "/experience-parallel", "/experiencia",
+      "/public-catalog", "/checkout-demo", "/reset-password", "/experience", "/experience-parallel", "/experiencia",
     ]);
     const publicPrefixes = ["/auth/", "/foro/", "/negocios/", "/public-catalog/"];
     const isPublic = publicPaths.has(location.pathname)
