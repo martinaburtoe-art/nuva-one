@@ -201,8 +201,10 @@ function Dashboard() {
   }, [allTx, isoFrom, isoTo, categories]);
 
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
-  const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0;
+  const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
   async function loadDemoBusiness() {
+    const confirmed = window.confirm("Se creará un negocio de demostración y pasará a ser el negocio activo. Tu negocio actual no se modifica. ¿Quieres continuar?");
+    if (!confirmed) return;
     setSeedingDemo(true);
     try {
       const { data, error } = await supabase.rpc("create_demo_business_for_current_user");
@@ -233,9 +235,9 @@ function Dashboard() {
               <h1>Resumen</h1>
               <p className="nuva-resumen-subtitle">Una lectura clara de tus operaciones, resultados y próximos focos de atención.</p>
             </div>
-            <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
-              {seedingDemo ? "Preparando demo…" : "Explorar demo"}
-            </Button>
+            {!hasActivity && <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
+              {seedingDemo ? "Preparando demo…" : "Crear espacio demo"}
+            </Button>}
           </div>
         </header>
 
