@@ -42,7 +42,8 @@ jobs:
         id: qa
         continue-on-error: true
         env:
-          NUVA_QA_URL: ${{ github.event.inputs.target_url || 'https://nuva-one.vercel.app' }}
+          # PR checks must inspect the authenticated-workspace preview, not silently smoke-test production.
+          NUVA_QA_URL: ${{ github.event_name == 'pull_request' && 'https://nuva-one-git-feat-frontend-brand-foundatio-d0241c-martinaburtoe.vercel.app' || github.event.inputs.target_url || 'https://nuva-one.vercel.app' }}
         run: npm run agency:qa
 
       - name: Upload QA evidence
