@@ -1,8 +1,8 @@
 /* Nüva One — authenticated product design tokens
  * The public homepage owns a separate dark/editorial art direction.
  * These semantic tokens apply only after the app shell marks the current
- * route as an authenticated product surface. Resumen keeps its own local
- * pearl-glass art direction in .nuva-resumen-canvas.
+ * route as an authenticated product surface. Every private module, including
+ * Resumen, consumes the same semantic palette and surface language.
  */
 body[data-nuva-surface="app"] {
   color-scheme: light;
