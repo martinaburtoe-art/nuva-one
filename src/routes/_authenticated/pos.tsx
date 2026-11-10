@@ -584,7 +584,7 @@ function POS() {
               </Card>
             )}
           </div>
-          <Card className="sticky top-20 flex h-fit max-h-[calc(100vh-6.5rem)] flex-col overflow-hidden rounded-2xl border-border/70 p-0 shadow-lg shadow-black/5">
+          <Card className="flex h-fit flex-col rounded-2xl border-border/70 p-0 shadow-lg shadow-black/5 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-6.5rem)] xl:overflow-hidden">
             <div className="border-b border-border/70 bg-muted/20 px-4 py-3.5">
               <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold">
@@ -599,7 +599,7 @@ function POS() {
               </div>
               <div className="mt-1 text-[11px] text-muted-foreground">Revisa el pedido antes de cobrar</div>
             </div>
-            <div className="min-h-[180px] flex-1 space-y-2 overflow-y-auto px-4 py-3">
+            <div className="min-h-[180px] flex-1 space-y-2 overflow-y-auto px-4 py-3 xl:min-h-0">
               {cart.length === 0 ? (
                 <div className="py-10 text-center text-sm text-muted-foreground">
                   Escanea un producto o selecciónalo para comenzar
@@ -653,7 +653,7 @@ function POS() {
                 ))
               )}
             </div>
-            <div className="space-y-3 border-t bg-card px-4 py-3">
+            <div className="shrink-0 space-y-3 border-t bg-card px-4 py-3">
               <div>
                 <Label className="mb-1.5 block text-xs">RUT del cliente (opcional)</Label>
                 {matchedCustomer ? (
