@@ -172,7 +172,8 @@
 .nuva-resumen-score-section h2 { margin: 6px 0 0; color: var(--nr-ink); font-size: 17px; font-weight: 630; letter-spacing: -.035em; }
 .nuva-resumen-score-section > div:first-child > p:last-child { margin: 7px 0 0; color: var(--nr-muted); font-size: 11px; line-height: 1.6; }
 .nuva-resumen-score-card { min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
-.nuva-resumen-score-card [class*="rounded-2xl"] { box-shadow: none; }
+.nuva-resumen-score-card > div { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.nuva-resumen-score-card [class*="rounded-2xl"] { border-radius: 10px; box-shadow: none; }
 .nuva-resumen-footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 12px 2px 0; border-top: 1px solid var(--nr-border); color: #92969b; font-size: 10px; line-height: 1.5; }
 .nuva-resumen-footer > span:first-child { color: #6d7178; font-weight: 720; letter-spacing: .1em; }
 .nuva-resumen-footer > span:first-child span { color: var(--nr-gold); }
