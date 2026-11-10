@@ -70,6 +70,11 @@ jobs:
               }
             }
             core.setFailed('No successful Vercel preview deployment was found for PR head ' + sha + '; refusing to test production as a substitute.');
+      - name: Require preview URL for pull requests
+        if: github.event_name == 'pull_request' && steps.preview.outputs.url == ''
+        run: |
+          echo 'A successful preview URL is required for pull-request QA. Production will not be used as a fallback.'
+          exit 1
       - name: Run autonomous web QA
         id: qa
         # Fail closed: warnings (including Vercel protection or an unavailable preview) are not a passing QA result.
