@@ -16,6 +16,7 @@ import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
+import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
@@ -203,8 +204,9 @@ function Dashboard() {
       if (error) throw error;
       localStorage.setItem("novaflow.active_business_id", data);
       window.location.assign("/dashboard");
-    } catch (error: any) {
-      console.error(error);
+    } catch (error: unknown) {
+      console.error("No se pudo preparar el negocio de demostración", error);
+      toast.error("No pudimos preparar el espacio de demostración");
     } finally {
       setSeedingDemo(false);
     }
