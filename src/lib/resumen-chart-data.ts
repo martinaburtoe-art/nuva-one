@@ -31,11 +31,33 @@ export function buildResumenChartData(
 
   if (options.daily) {
     const byDay: Record<string, ResumenChartRow> = {};
+
+    // A bounded daily range must include days without movements; otherwise the
+    // chart visually compresses time and can imply activity on adjacent dates.
+    if (options.from && options.to) {
+      const cursor = new Date(`${options.from}T00:00:00`);
+      const end = new Date(`${options.to}T00:00:00`);
+      if (Number.isFinite(cursor.getTime()) && Number.isFinite(end.getTime()) && cursor <= end) {
+        while (cursor <= end) {
+          const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+          byDay[key] = {
+            fecha: cursor.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }),
+            ingresos: 0,
+            gastos: 0,
+          };
+          cursor.setDate(cursor.getDate() + 1);
+        }
+      }
+    }
+
     rows.forEach((row) => {
       const key = row.tx_date;
       if (!byDay[key]) {
+        const date = new Date(`${key}T00:00:00`);
         byDay[key] = {
-          fecha: new Date(`${key}T00:00:00`).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }),
+          fecha: Number.isFinite(date.getTime())
+            ? date.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" })
+            : key,
           ingresos: 0,
           gastos: 0,
         };
