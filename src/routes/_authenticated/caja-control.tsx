@@ -202,7 +202,7 @@ function CashControl() {
           description="Apertura, efectivo, movimientos y arqueo de cada jornada desde un solo centro de control."
           action={
             <div className="flex items-center gap-2">
-              <Badge variant={registerQuery.data ? "default" : "secondary"}>{registerQuery.data ? "Caja abierta" : "Caja cerrada"}</Badge>
+              <Badge aria-live="polite" variant={registerQuery.isError ? "destructive" : registerQuery.data ? "default" : "secondary"}>{!active?.id ? "Sin negocio" : registerQuery.isLoading ? "Consultando caja…" : registerQuery.isError ? "Estado no disponible" : registerQuery.data ? "Caja abierta" : "Caja cerrada"}</Badge>
               <Button variant="ghost" size="icon" onClick={refresh} aria-label="Actualizar"><RefreshCw className="h-4 w-4" /></Button>
             </div>
           }
