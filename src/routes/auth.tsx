@@ -179,8 +179,8 @@ function AuthPage() {
       <div className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           <Link to="/" className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6C687]/25 bg-[#080809]">
+              <Sparkles className="h-5 w-5 text-[#E6C687]" />
             </div>
             <span className="font-semibold tracking-tight">Nüva One</span>
           </Link>
