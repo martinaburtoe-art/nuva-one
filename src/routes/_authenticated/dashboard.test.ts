@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
+import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 
 describe("goalsLabel (onboarding del dashboard)", () => {
   it.each([
@@ -108,5 +109,23 @@ describe("buildResumenChartData", () => {
     });
     expect(rows).toHaveLength(6);
     expect(rows.every((row) => row.ingresos === 0 && row.gastos === 0)).toBe(true);
+  });
+});
+
+
+describe("calculateInventoryValueAtCost", () => {
+  it("valora el stock al costo de adquisición, no al precio de venta", () => {
+    expect(calculateInventoryValueAtCost([
+      { stock: 10, cost: 1200 },
+      { stock: "5", cost: "800" },
+    ])).toBe(16000);
+  });
+
+  it("trata valores nulos como cero y omite importes no finitos", () => {
+    expect(calculateInventoryValueAtCost([
+      { stock: null, cost: 900 },
+      { stock: 4, cost: null },
+      { stock: 3, cost: "no-disponible" },
+    ])).toBe(0);
   });
 });
