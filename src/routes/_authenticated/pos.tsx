@@ -903,9 +903,13 @@ function POS() {
                 variant="outline"
                 className="flex-1"
                 onClick={async () => {
-                  if (onlinePayment)
-                    await navigator.clipboard.writeText(onlinePayment.url).catch(() => {});
-                  toast.success("Link copiado");
+                  if (!onlinePayment) return;
+                  try {
+                    await navigator.clipboard.writeText(onlinePayment.url);
+                    toast.success("Link copiado");
+                  } catch {
+                    toast.error("No se pudo copiar el link. Puedes seleccionarlo y copiarlo manualmente.");
+                  }
                 }}
               >
                 <Copy className="mr-1.5 h-4 w-4" />
