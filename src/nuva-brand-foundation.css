@@ -8,7 +8,7 @@ body[data-nuva-surface="app"] {
   color-scheme: light;
   --nuva-black: #080809;
   --nuva-gold: #E6C687;
-  --nuva-gold-muted: #B99A5D;
+  --nuva-gold-muted: #80652E; /* accessible on pearl/white surfaces */
   --nuva-indigo: #6366F1;
 
   --background: #F3F3EF;
@@ -18,13 +18,13 @@ body[data-nuva-surface="app"] {
   --popover: #FFFFFF;
   --popover-foreground: #17191B;
 
-  --primary: var(--nuva-indigo);
+  --primary: #595DDC; /* accessible action/text variant of Nüva indigo */
   --primary-foreground: #FFFFFF;
   --primary-glow: #9698F8;
   --secondary: #EBECE8;
   --secondary-foreground: #343638;
   --muted: #ECEDE9;
-  --muted-foreground: #777B80;
+  --muted-foreground: #686D72; /* readable secondary text on pearl surfaces */
   --accent: #F0EEE8;
   --accent-foreground: #252729;
 
@@ -39,7 +39,7 @@ body[data-nuva-surface="app"] {
   --input: rgba(23, 25, 27, 0.15);
   --ring: var(--nuva-indigo);
 
-  --chart-1: #6366F1;
+  --chart-1: #595DDC;
   --chart-2: #B99A5D;
   --chart-3: #47766C;
   --chart-4: #8B9297;
