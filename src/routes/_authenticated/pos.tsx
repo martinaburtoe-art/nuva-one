@@ -70,7 +70,7 @@ function POS() {
   });
   const { data: sales } = useBizList<any>("sales", {
     order: "created_at",
-    select: "id,sale_date,created_at,total,items,payment_method,customer_name",
+    select: "id,sale_date,created_at,total,items,payment_method,customer_name,status",
   });
   const { data: customers } = useBizList<any>("customers", {
     order: "name",
@@ -273,7 +273,7 @@ function POS() {
   const todayLocal = new Date();
   const today = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
   const todaySales = (sales ?? []).filter(
-    (s: any) => (s.sale_date ?? s.created_at?.slice(0, 10)) === today,
+    (s: any) => (s.sale_date ?? s.created_at?.slice(0, 10)) === today && s.status === "paid",
   );
   const todayTotal = todaySales.reduce((s: number, x: any) => s + Number(x.total), 0);
 
