@@ -103,14 +103,16 @@ function Analytics() {
     return true;
   }), [tx, isoFrom, isoTo]);
 
-  const totalSales = filteredSales.reduce((s, x) => s + Number(x.total), 0);
-  const avgTicket = filteredSales.length > 0 ? totalSales / filteredSales.length : 0;
+  // Revenue KPIs and sales charts must not treat pending, draft or cancelled orders as collected sales.
+  const paidSales = filteredSales.filter((sale: any) => sale.status === "paid");
+  const totalSales = paidSales.reduce((s, x) => s + Number(x.total ?? 0), 0);
+  const avgTicket = paidSales.length > 0 ? totalSales / paidSales.length : 0;
   const income = filteredTx.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
   const expense = filteredTx.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
   const cashFlowMargin = income > 0 ? ((income - expense) / income) * 100 : 0;
   const inventoryUnits = (products ?? []).reduce((s, p) => s + Number(p.stock ?? 0), 0);
   let revenueFromItems = 0; let costFromItems = 0;
-  filteredSales.forEach((s) => (s.items ?? []).forEach((it: any) => {
+  paidSales.forEach((s) => (s.items ?? []).forEach((it: any) => {
     const qty = Number(it.qty) || 0; const price = Number(it.price) || 0;
     revenueFromItems += qty * price;
     const product = it.product_id ? productById[it.product_id] : null;
@@ -122,16 +124,16 @@ function Analytics() {
     { l: "Margen de caja", v: `${cashFlowMargin.toFixed(1)}%`, i: DollarSign },
     { l: "Ticket promedio", v: fmtCLP(avgTicket), i: DollarSign },
     { l: "Unidades en stock", v: String(inventoryUnits), i: Package },
-    { l: "Clientes únicos", v: String(new Set(filteredSales.map((s) => s.customer_name)).size), i: Users },
+    { l: "Clientes únicos", v: String(new Set(paidSales.map((s) => s.customer_name).filter(Boolean)).size), i: Users },
   ];
   const byChannel: Record<string, number> = {};
-  filteredSales.forEach((s) => { byChannel[s.channel] = (byChannel[s.channel] ?? 0) + Number(s.total); });
+  paidSales.forEach((s) => { byChannel[s.channel] = (byChannel[s.channel] ?? 0) + Number(s.total); });
   const channelData = Object.entries(byChannel).map(([channel, total]) => ({ canal: CHANNEL_LABEL[channel] ?? "Otro", total }));
   const byPayment: Record<string, number> = {};
-  filteredSales.forEach((s) => { const key = s.payment_method ?? "sin registrar"; byPayment[key] = (byPayment[key] ?? 0) + Number(s.total); });
+  paidSales.forEach((s) => { const key = s.payment_method ?? "sin registrar"; byPayment[key] = (byPayment[key] ?? 0) + Number(s.total); });
   const paymentData = Object.entries(byPayment).map(([metodo, total]) => ({ metodo: PAYMENT_LABEL[metodo] ?? metodo, total }));
   const byDay: Record<string, number> = {};
-  filteredSales.forEach((s) => { byDay[s.sale_date] = (byDay[s.sale_date] ?? 0) + Number(s.total); });
+  paidSales.forEach((s) => { byDay[s.sale_date] = (byDay[s.sale_date] ?? 0) + Number(s.total); });
   const trendData = Object.entries(byDay).sort(([a], [b]) => a.localeCompare(b)).map(([fecha, total]) => ({ fecha: new Date(fecha + "T00:00:00").toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }), total }));
 
   return (
