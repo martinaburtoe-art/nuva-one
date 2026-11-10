@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
+import { fetchAllPages } from "@/lib/fetch-all-pages";
 
 describe("goalsLabel (onboarding del dashboard)", () => {
   it.each([
@@ -108,5 +109,35 @@ describe("buildResumenChartData", () => {
     });
     expect(rows).toHaveLength(6);
     expect(rows.every((row) => row.ingresos === 0 && row.gastos === 0)).toBe(true);
+  });
+});
+
+
+describe("fetchAllPages", () => {
+  it("lee todos los registros en páginas ordenadas hasta la última página", async () => {
+    const rows = Array.from({ length: 7 }, (_, index) => ({ id: index + 1 }));
+    const requestedRanges: Array<[number, number]> = [];
+    const result = await fetchAllPages(async (from, to) => {
+      requestedRanges.push([from, to]);
+      return { data: rows.slice(from, to + 1), error: null };
+    }, 3);
+
+    expect(result).toEqual(rows);
+    expect(requestedRanges).toEqual([[0, 2], [3, 5], [6, 8]]);
+  });
+
+  it("devuelve una lista vacía cuando la primera página no tiene filas", async () => {
+    const result = await fetchAllPages(async () => ({ data: [], error: null }), 500);
+    expect(result).toEqual([]);
+  });
+
+  it("propaga errores de consulta en lugar de presentar datos parciales como completos", async () => {
+    await expect(
+      fetchAllPages(async () => ({ data: null, error: new Error("fallo de consulta") }), 2),
+    ).rejects.toThrow("fallo de consulta");
+  });
+
+  it("rechaza tamaños de página inválidos", async () => {
+    await expect(fetchAllPages(async () => ({ data: [], error: null }), 0)).rejects.toThrow();
   });
 });
