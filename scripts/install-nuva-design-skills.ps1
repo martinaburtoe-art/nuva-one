@@ -75,10 +75,25 @@ Route all frontend design work through the Nüva One orchestration skill and the
 '@ | Set-Content -Path $aliasPath -Encoding utf8
   }
 
+  $hermes = Get-Command hermes -ErrorAction SilentlyContinue
+  if ($hermes) {
+    Write-Host ""
+    Write-Host "Trusting this repository's project-local skills in Hermes..." -ForegroundColor Yellow
+    & hermes skills trust $repoRoot
+    if ($LASTEXITCODE -ne 0) {
+      throw "Skill files were installed, but Hermes could not trust this project. Run 'hermes skills trust' from the repository root."
+    }
+    Write-Host ""
+    Write-Host "Installed Hermes skills:" -ForegroundColor Yellow
+    & hermes skills list
+  }
+  else {
+    Write-Warning "Hermes CLI was not found in PATH. After installation, run 'hermes skills trust' from the repository root, then 'hermes skills list'."
+  }
+
   Write-Host ""
   Write-Host "Installation commands completed." -ForegroundColor Green
-  Write-Host "Next: run 'hermes skills trust' from this repository, restart Hermes in this checkout, and verify with 'hermes skills list'."
-  Write-Host "Then run the extract-design-md skill to generate/update DESIGN.md from the actual source."
+  Write-Host "Next: restart Hermes in this checkout and invoke extract-design-md to generate/update DESIGN.md from the actual source."
 }
 finally {
   Pop-Location
