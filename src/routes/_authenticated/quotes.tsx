@@ -186,7 +186,7 @@ function Quotes() {
                     Nueva cotización
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl rounded-2xl">
+                <DialogContent className="max-h-[min(90dvh,900px)] max-w-3xl overflow-y-auto rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>Nueva cotización</DialogTitle>
                   </DialogHeader>
