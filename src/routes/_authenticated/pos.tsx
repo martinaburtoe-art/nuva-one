@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-utils";
@@ -101,6 +101,7 @@ function POS() {
   const [matchedCustomer, setMatchedCustomer] = useState<any | null>(null);
   const [newCustomerName, setNewCustomerName] = useState("");
   const [registering, setRegistering] = useState(false);
+  const checkoutLock = useRef(false);
 
   const { data: receiptDoc } = useQuery({
     queryKey: ["sale-billing-doc", showReceipt?.saleId],
@@ -278,7 +279,7 @@ function POS() {
   const todayTotal = todaySales.reduce((s: number, x: any) => s + Number(x.total), 0);
 
   async function checkout() {
-    if (!canPay) return;
+    if (!canPay || checkoutLock.current) return;
     // Defensa en profundidad: validar stock disponible al momento del cobro,
     // por si cambió entre agregar al carrito y hacer checkout.
     for (const i of cart) {
@@ -287,6 +288,7 @@ function POS() {
         return;
       }
     }
+    checkoutLock.current = true;
     const notes = [
       `Caja · ${method}`,
       method === "efectivo" ? `Recibido ${fmtCLP(received)} · Vuelto ${fmtCLP(change)}` : null,
@@ -336,6 +338,7 @@ function POS() {
         toast.error("Error de conexión con la pasarela de pago");
       } finally {
         setCreatingLink(false);
+        checkoutLock.current = false;
       }
       return;
     }
@@ -374,6 +377,8 @@ function POS() {
       // El trigger sync_sale_effects rechaza si hay stock insuficiente u otro error de integridad.
       // No se silencia: el usuario debe saber que la venta no se registró.
       toast.error(error?.message ?? "No se pudo registrar la venta. Verifica el stock disponible.");
+    } finally {
+      checkoutLock.current = false;
     }
   }
 
