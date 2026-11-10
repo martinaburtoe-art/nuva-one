@@ -45,11 +45,14 @@ function NuvaIntelligence() {
     return { income, expense, net, margin, lowStock, overdue, openQuotes: openQuotes.length, openPipeline, health, signals, salesCount: (sales ?? []).length, productsCount: (products ?? []).length };
   }, [activities, products, quotes, sales, transactions]);
 
-  const intelligenceLoading = salesLoading || transactionsLoading || productsLoading || quotesLoading || activitiesLoading || memoryLoading || queueLoading;
-  const intelligenceError = salesError || transactionsError || productsError || quotesError || activitiesError || memoryError || queueError;
+  const intelligenceLoading = salesLoading || transactionsLoading || productsLoading || quotesLoading || activitiesLoading;
+  const councilLoading = memoryLoading || queueLoading;
+  const councilError = memoryError || queueError;
+  const intelligenceError = salesError || transactionsError || productsError || quotesError || activitiesError;
   const retryIntelligence = () => {
     void Promise.all([refetchSales(), refetchTransactions(), refetchProducts(), refetchQuotes(), refetchActivities(), refetchMemory(), refetchQueue()]);
   };
+  const retryCouncil = () => { void Promise.all([refetchMemory(), refetchQueue()]); };
 
   const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
   const active = views.find((view) => view.id === activeView);
@@ -88,18 +91,18 @@ function NuvaIntelligence() {
                     <div className="rounded-xl border border-border/70 bg-primary/5 p-2.5 text-primary"><UsersRound className="h-5 w-5" /></div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Nüva Agent Council</p>
-                      <h2 className="mt-1 text-xl font-semibold">{latestCouncil?.title ?? "El consejo está construyendo contexto"}</h2>
-                      <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{latestCouncil?.content ?? "Los agentes especializados cruzan finanzas, ventas, abastecimiento, personas, cumplimiento y crecimiento antes de proponer una acción."}</p>
+                      <h2 className="mt-1 text-xl font-semibold">{councilLoading ? "Consultando el contexto del consejo" : councilError ? "Consejo temporalmente no disponible" : latestCouncil?.title ?? "El consejo está construyendo contexto"}</h2>
+                      <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{councilLoading ? "Estamos consultando memoria y acciones para mostrar el estado más reciente." : councilError ? "No fue posible consultar la memoria o la cola de acciones. El resto de Intelligence sigue disponible." : latestCouncil?.content ?? "Los agentes especializados cruzan finanzas, ventas, abastecimiento, personas, cumplimiento y crecimiento antes de proponer una acción."}</p>
                     </div>
                   </div>
-                  <Link to="/executive-command-center" className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">Ver acciones <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+                  {councilError ? <button type="button" onClick={retryCouncil} className="inline-flex min-h-11 items-center rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">Reintentar consejo</button> : <Link to="/executive-command-center" className="inline-flex min-h-11 items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">Ver acciones <ArrowUpRight className="h-3.5 w-3.5" /></Link>}
                 </div>
               </div>
               <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-6">
                 <CouncilMetric label="Fuentes operativas" value="7" detail="Áreas de datos consideradas" />
-                <CouncilMetric label="Confianza" value={councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Evidencia disponible" />
-                <CouncilMetric label="Acuerdo" value={councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Coincidencia sobre la prioridad" />
-                <CouncilMetric label="Acciones abiertas" value={String(pendingActions)} detail="Siempre requieren control humano" />
+                <CouncilMetric label="Confianza" value={councilLoading || councilError || councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Evidencia disponible" />
+                <CouncilMetric label="Acuerdo" value={councilLoading || councilError || councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Coincidencia sobre la prioridad" />
+                <CouncilMetric label="Acciones abiertas" value={councilLoading || councilError ? "—" : String(pendingActions)} detail="Siempre requieren control humano" />
               </div>
             </Card>
             <div>
