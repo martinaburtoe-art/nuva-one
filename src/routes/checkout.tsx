@@ -149,11 +149,16 @@ function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F3F3EF] text-[#17191B]">
+    <main className="min-h-screen overflow-hidden bg-[#f7f8fc] text-slate-950">
+      <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden">
+        <div className="absolute left-1/2 top-[-18rem] h-[38rem] w-[55rem] -translate-x-1/2 rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="absolute right-[-10rem] top-1/3 h-80 w-80 rounded-full bg-blue-400/10 blur-3xl" />
+      </div>
+
       <header className="relative z-10 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#080809] text-[#E6C687] ring-1 ring-[#E6C687]/30">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-white shadow-glow">
               <Sparkles className="h-4 w-4" />
             </span>
             <span className="font-semibold tracking-tight">Nüva One</span>
@@ -205,7 +210,7 @@ function CheckoutPage() {
           <div className="rounded-[2rem] border border-slate-200/80 bg-white p-5 shadow-[0_25px_80px_-40px_rgba(15,23,42,.25)] sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <Badge className="rounded-full bg-[#F0EEE8] px-3 py-1 text-[#8A6D38] hover:bg-[#F0EEE8]">
+                <Badge className="rounded-full bg-violet-50 px-3 py-1 text-violet-700 hover:bg-violet-50">
                   {isPro ? "Recomendado" : "Ideal para comenzar"}
                 </Badge>
                 <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -282,7 +287,7 @@ function CheckoutPage() {
 
           <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F0EEE8] text-[#8A6D38]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-700">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
@@ -302,7 +307,9 @@ function CheckoutPage() {
 
         <div className="lg:sticky lg:top-24">
           <div className="rounded-[2rem] bg-[#111522] p-4 shadow-[0_35px_90px_-35px_rgba(15,23,42,.65)] sm:p-5">
-            <div className="relative overflow-hidden rounded-[1.55rem] bg-[#F3F3EF] border border-[#E6C687]/35 p-5 shadow-inner sm:p-6">
+            <div className="relative overflow-hidden rounded-[1.55rem] bg-gradient-to-br from-[#e9eefc] via-[#cfdcff] to-[#b8c9ff] p-5 shadow-inner sm:p-6">
+              <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-white/30 blur-2xl" />
+              <div className="absolute -bottom-24 -left-12 h-48 w-48 rounded-full bg-violet-400/20 blur-2xl" />
               <div className="relative flex items-center justify-between text-slate-700">
                 <span className="text-[11px] font-bold tracking-[.24em]">NÜVA ONE</span>
                 <CreditCard className="h-5 w-5" />
@@ -345,7 +352,7 @@ function CheckoutPage() {
                     value={cardholder}
                     onChange={(event) => setCardholder(event.target.value)}
                     placeholder="Nombre y apellido"
-                    className="mt-1.5 border-white/10 bg-white/[.06] text-white placeholder:text-white/25 focus-visible:ring-[#E6C687]"
+                    className="mt-1.5 border-white/10 bg-white/[.06] text-white placeholder:text-white/25 focus-visible:ring-violet-400"
                   />
                 </div>
 
@@ -407,7 +414,7 @@ function CheckoutPage() {
 function TrustItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500">
-      <span className="text-[#B99A5D]">{icon}</span>
+      <span className="text-violet-600">{icon}</span>
       {text}
     </div>
   );
