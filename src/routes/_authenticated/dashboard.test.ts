@@ -21,7 +21,6 @@ describe("goalsLabel (onboarding del dashboard)", () => {
   });
 });
 
-
 describe("getResumenOperationalStatus", () => {
   it("no declara el negocio en orden mientras carga", () => {
     expect(getResumenOperationalStatus({
@@ -61,18 +60,27 @@ describe("getResumenOperationalStatus", () => {
   });
 });
 
-
 describe("buildResumenChartData", () => {
-  it("agrupa por día y respeta el filtro de categoría", () => {
+  it("incluye días sin movimientos y respeta el filtro de categoría", () => {
     const rows = buildResumenChartData([
       { tx_date: "2026-11-02", type: "income", amount: 120000, category: "Ventas" },
       { tx_date: "2026-11-02", type: "expense", amount: 25000, category: "Operación" },
       { tx_date: "2026-11-03", type: "income", amount: 80000, category: "Ventas" },
-    ], { from: "2026-11-01", to: "2026-11-30", categories: ["Ventas"], daily: true });
-    expect(rows).toHaveLength(2);
-    expect(rows[0].ingresos).toBe(120000);
+    ], { from: "2026-11-01", to: "2026-11-03", categories: ["Ventas"], daily: true });
+    expect(rows).toHaveLength(3);
+    expect(rows[0].ingresos).toBe(0);
     expect(rows[0].gastos).toBe(0);
-    expect(rows[1].ingresos).toBe(80000);
+    expect(rows[1].ingresos).toBe(120000);
+    expect(rows[1].gastos).toBe(0);
+    expect(rows[2].ingresos).toBe(80000);
+  });
+
+  it("devuelve todos los días en cero cuando el rango no tiene movimientos", () => {
+    const rows = buildResumenChartData([], {
+      from: "2026-11-01", to: "2026-11-03", categories: [], daily: true,
+    });
+    expect(rows).toHaveLength(3);
+    expect(rows.every((row) => row.ingresos === 0 && row.gastos === 0)).toBe(true);
   });
 
   it("mantiene todos los meses de un rango histórico, no solo los últimos seis", () => {
@@ -111,7 +119,6 @@ describe("buildResumenChartData", () => {
     expect(rows.every((row) => row.ingresos === 0 && row.gastos === 0)).toBe(true);
   });
 });
-
 
 describe("calculateInventoryValueAtCost", () => {
   it("valora el stock al costo de adquisición, no al precio de venta", () => {
