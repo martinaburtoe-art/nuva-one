@@ -277,7 +277,7 @@ function Customers() {
                       <Plus className="mr-1.5 h-4 w-4" /> Nuevo cliente
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-h-[min(90dvh,900px)] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editing ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
                     </DialogHeader>
