@@ -22,6 +22,7 @@ import {
   StarOff,
   AlertTriangle,
   Receipt,
+  Banknote,
   Link2,
   Copy,
   ScanBarcode,
@@ -401,6 +402,10 @@ function POS() {
           description="Vende, cobra y controla tu operación en un solo flujo."
           action={
             <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => navigate({ to: "/caja-control" })}>
+                <Banknote className="mr-2 h-4 w-4" />
+                Control de caja
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => openLiveScanner("cart")}
