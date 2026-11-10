@@ -250,6 +250,18 @@ function Dashboard() {
           </div>
         </header>
 
+        <div className="nuva-resumen-toolbar" aria-label="Filtros del resumen">
+          <div className="nuva-resumen-toolbar-context">
+            <span className="nuva-resumen-section-label">PERÍODO Y CATEGORÍA</span>
+            <strong>{financialPeriodLabel}</strong>
+            <p>Los indicadores financieros y el gráfico comparten estos filtros.</p>
+          </div>
+          <div className="nuva-resumen-filters">
+            <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+            <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
+          </div>
+        </div>
+
         {kpis === undefined && !kpisError && !txError && (
           <div className="nuva-resumen-feedback" role="status">
             <span className="nuva-resumen-feedback-mark" />
@@ -362,11 +374,7 @@ function Dashboard() {
 
         <section className="nuva-resumen-panel nuva-resumen-chart-panel" aria-label="Rendimiento financiero">
           <div className="nuva-resumen-panel-heading nuva-resumen-chart-heading">
-            <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>El gráfico y los indicadores financieros comparten el período y el filtro por categoría.</p></div>
-            <div className="nuva-resumen-filters">
-              <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-              <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
-            </div>
+            <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Comparación de movimientos dentro del contexto seleccionado arriba.</p></div>
           </div>
           <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
             <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
