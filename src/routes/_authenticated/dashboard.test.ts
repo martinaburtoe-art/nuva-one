@@ -58,3 +58,58 @@ describe("getResumenOperationalStatus", () => {
     }).label).toBe("En orden");
   });
 });
+
+
+describe("buildResumenChartData", () => {
+  it("agrupa por día y respeta el filtro de categoría", async () => {
+    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+    const rows = buildResumenChartData([
+      { tx_date: "2026-11-02", type: "income", amount: 120000, category: "Ventas" },
+      { tx_date: "2026-11-02", type: "expense", amount: 25000, category: "Operación" },
+      { tx_date: "2026-11-03", type: "income", amount: 80000, category: "Ventas" },
+    ], { from: "2026-11-01", to: "2026-11-30", categories: ["Ventas"], daily: true });
+    expect(rows).toHaveLength(2);
+    expect(rows[0].ingresos).toBe(120000);
+    expect(rows[0].gastos).toBe(0);
+    expect(rows[1].ingresos).toBe(80000);
+  });
+
+  it("mantiene todos los meses de un rango histórico, no solo los últimos seis", async () => {
+    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+    const rows = buildResumenChartData([
+      { tx_date: "2025-01-12", type: "income", amount: 100000, category: "Ventas" },
+      { tx_date: "2025-03-04", type: "expense", amount: 30000, category: "Operación" },
+    ], {
+      from: "2025-01-01", to: "2025-03-31", categories: [], daily: false,
+      now: new Date("2026-11-10T12:00:00"),
+    });
+    expect(rows).toHaveLength(3);
+    expect(rows[0].ingresos).toBe(100000);
+    expect(rows[1].ingresos).toBe(0);
+    expect(rows[2].gastos).toBe(30000);
+  });
+
+  it("permite consultar solo una fecha final incluyendo el histórico anterior", async () => {
+    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+    const rows = buildResumenChartData([
+      { tx_date: "2024-01-15", type: "income", amount: 50000, category: "Ventas" },
+      { tx_date: "2025-06-12", type: "expense", amount: 12000, category: "Operación" },
+    ], {
+      from: null, to: "2025-06-30", categories: [], daily: false,
+      now: new Date("2026-11-10T12:00:00"),
+    });
+    expect(rows).toHaveLength(18);
+    expect(rows[0].ingresos).toBe(50000);
+    expect(rows[17].gastos).toBe(12000);
+  });
+
+  it("muestra seis meses por defecto cuando no hay rango explícito", async () => {
+    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+    const rows = buildResumenChartData([], {
+      from: null, to: null, categories: [], daily: false,
+      now: new Date("2026-11-10T12:00:00"),
+    });
+    expect(rows).toHaveLength(6);
+    expect(rows.every((row) => row.ingresos === 0 && row.gastos === 0)).toBe(true);
+  });
+});
