@@ -173,8 +173,15 @@ function RootComponent() {
   const router = useRouter();
   const location = useLocation();
   useEffect(() => {
-    const publicPaths = new Set(["/", "/news", "/social", "/forum", "/directory", "/pricing", "/about", "/contact"]);
-    const isPublic = publicPaths.has(location.pathname) || location.pathname.startsWith("/auth");
+    const publicPaths = new Set([
+      "/", "/news", "/noticias", "/social", "/foro", "/forum", "/directorio", "/directory",
+      "/negocios", "/pricing", "/about", "/contact", "/privacy", "/terms",
+      "/public-catalog", "/checkout-demo", "/experience", "/experience-parallel", "/experiencia",
+    ]);
+    const publicPrefixes = ["/auth/", "/foro/", "/negocios/", "/public-catalog/"];
+    const isPublic = publicPaths.has(location.pathname)
+      || location.pathname === "/auth"
+      || publicPrefixes.some((prefix) => location.pathname.startsWith(prefix));
     document.body.dataset.nuvaSurface = isPublic ? "public" : "app";
     return () => { delete document.body.dataset.nuvaSurface; };
   }, [location.pathname]);
