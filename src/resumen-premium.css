@@ -375,3 +375,255 @@
     justify-content: stretch;
   }
 }
+
+
+/* NÜVA RESUMEN — mobile-first corrective pass (2026-11-10).
+   Scope: authenticated /dashboard (Resumen). Prevent intrinsic-width overflow,
+   preserve readable financial values, and make controls/touch targets usable. */
+.nuva-resumen-canvas,
+.nuva-resumen-canvas * {
+  box-sizing: border-box;
+}
+.nuva-resumen-canvas {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.nuva-resumen-canvas > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.nuva-resumen-canvas :is(h1,h2,h3,p,strong,span,a,button) {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .nuva-resumen-canvas {
+    width: 100%;
+    padding: 14px 12px calc(104px + env(safe-area-inset-bottom));
+    overflow-x: clip;
+  }
+  .nuva-resumen-header { margin-bottom: 14px; }
+  .nuva-resumen-heading { width: 100%; gap: 10px; }
+  .nuva-resumen-heading h1 {
+    margin: 3px 0 0;
+    font-size: clamp(28px, 8vw, 36px);
+    line-height: 1.04;
+    letter-spacing: -.055em;
+  }
+  .nuva-resumen-subtitle {
+    max-width: 34rem;
+    margin-top: 7px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .nuva-resumen-demo-button { min-height: 44px; }
+  .nuva-resumen-toolbar {
+    width: 100%;
+    gap: 12px;
+    margin: 0 0 12px;
+    padding: 13px;
+    border-radius: 14px;
+  }
+  .nuva-resumen-toolbar-context > strong { font-size: 14px; }
+  .nuva-resumen-toolbar-context > p { font-size: 11px; }
+  .nuva-resumen-toolbar .nuva-resumen-filters {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 9px;
+  }
+  .nuva-resumen-filters > * { width: 100%; min-width: 0; }
+  .nuva-resumen-filters :is(button,[role="combobox"],input) {
+    min-height: 44px;
+    max-width: 100%;
+    font-size: 13px;
+  }
+  .nuva-resumen-kpi-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 9px;
+    margin: 0 0 12px;
+  }
+  .nuva-resumen-kpi {
+    min-width: 0;
+    min-height: 116px;
+    padding: 13px 12px;
+    border-radius: 13px;
+  }
+  .nuva-resumen-kpi-primary {
+    grid-column: 1 / -1;
+    min-height: 128px;
+    padding: 15px;
+  }
+  .nuva-resumen-kpi-top {
+    min-height: 28px;
+    align-items: center;
+    gap: 7px;
+    font-size: 9px;
+    line-height: 1.3;
+    letter-spacing: .045em;
+  }
+  .nuva-resumen-kpi-icon {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+  .nuva-resumen-kpi > strong {
+    display: block;
+    max-width: 100%;
+    margin-top: 9px;
+    font-size: clamp(15px,4.4vw,20px);
+    line-height: 1.18;
+    letter-spacing: -.045em;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+  .nuva-resumen-kpi-primary > strong {
+    font-size: clamp(27px,7.6vw,35px);
+    white-space: normal;
+  }
+  .nuva-resumen-kpi > p {
+    margin-top: 7px;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .nuva-resumen-workspace-grid {
+    grid-template-columns: minmax(0,1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .nuva-resumen-panel {
+    min-width: 0;
+    border-radius: 14px;
+  }
+  .nuva-resumen-operations-panel,
+  .nuva-resumen-shortcuts-panel {
+    padding: 15px 13px;
+  }
+  .nuva-resumen-panel-heading {
+    align-items: flex-start;
+    gap: 9px;
+  }
+  .nuva-resumen-panel-heading h2 { font-size: 17px; }
+  .nuva-resumen-status-pill {
+    max-width: 45%;
+    min-height: 28px;
+    white-space: normal;
+    text-align: center;
+  }
+  .nuva-resumen-operational-stats {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 8px;
+    margin-top: 13px;
+  }
+  .nuva-resumen-operational-stats > div {
+    min-width: 0;
+    min-height: 76px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 7px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+  .nuva-resumen-operational-stats span {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .nuva-resumen-operational-stats strong {
+    max-width: 100%;
+    font-size: clamp(15px,4.2vw,19px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .nuva-resumen-status-copy { font-size: 11px; line-height: 1.5; }
+  .nuva-resumen-shortcuts {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 8px;
+    margin-top: 13px;
+  }
+  .nuva-resumen-shortcuts > a {
+    min-width: 0;
+    min-height: 76px;
+    padding: 11px;
+    border-radius: 11px;
+  }
+  .nuva-resumen-shortcuts > a > strong { font-size: 12px; }
+  .nuva-resumen-chart-panel {
+    margin-bottom: 12px;
+    padding: 15px 12px 13px;
+  }
+  .nuva-resumen-chart-heading { gap: 8px; }
+  .nuva-resumen-chart-heading h2 { font-size: 18px; }
+  .nuva-resumen-chart-heading > div:first-child > p:last-child {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .nuva-resumen-device-chart {
+    width: 100%;
+    height: 250px;
+    min-height: 250px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .nuva-resumen-device-chart .recharts-responsive-container {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .nuva-resumen-chart-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 18px;
+    font-size: 10px;
+  }
+  .nuva-resumen-score-section {
+    grid-template-columns: minmax(0,1fr);
+    gap: 12px;
+    margin-top: 12px;
+    padding: 15px 13px;
+    border-radius: 14px;
+  }
+  .nuva-resumen-score-section h2 { font-size: 18px; }
+  .nuva-resumen-score-card { min-width: 0; width: 100%; }
+  .nuva-resumen-score-card :is(button,a) { min-height: 42px; }
+  .nuva-resumen-feedback {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 13px;
+    border-radius: 12px;
+  }
+  .nuva-resumen-feedback > div { min-width: 0; flex: 1 1 180px; }
+  .nuva-resumen-feedback p { overflow-wrap: anywhere; }
+  .nuva-resumen-onboarding {
+    grid-template-columns: minmax(0,1fr);
+    gap: 14px;
+    padding: 15px;
+    border-radius: 14px;
+  }
+  .nuva-resumen-onboarding-copy h2 {
+    font-size: clamp(20px,6vw,25px);
+    line-height: 1.15;
+  }
+  .nuva-resumen-onboarding-copy > a,
+  .nuva-resumen-onboarding-copy button { min-height: 44px; }
+  .nuva-resumen-steps { grid-template-columns: minmax(0,1fr); }
+  .nuva-resumen-steps > div { min-height: 42px; font-size: 12px; }
+  .nuva-resumen-footer { padding-bottom: 8px; }
+}
+@media (max-width: 390px) {
+  .nuva-resumen-canvas { padding-right: 10px; padding-left: 10px; }
+  .nuva-resumen-kpi { padding: 11px 9px; }
+  .nuva-resumen-kpi-top { font-size: 8px; letter-spacing: .025em; }
+  .nuva-resumen-kpi > strong { font-size: 15px; }
+  .nuva-resumen-kpi-primary > strong { font-size: 27px; }
+  .nuva-resumen-operational-stats > div { padding: 9px 8px; }
+  .nuva-resumen-shortcuts > a { padding: 9px; }
+}
+@media (max-width: 340px) {
+  .nuva-resumen-kpi-grid { grid-template-columns: minmax(0,1fr); }
+  .nuva-resumen-kpi-primary { grid-column: auto; }
+  .nuva-resumen-kpi { min-height: 94px; }
+  .nuva-resumen-operational-stats { grid-template-columns: minmax(0,1fr); }
+  .nuva-resumen-shortcuts { grid-template-columns: minmax(0,1fr); }
+  .nuva-resumen-filters { gap: 8px; }
+}
