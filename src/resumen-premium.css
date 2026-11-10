@@ -1087,7 +1087,7 @@
     backdrop-filter: blur(18px);
   }
   .nuva-app nav[aria-label="Navegación principal móvil"] > a,
-  .nuva-app nav[aria-label="Navegación principal móvil"] > div > button {
+  .nuva-app nav[aria-label="Navegación principal móvil"] > button {
     min-height: 58px;
     padding-top: 8px;
     padding-bottom: 8px;
