@@ -1,6 +1,6 @@
 /* Nüva One — purposeful motion system.
    Motion communicates hierarchy, state and spatial continuity; it is never ambient decoration. */
-:root {
+.nuva-app {
   --nuva-motion-ease: cubic-bezier(.2, .75, .25, 1);
   --nuva-motion-ease-out: cubic-bezier(.16, 1, .3, 1);
   --nuva-motion-fast: 140ms;
@@ -8,7 +8,7 @@
   --nuva-motion-enter: 240ms;
 }
 
-body { text-rendering: optimizeLegibility; }
+body[data-nuva-surface="app"] { text-rendering: optimizeLegibility; }
 .nuva-app { min-width: 0; }
 .nuva-app :where(button, a[href], [role="button"], input, select, textarea) {
   -webkit-tap-highlight-color: transparent;
