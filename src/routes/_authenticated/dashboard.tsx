@@ -151,135 +151,128 @@ function Dashboard() {
   return (
     <ModuleGuard module="dashboard">
       <main className="nuva-resumen-canvas">
-        <div className="nuva-resumen-ambient-word" aria-hidden="true">Resumen</div>
         <header className="nuva-resumen-header">
-          <div className="nuva-resumen-brandline">
-            <span className="nuva-resumen-wordmark">nüva<span>one</span></span>
-            <span className="nuva-resumen-breadcrumb">/ TU NEGOCIO</span>
-            <span className="nuva-resumen-live"><i /> PANEL EJECUTIVO</span>
-          </div>
           <div className="nuva-resumen-heading">
             <div>
-              <p className="nuva-resumen-overline">UNA VISIÓN MÁS CLARA</p>
-              <h1>Todo en equilibrio.</h1>
-              <p className="nuva-resumen-subtitle">El estado de tu negocio, con la claridad que necesitas para avanzar.</p>
+              <p className="nuva-resumen-overline">VISTA GENERAL <span aria-hidden="true">/</span> NEGOCIO</p>
+              <h1>Resumen</h1>
+              <p className="nuva-resumen-subtitle">Una lectura clara de tus operaciones, resultados y próximos focos de atención.</p>
             </div>
             <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
-              {seedingDemo ? "Preparando…" : "Explorar demo"}
+              {seedingDemo ? "Preparando demo…" : "Explorar demo"}
             </Button>
           </div>
         </header>
 
         {kpis === undefined && !kpisError && !txError && (
-          <div className="nuva-resumen-onboarding nuva-resumen-loading">
-            <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><span className="animate-pulse" /></span>
-              <h2>Cargando indicadores del negocio</h2>
-              <p>Obteniendo los datos de tu panel ejecutivo. Un momento.</p>
-            </div>
+          <div className="nuva-resumen-feedback" role="status">
+            <span className="nuva-resumen-feedback-mark" />
+            <div><strong>Cargando información del negocio</strong><p>Estamos reuniendo tus indicadores y movimientos.</p></div>
           </div>
         )}
 
         {kpisError && (
-          <div role="alert" className="nuva-resumen-onboarding">
-            <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR INDICADORES</span>
-              <h2>No se pudieron cargar los indicadores del negocio</h2>
-              <p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p>
-              <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
-            </div>
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div><strong>No se pudieron cargar los indicadores</strong><p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p></div>
+            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
           </div>
         )}
 
         {txError && (
-          <div role="alert" className="nuva-resumen-onboarding">
-            <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR MOVIMIENTOS</span>
-              <h2>No se pudo cargar el historial de transacciones</h2>
-              <p>{String(txError?.message ?? txError ?? "Error desconocido")}</p>
-              <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
-            </div>
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div><strong>No se pudieron cargar los movimientos</strong><p>{String(txError?.message ?? txError ?? "Error desconocido")}</p></div>
+            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
           </div>
         )}
 
         {kpis !== undefined && !hasActivity && (
-          <Card className="nuva-resumen-onboarding">
+          <section className="nuva-resumen-onboarding">
             <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><Sparkles className="h-4 w-4" /> PRIMEROS PASOS</span>
-              <h2>Tu espacio está listo.</h2>
-              <p>Comienza con {goalsLabel(onboardingFocus).toLowerCase()} y convierte tus operaciones en una visión clara del negocio.</p>
+              <span className="nuva-resumen-section-label"><Sparkles className="h-4 w-4" /> CONFIGURACIÓN INICIAL</span>
+              <h2>Tu espacio está listo para empezar.</h2>
+              <p>Comienza con {goalsLabel(onboardingFocus).toLowerCase()} y convierte tus operaciones en información útil para decidir.</p>
               <Link to={focusAction.href}><Button size="sm">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
             </div>
-            <div className="nuva-resumen-steps"><ActivationStep done title="Negocio creado" /><ActivationStep done={hasActivity} title="Primera operación" /><ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" /><ActivationStep done={false} title="Primer análisis" /></div>
-          </Card>
+            <div className="nuva-resumen-steps">
+              <ActivationStep done title="Negocio creado" />
+              <ActivationStep done={hasActivity} title="Primera operación" />
+              <ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" />
+              <ActivationStep done={false} title="Primer análisis" />
+            </div>
+          </section>
         )}
 
-        <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
-          <article className="nuva-resumen-device nuva-resumen-device-main">
-            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Todo en equilibrio.</h2><span>Una mirada clara a tu negocio.</span></div>
-            <div className="nuva-resumen-balance-card">
-              <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span><span className="nuva-resumen-balance-mark">↗</span></div>
-              <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
-              <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Requiere atención" : "Resultado acumulado"}</p>
-              <svg className="nuva-resumen-balance-sparkline" viewBox="0 0 220 49" fill="none" aria-hidden="true"><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3 V49 H0Z" fill="currentColor" opacity=".08"/></svg>
-            </div>
-            <div className="nuva-resumen-device-money-grid">
-              <div><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
-              <div><span><i className="nuva-resumen-dot-indigo" /> Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
-            </div>
-            <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR ESTIMADO DE INVENTARIO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
-            <div className="nuva-resumen-status-card">
-              {kpis === undefined ? (
-                <>
-                  <span className="nuva-resumen-status-symbol"><i className="nuva-resumen-dot-gold" /></span>
-                  <div><strong>—</strong><p>Esperando datos del negocio…</p></div>
-                </>
-              ) : (
-                <>
-                  <span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span>
-                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div>
-                </>
-              )}
-              <i className="nuva-resumen-status-light" />
-            </div>
-                      </article>
-
-          <article className="nuva-resumen-device nuva-resumen-device-operations">
-            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">CENTRO DE OPERACIONES</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-device-title"><span>Tu negocio</span><small>ACCESOS Y ACTIVIDAD</small></div>
-            <div className="nuva-resumen-device-money-grid">
-              <div><span><i className="nuva-resumen-dot-gold" /> Ventas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
-              <div><span><i className="nuva-resumen-dot-indigo" /> Stock bajo</span><strong>{kpis?.lowStockCount ?? "—"}</strong></div>
-            </div>
-            <div className="nuva-resumen-operation-list">
-              <p className="nuva-resumen-section-label">CONTINUAR TRABAJANDO</p>
-              <Link to="/sales"><span className="nuva-resumen-operation-icon"><ShoppingBag className="h-4 w-4" /></span><span><strong>Ventas y operaciones</strong><small>Registros y actividad</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-              <Link to="/inventory"><span className="nuva-resumen-operation-icon"><Package className="h-4 w-4" /></span><span><strong>Inventario y stock</strong><small>Productos y existencias</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-              <Link to="/quotes"><span className="nuva-resumen-operation-icon"><Plus className="h-4 w-4" /></span><span><strong>Cotizaciones</strong><small>Propuestas comerciales</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-              <Link to="/finance"><span className="nuva-resumen-operation-icon"><TrendingUp className="h-4 w-4" /></span><span><strong>Finanzas</strong><small>Movimientos y resultados</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-            </div>
-            <div className="nuva-resumen-device-footer-note"><CheckCircle2 className="h-3.5 w-3.5" /> Tus accesos directos están disponibles.</div>
-                      </article>
+        <section className="nuva-resumen-kpi-grid" aria-label="Indicadores principales">
+          <article className="nuva-resumen-kpi nuva-resumen-kpi-primary">
+            <div className="nuva-resumen-kpi-top"><span>RESULTADO NETO</span><span className="nuva-resumen-kpi-icon"><TrendingUp className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
+            <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Resultado negativo" : "Ingresos menos gastos"}</p>
+          </article>
+          <article className="nuva-resumen-kpi">
+            <div className="nuva-resumen-kpi-top"><span>INGRESOS REGISTRADOS</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
+            <p>Movimientos de ingreso</p>
+          </article>
+          <article className="nuva-resumen-kpi">
+            <div className="nuva-resumen-kpi-top"><span>GASTOS REGISTRADOS</span><span className="nuva-resumen-kpi-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong>
+            <p>Movimientos de egreso</p>
+          </article>
+          <article className="nuva-resumen-kpi">
+            <div className="nuva-resumen-kpi-top"><span>VALOR DE INVENTARIO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong>
+            <p>{kpis?.productsCount ?? "—"} productos registrados</p>
+          </article>
         </section>
 
-        <section className="nuva-resumen-chart-section" aria-label="Rendimiento financiero">
-          <div className="nuva-resumen-filters nuva-resumen-device-filters">
-            <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-            <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
+        <section className="nuva-resumen-workspace-grid">
+          <article className="nuva-resumen-panel nuva-resumen-operations-panel">
+            <div className="nuva-resumen-panel-heading">
+              <div><p className="nuva-resumen-section-label">SEGUIMIENTO</p><h2>Estado operativo</h2></div>
+              <span className={attentionCount === 0 ? "nuva-resumen-status-pill is-clear" : "nuva-resumen-status-pill is-attention"}>{kpis === undefined ? "Cargando" : attentionCount === 0 ? "En orden" : "Requiere revisión"}</span>
+            </div>
+            <div className="nuva-resumen-operational-stats">
+              <div><span>Ventas registradas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
+              <div><span>Productos con stock bajo</span><strong className={kpis?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{kpis?.lowStockCount ?? "—"}</strong></div>
+            </div>
+            <div className="nuva-resumen-status-copy">
+              {kpis === undefined ? "Esperando los datos del negocio." : attentionCount === 0 ? "No hay alertas prioritarias en los indicadores disponibles." : `${kpis.lowStockCount} alertas de stock y ${kpis.net < 0 ? "un resultado neto negativo" : "otros indicadores"} que conviene revisar.`}
+            </div>
+          </article>
+
+          <article className="nuva-resumen-panel nuva-resumen-shortcuts-panel">
+            <div className="nuva-resumen-panel-heading"><div><p className="nuva-resumen-section-label">ACCESO DIRECTO</p><h2>Continúa tu trabajo</h2></div></div>
+            <nav className="nuva-resumen-shortcuts" aria-label="Accesos directos">
+              <Link to="/pos"><span><ShoppingBag className="h-4 w-4" /></span><strong>Caja</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/sales"><span><TrendingUp className="h-4 w-4" /></span><strong>Ventas</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/inventory"><span><Package className="h-4 w-4" /></span><strong>Inventario</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/quotes"><span><Plus className="h-4 w-4" /></span><strong>Cotizaciones</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            </nav>
+          </article>
+        </section>
+
+        <section className="nuva-resumen-panel nuva-resumen-chart-panel" aria-label="Rendimiento financiero">
+          <div className="nuva-resumen-panel-heading nuva-resumen-chart-heading">
+            <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Compara los movimientos registrados y detecta cambios en el tiempo.</p></div>
+            <div className="nuva-resumen-filters">
+              <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+              <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
+            </div>
           </div>
           <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
             <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
           </div>
-          <div className="nuva-resumen-chart-legend">
-            <span><i className="nuva-resumen-dot-gold" /> Ingresos</span>
-            <span><i className="nuva-resumen-dot-indigo" /> Gastos</span>
-          </div>
+          <div className="nuva-resumen-chart-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
         </section>
 
-        <section className="nuva-resumen-refine-row"><div><p className="nuva-resumen-section-label">LECTURA FINANCIERA</p><h2>Explora tus movimientos</h2><p>Los filtros del gráfico permiten revisar períodos y categorías específicas.</p></div></section>
-        <section className="nuva-resumen-score-section"><div><p className="nuva-resumen-section-label">INTELIGENCIA DE NEGOCIO</p><h2>Salud de tu empresa</h2><p>Indicadores complementarios para tomar mejores decisiones.</p></div><div className="nuva-resumen-score-card"><NuvaScoreCard /></div></section>
-        <footer className="nuva-resumen-footer"><span>NÜVA ONE <span>·</span> CONTROL DE NEGOCIO</span><span>Los indicadores reflejan los movimientos registrados en tu cuenta.</span></footer>
+        <section className="nuva-resumen-score-section">
+          <div><p className="nuva-resumen-section-label">INTELIGENCIA DE NEGOCIO</p><h2>Salud de tu empresa</h2><p>Indicadores complementarios para entender el estado general de tu negocio.</p></div>
+          <div className="nuva-resumen-score-card"><NuvaScoreCard /></div>
+        </section>
+
+        <footer className="nuva-resumen-footer"><span>NÜVA ONE <span>·</span> RESUMEN</span><span>Indicadores calculados a partir de los movimientos registrados en tu negocio.</span></footer>
       </main>
     </ModuleGuard>
   );
