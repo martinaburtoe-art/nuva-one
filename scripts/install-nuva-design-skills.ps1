@@ -31,7 +31,7 @@ try {
 
   if (-not $SkipImpeccableEngine) {
     Write-Host ""
-    Write-Host "[1/8] Impeccable engine, Hermes integration and design checks" -ForegroundColor Yellow
+    Write-Host "[1/7] Impeccable engine, Hermes integration and design checks" -ForegroundColor Yellow
     & npx --yes impeccable@latest install --providers=hermes --scope=project
     if ($LASTEXITCODE -ne 0) {
       throw "Impeccable installer failed with exit code $LASTEXITCODE. No other skills were installed by this script."
@@ -43,7 +43,6 @@ try {
     @{ Repo = "Nutlope/hallmark"; Name = "hallmark"; Label = "Hallmark" },
     @{ Repo = "nextlevelbuilder/ui-ux-pro-max-skill"; Name = "ui-ux-pro-max"; Label = "UI UX Pro Max" },
     @{ Repo = "dominikmartn/hue"; Name = "hue"; Label = "Hue" },
-    @{ Repo = "google-labs-code/stitch-skills"; Name = "stitch::extract-design-md"; Label = "Extract DESIGN.md (Google Stitch)" },
     @{ Repo = "shadcn-ui/ui"; Name = "shadcn"; Label = "shadcn/ui" },
     @{ Repo = "dammyjay93/interface-design"; Name = "interface-design"; Label = "Interface Design" },
     @{ Repo = "jakubkrehel/skills"; Name = "better-typography"; Label = "Better Typography" }
@@ -52,7 +51,7 @@ try {
   $index = 1
   foreach ($skill in $skills) {
     Write-Host ""
-    Write-Host ("[{0}/8] {1}" -f $index, $skill.Label) -ForegroundColor Yellow
+    Write-Host ("[{0}/7] {1}" -f $index, $skill.Label) -ForegroundColor Yellow
     & npx --yes skills@latest add $skill.Repo --skill $skill.Name --agent hermes --yes
     if ($LASTEXITCODE -ne 0) {
       throw ("Install failed for {0} ({1}/{2}); inspect the output and rerun after correcting it." -f $skill.Label, $skill.Repo, $skill.Name)
