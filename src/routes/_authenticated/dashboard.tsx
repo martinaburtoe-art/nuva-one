@@ -236,6 +236,18 @@ function Dashboard() {
           </div>
         </header>
 
+        <section className="nuva-resumen-mobile-brief" aria-label="Pulso del negocio">
+          <div className="nuva-resumen-mobile-brief-head">
+            <span className="nuva-resumen-section-label">PULSO OPERATIVO</span>
+            <span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-pill is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-pill is-attention" : "nuva-resumen-status-pill"}>{operationalStatus.label}</span>
+          </div>
+          <div className="nuva-resumen-mobile-brief-grid">
+            <Link to="/sales" className="nuva-resumen-mobile-brief-item"><span>Ventas</span><strong>{kpis?.salesCount ?? "—"}</strong><small>registradas</small></Link>
+            <Link to="/inventory" className="nuva-resumen-mobile-brief-item"><span>Stock bajo</span><strong className={kpis?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{kpis?.lowStockCount ?? "—"}</strong><small>por revisar</small></Link>
+            <Link to="/pos" className="nuva-resumen-mobile-brief-item"><span>Caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "N/D" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong><small>estado actual</small></Link>
+          </div>
+        </section>
+
         <div className="nuva-resumen-toolbar" aria-label="Filtros del resumen">
           <div className="nuva-resumen-toolbar-context">
             <span className="nuva-resumen-section-label">PERÍODO Y CATEGORÍA</span>
