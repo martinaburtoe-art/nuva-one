@@ -160,7 +160,7 @@ function Dashboard() {
     return Object.values(byMonth);
   }, [allTx, isoFrom, isoTo, categories]);
 
-  const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/crm" } : { label: "Completa tu primera operación", href: "/sales" };
+  const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
   const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0;
   async function loadDemoBusiness() {
     setSeedingDemo(true);
@@ -290,7 +290,7 @@ function Dashboard() {
               <Link to="/sales"><span><TrendingUp className="h-4 w-4" /></span><strong>Ventas</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
               <Link to="/inventory"><span><Package className="h-4 w-4" /></span><strong>Inventario</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
               <Link to="/quotes"><span><FileText className="h-4 w-4" /></span><strong>Cotizaciones</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
-              <Link to="/crm"><span><Users className="h-4 w-4" /></span><strong>Clientes</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/customers"><span><Users className="h-4 w-4" /></span><strong>Clientes</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
               <Link to="/finance"><span><Wallet className="h-4 w-4" /></span><strong>Finanzas</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
             </nav>
           </article>
