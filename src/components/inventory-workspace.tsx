@@ -37,10 +37,84 @@ export function InventoryWorkspace() {
   const replenishment = useMemo(() => products.map(product => ({ product, metrics: getInventoryMetrics(product) })).filter(({ metrics: m }) => m.suggestedReplenishment > 0).sort((a, b) => b.metrics.suggestedReplenishment - a.metrics.suggestedReplenishment), [products]);
   const replenishmentUnits = replenishment.reduce((s, item) => s + item.metrics.suggestedReplenishment, 0); const replenishmentValue = replenishment.reduce((s, item) => s + item.metrics.suggestedReplenishment * Number(item.product.cost ?? 0), 0);
   const estimatedMargins = products.reduce((s, p) => s + Math.max(0, Number(p.price ?? 0) - Number(p.cost ?? 0)) * Math.max(0, Number(p.stock ?? 0)), 0);
-  const marginRate = products.length ? products.reduce((s,p)=>s + (Number(p.price ?? 0)>0 ? Math.max(0,Number(p.price ?? 0)-Number(p.cost ?? 0))/Number(p.price ?? 0) : 0),0)/products.filter(p=>Number(p.price ?? 0)>0).length : 0;
+  const pricedProducts = products.filter(p => Number(p.price ?? 0) > 0);
+  const marginRate = pricedProducts.length ? pricedProducts.reduce((sum, p) => sum + Math.max(0, Number(p.price ?? 0) - Number(p.cost ?? 0)) / Number(p.price), 0) / pricedProducts.length : 0;
   const create = () => { setEditing(null); setOpen(true); }; const edit = (p: Product) => { setEditing(p); setOpen(true); }; const adjust = (p: Product) => { setAdjustProduct(p); setAdjustOpen(true); };
-  async function save(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); if (!canWrite || !businessId) return; const f = new FormData(e.currentTarget); const stock = Math.max(0, Number(f.get("stock") || 0)); const patch = { name: String(f.get("name") || "").trim(), sku: String(f.get("sku") || "").trim() || null, low_stock_threshold: Math.max(0, Number(f.get("minimum") || 0)), reorder_point: Math.max(0, Number(f.get("reorder") || 0)), max_stock: Math.max(0, Number(f.get("target") || 0)), cost: Math.max(0, Number(f.get("cost") || 0)), price: Math.max(0, Number(f.get("price") || 0)) }; if (!patch.name) return toast.error("Ingresa el nombre del producto."); try { if (editing) { await update.mutateAsync({ id: editing.id, patch }); const delta = stock - Number(editing.stock || 0); if (delta) await adjustInventoryStock(supabase, { productId: editing.id, delta, reason: "Ajuste desde ficha de producto", sourceType: "product_edit", sourceId: editing.id }); } else { const created = await insert.mutateAsync({ business_id: businessId, ...patch, stock: 0 }); if (stock) { const id = (created as { id: string }).id; await adjustInventoryStock(supabase, { productId: id, delta: stock, reason: "Stock inicial al crear producto", sourceType: "product_initial_stock", sourceId: id }); } } toast.success(editing ? "Producto actualizado" : "Producto creado"); setOpen(false); } catch (err: any) { toast.error(err?.message || "No se pudo guardar el producto."); } }
-  async function doAdjust(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); if (!adjustProduct || !canWrite) return; const f = new FormData(e.currentTarget); const delta = Number(f.get("delta")); const reason = String(f.get("reason") || "").trim(); if (!Number.isInteger(delta) || delta === 0) return toast.error("Usa un entero distinto de cero."); if (!reason) return toast.error("Indica el motivo."); try { await adjustInventoryStock(supabase, { productId: adjustProduct.id, delta, reason, sourceType: "manual_adjustment" }); toast.success("Stock ajustado y trazado"); setAdjustOpen(false); } catch (err: any) { toast.error(err?.message || "No se pudo ajustar el stock."); } }
+  async function save(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!canWrite || !businessId) return;
+    const form = new FormData(e.currentTarget);
+    const numberField = (key: string) => Number(form.get(key) ?? 0);
+    const stock = numberField("stock");
+    const minimum = numberField("minimum");
+    const reorder = numberField("reorder");
+    const target = numberField("target");
+    const cost = numberField("cost");
+    const price = numberField("price");
+    const patch = {
+      name: String(form.get("name") || "").trim(),
+      sku: String(form.get("sku") || "").trim() || null,
+      low_stock_threshold: minimum,
+      reorder_point: reorder,
+      max_stock: target,
+      cost,
+      price,
+    };
+    if (!patch.name) return toast.error("Ingresa el nombre del producto.");
+    if (![stock, minimum, reorder, target].every(value => Number.isSafeInteger(value) && value >= 0)) return toast.error("Stock, mínimo, reposición y objetivo deben ser enteros no negativos.");
+    if (![cost, price].every(value => Number.isFinite(value) && value >= 0)) return toast.error("Costo y precio deben ser importes válidos no negativos.");
+    try {
+      if (editing) {
+        await update.mutateAsync({ id: editing.id, patch });
+        const delta = stock - Number(editing.stock || 0);
+        if (delta) {
+          try {
+            await adjustInventoryStock(supabase, { productId: editing.id, delta, reason: "Ajuste desde ficha de producto", sourceType: "product_edit", sourceId: editing.id });
+          } catch (stockError: any) {
+            await refetch();
+            setOpen(false);
+            toast.error(`Datos del producto guardados, pero el stock no cambió: ${stockError?.message || "error de movimiento"}. Revisa el stock y registra el ajuste desde Movimientos.`);
+            return;
+          }
+        }
+      } else {
+        const created = await insert.mutateAsync({ business_id: businessId, ...patch, stock: 0 });
+        if (stock > 0) {
+          const id = (created as { id: string }).id;
+          try {
+            await adjustInventoryStock(supabase, { productId: id, delta: stock, reason: "Stock inicial al crear producto", sourceType: "product_initial_stock", sourceId: id });
+          } catch (stockError: any) {
+            await refetch();
+            setOpen(false);
+            toast.error(`Producto creado, pero el stock inicial quedó pendiente: ${stockError?.message || "error de movimiento"}. No vuelvas a crear el producto; abre su ficha y registra el stock.`);
+            return;
+          }
+        }
+      }
+      await refetch();
+      toast.success(editing ? "Producto actualizado" : "Producto creado");
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || "No se pudo guardar el producto.");
+    }
+  }
+  async function doAdjust(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!adjustProduct || !canWrite) return;
+    const form = new FormData(e.currentTarget);
+    const delta = Number(form.get("delta"));
+    const reason = String(form.get("reason") || "").trim();
+    if (!Number.isSafeInteger(delta) || delta === 0) return toast.error("Usa un entero distinto de cero.");
+    if (!reason) return toast.error("Indica el motivo.");
+    try {
+      await adjustInventoryStock(supabase, { productId: adjustProduct.id, delta, reason, sourceType: "manual_adjustment" });
+      await refetch();
+      toast.success("Stock ajustado y trazado");
+      setAdjustOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || "No se pudo ajustar el stock.");
+    }
+  }
   async function del(p: Product) { if (!canWrite || !window.confirm(`¿Eliminar ${p.name || "este producto"}?`)) return; try { await remove.mutateAsync(p.id); toast.success("Producto eliminado"); } catch { toast.error("No se pudo eliminar el producto"); } }
   function exportData() { downloadCsv("nuva-inventario.csv", products.map(p => { const m = getInventoryMetrics(p); return { SKU: p.sku || "", Producto: p.name || "", Stock: Number(p.stock || 0), Disponible: m.available, Proyectado: m.projected, Estado: statusText[m.status], Reposicion: m.suggestedReplenishment, Costo: Number(p.cost || 0), Precio: Number(p.price || 0), ValorCosto: Number(p.stock || 0) * Number(p.cost || 0) }; })); }
   function exportReplenishment() { downloadCsv("nuva-abastecimiento.csv", replenishment.map(({ product: p, metrics: m }) => ({ SKU: p.sku || "", Producto: p.name || "", Proyectado: m.projected, Reposicion: m.suggestedReplenishment, CostoUnitario: Number(p.cost || 0), InversionEstimada: m.suggestedReplenishment * Number(p.cost || 0), Estado: statusText[m.status] }))); }
