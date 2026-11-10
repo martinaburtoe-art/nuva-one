@@ -453,6 +453,26 @@ function POS() {
             </Button>
           </Card>
         </div>
+        {cart.length > 0 && (
+          <div className="sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-20 mb-3 xl:hidden">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 w-full justify-between border-primary/25 bg-card/95 px-4 shadow-md backdrop-blur"
+              onClick={() => document.getElementById("pos-cart-panel")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              aria-label={`Ver carrito con ${cart.length} productos, total ${fmtCLP(total)}`}
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-primary" />
+                <span className="font-semibold">Carrito · {cart.length}</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="font-semibold tabular-nums">{fmtCLP(total)}</span>
+                <span className="text-xs text-primary">Ver y cobrar →</span>
+              </span>
+            </Button>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
           <div className="space-y-4">
             <div className="relative">
@@ -589,7 +609,7 @@ function POS() {
               </Card>
             )}
           </div>
-          <Card className="flex h-fit flex-col rounded-2xl border-border/70 p-0 shadow-lg shadow-black/5 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-6.5rem)] xl:overflow-hidden">
+          <Card id="pos-cart-panel" className="flex h-fit flex-col rounded-2xl border-border/70 p-0 shadow-lg shadow-black/5 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-6.5rem)] xl:overflow-hidden">
             <div className="border-b border-border/70 bg-muted/20 px-4 py-3.5">
               <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold">
