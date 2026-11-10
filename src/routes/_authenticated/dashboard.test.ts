@@ -3,6 +3,7 @@ import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
+import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 
 describe("goalsLabel (onboarding del dashboard)", () => {
   it.each([
@@ -134,5 +135,32 @@ describe("calculateInventoryValueAtCost", () => {
       { stock: 4, cost: null },
       { stock: 3, cost: "no-disponible" },
     ])).toBe(0);
+  });
+});
+
+describe("fetchAllResumenRows", () => {
+  it("lee todas las páginas hasta la última página parcial", async () => {
+    const rows = await fetchAllResumenRows(async (from, to) => ({
+      data: Array.from({ length: Math.min(2, 5 - from) }, (_, i) => from + i).filter((n) => n <= to),
+      error: null,
+    }), 2);
+    expect(rows).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it("hace una sola consulta cuando la primera página está vacía", async () => {
+    let calls = 0;
+    const rows = await fetchAllResumenRows(async () => {
+      calls += 1;
+      return { data: [], error: null };
+    }, 2);
+    expect(rows).toEqual([]);
+    expect(calls).toBe(1);
+  });
+
+  it("propaga los errores de la consulta en lugar de ocultar datos incompletos", async () => {
+    await expect(fetchAllResumenRows(async () => ({
+      data: null,
+      error: new Error("fallo de lectura"),
+    }), 2)).rejects.toThrow("fallo de lectura");
   });
 });
