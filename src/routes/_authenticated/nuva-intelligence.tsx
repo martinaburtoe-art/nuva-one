@@ -23,13 +23,13 @@ const views: Array<{ id: View; title: string; description: string; info: string 
 
 function NuvaIntelligence() {
   const [activeView, setActiveView] = useState<View | null>(null);
-  const { data: sales } = useBizList<any>("sales", { order: "sale_date" });
-  const { data: transactions } = useBizList<any>("transactions", { order: "tx_date" });
-  const { data: products } = useBizList<any>("products", { order: "name" });
-  const { data: quotes } = useBizList<any>("quotes", { order: "created_at" });
-  const { data: activities } = useBizList<any>("customer_activities", { order: "created_at" });
-  const { data: councilMemory } = useBizList<any>("nuva_business_memory", { order: "created_at" });
-  const { data: actionQueue } = useBizList<any>("nuva_action_queue", { order: "created_at" });
+  const { data: sales, isLoading: salesLoading, isError: salesError, refetch: refetchSales } = useBizList<any>("sales", { order: "sale_date" });
+  const { data: transactions, isLoading: transactionsLoading, isError: transactionsError, refetch: refetchTransactions } = useBizList<any>("transactions", { order: "tx_date" });
+  const { data: products, isLoading: productsLoading, isError: productsError, refetch: refetchProducts } = useBizList<any>("products", { order: "name" });
+  const { data: quotes, isLoading: quotesLoading, isError: quotesError, refetch: refetchQuotes } = useBizList<any>("quotes", { order: "created_at" });
+  const { data: activities, isLoading: activitiesLoading, isError: activitiesError, refetch: refetchActivities } = useBizList<any>("customer_activities", { order: "created_at" });
+  const { data: councilMemory, isLoading: memoryLoading, isError: memoryError, refetch: refetchMemory } = useBizList<any>("nuva_business_memory", { order: "created_at" });
+  const { data: actionQueue, isLoading: queueLoading, isError: queueError, refetch: refetchQueue } = useBizList<any>("nuva_action_queue", { order: "created_at" });
 
   const intelligence = useMemo(() => {
     const income = (transactions ?? []).filter((t: any) => t.type === "income").reduce((sum: number, t: any) => sum + Number(t.amount ?? 0), 0);
@@ -45,6 +45,12 @@ function NuvaIntelligence() {
     return { income, expense, net, margin, lowStock, overdue, openQuotes: openQuotes.length, openPipeline, health, signals, salesCount: (sales ?? []).length, productsCount: (products ?? []).length };
   }, [activities, products, quotes, sales, transactions]);
 
+  const intelligenceLoading = salesLoading || transactionsLoading || productsLoading || quotesLoading || activitiesLoading || memoryLoading || queueLoading;
+  const intelligenceError = salesError || transactionsError || productsError || quotesError || activitiesError || memoryError || queueError;
+  const retryIntelligence = () => {
+    void Promise.all([refetchSales(), refetchTransactions(), refetchProducts(), refetchQuotes(), refetchActivities(), refetchMemory(), refetchQueue()]);
+  };
+
   const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
   const active = views.find((view) => view.id === activeView);
   const latestCouncil = (councilMemory ?? []).find((memory: any) => memory.memory_type === "agent_consensus");
@@ -57,24 +63,30 @@ function NuvaIntelligence() {
     <ModuleGuard module="dashboard">
       <div className="space-y-5">
         <PageHeader title="Nüva Intelligence" description="Interpreta datos, detecta señales y explica qué está cambiando. Las acciones se ejecutan en los módulos operativos." />
+        {intelligenceLoading ? (
+          <Card className="p-5" role="status" aria-live="polite"><div className="flex items-center gap-3"><div className="h-5 w-5 animate-pulse rounded-full bg-primary/20" /><div><p className="font-medium">Preparando la lectura del negocio</p><p className="text-sm text-muted-foreground">Estamos reuniendo datos de las áreas operativas antes de calcular indicadores.</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[1,2,3,4].map((n) => <div key={n} className="h-20 animate-pulse rounded-xl bg-muted/60" />)}</div></Card>
+        ) : intelligenceError ? (
+          <Card className="border-destructive/30 p-5" role="alert"><p className="font-semibold">La lectura está incompleta</p><p className="mt-1 text-sm text-muted-foreground">Una o más fuentes no respondieron. No calcularemos el índice ni presentaremos datos parciales como si fueran una lectura completa.</p><button type="button" onClick={retryIntelligence} className="mt-4 inline-flex min-h-11 items-center rounded-lg border px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Reintentar conexión</button></Card>
+        ) : (
+
 
         {!activeView ? (
           <>
-            <Card className="overflow-hidden rounded-2xl border-violet-500/20 bg-gradient-to-br from-violet-500/[0.07] via-background to-background p-5 shadow-sm md:p-6">
+            <Card className="overflow-hidden rounded-2xl border-border/70 bg-card p-5 shadow-sm md:p-7">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400"><Brain className="h-4 w-4" /> Capa analítica</div>
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary"><Brain className="h-4 w-4" /> Capa analítica</div>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">Entiende tu negocio antes de decidir.</h2>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">Nüva cruza caja, ventas, inventario, cotizaciones y seguimiento para transformar datos operativos en contexto accionable.</p>
                 </div>
-                <div className="min-w-[150px] rounded-2xl border bg-background/80 p-5 text-center"><p className="text-xs text-muted-foreground">Índice analítico</p><p className="mt-1 text-3xl font-bold tabular-nums">{intelligence.health}</p><p className="text-xs">/100</p></div>
+                <div className="min-w-[150px] rounded-2xl border bg-card p-5 text-center"><p className="text-xs text-muted-foreground">Índice analítico</p><p className="mt-1 text-3xl font-bold tabular-nums">{intelligence.health}</p><p className="text-xs">/100</p></div>
               </div>
             </Card>
-            <Card className="overflow-hidden border-violet-500/20 bg-background/70">
-              <div className="border-b border-violet-500/10 bg-violet-500/[0.04] p-5 md:p-6">
+            <Card className="overflow-hidden border-border/70 bg-card">
+              <div className="border-b border-border/70 bg-muted/40 p-5 md:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-3">
-                    <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.08] p-2.5 text-violet-600 dark:text-violet-400"><UsersRound className="h-5 w-5" /></div>
+                    <div className="rounded-xl border border-violet-500/20 bg-primary/5 p-2.5 text-violet-600 dark:text-violet-400"><UsersRound className="h-5 w-5" /></div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">Nüva Agent Council</p>
                       <h2 className="mt-1 text-xl font-semibold">{latestCouncil?.title ?? "El consejo está construyendo contexto"}</h2>
@@ -85,7 +97,7 @@ function NuvaIntelligence() {
                 </div>
               </div>
               <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-6">
-                <CouncilMetric label="Agentes consultados" value="7" detail="Un mismo contexto empresarial" />
+                <CouncilMetric label="Fuentes operativas" value="7" detail="Áreas de datos consideradas" />
                 <CouncilMetric label="Confianza" value={councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Evidencia disponible" />
                 <CouncilMetric label="Acuerdo" value={councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Coincidencia sobre la prioridad" />
                 <CouncilMetric label="Acciones abiertas" value={String(pendingActions)} detail="Siempre requieren control humano" />
@@ -94,7 +106,7 @@ function NuvaIntelligence() {
             <div>
               <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">Herramientas de Intelligence</p><h2 className="mt-1 text-xl font-semibold">Elige qué quieres entender</h2></div><span className="hidden text-xs text-muted-foreground md:block">4 herramientas</span></div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {views.map((view) => <button key={view.id} type="button" onClick={() => setActiveView(view.id)} className="group rounded-2xl border border-border/70 bg-background/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-md"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><div className="flex items-center justify-between gap-2"><p className="font-semibold">{view.title}</p><span title={view.info} aria-label={`Información: ${view.title}`} className="rounded-full p-1 text-muted-foreground"><Info className="h-4 w-4" /></span></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{view.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
+                {views.map((view) => <button key={view.id} type="button" onClick={() => setActiveView(view.id)} className="group rounded-2xl border border-border/70 bg-background/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><div className="flex items-center justify-between gap-2"><p className="font-semibold">{view.title}</p><span title={view.info} aria-label={`Información: ${view.title}`} className="rounded-full p-1 text-muted-foreground"><Info className="h-4 w-4" /></span></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{view.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
               </div>
             </div>
           </>
@@ -114,6 +126,7 @@ function NuvaIntelligence() {
             {activeView === "explain" && <ExplainMyBusiness />}
           </>
         )}
+        )}
       </div>
     </ModuleGuard>
   );
@@ -121,6 +134,6 @@ function NuvaIntelligence() {
 
 function SectionIntro({ title, text }: { title: string; text: string }) { return <div><h2 className="text-xl font-semibold">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{text}</p></div>; }
 function Kpi({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border bg-background/70 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-lg font-bold tabular-nums">{value}</p></div>; }
-function CouncilMetric({ label, value, detail }: { label: string; value: string; detail: string }) { return <div className="rounded-xl border bg-background/60 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold tabular-nums">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div>; }
-function InsightTile({ title, value, detail, href }: { title: string; value: string; detail: string; href: "/inventory" | "/quotes" | "/customers" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full border-violet-500/10 p-5 transition-all hover:-translate-y-0.5 hover:border-violet-500/30"><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p><p className="mt-2 text-lg font-semibold">{value}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></Card></Link>; }
+function CouncilMetric({ label, value, detail }: { label: string; value: string; detail: string }) { return <div className="rounded-xl border bg-muted/30 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold tabular-nums">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div>; }
+function InsightTile({ title, value, detail, href }: { title: string; value: string; detail: string; href: "/inventory" | "/quotes" | "/customers" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full border-violet-500/10 p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30"><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p><p className="mt-2 text-lg font-semibold">{value}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></Card></Link>; }
 function SignalCard({ icon, title, value, description, href }: { icon: React.ReactNode; title: string; value: number | string; description: string; href: "/inventory" | "/customers" | "/quotes" | "/finance" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full p-6 transition-all hover:-translate-y-0.5 hover:border-violet-500/30"><div className="flex items-start gap-3"><div className="rounded-xl border bg-violet-500/[0.08] p-2 text-violet-600 dark:text-violet-400">{icon}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p><p className="mt-1 text-sm text-muted-foreground">{description}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></div></div></Card></Link>; }
