@@ -633,10 +633,10 @@ function POS() {
                 cart.map((i) => (
                   <div key={i.product_id} className="rounded-lg border p-2.5">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium">{i.name}</span>
+                      <span className="min-w-0 break-words text-sm font-medium">{i.name}</span>
                       <button
                         onClick={() => removeFromCart(i.product_id)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                         aria-label="Eliminar producto"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -647,7 +647,7 @@ function POS() {
                         <Button
                           size="icon"
                           variant="outline"
-                          className="h-8 w-8"
+                          className="h-11 w-11"
                           onClick={() => updateQty(i.product_id, i.qty - 1)}
                         >
                           <Minus className="h-3 w-3" />
@@ -658,12 +658,12 @@ function POS() {
                           max={i.stock}
                           value={i.qty}
                           onChange={(e) => updateQty(i.product_id, Number(e.target.value))}
-                          className="h-8 w-14 text-center"
+                          className="h-11 w-16 text-center"
                         />
                         <Button
                           size="icon"
                           variant="outline"
-                          className="h-8 w-8"
+                          className="h-11 w-11"
                           onClick={() => updateQty(i.product_id, i.qty + 1)}
                         >
                           <Plus className="h-3 w-3" />
@@ -729,14 +729,14 @@ function POS() {
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs">Método de pago</Label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {(["efectivo", "tarjeta", "transferencia", "online"] as PayMethod[]).map((m) => (
                     <button
                       key={m}
                       onClick={() => (m !== "online" || hasPaymentGateway) && setMethod(m)}
                       disabled={m === "online" && !hasPaymentGateway}
                       className={cn(
-                        "rounded-lg border px-2 py-2 text-xs font-medium capitalize transition",
+                        "min-h-11 rounded-lg border px-2 py-2 text-xs font-medium capitalize transition",
                         method === m
                           ? "border-primary bg-primary text-primary-foreground"
                           : m === "online" && !hasPaymentGateway
