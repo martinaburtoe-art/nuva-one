@@ -114,7 +114,7 @@ function Customers() {
   const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
   const searchTerm = search.trim().replace(/[(),]/g, " ");
   const customerOr = searchTerm ? `name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,tax_id.ilike.%${searchTerm}%` : undefined;
-  const { data: customerPageData, isLoading } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });
+  const { data: customerPageData, isLoading, isError, refetch } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });
   const data = customerPageData?.rows ?? [];
   const { data: allCount = 0 } = useBizCount("customers");
   const { data: leadCount = 0 } = useBizCount("customers", { eq: { status: "lead" } });
@@ -413,6 +413,11 @@ function Customers() {
           <div className="space-y-2">
             <Skeleton className="h-14 w-full" />
             <Skeleton className="h-14 w-full" />
+          </div>
+        ) : isError ? (
+          <div role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm">
+            <p>No se pudo cargar la cartera de clientes. No mostraremos el error como si la empresa no tuviera clientes.</p>
+            <Button className="mt-3" size="sm" variant="outline" onClick={() => void refetch()}>Reintentar</Button>
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState
