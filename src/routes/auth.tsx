@@ -150,22 +150,28 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Visual */}
-      <div className="relative hidden overflow-hidden bg-gradient-primary lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-50" />
-        <Link to="/" className="relative flex items-center gap-2 text-primary-foreground">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-foreground/10 backdrop-blur">
-            <Sparkles className="h-5 w-5" />
+      <div className="relative hidden overflow-hidden bg-[#080809] text-[#F4F1E9] lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <Link to="/" className="relative flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6C687]/25 bg-[#E6C687]/10 text-[#E6C687]">
+            <Sparkles className="h-4 w-4" />
           </div>
-          <span className="font-semibold tracking-tight">Nüva One</span>
+          <span className="text-sm font-semibold tracking-tight">Nüva One</span>
         </Link>
-        <div className="relative max-w-md text-primary-foreground">
-          <h2 className="text-3xl font-bold leading-tight">Tu negocio, todo conectado.</h2>
-          <p className="mt-4 text-primary-foreground/80">
-            Únete a miles de PYMEs que ya operan más rápido y mejor con Nüva One.
+        <div className="relative max-w-lg">
+          <div className="mb-6 h-px w-12 bg-[#E6C687]" />
+          <p className="mb-5 text-[10px] font-semibold uppercase tracking-[.24em] text-[#E6C687]/80">
+            Business operating system
+          </p>
+          <h2 className="text-4xl font-semibold leading-[1.04] tracking-[-.045em] text-[#F4F1E9]">
+            Tu negocio merece una visión completa.
+          </h2>
+          <p className="mt-5 max-w-md text-sm leading-7 text-[#D5D2C9]/70">
+            Ventas, inventario, finanzas y clientes conectados en un espacio de trabajo diseñado para decidir con claridad.
           </p>
         </div>
-        <div className="relative text-xs text-primary-foreground/60">
-          © {new Date().getFullYear()} Nüva One
+        <div className="relative flex items-center justify-between border-t border-white/10 pt-5 text-[11px] text-white/45">
+          <span>© {new Date().getFullYear()} Nüva One</span>
+          <span className="uppercase tracking-[.18em] text-[#E6C687]/70">Chile · Business OS</span>
         </div>
       </div>
 
