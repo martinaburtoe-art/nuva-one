@@ -53,7 +53,7 @@ function Sales() {
   const qc = useQueryClient();
   const canWrite = canWriteOperations(myRole);
   const [salesPage, setSalesPage] = useState(1);
-  const { data: salesPageData, isLoading } = useBizPage<any>("sales", { page: salesPage, pageSize: 25, order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
+  const { data: salesPageData, isLoading, isError, refetch } = useBizPage<any>("sales", { page: salesPage, pageSize: 25, order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
   const sales = salesPageData?.rows ?? [];
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost" });
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true, select: "id,name,phone" });
@@ -437,6 +437,11 @@ function Sales() {
               {[...Array(5)].map((_, i) => (
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
+            </div>
+          ) : isError ? (
+            <div role="alert" className="m-4 rounded-xl border border-destructive/30 p-4 text-sm">
+              <p>No se pudo cargar el historial de ventas. No mostraremos este error como si no existieran ventas.</p>
+              <Button className="mt-3" size="sm" variant="outline" onClick={() => void refetch()}>Reintentar</Button>
             </div>
           ) : !sales || sales.length === 0 ? (
             <EmptyState
