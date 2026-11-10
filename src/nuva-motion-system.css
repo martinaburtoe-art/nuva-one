@@ -9,8 +9,6 @@
 }
 
 body { text-rendering: optimizeLegibility; }
-#root, main, [role="main"] { isolation: isolate; }
-
 .nuva-app { min-width: 0; }
 .nuva-app :where(button, a[href], [role="button"], input, select, textarea) {
   -webkit-tap-highlight-color: transparent;
