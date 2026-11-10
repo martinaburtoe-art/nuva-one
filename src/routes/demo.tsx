@@ -35,7 +35,7 @@ function DemoExperience() {
       <section className="border-b bg-card/95 px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E6C687]/25 bg-[#080809] text-[#E6C687]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground">
               <Sparkles className="h-4 w-4" />
             </div>
             <div>
