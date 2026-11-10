@@ -403,89 +403,30 @@ function Quotes() {
               description="Crea tu primera cotización profesional."
             />
           ) : (
-            <div className="overflow-x-auto"><Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>N°</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Seguimiento</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((q) => (
+            <>
+              <div className="space-y-3 p-3 sm:hidden">{data.map((q) => (
+                <article key={q.id} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{q.customer_name || "Cliente sin nombre"}</p><p className="text-xs text-muted-foreground">{q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "Sin folio"} · {new Date(q.created_at).toLocaleDateString("es-CL")}</p></div><p className="shrink-0 font-semibold tabular-nums">{fmtCLP(Number(q.total))}</p></div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2"><Badge variant="outline">{statusLabel[q.status]?.l ?? q.status}</Badge>{(q.status === "sent" || q.status === "viewed") && q.sent_at && <span className="text-xs text-muted-foreground">{Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta</span>}</div>
+                  {canWrite && <div className="mt-3"><select aria-label={`Estado de cotización de ${q.customer_name}`} value={q.status} disabled={upd.isPending} onChange={(e) => upd.mutate({ id: q.id, patch: { status: e.target.value } })} className="h-11 w-full rounded-md border bg-background px-3 text-sm">{Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}</select></div>}
+                  <div className="mt-3 grid grid-cols-2 gap-2"><Button className="h-11" variant="outline" onClick={() => downloadPdf(q)}><Download className="mr-2 h-4 w-4" />PDF</Button>{canWrite && <Button className="h-11" variant="outline" onClick={() => duplicateQuote(q)}><Copy className="mr-2 h-4 w-4" />Duplicar</Button>}{canWrite && q.status === "accepted" && !convertedQuoteIds.has(q.id) && <Button className="h-11" variant="outline" disabled={convertingId === q.id} onClick={() => convertToSale(q)}><ArrowRightCircle className="mr-2 h-4 w-4 text-success" />Convertir</Button>}{canWrite && <Button className="h-11" variant="outline" onClick={() => del.mutate(q.id)}><Trash2 className="mr-2 h-4 w-4 text-destructive" />Eliminar</Button>}</div>
+                </article>
+              ))}</div>
+              <div className="hidden overflow-x-auto sm:block"><Table>
+                <TableHeader><TableRow><TableHead>N°</TableHead><TableHead>Cliente</TableHead><TableHead>Fecha</TableHead><TableHead>Estado</TableHead><TableHead>Seguimiento</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Acciones</TableHead></TableRow></TableHeader>
+                <TableBody>{data.map((q) => (
                   <TableRow key={q.id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}</TableCell>
                     <TableCell className="font-medium">{q.customer_name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(q.created_at).toLocaleDateString("es-CL")}
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        value={q.status}
-                        onChange={(e) =>
-                          upd.mutate({ id: q.id, patch: { status: e.target.value } })
-                        }
-                        className="rounded-md border bg-background px-2 py-1 text-xs"
-                      >
-                        {Object.entries(statusLabel).map(([k, v]) => (
-                          <option key={k} value={k}>
-                            {v.l}
-                          </option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {(q.status === "sent" || q.status === "viewed") && q.sent_at
-                        ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta`
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {fmtCLP(Number(q.total))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Descargar PDF"
-                          onClick={() => downloadPdf(q)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Duplicar cotización"
-                          onClick={() => duplicateQuote(q)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        {q.status === "accepted" && !convertedQuoteIds.has(q.id) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Convertir a venta"
-                            disabled={convertingId === q.id}
-                            onClick={() => convertToSale(q)}
-                          >
-                            <ArrowRightCircle className="h-4 w-4 text-success" />
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(q.created_at).toLocaleDateString("es-CL")}</TableCell>
+                    <TableCell>{canWrite ? <select value={q.status} disabled={upd.isPending} onChange={(e) => upd.mutate({ id: q.id, patch: { status: e.target.value } })} className="rounded-md border bg-background px-2 py-1 text-xs">{Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}</select> : <Badge variant="outline">{statusLabel[q.status]?.l ?? q.status}</Badge>}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{(q.status === "sent" || q.status === "viewed") && q.sent_at ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta` : "—"}</TableCell>
+                    <TableCell className="text-right font-medium">{fmtCLP(Number(q.total))}</TableCell>
+                    <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" title="Descargar PDF" onClick={() => downloadPdf(q)}><Download className="h-4 w-4" /></Button>{canWrite && <><Button variant="ghost" size="icon" title="Duplicar cotización" onClick={() => duplicateQuote(q)}><Copy className="h-4 w-4" /></Button>{q.status === "accepted" && !convertedQuoteIds.has(q.id) && <Button variant="ghost" size="icon" title="Convertir a venta" disabled={convertingId === q.id} onClick={() => convertToSale(q)}><ArrowRightCircle className="h-4 w-4 text-success" /></Button>}<Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)} aria-label="Eliminar cotización"><Trash2 className="h-4 w-4" /></Button></>}</div></TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table></div>
+                ))}</TableBody>
+              </Table></div>
+            </>
           )}
         </Card>
       </>
