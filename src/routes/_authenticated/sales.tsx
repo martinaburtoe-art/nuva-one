@@ -443,99 +443,34 @@ function Sales() {
               icon={ShoppingCart}
               title="Sin ventas todavía"
               description="Empieza registrando tu primera venta."
-              action={
-                <Button onClick={() => setOpen(true)}>
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Nueva venta
-                </Button>
-              }
+              action={<Button onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" />Nueva venta</Button>}
             />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Cobro</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sales.map((s) => (
+            <>
+              <div className="space-y-3 p-3 sm:hidden">{sales.map((s) => (
+                <article key={s.id} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{s.customer_name ?? "Venta mostrador"}</p><p className="text-xs text-muted-foreground">{new Date(s.sale_date).toLocaleDateString("es-CL")} · {s.channel}</p></div><p className="shrink-0 font-semibold tabular-nums">{fmtCLP(Number(s.total))}</p></div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2"><Badge variant="outline" className="capitalize">{s.status}</Badge>{!s.is_credit ? <Badge variant="secondary">Contado</Badge> : Number(s.paid_amount) >= Number(s.total) ? <Badge className="bg-success/15 text-success">Pagada</Badge> : s.due_date && new Date(s.due_date) < new Date() ? <Badge className="bg-destructive/15 text-destructive">Vencida</Badge> : <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>}<span className="text-xs text-muted-foreground">{Array.isArray(s.items) ? `${s.items.length} producto(s)` : "—"}</span></div>
+                  {s.is_credit && Number(s.paid_amount) < Number(s.total) && <p className="mt-2 text-xs text-muted-foreground">Pagado: {fmtCLP(Number(s.paid_amount))}</p>}
+                  <div className="mt-3 flex items-center gap-2">{canWrite ? <select aria-label={`Estado de venta de ${s.customer_name ?? "mostrador"}`} value={s.status} disabled={upd.isPending} onChange={async (e) => { try { await upd.mutateAsync({ id: s.id, patch: { status: e.target.value } }); toast.success("Estado de venta actualizado"); } catch (error: any) { toast.error(error?.message ?? "No se pudo cambiar el estado de la venta"); } }} className="h-11 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm"><option value="pending">Pendiente</option><option value="paid">Pagada</option><option value="draft">Borrador</option><option value="cancelled">Cancelada</option></select> : <span className="text-xs text-muted-foreground">Estado: {s.status}</span>}{canWrite && <Button variant="outline" className="h-11" onClick={() => del.mutate(s.id)} aria-label="Eliminar venta"><Trash2 className="h-4 w-4" /></Button>}</div>
+                </article>
+              ))}</div>
+              <div className="hidden overflow-x-auto sm:block"><Table>
+                <TableHeader><TableRow><TableHead>Cliente</TableHead><TableHead>Fecha</TableHead><TableHead>Canal</TableHead><TableHead>Items</TableHead><TableHead>Estado</TableHead><TableHead>Cobro</TableHead><TableHead className="text-right">Total</TableHead><TableHead /></TableRow></TableHeader>
+                <TableBody>{sales.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.customer_name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(s.sale_date).toLocaleDateString("es-CL")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {s.channel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {Array.isArray(s.items) && s.items.length > 0
-                        ? `${s.items.length} producto(s)`
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        value={s.status}
-                        onChange={async (e) => {
-                          try {
-                            await upd.mutateAsync({
-                              id: s.id,
-                              patch: { status: e.target.value },
-                            });
-                            toast.success("Estado de venta actualizado");
-                          } catch (error: any) {
-                            toast.error(
-                              error?.message ?? "No se pudo cambiar el estado de la venta",
-                            );
-                          }
-                        }}
-                        className="rounded-md border bg-background px-2 py-1 text-xs"
-                      >
-                        <option value="pending">Pendiente</option>
-                        <option value="paid">Pagada</option>
-                        <option value="draft">Borrador</option>
-                        <option value="cancelled">Cancelada</option>
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      {!s.is_credit ? (
-                        <span className="text-xs text-muted-foreground">Contado</span>
-                      ) : Number(s.paid_amount) >= Number(s.total) ? (
-                        <Badge className="bg-success/15 text-success">Pagada</Badge>
-                      ) : s.due_date && new Date(s.due_date) < new Date() ? (
-                        <Badge className="bg-destructive/15 text-destructive">
-                          <Clock className="mr-1 h-3 w-3" />
-                          Vencida
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {fmtCLP(Number(s.total))}
-                      {s.is_credit && Number(s.paid_amount) < Number(s.total) && (
-                        <p className="text-xs font-normal text-muted-foreground">
-                          Pagado: {fmtCLP(Number(s.paid_amount))}
-                        </p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(s.sale_date).toLocaleDateString("es-CL")}</TableCell>
+                    <TableCell><Badge variant="outline" className="capitalize">{s.channel}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{Array.isArray(s.items) && s.items.length > 0 ? `${s.items.length} producto(s)` : "—"}</TableCell>
+                    <TableCell>{canWrite ? <select value={s.status} disabled={upd.isPending} onChange={async (e) => { try { await upd.mutateAsync({ id: s.id, patch: { status: e.target.value } }); toast.success("Estado de venta actualizado"); } catch (error: any) { toast.error(error?.message ?? "No se pudo cambiar el estado de la venta"); } }} className="rounded-md border bg-background px-2 py-1 text-xs"><option value="pending">Pendiente</option><option value="paid">Pagada</option><option value="draft">Borrador</option><option value="cancelled">Cancelada</option></select> : <Badge variant="outline">{s.status}</Badge>}</TableCell>
+                    <TableCell>{!s.is_credit ? <span className="text-xs text-muted-foreground">Contado</span> : Number(s.paid_amount) >= Number(s.total) ? <Badge className="bg-success/15 text-success">Pagada</Badge> : s.due_date && new Date(s.due_date) < new Date() ? <Badge className="bg-destructive/15 text-destructive"><Clock className="mr-1 h-3 w-3" />Vencida</Badge> : <Badge className="bg-warning/15 text-warning">Por cobrar</Badge>}</TableCell>
+                    <TableCell className="text-right font-medium">{fmtCLP(Number(s.total))}{s.is_credit && Number(s.paid_amount) < Number(s.total) && <p className="text-xs font-normal text-muted-foreground">Pagado: {fmtCLP(Number(s.paid_amount))}</p>}</TableCell>
+                    <TableCell>{canWrite && <Button variant="ghost" size="icon" onClick={() => del.mutate(s.id)} aria-label="Eliminar venta"><Trash2 className="h-4 w-4" /></Button>}</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                ))}</TableBody>
+              </Table></div>
+            </>
           )}
           {!isLoading && salesPageData && salesPageData.pageCount > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-muted-foreground">
