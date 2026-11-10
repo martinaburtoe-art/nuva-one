@@ -240,3 +240,93 @@
   .nuva-resumen-operational-stats > div { padding-inline: 9px; }
   .nuva-resumen-filters > div:first-child input { padding-inline: 5px; font-size: 10px; }
 }
+
+
+/* Mobile executive hierarchy — make the key result readable before secondary detail. */
+@media (max-width: 760px) {
+  .nuva-resumen-kpi-primary {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 0;
+    padding: 14px 16px;
+  }
+  .nuva-resumen-kpi-primary .nuva-resumen-kpi-top { grid-column: 1 / -1; }
+  .nuva-resumen-kpi-primary > strong {
+    margin-top: 8px;
+    font-size: clamp(25px, 7vw, 32px);
+    letter-spacing: -.055em;
+  }
+  .nuva-resumen-kpi-primary > p {
+    justify-self: end;
+    align-self: end;
+    margin-top: 0;
+    max-width: 11rem;
+    text-align: right;
+  }
+  .nuva-resumen-kpi-top { font-size: 9px; }
+  .nuva-resumen-operational-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .nuva-resumen-operational-stats > div {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+    min-height: 66px;
+    padding: 10px;
+  }
+  .nuva-resumen-operational-stats span { font-size: 10px; }
+  .nuva-resumen-operational-stats strong {
+    max-width: 100%;
+    font-size: clamp(15px, 4.5vw, 18px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .nuva-resumen-panel-heading { flex-wrap: wrap; }
+}
+
+@media (max-width: 390px) {
+  .nuva-resumen-canvas { padding-inline: 10px; }
+  .nuva-resumen-kpi-primary { padding: 13px; }
+  .nuva-resumen-kpi-primary > strong { font-size: clamp(23px, 7.2vw, 29px); }
+  .nuva-resumen-operational-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nuva-resumen-operational-stats > div { min-height: 70px; padding: 9px; }
+  .nuva-resumen-operational-stats span { font-size: 9.5px; }
+  .nuva-resumen-operational-stats strong { font-size: 15px; }
+}
+
+@media (max-width: 340px) {
+  .nuva-resumen-kpi-primary > strong { font-size: 23px; }
+  .nuva-resumen-kpi-primary > p { font-size: 9px; }
+  .nuva-resumen-operational-stats > div { padding: 8px; }
+}
+
+/* The compact app rail remains thumb-friendly and respects Android/iOS safe areas. */
+@media (max-width: 767px) {
+  .nuva-app nav[aria-label="Navegación principal móvil"] {
+    min-height: 68px;
+    padding-left: max(4px, env(safe-area-inset-left));
+    padding-right: max(4px, env(safe-area-inset-right));
+    background: rgb(255 255 255 / .97);
+    box-shadow: 0 -6px 24px rgb(18 20 24 / .055);
+  }
+  .nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] {
+    position: relative;
+    color: var(--primary);
+  }
+  .nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"]::before {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 22px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--primary);
+    content: "";
+    transform: translateX(-50%);
+  }
+}
