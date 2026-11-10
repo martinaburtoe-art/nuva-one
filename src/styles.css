@@ -188,3 +188,13 @@
   [aria-label="Smart Scan de Nüva One"] .mt-6.grid.max-w-xl { grid-template-columns: 1fr; }
   .cinematic-final-cta__actions { grid-template-columns: 1fr; }
 }
+
+/* Authenticated workspace: viewport and safe-area behavior for compact devices. */
+.nuva-app { min-height: 100dvh; min-width: 0; }
+.nuva-app main { min-width: 0; max-width: 100%; }
+@media (max-width: 767px) {
+  .nuva-app main { overflow-x: clip; }
+  .nuva-app nav[aria-label="Navegación principal móvil"] > a,
+  .nuva-app nav[aria-label="Navegación principal móvil"] > button { min-height: 48px; }
+  .nuva-app [data-vaul-drawer] { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+}
