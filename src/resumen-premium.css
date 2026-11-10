@@ -796,7 +796,7 @@
 .nuva-app .nuva-resumen-canvas {
   --nr-ink: var(--color-foreground);
   --nr-muted: var(--color-muted-foreground);
-  --nr-gold: var(--nuva-gold-muted);
+  --nr-gold: var(--color-chart-2);
   --nr-indigo: var(--color-primary);
   --nr-border: var(--nuva-line);
   color: var(--color-foreground);
@@ -866,3 +866,35 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Shared module surface treatment for dense controls and mobile tiles. */
+.nuva-app .nuva-resumen-canvas :where(.nuva-resumen-operational-stats > div, .nuva-resumen-shortcuts > a, .nuva-resumen-chart-loading, .nuva-resumen-filters button, .nuva-resumen-filters [role="combobox"], .nuva-resumen-filters input) {
+  border-color: var(--nuva-line);
+  background-color: var(--nuva-surface-muted);
+  color: var(--color-foreground);
+}
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-shortcuts > a > span {
+  background: color-mix(in oklab, var(--color-muted) 70%, var(--color-card));
+  color: var(--color-muted-foreground);
+}
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief,
+.nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-item {
+  border-color: var(--nuva-line);
+  background: var(--color-card);
+  box-shadow: var(--nuva-shadow-soft);
+}
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-item > strong {
+  color: var(--color-foreground);
+}
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-item > span,
+.nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-item > small {
+  color: var(--color-muted-foreground);
+}
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-dot-gold { background: var(--color-chart-2); }
+.nuva-app .nuva-resumen-canvas .nuva-resumen-dot-indigo { background: var(--color-chart-1); }
