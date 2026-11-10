@@ -13,6 +13,7 @@ import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
+import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
@@ -183,56 +184,15 @@ function Dashboard() {
   }, [allTx]);
 
 
-  const chartData = useMemo(() => {
-    const rows = (allTx ?? []).filter((r: any) => {
-      if (isoFrom && r.tx_date < isoFrom) return false;
-      if (isoTo && r.tx_date > isoTo) return false;
-      if (categories.length > 0 && !categories.includes(r.category)) return false;
-      return true;
-    });
-    if (dailyChart) {
-      const byDay: Record<string, { fecha: string; ingresos: number; gastos: number }> = {};
-      rows.forEach((r: any) => {
-        const key = r.tx_date;
-        if (!byDay[key]) byDay[key] = { fecha: new Date(key + "T00:00:00").toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }), ingresos: 0, gastos: 0 };
-        if (r.type === "income") byDay[key].ingresos += Number(r.amount); else byDay[key].gastos += Number(r.amount);
-      });
-      return Object.keys(byDay).sort().map((k) => byDay[k]);
-    }
-    const byMonth: Record<string, { mes: string; ingresos: number; gastos: number }> = {};
-    const now = new Date();
-    const firstObserved = rows.reduce<Date | null>((earliest, row: any) => {
-      const date = new Date(`${row.tx_date}T00:00:00`);
-      return !earliest || date < earliest ? date : earliest;
-    }, null);
-    const start = isoFrom
-      ? new Date(`${isoFrom}T00:00:00`)
-      : isoTo
-        ? firstObserved ?? new Date(`${isoTo}T00:00:00`)
-        : new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    const end = isoTo ? new Date(`${isoTo}T00:00:00`) : now;
-    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
-    const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1);
-    while (cursor <= lastMonth) {
-      const key = `${cursor.getFullYear()}-${cursor.getMonth()}`;
-      byMonth[key] = {
-        mes: cursor.toLocaleDateString("es-CL", { month: "short", year: "2-digit" }),
-        ingresos: 0,
-        gastos: 0,
-      };
-      cursor.setMonth(cursor.getMonth() + 1);
-    }
-    rows.forEach((r: any) => {
-      // Fecha local (no UTC): una fecha contable no debe desplazarse al mes anterior.
-      const [y, m] = r.tx_date.split("-").map(Number);
-      const key = `${y}-${m - 1}`;
-      if (byMonth[key]) {
-        if (r.type === "income") byMonth[key].ingresos += Number(r.amount);
-        else byMonth[key].gastos += Number(r.amount);
-      }
-    });
-    return Object.values(byMonth);
-  }, [allTx, isoFrom, isoTo, categories, dailyChart]);
+  const chartData = useMemo(
+    () => buildResumenChartData(allTx ?? [], {
+      from: isoFrom,
+      to: isoTo,
+      categories,
+      daily: dailyChart,
+    }),
+    [allTx, isoFrom, isoTo, categories, dailyChart],
+  );
 
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
   const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
