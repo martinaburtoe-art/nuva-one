@@ -1,5 +1,5 @@
 /* Nüva Product System — visual foundation for the authenticated product. */
-:root {
+.nuva-app {
   --nuva-ink: #080809;
   --nuva-gold: #e6c687;
   --nuva-indigo: #6366f1;
