@@ -683,7 +683,7 @@ function POS() {
                 ))
               )}
             </div>
-            <div className="shrink-0 space-y-3 border-t bg-card px-4 py-3">
+            <div className="shrink-0 space-y-3 border-t bg-card px-4 py-3 xl:max-h-[calc(100dvh-13rem)] xl:overflow-y-auto xl:overscroll-contain">
               <div>
                 <Label className="mb-1.5 block text-xs">RUT del cliente (opcional)</Label>
                 {matchedCustomer ? (
@@ -782,19 +782,21 @@ function POS() {
                 <span className="text-sm font-medium">Total</span>
                 <span className="text-2xl font-bold">{fmtCLP(total)}</span>
               </div>
-              <Button
-                className="h-12 w-full text-base shadow-elegant"
-                onClick={checkout}
-                disabled={!canPay || insert.isPending || creatingLink || !canWrite}
-              >
-                {!canWrite
-                  ? "Solo lectura — no puedes cobrar"
-                  : insert.isPending || creatingLink
-                    ? "Procesando…"
-                    : method === "online"
-                      ? `Generar link de pago · ${fmtCLP(total)}`
-                      : `Cobrar ${fmtCLP(total)}`}
-              </Button>
+              <div className="sticky bottom-0 z-10 -mx-4 -mb-3 bg-card px-4 pb-3 pt-2">
+                <Button
+                  className="h-auto min-h-12 w-full min-w-0 whitespace-normal px-3 py-3 text-center text-base leading-snug shadow-elegant"
+                  onClick={checkout}
+                  disabled={!canPay || insert.isPending || creatingLink || !canWrite}
+                >
+                  {!canWrite
+                    ? "Solo lectura — no puedes cobrar"
+                    : insert.isPending || creatingLink
+                      ? "Procesando…"
+                      : method === "online"
+                        ? `Generar link de pago · ${fmtCLP(total)}`
+                        : `Cobrar ${fmtCLP(total)}`}
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
