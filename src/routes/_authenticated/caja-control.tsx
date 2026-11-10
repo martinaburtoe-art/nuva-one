@@ -209,12 +209,26 @@ function CashControl() {
         />
         {registerQuery.isLoading ? (
           <Card className="p-6">Cargando estado de caja…</Card>
+        ) : registerQuery.isError ? (
+          <Card role="alert" className="border-destructive/30 p-6">
+            <h2 className="font-semibold">No se pudo consultar el estado de caja</h2>
+            <p className="mt-1 text-sm text-muted-foreground">No asumiremos que la caja está cerrada mientras exista un error de consulta.</p>
+            <Button className="mt-4" variant="outline" onClick={() => void registerQuery.refetch()}>Reintentar consulta</Button>
+          </Card>
         ) : !registerQuery.data ? (
           <Card className="rounded-2xl border-dashed bg-muted/10 p-10 text-center">
             <WalletCards className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <h2 className="text-xl font-semibold">Inicia la jornada</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Define el fondo inicial para comenzar a controlar el efectivo de esta jornada.</p>
             <Button className="mt-5" disabled={!canWrite} onClick={() => setOpenDialog(true)}><Banknote className="mr-2 h-4 w-4" />Abrir caja</Button>
+          </Card>
+        ) : summaryQuery.isLoading ? (
+          <Card className="p-6" aria-busy="true">Calculando el resumen de caja…</Card>
+        ) : summaryQuery.isError || !s ? (
+          <Card role="alert" className="border-destructive/30 p-6">
+            <h2 className="font-semibold">Resumen de caja no disponible</h2>
+            <p className="mt-1 text-sm text-muted-foreground">No mostraremos importes estimados ni habilitaremos el arqueo hasta obtener un resumen válido.</p>
+            <Button className="mt-4" variant="outline" onClick={() => void summaryQuery.refetch()}>Reintentar resumen</Button>
           </Card>
         ) : (
           <>
