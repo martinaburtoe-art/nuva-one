@@ -462,7 +462,7 @@ function POS() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar producto, SKU o código…"
                 className="h-12 rounded-xl border-border/70 bg-card pl-10 text-base shadow-sm"
-                autoFocus
+                inputMode="search"
               />
             </div>
             {favorites.length > 0 && !query && (
