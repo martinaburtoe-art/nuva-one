@@ -120,6 +120,21 @@ function Sales() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const validItems = items.filter((i) => i.name.trim() !== "");
+    const invalidLine = validItems.find((item) =>
+      !Number.isInteger(item.qty) || item.qty < 1 || !Number.isFinite(item.price) || item.price < 0
+    );
+    if (invalidLine) {
+      toast.error("Cada línea debe tener una cantidad entera mayor que cero y un precio válido.");
+      return;
+    }
+    if (!Number.isFinite(total) || total < 0) {
+      toast.error("El total de la venta debe ser un monto válido y no negativo.");
+      return;
+    }
+    if (isCredit && (!customerId || !dueDate)) {
+      toast.error("Para registrar una venta a crédito, vincula un cliente y define su vencimiento.");
+      return;
+    }
     try {
       await insert.mutateAsync({
         customer_name: customerName,

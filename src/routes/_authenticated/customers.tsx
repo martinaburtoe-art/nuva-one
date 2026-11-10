@@ -121,7 +121,7 @@ function Customers() {
   const { data: activeCount = 0 } = useBizCount("customers", { eq: { status: "active" } });
   const { data: inactiveCount = 0 } = useBizCount("customers", { eq: { status: "inactive" } });
   const counts = { all: allCount, lead: leadCount, active: activeCount, inactive: inactiveCount };
-  const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total" });
+  const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total,status" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at", select: "id,customer_id,created_at,status,total" });
   const { data: activities } = useBizList<Activity>("customer_activities", {
     order: "created_at",
@@ -150,7 +150,9 @@ function Customers() {
   const statsByCustomer = useMemo(() => {
     const map = new Map<string, { total: number; count: number; last: string | null }>();
     for (const s of sales ?? []) {
-      if (!s.customer_id) continue;
+      // El valor de vida del cliente representa ventas efectivamente pagadas,
+      // no cotizaciones cobrables, pendientes ni ventas anuladas.
+      if (!s.customer_id || s.status !== "paid") continue;
       const prev = map.get(s.customer_id) ?? { total: 0, count: 0, last: null };
       prev.total += Number(s.total) || 0;
       prev.count += 1;
