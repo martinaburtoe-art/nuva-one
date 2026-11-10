@@ -13,6 +13,7 @@ import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from
 import { Toaster, toast } from "sonner";
 
 import appCss from "../styles.css?url";
+import "../nuva-brand-foundation.css";
 import "../home-experience.css";
 import "../nuva-motion-system.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
