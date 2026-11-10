@@ -40,7 +40,7 @@ jobs:
 
       - name: Run autonomous web QA
         id: qa
-        continue-on-error: true
+        # Fail closed: warnings (including Vercel protection or an unavailable preview) are not a passing QA result.
         env:
           # PR checks must inspect the authenticated-workspace preview, not silently smoke-test production.
           NUVA_QA_URL: ${{ github.event_name == 'pull_request' && 'https://nuva-one-git-feat-frontend-brand-foundatio-d0241c-martinaburtoe.vercel.app' || github.event.inputs.target_url || 'https://nuva-one.vercel.app' }}
