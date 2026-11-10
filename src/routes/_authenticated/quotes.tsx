@@ -61,7 +61,7 @@ function Quotes() {
   const canWrite = canWriteOperations(myRole);
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
-  const { data, isLoading } = useBizList<any>("quotes", { order: "created_at" });
+  const { data, isLoading, isError, refetch } = useBizList<any>("quotes", { order: "created_at" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
@@ -81,7 +81,8 @@ function Quotes() {
 
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
 
-  const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const billableItems = items.filter((item) => item.name.trim().length > 0);
+  const subtotal = billableItems.reduce((s, i) => s + i.qty * i.price, 0);
   const discountAmount = Math.round(subtotal * (discountPct / 100));
   const taxable = subtotal - discountAmount;
   const tax = Math.round(taxable * 0.19);
@@ -101,8 +102,11 @@ function Quotes() {
   }
 
   async function save(status = "draft") {
-    if (!customer) return;
+    if (!customer.trim()) return toast.error("Selecciona o ingresa un cliente.");
     const validItems = items.filter((i) => i.name.trim() !== "");
+    if (validItems.length === 0) return toast.error("Agrega al menos un producto o servicio a la cotización.");
+    if (validItems.some((item) => !Number.isInteger(item.qty) || item.qty < 1 || !Number.isFinite(item.price) || item.price < 0)) return toast.error("Revisa cantidades y precios: deben ser valores válidos y no negativos.");
+    if (!Number.isFinite(discountPct) || discountPct < 0 || discountPct > 100) return toast.error("El descuento debe estar entre 0% y 100%.");
     await insert.mutateAsync({
       customer_name: customer,
       customer_id: customerId,
@@ -390,6 +394,8 @@ function Quotes() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
+          ) : isError ? (
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-3 p-5 text-sm"><span>No se pudieron cargar las cotizaciones. No asumiremos que la cartera está vacía.</span><Button variant="outline" size="sm" onClick={() => void refetch()}>Reintentar</Button></div>
           ) : !data || data.length === 0 ? (
             <EmptyState
               icon={FileText}
