@@ -12,7 +12,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
-import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -41,6 +41,9 @@ function Dashboard() {
         supabase.from("products").select("stock, price, low_stock_threshold, reorder_point").eq("business_id", bid),
         supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
+      for (const result of [sales, expenses, products, salesCount]) {
+        if (result.error) throw result.error;
+      }
       const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
       const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
       const inventoryValue = (products.data ?? []).reduce((s, r: any) => s + Number(r.stock) * Number(r.price), 0);
@@ -50,6 +53,32 @@ function Dashboard() {
         return threshold > 0 && stock <= threshold;
       }).length;
       return { income, expense, net: income - expense, inventoryValue, salesCount: salesCount.count ?? 0, productsCount: (products.data ?? []).length, lowStockCount };
+    },
+  });
+
+  const { data: integrations, error: integrationsError } = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-integrations", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const bid = active!.id;
+      const [quotes, customers, cashRegister] = await Promise.all([
+        supabase.from("quotes").select("id,status,total").eq("business_id", bid),
+        supabase.from("customers").select("id", { count: "exact", head: true }).eq("business_id", bid),
+        supabase.from("cash_registers").select("id,opened_at,opening_amount").eq("business_id", bid).eq("status", "open").limit(1).maybeSingle(),
+      ]);
+      for (const result of [quotes, customers, cashRegister]) {
+        if (result.error) throw result.error;
+      }
+      const pendingQuotes = (quotes.data ?? []).filter((quote: any) =>
+        ["draft", "sent", "viewed"].includes(String(quote.status).toLowerCase()),
+      );
+      return {
+        pendingQuotes: pendingQuotes.length,
+        pendingQuoteValue: pendingQuotes.reduce((sum: number, quote: any) => sum + Number(quote.total ?? 0), 0),
+        customersCount: customers.count ?? 0,
+        cashRegister: cashRegister.data,
+      };
     },
   });
 
@@ -187,6 +216,14 @@ function Dashboard() {
           </div>
         )}
 
+        {integrationsError && (
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div><strong>No se pudieron conectar todos los módulos</strong><p>{String(integrationsError?.message ?? integrationsError ?? "Error desconocido")}</p></div>
+            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["dashboard-integrations", active?.id] })}>Reintentar</Button>
+          </div>
+        )}
+
         {kpis !== undefined && !hasActivity && (
           <section className="nuva-resumen-onboarding">
             <div className="nuva-resumen-onboarding-copy">
@@ -236,6 +273,10 @@ function Dashboard() {
             <div className="nuva-resumen-operational-stats">
               <div><span>Ventas registradas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
               <div><span>Productos con stock bajo</span><strong className={kpis?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{kpis?.lowStockCount ?? "—"}</strong></div>
+              <div><span>Cotizaciones abiertas</span><strong>{integrations?.pendingQuotes ?? "—"}</strong></div>
+              <div><span>Clientes registrados</span><strong>{integrations?.customersCount ?? "—"}</strong></div>
+              <div><span>Estado de caja</span><strong>{integrations === undefined ? "—" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
+              <div><span>Valor cotizado</span><strong>{integrations ? fmtCLP(integrations.pendingQuoteValue) : "—"}</strong></div>
             </div>
             <div className="nuva-resumen-status-copy">
               {kpis === undefined ? "Esperando los datos del negocio." : attentionCount === 0 ? "No hay alertas prioritarias en los indicadores disponibles." : `${kpis.lowStockCount} alertas de stock y ${kpis.net < 0 ? "un resultado neto negativo" : "otros indicadores"} que conviene revisar.`}
@@ -248,7 +289,9 @@ function Dashboard() {
               <Link to="/pos"><span><ShoppingBag className="h-4 w-4" /></span><strong>Caja</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
               <Link to="/sales"><span><TrendingUp className="h-4 w-4" /></span><strong>Ventas</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
               <Link to="/inventory"><span><Package className="h-4 w-4" /></span><strong>Inventario</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
-              <Link to="/quotes"><span><Plus className="h-4 w-4" /></span><strong>Cotizaciones</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/quotes"><span><FileText className="h-4 w-4" /></span><strong>Cotizaciones</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/crm"><span><Users className="h-4 w-4" /></span><strong>Clientes</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/finance"><span><Wallet className="h-4 w-4" /></span><strong>Finanzas</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
             </nav>
           </article>
         </section>
