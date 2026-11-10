@@ -898,3 +898,242 @@
 
 .nuva-app .nuva-resumen-canvas .nuva-resumen-dot-gold { background: var(--color-chart-2); }
 .nuva-app .nuva-resumen-canvas .nuva-resumen-dot-indigo { background: var(--color-chart-1); }
+
+
+
+/* NÜVA ONE — Resumen integration pass
+   The dashboard consumes the same semantic palette and surfaces as every
+   authenticated module. No independent gold/green/blue palette or glass skin. */
+.nuva-app .nuva-resumen-canvas {
+  --nr-ink: var(--color-foreground);
+  --nr-muted: var(--color-muted-foreground);
+  --nr-gold: var(--nuva-gold-muted);
+  --nr-indigo: var(--color-primary);
+  --nr-border: var(--nuva-line);
+  color: var(--color-foreground);
+  background: transparent;
+}
+
+.nuva-app .nuva-resumen-canvas :where(
+  .nuva-resumen-overline,
+  .nuva-resumen-section-label,
+  .nuva-resumen-kpi-top,
+  .nuva-resumen-kpi > p,
+  .nuva-resumen-subtitle,
+  .nuva-resumen-status-copy,
+  .nuva-resumen-chart-legend,
+  .nuva-resumen-footer
+) {
+  color: var(--color-muted-foreground);
+}
+
+.nuva-app .nuva-resumen-canvas :where(
+  .nuva-resumen-heading h1,
+  .nuva-resumen-panel-heading h2,
+  .nuva-resumen-kpi > strong,
+  .nuva-resumen-operational-stats strong,
+  .nuva-resumen-onboarding h2,
+  .nuva-resumen-toolbar-context > strong
+) { color: var(--color-foreground); }
+
+.nuva-app .nuva-resumen-canvas :where(
+  .nuva-resumen-panel,
+  .nuva-resumen-kpi,
+  .nuva-resumen-onboarding,
+  .nuva-resumen-feedback,
+  .nuva-resumen-score-section,
+  .nuva-resumen-toolbar,
+  .nuva-resumen-mobile-brief
+) {
+  border-color: var(--nuva-line);
+  background: var(--color-card);
+  box-shadow: var(--nuva-shadow-soft);
+}
+
+.nuva-app .nuva-resumen-canvas :where(
+  .nuva-resumen-operational-stats > div,
+  .nuva-resumen-shortcuts > a,
+  .nuva-resumen-chart-loading,
+  .nuva-resumen-filters button,
+  .nuva-resumen-filters [role="combobox"],
+  .nuva-resumen-filters input,
+  .nuva-resumen-steps > div,
+  .nuva-resumen-mobile-brief-item
+) {
+  border-color: var(--nuva-line);
+  background: var(--nuva-surface-muted);
+  color: var(--color-foreground);
+}
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-primary {
+  border-color: color-mix(in oklab, var(--color-primary) 24%, var(--nuva-line));
+  background: color-mix(in oklab, var(--color-primary) 4%, var(--color-card));
+}
+
+.nuva-app .nuva-resumen-canvas :where(
+  .nuva-resumen-kpi-icon,
+  .nuva-resumen-shortcuts > a > span
+) {
+  border-color: var(--nuva-line);
+  background: var(--color-muted);
+  color: var(--color-primary);
+}
+
+.nuva-app .nuva-resumen-canvas :where(
+  .nuva-resumen-shortcuts > a:hover,
+  .nuva-resumen-demo-button:hover
+) {
+  border-color: color-mix(in oklab, var(--color-primary) 38%, var(--nuva-line));
+  background: color-mix(in oklab, var(--color-primary) 5%, var(--color-card));
+  color: var(--color-primary);
+}
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-status-pill {
+  border-color: var(--nuva-line);
+  background: var(--nuva-surface-muted);
+  color: var(--color-muted-foreground);
+}
+.nuva-app .nuva-resumen-canvas .nuva-resumen-status-pill.is-clear {
+  border-color: color-mix(in oklab, var(--color-success) 28%, var(--nuva-line));
+  background: color-mix(in oklab, var(--color-success) 8%, var(--color-card));
+  color: var(--color-success);
+}
+.nuva-app .nuva-resumen-canvas .nuva-resumen-status-pill.is-attention {
+  border-color: color-mix(in oklab, var(--color-warning) 30%, var(--nuva-line));
+  background: color-mix(in oklab, var(--color-warning) 8%, var(--color-card));
+  color: var(--color-warning);
+}
+.nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-positive { color: var(--color-success); }
+.nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-negative { color: var(--color-destructive); }
+.nuva-app .nuva-resumen-canvas .nuva-resumen-value-attention { color: var(--color-warning); }
+.nuva-app .nuva-resumen-canvas .nuva-resumen-dot-gold { background: var(--color-chart-2); }
+.nuva-app .nuva-resumen-canvas .nuva-resumen-dot-indigo { background: var(--color-chart-1); }
+.nuva-app .nuva-resumen-canvas .nuva-resumen-device-chart .recharts-cartesian-grid line {
+  stroke: var(--nuva-line);
+}
+.nuva-app .nuva-resumen-canvas :where(button, a, input, [role="combobox"]) {
+  touch-action: manipulation;
+}
+.nuva-app .nuva-resumen-canvas :where(button, a, [role="combobox"]) {
+  min-height: 40px;
+}
+.nuva-app .nuva-resumen-canvas :where(a, button, input, [role="combobox"]):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .nuva-app .nuva-resumen-canvas {
+    width: 100%;
+    max-width: none;
+    padding: 12px 12px calc(28px + env(safe-area-inset-bottom));
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-header { margin-bottom: 14px; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-heading h1 {
+    font-size: clamp(28px, 7.4vw, 34px);
+    line-height: 1.08;
+    letter-spacing: -.045em;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief {
+    border-color: var(--nuva-line);
+    background: var(--color-card);
+    box-shadow: var(--nuva-shadow-soft);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-item {
+    min-height: 76px;
+    border-radius: 12px;
+    background: var(--nuva-surface-muted);
+    box-shadow: none;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-toolbar {
+    background: var(--color-card);
+    gap: 12px;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi {
+    min-height: 112px;
+    padding: 12px;
+    border-radius: var(--nuva-radius-surface);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-primary {
+    grid-column: 1 / -1;
+    min-height: 108px;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-primary > strong {
+    font-size: clamp(26px, 7.2vw, 34px);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-chart-panel,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-score-section,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-panel {
+    border-radius: var(--nuva-radius-panel);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-device-chart {
+    height: 240px;
+    min-height: 240px;
+    overflow: hidden;
+  }
+  .nuva-app nav[aria-label="Navegación principal móvil"] {
+    min-height: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    border-color: var(--nuva-line);
+    background: color-mix(in oklab, var(--color-card) 96%, transparent);
+    box-shadow: 0 -8px 28px rgb(8 8 9 / .07);
+    backdrop-filter: blur(18px);
+  }
+  .nuva-app nav[aria-label="Navegación principal móvil"] > a,
+  .nuva-app nav[aria-label="Navegación principal móvil"] > div > button {
+    min-height: 58px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .nuva-app .nuva-resumen-canvas { padding-inline: 10px; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-grid { gap: 6px; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-item {
+    min-height: 72px;
+    padding: 8px 6px;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi { padding: 10px 9px; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-top {
+    font-size: 8px;
+    letter-spacing: .02em;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi:not(.nuva-resumen-kpi-primary) > strong {
+    font-size: clamp(14px, 4vw, 17px);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-filters > div:first-child {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 340px) {
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief-item {
+    min-height: 58px;
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-primary { grid-column: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-resumen-canvas *,
+  .nuva-app .nuva-resumen-canvas *::before,
+  .nuva-app .nuva-resumen-canvas *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
