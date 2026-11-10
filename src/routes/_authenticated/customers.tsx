@@ -92,7 +92,7 @@ const statusLabel: Record<string, { l: string; c: string }> = {
 const stageLabel: Record<Customer["pipeline_stage"], { l: string; c: string }> = {
   new: { l: "Nuevo", c: "bg-muted text-muted-foreground" },
   contacted: { l: "Contactado", c: "bg-blue-500/15 text-blue-600" },
-  qualified: { l: "Calificado", c: "bg-purple-500/15 text-purple-600" },
+  qualified: { l: "Calificado", c: "bg-primary/10 text-primary" },
   proposal: { l: "Propuesta", c: "bg-warning/15 text-warning" },
   won: { l: "Ganado", c: "bg-success/15 text-success" },
   lost: { l: "Perdido", c: "bg-destructive/15 text-destructive" },
