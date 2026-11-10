@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
+import { buildResumenChartData } from "@/lib/resumen-chart-data";
 
 describe("goalsLabel (onboarding del dashboard)", () => {
   it.each([
@@ -61,8 +62,7 @@ describe("getResumenOperationalStatus", () => {
 
 
 describe("buildResumenChartData", () => {
-  it("agrupa por día y respeta el filtro de categoría", async () => {
-    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+  it("agrupa por día y respeta el filtro de categoría", () => {
     const rows = buildResumenChartData([
       { tx_date: "2026-11-02", type: "income", amount: 120000, category: "Ventas" },
       { tx_date: "2026-11-02", type: "expense", amount: 25000, category: "Operación" },
@@ -74,8 +74,7 @@ describe("buildResumenChartData", () => {
     expect(rows[1].ingresos).toBe(80000);
   });
 
-  it("mantiene todos los meses de un rango histórico, no solo los últimos seis", async () => {
-    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+  it("mantiene todos los meses de un rango histórico, no solo los últimos seis", () => {
     const rows = buildResumenChartData([
       { tx_date: "2025-01-12", type: "income", amount: 100000, category: "Ventas" },
       { tx_date: "2025-03-04", type: "expense", amount: 30000, category: "Operación" },
@@ -89,8 +88,7 @@ describe("buildResumenChartData", () => {
     expect(rows[2].gastos).toBe(30000);
   });
 
-  it("permite consultar solo una fecha final incluyendo el histórico anterior", async () => {
-    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+  it("permite consultar solo una fecha final incluyendo el histórico anterior", () => {
     const rows = buildResumenChartData([
       { tx_date: "2024-01-15", type: "income", amount: 50000, category: "Ventas" },
       { tx_date: "2025-06-12", type: "expense", amount: 12000, category: "Operación" },
@@ -103,8 +101,7 @@ describe("buildResumenChartData", () => {
     expect(rows[17].gastos).toBe(12000);
   });
 
-  it("muestra seis meses por defecto cuando no hay rango explícito", async () => {
-    const { buildResumenChartData } = await import("@/lib/resumen-chart-data");
+  it("muestra seis meses por defecto cuando no hay rango explícito", () => {
     const rows = buildResumenChartData([], {
       from: null, to: null, categories: [], daily: false,
       now: new Date("2026-11-10T12:00:00"),
