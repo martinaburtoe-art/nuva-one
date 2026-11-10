@@ -266,7 +266,7 @@ function Dashboard() {
           <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
             <ShieldAlert className="h-5 w-5" />
             <div><strong>No se pudieron cargar los movimientos</strong><p>{String(txError?.message ?? txError ?? "Error desconocido")}</p></div>
-            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
+            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo] })}>Reintentar</Button>
           </div>
         )}
 
