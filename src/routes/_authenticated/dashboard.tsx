@@ -56,31 +56,72 @@ function Dashboard() {
     },
   });
 
-  const { data: integrations, error: integrationsError } = useQuery({
+  // Cada módulo se consulta por separado: un fallo parcial no debe ocultar
+  // los datos válidos de los otros módulos del Resumen.
+  const quotesQuery = useQuery({
     enabled: !!active?.id,
-    queryKey: ["dashboard-integrations", active?.id],
+    queryKey: ["dashboard-quotes", active?.id],
     staleTime: 60_000,
     queryFn: async () => {
-      const bid = active!.id;
-      const [quotes, customers, cashRegister] = await Promise.all([
-        supabase.from("quotes").select("id,status,total").eq("business_id", bid),
-        supabase.from("customers").select("id", { count: "exact", head: true }).eq("business_id", bid),
-        supabase.from("cash_registers").select("id,opened_at,opening_amount").eq("business_id", bid).eq("status", "open").limit(1).maybeSingle(),
-      ]);
-      for (const result of [quotes, customers, cashRegister]) {
-        if (result.error) throw result.error;
-      }
-      const pendingQuotes = (quotes.data ?? []).filter((quote: any) =>
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("id,status,total")
+        .eq("business_id", active!.id);
+      if (error) throw error;
+      const pending = (data ?? []).filter((quote: any) =>
         ["draft", "sent", "viewed"].includes(String(quote.status).toLowerCase()),
       );
       return {
-        pendingQuotes: pendingQuotes.length,
-        pendingQuoteValue: pendingQuotes.reduce((sum: number, quote: any) => sum + Number(quote.total ?? 0), 0),
-        customersCount: customers.count ?? 0,
-        cashRegister: cashRegister.data,
+        count: pending.length,
+        value: pending.reduce((sum: number, quote: any) => sum + Number(quote.total ?? 0), 0),
       };
     },
   });
+
+  const customersQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-customers", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("customers")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", active!.id);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const cashRegisterQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-cash-register", active?.id],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cash_registers")
+        .select("id,opened_at,opening_amount")
+        .eq("business_id", active!.id)
+        .eq("status", "open")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const integrations = {
+    pendingQuotes: quotesQuery.data?.count,
+    pendingQuoteValue: quotesQuery.data?.value,
+    customersCount: customersQuery.data,
+    cashRegister: cashRegisterQuery.data,
+  };
+  const integrationErrors = [
+    quotesQuery.error,
+    customersQuery.error,
+    cashRegisterQuery.error,
+  ].filter(Boolean);
+  const integrationsLoading =
+    quotesQuery.isLoading || customersQuery.isLoading || cashRegisterQuery.isLoading;
 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -216,11 +257,18 @@ function Dashboard() {
           </div>
         )}
 
-        {integrationsError && (
+        {integrationErrors.length > 0 && (
           <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
             <ShieldAlert className="h-5 w-5" />
-            <div><strong>No se pudieron conectar todos los módulos</strong><p>{String(integrationsError?.message ?? integrationsError ?? "Error desconocido")}</p></div>
-            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["dashboard-integrations", active?.id] })}>Reintentar</Button>
+            <div>
+              <strong>Algunos indicadores no están disponibles</strong>
+              <p>{integrationErrors.map((error: any) => String(error?.message ?? "Error desconocido")).join(" · ")}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {quotesQuery.isError && <Button size="sm" variant="outline" onClick={() => void quotesQuery.refetch()}>Reintentar cotizaciones</Button>}
+              {customersQuery.isError && <Button size="sm" variant="outline" onClick={() => void customersQuery.refetch()}>Reintentar clientes</Button>}
+              {cashRegisterQuery.isError && <Button size="sm" variant="outline" onClick={() => void cashRegisterQuery.refetch()}>Reintentar caja</Button>}
+            </div>
           </div>
         )}
 
@@ -273,10 +321,10 @@ function Dashboard() {
             <div className="nuva-resumen-operational-stats">
               <div><span>Ventas registradas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
               <div><span>Productos con stock bajo</span><strong className={kpis?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{kpis?.lowStockCount ?? "—"}</strong></div>
-              <div><span>Cotizaciones abiertas</span><strong>{integrations?.pendingQuotes ?? "—"}</strong></div>
-              <div><span>Clientes registrados</span><strong>{integrations?.customersCount ?? "—"}</strong></div>
-              <div><span>Estado de caja</span><strong>{integrations === undefined ? "—" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
-              <div><span>Valor cotizado</span><strong>{integrations ? fmtCLP(integrations.pendingQuoteValue) : "—"}</strong></div>
+              <div><span>Cotizaciones abiertas</span><strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "—" : integrations.pendingQuotes ?? 0}</strong></div>
+              <div><span>Clientes registrados</span><strong>{customersQuery.isLoading ? "—" : customersQuery.isError ? "—" : integrations.customersCount ?? 0}</strong></div>
+              <div><span>Estado de caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "No disponible" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
+              <div><span>Valor cotizado</span><strong>{quotesQuery.isLoading || quotesQuery.isError ? "—" : fmtCLP(integrations.pendingQuoteValue ?? 0)}</strong></div>
             </div>
             <div className="nuva-resumen-status-copy">
               {kpis === undefined ? "Esperando los datos del negocio." : attentionCount === 0 ? "No hay alertas prioritarias en los indicadores disponibles." : `${kpis.lowStockCount} alertas de stock y ${kpis.net < 0 ? "un resultado neto negativo" : "otros indicadores"} que conviene revisar.`}
