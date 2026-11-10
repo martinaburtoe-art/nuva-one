@@ -120,8 +120,6 @@ function Dashboard() {
     customersQuery.error,
     cashRegisterQuery.error,
   ].filter(Boolean);
-  const integrationsLoading =
-    quotesQuery.isLoading || customersQuery.isLoading || cashRegisterQuery.isLoading;
 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
