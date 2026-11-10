@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { goalsLabel } from "@/lib/resumen-goals";
+import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 
 describe("goalsLabel (onboarding del dashboard)", () => {
   it.each([
@@ -18,8 +19,6 @@ describe("goalsLabel (onboarding del dashboard)", () => {
   });
 });
 
-
-import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 
 describe("getResumenOperationalStatus", () => {
   it("no declara el negocio en orden mientras carga", () => {
