@@ -45,30 +45,14 @@
   transition: transform var(--nuva-duration) var(--nuva-ease), box-shadow var(--nuva-duration) var(--nuva-ease), border-color var(--nuva-duration) var(--nuva-ease), background-color var(--nuva-duration) var(--nuva-ease);
 }
 
-.nuva-app .nuva-surface-interactive::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(115deg, transparent 0%, color-mix(in oklab, var(--nuva-indigo) 7%, transparent) 48%, transparent 72%);
-  transform: translateX(-100%);
-  transition: opacity var(--nuva-duration) var(--nuva-ease), transform 650ms var(--nuva-ease);
-}
-
 .nuva-app .nuva-surface-interactive:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in oklab, var(--color-border) 62%, var(--nuva-indigo));
+  border-color: color-mix(in oklab, var(--color-border) 58%, var(--nuva-indigo));
+  background-color: color-mix(in oklab, var(--nuva-surface) 97%, var(--nuva-indigo));
   box-shadow: var(--nuva-shadow-hover);
 }
 
-.nuva-app .nuva-surface-interactive:hover::after {
-  opacity: 1;
-  transform: translateX(100%);
-}
-
 .nuva-app .nuva-surface-interactive:active {
-  transform: translateY(0) scale(0.997);
+  box-shadow: var(--nuva-shadow-soft);
   transition-duration: 90ms;
 }
 
