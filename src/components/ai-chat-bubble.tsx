@@ -79,7 +79,7 @@ export function AiChatBubble() {
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:bottom-6 md:right-6 md:h-14 md:w-14"
+        className="fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom))] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:bottom-6 md:right-6 md:h-14 md:w-14"
         aria-label="Asistente IA"
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
@@ -87,7 +87,7 @@ export function AiChatBubble() {
 
       <div
         className={cn(
-          "fixed bottom-[calc(6.5rem+env(safe-area-inset-bottom))] right-4 z-50 w-[min(360px,calc(100vw-2rem))] max-h-[calc(100dvh-8.5rem-env(safe-area-inset-bottom))] origin-bottom-right transition-all duration-200 md:bottom-24 md:right-6 md:max-h-[calc(100dvh-8rem)]",
+          "fixed bottom-[calc(6.5rem_+_env(safe-area-inset-bottom))] right-4 z-50 w-[min(360px,calc(100vw-2rem))] max-h-[calc(100dvh_-_8.5rem_-_env(safe-area-inset-bottom))] origin-bottom-right transition-all duration-200 md:bottom-24 md:right-6 md:max-h-[calc(100dvh_-_8rem)]",
           open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
         )}
       >
