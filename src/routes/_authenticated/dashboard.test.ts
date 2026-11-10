@@ -163,4 +163,20 @@ describe("fetchAllResumenRows", () => {
       error: new Error("fallo de lectura"),
     }), 2)).rejects.toThrow("fallo de lectura");
   });
+  it("respeta límites exactos de página sin perder ni duplicar filas", async () => {
+    const offsets: number[] = [];
+    const rows = await fetchAllResumenRows(async (from, to) => {
+      offsets.push(from);
+      const all = [10, 20, 30, 40];
+      return { data: all.slice(from, to + 1), error: null };
+    }, 2);
+    expect(rows).toEqual([10, 20, 30, 40]);
+    expect(offsets).toEqual([0, 2, 4]);
+  });
+
+  it("rechaza tamaños de página inválidos", async () => {
+    await expect(fetchAllResumenRows(async () => ({ data: [], error: null }), 0))
+      .rejects.toThrow("pageSize must be a positive integer");
+  });
+
 });
