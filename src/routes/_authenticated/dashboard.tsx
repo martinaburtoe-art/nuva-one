@@ -12,6 +12,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
+import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
@@ -214,7 +215,13 @@ function Dashboard() {
       setSeedingDemo(false);
     }
   }
-  const attentionCount = (kpis?.lowStockCount ?? 0) + ((kpis?.net ?? 0) < 0 ? 1 : 0);
+  const operationalStatus = getResumenOperationalStatus({
+    loading: kpis === undefined && !kpisError,
+    kpisError: Boolean(kpisError),
+    integrationErrorCount: integrationErrors.length,
+    lowStockCount: kpis?.lowStockCount ?? 0,
+    net: kpis?.net,
+  });
 
   return (
     <ModuleGuard module="dashboard">
@@ -314,7 +321,7 @@ function Dashboard() {
           <article className="nuva-resumen-panel nuva-resumen-operations-panel">
             <div className="nuva-resumen-panel-heading">
               <div><p className="nuva-resumen-section-label">SEGUIMIENTO</p><h2>Estado operativo</h2></div>
-              <span className={attentionCount === 0 ? "nuva-resumen-status-pill is-clear" : "nuva-resumen-status-pill is-attention"}>{kpis === undefined ? "Cargando" : attentionCount === 0 ? "En orden" : "Requiere revisión"}</span>
+              <span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-pill is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-pill is-attention" : "nuva-resumen-status-pill"}>{operationalStatus.label}</span>
             </div>
             <div className="nuva-resumen-operational-stats">
               <div><span>Ventas registradas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
@@ -325,7 +332,7 @@ function Dashboard() {
               <div><span>Valor cotizado</span><strong>{quotesQuery.isLoading || quotesQuery.isError ? "—" : fmtCLP(integrations.pendingQuoteValue ?? 0)}</strong></div>
             </div>
             <div className="nuva-resumen-status-copy">
-              {kpis === undefined ? "Esperando los datos del negocio." : attentionCount === 0 ? "No hay alertas prioritarias en los indicadores disponibles." : `${kpis.lowStockCount} alertas de stock y ${kpis.net < 0 ? "un resultado neto negativo" : "otros indicadores"} que conviene revisar.`}
+              {operationalStatus.description}
             </div>
           </article>
 
