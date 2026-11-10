@@ -155,7 +155,7 @@ function Dashboard() {
 
   const { data: allTx, error: txError } = useQuery({
     enabled: !!active?.id,
-    queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories],
+    queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo],
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     queryFn: async () => {
@@ -166,7 +166,6 @@ function Dashboard() {
 
       if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
       if (isoTo) query = query.lte("tx_date", isoTo);
-      if (categories.length > 0) query = query.in("category", categories);
 
       const { data, error } = await query;
       if (error) throw error;
