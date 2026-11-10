@@ -69,11 +69,11 @@ function ResetPassword() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F3EF] px-6 py-12">
+      <div className="w-full max-w-md rounded-[24px] border border-[#17191B]/10 bg-white p-8 shadow-[0_24px_60px_-42px_rgba(8,8,9,.28)]">
         <Link to="/" className="mb-8 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E6C687]/25 bg-[#080809]">
+            <Sparkles className="h-5 w-5 text-[#E6C687]" />
           </div>
           <span className="font-semibold tracking-tight">Nüva One</span>
         </Link>
