@@ -66,13 +66,17 @@ export function NuvaConnectCenter() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border bg-background/70 p-4"><div className="text-2xl font-semibold">{NUVA_CONNECT_INTEGRATIONS.length}</div><div className="text-xs text-muted-foreground">conectores definidos</div></div>
-              <div className="rounded-xl border bg-background/70 p-4"><div className="text-2xl font-semibold">{baseReady}</div><div className="text-xs text-muted-foreground">base lista</div></div>
+              <div className="rounded-xl border bg-background/70 p-4"><div className="text-2xl font-semibold">{baseReady}</div><div className="text-xs text-muted-foreground">base técnica lista</div></div>
               <div className="rounded-xl border bg-background/70 p-4"><div className="text-2xl font-semibold">{needsConfig}</div><div className="text-xs text-muted-foreground">requieren credenciales</div></div>
               <div className="rounded-xl border bg-background/70 p-4"><div className="text-2xl font-semibold">1</div><div className="text-xs text-muted-foreground">modelo de conexión</div></div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <p className="text-xs leading-5 text-muted-foreground">
+        Este catálogo describe compatibilidad y preparación técnica. «Base técnica lista» no significa que una cuenta externa ya esté conectada ni que exista sincronización activa; cada proveedor requiere habilitación y credenciales verificadas.
+      </p>
 
       <Card>
         <CardContent className="p-4 md:p-5">
