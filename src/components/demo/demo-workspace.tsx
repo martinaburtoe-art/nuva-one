@@ -174,7 +174,7 @@ export function DemoWorkspace({ onExit }: { onExit: () => void }) {
           <div className="min-w-0 flex-1"><div className="text-sm font-semibold">{current.label}</div><div className="hidden text-[11px] text-muted-foreground sm:block">{DEMO_BUSINESS.name} · Datos de demostración</div></div>
           <div className="hidden items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs text-muted-foreground lg:flex"><span className="h-2 w-2 rounded-full bg-success" /> Sistema operativo</div>
           <Button variant="ghost" size="icon" onClick={() => setNotice("En la versión real, aquí aparecerán alertas de stock, cobranza, facturación y actividad.")}><Bell className="h-4 w-4" /></Button>
-          <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-primary-foreground" onClick={() => select("settings")}><UserRound className="h-4 w-4" /></button>
+          <button className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E6C687]/25 bg-[#080809] text-xs font-bold text-[#E6C687]" onClick={() => select("settings")}><UserRound className="h-4 w-4" /></button>
         </header>
 
         <main className="min-h-[calc(100vh-7rem)] p-4 pb-16 md:p-8">
