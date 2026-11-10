@@ -70,7 +70,7 @@ function POS() {
   });
   const { data: sales } = useBizList<any>("sales", {
     order: "created_at",
-    select: "id,sale_date,created_at,total",
+    select: "id,sale_date,created_at,total,items,payment_method,customer_name",
   });
   const { data: customers } = useBizList<any>("customers", {
     order: "name",
