@@ -26,6 +26,21 @@ function Dashboard() {
   const [onboardingFocus, setOnboardingFocus] = useState("Todo");
   const [seedingDemo, setSeedingDemo] = useState(false);
 
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const isoFrom = dmyToIso(dateFrom);
+  const isoTo = dmyToIso(dateTo);
+  const chartWindowStart = useMemo(() => {
+    if (isoFrom) return isoFrom;
+    const d = new Date();
+    d.setMonth(d.getMonth() - 5);
+    d.setDate(1);
+    // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, [isoFrom]);
+  const financialPeriodLabel = isoFrom || isoTo ? "Rango seleccionado" : "Últimos seis meses";
+
   useEffect(() => {
     try { setOnboardingFocus(localStorage.getItem("nuva.onboarding_goal") || "Todo"); }
     catch { setOnboardingFocus("Todo"); }
@@ -33,12 +48,22 @@ function Dashboard() {
 
   const { data: kpis, error: kpisError } = useQuery({
     enabled: !!active?.id,
-    queryKey: ["kpis", active?.id],
+    queryKey: ["kpis", active?.id, chartWindowStart, isoTo, categories],
     queryFn: async () => {
       const bid = active!.id;
+      let incomeQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income").gte("tx_date", chartWindowStart);
+      let expenseQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense").gte("tx_date", chartWindowStart);
+      if (isoTo) {
+        incomeQuery = incomeQuery.lte("tx_date", isoTo);
+        expenseQuery = expenseQuery.lte("tx_date", isoTo);
+      }
+      if (categories.length > 0) {
+        incomeQuery = incomeQuery.in("category", categories);
+        expenseQuery = expenseQuery.in("category", categories);
+      }
       const [sales, expenses, products, salesCount] = await Promise.all([
-        supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income"),
-        supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense"),
+        incomeQuery,
+        expenseQuery,
         supabase.from("products").select("stock, price, low_stock_threshold, reorder_point").eq("business_id", bid),
         supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
@@ -121,22 +146,6 @@ function Dashboard() {
     customersQuery.error,
     cashRegisterQuery.error,
   ].filter(Boolean);
-
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
-  const isoFrom = dmyToIso(dateFrom);
-  const isoTo = dmyToIso(dateTo);
-
-  const chartWindowStart = useMemo(() => {
-    if (isoFrom) return isoFrom;
-    const d = new Date();
-    d.setMonth(d.getMonth() - 5);
-    d.setDate(1);
-    // Fecha local (no UTC) para que el umbral del desplazamiento no se desplace un día
-    // según la hora en que se abra el dashboard en Chile (UTC-4).
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }, [isoFrom]);
 
   const { data: allTx, error: txError } = useQuery({
     enabled: !!active?.id,
@@ -298,19 +307,19 @@ function Dashboard() {
 
         <section className="nuva-resumen-kpi-grid" aria-label="Indicadores principales">
           <article className="nuva-resumen-kpi nuva-resumen-kpi-primary">
-            <div className="nuva-resumen-kpi-top"><span>RESULTADO NETO</span><span className="nuva-resumen-kpi-icon"><TrendingUp className="h-4 w-4" /></span></div>
+            <div className="nuva-resumen-kpi-top"><span>RESULTADO DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><TrendingUp className="h-4 w-4" /></span></div>
             <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
             <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Resultado negativo" : "Ingresos menos gastos"}</p>
           </article>
           <article className="nuva-resumen-kpi">
-            <div className="nuva-resumen-kpi-top"><span>INGRESOS REGISTRADOS</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
+            <div className="nuva-resumen-kpi-top"><span>INGRESOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
             <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
-            <p>Movimientos de ingreso</p>
+            <p>{financialPeriodLabel}</p>
           </article>
           <article className="nuva-resumen-kpi">
-            <div className="nuva-resumen-kpi-top"><span>GASTOS REGISTRADOS</span><span className="nuva-resumen-kpi-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
+            <div className="nuva-resumen-kpi-top"><span>GASTOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
             <strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong>
-            <p>Movimientos de egreso</p>
+            <p>{financialPeriodLabel}</p>
           </article>
           <article className="nuva-resumen-kpi">
             <div className="nuva-resumen-kpi-top"><span>VALOR DE INVENTARIO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
@@ -353,7 +362,7 @@ function Dashboard() {
 
         <section className="nuva-resumen-panel nuva-resumen-chart-panel" aria-label="Rendimiento financiero">
           <div className="nuva-resumen-panel-heading nuva-resumen-chart-heading">
-            <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Compara los movimientos registrados y detecta cambios en el tiempo.</p></div>
+            <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>El gráfico y los indicadores financieros comparten el período y el filtro por categoría.</p></div>
             <div className="nuva-resumen-filters">
               <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
               <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
