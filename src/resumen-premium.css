@@ -330,3 +330,48 @@
     transform: translateX(-50%);
   }
 }
+
+
+/* Shared period controls stay beside the executive KPIs they govern. */
+.nuva-resumen-toolbar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: -6px 0 14px;
+  padding: 11px 13px;
+  border: 1px solid var(--nr-border);
+  border-radius: 12px;
+  background: rgb(255 255 255 / .78);
+}
+.nuva-resumen-toolbar-context { min-width: 0; }
+.nuva-resumen-toolbar-context > strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--nr-ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+.nuva-resumen-toolbar-context > p {
+  margin: 2px 0 0;
+  color: var(--nr-muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.nuva-resumen-toolbar .nuva-resumen-filters { flex: 0 1 auto; }
+@media (max-width: 760px) {
+  .nuva-resumen-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: -3px;
+    padding: 11px;
+  }
+  .nuva-resumen-toolbar .nuva-resumen-filters {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    justify-content: stretch;
+  }
+}
