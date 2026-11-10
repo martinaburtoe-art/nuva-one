@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 
 const baseUrl = (process.env.NUVA_QA_URL ?? "https://nuva-one.vercel.app").replace(/\/$/, "");
 const timeoutMs = Number(process.env.NUVA_QA_TIMEOUT_MS ?? 12000);
-const routes = (process.env.NUVA_QA_ROUTES ?? "/,/auth,/pricing,/checkout,/checkout-demo,/reset-password,/demo,/foro,/negocios,/directorio,/news,/noticias")
+const routes = (process.env.NUVA_QA_ROUTES ?? "/,/auth,/dashboard,/pricing,/checkout,/checkout-demo,/reset-password,/demo,/foro,/negocios,/directorio,/news,/noticias")
   .split(",")
   .map((route) => route.trim())
   .filter(Boolean);
@@ -18,7 +18,15 @@ async function fetchWithTimeout(url) {
     const response = await fetch(url, {
       redirect: "follow",
       signal: controller.signal,
-      headers: { "User-Agent": "nuva-agency-qa/1.0" },
+      headers: {
+        "User-Agent": "nuva-agency-qa/1.0",
+        ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+          ? {
+              "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+              "x-vercel-set-bypass-cookie": "true",
+            }
+          : {}),
+      },
     });
 
     return {
