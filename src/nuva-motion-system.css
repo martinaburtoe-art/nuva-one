@@ -84,6 +84,7 @@ body[data-nuva-surface="app"] :where(input, select, textarea):focus-visible {
   @media (prefers-reduced-motion: no-preference) {
     .nuva-reveal-on-view {
       animation: nuva-motion-enter linear both;
+      animation-duration: auto;
       animation-timeline: view();
       animation-range: entry 0% entry 70%;
     }
