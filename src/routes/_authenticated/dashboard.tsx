@@ -14,6 +14,7 @@ import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
+import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
@@ -71,7 +72,7 @@ function Dashboard() {
       const [sales, expenses, products, salesCount] = await Promise.all([
         incomeQuery,
         expenseQuery,
-        supabase.from("products").select("stock, price, low_stock_threshold, reorder_point").eq("business_id", bid),
+        supabase.from("products").select("stock, cost, low_stock_threshold, reorder_point").eq("business_id", bid),
         supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
       for (const result of [sales, expenses, products, salesCount]) {
@@ -79,7 +80,7 @@ function Dashboard() {
       }
       const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
       const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const inventoryValue = (products.data ?? []).reduce((s, r: any) => s + Number(r.stock) * Number(r.price), 0);
+      const inventoryValue = calculateInventoryValueAtCost(products.data ?? []);
       const lowStockCount = (products.data ?? []).filter((r: any) => {
         const stock = Number(r.stock ?? 0);
         const threshold = Number(r.low_stock_threshold ?? r.reorder_point ?? 0);
@@ -319,7 +320,7 @@ function Dashboard() {
             <p>{financialPeriodLabel}</p>
           </article>
           <article className="nuva-resumen-kpi">
-            <div className="nuva-resumen-kpi-top"><span>VALOR DE INVENTARIO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
+            <div className="nuva-resumen-kpi-top"><span>INVENTARIO AL COSTO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
             <strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong>
             <p>{kpis?.productsCount ?? "—"} productos registrados</p>
           </article>
