@@ -1,0 +1,77 @@
+/* Nüva One — shared brand tokens
+ * A restrained semantic foundation for public and authenticated surfaces.
+ * Module-specific art direction (including Resumen) remains locally scoped.
+ */
+:root,
+.dark {
+  color-scheme: light;
+  --nuva-black: #080809;
+  --nuva-gold: #E6C687;
+  --nuva-indigo: #6366F1;
+
+  --background: #F7F7F4;
+  --foreground: #17191B;
+  --card: #FFFFFF;
+  --card-foreground: #17191B;
+  --popover: #FFFFFF;
+  --popover-foreground: #17191B;
+
+  --primary: var(--nuva-indigo);
+  --primary-foreground: #FFFFFF;
+  --primary-glow: #9698F8;
+  --secondary: #F0EFEA;
+  --secondary-foreground: #343638;
+  --muted: #F0F0EC;
+  --muted-foreground: #686B6E;
+  --accent: #EEEDE8;
+  --accent-foreground: #252729;
+
+  --destructive: #B64B43;
+  --destructive-foreground: #FFFFFF;
+  --success: #34785B;
+  --success-foreground: #FFFFFF;
+  --warning: #946B32;
+  --warning-foreground: #FFFFFF;
+
+  --border: rgba(23, 25, 27, 0.12);
+  --input: rgba(23, 25, 27, 0.16);
+  --ring: var(--nuva-indigo);
+
+  --chart-1: #6366F1;
+  --chart-2: #B99A5D;
+  --chart-3: #47766C;
+  --chart-4: #8B9297;
+  --chart-5: #343638;
+
+  --sidebar: #080809;
+  --sidebar-foreground: #F4F1E9;
+  --sidebar-primary: #E6C687;
+  --sidebar-primary-foreground: #080809;
+  --sidebar-accent: rgba(230, 198, 135, 0.12);
+  --sidebar-accent-foreground: #F4F1E9;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: #E6C687;
+
+  --shadow-soft: 0 1px 2px rgba(8, 8, 9, 0.035), 0 8px 24px -18px rgba(8, 8, 9, 0.18);
+  --shadow-elegant: 0 16px 44px -30px rgba(8, 8, 9, 0.28);
+  --shadow-glow: 0 0 0 1px rgba(230, 198, 135, 0.16), 0 12px 36px -24px rgba(8, 8, 9, 0.3);
+}
+
+/* Gold is a deliberate brand signal, not a general-purpose text color. */
+:where([data-nuva-brand-accent="gold"]) {
+  color: var(--nuva-gold);
+}
+
+/* Keep keyboard focus visible without the inherited electric-blue treatment. */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline-color: var(--nuva-indigo);
+  outline-offset: 3px;
+}
+
+/* Respect reduced motion and avoid global hover choreography on touch devices. */
+@media (hover: none), (pointer: coarse) {
+  body[data-nuva-surface="app"] button,
+  body[data-nuva-surface="app"] a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
