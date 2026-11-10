@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Building2, Plus, ShieldAlert } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ErrorState, LoadingState } from "@/components/page-utils";
-import { Button } from "@/components/ui/button";
 import { useActiveBusiness, useMyMembership, hasModulePermission, type ModuleKey } from "@/lib/use-business";
 
 /**
@@ -83,11 +82,12 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
             ))}
             {businesses.length === 0 && (
               <div className="sm:col-span-2">
-                <Link to="/onboarding">
-                  <Button className="min-h-11 w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Crear mi negocio
-                  </Button>
+                <Link
+                  to="/onboarding"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear mi negocio
                 </Link>
               </div>
             )}
