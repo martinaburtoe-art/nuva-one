@@ -33,12 +33,14 @@ function Dashboard() {
   const isoTo = dmyToIso(dateTo);
   const chartWindowStart = useMemo(() => {
     if (isoFrom) return isoFrom;
+    if (isoTo) return null; // Solo fecha final: incluir todo el histórico anterior.
     const d = new Date();
     d.setMonth(d.getMonth() - 5);
     d.setDate(1);
     // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }, [isoFrom]);
+  }, [isoFrom, isoTo]);
+  const dailyChart = Boolean(isoFrom && isoTo && Date.parse(isoTo) - Date.parse(isoFrom) <= 62 * 86_400_000);
   const financialPeriodLabel = isoFrom || isoTo ? "Rango seleccionado" : "Últimos seis meses";
 
   useEffect(() => {
@@ -51,8 +53,12 @@ function Dashboard() {
     queryKey: ["kpis", active?.id, chartWindowStart, isoTo, categories],
     queryFn: async () => {
       const bid = active!.id;
-      let incomeQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income").gte("tx_date", chartWindowStart);
-      let expenseQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense").gte("tx_date", chartWindowStart);
+      let incomeQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income");
+      let expenseQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense");
+      if (chartWindowStart) {
+        incomeQuery = incomeQuery.gte("tx_date", chartWindowStart);
+        expenseQuery = expenseQuery.gte("tx_date", chartWindowStart);
+      }
       if (isoTo) {
         incomeQuery = incomeQuery.lte("tx_date", isoTo);
         expenseQuery = expenseQuery.lte("tx_date", isoTo);
@@ -156,9 +162,9 @@ function Dashboard() {
       let query = supabase
         .from("transactions")
         .select("amount, type, tx_date, category")
-        .eq("business_id", active!.id)
-        .gte("tx_date", chartWindowStart);
+        .eq("business_id", active!.id);
 
+      if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
       if (isoTo) query = query.lte("tx_date", isoTo);
       if (categories.length > 0) query = query.in("category", categories);
 
@@ -185,7 +191,7 @@ function Dashboard() {
       if (categories.length > 0 && !categories.includes(r.category)) return false;
       return true;
     });
-    if (isoFrom || isoTo) {
+    if (dailyChart) {
       const byDay: Record<string, { fecha: string; ingresos: number; gastos: number }> = {};
       rows.forEach((r: any) => {
         const key = r.tx_date;
@@ -196,18 +202,38 @@ function Dashboard() {
     }
     const byMonth: Record<string, { mes: string; ingresos: number; gastos: number }> = {};
     const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      byMonth[`${d.getFullYear()}-${d.getMonth()}`] = { mes: d.toLocaleDateString("es-CL", { month: "short" }), ingresos: 0, gastos: 0 };
+    const firstObserved = rows.reduce<Date | null>((earliest, row: any) => {
+      const date = new Date(`${row.tx_date}T00:00:00`);
+      return !earliest || date < earliest ? date : earliest;
+    }, null);
+    const start = isoFrom
+      ? new Date(`${isoFrom}T00:00:00`)
+      : isoTo
+        ? firstObserved ?? new Date(`${isoTo}T00:00:00`)
+        : new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const end = isoTo ? new Date(`${isoTo}T00:00:00`) : now;
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+    while (cursor <= lastMonth) {
+      const key = `${cursor.getFullYear()}-${cursor.getMonth()}`;
+      byMonth[key] = {
+        mes: cursor.toLocaleDateString("es-CL", { month: "short", year: "2-digit" }),
+        ingresos: 0,
+        gastos: 0,
+      };
+      cursor.setMonth(cursor.getMonth() + 1);
     }
     rows.forEach((r: any) => {
-      // Fecha local (no UTC): "2026-08-01" no debe agruparse bajo julio en UTC-4.
+      // Fecha local (no UTC): una fecha contable no debe desplazarse al mes anterior.
       const [y, m] = r.tx_date.split("-").map(Number);
       const key = `${y}-${m - 1}`;
-      if (byMonth[key]) { if (r.type === "income") byMonth[key].ingresos += Number(r.amount); else byMonth[key].gastos += Number(r.amount); }
+      if (byMonth[key]) {
+        if (r.type === "income") byMonth[key].ingresos += Number(r.amount);
+        else byMonth[key].gastos += Number(r.amount);
+      }
     });
     return Object.values(byMonth);
-  }, [allTx, isoFrom, isoTo, categories]);
+  }, [allTx, isoFrom, isoTo, categories, dailyChart]);
 
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
   const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
@@ -377,7 +403,7 @@ function Dashboard() {
             <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Comparación de movimientos dentro del contexto seleccionado arriba.</p></div>
           </div>
           <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
-            <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
+            <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={dailyChart} /></Suspense>
           </div>
           <div className="nuva-resumen-chart-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
         </section>
