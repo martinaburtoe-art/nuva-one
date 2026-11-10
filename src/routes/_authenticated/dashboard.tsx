@@ -15,6 +15,7 @@ import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
+import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
@@ -55,38 +56,37 @@ function Dashboard() {
     queryKey: ["kpis", active?.id, chartWindowStart, isoTo, categories],
     queryFn: async () => {
       const bid = active!.id;
-      let incomeQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income");
-      let expenseQuery = supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense");
-      if (chartWindowStart) {
-        incomeQuery = incomeQuery.gte("tx_date", chartWindowStart);
-        expenseQuery = expenseQuery.gte("tx_date", chartWindowStart);
-      }
-      if (isoTo) {
-        incomeQuery = incomeQuery.lte("tx_date", isoTo);
-        expenseQuery = expenseQuery.lte("tx_date", isoTo);
-      }
-      if (categories.length > 0) {
-        incomeQuery = incomeQuery.in("category", categories);
-        expenseQuery = expenseQuery.in("category", categories);
-      }
       const [sales, expenses, products, salesCount] = await Promise.all([
-        incomeQuery,
-        expenseQuery,
-        supabase.from("products").select("stock, cost, low_stock_threshold, reorder_point").eq("business_id", bid),
+        fetchAllResumenRows((from, to) => {
+          let query = supabase.from("transactions").select("id, amount").eq("business_id", bid).eq("type", "income");
+          if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
+          if (isoTo) query = query.lte("tx_date", isoTo);
+          if (categories.length > 0) query = query.in("category", categories);
+          return query.order("id").range(from, to);
+        }),
+        fetchAllResumenRows((from, to) => {
+          let query = supabase.from("transactions").select("id, amount").eq("business_id", bid).eq("type", "expense");
+          if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
+          if (isoTo) query = query.lte("tx_date", isoTo);
+          if (categories.length > 0) query = query.in("category", categories);
+          return query.order("id").range(from, to);
+        }),
+        fetchAllResumenRows((from, to) =>
+          supabase.from("products").select("id, stock, cost, low_stock_threshold, reorder_point")
+            .eq("business_id", bid).order("id").range(from, to),
+        ),
         supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
-      for (const result of [sales, expenses, products, salesCount]) {
-        if (result.error) throw result.error;
-      }
-      const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const inventoryValue = calculateInventoryValueAtCost(products.data ?? []);
-      const lowStockCount = (products.data ?? []).filter((r: any) => {
+      if (salesCount.error) throw salesCount.error;
+      const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      const inventoryValue = calculateInventoryValueAtCost(products);
+      const lowStockCount = products.filter((r: any) => {
         const stock = Number(r.stock ?? 0);
         const threshold = Number(r.low_stock_threshold ?? r.reorder_point ?? 0);
         return threshold > 0 && stock <= threshold;
       }).length;
-      return { income, expense, net: income - expense, inventoryValue, salesCount: salesCount.count ?? 0, productsCount: (products.data ?? []).length, lowStockCount };
+      return { income, expense, net: income - expense, inventoryValue, salesCount: salesCount.count ?? 0, productsCount: products.length, lowStockCount };
     },
   });
 
@@ -97,12 +97,11 @@ function Dashboard() {
     queryKey: ["dashboard-quotes", active?.id],
     staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("quotes")
-        .select("id,status,total")
-        .eq("business_id", active!.id);
-      if (error) throw error;
-      const pending = (data ?? []).filter((quote: any) =>
+      const data = await fetchAllResumenRows((from, to) =>
+        supabase.from("quotes").select("id,status,total")
+          .eq("business_id", active!.id).order("id").range(from, to),
+      );
+      const pending = data.filter((quote: any) =>
         ["draft", "sent", "viewed"].includes(String(quote.status).toLowerCase()),
       );
       return {
@@ -161,17 +160,15 @@ function Dashboard() {
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     queryFn: async () => {
-      let query = supabase
-        .from("transactions")
-        .select("amount, type, tx_date, category")
-        .eq("business_id", active!.id);
-
-      if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
-      if (isoTo) query = query.lte("tx_date", isoTo);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data ?? [];
+      return fetchAllResumenRows((from, to) => {
+        let query = supabase
+          .from("transactions")
+          .select("id, amount, type, tx_date, category")
+          .eq("business_id", active!.id);
+        if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
+        if (isoTo) query = query.lte("tx_date", isoTo);
+        return query.order("id").range(from, to);
+      });
     },
   });
 
