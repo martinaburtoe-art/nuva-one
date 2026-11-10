@@ -46,14 +46,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { active, businesses, setActiveId } = useActiveBusiness();
-  const { data: membership } = useMyMembership();
+  const { data: membership, isLoading: membershipLoading, isError: membershipError } = useMyMembership();
   const myRole = membership?.role ?? null;
   const canManage = myRole === "owner" || myRole === "admin";
-  const visibleNav = nav.filter((item) => {
-    if ("adminOnly" in item && item.adminOnly) return canManage;
-    if ("module" in item && item.module) return hasModulePermission(myRole, membership?.permissions, item.module as ModuleKey);
-    return true;
-  });
+  const visibleNav = membershipLoading || (!membership && !membershipError)
+    ? nav.filter((item) => !("adminOnly" in item && item.adminOnly))
+    : nav.filter((item) => {
+        if ("adminOnly" in item && item.adminOnly) return canManage;
+        if ("module" in item && item.module) return hasModulePermission(myRole, membership?.permissions, item.module as ModuleKey);
+        return true;
+      });
   // Keep the four highest-frequency destinations visible on compact screens.
   // Secondary workflows remain available from the grouped “Más” sheet.
   const mobilePrimaryPaths = ["/dashboard", "/pos", "/sales", "/inventory"];
