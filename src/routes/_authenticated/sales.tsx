@@ -183,7 +183,7 @@ function Sales() {
                     Nueva venta
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl rounded-2xl">
+                <DialogContent className="max-h-[min(90dvh,900px)] max-w-3xl overflow-y-auto rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>Registrar venta</DialogTitle>
                   </DialogHeader>
@@ -313,8 +313,8 @@ function Sales() {
                       </div>
                       <div className="space-y-2">
                         {items.map((it, idx) => (
-                          <div key={idx} className="grid grid-cols-12 gap-2">
-                            <div className="col-span-5">
+                          <div key={idx} className="grid grid-cols-12 items-start gap-2">
+                            <div className="col-span-12 min-w-0 sm:col-span-5">
                               <Select
                                 value={it.product_id ?? "__free__"}
                                 onValueChange={(v) =>
@@ -347,7 +347,7 @@ function Sales() {
                               )}
                             </div>
                             <Input
-                              className="col-span-2"
+                              className="col-span-4 min-w-0 sm:col-span-2"
                               type="number"
                               min={1}
                               value={it.qty}
@@ -361,7 +361,7 @@ function Sales() {
                               }}
                             />
                             <CurrencyInput
-                              wrapperClassName="col-span-3"
+                              wrapperClassName="col-span-7 min-w-0 sm:col-span-3"
                               value={it.price}
                               onValueChange={(value) => {
                                 const c = [...items];
@@ -374,7 +374,7 @@ function Sales() {
                               type="button"
                               size="icon"
                               variant="ghost"
-                              className="col-span-1"
+                              className="col-span-1 h-11 w-full"
                               onClick={() => setItems(items.filter((_, i) => i !== idx))}
                             >
                               <X className="h-4 w-4" />
@@ -389,7 +389,7 @@ function Sales() {
                       </div>
                     </div>
 
-                    <div className="sticky bottom-0 flex items-center gap-3 rounded-xl border border-border/70 bg-background/95 p-4 shadow-lg backdrop-blur-xl">
+                    <div className="sticky bottom-0 z-10 flex items-center gap-3 rounded-xl border border-border/70 bg-background/95 p-3 shadow-lg backdrop-blur-xl sm:p-4">
                       <Label htmlFor="total" className="shrink-0">
                         Total (CLP)
                       </Label>
