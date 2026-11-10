@@ -39,9 +39,9 @@ const PAYMENT_LABEL: Record<string, string> = {
 };
 
 function Analytics() {
-  const { data: sales, isLoading: salesLoading } = useBizList<any>("sales");
-  const { data: products, isLoading: productsLoading } = useBizList<any>("products");
-  const { data: tx, isLoading: txLoading } = useBizList<any>("transactions");
+  const { data: sales, isLoading: salesLoading, isError: salesError, refetch: refetchSales } = useBizList<any>("sales");
+  const { data: products, isLoading: productsLoading, isError: productsError, refetch: refetchProducts } = useBizList<any>("products");
+  const { data: tx, isLoading: txLoading, isError: txError, refetch: refetchTx } = useBizList<any>("transactions");
 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -73,6 +73,8 @@ function Analytics() {
   }, [sales]);
 
   const loading = salesLoading || productsLoading || txLoading;
+  const hasError = salesError || productsError || txError;
+  const retry = () => { void Promise.all([refetchSales(), refetchProducts(), refetchTx()]); };
 
   const hasActiveFilters = !!dateFrom || !!dateTo || productIds.length > 0 || categories.length > 0 || channels.length > 0 || paymentMethods.length > 0;
   function clearFilters() {
@@ -106,7 +108,7 @@ function Analytics() {
   const income = filteredTx.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
   const expense = filteredTx.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
   const cashFlowMargin = income > 0 ? ((income - expense) / income) * 100 : 0;
-  const inventoryUnits = (products ?? []).reduce((s, p) => s + p.stock, 0);
+  const inventoryUnits = (products ?? []).reduce((s, p) => s + Number(p.stock ?? 0), 0);
   let revenueFromItems = 0; let costFromItems = 0;
   filteredSales.forEach((s) => (s.items ?? []).forEach((it: any) => {
     const qty = Number(it.qty) || 0; const price = Number(it.price) || 0;
@@ -144,27 +146,44 @@ function Analytics() {
           <MultiSelectFilter label="Método de pago" options={paymentOptions} selected={paymentMethods} onChange={setPaymentMethods} />
           {hasActiveFilters && <Button variant="ghost" size="sm" className="self-start lg:self-auto" onClick={clearFilters}><X className="mr-1 h-3.5 w-3.5" /> Quitar filtros</Button>}
         </div></Card>
-        {loading ? (
-          <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-5" role="status" aria-label="Cargando indicadores">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Card key={i} className="rounded-2xl border-border/70 p-4 shadow-sm">
-                <div className="h-16 animate-pulse rounded-md bg-muted" />
-              </Card>
-            ))}
+        {hasError ? (
+          <Card className="mt-4 border-destructive/30 p-5" role="alert">
+            <h2 className="font-semibold">No se pudieron cargar todos los indicadores</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Ventas, productos y movimientos deben estar disponibles para que las métricas sean comparables. No mostraremos resultados parciales como si fueran definitivos.</p>
+            <Button className="mt-4 min-h-11" variant="outline" onClick={retry}>Reintentar datos</Button>
+          </Card>
+        ) : loading ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" role="status" aria-label="Cargando indicadores">
+            {Array.from({ length: 5 }).map((_, i) => <Card key={i} className="border-border/70 p-4"><div className="h-16 animate-pulse rounded-md bg-muted" /></Card>)}
           </div>
         ) : (
-          <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
-            {kpis.map((k) => (
-              <Card key={k.l} className="rounded-2xl border-border/70 p-4 shadow-sm">
-                <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{k.l}</span><k.i className="h-4 w-4 text-primary" /></div>
-                <div className="mt-2 text-2xl font-bold">{k.v}</div>
+          <>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {kpis.map((k) => <Card key={k.l} className="border-border/70 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-2"><span className="text-xs text-muted-foreground">{k.l}</span><k.i className="h-4 w-4 shrink-0 text-primary" /></div>
+                <div className="mt-2 break-words text-xl font-semibold tabular-nums sm:text-2xl">{k.v}</div>
+              </Card>)}
+            </div>
+            <Card className="mt-5 border-border/70 p-4 shadow-sm sm:p-5">
+              <div className="mb-2"><h3 className="font-semibold">Evolución de ventas</h3><p className="text-xs text-muted-foreground">Ventas registradas en el período visible.</p></div>
+              {trendData.length ? <div role="img" aria-label="Gráfico de evolución de ventas" className="h-[220px] min-w-0 sm:h-[280px]"><ResponsiveContainer width="100%" height="100%"><LineChart data={trendData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}><CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" /><XAxis dataKey="fecha" stroke="hsl(var(--muted-foreground))" fontSize={11} minTickGap={20} /><YAxis width={48} stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))" }} /><Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} /></LineChart></ResponsiveContainer></div> : <ChartEmptyState text="No hay ventas en el período y filtros seleccionados." />}
+            </Card>
+            <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-2">
+              <Card className="min-w-0 border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Ventas por canal</h3><p className="text-xs text-muted-foreground">Distribución del monto vendido.</p></div>
+                {channelData.length ? <div className="h-[240px] min-w-0 sm:h-[280px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={channelData} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}><CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" /><XAxis dataKey="canal" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={0} /><YAxis width={48} stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))" }} /><Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div> : <ChartEmptyState text="No hay datos de canal para este período." />}
               </Card>
-            ))}
-          </div>
+              <Card className="min-w-0 border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Ventas por método de pago</h3><p className="text-xs text-muted-foreground">Distribución del monto vendido.</p></div>
+                {paymentData.length ? <div className="h-[240px] min-w-0 sm:h-[280px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={paymentData} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}><CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" /><XAxis dataKey="metodo" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={0} /><YAxis width={48} stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))" }} /><Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div> : <ChartEmptyState text="No hay datos de pago para este período." />}
+              </Card>
+            </div>
+          </>
         )}
-        <Card className="mt-5 rounded-2xl border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Evolución de ventas</h3><p className="text-xs text-muted-foreground">Ventas registradas en el período visible.</p></div><div role="img" aria-label="Gráfico de evolución de ventas"><ResponsiveContainer width="100%" height={260}><LineChart data={trendData}><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey="fecha" stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Line type="monotone" dataKey="total" stroke="oklch(0.55 0.22 268)" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div></Card>
-        <div className="mt-5 grid gap-4 lg:grid-cols-2"><Card className="rounded-2xl border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Ventas por canal</h3><p className="text-xs text-muted-foreground">Distribución del monto vendido.</p></div><ResponsiveContainer width="100%" height={280}><BarChart data={channelData}><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey="canal" stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Bar dataKey="total" fill="oklch(0.55 0.22 268)" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></Card><Card className="rounded-2xl border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Ventas por método de pago</h3><p className="text-xs text-muted-foreground">Distribución del monto vendido.</p></div><ResponsiveContainer width="100%" height={280}><BarChart data={paymentData}><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey="metodo" stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Bar dataKey="total" fill="oklch(0.6 0.18 200)" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></Card></div>
       </>
     </ModuleGuard>
   );
+}
+
+
+function ChartEmptyState({ text }: { text: string }) {
+  return <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed bg-muted/20 px-5 text-center text-sm text-muted-foreground">{text}</div>;
 }
