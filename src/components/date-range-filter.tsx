@@ -56,7 +56,7 @@ function DateField({
           placeholder="dd-mm-aaaa"
           value={value}
           onChange={(e) => onChange(autoFormatDMY(e.target.value))}
-          className="w-28"
+          className="w-full min-w-0"
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -102,7 +102,7 @@ export function DateRangeFilter({
   onToChange: (v: string) => void;
 }) {
   return (
-    <div className="flex items-end gap-2">
+    <div className="nuva-date-range-filter grid min-w-0 grid-cols-2 items-end gap-2">
       <DateField label="Desde" value={from} onChange={onFromChange} />
       <DateField label="Hasta" value={to} onChange={onToChange} />
     </div>
