@@ -221,7 +221,8 @@ function Dashboard() {
     }
   }
   const operationalStatus = getResumenOperationalStatus({
-    loading: kpis === undefined && !kpisError,
+    invalidDateRange,
+    loading: !invalidDateRange && kpis === undefined && !kpisError,
     kpisError: Boolean(kpisError),
     integrationErrorCount: integrationErrors.length,
     lowStockCount: kpis?.lowStockCount ?? 0,
