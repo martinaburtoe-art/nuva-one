@@ -1756,3 +1756,58 @@
   .nuva-resumen-kpi { transition: none; }
   .nuva-resumen-kpi:hover { transform: none; }
 }
+
+
+/* Financial composition — a real-data visual, not a decorative KPI. */
+.nuva-app .nuva-resumen-financial-mix {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid #e9e6de;
+  border-radius: 12px;
+  background: rgb(255 255 255 / .58);
+}
+.nuva-app .nuva-resumen-financial-mix-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: #777970;
+  font-size: 10px;
+}
+.nuva-app .nuva-resumen-financial-mix-label strong {
+  color: #45483f;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nuva-app .nuva-resumen-financial-mix-track {
+  display: flex;
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ecebe6;
+}
+.nuva-app .nuva-resumen-financial-mix-track span { display: block; height: 100%; transition: width 220ms ease; }
+.nuva-app .nuva-resumen-financial-mix-income { background: #879778; }
+.nuva-app .nuva-resumen-financial-mix-expense { background: #c8a66d; }
+.nuva-app .nuva-resumen-financial-mix-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: #85877f;
+  font-size: 9px;
+}
+.nuva-app .nuva-resumen-financial-mix-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.nuva-app .nuva-resumen-financial-mix-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.nuva-app .nuva-resumen-financial-mix-legend i.is-income { background: #879778; }
+.nuva-app .nuva-resumen-financial-mix-legend i.is-expense { background: #c8a66d; }
+@media (max-width: 767px) {
+  .nuva-app .nuva-resumen-financial-mix { padding: 10px 11px; }
+  .nuva-app .nuva-resumen-financial-mix-track { height: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-resumen-financial-mix-track span { transition: none; }
+}
