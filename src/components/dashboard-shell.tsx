@@ -61,7 +61,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   // Secondary workflows remain available from the grouped “Más” sheet.
   const mobilePrimaryPaths = ["/dashboard", "/pos", "/sales", "/inventory"];
   const mobilePrimaryNav = mobilePrimaryPaths.flatMap((path) => visibleNav.filter((item) => item.to === path));
-  const mobileMoreNav = useMemo(() => {\n    const query = mobileModuleQuery.trim().toLocaleLowerCase("es-CL");\n    return visibleNav.filter((item) => !mobilePrimaryNav.includes(item) && (!query || item.label.toLocaleLowerCase("es-CL").includes(query) || item.section.toLocaleLowerCase("es-CL").includes(query)));\n  }, [visibleNav, mobilePrimaryNav, mobileModuleQuery]);
+  const mobileMoreNav = useMemo(() => {
+    const query = mobileModuleQuery.trim().toLocaleLowerCase("es-CL");
+    return visibleNav.filter((item) => !mobilePrimaryNav.includes(item) && (!query || item.label.toLocaleLowerCase("es-CL").includes(query) || item.section.toLocaleLowerCase("es-CL").includes(query)));
+  }, [visibleNav, mobilePrimaryNav, mobileModuleQuery]);
   const plan = (active as any)?.plan ?? "starter";
   const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
   const trialDaysLeft = createdAt ? Math.max(0, 15 - Math.floor((Date.now() - createdAt.getTime()) / 86_400_000)) : 15;
