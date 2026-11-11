@@ -387,7 +387,18 @@ function Dashboard() {
             <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Comparación de movimientos dentro del contexto seleccionado arriba.</p></div>
           </div>
           <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
-            <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={dailyChart} /></Suspense>
+            {chartData?.length ? (
+              <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}>
+                <DashboardChart data={chartData} filtered={dailyChart} />
+              </Suspense>
+            ) : (
+              <div className="nuva-resumen-chart-empty" role="status">
+                <span className="nuva-resumen-chart-empty-icon"><TrendingUp className="h-5 w-5" /></span>
+                <strong>No hay movimientos para mostrar</strong>
+                <p>Cuando registres ingresos o gastos dentro del período seleccionado, aparecerán aquí.</p>
+                <Link to="/finance">Ir a finanzas <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              </div>
+            )}
           </div>
           <div className="nuva-resumen-chart-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
         </section>
