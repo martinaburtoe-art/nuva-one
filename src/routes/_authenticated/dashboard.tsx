@@ -235,6 +235,24 @@ function Dashboard() {
           </div>
         </header>
 
+        <section className="nuva-resumen-hero" aria-label="Resultado financiero del período">
+          <div className="nuva-resumen-hero-main">
+            <div className="nuva-resumen-hero-kicker"><span className="nuva-resumen-hero-spark" aria-hidden="true" /> LECTURA EJECUTIVA <span aria-hidden="true">·</span> {financialPeriodLabel}</div>
+            <h2>Resultado del período</h2>
+            <p>Ingresos registrados menos gastos registrados</p>
+            <strong className={kpis && kpis.net < 0 ? "is-negative" : "is-positive"}>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
+            <span className="nuva-resumen-hero-caption">{kpisError ? "No disponible: revisa la conexión de indicadores" : kpis ? (kpis.net < 0 ? "El período registra más gastos que ingresos" : "Resultado calculado con tus movimientos registrados") : "Calculando el resultado con tus movimientos…"}</span>
+          </div>
+          <div className="nuva-resumen-hero-side">
+            <div className="nuva-resumen-hero-status"><span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-dot is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-dot is-attention" : "nuva-resumen-status-dot"} />{operationalStatus.label}</div>
+            <div className="nuva-resumen-hero-breakdown">
+              <div><span>Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
+              <div><span>Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
+            </div>
+            <Link to="/finance" className="nuva-resumen-hero-link">Explorar finanzas <ArrowUpRight className="h-4 w-4" /></Link>
+          </div>
+        </section>
+
         <section className="nuva-resumen-mobile-brief" aria-label="Pulso del negocio">
           <div className="nuva-resumen-mobile-brief-head">
             <span className="nuva-resumen-section-label">PULSO OPERATIVO</span>
@@ -315,11 +333,6 @@ function Dashboard() {
         )}
 
         <section className="nuva-resumen-kpi-grid" aria-label="Indicadores principales">
-          <article className="nuva-resumen-kpi nuva-resumen-kpi-primary">
-            <div className="nuva-resumen-kpi-top"><span>RESULTADO DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><TrendingUp className="h-4 w-4" /></span></div>
-            <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
-            <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Resultado negativo" : "Ingresos menos gastos"}</p>
-          </article>
           <article className="nuva-resumen-kpi">
             <div className="nuva-resumen-kpi-top"><span>INGRESOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
             <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
