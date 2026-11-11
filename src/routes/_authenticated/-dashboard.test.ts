@@ -4,6 +4,7 @@ import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
+import { dmyToIso } from "@/components/date-range-filter";
 
 describe("goalsLabel (onboarding del dashboard)", () => {
   it.each([
@@ -179,4 +180,17 @@ describe("fetchAllResumenRows", () => {
       .rejects.toThrow("pageSize must be a positive integer");
   });
 
+});
+
+
+describe("dmyToIso (filtros de período)", () => {
+  it("convierte fechas válidas al formato ISO", () => {
+    expect(dmyToIso("10-11-2026")).toBe("2026-11-10");
+    expect(dmyToIso("29-02-2024")).toBe("2024-02-29");
+  });
+
+  it.each(["31-02-2026", "29-02-2025", "00-12-2026", "10-13-2026", "1-1-2026", ""]) (
+    "rechaza fechas incompletas o inexistentes: %s",
+    (value) => expect(dmyToIso(value)).toBeNull(),
+  );
 });
