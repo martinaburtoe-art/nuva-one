@@ -62,8 +62,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const mobilePrimaryPaths = ["/dashboard", "/pos", "/sales", "/inventory"];
   const mobilePrimaryNav = mobilePrimaryPaths.flatMap((path) => visibleNav.filter((item) => item.to === path));
   const mobileMoreNav = useMemo(() => {
-    const query = mobileModuleQuery.trim().toLocaleLowerCase("es-CL");
-    return visibleNav.filter((item) => !mobilePrimaryNav.includes(item) && (!query || item.label.toLocaleLowerCase("es-CL").includes(query) || item.section.toLocaleLowerCase("es-CL").includes(query)));
+    const query = mobileModuleQuery.trim().toLowerCase();
+    return visibleNav.filter((item) => !mobilePrimaryNav.includes(item) && (!query || item.label.toLowerCase().includes(query) || item.section.toLowerCase().includes(query)));
   }, [visibleNav, mobilePrimaryNav, mobileModuleQuery]);
   const plan = (active as any)?.plan ?? "starter";
   const createdAt = (active as any)?.created_at ? new Date((active as any).created_at) : null;
