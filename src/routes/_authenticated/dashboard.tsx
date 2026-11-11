@@ -279,7 +279,17 @@ function Dashboard() {
           </div>
         </div>
 
-        {kpis === undefined && !kpisError && !txError && (
+        {invalidDateRange && (
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div>
+              <strong>Revisa el período seleccionado</strong>
+              <p>Ingresa fechas reales en formato día-mes-año y comprueba que la fecha inicial no sea posterior a la final.</p>
+            </div>
+          </div>
+        )}
+
+        {kpis === undefined && !kpisError && !txError && !invalidDateRange && (
           <div className="nuva-resumen-feedback" role="status">
             <span className="nuva-resumen-feedback-mark" />
             <div><strong>Cargando información del negocio</strong><p>Estamos reuniendo tus indicadores y movimientos.</p></div>
