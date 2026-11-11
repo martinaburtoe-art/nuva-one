@@ -5,12 +5,21 @@ export type ResumenOperationalStatus = {
 };
 
 export function getResumenOperationalStatus(input: {
+  invalidDateRange?: boolean;
   loading: boolean;
   kpisError: boolean;
   integrationErrorCount: number;
   lowStockCount: number;
   net: number | undefined;
 }): ResumenOperationalStatus {
+  if (input.invalidDateRange) {
+    return {
+      label: "Fechas por corregir",
+      tone: "attention",
+      description: "Corrige el período seleccionado para actualizar los indicadores y evaluar el estado del negocio.",
+    };
+  }
+
   if (input.loading) {
     return {
       label: "Cargando",
