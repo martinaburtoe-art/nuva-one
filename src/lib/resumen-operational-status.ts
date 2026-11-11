@@ -5,6 +5,7 @@ export type ResumenOperationalStatus = {
 };
 
 export function getResumenOperationalStatus(input: {
+  hasBusiness?: boolean;
   invalidDateRange?: boolean;
   loading: boolean;
   kpisError: boolean;
@@ -12,6 +13,14 @@ export function getResumenOperationalStatus(input: {
   lowStockCount: number;
   net: number | undefined;
 }): ResumenOperationalStatus {
+  if (input.hasBusiness === false) {
+    return {
+      label: "Negocio no seleccionado",
+      tone: "attention",
+      description: "Selecciona o crea un negocio para consultar indicadores reales. No hay datos suficientes para evaluar el estado operativo.",
+    };
+  }
+
   if (input.invalidDateRange) {
     return {
       label: "Fechas por corregir",
