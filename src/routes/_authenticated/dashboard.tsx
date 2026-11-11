@@ -163,7 +163,7 @@ function Dashboard() {
   ].filter(Boolean);
 
   const { data: allTx, error: txError } = useQuery({
-    enabled: !!active?.id,
+    enabled: !!active?.id && !invalidDateRange,
     queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo],
     staleTime: 60_000,
     gcTime: 5 * 60_000,
@@ -405,8 +405,18 @@ function Dashboard() {
           <div className="nuva-resumen-panel-heading nuva-resumen-chart-heading">
             <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Comparación de movimientos dentro del contexto seleccionado arriba.</p></div>
           </div>
-          <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
-            {hasChartActivity ? (
+          <div className="nuva-resumen-device-chart" role="region" aria-label="Gráfico de ingresos y gastos del negocio">
+            {invalidDateRange ? (
+              <div className="nuva-resumen-chart-empty" role="status">
+                <strong>Corrige el período para consultar el gráfico</strong>
+                <p>Los movimientos se mostrarán cuando las fechas seleccionadas sean válidas.</p>
+              </div>
+            ) : txError ? (
+              <div className="nuva-resumen-chart-empty" role="alert">
+                <strong>No se pudo cargar el gráfico</strong>
+                <p>Comprueba la conexión e inténtalo nuevamente desde el aviso de movimientos.</p>
+              </div>
+            ) : hasChartActivity ? (
               <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}>
                 <DashboardChart data={chartData} filtered={dailyChart} />
               </Suspense>
