@@ -193,6 +193,8 @@ function Dashboard() {
     [allTx, isoFrom, isoTo, categories, dailyChart],
   );
 
+  const hasChartActivity = chartData.some((row) => row.ingresos > 0 || row.gastos > 0);
+
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
   const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
   async function loadDemoBusiness() {
@@ -387,7 +389,7 @@ function Dashboard() {
             <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Comparación de movimientos dentro del contexto seleccionado arriba.</p></div>
           </div>
           <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
-            {chartData?.length ? (
+            {hasChartActivity ? (
               <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}>
                 <DashboardChart data={chartData} filtered={dailyChart} />
               </Suspense>
