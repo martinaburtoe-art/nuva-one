@@ -24,6 +24,14 @@ describe("goalsLabel (onboarding del dashboard)", () => {
 });
 
 describe("getResumenOperationalStatus", () => {
+  it("no declara el negocio en orden si no hay un negocio activo", () => {
+    const status = getResumenOperationalStatus({
+      hasBusiness: false, loading: false, kpisError: false, integrationErrorCount: 0, lowStockCount: 0, net: undefined,
+    });
+    expect(status.label).toBe("Negocio no seleccionado");
+    expect(status.tone).toBe("attention");
+  });
+
   it("prioriza el período inválido sobre el estado de carga", () => {
     const status = getResumenOperationalStatus({
       invalidDateRange: true, loading: false, kpisError: false, integrationErrorCount: 0, lowStockCount: 0, net: undefined,
