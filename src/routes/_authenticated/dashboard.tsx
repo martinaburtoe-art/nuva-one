@@ -229,6 +229,11 @@ function Dashboard() {
   );
 
   const hasChartActivity = chartData.some((row) => row.ingresos > 0 || row.gastos > 0);
+  const incomeForMix = Math.max(0, Number(kpis?.income ?? 0));
+  const expenseForMix = Math.max(0, Number(kpis?.expense ?? 0));
+  const totalFinancialMovement = incomeForMix + expenseForMix;
+  const incomeMixPercent = totalFinancialMovement > 0 ? Math.round((incomeForMix / totalFinancialMovement) * 100) : 0;
+  const expenseMixPercent = totalFinancialMovement > 0 ? 100 - incomeMixPercent : 0;
 
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
   const hasActivity = (inventoryQuery.data?.productsCount ?? 0) > 0 || (salesCountQuery.data ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
@@ -293,7 +298,17 @@ function Dashboard() {
               <div><span>Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
               <div><span>Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
             </div>
-            <Link to="/finance" className="nuva-resumen-hero-link">Explorar finanzas <ArrowUpRight className="h-4 w-4" /></Link>
+            {kpis && totalFinancialMovement > 0 && (
+              <div className="nuva-resumen-financial-mix" aria-label={`Distribución de movimientos: ${incomeMixPercent}% ingresos y ${expenseMixPercent}% gastos`}>
+                <div className="nuva-resumen-financial-mix-label"><span>Composición de movimientos</span><strong>{incomeMixPercent}% / {expenseMixPercent}%</strong></div>
+                <div className="nuva-resumen-financial-mix-track" role="img" aria-label={`Ingresos ${incomeMixPercent} por ciento, gastos ${expenseMixPercent} por ciento`}>
+                  <span className="nuva-resumen-financial-mix-income" style={{ width: `${incomeMixPercent}%` }} />
+                  <span className="nuva-resumen-financial-mix-expense" style={{ width: `${expenseMixPercent}%` }} />
+                </div>
+                <div className="nuva-resumen-financial-mix-legend"><span><i className="is-income" />Ingresos</span><span><i className="is-expense" />Gastos</span></div>
+              </div>
+            )}
+            <Link to="/finance" className="nuva-resumen-hero-link">Ver detalle financiero <ArrowUpRight className="h-4 w-4" /></Link>
           </div>
         </section>
 
