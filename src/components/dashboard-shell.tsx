@@ -39,7 +39,8 @@ const nav = [
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);\n  const [mobileModuleQuery, setMobileModuleQuery] = useState("");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileModuleQuery, setMobileModuleQuery] = useState("");
   const playModuleMotion = (to: string) => {
     void navigate({ to });
   };
