@@ -1388,3 +1388,30 @@
   .nuva-app .nuva-resumen-panel { animation: resumen-enter .36s cubic-bezier(.2,.7,.2,1) both; }
   @keyframes resumen-enter { from { opacity: .0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 }
+
+
+/* Filter controls and explicit no-data state for compact screens. */
+.nuva-date-range-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.nuva-date-field { min-width: 0; }
+.nuva-date-field > div { min-width: 0; }
+.nuva-date-field input { min-width: 0; width: 100%; }
+.nuva-category-filter { min-height: 44px; }
+.nuva-resumen-chart-empty { display: grid; min-height: 220px; place-content: center; justify-items: center; gap: 9px; padding: 24px 16px; border: 1px dashed #dedfe8; border-radius: 14px; background: linear-gradient(145deg, #fcfcff, #fafaf8); text-align: center; }
+.nuva-resumen-chart-empty-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; background: #f0f0fa; color: var(--nr-indigo); }
+.nuva-resumen-chart-empty strong { color: var(--nr-ink); font-size: 13px; font-weight: 650; }
+.nuva-resumen-chart-empty p { max-width: 36ch; margin: 0; color: var(--nr-muted); font-size: 11px; line-height: 1.55; }
+.nuva-resumen-chart-empty a { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; color: var(--nr-indigo); font-size: 12px; font-weight: 650; text-decoration: none; }
+@media (max-width: 760px) {
+  .nuva-resumen-toolbar .nuva-resumen-filters { grid-template-columns: minmax(0, 1fr); }
+  .nuva-date-range-filter { gap: 8px; }
+  .nuva-date-field label { display: block; min-height: 28px; font-size: 10px; }
+  .nuva-date-field > div { gap: 5px; }
+  .nuva-date-field input { min-height: 44px; padding-inline: 8px; font-size: 12px; }
+  .nuva-date-field button { width: 44px; height: 44px; flex: 0 0 44px; }
+  .nuva-category-filter { min-height: 44px; }
+}
+@media (max-width: 360px) {
+  .nuva-date-range-filter { gap: 6px; }
+  .nuva-date-field label { font-size: 9px; }
+  .nuva-date-field input { padding-inline: 6px; font-size: 11px; }
+}
