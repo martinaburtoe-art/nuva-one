@@ -1268,3 +1268,74 @@
   .nuva-app .nuva-resumen-kpi { transition: none; }
   .nuva-app .nuva-resumen-kpi:hover { transform: none; }
 }
+
+
+/* Executive hero: a clear financial focal point, structurally distinct from KPI tiles. */
+.nuva-resumen-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(250px, .75fr);
+  gap: 28px;
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: clamp(22px, 3vw, 34px);
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--nr-indigo) 16%, var(--nr-border));
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 88% 10%, rgb(221 222 255 / .58), transparent 38%), linear-gradient(118deg, #fff 0%, #fbfbff 56%, #f6f6fb 100%);
+  box-shadow: 0 2px 5px rgb(24 28 42 / .025), 0 18px 46px rgb(24 28 42 / .045);
+}
+.nuva-resumen-hero::after {
+  position: absolute;
+  right: -64px;
+  bottom: -128px;
+  width: 280px;
+  height: 280px;
+  border: 1px solid rgb(99 102 241 / .09);
+  border-radius: 50%;
+  box-shadow: 0 0 0 28px rgb(99 102 241 / .025), 0 0 0 58px rgb(99 102 241 / .018);
+  content: "";
+  pointer-events: none;
+}
+.nuva-resumen-hero-main, .nuva-resumen-hero-side { position: relative; z-index: 1; min-width: 0; }
+.nuva-resumen-hero-kicker { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: #777b88; font-size: 10px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+.nuva-resumen-hero-spark { width: 7px; height: 7px; border-radius: 50%; background: var(--nr-gold); box-shadow: 0 0 0 4px rgb(185 154 93 / .12); }
+.nuva-resumen-hero-main h2 { margin: 17px 0 0; color: #343640; font-size: clamp(18px, 2vw, 23px); font-weight: 630; letter-spacing: -.04em; }
+.nuva-resumen-hero-main > p { margin: 5px 0 0; color: #858894; font-size: 12px; }
+.nuva-resumen-hero-main > strong { display: block; max-width: 100%; margin-top: 8px; color: #242631; font-size: clamp(34px, 4.6vw, 58px); font-weight: 670; letter-spacing: -.07em; line-height: 1.08; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.nuva-resumen-hero-main > strong.is-negative { color: #a65d58; }
+.nuva-resumen-hero-main > strong.is-positive { color: #30334a; }
+.nuva-resumen-hero-caption { display: block; margin-top: 9px; color: #858894; font-size: 11px; line-height: 1.5; }
+.nuva-resumen-hero-side { display: flex; flex-direction: column; justify-content: center; gap: 20px; padding: 6px 0 6px 25px; border-left: 1px solid rgb(111 113 133 / .14); }
+.nuva-resumen-hero-status { display: inline-flex; align-items: center; gap: 8px; color: #5e626d; font-size: 11px; font-weight: 650; }
+.nuva-resumen-status-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #a4a6ad; }
+.nuva-resumen-status-dot.is-clear { background: #82936d; box-shadow: 0 0 0 4px rgb(130 147 109 / .12); }
+.nuva-resumen-status-dot.is-attention { background: #b99a5d; box-shadow: 0 0 0 4px rgb(185 154 93 / .13); }
+.nuva-resumen-hero-breakdown { display: grid; gap: 12px; }
+.nuva-resumen-hero-breakdown > div { display: flex; min-width: 0; align-items: baseline; justify-content: space-between; gap: 10px; }
+.nuva-resumen-hero-breakdown span { color: #858894; font-size: 11px; }
+.nuva-resumen-hero-breakdown strong { color: #353742; font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
+.nuva-resumen-hero-link { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 13px; border: 1px solid rgb(99 102 241 / .19); border-radius: 10px; background: rgb(255 255 255 / .72); color: #5559a7; font-size: 11px; font-weight: 650; text-decoration: none; transition: background-color 160ms ease, border-color 160ms ease; }
+.nuva-resumen-hero-link:hover { border-color: rgb(99 102 241 / .35); background: #fff; }
+.nuva-resumen-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1180px) {
+  .nuva-resumen-hero { grid-template-columns: minmax(0, 1.2fr) minmax(220px, .8fr); }
+}
+@media (max-width: 760px) {
+  .nuva-resumen-hero { grid-template-columns: minmax(0, 1fr); gap: 17px; margin-bottom: 12px; padding: 20px 17px; border-radius: 17px; }
+  .nuva-resumen-hero-main h2 { margin-top: 13px; font-size: 19px; }
+  .nuva-resumen-hero-main > strong { margin-top: 9px; font-size: clamp(32px, 9vw, 43px); line-height: 1.08; }
+  .nuva-resumen-hero-side { gap: 13px; padding: 14px 0 0; border-top: 1px solid rgb(111 113 133 / .14); border-left: 0; }
+  .nuva-resumen-hero-breakdown { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .nuva-resumen-hero-breakdown > div { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .nuva-resumen-hero-breakdown strong { font-size: 13px; text-align: left; }
+  .nuva-resumen-hero-link { width: 100%; min-height: 44px; }
+  .nuva-resumen-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 390px) {
+  .nuva-resumen-hero { padding: 17px 14px; }
+  .nuva-resumen-hero-main > strong { font-size: clamp(29px, 8.8vw, 36px); letter-spacing: -.06em; }
+  .nuva-resumen-hero-kicker { font-size: 9px; letter-spacing: .1em; }
+  .nuva-resumen-hero-breakdown { gap: 8px; }
+  .nuva-resumen-hero-breakdown strong { font-size: 12px; }
+}
