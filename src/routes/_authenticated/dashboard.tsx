@@ -64,7 +64,7 @@ function Dashboard() {
     queryKey: ["kpis", active?.id, chartWindowStart, isoTo, categories],
     queryFn: async () => {
       const bid = active!.id;
-      const [sales, expenses, products, salesCount] = await Promise.all([
+      const [sales, expenses] = await Promise.all([
         fetchAllResumenRows((from, to) => {
           let query = supabase.from("transactions").select("id, amount").eq("business_id", bid).eq("type", "income");
           if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
@@ -79,22 +79,48 @@ function Dashboard() {
           if (categories.length > 0) query = query.in("category", categories);
           return query.order("id").range(from, to);
         }),
-        fetchAllResumenRows((from, to) =>
-          supabase.from("products").select("id, stock, cost, low_stock_threshold, reorder_point")
-            .eq("business_id", bid).order("id").range(from, to),
-        ),
-        supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
       ]);
-      if (salesCount.error) throw salesCount.error;
       const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
       const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
-      const inventoryValue = calculateInventoryValueAtCost(products);
-      const lowStockCount = products.filter((r: any) => {
-        const stock = Number(r.stock ?? 0);
-        const threshold = Number(r.low_stock_threshold ?? r.reorder_point ?? 0);
+      return { income, expense, net: income - expense };
+    },
+  });
+
+  // Inventario y ventas son lecturas independientes del período financiero.
+  // Cambiar fechas/categorías no debe recargar el stock ni el conteo histórico.
+  const inventoryQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-inventory", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const products = await fetchAllResumenRows((from, to) =>
+        supabase.from("products").select("id, stock, cost, low_stock_threshold, reorder_point")
+          .eq("business_id", active!.id).order("id").range(from, to),
+      );
+      const lowStockCount = products.filter((product: any) => {
+        const stock = Number(product.stock ?? 0);
+        const threshold = Number(product.low_stock_threshold ?? product.reorder_point ?? 0);
         return threshold > 0 && stock <= threshold;
       }).length;
-      return { income, expense, net: income - expense, inventoryValue, salesCount: salesCount.count ?? 0, productsCount: products.length, lowStockCount };
+      return {
+        inventoryValue: calculateInventoryValueAtCost(products),
+        productsCount: products.length,
+        lowStockCount,
+      };
+    },
+  });
+
+  const salesCountQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-sales-count", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { count, error } = await supabase.from("sales")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", active!.id)
+        .neq("status", "cancelled");
+      if (error) throw error;
+      return count ?? 0;
     },
   });
 
@@ -157,6 +183,8 @@ function Dashboard() {
     cashRegister: cashRegisterQuery.data,
   };
   const integrationErrors = [
+    inventoryQuery.error,
+    salesCountQuery.error,
     quotesQuery.error,
     customersQuery.error,
     cashRegisterQuery.error,
@@ -203,7 +231,8 @@ function Dashboard() {
   const hasChartActivity = chartData.some((row) => row.ingresos > 0 || row.gastos > 0);
 
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
-  const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
+  const hasActivity = (inventoryQuery.data?.productsCount ?? 0) > 0 || (salesCountQuery.data ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
+  const primaryDataReady = kpis !== undefined && inventoryQuery.data !== undefined && salesCountQuery.data !== undefined;
   async function loadDemoBusiness() {
     const confirmed = window.confirm("Se creará un negocio de demostración y pasará a ser el negocio activo. Tu negocio actual no se modifica. ¿Quieres continuar?");
     if (!confirmed) return;
@@ -222,10 +251,14 @@ function Dashboard() {
   }
   const operationalStatus = getResumenOperationalStatus({
     invalidDateRange,
-    loading: !invalidDateRange && kpis === undefined && !kpisError,
+    loading: !invalidDateRange && (
+      (kpis === undefined && !kpisError) ||
+      (inventoryQuery.data === undefined && !inventoryQuery.isError) ||
+      (salesCountQuery.data === undefined && !salesCountQuery.isError)
+    ),
     kpisError: Boolean(kpisError),
     integrationErrorCount: integrationErrors.length,
-    lowStockCount: kpis?.lowStockCount ?? 0,
+    lowStockCount: inventoryQuery.data?.lowStockCount ?? 0,
     net: kpis?.net,
   });
 
@@ -269,8 +302,8 @@ function Dashboard() {
             <span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-pill is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-pill is-attention" : "nuva-resumen-status-pill"}>{operationalStatus.label}</span>
           </div>
           <div className="nuva-resumen-mobile-brief-grid">
-            <Link to="/sales" className="nuva-resumen-mobile-brief-item"><span>Ventas</span><strong>{kpis?.salesCount ?? "—"}</strong><small>registradas</small></Link>
-            <Link to="/inventory" className="nuva-resumen-mobile-brief-item"><span>Stock bajo</span><strong className={kpis?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{kpis?.lowStockCount ?? "—"}</strong><small>por revisar</small></Link>
+            <Link to="/sales" className="nuva-resumen-mobile-brief-item"><span>Ventas</span><strong>{salesCountQuery.data ?? "—"}</strong><small>registradas</small></Link>
+            <Link to="/inventory" className="nuva-resumen-mobile-brief-item"><span>Stock bajo</span><strong className={inventoryQuery.data?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{inventoryQuery.data?.lowStockCount ?? "—"}</strong><small>por revisar</small></Link>
             <Link to="/pos" className="nuva-resumen-mobile-brief-item"><span>Caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "N/D" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong><small>estado actual</small></Link>
           </div>
         </section>
@@ -335,7 +368,7 @@ function Dashboard() {
           </div>
         )}
 
-        {kpis !== undefined && !hasActivity && (
+        {primaryDataReady && !hasActivity && (
           <section className="nuva-resumen-onboarding">
             <div className="nuva-resumen-onboarding-copy">
               <span className="nuva-resumen-section-label"><Sparkles className="h-4 w-4" /> CONFIGURACIÓN INICIAL</span>
@@ -346,7 +379,7 @@ function Dashboard() {
             <div className="nuva-resumen-steps">
               <ActivationStep done title="Negocio creado" />
               <ActivationStep done={hasActivity} title="Primera operación" />
-              <ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" />
+              <ActivationStep done={(inventoryQuery.data?.productsCount ?? 0) > 0 && (salesCountQuery.data ?? 0) > 0} title="Datos conectados" />
               <ActivationStep done={false} title="Primer análisis" />
             </div>
           </section>
@@ -365,8 +398,8 @@ function Dashboard() {
           </article>
           <article className="nuva-resumen-kpi">
             <div className="nuva-resumen-kpi-top"><span>INVENTARIO AL COSTO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
-            <strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong>
-            <p>{kpis?.productsCount ?? "—"} productos registrados</p>
+            <strong>{inventoryQuery.data ? fmtCLP(inventoryQuery.data.inventoryValue) : "—"}</strong>
+            <p>{inventoryQuery.data?.productsCount ?? "—"} productos registrados</p>
           </article>
         </section>
 
@@ -377,8 +410,8 @@ function Dashboard() {
               <span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-pill is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-pill is-attention" : "nuva-resumen-status-pill"}>{operationalStatus.label}</span>
             </div>
             <div className="nuva-resumen-operational-stats">
-              <div><span>Ventas registradas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
-              <div><span>Productos con stock bajo</span><strong className={kpis?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{kpis?.lowStockCount ?? "—"}</strong></div>
+              <div><span>Ventas registradas</span><strong>{salesCountQuery.data ?? "—"}</strong></div>
+              <div><span>Productos con stock bajo</span><strong className={inventoryQuery.data?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{inventoryQuery.data?.lowStockCount ?? "—"}</strong></div>
               <div><span>Cotizaciones abiertas</span><strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "—" : integrations.pendingQuotes ?? 0}</strong></div>
               <div><span>Clientes registrados</span><strong>{customersQuery.isLoading ? "—" : customersQuery.isError ? "—" : integrations.customersCount ?? 0}</strong></div>
               <div><span>Estado de caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "No disponible" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
