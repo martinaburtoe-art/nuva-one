@@ -361,6 +361,8 @@ function Dashboard() {
               <p>{integrationErrors.map((error: any) => String(error?.message ?? "Error desconocido")).join(" · ")}</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {inventoryQuery.isError && <Button size="sm" variant="outline" onClick={() => void inventoryQuery.refetch()}>Reintentar inventario</Button>}
+              {salesCountQuery.isError && <Button size="sm" variant="outline" onClick={() => void salesCountQuery.refetch()}>Reintentar ventas</Button>}
               {quotesQuery.isError && <Button size="sm" variant="outline" onClick={() => void quotesQuery.refetch()}>Reintentar cotizaciones</Button>}
               {customersQuery.isError && <Button size="sm" variant="outline" onClick={() => void customersQuery.refetch()}>Reintentar clientes</Button>}
               {cashRegisterQuery.isError && <Button size="sm" variant="outline" onClick={() => void cashRegisterQuery.refetch()}>Reintentar caja</Button>}
