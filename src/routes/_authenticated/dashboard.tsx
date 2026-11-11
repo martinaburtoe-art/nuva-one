@@ -35,6 +35,11 @@ function Dashboard() {
   const [categories, setCategories] = useState<string[]>([]);
   const isoFrom = dmyToIso(dateFrom);
   const isoTo = dmyToIso(dateTo);
+  const invalidDateRange = Boolean(
+    (dateFrom && !isoFrom) ||
+    (dateTo && !isoTo) ||
+    (isoFrom && isoTo && isoFrom > isoTo)
+  );
   const chartWindowStart = useMemo(() => {
     if (isoFrom) return isoFrom;
     if (isoTo) return null; // Solo fecha final: incluir todo el histórico anterior.
@@ -45,7 +50,9 @@ function Dashboard() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, [isoFrom, isoTo]);
   const dailyChart = Boolean(isoFrom && isoTo && Date.parse(isoTo) - Date.parse(isoFrom) <= 62 * 86_400_000);
-  const financialPeriodLabel = isoFrom || isoTo ? "Rango seleccionado" : "Últimos seis meses";
+  const financialPeriodLabel = invalidDateRange
+    ? "Fechas por corregir"
+    : isoFrom || isoTo ? "Rango seleccionado" : "Últimos seis meses";
 
   useEffect(() => {
     try { setOnboardingFocus(localStorage.getItem("nuva.onboarding_goal") || "Todo"); }
@@ -53,7 +60,7 @@ function Dashboard() {
   }, []);
 
   const { data: kpis, error: kpisError } = useQuery({
-    enabled: !!active?.id,
+    enabled: !!active?.id && !invalidDateRange,
     queryKey: ["kpis", active?.id, chartWindowStart, isoTo, categories],
     queryFn: async () => {
       const bid = active!.id;
