@@ -25,7 +25,11 @@ export function dmyToIso(dmy: string): string | null {
   const [, d, mo, y] = m;
   const day = Number(d);
   const month = Number(mo);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  if (month < 1 || month > 12 || day < 1) return null;
+  const year = Number(y);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  if (day > daysInMonth) return null;
   return `${y}-${mo}-${d}`;
 }
 
