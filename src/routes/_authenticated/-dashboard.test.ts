@@ -24,6 +24,14 @@ describe("goalsLabel (onboarding del dashboard)", () => {
 });
 
 describe("getResumenOperationalStatus", () => {
+  it("prioriza el período inválido sobre el estado de carga", () => {
+    const status = getResumenOperationalStatus({
+      invalidDateRange: true, loading: false, kpisError: false, integrationErrorCount: 0, lowStockCount: 0, net: undefined,
+    });
+    expect(status.label).toBe("Fechas por corregir");
+    expect(status.tone).toBe("attention");
+  });
+
   it("no declara el negocio en orden mientras carga", () => {
     expect(getResumenOperationalStatus({
       loading: true, kpisError: false, integrationErrorCount: 0, lowStockCount: 0, net: undefined,
