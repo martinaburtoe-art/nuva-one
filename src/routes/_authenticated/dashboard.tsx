@@ -250,6 +250,7 @@ function Dashboard() {
     }
   }
   const operationalStatus = getResumenOperationalStatus({
+    hasBusiness: Boolean(active?.id),
     invalidDateRange,
     loading: !invalidDateRange && (
       (kpis === undefined && !kpisError) ||
