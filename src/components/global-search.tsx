@@ -60,6 +60,7 @@ const navItems = [
   { to: "/financial-integrity", label: "Integridad financiera", icon: ShieldCheck },
   { to: "/analytics", label: "Indicadores", icon: BarChart3 },
   { to: "/quotes", label: "Cotizaciones", icon: FileText },
+  { to: "/pricing-calculator", label: "Calculadora de precios", icon: Calculator },
   { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain },
   { to: "/business-health", label: "Salud del negocio", icon: BarChart3 },
   { to: "/business-simulator", label: "Simulador de negocio", icon: Calculator },
