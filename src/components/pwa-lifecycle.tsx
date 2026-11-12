@@ -94,10 +94,6 @@ export function PwaLifecycle() {
   }
 
   function applyUpdate() {
-    const waiting = navigator.serviceWorker?.controller
-      ? undefined
-      : undefined;
-    void waiting;
     // The waiting worker receives the command through its registration below.
     navigator.serviceWorker?.getRegistration("/").then((reg) => {
       if (!reg?.waiting) {
