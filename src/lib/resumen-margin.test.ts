@@ -36,6 +36,6 @@ describe("calculateGrossMargin", () => {
   it("rejects negative acquisition costs", () => {
     expect(calculateGrossMargin([
       { items: [{ product_id: "p1", qty: 1, price: 1000 }] },
-    ], new Map([["p1", -100]])).toBeNull();
+    ], new Map([["p1", -100]]))).toBeNull();
   });
 });
