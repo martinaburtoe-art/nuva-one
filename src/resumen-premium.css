@@ -1268,7 +1268,7 @@
 
   .nuva-app .nuva-resumen-canvas .nuva-resumen-filters > div:first-child { grid-template-columns: minmax(0, 1fr); }
 
-  .nuva-resumen-canvas { padding-right: 10px; padding-left: 10px; padding-inline: 10px; padding: 14px; }
+  .nuva-resumen-canvas { padding: 14px 10px; }
 
   .nuva-resumen-kpi-primary {
     grid-column: 1 / -1;
