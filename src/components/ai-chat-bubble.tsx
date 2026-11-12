@@ -79,7 +79,7 @@ export function AiChatBubble() {
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-elegant transition-all hover:scale-105 hover:shadow-glow"
+        className="fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom))] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:bottom-6 md:right-6 md:h-14 md:w-14"
         aria-label="Asistente IA"
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
@@ -87,11 +87,11 @@ export function AiChatBubble() {
 
       <div
         className={cn(
-          "fixed bottom-24 right-6 z-50 w-[360px] origin-bottom-right transition-all duration-200",
+          "fixed bottom-[calc(6.5rem_+_env(safe-area-inset-bottom))] right-4 z-50 w-[min(360px,calc(100vw-2rem))] max-h-[calc(100dvh_-_8.5rem_-_env(safe-area-inset-bottom))] origin-bottom-right transition-all duration-200 md:bottom-24 md:right-6 md:max-h-[calc(100dvh_-_8rem)]",
           open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
         )}
       >
-        <div className="rounded-2xl border bg-card shadow-elegant">
+        <div className="flex max-h-[inherit] flex-col overflow-hidden rounded-2xl border bg-card shadow-elegant">
           <div className="flex items-center gap-2 border-b px-4 py-3">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
@@ -102,7 +102,7 @@ export function AiChatBubble() {
             </div>
           </div>
 
-          <div className="h-80 space-y-3 overflow-y-auto p-4">
+          <div className="min-h-0 h-80 max-h-[45dvh] space-y-3 overflow-y-auto overscroll-contain p-4 md:max-h-[50dvh]">
             {messages.length === 0 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">Prueba con:</p>
@@ -147,7 +147,7 @@ export function AiChatBubble() {
             )}
           </div>
 
-          <form onSubmit={handleSend} className="flex gap-2 border-t p-3">
+          <form onSubmit={handleSend} className="flex shrink-0 gap-2 border-t p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] md:pb-3">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
