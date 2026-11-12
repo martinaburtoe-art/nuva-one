@@ -140,6 +140,7 @@ function Dashboard() {
       );
       return {
         count: pending.length,
+        totalCount: data.length,
         value: pending.reduce((sum: number, quote: any) => sum + Number(quote.total ?? 0), 0),
       };
     },
@@ -236,8 +237,27 @@ function Dashboard() {
   const expenseMixPercent = totalFinancialMovement > 0 ? 100 - incomeMixPercent : 0;
 
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
-  const hasActivity = (inventoryQuery.data?.productsCount ?? 0) > 0 || (salesCountQuery.data ?? 0) > 0 || (kpis?.income ?? 0) > 0 || (kpis?.expense ?? 0) > 0;
-  const primaryDataReady = kpis !== undefined && inventoryQuery.data !== undefined && salesCountQuery.data !== undefined;
+  const hasActivity =
+    (inventoryQuery.data?.productsCount ?? 0) > 0 ||
+    (salesCountQuery.data ?? 0) > 0 ||
+    (kpis?.income ?? 0) > 0 ||
+    (kpis?.expense ?? 0) > 0 ||
+    (quotesQuery.data?.totalCount ?? 0) > 0 ||
+    (customersQuery.data ?? 0) > 0 ||
+    Boolean(cashRegisterQuery.data);
+  const primaryDataReady =
+    kpis !== undefined &&
+    !kpisError &&
+    inventoryQuery.data !== undefined &&
+    !inventoryQuery.isError &&
+    salesCountQuery.data !== undefined &&
+    !salesCountQuery.isError &&
+    quotesQuery.data !== undefined &&
+    !quotesQuery.isError &&
+    customersQuery.data !== undefined &&
+    !customersQuery.isError &&
+    cashRegisterQuery.isFetched &&
+    !cashRegisterQuery.isError;
   async function loadDemoBusiness() {
     const confirmed = window.confirm("Se creará un negocio de demostración y pasará a ser el negocio activo. Tu negocio actual no se modifica. ¿Quieres continuar?");
     if (!confirmed) return;
