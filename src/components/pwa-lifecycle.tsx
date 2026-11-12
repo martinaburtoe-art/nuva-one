@@ -13,7 +13,7 @@ function isStandalone() {
 }
 
 function isIos() {
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  return typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
 export function PwaLifecycle() {
