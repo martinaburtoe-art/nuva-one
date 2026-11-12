@@ -8,7 +8,7 @@ This file is the product-interface contract for authenticated Nüva One screens.
 - Resumen has local presentation rules in src/resumen-premium.css under .nuva-resumen-canvas.
 
 ## Color roles
-- Product black: #080809. Use for the authenticated navigation rail and deep anchors.
+- Product black: #080809. Reserve for the Nüva mark, high-emphasis ink and deliberate deep anchors; the authenticated navigation rail remains white.
 - Pearl canvas: #F3F3EF. Primary app background.
 - Surface: #FFFFFF. Cards, dialogs and elevated work areas.
 - Main text: #17191B. Secondary text: #686D72.
