@@ -6,6 +6,10 @@ export type MobileNavigationItem = {
   section?: string;
 };
 
+function normalizeSearchText(value: string): string {
+  return value.normalize("NFD").replace(/\\p{Diacritic}/gu, "").toLocaleLowerCase("es");
+}
+
 /**
  * Splits the authorized desktop navigation into the four persistent mobile
  * destinations and the searchable secondary directory. Every input item is
@@ -15,14 +19,14 @@ export function splitMobileNavigation<T extends MobileNavigationItem>(
   items: readonly T[],
   query = "",
 ): { primary: T[]; more: T[] } {
-  const normalizedQuery = query.trim().toLocaleLowerCase("es");
+  const normalizedQuery = normalizeSearchText(query.trim());
   return {
     primary: items.filter((item) => MOBILE_PRIMARY_PATHS.has(item.to)),
     more: items.filter((item) => {
       if (MOBILE_PRIMARY_PATHS.has(item.to)) return false;
       if (!normalizedQuery) return true;
-      return item.label.toLocaleLowerCase("es").includes(normalizedQuery)
-        || (item.section ?? "").toLocaleLowerCase("es").includes(normalizedQuery);
+      return normalizeSearchText(item.label).includes(normalizedQuery)
+        || normalizeSearchText(item.section ?? "").includes(normalizedQuery);
     }),
   };
 }
