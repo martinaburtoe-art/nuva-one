@@ -77,13 +77,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const canManage = myRole === "owner" || myRole === "admin";
   // Do not render restricted module links until the active business membership
   // has been resolved. Backend/RLS remains the actual authorization boundary.
-  const visibleNav = membershipLoading || membershipError || !membership
-    ? []
-    : nav.filter((item) => {
-        if ("adminOnly" in item && item.adminOnly) return canManage;
-        if ("module" in item && item.module) return hasModulePermission(myRole, membership.permissions, item.module as ModuleKey);
-        return true;
-      });
+  const visibleNav = useMemo(() => {
+    if (membershipLoading || membershipError || !membership) return [];
+    return nav.filter((item) => {
+      if ("adminOnly" in item && item.adminOnly) return canManage;
+      if ("module" in item && item.module) return hasModulePermission(myRole, membership.permissions, item.module as ModuleKey);
+      return true;
+    });
+  }, [membershipLoading, membershipError, membership, canManage, myRole]);
   // Every authorized desktop module appears either in the persistent mobile
   // destinations or in the searchable “Más” directory.
   const { primary: mobilePrimaryNav, more: mobileMoreNav } = useMemo(
