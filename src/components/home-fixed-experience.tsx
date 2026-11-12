@@ -23,8 +23,8 @@ function DeferredDemo() {
     const node = containerRef.current;
     if (!node || shouldLoad) return;
     if (typeof IntersectionObserver === "undefined") {
-      setShouldLoad(true);
-      return;
+      const fallbackId = window.setTimeout(() => setShouldLoad(true), 0);
+      return () => window.clearTimeout(fallbackId);
     }
 
     const observer = new IntersectionObserver(([entry]) => {

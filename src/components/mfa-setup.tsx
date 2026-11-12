@@ -27,7 +27,7 @@ export function MfaSetup({ onVerified }: { onVerified?: () => void } = {}) {
   }
 
   useEffect(() => {
-    refresh();
+    queueMicrotask(() => void refresh());
   }, []);
 
   async function startEnroll() {

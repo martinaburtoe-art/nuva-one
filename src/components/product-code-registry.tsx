@@ -114,7 +114,7 @@ export function ProductCodeRegistry({ products }: { products: Product[] }) {
   }, [businessId]);
 
   useEffect(() => {
-    void loadCodes();
+    queueMicrotask(() => void loadCodes());
   }, [loadCodes]);
 
   const filtered = useMemo(() => {

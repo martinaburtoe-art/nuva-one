@@ -41,7 +41,11 @@ export function NuvaLaunchExperience({ onComplete }: { onComplete: () => void })
   const rootRef = useRef<HTMLDivElement>(null);
   const completeRef = useRef(onComplete);
   const [exiting, setExiting] = useState(false);
-  completeRef.current = onComplete;
+  // Latest-ref: se sincroniza en un efecto (no durante el render, que es lo
+  // que prohíbe react-hooks/refs) y el loop de animación lo lee al usarlo.
+  useEffect(() => {
+    completeRef.current = onComplete;
+  }, [onComplete]);
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;

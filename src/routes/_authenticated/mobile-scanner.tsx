@@ -42,17 +42,21 @@ function MobileScanner() {
   const [cameraAvailable, setCameraAvailable] = useState(true);
 
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      if (saved) setSession(JSON.parse(saved) as MobileScannerSession);
-    } catch {
-      /* ignore stale local session */
-    }
+    // Restauración y detección de cámara diferidas a un microtask para no
+    // disparar setState síncrono en el cuerpo del efecto.
+    queueMicrotask(() => {
+      try {
+        const saved = sessionStorage.getItem(STORAGE_KEY);
+        if (saved) setSession(JSON.parse(saved) as MobileScannerSession);
+      } catch {
+        /* ignore stale local session */
+      }
+      setCameraAvailable(Boolean(navigator.mediaDevices?.getUserMedia));
+    });
     const onOnline = () => setOnline(true);
     const onOffline = () => setOnline(false);
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
-    setCameraAvailable(Boolean(navigator.mediaDevices?.getUserMedia));
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);

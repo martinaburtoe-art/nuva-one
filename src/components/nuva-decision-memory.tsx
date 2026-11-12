@@ -18,12 +18,12 @@ const ageDays = (value?: string | null) =>
 export function NuvaDecisionMemory({ activities = [] }: Props) {
   const decisions = activities
     .filter((a) => a.type === "task" && a.created_at)
-    .filter((a) => Date.now() - new Date(a.created_at!).getTime() >= 0)
+    .filter((a) => ageDays(a.created_at) >= 0)
     .sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
   const recent = decisions.filter((a) => ageDays(a.created_at) <= 30);
   const completed = recent.filter((a) => a.completed).length;
   const overdue = recent.filter(
-    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+    (a) => !a.completed && a.due_date && ageDays(a.due_date) > 0,
   ).length;
   const rate = recent.length ? Math.round((completed / recent.length) * 100) : 0;
   const memoryLabel = recent.length >= 5 ? "Memoria operativa activa" : recent.length ? "Memoria en construcción" : "Sin historial suficiente";
@@ -87,7 +87,7 @@ export function NuvaDecisionMemory({ activities = [] }: Props) {
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {item.completed
                       ? "Ejecutada"
-                      : item.due_date && new Date(item.due_date).getTime() < Date.now()
+                      : item.due_date && ageDays(item.due_date) > 0
                         ? "Vencida"
                         : "Pendiente"}
                   </p>

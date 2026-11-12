@@ -24,7 +24,10 @@ export function SceneArt({kind,progress,reducedMotion=false,mediaMode="video"}:S
  useEffect(()=>{
   const node=sceneRef.current;
   if(!node||mediaMode!=="video"||reducedMotion||!mediaFile){return;}
-  if(typeof IntersectionObserver==="undefined"){setVideoNearViewport(true);return;}
+  if(typeof IntersectionObserver==="undefined"){
+   const fallbackId=window.setTimeout(()=>setVideoNearViewport(true),0);
+   return()=>window.clearTimeout(fallbackId);
+  }
   const observer=new IntersectionObserver(([entry])=>{
    if(!entry.isIntersecting)return;
    setVideoNearViewport(true);

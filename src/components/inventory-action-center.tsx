@@ -34,6 +34,11 @@ type Activity = {
 
 type Props = { products: Product[]; canWrite?: boolean };
 
+// Fecha de vencimiento relativa al momento en que se ejecuta la acción (clic),
+// calculada en scope de módulo para no llamar Date.now durante el render.
+const dueInDays = (days: number) => new Date(Date.now() + days * 86400000).toISOString();
+
+
 export type InventoryMetrics = {
   stock: number;
   reserved: number;
@@ -148,9 +153,7 @@ export function InventoryActionCenter({ products, canWrite = true }: Props) {
         product_id: product.id,
         type: "task",
         content: `[Inventory Intelligence] ${p.action}: ${product.name || "Producto"}${product.sku ? ` · SKU ${product.sku}` : ""}. Físico ${m.stock}, disponible ${m.available}, reservado ${m.reserved}, bloqueado ${m.blocked}, tránsito ${m.inTransit}, proyectado ${m.projected}, mínimo ${m.minimum}, punto ${m.reorderPoint}, objetivo ${m.target}, sugerido ${m.suggestedOrder}.`,
-        due_date: new Date(
-          Date.now() + (m.available === 0 ? 86400000 : 2 * 86400000),
-        ).toISOString(),
+        due_date: dueInDays(m.available === 0 ? 1 : 2),
         completed: false,
       });
       toast.success(

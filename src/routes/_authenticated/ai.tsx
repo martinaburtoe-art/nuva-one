@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { PageHeader } from "@/components/page-utils";
@@ -86,6 +86,28 @@ const specialists: Array<{
   },
 ];
 
+// Holder de módulo para auth/negocio: react-hooks/refs prohíbe leer refs en
+// closures creadas durante el render (como el `fetch` del transporte). Este
+// objeto se escribe solo desde efectos y callbacks, y el fetch lo lee por
+// petición, preservando el comportamiento original de los refs.
+const chatAuth: { businessId: string; token: string | null } = {
+  businessId: "",
+  token: null,
+};
+
+function createAuthedTransport(specialist: Specialist) {
+  return new DefaultChatTransport({
+    api: "/api/chat",
+    fetch: (input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set("x-business-id", chatAuth.businessId);
+      if (chatAuth.token) headers.set("Authorization", `Bearer ${chatAuth.token}`);
+      return fetch(input, { ...init, headers });
+    },
+    prepareSendMessagesRequest: ({ messages }) => ({ body: { messages, specialist } }),
+  });
+}
+
 export const Route = createFileRoute("/_authenticated/ai")({
   head: () => ({ meta: [{ title: "Nüva Agent — Nüva One" }] }),
   component: AiPage,
@@ -98,36 +120,27 @@ function AiPage() {
   const [limitReached, setLimitReached] = useState(false);
   const [specialist, setSpecialist] = useState<Specialist>("orchestrator");
   const { active } = useActiveBusiness();
-  const tokenRef = useRef<string | null>(null);
-  const businessIdRef = useRef<string>("");
 
   useEffect(() => {
-    businessIdRef.current = active?.id ?? "";
+    chatAuth.businessId = active?.id ?? "";
   }, [active?.id]);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      tokenRef.current = data.session?.access_token ?? null;
-      setToken(tokenRef.current);
+      const nextToken = data.session?.access_token ?? null;
+      chatAuth.token = nextToken;
+      setToken(nextToken);
       setSessionReady(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      tokenRef.current = session?.access_token ?? null;
-      setToken(tokenRef.current);
+      const nextToken = session?.access_token ?? null;
+      chatAuth.token = nextToken;
+      setToken(nextToken);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      fetch: (input, init) => {
-        const headers = new Headers(init?.headers);
-        headers.set("x-business-id", businessIdRef.current);
-        if (tokenRef.current) headers.set("Authorization", `Bearer ${tokenRef.current}`);
-        return fetch(input, { ...init, headers });
-      },
-      prepareSendMessagesRequest: ({ messages }) => ({ body: { messages, specialist } }),
-    }),
+    transport: createAuthedTransport(specialist),
     onError: (err) => {
       let msg = err.message || "Error al conectar con Nüva Agent. Intenta nuevamente.";
       try {

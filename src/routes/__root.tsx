@@ -146,7 +146,9 @@ function RouteEnhancements() {
     const path = location.pathname;
     const isCustomers = path === "/customers";
     const isPos = path === "/pos";
-    if (!isCustomers && !isPos) { setMount(null); return; }
+    // Rutas sin mejora montable: no hace falta limpiar aquí, el cleanup del
+    // efecto anterior ya dejó `mount` en null y retiró el nodo del DOM.
+    if (!isCustomers && !isPos) return;
     const mountNode = document.createElement("div");
     mountNode.dataset.nuvaRouteEnhancement = isPos ? "pos-barcode-scanner" : "operating-pulse";
     const heading = Array.from(document.querySelectorAll("main h1")).find((node) => node.textContent?.trim() === (isPos ? "Caja" : "Clientes"));
@@ -155,7 +157,10 @@ function RouteEnhancements() {
     if (!pageHeader || !content) return;
     mountNode.className = "mb-4 w-full";
     content.insertBefore(mountNode, pageHeader);
-    setMount(mountNode);
+    // Microtask: publica el nodo de montaje sin setState síncrono en el
+    // cuerpo del efecto; corre antes del paint y antes de cualquier
+    // navegación posterior.
+    queueMicrotask(() => setMount(mountNode));
     return () => { setMount(null); mountNode.remove(); };
   }, [location.pathname]);
   if (!mount) return null;

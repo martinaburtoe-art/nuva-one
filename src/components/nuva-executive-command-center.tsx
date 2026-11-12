@@ -22,6 +22,10 @@ type Sale = { total?: number | string | null; status?: string | null };
 type Activity = { type?: string | null; completed?: boolean | null; due_date?: string | null };
 type Quote = { total?: number | string | null; status?: string | null };
 type Product = { stock?: number | string | null; min_stock?: number | string | null; reorder_point?: number | string | null };
+
+const isOverdue = (a: Activity) =>
+  !!a.due_date && new Date(a.due_date).getTime() < Date.now();
+
 type Props = {
   customers?: Customer[];
   sales?: Sale[];
@@ -65,7 +69,7 @@ export function NuvaExecutiveCommandCenter({
   const activeCustomers = customers.filter((c) => c.status !== "inactive").length;
   const tasks = activities.filter((a) => a.type === "task");
   const overdue = tasks.filter(
-    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+    (a) => !a.completed && isOverdue(a),
   ).length;
   const lowStock = products.filter(
     (p) => Number(p.stock ?? 0) <= Number(p.reorder_point ?? p.min_stock ?? 0) && Number(p.reorder_point ?? p.min_stock ?? 0) > 0,
