@@ -344,7 +344,7 @@ function Dashboard() {
               <h1>Resumen</h1>
               <p className="nuva-resumen-subtitle">Una lectura clara de tus operaciones, resultados y próximos focos de atención.</p>
             </div>
-            {!hasActivity && <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
+            {primaryDataReady && !hasActivity && <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
               {seedingDemo ? "Preparando demo…" : "Crear espacio demo"}
             </Button>}
           </div>
@@ -501,7 +501,7 @@ function Dashboard() {
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">SEÑAL DE GASTO</p>
             {largestExpense ? <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2"><div><strong className="text-sm">{largestExpense.category}</strong><p className="text-xs text-muted-foreground">Es la categoría con mayor gasto registrado en el período.</p></div><div className="text-right"><strong className="text-lg">{fmtCLP(largestExpense.amount)}</strong><p className="text-xs text-muted-foreground">{largestExpense.share.toFixed(1)}% de los gastos</p></div></div> : <p className="mt-1 text-sm text-muted-foreground">Aún no hay gastos categorizados suficientes para detectar concentración.</p>}
           </div>
-          {comparisonQuery.isError && <p role="status" className="mt-3 text-xs text-muted-foreground">La comparación anterior no está disponible; los valores del período actual se mantienen.</p>}
+          {comparisonQuery.isError && <div role="status" className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><span>La comparación anterior no está disponible; los valores del período actual se mantienen.</span><Button size="sm" variant="outline" onClick={() => void comparisonQuery.refetch()}>Reintentar comparación</Button></div>}
           {!comparisonWindow && <p className="mt-3 text-xs text-muted-foreground">Selecciona una fecha inicial y final para comparar períodos equivalentes.</p>}
         </section>
 
