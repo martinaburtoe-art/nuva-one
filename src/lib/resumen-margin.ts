@@ -1,13 +1,3 @@
-export type ResumenSaleItem = {
-  product_id?: string | null;
-  qty: number | string;
-  price: number | string;
-};
-
-export type ResumenSaleForMargin = {
-  items: ResumenSaleItem[] | null;
-};
-
 export type GrossMarginResult = {
   revenue: number;
   cost: number;
@@ -17,10 +7,10 @@ export type GrossMarginResult = {
 /**
  * Calculates gross margin only when every sold line has a valid quantity,
  * selling price, product reference, and non-negative acquisition cost.
- * Missing costs are unknown, never zero.
+ * Sale item JSON is treated as untrusted input; missing costs are never zero.
  */
 export function calculateGrossMargin(
-  sales: readonly ResumenSaleForMargin[],
+  sales: readonly { items: unknown }[],
   costByProduct: ReadonlyMap<string, number>,
 ): GrossMarginResult | null {
   let revenue = 0;
@@ -28,13 +18,16 @@ export function calculateGrossMargin(
 
   for (const sale of sales) {
     if (!Array.isArray(sale.items) || sale.items.length === 0) return null;
-    for (const item of sale.items) {
+    for (const rawItem of sale.items) {
+      if (!rawItem || typeof rawItem !== "object") return null;
+      const item = rawItem as Record<string, unknown>;
+      const productId = typeof item.product_id === "string" ? item.product_id : "";
       const quantity = Number(item.qty);
       const price = Number(item.price);
-      if (!item.product_id || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0) {
+      if (!productId || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0) {
         return null;
       }
-      const unitCost = costByProduct.get(item.product_id);
+      const unitCost = costByProduct.get(productId);
       if (unitCost === undefined || !Number.isFinite(unitCost) || unitCost < 0) return null;
       revenue += price * quantity;
       cost += unitCost * quantity;
