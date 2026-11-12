@@ -49,14 +49,12 @@ export function useNuvaScore() {
     queryFn: async (): Promise<NuvaScore> => {
       const bid = active!.id;
       const now = new Date();
-      const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-        .toISOString()
-        .slice(0, 10);
-      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        .toISOString()
-        .slice(0, 10);
-      const last30 = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
-      const todayIso = now.toISOString().slice(0, 10);
+      const toLocalIsoDate = (date: Date) =>
+        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      const startOfThisMonth = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+      const startOfLastMonth = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+      const last30 = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
+      const todayIso = toLocalIsoDate(now);
 
       const [txRes, productsRes, salesRes, creditSalesRes] = await Promise.all([
         supabase
@@ -81,6 +79,11 @@ export function useNuvaScore() {
           .eq("is_credit", true)
           .neq("status", "cancelled"),
       ]);
+
+      // Supabase puede devolver error sin lanzar excepción. No convertir una
+      // lectura fallida en un score aparentemente saludable con arreglos vacíos.
+      const queryError = txRes.error ?? productsRes.error ?? salesRes.error ?? creditSalesRes.error;
+      if (queryError) throw queryError;
 
       const components: ScoreComponent[] = [];
 
@@ -124,26 +127,37 @@ export function useNuvaScore() {
         let marginPoints: number | null = null;
         let marginDetail = "";
         if (productIds.size > 0) {
-          const { data: costRows } = await supabase
+          const { data: costRows, error: costError } = await supabase
             .from("products")
             .select("id, cost")
             .eq("business_id", bid)
             .in("id", Array.from(productIds));
-          (costRows ?? []).forEach((r) => costByProduct.set(r.id, Number(r.cost)));
+          if (costError) throw costError;
+          (costRows ?? []).forEach((r) => {
+            if (r.cost !== null && r.cost !== undefined && Number.isFinite(Number(r.cost))) {
+              costByProduct.set(r.id, Number(r.cost));
+            }
+          });
 
           let revenue = 0;
           let cost = 0;
+          let hasCompleteCostCoverage = true;
           salesThisMonth.forEach((s) => {
             (s.items as Array<{ product_id?: string; qty: number; price: number }> | null)?.forEach(
               (it) => {
                 const lineRevenue = Number(it.price) * Number(it.qty);
                 revenue += lineRevenue;
-                const unitCost = it.product_id ? (costByProduct.get(it.product_id) ?? 0) : 0;
-                cost += unitCost * Number(it.qty);
+                if (!it.product_id || !costByProduct.has(it.product_id)) {
+                  hasCompleteCostCoverage = false;
+                  return;
+                }
+                cost += costByProduct.get(it.product_id)! * Number(it.qty);
               },
-            );
+            ) ?? (hasCompleteCostCoverage = false);
           });
-          if (revenue > 0) {
+          // Un costo ausente no equivale a costo cero: omitir margen evita
+          // presentar rentabilidad inflada cuando la cobertura es incompleta.
+          if (revenue > 0 && hasCompleteCostCoverage) {
             const marginRatio = (revenue - cost) / revenue;
             marginPoints = scoreFromRatio(marginRatio, 0.35, 0.1);
             marginDetail = `Margen bruto de ${(marginRatio * 100).toFixed(0)}% este mes`;
@@ -189,7 +203,10 @@ export function useNuvaScore() {
 
       // 4) Inventario: % de productos en stock crítico (<= umbral bajo).
       if (products.length > 0) {
-        const critical = products.filter((p) => Number(p.stock) <= Number(p.low_stock_threshold));
+        const critical = products.filter((p) => {
+          const threshold = Number(p.low_stock_threshold ?? (p as typeof p & { reorder_point?: number | null }).reorder_point ?? 0);
+          return threshold > 0 && Number(p.stock ?? 0) <= threshold;
+        });
         const ratio = critical.length / products.length;
         const points = scoreFromRatio(ratio, 0.05, 0.4);
         components.push({
