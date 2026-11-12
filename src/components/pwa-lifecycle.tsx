@@ -1,0 +1,145 @@
+import { useEffect, useState } from "react";
+import { Download, RefreshCw, X } from "lucide-react";
+import { toast } from "sonner";
+
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
+function isStandalone() {
+  return window.matchMedia("(display-mode: standalone)").matches
+    || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
+function isIos() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+export function PwaLifecycle() {
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [updateReady, setUpdateReady] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    setIsInstalled(isStandalone());
+    const onBeforeInstall = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    };
+    const onInstalled = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+      toast.success("Nüva One quedó instalada en tu dispositivo.");
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+
+    let registration: ServiceWorkerRegistration | undefined;
+    let disposed = false;
+    let reloadOnControllerChange = false;
+
+    const onControllerChange = () => {
+      if (!reloadOnControllerChange) return;
+      reloadOnControllerChange = false;
+      window.location.reload();
+    };
+    navigator.serviceWorker?.addEventListener("controllerchange", onControllerChange);
+
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" })
+        .then((reg) => {
+          if (disposed) return;
+          registration = reg;
+          if (reg.waiting) setUpdateReady(true);
+          reg.addEventListener("updatefound", () => {
+            const installing = reg.installing;
+            installing?.addEventListener("statechange", () => {
+              if (installing.state === "installed" && navigator.serviceWorker.controller) {
+                setUpdateReady(true);
+              }
+            });
+          });
+          void reg.update().catch(() => undefined);
+        })
+        .catch((error) => console.warn("[Nüva PWA] No se pudo registrar el service worker:", error));
+    }
+
+    const checkForUpdate = () => { void registration?.update().catch(() => undefined); };
+    window.addEventListener("focus", checkForUpdate);
+    const onVisibility = () => { if (document.visibilityState === "visible") checkForUpdate(); };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      disposed = true;
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+      navigator.serviceWorker?.removeEventListener("controllerchange", onControllerChange);
+      window.removeEventListener("focus", checkForUpdate);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  async function install() {
+    if (isIos()) {
+      toast.info("En Safari: toca Compartir y luego “Agregar a pantalla de inicio”.");
+      return;
+    }
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === "accepted") setIsInstalled(true);
+    setInstallPrompt(null);
+  }
+
+  function applyUpdate() {
+    const waiting = navigator.serviceWorker?.controller
+      ? undefined
+      : undefined;
+    void waiting;
+    // The waiting worker receives the command through its registration below.
+    navigator.serviceWorker?.getRegistration("/").then((reg) => {
+      if (!reg?.waiting) {
+        setUpdateReady(false);
+        return;
+      }
+      const worker = reg.waiting;
+      const onChange = () => {
+        navigator.serviceWorker.removeEventListener("controllerchange", onChange);
+        window.location.reload();
+      };
+      navigator.serviceWorker.addEventListener("controllerchange", onChange);
+      worker.postMessage({ type: "SKIP_WAITING" });
+    });
+  }
+
+  const canInstall = !isInstalled && (Boolean(installPrompt) || isIos());
+  if ((!canInstall && !updateReady) || dismissed) return null;
+
+  return (
+    <aside className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-[120] mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_12px_40px_rgba(20,25,60,.16)] backdrop-blur-xl">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-800">
+          {updateReady ? <RefreshCw className="h-5 w-5" /> : <Download className="h-5 w-5" />}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-900">
+            {updateReady ? "Nueva versión disponible" : "Lleva Nüva One a tu celular"}
+          </p>
+          <p className="text-xs leading-5 text-slate-600">
+            {updateReady ? "Guarda tu trabajo y actualiza cuando estés listo." : "Acceso directo desde tu pantalla de inicio."}
+          </p>
+        </div>
+      </div>
+      {updateReady ? (
+        <button type="button" onClick={applyUpdate} className="min-h-10 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800">Actualizar</button>
+      ) : canInstall ? (
+        <button type="button" onClick={() => void install()} className="min-h-10 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800">Instalar</button>
+      ) : null}
+      <button type="button" aria-label="Cerrar aviso" onClick={() => setDismissed(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+        <X className="h-4 w-4" />
+      </button>
+    </aside>
+  );
+}
