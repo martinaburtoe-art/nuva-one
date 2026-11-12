@@ -12,7 +12,7 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
-import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
+import { getResumenOperationalStatus, hasResumenActivity } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
@@ -237,14 +237,15 @@ function Dashboard() {
   const expenseMixPercent = totalFinancialMovement > 0 ? 100 - incomeMixPercent : 0;
 
   const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
-  const hasActivity =
-    (inventoryQuery.data?.productsCount ?? 0) > 0 ||
-    (salesCountQuery.data ?? 0) > 0 ||
-    (kpis?.income ?? 0) > 0 ||
-    (kpis?.expense ?? 0) > 0 ||
-    (quotesQuery.data?.totalCount ?? 0) > 0 ||
-    (customersQuery.data ?? 0) > 0 ||
-    Boolean(cashRegisterQuery.data);
+  const hasActivity = hasResumenActivity({
+    productsCount: inventoryQuery.data?.productsCount,
+    salesCount: salesCountQuery.data,
+    income: kpis?.income,
+    expense: kpis?.expense,
+    quotesCount: quotesQuery.data?.totalCount,
+    customersCount: customersQuery.data,
+    cashRegisterOpen: Boolean(cashRegisterQuery.data),
+  });
   const primaryDataReady =
     kpis !== undefined &&
     !kpisError &&
