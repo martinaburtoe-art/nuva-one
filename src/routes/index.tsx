@@ -21,7 +21,7 @@ const FAQ_ITEMS = [
 const STRUCTURED_DATA = {
   "@context": "https://schema.org",
   "@graph": [
-    { "@type": "SoftwareApplication", name: "Nüva One", applicationCategory: "BusinessApplication", operatingSystem: "Web", url: "https://nuva-one.vercel.app", description: "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones y Nüva IA." },
+    { "@type": "SoftwareApplication", name: "Nüva One", applicationCategory: "BusinessApplication", operatingSystem: "Web", url: "https://nuva-one.vercel.app/", description: "Plataforma todo-en-uno para PYMEs: inventario, ventas, finanzas, cotizaciones y Nüva IA." },
     { "@type": "Organization", name: "Nüva One", url: "https://nuva-one.vercel.app" },
     { "@type": "FAQPage", mainEntity: FAQ_ITEMS.map((it) => ({ "@type": "Question", name: it.q, acceptedAnswer: { "@type": "Answer", text: it.a } })) },
   ],
@@ -35,6 +35,9 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "es_CL" },
+      { property: "og:url", content: "https://nuva-one.vercel.app/" },
+      { property: "og:site_name", content: "Nüva One" },
+      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
       { property: "og:title", content: "Nüva One — La inteligencia de tu negocio, en un solo lugar" },
       { property: "og:description", content: "Gestiona, entiende y anticipa tu negocio desde una sola plataforma." },
     ],
