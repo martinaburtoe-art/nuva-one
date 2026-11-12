@@ -19,6 +19,7 @@ import "../nuva-motion-system.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineBanner } from "@/components/offline-banner";
+import { PwaLifecycle } from "@/components/pwa-lifecycle";
 // Cargar mejoras pesadas solo cuando se visita su módulo.
 const NuvaOperatingPulse = lazy(() => import("@/components/nuva-operating-pulse").then((module) => ({ default: module.NuvaOperatingPulse })));
 const PosBarcodeScanner = lazy(() => import("@/components/pos-barcode-scanner").then((module) => ({ default: module.PosBarcodeScanner })));
@@ -81,7 +82,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#f7f8fc" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Nüva One" },
       { title: "Nüva One — La inteligencia de tu negocio, en un solo lugar" },
       { name: "description", content: "Plataforma todo-en-uno para PYMEs: ventas, inventario, finanzas, clientes, personas e inteligencia para decidir y actuar desde un solo lugar." },
       { name: "author", content: "Nüva One" },
@@ -94,7 +100,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/35dcf456-e092-4e2c-b542-85106be452c6" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/35dcf456-e092-4e2c-b542-85106be452c6" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", href: "/icons/nuva-192.svg", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/icons/nuva-192.svg" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -202,6 +213,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <OfflineBanner />
+      <PwaLifecycle />
       <RouteEnhancements />
       <Outlet />
       <Toaster position="top-right" richColors closeButton />
