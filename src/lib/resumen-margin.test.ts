@@ -26,6 +26,8 @@ describe("calculateGrossMargin", () => {
     expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: -1 }] }], costs)).toBeNull();
     expect(calculateGrossMargin([{ items: [{ qty: 1, price: 1000 }] }], costs)).toBeNull();
     expect(calculateGrossMargin([{ items: ["malformed-json"] }], costs)).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: null, price: 1000 }] }], costs)).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: null }] }], costs)).toBeNull();
   });
 
   it("accepts a genuine zero acquisition cost without inventing a cost", () => {
