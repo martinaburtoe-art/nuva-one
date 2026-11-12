@@ -1818,9 +1818,9 @@
   .nuva-resumen-operations-panel .nuva-resumen-panel-heading > .nuva-resumen-status-pill {
     display: none;
   }
-  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > div:nth-child(1),
-  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > div:nth-child(2),
-  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > div:nth-child(5) {
+  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > [data-metric="sales"],
+  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > [data-metric="low-stock"],
+  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > [data-metric="cash-register"] {
     display: none;
   }
 }
