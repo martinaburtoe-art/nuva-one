@@ -258,12 +258,12 @@ function Dashboard() {
 
   const chartData = useMemo(
     () => buildResumenChartData(allTx ?? [], {
-      from: isoFrom,
-      to: isoTo,
+      from: chartWindowStart,
+      to: chartWindowEnd,
       categories,
       daily: dailyChart,
     }),
-    [allTx, isoFrom, isoTo, categories, dailyChart],
+    [allTx, chartWindowStart, chartWindowEnd, categories, dailyChart],
   );
 
   const largestExpense = useMemo(() => getLargestExpenseCategory(
