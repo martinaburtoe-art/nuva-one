@@ -1312,9 +1312,7 @@
   .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi:not(.nuva-resumen-kpi-primary) > strong { font-size: clamp(14px, 4vw, 17px); }
 
   .nuva-app .nuva-resumen-canvas .nuva-resumen-filters > div:first-child { grid-template-columns: minmax(0, 1fr); }
-}
-
-@media (max-width: 760px) {
+  /* Continuation of the single mobile breakpoint; later rules intentionally refine earlier mobile defaults. */
   .nuva-resumen-canvas { padding: 14px; }
 
   .nuva-resumen-kpi-primary {
