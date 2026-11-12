@@ -129,7 +129,7 @@ export function useNuvaScore() {
       const salesThisMonth = sales.filter((s) => s.sale_date >= startOfThisMonth);
       if (salesThisMonth.length > 0) {
         const margin = calculateGrossMargin(
-          salesThisMonth as Array<{ items: Array<{ product_id?: string; qty: number; price: number }> | null }>,
+          salesThisMonth,
           costByProduct,
         );
         const marginPoints = margin ? scoreFromRatio(margin.marginRatio, 0.35, 0.1) : null;
