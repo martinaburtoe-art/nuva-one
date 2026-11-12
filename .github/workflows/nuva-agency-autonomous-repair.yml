@@ -72,7 +72,7 @@ jobs:
 
       - name: Run focused autonomous repair
         if: steps.pr.outputs.eligible == 'true'
-        uses: google-github-actions/run-gemini-cli@v0.1.22
+        uses: google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489
         env:
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
