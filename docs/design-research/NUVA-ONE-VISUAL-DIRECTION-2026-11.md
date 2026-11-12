@@ -26,7 +26,7 @@ Build a distinctive enterprise SaaS interface: calm, precise, data-first, respon
 ## Nüva One design system decisions
 
 ### 1. Visual foundation
-- Primary workspace: pearl/white/light neutral surfaces; keep dark brand navigation as a frame where the existing shell uses it.
+- Primary workspace: pearl/white/light neutral surfaces. Preserve the current white navigation rail and white top bar; do not introduce a dark sidebar into this authenticated shell.
 - Accent hierarchy: Nüva indigo for interactive/selected states; restrained gold for financial emphasis and secondary highlights; semantic success/warning/error colors remain semantic.
 - Borders and shadows: low-contrast borders, shallow elevation, consistent radii; avoid stacking multiple heavy shadows.
 - Typography: one coherent family from the existing app tokens; clear display/section/body/metadata scale; tabular numerals for monetary and count values.
