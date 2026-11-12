@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
+import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 
 // Nüva Score: 5 componentes de 0 a 20 puntos cada uno, sumando 0-100.
 // Cada componente se calcula desde datos reales ya existentes en el
@@ -56,39 +57,45 @@ export function useNuvaScore() {
       const last30 = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
       const todayIso = toLocalIsoDate(now);
 
-      const [txRes, productsRes, salesRes, creditSalesRes] = await Promise.all([
-        supabase
+      const [tx, products, sales, creditSales] = await Promise.all([
+        fetchAllResumenRows((from, to) => supabase
           .from("transactions")
           .select("type, amount, tx_date")
           .eq("business_id", bid)
-          .gte("tx_date", last30),
-        supabase
+          .gte("tx_date", last30)
+          .lte("tx_date", todayIso)
+          .order("id")
+          .range(from, to)),
+        fetchAllResumenRows((from, to) => supabase
           .from("products")
-          .select("cost, price, stock, low_stock_threshold")
-          .eq("business_id", bid),
-        supabase
+          .select("id, cost, price, stock, low_stock_threshold, reorder_point")
+          .eq("business_id", bid)
+          .order("id")
+          .range(from, to)),
+        fetchAllResumenRows((from, to) => supabase
           .from("sales")
           .select("total, items, sale_date")
           .eq("business_id", bid)
           .neq("status", "cancelled")
-          .gte("sale_date", startOfLastMonth),
-        supabase
+          .gte("sale_date", startOfLastMonth)
+          .lte("sale_date", todayIso)
+          .order("id")
+          .range(from, to)),
+        fetchAllResumenRows((from, to) => supabase
           .from("sales")
           .select("total, paid_amount, due_date")
           .eq("business_id", bid)
           .eq("is_credit", true)
-          .neq("status", "cancelled"),
+          .neq("status", "cancelled")
+          .order("id")
+          .range(from, to)),
       ]);
-
-      // Supabase puede devolver error sin lanzar excepción. No convertir una
-      // lectura fallida en un score aparentemente saludable con arreglos vacíos.
-      const queryError = txRes.error ?? productsRes.error ?? salesRes.error ?? creditSalesRes.error;
-      if (queryError) throw queryError;
 
       const components: ScoreComponent[] = [];
 
       // 1) Liquidez: flujo de caja neto de los últimos 30 días.
-      const tx = txRes.data ?? [];
+      // Todos los conjuntos se leen paginados; el límite por respuesta de
+      // Supabase no debe sesgar el score de negocios con más de 1.000 filas.
       if (tx.length > 0) {
         const income = tx
           .filter((t) => t.type === "income")
@@ -112,11 +119,13 @@ export function useNuvaScore() {
       }
 
       // 2) Margen: sobre ventas del mes actual, usando costo real del producto.
-      const products = productsRes.data ?? [];
       const costByProduct = new Map<string, number>();
-      // No tenemos product_id en products.select porque no se pidió -- lo
-      // recalculamos abajo con una consulta separada solo si hay ventas.
-      const salesThisMonth = (salesRes.data ?? []).filter((s) => s.sale_date >= startOfThisMonth);
+      products.forEach((product) => {
+        if (product.cost !== null && product.cost !== undefined && Number.isFinite(Number(product.cost))) {
+          costByProduct.set(product.id, Number(product.cost));
+        }
+      });
+      const salesThisMonth = sales.filter((s) => s.sale_date >= startOfThisMonth);
       if (salesThisMonth.length > 0) {
         const productIds = new Set<string>();
         salesThisMonth.forEach((s) => {
@@ -127,18 +136,6 @@ export function useNuvaScore() {
         let marginPoints: number | null = null;
         let marginDetail = "";
         if (productIds.size > 0) {
-          const { data: costRows, error: costError } = await supabase
-            .from("products")
-            .select("id, cost")
-            .eq("business_id", bid)
-            .in("id", Array.from(productIds));
-          if (costError) throw costError;
-          (costRows ?? []).forEach((r) => {
-            if (r.cost !== null && r.cost !== undefined && Number.isFinite(Number(r.cost))) {
-              costByProduct.set(r.id, Number(r.cost));
-            }
-          });
-
           let revenue = 0;
           let cost = 0;
           let hasCompleteCostCoverage = true;
@@ -178,7 +175,7 @@ export function useNuvaScore() {
       }
 
       // 3) Cobranza: % de cuentas por cobrar vencidas sobre el total pendiente.
-      const creditSales = creditSalesRes.data ?? [];
+      
       const pending = creditSales.filter((s) => Number(s.paid_amount) < Number(s.total));
       if (pending.length > 0) {
         const totalPending = pending.reduce(
@@ -226,7 +223,7 @@ export function useNuvaScore() {
 
       // 5) Crecimiento: ventas de este mes vs mes anterior.
       const totalThisMonth = salesThisMonth.reduce((s, r) => s + Number(r.total), 0);
-      const totalLastMonth = (salesRes.data ?? [])
+      const totalLastMonth = sales
         .filter((s) => s.sale_date >= startOfLastMonth && s.sale_date < startOfThisMonth)
         .reduce((s, r) => s + Number(r.total), 0);
       if (totalLastMonth > 0) {
