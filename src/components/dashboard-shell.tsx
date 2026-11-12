@@ -33,6 +33,7 @@ const nav = [
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance", section: "Finanzas" },
   { to: "/finance-accounting", label: "Contabilidad y tributación", icon: FileText, module: "finance", section: "Finanzas" },
   { to: "/finance-professional", label: "Centro financiero profesional", icon: Calculator, module: "finance", section: "Finanzas" },
+  { to: "/financial-dashboard", label: "Panel financiero", icon: BarChart3, module: "finance", section: "Finanzas" },
   { to: "/financial-control", label: "Control financiero", icon: ShieldCheck, module: "finance", section: "Finanzas" },
   { to: "/financial-integrity", label: "Integridad financiera", icon: ShieldCheck, module: "finance", section: "Finanzas" },
   { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics", section: "Finanzas" },
