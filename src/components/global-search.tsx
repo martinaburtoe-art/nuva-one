@@ -53,6 +53,7 @@ const navItems = [
   { to: "/finance", label: "Finanzas", icon: CreditCard },
   { to: "/finance-accounting", label: "Contabilidad y tributación", icon: FileText },
   { to: "/finance-professional", label: "Centro financiero profesional", icon: Calculator },
+  { to: "/financial-dashboard", label: "Panel financiero", icon: BarChart3 },
   { to: "/financial-control", label: "Control financiero", icon: ShieldCheck },
   { to: "/financial-integrity", label: "Integridad financiera", icon: ShieldCheck },
   { to: "/analytics", label: "Indicadores", icon: BarChart3 },
