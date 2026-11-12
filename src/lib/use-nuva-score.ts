@@ -128,12 +128,6 @@ export function useNuvaScore() {
       });
       const salesThisMonth = sales.filter((s) => s.sale_date >= startOfThisMonth);
       if (salesThisMonth.length > 0) {
-        const productIds = new Set<string>();
-        salesThisMonth.forEach((s) => {
-          (s.items as Array<{ product_id?: string }> | null)?.forEach((it) => {
-            if (it.product_id) productIds.add(it.product_id);
-          });
-        });
         const margin = calculateGrossMargin(
           salesThisMonth as Array<{ items: Array<{ product_id?: string; qty: number; price: number }> | null }>,
           costByProduct,
