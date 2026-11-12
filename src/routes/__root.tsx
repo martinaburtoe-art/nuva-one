@@ -13,6 +13,7 @@ import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from
 import { Toaster, toast } from "sonner";
 
 import appCss from "../styles.css?url";
+import "../nuva-brand-foundation.css";
 import "../home-experience.css";
 import "../nuva-motion-system.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -172,8 +173,15 @@ function RootComponent() {
   const router = useRouter();
   const location = useLocation();
   useEffect(() => {
-    const publicPaths = new Set(["/", "/news", "/social", "/forum", "/directory", "/pricing", "/about", "/contact"]);
-    const isPublic = publicPaths.has(location.pathname) || location.pathname.startsWith("/auth");
+    const publicPaths = new Set([
+      "/", "/news", "/noticias", "/social", "/foro", "/forum", "/directorio", "/directory",
+      "/negocios", "/pricing", "/about", "/contact", "/privacy", "/terms",
+      "/public-catalog", "/checkout", "/checkout-demo", "/reset-password", "/experience", "/experience-parallel", "/experiencia",
+    ]);
+    const publicPrefixes = ["/auth/", "/foro/", "/negocios/", "/public-catalog/"];
+    const isPublic = publicPaths.has(location.pathname)
+      || location.pathname === "/auth"
+      || publicPrefixes.some((prefix) => location.pathname.startsWith(prefix));
     document.body.dataset.nuvaSurface = isPublic ? "public" : "app";
     return () => { delete document.body.dataset.nuvaSurface; };
   }, [location.pathname]);
