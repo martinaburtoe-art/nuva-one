@@ -55,7 +55,7 @@ function Dashboard() {
     d.setDate(1);
     // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }, [isoFrom, isoTo]);
+  }, [isoFrom, isoTo, todayIso]);
   const dailyChart = Boolean(isoFrom && Date.parse(chartWindowEnd) - Date.parse(isoFrom) <= 62 * 86_400_000);
   const financialPeriodLabel = invalidDateRange
     ? "Fechas por corregir"
@@ -241,7 +241,7 @@ function Dashboard() {
           .select("id, amount, type, tx_date, category")
           .eq("business_id", active!.id);
         if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
-        if (isoTo) query = query.lte("tx_date", isoTo);
+        query = query.lte("tx_date", chartWindowEnd);
         return query.order("id").range(from, to);
       });
     },
@@ -433,7 +433,7 @@ function Dashboard() {
           <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
             <ShieldAlert className="h-5 w-5" />
             <div><strong>No se pudieron cargar los movimientos</strong><p>{String(txError?.message ?? txError ?? "Error desconocido")}</p></div>
-            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo] })}>Reintentar</Button>
+            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, chartWindowEnd] })}>Reintentar</Button>
           </div>
         )}
 
