@@ -493,9 +493,9 @@ function Dashboard() {
             {comparisonWindow && <span className="nuva-resumen-status-pill">{comparisonWindow.from} — {comparisonWindow.to}</span>}
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <ComparisonMetric label="Ingresos" current={incomeChange} currentValue={kpis ? fmtCLP(kpis.income) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.income) : null} inverse={false} />
-            <ComparisonMetric label="Gastos" current={expenseChange} currentValue={kpis ? fmtCLP(kpis.expense) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.expense) : null} inverse />
-            <ComparisonMetric label="Resultado" current={netChange} currentValue={kpis ? fmtCLP(kpis.net) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.net) : null} inverse={false} />
+            <ComparisonMetric label="Ingresos" current={incomeChange} currentValue={kpis ? fmtCLP(kpis.income) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.income) : null} loading={comparisonQuery.isLoading} inverse={false} />
+            <ComparisonMetric label="Gastos" current={expenseChange} currentValue={kpis ? fmtCLP(kpis.expense) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.expense) : null} loading={comparisonQuery.isLoading} inverse />
+            <ComparisonMetric label="Resultado" current={netChange} currentValue={kpis ? fmtCLP(kpis.net) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.net) : null} loading={comparisonQuery.isLoading} inverse={false} />
           </div>
           <div className="mt-4 rounded-xl border border-[var(--nuva-line)] bg-[var(--color-muted)]/35 p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">SEÑAL DE GASTO</p>
@@ -579,13 +579,13 @@ function Dashboard() {
   );
 }
 
-function ComparisonMetric({ label, current, currentValue, previousValue, inverse = false }: { label: string; current: number | null; currentValue: string; previousValue: string | null; inverse?: boolean }) {
+function ComparisonMetric({ label, current, currentValue, previousValue, loading = false, inverse = false }: { label: string; current: number | null; currentValue: string; previousValue: string | null; loading?: boolean; inverse?: boolean }) {
   const positive = current !== null && (inverse ? current < 0 : current > 0);
   const negative = current !== null && (inverse ? current > 0 : current < 0);
   return <div className="rounded-xl border border-[var(--nuva-line)] bg-white/70 p-4">
     <p className="text-xs font-medium text-muted-foreground">{label}</p>
     <strong className="mt-1 block text-xl tracking-tight">{currentValue}</strong>
-    {previousValue === null ? <p className="mt-2 text-xs text-muted-foreground">Sin período comparable</p> : <p className={`mt-2 text-xs font-semibold ${positive ? "text-emerald-700" : negative ? "text-rose-700" : "text-muted-foreground"}`}>
+    {loading ? <p className="mt-2 text-xs text-muted-foreground">Calculando comparación…</p> : previousValue === null ? <p className="mt-2 text-xs text-muted-foreground">Sin período comparable</p> : <p className={`mt-2 text-xs font-semibold ${positive ? "text-emerald-700" : negative ? "text-rose-700" : "text-muted-foreground"}`}>
       {current === null ? "Base anterior igual a cero" : `${current > 0 ? "+" : ""}${current.toFixed(1)}% vs. período anterior`}
       <span className="ml-1 font-normal text-muted-foreground">· anterior {previousValue}</span>
     </p>}
