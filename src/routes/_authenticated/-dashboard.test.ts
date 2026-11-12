@@ -221,6 +221,10 @@ describe("hasResumenActivity", () => {
     expect(hasResumenActivity({ cashRegisterOpen: true })).toBe(true);
   });
 
+  it("detecta movimientos financieros no nulos incluso si son negativos", () => {
+    expect(hasResumenActivity({ expense: -1500 })).toBe(true);
+  });
+
   it("no considera actividad valores nulos, cero o negativos aislados", () => {
     expect(hasResumenActivity({
       productsCount: 0,
