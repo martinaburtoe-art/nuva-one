@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-utils";
@@ -22,6 +22,7 @@ import {
   StarOff,
   AlertTriangle,
   Receipt,
+  Banknote,
   Link2,
   Copy,
   ScanBarcode,
@@ -69,7 +70,7 @@ function POS() {
   });
   const { data: sales } = useBizList<any>("sales", {
     order: "created_at",
-    select: "id,sale_date,created_at,total",
+    select: "id,sale_date,created_at,total,items,payment_method,customer_name,status",
   });
   const { data: customers } = useBizList<any>("customers", {
     order: "name",
@@ -100,6 +101,7 @@ function POS() {
   const [matchedCustomer, setMatchedCustomer] = useState<any | null>(null);
   const [newCustomerName, setNewCustomerName] = useState("");
   const [registering, setRegistering] = useState(false);
+  const checkoutLock = useRef(false);
 
   const { data: receiptDoc } = useQuery({
     queryKey: ["sale-billing-doc", showReceipt?.saleId],
@@ -272,12 +274,12 @@ function POS() {
   const todayLocal = new Date();
   const today = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
   const todaySales = (sales ?? []).filter(
-    (s: any) => (s.sale_date ?? s.created_at?.slice(0, 10)) === today,
+    (s: any) => (s.sale_date ?? s.created_at?.slice(0, 10)) === today && s.status === "paid",
   );
   const todayTotal = todaySales.reduce((s: number, x: any) => s + Number(x.total), 0);
 
   async function checkout() {
-    if (!canPay) return;
+    if (!canPay || checkoutLock.current) return;
     // Defensa en profundidad: validar stock disponible al momento del cobro,
     // por si cambió entre agregar al carrito y hacer checkout.
     for (const i of cart) {
@@ -286,6 +288,7 @@ function POS() {
         return;
       }
     }
+    checkoutLock.current = true;
     const notes = [
       `Caja · ${method}`,
       method === "efectivo" ? `Recibido ${fmtCLP(received)} · Vuelto ${fmtCLP(change)}` : null,
@@ -335,6 +338,7 @@ function POS() {
         toast.error("Error de conexión con la pasarela de pago");
       } finally {
         setCreatingLink(false);
+        checkoutLock.current = false;
       }
       return;
     }
@@ -373,6 +377,8 @@ function POS() {
       // El trigger sync_sale_effects rechaza si hay stock insuficiente u otro error de integridad.
       // No se silencia: el usuario debe saber que la venta no se registró.
       toast.error(error?.message ?? "No se pudo registrar la venta. Verifica el stock disponible.");
+    } finally {
+      checkoutLock.current = false;
     }
   }
 
@@ -401,6 +407,10 @@ function POS() {
           description="Vende, cobra y controla tu operación en un solo flujo."
           action={
             <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => navigate({ to: "/caja-control" })}>
+                <Banknote className="mr-2 h-4 w-4" />
+                Control de caja
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => openLiveScanner("cart")}
@@ -448,6 +458,26 @@ function POS() {
             </Button>
           </Card>
         </div>
+        {cart.length > 0 && (
+          <div className="sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-20 mb-3 xl:hidden">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 w-full justify-between border-primary/25 bg-card/95 px-4 shadow-md backdrop-blur"
+              onClick={() => document.getElementById("pos-cart-panel")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              aria-label={`Ver carrito con ${cart.length} productos, total ${fmtCLP(total)}`}
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-primary" />
+                <span className="font-semibold">Carrito · {cart.length}</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="font-semibold tabular-nums">{fmtCLP(total)}</span>
+                <span className="text-xs text-primary">Ver y cobrar →</span>
+              </span>
+            </Button>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
           <div className="space-y-4">
             <div className="relative">
@@ -457,7 +487,7 @@ function POS() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar producto, SKU o código…"
                 className="h-12 rounded-xl border-border/70 bg-card pl-10 text-base shadow-sm"
-                autoFocus
+                inputMode="search"
               />
             </div>
             {favorites.length > 0 && !query && (
@@ -584,7 +614,7 @@ function POS() {
               </Card>
             )}
           </div>
-          <Card className="sticky top-20 flex h-fit max-h-[calc(100vh-6.5rem)] flex-col overflow-hidden rounded-2xl border-border/70 p-0 shadow-lg shadow-black/5">
+          <Card id="pos-cart-panel" className="flex h-fit flex-col rounded-2xl border-border/70 p-0 shadow-lg shadow-black/5 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-6.5rem)] xl:overflow-hidden">
             <div className="border-b border-border/70 bg-muted/20 px-4 py-3.5">
               <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold">
@@ -599,7 +629,7 @@ function POS() {
               </div>
               <div className="mt-1 text-[11px] text-muted-foreground">Revisa el pedido antes de cobrar</div>
             </div>
-            <div className="min-h-[180px] flex-1 space-y-2 overflow-y-auto px-4 py-3">
+            <div className="min-h-[180px] flex-1 space-y-2 overflow-y-auto px-4 py-3 xl:min-h-0">
               {cart.length === 0 ? (
                 <div className="py-10 text-center text-sm text-muted-foreground">
                   Escanea un producto o selecciónalo para comenzar
@@ -608,10 +638,10 @@ function POS() {
                 cart.map((i) => (
                   <div key={i.product_id} className="rounded-lg border p-2.5">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium">{i.name}</span>
+                      <span className="min-w-0 break-words text-sm font-medium">{i.name}</span>
                       <button
                         onClick={() => removeFromCart(i.product_id)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                         aria-label="Eliminar producto"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -622,7 +652,7 @@ function POS() {
                         <Button
                           size="icon"
                           variant="outline"
-                          className="h-8 w-8"
+                          className="h-11 w-11"
                           onClick={() => updateQty(i.product_id, i.qty - 1)}
                         >
                           <Minus className="h-3 w-3" />
@@ -633,12 +663,12 @@ function POS() {
                           max={i.stock}
                           value={i.qty}
                           onChange={(e) => updateQty(i.product_id, Number(e.target.value))}
-                          className="h-8 w-14 text-center"
+                          className="h-11 w-16 text-center"
                         />
                         <Button
                           size="icon"
                           variant="outline"
-                          className="h-8 w-8"
+                          className="h-11 w-11"
                           onClick={() => updateQty(i.product_id, i.qty + 1)}
                         >
                           <Plus className="h-3 w-3" />
@@ -653,7 +683,7 @@ function POS() {
                 ))
               )}
             </div>
-            <div className="space-y-3 border-t bg-card px-4 py-3">
+            <div className="shrink-0 space-y-3 border-t bg-card px-4 py-3 xl:max-h-[calc(100dvh-13rem)] xl:overflow-y-auto xl:overscroll-contain">
               <div>
                 <Label className="mb-1.5 block text-xs">RUT del cliente (opcional)</Label>
                 {matchedCustomer ? (
@@ -704,14 +734,14 @@ function POS() {
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs">Método de pago</Label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {(["efectivo", "tarjeta", "transferencia", "online"] as PayMethod[]).map((m) => (
                     <button
                       key={m}
                       onClick={() => (m !== "online" || hasPaymentGateway) && setMethod(m)}
                       disabled={m === "online" && !hasPaymentGateway}
                       className={cn(
-                        "rounded-lg border px-2 py-2 text-xs font-medium capitalize transition",
+                        "min-h-11 rounded-lg border px-2 py-2 text-xs font-medium capitalize transition",
                         method === m
                           ? "border-primary bg-primary text-primary-foreground"
                           : m === "online" && !hasPaymentGateway
@@ -752,19 +782,21 @@ function POS() {
                 <span className="text-sm font-medium">Total</span>
                 <span className="text-2xl font-bold">{fmtCLP(total)}</span>
               </div>
-              <Button
-                className="h-12 w-full text-base shadow-elegant"
-                onClick={checkout}
-                disabled={!canPay || insert.isPending || creatingLink || !canWrite}
-              >
-                {!canWrite
-                  ? "Solo lectura — no puedes cobrar"
-                  : insert.isPending || creatingLink
-                    ? "Procesando…"
-                    : method === "online"
-                      ? `Generar link de pago · ${fmtCLP(total)}`
-                      : `Cobrar ${fmtCLP(total)}`}
-              </Button>
+              <div className="sticky bottom-0 z-10 -mx-4 -mb-3 bg-card px-4 pb-3 pt-2">
+                <Button
+                  className="h-auto min-h-12 w-full min-w-0 whitespace-normal px-3 py-3 text-center text-base leading-snug shadow-elegant"
+                  onClick={checkout}
+                  disabled={!canPay || insert.isPending || creatingLink || !canWrite}
+                >
+                  {!canWrite
+                    ? "Solo lectura — no puedes cobrar"
+                    : insert.isPending || creatingLink
+                      ? "Procesando…"
+                      : method === "online"
+                        ? `Generar link de pago · ${fmtCLP(total)}`
+                        : `Cobrar ${fmtCLP(total)}`}
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
@@ -898,9 +930,13 @@ function POS() {
                 variant="outline"
                 className="flex-1"
                 onClick={async () => {
-                  if (onlinePayment)
-                    await navigator.clipboard.writeText(onlinePayment.url).catch(() => {});
-                  toast.success("Link copiado");
+                  if (!onlinePayment) return;
+                  try {
+                    await navigator.clipboard.writeText(onlinePayment.url);
+                    toast.success("Link copiado");
+                  } catch {
+                    toast.error("No se pudo copiar el link. Puedes seleccionarlo y copiarlo manualmente.");
+                  }
                 }}
               >
                 <Copy className="mr-1.5 h-4 w-4" />

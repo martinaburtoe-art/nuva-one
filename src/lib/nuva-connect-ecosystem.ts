@@ -49,7 +49,7 @@ export const NUVA_CONNECT_CATEGORIES: Array<{ id: NuvaIntegrationCategory; label
 ];
 
 export function getNuvaIntegrationStatusLabel(status: NuvaIntegrationStatus) {
-  if (status === "base_ready") return "Base lista";
+  if (status === "base_ready") return "Base técnica lista";
   if (status === "configuration_required") return "Requiere configuración";
   return "Planificada";
 }

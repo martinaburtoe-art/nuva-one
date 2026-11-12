@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/finance")({
 function Finance() {
   const { active } = useActiveBusiness();
   const businessId = active?.id;
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, isError, refetch } = useQuery({
     enabled: !!businessId,
     queryKey: ["finance-dashboard-summary", businessId],
     staleTime: 30_000,
@@ -45,7 +45,14 @@ function Finance() {
           description="Control financiero, contabilidad, tributación y decisiones sobre el dinero del negocio."
         />
         <Suspense fallback={<div className="space-y-3" aria-busy="true"><div className="h-28 animate-pulse rounded-2xl border bg-muted/30" /><div className="h-48 animate-pulse rounded-2xl border bg-muted/30" /></div>}>
-          <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} loading={isLoading} />
+          {isError ? (
+            <div role="alert" className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <p>No se pudo cargar el resumen financiero. Los importes no se mostrarán como cero para evitar una lectura incorrecta.</p>
+              <button type="button" onClick={() => void refetch()} className="font-medium text-foreground underline underline-offset-4">Reintentar resumen</button>
+            </div>
+          ) : (
+            <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} loading={isLoading} />
+          )}
           <CollectionPriorityPanel />
           <FinanceSiiWorkspace />
           <FinanceAdvancedTools />

@@ -202,19 +202,33 @@ function CashControl() {
           description="Apertura, efectivo, movimientos y arqueo de cada jornada desde un solo centro de control."
           action={
             <div className="flex items-center gap-2">
-              <Badge variant={registerQuery.data ? "default" : "secondary"}>{registerQuery.data ? "Caja abierta" : "Caja cerrada"}</Badge>
+              <Badge aria-live="polite" variant={registerQuery.isError ? "destructive" : registerQuery.data ? "default" : "secondary"}>{!active?.id ? "Sin negocio" : registerQuery.isLoading ? "Consultando caja…" : registerQuery.isError ? "Estado no disponible" : registerQuery.data ? "Caja abierta" : "Caja cerrada"}</Badge>
               <Button variant="ghost" size="icon" onClick={refresh} aria-label="Actualizar"><RefreshCw className="h-4 w-4" /></Button>
             </div>
           }
         />
         {registerQuery.isLoading ? (
           <Card className="p-6">Cargando estado de caja…</Card>
+        ) : registerQuery.isError ? (
+          <Card role="alert" className="border-destructive/30 p-6">
+            <h2 className="font-semibold">No se pudo consultar el estado de caja</h2>
+            <p className="mt-1 text-sm text-muted-foreground">No asumiremos que la caja está cerrada mientras exista un error de consulta.</p>
+            <Button className="mt-4" variant="outline" onClick={() => void registerQuery.refetch()}>Reintentar consulta</Button>
+          </Card>
         ) : !registerQuery.data ? (
           <Card className="rounded-2xl border-dashed bg-muted/10 p-10 text-center">
             <WalletCards className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <h2 className="text-xl font-semibold">Inicia la jornada</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Define el fondo inicial para comenzar a controlar el efectivo de esta jornada.</p>
             <Button className="mt-5" disabled={!canWrite} onClick={() => setOpenDialog(true)}><Banknote className="mr-2 h-4 w-4" />Abrir caja</Button>
+          </Card>
+        ) : summaryQuery.isLoading ? (
+          <Card className="p-6" aria-busy="true">Calculando el resumen de caja…</Card>
+        ) : summaryQuery.isError || !s ? (
+          <Card role="alert" className="border-destructive/30 p-6">
+            <h2 className="font-semibold">Resumen de caja no disponible</h2>
+            <p className="mt-1 text-sm text-muted-foreground">No mostraremos importes estimados ni habilitaremos el arqueo hasta obtener un resumen válido.</p>
+            <Button className="mt-4" variant="outline" onClick={() => void summaryQuery.refetch()}>Reintentar resumen</Button>
           </Card>
         ) : (
           <>
@@ -254,13 +268,19 @@ function CashControl() {
                 <div className="mt-5">
                   <div className="flex items-center gap-2 text-sm font-medium"><History className="h-4 w-4" />Movimientos de caja</div>
                   <div className="mt-2 space-y-2">
-                    {(movementsQuery.data ?? []).map((m) => (
-                      <div key={m.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-                        <div><div className="font-medium">{m.reason}</div><div className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleString("es-CL")}</div></div>
-                        <span className={m.movement_type.toLowerCase() === "deposit" || m.movement_type.toLowerCase() === "income" ? "font-semibold text-emerald-600" : "font-semibold text-destructive"}>{m.movement_type.toLowerCase() === "deposit" || m.movement_type.toLowerCase() === "income" ? "+" : "-"}{fmtCLP(Number(m.amount))}</span>
+                    {movementsQuery.isLoading ? (
+                      <p className="py-6 text-center text-sm text-muted-foreground" aria-busy="true">Cargando movimientos…</p>
+                    ) : movementsQuery.isError ? (
+                      <div role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm">
+                        <p>No se pudo consultar el historial de movimientos. No lo mostraremos como una caja sin movimientos.</p>
+                        <Button className="mt-2" size="sm" variant="outline" onClick={() => void movementsQuery.refetch()}>Reintentar</Button>
                       </div>
-                    ))}
-                    {(movementsQuery.data ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Sin movimientos manuales.</p>}
+                    ) : (movementsQuery.data ?? []).length ? (movementsQuery.data ?? []).map((m) => (
+                      <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+                        <div className="min-w-0"><div className="break-words font-medium">{m.reason}</div><div className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleString("es-CL")}</div></div>
+                        <span className={m.movement_type.toLowerCase() === "deposit" || m.movement_type.toLowerCase() === "income" ? "shrink-0 font-semibold text-emerald-600" : "shrink-0 font-semibold text-destructive"}>{m.movement_type.toLowerCase() === "deposit" || m.movement_type.toLowerCase() === "income" ? "+" : "-"}{fmtCLP(Number(m.amount))}</span>
+                      </div>
+                    )) : <p className="py-6 text-center text-sm text-muted-foreground">Sin movimientos manuales.</p>}
                   </div>
                 </div>
               </Card>
@@ -279,11 +299,25 @@ function CashControl() {
         )}
         <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
           <div className="flex items-center gap-2"><History className="h-5 w-5" /><div><h2 className="text-lg font-semibold">Historial de cierres</h2><p className="text-sm text-muted-foreground">Consulta las últimas jornadas y sus arqueos.</p></div></div>
-          <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[680px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Apertura</th><th className="px-3 py-2">Cierre</th><th className="px-3 py-2 text-right">Fondo</th><th className="px-3 py-2 text-right">Contado</th><th className="px-3 py-2">Estado</th></tr></thead><tbody>{(historyQuery.data ?? []).map((r) => <tr key={r.id} className="border-t"><td className="px-3 py-3">{new Date(r.opened_at).toLocaleString("es-CL")}</td><td className="px-3 py-3">{r.closed_at ? new Date(r.closed_at).toLocaleString("es-CL") : "—"}</td><td className="px-3 py-3 text-right">{fmtCLP(Number(r.opening_amount))}</td><td className="px-3 py-3 text-right">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</td><td className="px-3 py-3"><Badge variant="secondary">Cerrada</Badge></td></tr>)}</tbody></table>{(historyQuery.data ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay jornadas cerradas.</p>}</div>
+          <div className="mt-4">
+            {historyQuery.isLoading ? <p className="py-6 text-center text-sm text-muted-foreground" aria-busy="true">Cargando jornadas…</p> : historyQuery.isError ? (
+              <div role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm">
+                <p>No se pudo consultar el historial de cierres. No lo interpretaremos como un historial vacío.</p>
+                <Button className="mt-2" size="sm" variant="outline" onClick={() => void historyQuery.refetch()}>Reintentar</Button>
+              </div>
+            ) : (historyQuery.data ?? []).length ? <>
+              <div className="space-y-3 sm:hidden">{(historyQuery.data ?? []).map((r) => <article key={r.id} className="rounded-xl border p-3 text-sm">
+                <div className="flex items-center justify-between gap-2"><span className="font-medium">{new Date(r.opened_at).toLocaleDateString("es-CL")}</span><Badge variant="secondary">Cerrada</Badge></div>
+                <div className="mt-2 grid grid-cols-2 gap-3"><div><p className="text-xs text-muted-foreground">Fondo inicial</p><p className="font-semibold tabular-nums">{fmtCLP(Number(r.opening_amount))}</p></div><div><p className="text-xs text-muted-foreground">Efectivo contado</p><p className="font-semibold tabular-nums">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</p></div></div>
+                <p className="mt-2 text-xs text-muted-foreground">Cierre: {r.closed_at ? new Date(r.closed_at).toLocaleString("es-CL") : "—"}</p>
+              </article>)}</div>
+              <div className="hidden overflow-x-auto sm:block"><table className="w-full min-w-[680px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Apertura</th><th className="px-3 py-2">Cierre</th><th className="px-3 py-2 text-right">Fondo</th><th className="px-3 py-2 text-right">Contado</th><th className="px-3 py-2">Estado</th></tr></thead><tbody>{(historyQuery.data ?? []).map((r) => <tr key={r.id} className="border-t"><td className="px-3 py-3">{new Date(r.opened_at).toLocaleString("es-CL")}</td><td className="px-3 py-3">{r.closed_at ? new Date(r.closed_at).toLocaleString("es-CL") : "—"}</td><td className="px-3 py-3 text-right">{fmtCLP(Number(r.opening_amount))}</td><td className="px-3 py-3 text-right">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</td><td className="px-3 py-3"><Badge variant="secondary">Cerrada</Badge></td></tr>)}</tbody></table></div>
+            </> : <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay jornadas cerradas.</p>}
+          </div>
         </Card>
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}><DialogContent><DialogHeader><DialogTitle>Abrir caja</DialogTitle></DialogHeader><div className="space-y-4"><Label>Fondo inicial</Label><CurrencyInput value={openingAmount} onValueChange={setOpeningAmount} placeholder="$0" /><Button className="w-full" disabled={busy} onClick={openRegister}>Confirmar apertura</Button></div></DialogContent></Dialog>
-        <Dialog open={movementDialog !== null} onOpenChange={(open) => !open && setMovementDialog(null)}><DialogContent><DialogHeader><DialogTitle>{movementDialog === "deposit" ? "Registrar ingreso" : "Registrar retiro"}</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>Monto</Label><CurrencyInput value={movementAmount} onValueChange={setMovementAmount} placeholder="$0" /></div><div><Label>Motivo</Label><Input value={movementReason} onChange={(e) => setMovementReason(e.target.value)} placeholder="Ej. depósito bancario" /></div><Button className="w-full" disabled={busy} onClick={addMovement}>Registrar movimiento</Button></div></DialogContent></Dialog>
-        <Dialog open={closeDialog} onOpenChange={setCloseDialog}><DialogContent><DialogHeader><DialogTitle>Cierre y arqueo</DialogTitle></DialogHeader><div className="space-y-4"><div className="rounded-lg border p-3 text-sm">Efectivo esperado: <strong>{fmtCLP(expected)}</strong></div><div><Label>Efectivo contado</Label><CurrencyInput value={countedCash ?? 0} onValueChange={setCountedCash} placeholder="$0" /></div>{counted !== null && <div className="rounded-lg border p-3 text-sm">Diferencia: <strong>{fmtCLP(difference ?? 0)}</strong></div>}<Button className="w-full" disabled={busy} onClick={closeRegister}>Confirmar cierre</Button></div></DialogContent></Dialog>
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}><DialogContent className="max-h-[min(90dvh,900px)] overflow-y-auto"><DialogHeader><DialogTitle>Abrir caja</DialogTitle></DialogHeader><div className="space-y-4"><Label>Fondo inicial</Label><CurrencyInput value={openingAmount} onValueChange={setOpeningAmount} placeholder="$0" /><Button className="w-full" disabled={busy} onClick={openRegister}>Confirmar apertura</Button></div></DialogContent></Dialog>
+        <Dialog open={movementDialog !== null} onOpenChange={(open) => !open && setMovementDialog(null)}><DialogContent className="max-h-[min(90dvh,900px)] overflow-y-auto"><DialogHeader><DialogTitle>{movementDialog === "deposit" ? "Registrar ingreso" : "Registrar retiro"}</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>Monto</Label><CurrencyInput value={movementAmount} onValueChange={setMovementAmount} placeholder="$0" /></div><div><Label>Motivo</Label><Input value={movementReason} onChange={(e) => setMovementReason(e.target.value)} placeholder="Ej. depósito bancario" /></div><Button className="w-full" disabled={busy} onClick={addMovement}>Registrar movimiento</Button></div></DialogContent></Dialog>
+        <Dialog open={closeDialog} onOpenChange={setCloseDialog}><DialogContent className="max-h-[min(90dvh,900px)] overflow-y-auto"><DialogHeader><DialogTitle>Cierre y arqueo</DialogTitle></DialogHeader><div className="space-y-4"><div className="rounded-lg border p-3 text-sm">Efectivo esperado: <strong>{fmtCLP(expected)}</strong></div><div><Label>Efectivo contado</Label><CurrencyInput value={countedCash ?? 0} onValueChange={setCountedCash} placeholder="$0" /></div>{counted !== null && <div className="rounded-lg border p-3 text-sm">Diferencia: <strong>{fmtCLP(difference ?? 0)}</strong></div>}<Button className="w-full" disabled={busy} onClick={closeRegister}>Confirmar cierre</Button></div></DialogContent></Dialog>
       </div>
     </ModuleGuard>
   );

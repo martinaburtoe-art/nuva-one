@@ -42,12 +42,12 @@ function SelectBusiness() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-mesh">
+    <div className="min-h-screen bg-[#F3F3EF]">
       <div className="mx-auto max-w-4xl px-6 py-16">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E6C687]/25 bg-[#080809]">
+              <Sparkles className="h-4 w-4 text-[#E6C687]" />
             </div>
             <span className="font-semibold tracking-tight">Nüva One</span>
           </Link>
@@ -69,9 +69,9 @@ function SelectBusiness() {
             <Card
               key={b.id}
               onClick={() => select(b.id)}
-              className="group cursor-pointer p-6 transition-all hover:-translate-y-1 hover:border-primary hover:shadow-elegant"
+              className="group cursor-pointer p-6 transition-colors hover:border-[#6366F1]/50 hover:bg-white hover:shadow-elegant"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#E6C687]/30 bg-[#080809] text-[#E6C687]">
                 <Building2 className="h-6 w-6" />
               </div>
               <h3 className="mt-4 font-semibold">{b.name}</h3>
@@ -81,7 +81,7 @@ function SelectBusiness() {
             </Card>
           ))}
           <Link to="/onboarding">
-            <Card className="flex h-full cursor-pointer items-center justify-center border-dashed p-6 transition-all hover:-translate-y-1 hover:border-primary hover:bg-accent">
+            <Card className="flex h-full cursor-pointer items-center justify-center border-dashed p-6 transition-colors hover:border-[#6366F1]/50 hover:bg-white">
               <div className="text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/40">
                   <Plus className="h-6 w-6 text-muted-foreground" />

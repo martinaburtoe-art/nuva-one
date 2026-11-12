@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 
 const baseUrl = (process.env.NUVA_QA_URL ?? "https://nuva-one.vercel.app").replace(/\/$/, "");
 const timeoutMs = Number(process.env.NUVA_QA_TIMEOUT_MS ?? 12000);
-const routes = (process.env.NUVA_QA_ROUTES ?? "/,/foro,/directorio,/news")
+const routes = (process.env.NUVA_QA_ROUTES ?? "/,/auth,/dashboard,/pricing,/checkout,/checkout-demo,/reset-password,/demo,/foro,/negocios,/directorio,/news,/noticias")
   .split(",")
   .map((route) => route.trim())
   .filter(Boolean);
@@ -18,7 +18,15 @@ async function fetchWithTimeout(url) {
     const response = await fetch(url, {
       redirect: "follow",
       signal: controller.signal,
-      headers: { "User-Agent": "nuva-agency-qa/1.0" },
+      headers: {
+        "User-Agent": "nuva-agency-qa/1.0",
+        ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+          ? {
+              "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+              "x-vercel-set-bypass-cookie": "true",
+            }
+          : {}),
+      },
     });
 
     return {
@@ -74,14 +82,18 @@ async function checkRoute(route) {
     const validStatus = response.status >= 200 && response.status < 400;
     const hasDocument = /<html[\s>]/i.test(html) && /<body[\s>]/i.test(html);
     const title = html.match(/<title[^>]*>(.*?)<\/title>/is)?.[1]?.trim() ?? "";
+    const isVercelProtection = /login\s*[–—-]\s*vercel/i.test(title)
+      || /vercel\.com\/login|vercel authentication/i.test(html);
     const assets = absoluteAssetUrls(html, url);
 
     addCheck(
       `route:${route}`,
-      validStatus && hasDocument ? "healthy" : "critical",
-      validStatus && hasDocument
-        ? `HTTP ${response.status}; HTML document detected`
-        : `Route returned HTTP ${response.status} or an incomplete HTML document`,
+      isVercelProtection ? "warning" : validStatus && hasDocument ? "healthy" : "critical",
+      isVercelProtection
+        ? "Vercel Deployment Protection login page detected; application route was not inspected"
+        : validStatus && hasDocument
+          ? `HTTP ${response.status}; HTML document detected`
+          : `Route returned HTTP ${response.status} or an incomplete HTML document`,
       {
         url,
         status: response.status,
@@ -92,7 +104,7 @@ async function checkRoute(route) {
       },
     );
 
-    if (!validStatus || !hasDocument) return;
+    if (!validStatus || !hasDocument || isVercelProtection) return;
 
     const assetFailures = [];
     for (const assetUrl of assets) {
@@ -129,6 +141,10 @@ async function checkRoute(route) {
 async function checkSecurityHeaders() {
   try {
     const { response } = await fetchWithTimeout(baseUrl);
+    const html = await response.text();
+    const title = html.match(/<title[^>]*>(.*?)<\/title>/is)?.[1]?.trim() ?? "";
+    const isVercelProtection = /login\s*[–—-]\s*vercel/i.test(title)
+      || /vercel\.com\/login|vercel authentication/i.test(html);
     const required = [
       "content-type",
       "x-content-type-options",
@@ -138,11 +154,13 @@ async function checkSecurityHeaders() {
 
     addCheck(
       "security:headers",
-      missing.length === 0 ? "healthy" : "warning",
-      missing.length === 0
-        ? "Baseline browser security headers are present"
-        : `Missing baseline headers: ${missing.join(", ")}`,
-      { missing },
+      isVercelProtection ? "warning" : missing.length === 0 ? "healthy" : "warning",
+      isVercelProtection
+        ? "Vercel Deployment Protection login page detected; application security headers were not inspected"
+        : missing.length === 0
+          ? "Baseline browser security headers are present"
+          : `Missing baseline headers: ${missing.join(", ")}`,
+      { missing, protectedByVercel: isVercelProtection },
     );
   } catch (error) {
     addCheck(
@@ -162,7 +180,7 @@ async function main() {
   const healthy = checks.filter((check) => check.status === "healthy").length;
 
   const report = {
-    version: "web-qa-v1",
+    version: "web-qa-v2",
     generatedAt: new Date().toISOString(),
     target: baseUrl,
     routes,

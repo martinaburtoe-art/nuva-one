@@ -12,7 +12,12 @@ import { ModuleGuard } from "@/components/module-guard";
 import { NuvaScoreCard } from "@/components/nuva-score-card";
 import { fmtCLP } from "@/lib/biz-data";
 import { goalsLabel } from "@/lib/resumen-goals";
-import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight } from "lucide-react";
+import { getResumenOperationalStatus, hasResumenActivity } from "@/lib/resumen-operational-status";
+import { buildResumenChartData } from "@/lib/resumen-chart-data";
+import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
+import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
+import { toast } from "sonner";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -25,68 +30,182 @@ function Dashboard() {
   const [onboardingFocus, setOnboardingFocus] = useState("Todo");
   const [seedingDemo, setSeedingDemo] = useState(false);
 
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const isoFrom = dmyToIso(dateFrom);
+  const isoTo = dmyToIso(dateTo);
+  const invalidDateRange = Boolean(
+    (dateFrom && !isoFrom) ||
+    (dateTo && !isoTo) ||
+    (isoFrom && isoTo && isoFrom > isoTo)
+  );
+  const chartWindowStart = useMemo(() => {
+    if (isoFrom) return isoFrom;
+    if (isoTo) return null; // Solo fecha final: incluir todo el histórico anterior.
+    const d = new Date();
+    d.setMonth(d.getMonth() - 5);
+    d.setDate(1);
+    // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, [isoFrom, isoTo]);
+  const dailyChart = Boolean(isoFrom && isoTo && Date.parse(isoTo) - Date.parse(isoFrom) <= 62 * 86_400_000);
+  const financialPeriodLabel = invalidDateRange
+    ? "Fechas por corregir"
+    : isoFrom || isoTo ? "Rango seleccionado" : "Últimos seis meses";
+
   useEffect(() => {
     try { setOnboardingFocus(localStorage.getItem("nuva.onboarding_goal") || "Todo"); }
     catch { setOnboardingFocus("Todo"); }
   }, []);
 
   const { data: kpis, error: kpisError } = useQuery({
-    enabled: !!active?.id,
-    queryKey: ["kpis", active?.id],
+    enabled: !!active?.id && !invalidDateRange,
+    queryKey: ["kpis", active?.id, chartWindowStart, isoTo, categories],
     queryFn: async () => {
       const bid = active!.id;
-      const [sales, expenses, products, salesCount] = await Promise.all([
-        supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "income"),
-        supabase.from("transactions").select("amount").eq("business_id", bid).eq("type", "expense"),
-        supabase.from("products").select("stock, price, low_stock_threshold, reorder_point").eq("business_id", bid),
-        supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", bid).neq("status", "cancelled"),
+      const [sales, expenses] = await Promise.all([
+        fetchAllResumenRows((from, to) => {
+          let query = supabase.from("transactions").select("id, amount").eq("business_id", bid).eq("type", "income");
+          if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
+          if (isoTo) query = query.lte("tx_date", isoTo);
+          if (categories.length > 0) query = query.in("category", categories);
+          return query.order("id").range(from, to);
+        }),
+        fetchAllResumenRows((from, to) => {
+          let query = supabase.from("transactions").select("id, amount").eq("business_id", bid).eq("type", "expense");
+          if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
+          if (isoTo) query = query.lte("tx_date", isoTo);
+          if (categories.length > 0) query = query.in("category", categories);
+          return query.order("id").range(from, to);
+        }),
       ]);
-      const income = (sales.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const expense = (expenses.data ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
-      const inventoryValue = (products.data ?? []).reduce((s, r: any) => s + Number(r.stock) * Number(r.price), 0);
-      const lowStockCount = (products.data ?? []).filter((r: any) => {
-        const stock = Number(r.stock ?? 0);
-        const threshold = Number(r.low_stock_threshold ?? r.reorder_point ?? 0);
-        return threshold > 0 && stock <= threshold;
-      }).length;
-      return { income, expense, net: income - expense, inventoryValue, salesCount: salesCount.count ?? 0, productsCount: (products.data ?? []).length, lowStockCount };
+      const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      return { income, expense, net: income - expense };
     },
   });
 
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
-  const isoFrom = dmyToIso(dateFrom);
-  const isoTo = dmyToIso(dateTo);
+  // Inventario y ventas son lecturas independientes del período financiero.
+  // Cambiar fechas/categorías no debe recargar el stock ni el conteo histórico.
+  const inventoryQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-inventory", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const products = await fetchAllResumenRows((from, to) =>
+        supabase.from("products").select("id, stock, cost, low_stock_threshold, reorder_point")
+          .eq("business_id", active!.id).order("id").range(from, to),
+      );
+      const lowStockCount = products.filter((product: any) => {
+        const stock = Number(product.stock ?? 0);
+        const threshold = Number(product.low_stock_threshold ?? product.reorder_point ?? 0);
+        return threshold > 0 && stock <= threshold;
+      }).length;
+      return {
+        inventoryValue: calculateInventoryValueAtCost(products),
+        productsCount: products.length,
+        lowStockCount,
+      };
+    },
+  });
 
-  const chartWindowStart = useMemo(() => {
-    if (isoFrom) return isoFrom;
-    const d = new Date();
-    d.setMonth(d.getMonth() - 5);
-    d.setDate(1);
-    // Fecha local (no UTC) para que el umbral del desplazamiento no se desplace un día
-    // según la hora en que se abra el dashboard en Chile (UTC-4).
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }, [isoFrom]);
+  const salesCountQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-sales-count", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { count, error } = await supabase.from("sales")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", active!.id)
+        .neq("status", "cancelled");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  // Cada módulo se consulta por separado: un fallo parcial no debe ocultar
+  // los datos válidos de los otros módulos del Resumen.
+  const quotesQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-quotes", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const data = await fetchAllResumenRows((from, to) =>
+        supabase.from("quotes").select("id,status,total")
+          .eq("business_id", active!.id).order("id").range(from, to),
+      );
+      const pending = data.filter((quote: any) =>
+        ["draft", "sent", "viewed"].includes(String(quote.status).toLowerCase()),
+      );
+      return {
+        count: pending.length,
+        totalCount: data.length,
+        value: pending.reduce((sum: number, quote: any) => sum + Number(quote.total ?? 0), 0),
+      };
+    },
+  });
+
+  const customersQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-customers", active?.id],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("customers")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", active!.id);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const cashRegisterQuery = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-cash-register", active?.id],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cash_registers")
+        .select("id,opened_at,opening_amount")
+        .eq("business_id", active!.id)
+        .eq("status", "open")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const integrations = {
+    pendingQuotes: quotesQuery.data?.count,
+    pendingQuoteValue: quotesQuery.data?.value,
+    customersCount: customersQuery.data,
+    cashRegister: cashRegisterQuery.data,
+  };
+  const integrationErrors = [
+    inventoryQuery.error,
+    salesCountQuery.error,
+    quotesQuery.error,
+    customersQuery.error,
+    cashRegisterQuery.error,
+  ].filter(Boolean);
 
   const { data: allTx, error: txError } = useQuery({
-    enabled: !!active?.id,
-    queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories],
+    enabled: !!active?.id && !invalidDateRange,
+    queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo],
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     queryFn: async () => {
-      let query = supabase
-        .from("transactions")
-        .select("amount, type, tx_date, category")
-        .eq("business_id", active!.id)
-        .gte("tx_date", chartWindowStart);
-
-      if (isoTo) query = query.lte("tx_date", isoTo);
-      if (categories.length > 0) query = query.in("category", categories);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data ?? [];
+      return fetchAllResumenRows((from, to) => {
+        let query = supabase
+          .from("transactions")
+          .select("id, amount, type, tx_date, category")
+          .eq("business_id", active!.id);
+        if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
+        if (isoTo) query = query.lte("tx_date", isoTo);
+        return query.order("id").range(from, to);
+      });
     },
   });
 
@@ -100,186 +219,301 @@ function Dashboard() {
   }, [allTx]);
 
 
-  const chartData = useMemo(() => {
-    const rows = (allTx ?? []).filter((r: any) => {
-      if (isoFrom && r.tx_date < isoFrom) return false;
-      if (isoTo && r.tx_date > isoTo) return false;
-      if (categories.length > 0 && !categories.includes(r.category)) return false;
-      return true;
-    });
-    if (isoFrom || isoTo) {
-      const byDay: Record<string, { fecha: string; ingresos: number; gastos: number }> = {};
-      rows.forEach((r: any) => {
-        const key = r.tx_date;
-        if (!byDay[key]) byDay[key] = { fecha: new Date(key + "T00:00:00").toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }), ingresos: 0, gastos: 0 };
-        if (r.type === "income") byDay[key].ingresos += Number(r.amount); else byDay[key].gastos += Number(r.amount);
-      });
-      return Object.keys(byDay).sort().map((k) => byDay[k]);
-    }
-    const byMonth: Record<string, { mes: string; ingresos: number; gastos: number }> = {};
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      byMonth[`${d.getFullYear()}-${d.getMonth()}`] = { mes: d.toLocaleDateString("es-CL", { month: "short" }), ingresos: 0, gastos: 0 };
-    }
-    rows.forEach((r: any) => {
-      // Fecha local (no UTC): "2026-08-01" no debe agruparse bajo julio en UTC-4.
-      const [y, m] = r.tx_date.split("-").map(Number);
-      const key = `${y}-${m - 1}`;
-      if (byMonth[key]) { if (r.type === "income") byMonth[key].ingresos += Number(r.amount); else byMonth[key].gastos += Number(r.amount); }
-    });
-    return Object.values(byMonth);
-  }, [allTx, isoFrom, isoTo, categories]);
+  const chartData = useMemo(
+    () => buildResumenChartData(allTx ?? [], {
+      from: isoFrom,
+      to: isoTo,
+      categories,
+      daily: dailyChart,
+    }),
+    [allTx, isoFrom, isoTo, categories, dailyChart],
+  );
 
-  const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/crm" } : { label: "Completa tu primera operación", href: "/sales" };
-  const hasActivity = (kpis?.productsCount ?? 0) > 0 || (kpis?.salesCount ?? 0) > 0;
+  const hasChartActivity = chartData.some((row) => row.ingresos > 0 || row.gastos > 0);
+  const incomeForMix = Math.max(0, Number(kpis?.income ?? 0));
+  const expenseForMix = Math.max(0, Number(kpis?.expense ?? 0));
+  const totalFinancialMovement = incomeForMix + expenseForMix;
+  const incomeMixPercent = totalFinancialMovement > 0 ? Math.round((incomeForMix / totalFinancialMovement) * 100) : 0;
+  const expenseMixPercent = totalFinancialMovement > 0 ? 100 - incomeMixPercent : 0;
+
+  const focusAction = onboardingFocus === "sales" ? { label: "Registra tu primera venta", href: "/pos" } : onboardingFocus === "inventory" ? { label: "Carga tus primeros productos", href: "/inventory" } : onboardingFocus === "finance" ? { label: "Registra tu primer movimiento", href: "/finance" } : onboardingFocus === "customers" ? { label: "Crea tu primer cliente", href: "/customers" } : { label: "Completa tu primera operación", href: "/sales" };
+  const hasActivity = hasResumenActivity({
+    productsCount: inventoryQuery.data?.productsCount,
+    salesCount: salesCountQuery.data,
+    income: kpis?.income,
+    expense: kpis?.expense,
+    quotesCount: quotesQuery.data?.totalCount,
+    customersCount: customersQuery.data,
+    cashRegisterOpen: Boolean(cashRegisterQuery.data),
+  });
+  const primaryDataReady =
+    kpis !== undefined &&
+    !kpisError &&
+    inventoryQuery.data !== undefined &&
+    !inventoryQuery.isError &&
+    salesCountQuery.data !== undefined &&
+    !salesCountQuery.isError &&
+    quotesQuery.data !== undefined &&
+    !quotesQuery.isError &&
+    customersQuery.data !== undefined &&
+    !customersQuery.isError &&
+    cashRegisterQuery.isFetched &&
+    !cashRegisterQuery.isError;
   async function loadDemoBusiness() {
+    const confirmed = window.confirm("Se creará un negocio de demostración y pasará a ser el negocio activo. Tu negocio actual no se modifica. ¿Quieres continuar?");
+    if (!confirmed) return;
     setSeedingDemo(true);
     try {
       const { data, error } = await supabase.rpc("create_demo_business_for_current_user");
       if (error) throw error;
       localStorage.setItem("novaflow.active_business_id", data);
       window.location.assign("/dashboard");
-    } catch (error: any) {
-      console.error(error);
+    } catch (error: unknown) {
+      console.error("No se pudo preparar el negocio de demostración", error);
+      toast.error("No pudimos preparar el espacio de demostración");
     } finally {
       setSeedingDemo(false);
     }
   }
-  const attentionCount = (kpis?.lowStockCount ?? 0) + ((kpis?.net ?? 0) < 0 ? 1 : 0);
+  const operationalStatus = getResumenOperationalStatus({
+    hasBusiness: Boolean(active?.id),
+    invalidDateRange,
+    loading: !invalidDateRange && (
+      (kpis === undefined && !kpisError) ||
+      (inventoryQuery.data === undefined && !inventoryQuery.isError) ||
+      (salesCountQuery.data === undefined && !salesCountQuery.isError) ||
+      (quotesQuery.data === undefined && !quotesQuery.isError) ||
+      (customersQuery.data === undefined && !customersQuery.isError) ||
+      (!cashRegisterQuery.isFetched && !cashRegisterQuery.isError)
+    ),
+    kpisError: Boolean(kpisError),
+    integrationErrorCount: integrationErrors.length,
+    lowStockCount: inventoryQuery.data?.lowStockCount ?? 0,
+    net: kpis?.net,
+  });
 
   return (
     <ModuleGuard module="dashboard">
       <main className="nuva-resumen-canvas">
-        <div className="nuva-resumen-ambient-word" aria-hidden="true">Resumen</div>
         <header className="nuva-resumen-header">
-          <div className="nuva-resumen-brandline">
-            <span className="nuva-resumen-wordmark">nüva<span>one</span></span>
-            <span className="nuva-resumen-breadcrumb">/ TU NEGOCIO</span>
-            <span className="nuva-resumen-live"><i /> PANEL EJECUTIVO</span>
-          </div>
           <div className="nuva-resumen-heading">
             <div>
-              <p className="nuva-resumen-overline">UNA VISIÓN MÁS CLARA</p>
-              <h1>Todo en equilibrio.</h1>
-              <p className="nuva-resumen-subtitle">El estado de tu negocio, con la claridad que necesitas para avanzar.</p>
+              <p className="nuva-resumen-overline">VISTA GENERAL <span aria-hidden="true">/</span> NEGOCIO</p>
+              <h1>Resumen</h1>
+              <p className="nuva-resumen-subtitle">Una lectura clara de tus operaciones, resultados y próximos focos de atención.</p>
             </div>
-            <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
-              {seedingDemo ? "Preparando…" : "Explorar demo"}
-            </Button>
+            {!hasActivity && <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
+              {seedingDemo ? "Preparando demo…" : "Crear espacio demo"}
+            </Button>}
           </div>
         </header>
 
-        {kpis === undefined && !kpisError && !txError && (
-          <div className="nuva-resumen-onboarding nuva-resumen-loading">
-            <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><span className="animate-pulse" /></span>
-              <h2>Cargando indicadores del negocio</h2>
-              <p>Obteniendo los datos de tu panel ejecutivo. Un momento.</p>
+        <section className="nuva-resumen-hero" aria-label="Resultado financiero del período">
+          <div className="nuva-resumen-hero-main">
+            <div className="nuva-resumen-hero-kicker"><span className="nuva-resumen-hero-spark" aria-hidden="true" /> LECTURA EJECUTIVA <span aria-hidden="true">·</span> {financialPeriodLabel}</div>
+            <h2>Resultado del período</h2>
+            <p>Ingresos registrados menos gastos registrados</p>
+            <strong className={kpis && kpis.net < 0 ? "is-negative" : "is-positive"}>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
+            <span className="nuva-resumen-hero-caption">{kpisError ? "No disponible: revisa la conexión de indicadores" : kpis ? (kpis.net < 0 ? "El período registra más gastos que ingresos" : "Resultado calculado con tus movimientos registrados") : "Calculando el resultado con tus movimientos…"}</span>
+          </div>
+          <div className="nuva-resumen-hero-side">
+            <div className="nuva-resumen-hero-status"><span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-dot is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-dot is-attention" : "nuva-resumen-status-dot"} />{operationalStatus.label}</div>
+            <div className="nuva-resumen-hero-breakdown">
+              <div><span>Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
+              <div><span>Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
             </div>
+            {kpis && totalFinancialMovement > 0 && (
+              <div className="nuva-resumen-financial-mix" aria-label={`Distribución de movimientos: ${incomeMixPercent}% ingresos y ${expenseMixPercent}% gastos`}>
+                <div className="nuva-resumen-financial-mix-label"><span>Composición de movimientos</span><strong>{incomeMixPercent}% / {expenseMixPercent}%</strong></div>
+                <div className="nuva-resumen-financial-mix-track" role="img" aria-label={`Ingresos ${incomeMixPercent} por ciento, gastos ${expenseMixPercent} por ciento`}>
+                  <span className="nuva-resumen-financial-mix-income" style={{ width: `${incomeMixPercent}%` }} />
+                  <span className="nuva-resumen-financial-mix-expense" style={{ width: `${expenseMixPercent}%` }} />
+                </div>
+                <div className="nuva-resumen-financial-mix-legend"><span><i className="is-income" />Ingresos</span><span><i className="is-expense" />Gastos</span></div>
+              </div>
+            )}
+            <Link to="/finance" className="nuva-resumen-hero-link">Ver detalle financiero <ArrowUpRight className="h-4 w-4" /></Link>
+          </div>
+        </section>
+
+        <section className="nuva-resumen-mobile-brief" aria-label="Pulso del negocio">
+          <div className="nuva-resumen-mobile-brief-head">
+            <span className="nuva-resumen-section-label">PULSO OPERATIVO</span>
+            <span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-pill is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-pill is-attention" : "nuva-resumen-status-pill"}>{operationalStatus.label}</span>
+          </div>
+          <div className="nuva-resumen-mobile-brief-grid">
+            <Link to="/sales" className="nuva-resumen-mobile-brief-item"><span>Ventas</span><strong>{salesCountQuery.data ?? "—"}</strong><small>registradas</small></Link>
+            <Link to="/inventory" className="nuva-resumen-mobile-brief-item"><span>Stock bajo</span><strong className={inventoryQuery.data?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{inventoryQuery.data?.lowStockCount ?? "—"}</strong><small>por revisar</small></Link>
+            <Link to="/pos" className="nuva-resumen-mobile-brief-item"><span>Caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "N/D" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong><small>estado actual</small></Link>
+          </div>
+        </section>
+
+        <div className="nuva-resumen-toolbar" aria-label="Filtros del resumen">
+          <div className="nuva-resumen-toolbar-context">
+            <span className="nuva-resumen-section-label">PERÍODO Y CATEGORÍA</span>
+            <strong>{financialPeriodLabel}</strong>
+            <p>Los indicadores financieros y el gráfico comparten estos filtros.</p>
+          </div>
+          <div className="nuva-resumen-filters">
+            <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+            <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
+          </div>
+        </div>
+
+        {invalidDateRange && (
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div>
+              <strong>Revisa el período seleccionado</strong>
+              <p>Ingresa fechas reales en formato día-mes-año y comprueba que la fecha inicial no sea posterior a la final.</p>
+            </div>
+          </div>
+        )}
+
+        {kpis === undefined && !kpisError && !txError && !invalidDateRange && (
+          <div className="nuva-resumen-feedback" role="status">
+            <span className="nuva-resumen-feedback-mark" />
+            <div><strong>Cargando información del negocio</strong><p>Estamos reuniendo tus indicadores y movimientos.</p></div>
           </div>
         )}
 
         {kpisError && (
-          <div role="alert" className="nuva-resumen-onboarding">
-            <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR INDICADORES</span>
-              <h2>No se pudieron cargar los indicadores del negocio</h2>
-              <p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p>
-              <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
-            </div>
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div><strong>No se pudieron cargar los indicadores</strong><p>{String(kpisError?.message ?? kpisError ?? "Error desconocido")}</p></div>
+            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["kpis", active?.id] })}>Reintentar</Button>
           </div>
         )}
 
         {txError && (
-          <div role="alert" className="nuva-resumen-onboarding">
-            <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><ShieldAlert className="h-4 w-4" /> ERROR AL CARGAR MOVIMIENTOS</span>
-              <h2>No se pudo cargar el historial de transacciones</h2>
-              <p>{String(txError?.message ?? txError ?? "Error desconocido")}</p>
-              <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo, categories] })}>Reintentar</Button>
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div><strong>No se pudieron cargar los movimientos</strong><p>{String(txError?.message ?? txError ?? "Error desconocido")}</p></div>
+            <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo] })}>Reintentar</Button>
+          </div>
+        )}
+
+        {integrationErrors.length > 0 && (
+          <div role="alert" className="nuva-resumen-feedback nuva-resumen-feedback-error">
+            <ShieldAlert className="h-5 w-5" />
+            <div>
+              <strong>Algunos indicadores no están disponibles</strong>
+              <p>{integrationErrors.map((error: any) => String(error?.message ?? "Error desconocido")).join(" · ")}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {inventoryQuery.isError && <Button size="sm" variant="outline" onClick={() => void inventoryQuery.refetch()}>Reintentar inventario</Button>}
+              {salesCountQuery.isError && <Button size="sm" variant="outline" onClick={() => void salesCountQuery.refetch()}>Reintentar ventas</Button>}
+              {quotesQuery.isError && <Button size="sm" variant="outline" onClick={() => void quotesQuery.refetch()}>Reintentar cotizaciones</Button>}
+              {customersQuery.isError && <Button size="sm" variant="outline" onClick={() => void customersQuery.refetch()}>Reintentar clientes</Button>}
+              {cashRegisterQuery.isError && <Button size="sm" variant="outline" onClick={() => void cashRegisterQuery.refetch()}>Reintentar caja</Button>}
             </div>
           </div>
         )}
 
-        {kpis !== undefined && !hasActivity && (
-          <Card className="nuva-resumen-onboarding">
+        {primaryDataReady && !hasActivity && (
+          <section className="nuva-resumen-onboarding">
             <div className="nuva-resumen-onboarding-copy">
-              <span className="nuva-resumen-section-label"><Sparkles className="h-4 w-4" /> PRIMEROS PASOS</span>
-              <h2>Tu espacio está listo.</h2>
-              <p>Comienza con {goalsLabel(onboardingFocus).toLowerCase()} y convierte tus operaciones en una visión clara del negocio.</p>
+              <span className="nuva-resumen-section-label"><Sparkles className="h-4 w-4" /> CONFIGURACIÓN INICIAL</span>
+              <h2>Tu espacio está listo para empezar.</h2>
+              <p>Comienza con {goalsLabel(onboardingFocus).toLowerCase()} y convierte tus operaciones en información útil para decidir.</p>
               <Link to={focusAction.href}><Button size="sm">{focusAction.label}<ArrowUpRight className="ml-1 h-4 w-4" /></Button></Link>
             </div>
-            <div className="nuva-resumen-steps"><ActivationStep done title="Negocio creado" /><ActivationStep done={hasActivity} title="Primera operación" /><ActivationStep done={(kpis?.productsCount ?? 0) > 0 && (kpis?.salesCount ?? 0) > 0} title="Datos conectados" /><ActivationStep done={false} title="Primer análisis" /></div>
-          </Card>
+            <div className="nuva-resumen-steps">
+              <ActivationStep done title="Negocio creado" />
+              <ActivationStep done={hasActivity} title="Primera operación" />
+              <ActivationStep done={(inventoryQuery.data?.productsCount ?? 0) > 0 && (salesCountQuery.data ?? 0) > 0} title="Datos conectados" />
+              <ActivationStep done={false} title="Primer análisis" />
+            </div>
+          </section>
         )}
 
-        <section className="nuva-resumen-device-stage" aria-label="Panel ejecutivo de negocio">
-          <article className="nuva-resumen-device nuva-resumen-device-main">
-            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">TU NEGOCIO, EN EQUILIBRIO</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-main-intro"><p>PANEL EJECUTIVO</p><h2>Todo en equilibrio.</h2><span>Una mirada clara a tu negocio.</span></div>
-            <div className="nuva-resumen-balance-card">
-              <div className="nuva-resumen-balance-label"><span>RESULTADO DEL NEGOCIO</span><span className="nuva-resumen-balance-mark">↗</span></div>
-              <strong>{kpis ? fmtCLP(kpis.net) : "—"}</strong>
-              <p className={kpis && kpis.net < 0 ? "nuva-resumen-negative" : "nuva-resumen-positive"}>{kpis && kpis.net < 0 ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}{kpis && kpis.net < 0 ? "Requiere atención" : "Resultado acumulado"}</p>
-              <svg className="nuva-resumen-balance-sparkline" viewBox="0 0 220 49" fill="none" aria-hidden="true"><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M0 41 C25 40 28 26 49 30 S73 42 91 25 S123 7 141 24 S171 30 188 12 S207 11 220 3 V49 H0Z" fill="currentColor" opacity=".08"/></svg>
-            </div>
-            <div className="nuva-resumen-device-money-grid">
-              <div><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong></div>
-              <div><span><i className="nuva-resumen-dot-indigo" /> Gastos</span><strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong></div>
-            </div>
-            <div className="nuva-resumen-device-portfolio"><span className="nuva-resumen-portfolio-icon"><Package className="h-4 w-4" /></span><span><small>VALOR ESTIMADO DE INVENTARIO</small><strong>{kpis ? fmtCLP(kpis.inventoryValue) : "—"}</strong></span><ArrowUpRight className="h-4 w-4" /></div>
-            <div className="nuva-resumen-status-card">
-              {kpis === undefined ? (
-                <>
-                  <span className="nuva-resumen-status-symbol"><i className="nuva-resumen-dot-gold" /></span>
-                  <div><strong>—</strong><p>Esperando datos del negocio…</p></div>
-                </>
-              ) : (
-                <>
-                  <span className="nuva-resumen-status-symbol">{attentionCount === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}</span>
-                  <div><strong>{attentionCount === 0 ? "Todo en orden" : `${attentionCount} indicadores por revisar`}</strong><p>{attentionCount === 0 ? "Sin alertas prioritarias en los datos disponibles." : `${kpis?.lowStockCount ?? 0} alertas de stock; revisa tus movimientos.`}</p></div>
-                </>
-              )}
-              <i className="nuva-resumen-status-light" />
-            </div>
-                      </article>
-
-          <article className="nuva-resumen-device nuva-resumen-device-operations">
-            <div className="nuva-resumen-device-topline"><span className="nuva-resumen-avatar">nü</span><span className="nuva-resumen-device-kicker">CENTRO DE OPERACIONES</span><span className="nuva-resumen-notification">⌁</span></div>
-            <div className="nuva-resumen-device-title"><span>Tu negocio</span><small>ACCESOS Y ACTIVIDAD</small></div>
-            <div className="nuva-resumen-device-money-grid">
-              <div><span><i className="nuva-resumen-dot-gold" /> Ventas</span><strong>{kpis?.salesCount ?? "—"}</strong></div>
-              <div><span><i className="nuva-resumen-dot-indigo" /> Stock bajo</span><strong>{kpis?.lowStockCount ?? "—"}</strong></div>
-            </div>
-            <div className="nuva-resumen-operation-list">
-              <p className="nuva-resumen-section-label">CONTINUAR TRABAJANDO</p>
-              <Link to="/sales"><span className="nuva-resumen-operation-icon"><ShoppingBag className="h-4 w-4" /></span><span><strong>Ventas y operaciones</strong><small>Registros y actividad</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-              <Link to="/inventory"><span className="nuva-resumen-operation-icon"><Package className="h-4 w-4" /></span><span><strong>Inventario y stock</strong><small>Productos y existencias</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-              <Link to="/quotes"><span className="nuva-resumen-operation-icon"><Plus className="h-4 w-4" /></span><span><strong>Cotizaciones</strong><small>Propuestas comerciales</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-              <Link to="/finance"><span className="nuva-resumen-operation-icon"><TrendingUp className="h-4 w-4" /></span><span><strong>Finanzas</strong><small>Movimientos y resultados</small></span><ArrowUpRight className="h-4 w-4" /></Link>
-            </div>
-            <div className="nuva-resumen-device-footer-note"><CheckCircle2 className="h-3.5 w-3.5" /> Tus accesos directos están disponibles.</div>
-                      </article>
+        <section className="nuva-resumen-kpi-grid" aria-label="Indicadores principales">
+          <article className="nuva-resumen-kpi">
+            <div className="nuva-resumen-kpi-top"><span>INGRESOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
+            <p>{financialPeriodLabel}</p>
+          </article>
+          <article className="nuva-resumen-kpi">
+            <div className="nuva-resumen-kpi-top"><span>GASTOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
+            <strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong>
+            <p>{financialPeriodLabel}</p>
+          </article>
+          <article className="nuva-resumen-kpi">
+            <div className="nuva-resumen-kpi-top"><span>INVENTARIO AL COSTO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
+            <strong>{inventoryQuery.data ? fmtCLP(inventoryQuery.data.inventoryValue) : "—"}</strong>
+            <p>{inventoryQuery.data?.productsCount ?? "—"} productos registrados</p>
+          </article>
         </section>
 
-        <section className="nuva-resumen-chart-section" aria-label="Rendimiento financiero">
-          <div className="nuva-resumen-filters nuva-resumen-device-filters">
-            <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-            <MultiSelectFilter label="Categoría" options={categoryOptions} selected={categories} onChange={setCategories} />
-          </div>
-          <div className="nuva-resumen-device-chart" role="img" aria-label="Gráfico de ingresos y gastos del negocio">
-            <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}><DashboardChart data={chartData ?? []} filtered={Boolean(isoFrom || isoTo)} /></Suspense>
-          </div>
-          <div className="nuva-resumen-chart-legend">
-            <span><i className="nuva-resumen-dot-gold" /> Ingresos</span>
-            <span><i className="nuva-resumen-dot-indigo" /> Gastos</span>
-          </div>
+        <section className="nuva-resumen-workspace-grid">
+          <article className="nuva-resumen-panel nuva-resumen-operations-panel">
+            <div className="nuva-resumen-panel-heading">
+              <div><p className="nuva-resumen-section-label">SEGUIMIENTO</p><h2>Estado operativo</h2></div>
+              <span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-pill is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-pill is-attention" : "nuva-resumen-status-pill"}>{operationalStatus.label}</span>
+            </div>
+            <div className="nuva-resumen-operational-stats">
+              <div data-metric="sales"><span>Ventas registradas</span><strong>{salesCountQuery.data ?? "—"}</strong></div>
+              <div data-metric="low-stock"><span>Productos con stock bajo</span><strong className={inventoryQuery.data?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{inventoryQuery.data?.lowStockCount ?? "—"}</strong></div>
+              <div data-metric="open-quotes"><span>Cotizaciones abiertas</span><strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "—" : integrations.pendingQuotes ?? 0}</strong></div>
+              <div data-metric="customers"><span>Clientes registrados</span><strong>{customersQuery.isLoading ? "—" : customersQuery.isError ? "—" : integrations.customersCount ?? 0}</strong></div>
+              <div data-metric="cash-register"><span>Estado de caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "No disponible" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
+              <div data-metric="quote-value"><span>Valor cotizado</span><strong>{quotesQuery.isLoading || quotesQuery.isError ? "—" : fmtCLP(integrations.pendingQuoteValue ?? 0)}</strong></div>
+            </div>
+            <div className="nuva-resumen-status-copy">
+              {operationalStatus.description}
+            </div>
+          </article>
+
+          <article className="nuva-resumen-panel nuva-resumen-shortcuts-panel">
+            <div className="nuva-resumen-panel-heading"><div><p className="nuva-resumen-section-label">ACCESO DIRECTO</p><h2>Continúa tu trabajo</h2></div></div>
+            <nav className="nuva-resumen-shortcuts" aria-label="Accesos directos">
+              <Link to="/pos"><span><ShoppingBag className="h-4 w-4" /></span><strong>Caja</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/sales"><span><TrendingUp className="h-4 w-4" /></span><strong>Ventas</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/inventory"><span><Package className="h-4 w-4" /></span><strong>Inventario</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/quotes"><span><FileText className="h-4 w-4" /></span><strong>Cotizaciones</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/customers"><span><Users className="h-4 w-4" /></span><strong>Clientes</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/finance"><span><Wallet className="h-4 w-4" /></span><strong>Finanzas</strong><ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            </nav>
+          </article>
         </section>
 
-        <section className="nuva-resumen-refine-row"><div><p className="nuva-resumen-section-label">LECTURA FINANCIERA</p><h2>Explora tus movimientos</h2><p>Los filtros del gráfico permiten revisar períodos y categorías específicas.</p></div></section>
-        <section className="nuva-resumen-score-section"><div><p className="nuva-resumen-section-label">INTELIGENCIA DE NEGOCIO</p><h2>Salud de tu empresa</h2><p>Indicadores complementarios para tomar mejores decisiones.</p></div><div className="nuva-resumen-score-card"><NuvaScoreCard /></div></section>
-        <footer className="nuva-resumen-footer"><span>NÜVA ONE <span>·</span> CONTROL DE NEGOCIO</span><span>Los indicadores reflejan los movimientos registrados en tu cuenta.</span></footer>
+        <section className="nuva-resumen-panel nuva-resumen-chart-panel" aria-label="Rendimiento financiero">
+          <div className="nuva-resumen-panel-heading nuva-resumen-chart-heading">
+            <div><p className="nuva-resumen-section-label">EVOLUCIÓN FINANCIERA</p><h2>Ingresos y gastos</h2><p>Comparación de movimientos dentro del contexto seleccionado arriba.</p></div>
+          </div>
+          <div className="nuva-resumen-device-chart" role="region" aria-label="Gráfico de ingresos y gastos del negocio">
+            {invalidDateRange ? (
+              <div className="nuva-resumen-chart-empty" role="status">
+                <strong>Corrige el período para consultar el gráfico</strong>
+                <p>Los movimientos se mostrarán cuando las fechas seleccionadas sean válidas.</p>
+              </div>
+            ) : txError ? (
+              <div className="nuva-resumen-chart-empty" role="alert">
+                <strong>No se pudo cargar el gráfico</strong>
+                <p>Comprueba la conexión e inténtalo nuevamente desde el aviso de movimientos.</p>
+              </div>
+            ) : hasChartActivity ? (
+              <Suspense fallback={<div className="nuva-resumen-chart-loading" role="status" aria-label="Cargando gráfico" />}>
+                <DashboardChart data={chartData} filtered={dailyChart} />
+              </Suspense>
+            ) : (
+              <div className="nuva-resumen-chart-empty" role="status">
+                <span className="nuva-resumen-chart-empty-icon"><TrendingUp className="h-5 w-5" /></span>
+                <strong>No hay movimientos para mostrar</strong>
+                <p>Cuando registres ingresos o gastos dentro del período seleccionado, aparecerán aquí.</p>
+                <Link to="/finance">Ir a finanzas <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+              </div>
+            )}
+          </div>
+          <div className="nuva-resumen-chart-legend"><span><i className="nuva-resumen-dot-gold" /> Ingresos</span><span><i className="nuva-resumen-dot-indigo" /> Gastos</span></div>
+        </section>
+
+        <section className="nuva-resumen-score-section">
+          <div><p className="nuva-resumen-section-label">INTELIGENCIA DE NEGOCIO</p><h2>Salud de tu empresa</h2><p>Indicadores complementarios para entender el estado general de tu negocio.</p></div>
+          <div className="nuva-resumen-score-card"><NuvaScoreCard /></div>
+        </section>
+
+        <footer className="nuva-resumen-footer"><span>NÜVA ONE <span>·</span> RESUMEN</span><span>Indicadores calculados a partir de los movimientos registrados en tu negocio.</span></footer>
       </main>
     </ModuleGuard>
   );

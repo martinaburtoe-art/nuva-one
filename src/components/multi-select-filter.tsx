@@ -21,7 +21,7 @@ export function MultiSelectFilter({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="justify-between">
+        <Button variant="outline" size="sm" className="nuva-category-filter w-full justify-between">
           {label}
           {selected.length > 0 && (
             <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 text-xs text-primary">

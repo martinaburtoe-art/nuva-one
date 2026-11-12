@@ -92,7 +92,7 @@ const statusLabel: Record<string, { l: string; c: string }> = {
 const stageLabel: Record<Customer["pipeline_stage"], { l: string; c: string }> = {
   new: { l: "Nuevo", c: "bg-muted text-muted-foreground" },
   contacted: { l: "Contactado", c: "bg-blue-500/15 text-blue-600" },
-  qualified: { l: "Calificado", c: "bg-purple-500/15 text-purple-600" },
+  qualified: { l: "Calificado", c: "bg-primary/10 text-primary" },
   proposal: { l: "Propuesta", c: "bg-warning/15 text-warning" },
   won: { l: "Ganado", c: "bg-success/15 text-success" },
   lost: { l: "Perdido", c: "bg-destructive/15 text-destructive" },
@@ -114,14 +114,14 @@ function Customers() {
   const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
   const searchTerm = search.trim().replace(/[(),]/g, " ");
   const customerOr = searchTerm ? `name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,tax_id.ilike.%${searchTerm}%` : undefined;
-  const { data: customerPageData, isLoading } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });
+  const { data: customerPageData, isLoading, isError, refetch } = useBizPage<Customer>("customers", { page: customerPage, pageSize: 25, order: "name", ascending: true, or: customerOr, eq: statusFilter === "all" ? undefined : { status: statusFilter } });
   const data = customerPageData?.rows ?? [];
   const { data: allCount = 0 } = useBizCount("customers");
   const { data: leadCount = 0 } = useBizCount("customers", { eq: { status: "lead" } });
   const { data: activeCount = 0 } = useBizCount("customers", { eq: { status: "active" } });
   const { data: inactiveCount = 0 } = useBizCount("customers", { eq: { status: "inactive" } });
   const counts = { all: allCount, lead: leadCount, active: activeCount, inactive: inactiveCount };
-  const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total" });
+  const { data: sales } = useBizList<any>("sales", { order: "sale_date", select: "id,customer_id,sale_date,total,status" });
   const { data: quotes } = useBizList<any>("quotes", { order: "created_at", select: "id,customer_id,created_at,status,total" });
   const { data: activities } = useBizList<Activity>("customer_activities", {
     order: "created_at",
@@ -150,7 +150,9 @@ function Customers() {
   const statsByCustomer = useMemo(() => {
     const map = new Map<string, { total: number; count: number; last: string | null }>();
     for (const s of sales ?? []) {
-      if (!s.customer_id) continue;
+      // El valor de vida del cliente representa ventas efectivamente pagadas,
+      // no cotizaciones cobrables, pendientes ni ventas anuladas.
+      if (!s.customer_id || s.status !== "paid") continue;
       const prev = map.get(s.customer_id) ?? { total: 0, count: 0, last: null };
       prev.total += Number(s.total) || 0;
       prev.count += 1;
@@ -275,7 +277,7 @@ function Customers() {
                       <Plus className="mr-1.5 h-4 w-4" /> Nuevo cliente
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-h-[min(90dvh,900px)] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editing ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
                     </DialogHeader>
@@ -412,6 +414,11 @@ function Customers() {
             <Skeleton className="h-14 w-full" />
             <Skeleton className="h-14 w-full" />
           </div>
+        ) : isError ? (
+          <div role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm">
+            <p>No se pudo cargar la cartera de clientes. No mostraremos el error como si la empresa no tuviera clientes.</p>
+            <Button className="mt-3" size="sm" variant="outline" onClick={() => void refetch()}>Reintentar</Button>
+          </div>
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Users}
@@ -427,81 +434,33 @@ function Customers() {
               </div>
               <Users className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Etapa</TableHead>
-                  <TableHead className="text-right">Total comprado</TableHead>
-                  <TableHead className="text-right">Última compra</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((c) => {
-                  const stats = statsByCustomer.get(c.id);
-                  return (
-                    <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
-                      <TableCell className="font-medium">
-                        {c.name}
-                        {c.tags?.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {c.tags.map((t) => (
-                              <Badge key={t} variant="secondary" className="text-[10px]">
-                                {t}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {c.phone || c.email || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}
-                        >
-                          {statusLabel[c.status].l}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}
-                        >
-                          {stageLabel[c.pipeline_stage ?? "new"].l}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">{fmtCLP(stats?.total ?? 0)}</TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">
-                        {stats?.last ? new Date(stats.last).toLocaleDateString("es-CL") : "—"}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        {canWrite && (
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                if (confirm(`¿Eliminar a ${c.name}?`)) del.mutate(c.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            </div>
+            <div className="space-y-3 p-3 sm:hidden">{filtered.map((c) => {
+              const stats = statsByCustomer.get(c.id);
+              return <article key={c.id} className="rounded-xl border bg-card p-3">
+                <button type="button" className="w-full text-left" onClick={() => setDetail(c)}>
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{c.name}</p><p className="mt-1 truncate text-xs text-muted-foreground">{c.phone || c.email || "Sin contacto"}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span></div>
+                  {c.tags?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{c.tags.map((tag) => <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>)}</div>}
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm"><div><p className="text-xs text-muted-foreground">Etapa comercial</p><p className="font-medium">{stageLabel[c.pipeline_stage ?? "new"].l}</p></div><div><p className="text-xs text-muted-foreground">Total comprado</p><p className="font-semibold tabular-nums">{fmtCLP(stats?.total ?? 0)}</p></div></div>
+                  <p className="mt-2 text-xs text-muted-foreground">Última compra: {stats?.last ? new Date(stats.last).toLocaleDateString("es-CL") : "—"}</p>
+                </button>
+                {canWrite && <div className="mt-3 flex gap-2 border-t pt-3"><Button className="h-11 flex-1" variant="outline" onClick={() => openEdit(c)}><Pencil className="mr-2 h-4 w-4" />Editar</Button><Button className="h-11" variant="outline" onClick={() => { if (confirm(`¿Eliminar a ${c.name}?`)) del.mutate(c.id); }} aria-label={`Eliminar a ${c.name}`}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>}
+              </article>;
+            })}</div>
+            <div className="hidden overflow-x-auto sm:block"><Table>
+              <TableHeader><TableRow><TableHead>Nombre</TableHead><TableHead>Contacto</TableHead><TableHead>Estado</TableHead><TableHead>Etapa</TableHead><TableHead className="text-right">Total comprado</TableHead><TableHead className="text-right">Última compra</TableHead><TableHead className="w-10" /></TableRow></TableHeader>
+              <TableBody>{filtered.map((c) => {
+                const stats = statsByCustomer.get(c.id);
+                return <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
+                  <TableCell className="font-medium">{c.name}{c.tags?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{c.tags.map((tag) => <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>)}</div>}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{c.phone || c.email || "—"}</TableCell>
+                  <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span></TableCell>
+                  <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}>{stageLabel[c.pipeline_stage ?? "new"].l}</span></TableCell>
+                  <TableCell className="text-right">{fmtCLP(stats?.total ?? 0)}</TableCell>
+                  <TableCell className="text-right text-sm text-muted-foreground">{stats?.last ? new Date(stats.last).toLocaleDateString("es-CL") : "—"}</TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>{canWrite && <div className="flex gap-1"><Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label={`Editar ${c.name}`}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => { if (confirm(`¿Eliminar a ${c.name}?`)) del.mutate(c.id); }} aria-label={`Eliminar ${c.name}`}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>}</TableCell>
+                </TableRow>;
+              })}</TableBody>
+            </Table></div>
             {customerPageData && customerPageData.pageCount > 1 && (
               <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-muted-foreground">
                 <span>Página {customerPageData.page} de {customerPageData.pageCount}</span>

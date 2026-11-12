@@ -129,7 +129,7 @@ export function GlobalSearch({ visibleNav }: { visibleNav?: readonly { to: strin
             online ? "Abrir búsqueda y acciones rápidas" : "Abrir acciones rápidas sin conexión"
           }
           onClick={() => setOpen(true)}
-          className="fixed bottom-[4.5rem] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-background shadow-lg ring-1 ring-black/5 md:hidden"
+          className="fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom))] left-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-background shadow-lg ring-1 ring-black/5 md:hidden"
         >
           <ScanBarcode className="h-5 w-5 text-primary" aria-hidden="true" />
           {!online && (

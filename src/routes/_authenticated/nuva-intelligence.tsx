@@ -23,13 +23,13 @@ const views: Array<{ id: View; title: string; description: string; info: string 
 
 function NuvaIntelligence() {
   const [activeView, setActiveView] = useState<View | null>(null);
-  const { data: sales } = useBizList<any>("sales", { order: "sale_date" });
-  const { data: transactions } = useBizList<any>("transactions", { order: "tx_date" });
-  const { data: products } = useBizList<any>("products", { order: "name" });
-  const { data: quotes } = useBizList<any>("quotes", { order: "created_at" });
-  const { data: activities } = useBizList<any>("customer_activities", { order: "created_at" });
-  const { data: councilMemory } = useBizList<any>("nuva_business_memory", { order: "created_at" });
-  const { data: actionQueue } = useBizList<any>("nuva_action_queue", { order: "created_at" });
+  const { data: sales, isLoading: salesLoading, isError: salesError, refetch: refetchSales } = useBizList<any>("sales", { order: "sale_date" });
+  const { data: transactions, isLoading: transactionsLoading, isError: transactionsError, refetch: refetchTransactions } = useBizList<any>("transactions", { order: "tx_date" });
+  const { data: products, isLoading: productsLoading, isError: productsError, refetch: refetchProducts } = useBizList<any>("products", { order: "name" });
+  const { data: quotes, isLoading: quotesLoading, isError: quotesError, refetch: refetchQuotes } = useBizList<any>("quotes", { order: "created_at" });
+  const { data: activities, isLoading: activitiesLoading, isError: activitiesError, refetch: refetchActivities } = useBizList<any>("customer_activities", { order: "created_at" });
+  const { data: councilMemory, isLoading: memoryLoading, isError: memoryError, refetch: refetchMemory } = useBizList<any>("nuva_business_memory", { order: "created_at" });
+  const { data: actionQueue, isLoading: queueLoading, isError: queueError, refetch: refetchQueue } = useBizList<any>("nuva_action_queue", { order: "created_at" });
 
   const intelligence = useMemo(() => {
     const income = (transactions ?? []).filter((t: any) => t.type === "income").reduce((sum: number, t: any) => sum + Number(t.amount ?? 0), 0);
@@ -45,6 +45,15 @@ function NuvaIntelligence() {
     return { income, expense, net, margin, lowStock, overdue, openQuotes: openQuotes.length, openPipeline, health, signals, salesCount: (sales ?? []).length, productsCount: (products ?? []).length };
   }, [activities, products, quotes, sales, transactions]);
 
+  const intelligenceLoading = salesLoading || transactionsLoading || productsLoading || quotesLoading || activitiesLoading;
+  const councilLoading = memoryLoading || queueLoading;
+  const councilError = memoryError || queueError;
+  const intelligenceError = salesError || transactionsError || productsError || quotesError || activitiesError;
+  const retryIntelligence = () => {
+    void Promise.all([refetchSales(), refetchTransactions(), refetchProducts(), refetchQuotes(), refetchActivities(), refetchMemory(), refetchQueue()]);
+  };
+  const retryCouncil = () => { void Promise.all([refetchMemory(), refetchQueue()]); };
+
   const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
   const active = views.find((view) => view.id === activeView);
   const latestCouncil = (councilMemory ?? []).find((memory: any) => memory.memory_type === "agent_consensus");
@@ -57,61 +66,68 @@ function NuvaIntelligence() {
     <ModuleGuard module="dashboard">
       <div className="space-y-5">
         <PageHeader title="Nüva Intelligence" description="Interpreta datos, detecta señales y explica qué está cambiando. Las acciones se ejecutan en los módulos operativos." />
-
-        {!activeView ? (
+        {intelligenceLoading ? (
+          <Card className="p-5" role="status" aria-live="polite"><div className="flex items-center gap-3"><div className="h-5 w-5 animate-pulse rounded-full bg-primary/20" /><div><p className="font-medium">Preparando la lectura del negocio</p><p className="text-sm text-muted-foreground">Estamos reuniendo datos de las áreas operativas antes de calcular indicadores.</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[1,2,3,4].map((n) => <div key={n} className="h-20 animate-pulse rounded-xl bg-muted/60" />)}</div></Card>
+        ) : intelligenceError ? (
+          <Card className="border-destructive/30 p-5" role="alert"><p className="font-semibold">La lectura está incompleta</p><p className="mt-1 text-sm text-muted-foreground">Una o más fuentes no respondieron. No calcularemos el índice ni presentaremos datos parciales como si fueran una lectura completa.</p><button type="button" onClick={retryIntelligence} className="mt-4 inline-flex min-h-11 items-center rounded-lg border px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Reintentar conexión</button></Card>
+        ) : (
           <>
-            <Card className="overflow-hidden rounded-2xl border-violet-500/20 bg-gradient-to-br from-violet-500/[0.07] via-background to-background p-5 shadow-sm md:p-6">
+            {!activeView ? (
+          <>
+            <Card className="overflow-hidden rounded-2xl border-border/70 bg-card p-5 shadow-sm md:p-7">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400"><Brain className="h-4 w-4" /> Capa analítica</div>
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary"><Brain className="h-4 w-4" /> Capa analítica</div>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">Entiende tu negocio antes de decidir.</h2>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">Nüva cruza caja, ventas, inventario, cotizaciones y seguimiento para transformar datos operativos en contexto accionable.</p>
                 </div>
-                <div className="min-w-[150px] rounded-2xl border bg-background/80 p-5 text-center"><p className="text-xs text-muted-foreground">Índice analítico</p><p className="mt-1 text-3xl font-bold tabular-nums">{intelligence.health}</p><p className="text-xs">/100</p></div>
+                <div className="w-full rounded-2xl border bg-background/70 p-4 sm:w-[190px] sm:p-5"><div className="flex items-baseline justify-between gap-3"><p className="text-xs font-medium text-muted-foreground">Pulso operativo</p><p className="text-2xl font-semibold tabular-nums">{intelligence.health}<span className="ml-1 text-xs font-normal text-muted-foreground">/100</span></p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Pulso operativo estimado" aria-valuemin={0} aria-valuemax={100} aria-valuenow={intelligence.health}><div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${intelligence.health}%` }} /></div><p className="mt-2 text-[11px] leading-4 text-muted-foreground">Estimación orientativa basada en margen de caja, presión de stock y seguimientos vencidos.</p></div>
               </div>
             </Card>
-            <Card className="overflow-hidden border-violet-500/20 bg-background/70">
-              <div className="border-b border-violet-500/10 bg-violet-500/[0.04] p-5 md:p-6">
+            <Card className="overflow-hidden border-border/70 bg-card">
+              <div className="border-b border-border/70 bg-muted/40 p-5 md:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-3">
-                    <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.08] p-2.5 text-violet-600 dark:text-violet-400"><UsersRound className="h-5 w-5" /></div>
+                    <div className="rounded-xl border border-border/70 bg-primary/5 p-2.5 text-primary"><UsersRound className="h-5 w-5" /></div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">Nüva Agent Council</p>
-                      <h2 className="mt-1 text-xl font-semibold">{latestCouncil?.title ?? "El consejo está construyendo contexto"}</h2>
-                      <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{latestCouncil?.content ?? "Los agentes especializados cruzan finanzas, ventas, abastecimiento, personas, cumplimiento y crecimiento antes de proponer una acción."}</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Nüva Agent Council</p>
+                      <h2 className="mt-1 text-xl font-semibold">{councilLoading ? "Consultando el contexto del consejo" : councilError ? "Consejo temporalmente no disponible" : latestCouncil?.title ?? "El consejo está construyendo contexto"}</h2>
+                      <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{councilLoading ? "Estamos consultando memoria y acciones para mostrar el estado más reciente." : councilError ? "No fue posible consultar la memoria o la cola de acciones. El resto de Intelligence sigue disponible." : latestCouncil?.content ?? "Los agentes especializados cruzan finanzas, ventas, abastecimiento, personas, cumplimiento y crecimiento antes de proponer una acción."}</p>
                     </div>
                   </div>
-                  <Link to="/executive-command-center" className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">Ver acciones <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+                  {councilError ? <button type="button" onClick={retryCouncil} className="inline-flex min-h-11 items-center rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">Reintentar consejo</button> : <Link to="/executive-command-center" className="inline-flex min-h-11 items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">Ver acciones <ArrowUpRight className="h-3.5 w-3.5" /></Link>}
                 </div>
               </div>
               <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-6">
-                <CouncilMetric label="Agentes consultados" value="7" detail="Un mismo contexto empresarial" />
-                <CouncilMetric label="Confianza" value={councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Evidencia disponible" />
-                <CouncilMetric label="Acuerdo" value={councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Coincidencia sobre la prioridad" />
-                <CouncilMetric label="Acciones abiertas" value={String(pendingActions)} detail="Siempre requieren control humano" />
+                <CouncilMetric label="Fuentes operativas" value="7" detail="Áreas de datos consideradas" />
+                <CouncilMetric label="Confianza" value={councilLoading || councilError || councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Evidencia disponible" />
+                <CouncilMetric label="Acuerdo" value={councilLoading || councilError || councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Coincidencia sobre la prioridad" />
+                <CouncilMetric label="Acciones abiertas" value={councilLoading || councilError ? "—" : String(pendingActions)} detail="Siempre requieren control humano" />
               </div>
             </Card>
             <div>
-              <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">Herramientas de Intelligence</p><h2 className="mt-1 text-xl font-semibold">Elige qué quieres entender</h2></div><span className="hidden text-xs text-muted-foreground md:block">4 herramientas</span></div>
+              <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Herramientas de Intelligence</p><h2 className="mt-1 text-xl font-semibold">Elige qué quieres entender</h2></div><span className="hidden text-xs text-muted-foreground md:block">4 herramientas</span></div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {views.map((view) => <button key={view.id} type="button" onClick={() => setActiveView(view.id)} className="group rounded-2xl border border-border/70 bg-background/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-md"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><div className="flex items-center justify-between gap-2"><p className="font-semibold">{view.title}</p><span title={view.info} aria-label={`Información: ${view.title}`} className="rounded-full p-1 text-muted-foreground"><Info className="h-4 w-4" /></span></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{view.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
+                {views.map((view) => <button key={view.id} type="button" onClick={() => setActiveView(view.id)} className="group rounded-2xl border border-border/70 bg-card p-4 text-left shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"><div className="flex h-full min-h-[132px] flex-col justify-between gap-5"><div><div className="flex items-center justify-between gap-2"><p className="font-semibold">{view.title}</p><span title={view.info} aria-label={`Información: ${view.title}`} className="rounded-full p-1 text-muted-foreground"><Info className="h-4 w-4" /></span></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{view.description}</p></div><span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">Abrir herramienta <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span></div></button>)}
               </div>
             </div>
           </>
         ) : (
           <>
-            <button type="button" onClick={() => setActiveView(null)} className="inline-flex items-center gap-2 rounded-xl border bg-background/80 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"><ArrowLeft className="h-4 w-4" /> Volver a Intelligence</button>
-            <div className="flex items-end justify-between gap-3 border-b pb-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">Nüva Intelligence</p><h2 className="mt-1 text-xl font-semibold">{active?.title}</h2><p className="mt-1 text-sm text-muted-foreground">{active?.description}</p></div></div>
+            <button type="button" onClick={() => setActiveView(null)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border bg-background/80 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"><ArrowLeft className="h-4 w-4" /> Volver a Intelligence</button>
+            <div className="flex items-end justify-between gap-3 border-b pb-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Nüva Intelligence</p><h2 className="mt-1 text-xl font-semibold">{active?.title}</h2><p className="mt-1 text-sm text-muted-foreground">{active?.description}</p></div></div>
             {activeView === "read" && (
               <div className="space-y-5">
-                <Card className="overflow-hidden border-violet-500/20"><div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:p-8"><div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">Interpretación</p><h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{intelligence.signals > 0 ? "Nüva detecta cambios que vale la pena entender." : "Nüva no detecta señales críticas con los datos actuales."}</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">Esta pantalla no te pide registrar nada. Cruza caja, ventas, inventario, cotizaciones y seguimiento para explicar dónde está el cambio, qué puede significar y qué evidencia lo sostiene.</p></div><div className="min-w-[150px] rounded-2xl border bg-background/80 p-5 text-center"><p className="text-xs text-muted-foreground">Índice analítico</p><p className="mt-1 text-3xl font-bold tabular-nums">{intelligence.health}</p><p className="text-xs">/100</p></div></div></Card>
+                <Card className="overflow-hidden border-border/70"><div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:p-8"><div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Interpretación</p><h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{intelligence.signals > 0 ? "Nüva detecta cambios que vale la pena entender." : "Nüva no detecta señales críticas con los datos actuales."}</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">Esta pantalla no te pide registrar nada. Cruza caja, ventas, inventario, cotizaciones y seguimiento para explicar dónde está el cambio, qué puede significar y qué evidencia lo sostiene.</p></div><div className="min-w-[150px] rounded-2xl border bg-background/80 p-5 text-center"><p className="text-xs text-muted-foreground">Índice analítico</p><p className="mt-1 text-3xl font-bold tabular-nums">{intelligence.health}</p><p className="text-xs">/100</p></div></div></Card>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Kpi label="Flujo neto" value={money(intelligence.net)} /><Kpi label="Margen" value={`${intelligence.margin}%`} /><Kpi label="Señales" value={String(intelligence.signals)} /><Kpi label="Pipeline" value={money(intelligence.openPipeline)} /></div>
                 <div className="grid gap-4 lg:grid-cols-3"><InsightTile title="Lo que observa" value={`${intelligence.lowStock} riesgos de stock`} detail="La disponibilidad está bajo presión cuando el stock alcanza sus mínimos configurados." href="/inventory" /><InsightTile title="Lo que significa" value={`${intelligence.openQuotes} cotizaciones abiertas`} detail={`Existe un pipeline potencial de ${money(intelligence.openPipeline)} que merece interpretación comercial.`} href="/quotes" /><InsightTile title="Lo que explica" value={`${intelligence.overdue} seguimientos vencidos`} detail="Los atrasos comerciales pueden explicar parte de la pérdida de conversión." href="/customers" /></div>
               </div>
             )}
             {activeView === "signals" && <div className="space-y-4"><SectionIntro title="Señales detectadas" text="Aquí no se ejecutan tareas: se entiende la evidencia detrás de cada señal." /><div className="grid gap-5 md:grid-cols-2"><SignalCard icon={<ShieldAlert className="h-5 w-5" />} title="Presión de inventario" value={intelligence.lowStock} description="Productos en o bajo su mínimo configurado." href="/inventory" /><SignalCard icon={<AlertTriangle className="h-5 w-5" />} title="Fricción comercial" value={intelligence.overdue} description="Seguimientos vencidos que pueden afectar conversión." href="/customers" /><SignalCard icon={<CheckCircle2 className="h-5 w-5" />} title="Demanda potencial" value={intelligence.openQuotes} description={`Cotizaciones abiertas por ${money(intelligence.openPipeline)}.`} href="/quotes" /><SignalCard icon={<Sparkles className="h-5 w-5" />} title="Resultado financiero" value={`${intelligence.margin}%`} description="Margen estimado sobre los movimientos registrados." href="/finance" /></div></div>}
-            {activeView === "opportunities" && <Card className="border-violet-500/20 p-6 md:p-8"><div className="flex items-start gap-4"><Lightbulb className="mt-1 h-6 w-6 text-violet-600 dark:text-violet-400" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">Potencial detectado</p><h2 className="mt-1 text-xl font-semibold">{intelligence.openQuotes > 0 ? "El pipeline contiene una oportunidad de conversión." : "Nüva necesita más evidencia para detectar oportunidades."}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{intelligence.openQuotes > 0 ? `Nüva identifica ${intelligence.openQuotes} cotizaciones abiertas por ${money(intelligence.openPipeline)}. La oportunidad no es una orden automática: es una hipótesis que debes evaluar.` : "Registra más ventas, gastos, productos y clientes para que el análisis gane profundidad."}</p></div></div></Card>}
+            {activeView === "opportunities" && <Card className="border-border/70 p-6 md:p-8"><div className="flex items-start gap-4"><Lightbulb className="mt-1 h-6 w-6 text-primary" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Potencial detectado</p><h2 className="mt-1 text-xl font-semibold">{intelligence.openQuotes > 0 ? "El pipeline contiene una oportunidad de conversión." : "Nüva necesita más evidencia para detectar oportunidades."}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{intelligence.openQuotes > 0 ? `Nüva identifica ${intelligence.openQuotes} cotizaciones abiertas por ${money(intelligence.openPipeline)}. La oportunidad no es una orden automática: es una hipótesis que debes evaluar.` : "Registra más ventas, gastos, productos y clientes para que el análisis gane profundidad."}</p></div></div></Card>}
             {activeView === "explain" && <ExplainMyBusiness />}
+          </>
+        )}
           </>
         )}
       </div>
@@ -121,6 +137,6 @@ function NuvaIntelligence() {
 
 function SectionIntro({ title, text }: { title: string; text: string }) { return <div><h2 className="text-xl font-semibold">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{text}</p></div>; }
 function Kpi({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border bg-background/70 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-lg font-bold tabular-nums">{value}</p></div>; }
-function CouncilMetric({ label, value, detail }: { label: string; value: string; detail: string }) { return <div className="rounded-xl border bg-background/60 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold tabular-nums">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div>; }
-function InsightTile({ title, value, detail, href }: { title: string; value: string; detail: string; href: "/inventory" | "/quotes" | "/customers" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full border-violet-500/10 p-5 transition-all hover:-translate-y-0.5 hover:border-violet-500/30"><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p><p className="mt-2 text-lg font-semibold">{value}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></Card></Link>; }
-function SignalCard({ icon, title, value, description, href }: { icon: React.ReactNode; title: string; value: number | string; description: string; href: "/inventory" | "/customers" | "/quotes" | "/finance" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full p-6 transition-all hover:-translate-y-0.5 hover:border-violet-500/30"><div className="flex items-start gap-3"><div className="rounded-xl border bg-violet-500/[0.08] p-2 text-violet-600 dark:text-violet-400">{icon}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p><p className="mt-1 text-sm text-muted-foreground">{description}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></div></div></Card></Link>; }
+function CouncilMetric({ label, value, detail }: { label: string; value: string; detail: string }) { return <div className="rounded-xl border bg-muted/30 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold tabular-nums">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div>; }
+function InsightTile({ title, value, detail, href }: { title: string; value: string; detail: string; href: "/inventory" | "/quotes" | "/customers" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full border-border/70 p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30"><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p><p className="mt-2 text-lg font-semibold">{value}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></Card></Link>; }
+function SignalCard({ icon, title, value, description, href }: { icon: React.ReactNode; title: string; value: number | string; description: string; href: "/inventory" | "/customers" | "/quotes" | "/finance" }) { return <Link to={href} className="block rounded-2xl"><Card className="h-full p-6 transition-all hover:-translate-y-0.5 hover:border-primary/30"><div className="flex items-start gap-3"><div className="rounded-xl border bg-primary/5 p-2 text-primary">{icon}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p><p className="mt-1 text-sm text-muted-foreground">{description}</p><span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary">Ver evidencia <ArrowUpRight className="h-3.5 w-3.5" /></span></div></div></Card></Link>; }

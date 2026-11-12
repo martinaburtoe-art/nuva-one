@@ -111,13 +111,13 @@ function Onboarding() {
   const labels = ["Tu negocio", "Tu contexto", "Tu foco", "Listo"];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-mesh px-4 py-8 sm:px-6 sm:py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F3EF] px-4 py-8 sm:px-6 sm:py-12">
       <Card className="w-full max-w-2xl overflow-hidden shadow-elegant">
         <div className="border-b bg-card/80 px-6 py-5 sm:px-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E6C687]/25 bg-[#080809]">
+                <Sparkles className="h-4 w-4 text-[#E6C687]" />
               </div>
               <span className="font-semibold tracking-tight">Nüva One</span>
             </div>
@@ -134,7 +134,7 @@ function Onboarding() {
               return (
                 <div key={label}>
                   <div
-                    className={`h-1.5 rounded-full transition-colors ${n <= step ? "bg-gradient-primary" : "bg-muted"}`}
+                    className={`h-1.5 rounded-full transition-colors ${n <= step ? "bg-[#6366F1]" : "bg-muted"}`}
                   />
                   <div
                     className={`mt-2 hidden text-[11px] sm:block ${n <= step ? "font-medium text-foreground" : "text-muted-foreground"}`}

@@ -52,6 +52,21 @@ AI confidence is never certification. Lint/typecheck/build passing does not prov
 ## Safety
 Never expose secrets. Never weaken auth/RLS/security/billing/checkout. Never perform irreversible production mutation from an autonomous coding cycle. Respect protected paths and merge gates.
 
+## Frontend design skill protocol
+
+For any meaningful authenticated-workspace UI task, load and follow the project-local skill nuva-frontend-design before editing. Its specialist routing is authoritative:
+- impeccable is the canonical successor to the older frontend-design guidance.
+- interface-design owns product UI craft for dashboards, admin and data-heavy screens.
+- ui-ux-pro-max supplies searchable design/UX reference data.
+- design-taste-frontend supplies art direction; never override the Nüva brand contract.
+- hallmark is opt-in for explicitly requested redesign/audit work.
+- extract-design-md documents actual source tokens into DESIGN.md.
+- better-typography handles text rendering and responsive type quality.
+- shadcn handles component discovery/composition only after inspecting current project configuration and components.
+- hue is reserved for creating or evolving reusable design-language skills.
+
+Do not load every specialist for every task. Preserve the authenticated/public surface boundary, existing Nüva tokens, routes and business behavior. Mobile is first-class: validate 320/360/390/430 px plus tablet and desktop. Do not add packages, initialize shadcn, apply presets, overwrite components, or modify auth/payments/database/production as a side effect of visual work. Distinguish source edits, builds and real browser QA.
+
 ## Handoff
 Every completed task should leave:
 - problem/evidence;

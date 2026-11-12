@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModuleGuard } from "@/components/module-guard";
@@ -61,7 +62,7 @@ function Quotes() {
   const canWrite = canWriteOperations(myRole);
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
-  const { data, isLoading } = useBizList<any>("quotes", { order: "created_at" });
+  const { data, isLoading, isError, refetch } = useBizList<any>("quotes", { order: "created_at" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
@@ -81,7 +82,8 @@ function Quotes() {
 
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
 
-  const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const billableItems = items.filter((item) => item.name.trim().length > 0);
+  const subtotal = billableItems.reduce((s, i) => s + i.qty * i.price, 0);
   const discountAmount = Math.round(subtotal * (discountPct / 100));
   const taxable = subtotal - discountAmount;
   const tax = Math.round(taxable * 0.19);
@@ -101,8 +103,11 @@ function Quotes() {
   }
 
   async function save(status = "draft") {
-    if (!customer) return;
+    if (!customer.trim()) return toast.error("Selecciona o ingresa un cliente.");
     const validItems = items.filter((i) => i.name.trim() !== "");
+    if (validItems.length === 0) return toast.error("Agrega al menos un producto o servicio a la cotización.");
+    if (validItems.some((item) => !Number.isInteger(item.qty) || item.qty < 1 || !Number.isFinite(item.price) || item.price < 0)) return toast.error("Revisa cantidades y precios: deben ser valores válidos y no negativos.");
+    if (!Number.isFinite(discountPct) || discountPct < 0 || discountPct > 100) return toast.error("El descuento debe estar entre 0% y 100%.");
     await insert.mutateAsync({
       customer_name: customer,
       customer_id: customerId,
@@ -181,7 +186,7 @@ function Quotes() {
                     Nueva cotización
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl rounded-2xl">
+                <DialogContent className="max-h-[min(90dvh,900px)] max-w-3xl overflow-y-auto rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>Nueva cotización</DialogTitle>
                   </DialogHeader>
@@ -390,6 +395,8 @@ function Quotes() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
+          ) : isError ? (
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-3 p-5 text-sm"><span>No se pudieron cargar las cotizaciones. No asumiremos que la cartera está vacía.</span><Button variant="outline" size="sm" onClick={() => void refetch()}>Reintentar</Button></div>
           ) : !data || data.length === 0 ? (
             <EmptyState
               icon={FileText}
@@ -397,89 +404,30 @@ function Quotes() {
               description="Crea tu primera cotización profesional."
             />
           ) : (
-            <div className="overflow-x-auto"><Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>N°</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Seguimiento</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((q) => (
+            <>
+              <div className="space-y-3 p-3 sm:hidden">{data.map((q) => (
+                <article key={q.id} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{q.customer_name || "Cliente sin nombre"}</p><p className="text-xs text-muted-foreground">{q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "Sin folio"} · {new Date(q.created_at).toLocaleDateString("es-CL")}</p></div><p className="shrink-0 font-semibold tabular-nums">{fmtCLP(Number(q.total))}</p></div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2"><Badge variant="outline">{statusLabel[q.status]?.l ?? q.status}</Badge>{(q.status === "sent" || q.status === "viewed") && q.sent_at && <span className="text-xs text-muted-foreground">{Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta</span>}</div>
+                  {canWrite && <div className="mt-3"><select aria-label={`Estado de cotización de ${q.customer_name}`} value={q.status} disabled={upd.isPending} onChange={(e) => upd.mutate({ id: q.id, patch: { status: e.target.value } })} className="h-11 w-full rounded-md border bg-background px-3 text-sm">{Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}</select></div>}
+                  <div className="mt-3 grid grid-cols-2 gap-2"><Button className="h-11" variant="outline" onClick={() => downloadPdf(q)}><Download className="mr-2 h-4 w-4" />PDF</Button>{canWrite && <Button className="h-11" variant="outline" onClick={() => duplicateQuote(q)}><Copy className="mr-2 h-4 w-4" />Duplicar</Button>}{canWrite && q.status === "accepted" && !convertedQuoteIds.has(q.id) && <Button className="h-11" variant="outline" disabled={convertingId === q.id} onClick={() => convertToSale(q)}><ArrowRightCircle className="mr-2 h-4 w-4 text-success" />Convertir</Button>}{canWrite && <Button className="h-11" variant="outline" onClick={() => del.mutate(q.id)}><Trash2 className="mr-2 h-4 w-4 text-destructive" />Eliminar</Button>}</div>
+                </article>
+              ))}</div>
+              <div className="hidden overflow-x-auto sm:block"><Table>
+                <TableHeader><TableRow><TableHead>N°</TableHead><TableHead>Cliente</TableHead><TableHead>Fecha</TableHead><TableHead>Estado</TableHead><TableHead>Seguimiento</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Acciones</TableHead></TableRow></TableHeader>
+                <TableBody>{data.map((q) => (
                   <TableRow key={q.id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}</TableCell>
                     <TableCell className="font-medium">{q.customer_name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(q.created_at).toLocaleDateString("es-CL")}
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        value={q.status}
-                        onChange={(e) =>
-                          upd.mutate({ id: q.id, patch: { status: e.target.value } })
-                        }
-                        className="rounded-md border bg-background px-2 py-1 text-xs"
-                      >
-                        {Object.entries(statusLabel).map(([k, v]) => (
-                          <option key={k} value={k}>
-                            {v.l}
-                          </option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {(q.status === "sent" || q.status === "viewed") && q.sent_at
-                        ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta`
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {fmtCLP(Number(q.total))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Descargar PDF"
-                          onClick={() => downloadPdf(q)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Duplicar cotización"
-                          onClick={() => duplicateQuote(q)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        {q.status === "accepted" && !convertedQuoteIds.has(q.id) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Convertir a venta"
-                            disabled={convertingId === q.id}
-                            onClick={() => convertToSale(q)}
-                          >
-                            <ArrowRightCircle className="h-4 w-4 text-success" />
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(q.created_at).toLocaleDateString("es-CL")}</TableCell>
+                    <TableCell>{canWrite ? <select value={q.status} disabled={upd.isPending} onChange={(e) => upd.mutate({ id: q.id, patch: { status: e.target.value } })} className="rounded-md border bg-background px-2 py-1 text-xs">{Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}</select> : <Badge variant="outline">{statusLabel[q.status]?.l ?? q.status}</Badge>}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{(q.status === "sent" || q.status === "viewed") && q.sent_at ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta` : "—"}</TableCell>
+                    <TableCell className="text-right font-medium">{fmtCLP(Number(q.total))}</TableCell>
+                    <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" title="Descargar PDF" onClick={() => downloadPdf(q)}><Download className="h-4 w-4" /></Button>{canWrite && <><Button variant="ghost" size="icon" title="Duplicar cotización" onClick={() => duplicateQuote(q)}><Copy className="h-4 w-4" /></Button>{q.status === "accepted" && !convertedQuoteIds.has(q.id) && <Button variant="ghost" size="icon" title="Convertir a venta" disabled={convertingId === q.id} onClick={() => convertToSale(q)}><ArrowRightCircle className="h-4 w-4 text-success" /></Button>}<Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)} aria-label="Eliminar cotización"><Trash2 className="h-4 w-4" /></Button></>}</div></TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table></div>
+                ))}</TableBody>
+              </Table></div>
+            </>
           )}
         </Card>
       </>
