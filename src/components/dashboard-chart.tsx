@@ -22,7 +22,7 @@ export function DashboardChart({ data, filtered }: { data: ChartRow[]; filtered:
         Resultado del período: {clp.format(totalIncome - totalExpenses)}.
         Los datos también están disponibles en una tabla desplegable.
       </p>
-      <div role="img" aria-describedby="resumen-chart-description" aria-label="Evolución de ingresos y gastos. Consulta la tabla de datos para los valores exactos.">
+      <div className="nuva-resumen-chart-plot" role="img" aria-describedby="resumen-chart-description" aria-label="Evolución de ingresos y gastos. Consulta la tabla de datos para los valores exactos.">
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
           <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
         <defs>
