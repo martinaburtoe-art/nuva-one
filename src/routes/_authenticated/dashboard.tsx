@@ -50,9 +50,8 @@ function Dashboard() {
   const chartWindowStart = useMemo(() => {
     if (isoFrom) return isoFrom;
     if (isoTo) return null; // Solo fecha final: incluir todo el histórico anterior.
-    const d = new Date();
-    d.setMonth(d.getMonth() - 5);
-    d.setDate(1);
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth() - 5, 1);
     // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, [isoFrom, isoTo, todayIso]);
