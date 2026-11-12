@@ -16,6 +16,10 @@ function isIos() {
   return typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
+function isAndroid() {
+  return typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
+}
+
 export function PwaLifecycle() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [updateReady, setUpdateReady] = useState(false);
@@ -86,7 +90,12 @@ export function PwaLifecycle() {
       toast.info("En Safari: toca Compartir y luego “Agregar a pantalla de inicio”.");
       return;
     }
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      if (isAndroid()) {
+        toast.info("En Chrome: abre el menú ⋮ y elige “Instalar aplicación” o “Agregar a pantalla principal”.");
+      }
+      return;
+    }
     await installPrompt.prompt();
     const choice = await installPrompt.userChoice;
     if (choice.outcome === "accepted") setIsInstalled(true);
@@ -110,7 +119,7 @@ export function PwaLifecycle() {
     });
   }
 
-  const canInstall = !isInstalled && (Boolean(installPrompt) || isIos());
+  const canInstall = !isInstalled && (Boolean(installPrompt) || isIos() || isAndroid());
   if ((!canInstall && !updateReady) || dismissed) return null;
 
   return (
