@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
+import { calculateGrossMargin } from "@/lib/resumen-margin";
 
 // Nüva Score: 5 componentes de 0 a 20 puntos cada uno, sumando 0-100.
 // Cada componente se calcula desde datos reales ya existentes en el
@@ -121,7 +122,7 @@ export function useNuvaScore() {
       // 2) Margen: sobre ventas del mes actual, usando costo real del producto.
       const costByProduct = new Map<string, number>();
       products.forEach((product) => {
-        if (product.cost !== null && product.cost !== undefined && Number.isFinite(Number(product.cost))) {
+        if (product.cost !== null && product.cost !== undefined && Number.isFinite(Number(product.cost)) && Number(product.cost) >= 0) {
           costByProduct.set(product.id, Number(product.cost));
         }
       });
@@ -133,36 +134,12 @@ export function useNuvaScore() {
             if (it.product_id) productIds.add(it.product_id);
           });
         });
-        let marginPoints: number | null = null;
-        let marginDetail = "";
-        if (productIds.size > 0) {
-          let revenue = 0;
-          let cost = 0;
-          let hasCompleteCostCoverage = true;
-          salesThisMonth.forEach((s) => {
-            const items = s.items as Array<{ product_id?: string; qty: number; price: number }> | null;
-            if (!items) {
-              hasCompleteCostCoverage = false;
-              return;
-            }
-            items.forEach((it) => {
-              const lineRevenue = Number(it.price) * Number(it.qty);
-              revenue += lineRevenue;
-              if (!it.product_id || !costByProduct.has(it.product_id)) {
-                hasCompleteCostCoverage = false;
-                return;
-              }
-              cost += costByProduct.get(it.product_id)! * Number(it.qty);
-            });
-          });
-          // Un costo ausente no equivale a costo cero: omitir margen evita
-          // presentar rentabilidad inflada cuando la cobertura es incompleta.
-          if (revenue > 0 && hasCompleteCostCoverage) {
-            const marginRatio = (revenue - cost) / revenue;
-            marginPoints = scoreFromRatio(marginRatio, 0.35, 0.1);
-            marginDetail = `Margen bruto de ${(marginRatio * 100).toFixed(0)}% este mes`;
-          }
-        }
+        const margin = calculateGrossMargin(
+          salesThisMonth as Array<{ items: Array<{ product_id?: string; qty: number; price: number }> | null }>,
+          costByProduct,
+        );
+        const marginPoints = margin ? scoreFromRatio(margin.marginRatio, 0.35, 0.1) : null;
+        const marginDetail = margin ? `Margen bruto de ${(margin.marginRatio * 100).toFixed(0)}% este mes` : "";
         if (marginPoints !== null) {
           components.push({
             key: "margen",
@@ -204,7 +181,7 @@ export function useNuvaScore() {
       // 4) Inventario: % de productos en stock crítico (<= umbral bajo).
       if (products.length > 0) {
         const critical = products.filter((p) => {
-          const threshold = Number(p.low_stock_threshold ?? (p as typeof p & { reorder_point?: number | null }).reorder_point ?? 0);
+          const threshold = Number(p.low_stock_threshold ?? p.reorder_point ?? 0);
           return threshold > 0 && Number(p.stock ?? 0) <= threshold;
         });
         const ratio = critical.length / products.length;
