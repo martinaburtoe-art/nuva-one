@@ -146,12 +146,25 @@ describe("calculateInventoryValueAtCost", () => {
     ])).toBe(16000);
   });
 
-  it("trata valores nulos como cero y omite importes no finitos", () => {
+  it("no inventa valor cuando falta el costo de existencias disponibles", () => {
     expect(calculateInventoryValueAtCost([
-      { stock: null, cost: 900 },
       { stock: 4, cost: null },
+    ])).toBeNull();
+    expect(calculateInventoryValueAtCost([
       { stock: 3, cost: "no-disponible" },
-    ])).toBe(0);
+    ])).toBeNull();
+  });
+
+  it("ignora costo ausente solo cuando no hay unidades en existencia", () => {
+    expect(calculateInventoryValueAtCost([
+      { stock: 0, cost: null },
+      { stock: 5, cost: 800 },
+    ])).toBe(4000);
+  });
+
+  it("marca como no valorizable una cantidad de stock desconocida o negativa", () => {
+    expect(calculateInventoryValueAtCost([{ stock: null, cost: 900 }])).toBeNull();
+    expect(calculateInventoryValueAtCost([{ stock: -1, cost: 900 }])).toBeNull();
   });
 });
 
