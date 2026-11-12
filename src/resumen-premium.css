@@ -1811,3 +1811,16 @@
 @media (prefers-reduced-motion: reduce) {
   .nuva-app .nuva-resumen-financial-mix-track span { transition: none; }
 }
+
+/* Mobile: keep the at-a-glance pulse unique. The full operations panel
+   retains the remaining details without repeating Sales, Low stock or Cash. */
+@media (max-width: 767px) {
+  .nuva-resumen-operations-panel .nuva-resumen-panel-heading > .nuva-resumen-status-pill {
+    display: none;
+  }
+  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > div:nth-child(1),
+  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > div:nth-child(2),
+  .nuva-resumen-operations-panel .nuva-resumen-operational-stats > div:nth-child(5) {
+    display: none;
+  }
+}
