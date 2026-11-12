@@ -67,3 +67,24 @@ export function getResumenOperationalStatus(input: {
     description: "No hay alertas prioritarias en los indicadores disponibles.",
   };
 }
+
+/** True when any persisted business activity exists, not only sales or money movements. */
+export function hasResumenActivity(input: {
+  productsCount?: number;
+  salesCount?: number;
+  income?: number;
+  expense?: number;
+  quotesCount?: number;
+  customersCount?: number;
+  cashRegisterOpen?: boolean;
+}): boolean {
+  return [
+    input.productsCount,
+    input.salesCount,
+    input.income,
+    input.expense,
+    input.quotesCount,
+    input.customersCount,
+  ].some((value) => Number.isFinite(Number(value)) && Number(value) > 0)
+    || Boolean(input.cashRegisterOpen);
+}
