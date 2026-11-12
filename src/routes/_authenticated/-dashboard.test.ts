@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { goalsLabel } from "@/lib/resumen-goals";
-import { getResumenOperationalStatus } from "@/lib/resumen-operational-status";
+import { getResumenOperationalStatus, hasResumenActivity } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
@@ -209,4 +209,27 @@ describe("dmyToIso (filtros de período)", () => {
     "rechaza fechas incompletas o inexistentes: %s",
     (value) => expect(dmyToIso(value)).toBeNull(),
   );
+});
+
+describe("hasResumenActivity", () => {
+  it("detecta actividad aunque el negocio solo tenga clientes o cotizaciones", () => {
+    expect(hasResumenActivity({ customersCount: 1 })).toBe(true);
+    expect(hasResumenActivity({ quotesCount: 1 })).toBe(true);
+  });
+
+  it("detecta una caja abierta aunque todavía no existan ventas", () => {
+    expect(hasResumenActivity({ cashRegisterOpen: true })).toBe(true);
+  });
+
+  it("no considera actividad valores nulos, cero o negativos aislados", () => {
+    expect(hasResumenActivity({
+      productsCount: 0,
+      salesCount: 0,
+      income: 0,
+      expense: 0,
+      quotesCount: 0,
+      customersCount: 0,
+      cashRegisterOpen: false,
+    })).toBe(false);
+  });
 });
