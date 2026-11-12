@@ -36,7 +36,7 @@ function actionFor(key: string): { href: string; label: string } {
   if (key === "inventario") return { href: "/inventory", label: "Ver inventario" };
   if (key === "margen" || key === "liquidez")
     return { href: "/finance", label: "Analizar finanzas" };
-  if (key === "cobranza") return { href: "/crm", label: "Revisar cobranza" };
+  if (key === "cobranza") return { href: "/customers", label: "Revisar cobranza" };
   if (key === "crecimiento") return { href: "/sales", label: "Ver ventas" };
   return { href: "/dashboard", label: "Ver dashboard" };
 }
