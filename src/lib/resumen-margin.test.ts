@@ -31,9 +31,11 @@ describe("calculateGrossMargin", () => {
   });
 
   it("accepts a genuine zero acquisition cost without inventing a cost", () => {
-    expect(calculateGrossMargin([
+    const result = calculateGrossMargin([
       { items: [{ product_id: "free", qty: 1, price: 1000 }] },
-    ], new Map([["free", 0]])).marginRatio).toBe(1);
+    ], new Map([["free", 0]]));
+    expect(result).not.toBeNull();
+    expect(result?.marginRatio).toBe(1);
   });
 
   it("rejects negative acquisition costs", () => {
