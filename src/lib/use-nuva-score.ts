@@ -143,17 +143,20 @@ export function useNuvaScore() {
           let cost = 0;
           let hasCompleteCostCoverage = true;
           salesThisMonth.forEach((s) => {
-            (s.items as Array<{ product_id?: string; qty: number; price: number }> | null)?.forEach(
-              (it) => {
-                const lineRevenue = Number(it.price) * Number(it.qty);
-                revenue += lineRevenue;
-                if (!it.product_id || !costByProduct.has(it.product_id)) {
-                  hasCompleteCostCoverage = false;
-                  return;
-                }
-                cost += costByProduct.get(it.product_id)! * Number(it.qty);
-              },
-            ) ?? (hasCompleteCostCoverage = false);
+            const items = s.items as Array<{ product_id?: string; qty: number; price: number }> | null;
+            if (!items) {
+              hasCompleteCostCoverage = false;
+              return;
+            }
+            items.forEach((it) => {
+              const lineRevenue = Number(it.price) * Number(it.qty);
+              revenue += lineRevenue;
+              if (!it.product_id || !costByProduct.has(it.product_id)) {
+                hasCompleteCostCoverage = false;
+                return;
+              }
+              cost += costByProduct.get(it.product_id)! * Number(it.qty);
+            });
           });
           // Un costo ausente no equivale a costo cero: omitir margen evita
           // presentar rentabilidad inflada cuando la cobertura es incompleta.
