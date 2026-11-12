@@ -16,6 +16,7 @@ import { getResumenOperationalStatus, hasResumenActivity } from "@/lib/resumen-o
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
+import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparableWindow } from "@/lib/resumen-period-comparison";
 import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
@@ -82,6 +83,41 @@ function Dashboard() {
       ]);
       const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
       const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      return { income, expense, net: income - expense };
+    },
+  });
+
+  const todayIso = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  })();
+  const comparisonWindow = useMemo(() => getPreviousComparableWindow({
+    from: isoFrom,
+    to: isoTo,
+    defaultFrom: chartWindowStart ?? todayIso,
+    today: todayIso,
+  }), [isoFrom, isoTo, chartWindowStart, todayIso]);
+  const comparisonQuery = useQuery({
+    enabled: !!active?.id && !invalidDateRange && Boolean(comparisonWindow),
+    queryKey: ["dashboard-period-comparison", active?.id, comparisonWindow?.from, comparisonWindow?.to, categories],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const [incomeRows, expenseRows] = await Promise.all([
+        fetchAllResumenRows((from, to) => {
+          let query = supabase.from("transactions").select("id,amount").eq("business_id", active!.id).eq("type", "income")
+            .gte("tx_date", comparisonWindow!.from).lte("tx_date", comparisonWindow!.to);
+          if (categories.length) query = query.in("category", categories);
+          return query.order("id").range(from, to);
+        }),
+        fetchAllResumenRows((from, to) => {
+          let query = supabase.from("transactions").select("id,amount").eq("business_id", active!.id).eq("type", "expense")
+            .gte("tx_date", comparisonWindow!.from).lte("tx_date", comparisonWindow!.to);
+          if (categories.length) query = query.in("category", categories);
+          return query.order("id").range(from, to);
+        }),
+      ]);
+      const income = incomeRows.reduce((sum: number, row: any) => sum + Number(row.amount), 0);
+      const expense = expenseRows.reduce((sum: number, row: any) => sum + Number(row.amount), 0);
       return { income, expense, net: income - expense };
     },
   });
@@ -229,6 +265,12 @@ function Dashboard() {
     [allTx, isoFrom, isoTo, categories, dailyChart],
   );
 
+  const largestExpense = useMemo(() => getLargestExpenseCategory(
+    (allTx ?? []).filter((row: any) => (!isoFrom || row.tx_date >= isoFrom) && (!isoTo || row.tx_date <= isoTo) && (!categories.length || categories.includes(row.category ?? ""))),
+  ), [allTx, isoFrom, isoTo, categories]);
+  const incomeChange = kpis && comparisonQuery.data ? calculatePercentChange(kpis.income, comparisonQuery.data.income) : null;
+  const expenseChange = kpis && comparisonQuery.data ? calculatePercentChange(kpis.expense, comparisonQuery.data.expense) : null;
+  const netChange = kpis && comparisonQuery.data ? calculatePercentChange(kpis.net, comparisonQuery.data.net) : null;
   const hasChartActivity = chartData.some((row) => row.ingresos > 0 || row.gastos > 0);
   const incomeForMix = Math.max(0, Number(kpis?.income ?? 0));
   const expenseForMix = Math.max(0, Number(kpis?.expense ?? 0));
@@ -445,6 +487,24 @@ function Dashboard() {
           </article>
         </section>
 
+        <section className="nuva-resumen-panel" aria-label="Análisis comparativo y señales del negocio" style={{ marginBottom: 20 }}>
+          <div className="nuva-resumen-panel-heading">
+            <div><p className="nuva-resumen-section-label">ANÁLISIS DE DESEMPEÑO</p><h2>Qué cambió y dónde mirar</h2><p>Comparación contra el período inmediatamente anterior de igual duración.</p></div>
+            {comparisonWindow && <span className="nuva-resumen-status-pill">{comparisonWindow.from} — {comparisonWindow.to}</span>}
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <ComparisonMetric label="Ingresos" current={incomeChange} currentValue={kpis ? fmtCLP(kpis.income) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.income) : null} inverse={false} />
+            <ComparisonMetric label="Gastos" current={expenseChange} currentValue={kpis ? fmtCLP(kpis.expense) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.expense) : null} inverse />
+            <ComparisonMetric label="Resultado" current={netChange} currentValue={kpis ? fmtCLP(kpis.net) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.net) : null} inverse={false} />
+          </div>
+          <div className="mt-4 rounded-xl border border-[var(--nuva-line)] bg-[var(--color-muted)]/35 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">SEÑAL DE GASTO</p>
+            {largestExpense ? <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2"><div><strong className="text-sm">{largestExpense.category}</strong><p className="text-xs text-muted-foreground">Es la categoría con mayor gasto registrado en el período.</p></div><div className="text-right"><strong className="text-lg">{fmtCLP(largestExpense.amount)}</strong><p className="text-xs text-muted-foreground">{largestExpense.share.toFixed(1)}% de los gastos</p></div></div> : <p className="mt-1 text-sm text-muted-foreground">Aún no hay gastos categorizados suficientes para detectar concentración.</p>}
+          </div>
+          {comparisonQuery.isError && <p role="status" className="mt-3 text-xs text-muted-foreground">La comparación anterior no está disponible; los valores del período actual se mantienen.</p>}
+          {!comparisonWindow && <p className="mt-3 text-xs text-muted-foreground">Selecciona una fecha inicial y final para comparar períodos equivalentes.</p>}
+        </section>
+
         <section className="nuva-resumen-workspace-grid">
           <article className="nuva-resumen-panel nuva-resumen-operations-panel">
             <div className="nuva-resumen-panel-heading">
@@ -517,6 +577,19 @@ function Dashboard() {
       </main>
     </ModuleGuard>
   );
+}
+
+function ComparisonMetric({ label, current, currentValue, previousValue, inverse = false }: { label: string; current: number | null; currentValue: string; previousValue: string | null; inverse?: boolean }) {
+  const positive = current !== null && (inverse ? current < 0 : current > 0);
+  const negative = current !== null && (inverse ? current > 0 : current < 0);
+  return <div className="rounded-xl border border-[var(--nuva-line)] bg-white/70 p-4">
+    <p className="text-xs font-medium text-muted-foreground">{label}</p>
+    <strong className="mt-1 block text-xl tracking-tight">{currentValue}</strong>
+    {previousValue === null ? <p className="mt-2 text-xs text-muted-foreground">Sin período comparable</p> : <p className={`mt-2 text-xs font-semibold ${positive ? "text-emerald-700" : negative ? "text-rose-700" : "text-muted-foreground"}`}>
+      {current === null ? "Base anterior igual a cero" : `${current > 0 ? "+" : ""}${current.toFixed(1)}% vs. período anterior`}
+      <span className="ml-1 font-normal text-muted-foreground">· anterior {previousValue}</span>
+    </p>}
+  </div>;
 }
 
 function OperationalCard({ icon, label, value, description, href }: { icon: React.ReactNode; label: string; value: string | number; description: string; href: string }) {
