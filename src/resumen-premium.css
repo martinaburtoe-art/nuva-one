@@ -540,7 +540,7 @@
   background: transparent;
   max-width: 1680px;
   padding: clamp(18px, 2.2vw, 34px);
-  container: resumen / inline-size;
+  container: nuva-resumen / inline-size;
   min-width: 0;
 }
 
@@ -1138,14 +1138,6 @@
   .nuva-app .nuva-resumen-workspace-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
-@container nuva-resumen (max-width: 420px) {
-  .nuva-resumen-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); }
-
-  .nuva-resumen-panel-heading { align-items: flex-start; }
-
-  .nuva-resumen-mobile-brief-item { padding: 9px; }
-}
-
 @media (max-width: 1180px) {
   .nuva-resumen-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 
@@ -1156,7 +1148,7 @@
   .nuva-resumen-shortcuts { grid-template-columns: repeat(4,minmax(0,1fr)); }
 }
 
-@container resumen (max-width: 680px) {
+@container nuva-resumen (max-width: 680px) {
   .nuva-resumen-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .nuva-resumen-workspace-grid { grid-template-columns: minmax(0, 1fr); }
@@ -1164,19 +1156,19 @@
   .nuva-resumen-toolbar { align-items: stretch; }
 
   .nuva-resumen-filters { width: 100%; min-width: 0; }
+
+  .nuva-resumen-onboarding { grid-template-columns: minmax(0, 1fr); }
+
+  .nuva-resumen-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-@container nuva-resumen (max-width: 680px) {
-  .nuva-resumen-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+@container nuva-resumen (max-width: 420px) {
+  .nuva-resumen-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-  .nuva-resumen-workspace-grid { grid-template-columns: minmax(0,1fr); }
+  .nuva-resumen-panel-heading { align-items: flex-start; }
 
-  .nuva-resumen-onboarding { grid-template-columns: minmax(0,1fr); }
+  .nuva-resumen-mobile-brief-item { padding: 9px; }
 
-  .nuva-resumen-shortcuts { grid-template-columns: repeat(3,minmax(0,1fr)); }
-}
-
-@container resumen (max-width: 420px) {
   .nuva-resumen-kpi { padding: 11px 9px; }
 
   .nuva-resumen-kpi-top { gap: 5px; font-size: 8px; letter-spacing: .015em; }
