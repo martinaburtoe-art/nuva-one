@@ -1836,3 +1836,19 @@
 
   .nuva-resumen-steps > div { min-height: 42px; font-size: 12px; }
 }
+
+
+/* Datos equivalentes para lectura, teclado y consulta precisa del gráfico */
+.nuva-resumen-chart-visualization { min-width: 0; width: 100%; }
+.nuva-resumen-chart-data { margin-top: 12px; border-top: 1px solid var(--nuva-line, #e7e7e2); color: var(--nuva-ink, #34363b); }
+.nuva-resumen-chart-data summary { width: fit-content; padding: 10px 2px 6px; color: var(--nuva-muted, #6b7280); cursor: pointer; font-size: 12px; font-weight: 600; }
+.nuva-resumen-chart-data summary:focus-visible { outline: 2px solid var(--nuva-primary, #6366f1); outline-offset: 3px; border-radius: 4px; }
+.nuva-resumen-chart-table-wrap { max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
+.nuva-resumen-chart-table-wrap table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.nuva-resumen-chart-table-wrap th, .nuva-resumen-chart-table-wrap td { padding: 9px 10px; border-bottom: 1px solid var(--nuva-line, #e7e7e2); text-align: right; white-space: nowrap; }
+.nuva-resumen-chart-table-wrap th:first-child, .nuva-resumen-chart-table-wrap td:first-child { text-align: left; }
+.nuva-resumen-chart-table-wrap thead th { color: var(--nuva-muted, #6b7280); font-weight: 650; }
+.nuva-resumen-chart-table-wrap tfoot { font-weight: 700; }
+@media (prefers-reduced-motion: reduce) {
+  .nuva-resumen-chart-data summary { scroll-behavior: auto; }
+}
