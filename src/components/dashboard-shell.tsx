@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useMemo, useState } from "react";
 import "@/nuva-product-system.css";
 import "@/module-motion-system.css";
-import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, Sparkles, Brain, FileText, Settings, Bell, LogOut, ChevronsLeft, ChevronsRight, Building2, ChevronDown, Plus, Menu, Calculator, Lock, CalendarClock, Users, MessagesSquare, Truck, ShieldCheck, HelpCircle, UserRoundCog, Link2, Search, X } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, Sparkles, Brain, FileText, Settings, Bell, LogOut, ChevronsLeft, ChevronsRight, Building2, ChevronDown, Plus, Menu, Calculator, Lock, CalendarClock, Users, MessagesSquare, Truck, ShieldCheck, HelpCircle, UserRoundCog, Link2, Search, X, Receipt, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness, useMyMembership, hasModulePermission, type ModuleKey } from "@/lib/use-business";
@@ -21,7 +21,9 @@ const nav = [
   { to: "/pos", label: "Caja", icon: Calculator, module: "pos", section: "Operación" },
   { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales", section: "Operación" },
   { to: "/customers", label: "Clientes", icon: Users, module: "customers", section: "Operación" },
+  { to: "/billing", label: "Facturación SII", icon: Receipt, module: "billing", section: "Operación" },
   { to: "/purchases", label: "Compras", icon: Package, module: "purchases", section: "Operación" },
+  { to: "/catalog", label: "Catálogo", icon: BookOpen, module: "catalog", section: "Operación" },
   { to: "/inventory", label: "Inventario", icon: Boxes, module: "inventory", section: "Operación" },
   { to: "/shipments", label: "Envíos & Entregas", icon: Truck, section: "Operación" },
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance", section: "Finanzas" },
@@ -34,7 +36,7 @@ const nav = [
   { to: "/foro", label: "Comunidad", icon: MessagesSquare, section: "Espacio" },
   { to: "/shifts", label: "Turnos", icon: CalendarClock, adminOnly: true, section: "Espacio" },
   { to: "/people", label: "Nüva People", icon: UserRoundCog, module: "people", section: "Personas" },
-  { to: "/conexiones", label: "Nüva Connect", icon: Link2, section: "Espacio" },
+  { to: "/conexiones", label: "Nüva Connect", icon: Link2, module: "conexiones", section: "Espacio" },
   { to: "/settings", label: "Configuración", icon: Settings, section: "Espacio" },
 ] as const;
 
