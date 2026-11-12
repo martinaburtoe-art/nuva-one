@@ -25,7 +25,11 @@ export function dmyToIso(dmy: string): string | null {
   const [, d, mo, y] = m;
   const day = Number(d);
   const month = Number(mo);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  if (month < 1 || month > 12 || day < 1) return null;
+  const year = Number(y);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  if (day > daysInMonth) return null;
   return `${y}-${mo}-${d}`;
 }
 
@@ -56,7 +60,7 @@ function DateField({
           placeholder="dd-mm-aaaa"
           value={value}
           onChange={(e) => onChange(autoFormatDMY(e.target.value))}
-          className="w-28"
+          className="w-full min-w-0"
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -102,7 +106,7 @@ export function DateRangeFilter({
   onToChange: (v: string) => void;
 }) {
   return (
-    <div className="flex items-end gap-2">
+    <div className="nuva-date-range-filter grid min-w-0 grid-cols-2 items-end gap-2">
       <DateField label="Desde" value={from} onChange={onFromChange} />
       <DateField label="Hasta" value={to} onChange={onToChange} />
     </div>
