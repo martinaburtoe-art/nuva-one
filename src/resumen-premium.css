@@ -1858,3 +1858,27 @@
 @media (prefers-reduced-motion: reduce) {
   .nuva-resumen-chart-data summary { scroll-behavior: auto; }
 }
+
+/* Keep the plot measurable while allowing the accessible data table to expand
+   below it. A fixed-height chart wrapper clipped the table on narrow screens. */
+.nuva-app .nuva-resumen-canvas .nuva-resumen-device-chart {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+.nuva-app .nuva-resumen-canvas .nuva-resumen-device-chart > .nuva-resumen-chart-visualization {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+.nuva-app .nuva-resumen-chart-plot {
+  width: 100%;
+  height: clamp(240px, 26vw, 350px);
+  min-height: 200px;
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-resumen-chart-plot {
+    height: 220px;
+    min-height: 200px;
+  }
+}
