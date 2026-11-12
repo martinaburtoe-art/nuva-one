@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useMemo, useState } from "react";
 import "@/nuva-product-system.css";
 import "@/module-motion-system.css";
-import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, Sparkles, Brain, FileText, Settings, Bell, LogOut, ChevronsLeft, ChevronsRight, Building2, ChevronDown, Plus, Menu, Calculator, Lock, CalendarClock, Users, MessagesSquare, Truck, ShieldCheck, HelpCircle, UserRoundCog, Link2, Search, X, Receipt, BookOpen } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, Boxes, CreditCard, BarChart3, Sparkles, Brain, FileText, Settings, Bell, LogOut, ChevronsLeft, ChevronsRight, Building2, ChevronDown, Plus, Menu, Calculator, Lock, CalendarClock, Users, MessagesSquare, Truck, ShieldCheck, HelpCircle, UserRoundCog, Link2, Search, X, BookOpen, ScanBarcode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness, useMyMembership, hasModulePermission, type ModuleKey } from "@/lib/use-business";
@@ -19,11 +19,12 @@ import { splitMobileNavigation } from "@/lib/mobile-navigation";
 const nav = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard", section: "Operación" },
   { to: "/pos", label: "Caja", icon: Calculator, module: "pos", section: "Operación" },
+  { to: "/caja-control", label: "Control de caja", icon: CreditCard, module: "pos", section: "Caja" },
+  { to: "/mobile-scanner", label: "Scanner móvil", icon: ScanBarcode, module: "pos", section: "Caja" },
   { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales", section: "Operación" },
   { to: "/customers", label: "Clientes", icon: Users, module: "customers", section: "Operación" },
   { to: "/customer-action-center", label: "Centro de acción CRM", icon: FileText, module: "customers", section: "Clientes" },
   { to: "/customers-intelligence", label: "Inteligencia de clientes", icon: Brain, module: "customers", section: "Clientes" },
-  { to: "/billing", label: "Facturación SII", icon: Receipt, module: "billing", section: "Operación" },
   { to: "/purchases", label: "Compras", icon: Package, module: "purchases", section: "Operación" },
   { to: "/catalog", label: "Catálogo", icon: BookOpen, module: "catalog", section: "Operación" },
   { to: "/inventory", label: "Inventario", icon: Boxes, module: "inventory", section: "Operación" },
