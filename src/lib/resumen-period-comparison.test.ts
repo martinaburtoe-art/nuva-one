@@ -9,7 +9,7 @@ describe("resumen period comparison", () => {
 
   it("uses the default six-month window when no dates are selected", () => {
     expect(getPreviousComparableWindow({ from: null, to: null, defaultFrom: "2026-06-01", today: "2026-11-30" }))
-      .toEqual({ from: "2025-12-03", to: "2026-05-31" });
+      .toEqual({ from: "2025-11-30", to: "2026-05-31" });
   });
 
   it("does not invent a comparison for an end-only all-history filter", () => {
