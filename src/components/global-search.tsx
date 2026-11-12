@@ -40,6 +40,8 @@ import {
 const navItems = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { to: "/pos", label: "Caja", icon: Calculator },
+  { to: "/caja-control", label: "Control de caja", icon: CreditCard },
+  { to: "/mobile-scanner", label: "Scanner móvil", icon: ScanBarcode },
   { to: "/sales", label: "Ventas", icon: ShoppingCart },
   { to: "/customers", label: "Clientes", icon: Users },
   { to: "/customer-action-center", label: "Centro de acción CRM", icon: FileText },
