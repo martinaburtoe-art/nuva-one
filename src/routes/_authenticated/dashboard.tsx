@@ -36,9 +36,15 @@ function Dashboard() {
   const [categories, setCategories] = useState<string[]>([]);
   const isoFrom = dmyToIso(dateFrom);
   const isoTo = dmyToIso(dateTo);
+  const todayIso = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  })();
+  const chartWindowEnd = isoTo ?? todayIso;
   const invalidDateRange = Boolean(
     (dateFrom && !isoFrom) ||
     (dateTo && !isoTo) ||
+    (isoFrom && isoFrom > chartWindowEnd) ||
     (isoFrom && isoTo && isoFrom > isoTo)
   );
   const chartWindowStart = useMemo(() => {
@@ -50,7 +56,7 @@ function Dashboard() {
     // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, [isoFrom, isoTo]);
-  const dailyChart = Boolean(isoFrom && isoTo && Date.parse(isoTo) - Date.parse(isoFrom) <= 62 * 86_400_000);
+  const dailyChart = Boolean(isoFrom && Date.parse(chartWindowEnd) - Date.parse(isoFrom) <= 62 * 86_400_000);
   const financialPeriodLabel = invalidDateRange
     ? "Fechas por corregir"
     : isoFrom || isoTo ? "Rango seleccionado" : "Últimos seis meses";
@@ -62,21 +68,21 @@ function Dashboard() {
 
   const { data: kpis, error: kpisError } = useQuery({
     enabled: !!active?.id && !invalidDateRange,
-    queryKey: ["kpis", active?.id, chartWindowStart, isoTo, categories],
+    queryKey: ["kpis", active?.id, chartWindowStart, chartWindowEnd, categories],
     queryFn: async () => {
       const bid = active!.id;
       const [sales, expenses] = await Promise.all([
         fetchAllResumenRows((from, to) => {
           let query = supabase.from("transactions").select("id, amount").eq("business_id", bid).eq("type", "income");
           if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
-          if (isoTo) query = query.lte("tx_date", isoTo);
+          query = query.lte("tx_date", chartWindowEnd);
           if (categories.length > 0) query = query.in("category", categories);
           return query.order("id").range(from, to);
         }),
         fetchAllResumenRows((from, to) => {
           let query = supabase.from("transactions").select("id, amount").eq("business_id", bid).eq("type", "expense");
           if (chartWindowStart) query = query.gte("tx_date", chartWindowStart);
-          if (isoTo) query = query.lte("tx_date", isoTo);
+          query = query.lte("tx_date", chartWindowEnd);
           if (categories.length > 0) query = query.in("category", categories);
           return query.order("id").range(from, to);
         }),
@@ -87,10 +93,6 @@ function Dashboard() {
     },
   });
 
-  const todayIso = (() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  })();
   const comparisonWindow = useMemo(() => getPreviousComparableWindow({
     from: isoFrom,
     to: isoTo,
@@ -229,7 +231,7 @@ function Dashboard() {
 
   const { data: allTx, error: txError } = useQuery({
     enabled: !!active?.id && !invalidDateRange,
-    queryKey: ["chart-tx", active?.id, chartWindowStart, isoTo],
+    queryKey: ["chart-tx", active?.id, chartWindowStart, chartWindowEnd],
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     queryFn: async () => {
