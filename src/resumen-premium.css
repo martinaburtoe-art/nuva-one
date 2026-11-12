@@ -490,20 +490,26 @@
 }
 
 .nuva-app .nuva-resumen-kpi-primary {
-  border-color: color-mix(in oklab, var(--primary) 30%, #d9d9ed);
+  border-color: color-mix(in oklab, var(--color-primary) 24%, var(--nuva-line));
   background:
-    radial-gradient(ellipse at 100% 0%, rgb(230 198 135 / .25), transparent 45%),
-    linear-gradient(135deg, #24253a 0%, #343550 100%);
-  box-shadow: 0 12px 28px rgb(37 38 61 / .16);
+    radial-gradient(ellipse at 100% 0%, rgb(230 198 135 / .16), transparent 46%),
+    linear-gradient(145deg, #fff 0%, #fbfbff 100%);
+  box-shadow: 0 5px 18px rgb(27 30 38 / .045), inset 0 1px 0 #fff;
 }
 
-.nuva-app .nuva-resumen-kpi-primary .nuva-resumen-kpi-top, .nuva-app .nuva-resumen-kpi-primary > strong { color: #fff; }
+.nuva-app .nuva-resumen-kpi-primary .nuva-resumen-kpi-top { color: var(--color-muted-foreground); }
 
-.nuva-app .nuva-resumen-kpi-primary .nuva-resumen-kpi-icon { border-color: rgb(255 255 255 / .17); background: rgb(255 255 255 / .09); color: #e6c687; }
+.nuva-app .nuva-resumen-kpi-primary > strong { color: var(--color-foreground); }
+
+.nuva-app .nuva-resumen-kpi-primary .nuva-resumen-kpi-icon {
+  border-color: color-mix(in oklab, var(--color-primary) 16%, var(--nuva-line));
+  background: color-mix(in oklab, var(--color-primary) 7%, var(--color-card));
+  color: var(--color-primary);
+}
 
 .nuva-app .nuva-resumen-kpi-primary > strong { font-size: clamp(25px, 2.35vw, 34px); }
 
-.nuva-app .nuva-resumen-kpi-primary > p { color: #e6c687; }
+.nuva-app .nuva-resumen-kpi-primary > p { color: var(--nuva-gold-muted); }
 
 .nuva-app .nuva-resumen-toolbar {
   margin: 0 0 16px;
