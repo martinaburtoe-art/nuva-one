@@ -30,7 +30,7 @@ export function NuvaDecisionTimeline({ activities = [] }: Props) {
     .slice(0, 5);
   const completed = items.filter((a) => a.completed).length;
   const overdue = items.filter(
-    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+    (a) => !a.completed && a.due_date && age(a.due_date) > 0,
   ).length;
   const pending = Math.max(0, items.length - completed - overdue);
   const executionRate = items.length ? Math.round((completed / items.length) * 100) : 0;
@@ -150,7 +150,7 @@ export function NuvaDecisionTimeline({ activities = [] }: Props) {
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {latest.completed
                     ? "Ejecutada"
-                    : latest.due_date && new Date(latest.due_date).getTime() < Date.now()
+                    : latest.due_date && age(latest.due_date) > 0
                       ? "Vencida"
                       : "Pendiente"}
                 </p>

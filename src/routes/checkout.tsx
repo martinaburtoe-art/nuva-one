@@ -69,9 +69,14 @@ function CheckoutPage() {
     });
   }, []);
 
-  useEffect(() => {
-    if (search.billing !== billing) setBilling(search.billing);
-  }, [search.billing, billing]);
+  // Sincroniza el ciclo de facturación cuando cambia el parámetro de búsqueda
+  // usando el patrón previous-value durante el render (aprobado por React)
+  // en vez de un efecto.
+  const [prevSearchBilling, setPrevSearchBilling] = useState(search.billing);
+  if (search.billing !== prevSearchBilling) {
+    setPrevSearchBilling(search.billing);
+    setBilling(search.billing);
+  }
 
   const featureList = useMemo(
     () =>

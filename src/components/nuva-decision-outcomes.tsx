@@ -9,25 +9,27 @@ type Activity = {
 };
 type Props = { activities?: Activity[] };
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 100) : 0);
+const ageDays = (value?: string | null) =>
+  value ? (Date.now() - new Date(value).getTime()) / 86400000 : Infinity;
 
 export function NuvaDecisionOutcomes({ activities = [] }: Props) {
   const tasks = activities.filter((a) => a.type === "task");
   const completed = tasks.filter((a) => a.completed).length;
   const overdue = tasks.filter(
-    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+    (a) => !a.completed && a.due_date && ageDays(a.due_date) > 0,
   ).length;
   const recent = tasks.filter((a) => {
     if (!a.created_at) return false;
-    const age = Date.now() - new Date(a.created_at).getTime();
-    return age >= 0 && age <= 30 * 86400000;
+    const age = ageDays(a.created_at);
+    return age >= 0 && age <= 30;
   });
   const recentCompleted = recent.filter((a) => a.completed).length;
   const recentOverdue = recent.filter(
-    (a) => !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now(),
+    (a) => !a.completed && a.due_date && ageDays(a.due_date) > 0,
   ).length;
   const prior = tasks.filter((a) => {
     if (!a.created_at) return false;
-    const age = (Date.now() - new Date(a.created_at).getTime()) / 86400000;
+    const age = ageDays(a.created_at);
     return age > 30 && age <= 60;
   });
   const priorRate = pct(prior.filter((a) => a.completed).length, prior.length);

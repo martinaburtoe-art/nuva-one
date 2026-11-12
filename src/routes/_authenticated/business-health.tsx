@@ -8,6 +8,13 @@ import { buildBusinessHealthIntelligence } from "@/lib/nuva-business-health";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Vencida: fecha válida y anterior al momento de la consulta (Date.now en scope de módulo).
+const isOverdueDate = (value?: string | null) =>
+  !!value &&
+  Number.isFinite(new Date(value).getTime()) &&
+  new Date(value).getTime() < Date.now();
+
+
 export const Route = createFileRoute("/_authenticated/business-health")({
   head: () => ({ meta: [{ title: "Business Health — Nüva One" }] }),
   component: BusinessHealth,
@@ -44,11 +51,7 @@ function BusinessHealth() {
   const tasks = activities.filter((item: any) => item.type === "task");
   const openTasks = tasks.filter((item: any) => !item.completed).length;
   const overdueTasks = tasks.filter(
-    (item: any) =>
-      !item.completed &&
-      item.due_date &&
-      Number.isFinite(new Date(item.due_date).getTime()) &&
-      new Date(item.due_date).getTime() < Date.now(),
+    (item: any) => !item.completed && isOverdueDate(item.due_date),
   ).length;
   const intelligence = useMemo(
     () =>

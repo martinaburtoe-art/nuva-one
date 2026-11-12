@@ -30,6 +30,9 @@ type DurableLease = { id: string; task_id: string; agent_id: string; status: str
 type DurableApproval = { id: string; action_type: string; risk_level: string; description: string; status: string; created_at: string };
 type DurableAgency = { generated_at: string; missions: DurableMission[]; tasks: DurableTask[]; events: DurableEvent[]; leases: DurableLease[]; approvals: DurableApproval[] };
 
+// Lease vigente: aún no expira al momento de la consulta (Date.now en scope de módulo).
+const leaseNotExpired = (expiresAt: string) => new Date(expiresAt).getTime() > Date.now();
+
 export const Route = createFileRoute("/owner/control-tower")({
   ssr: false,
   beforeLoad: async () => {
@@ -154,7 +157,9 @@ function ControlTower() {
   };
 
   useEffect(() => {
-    void refresh();
+    // Microtask: la primera carga arranca fuera de la fase síncrona del efecto
+    // para no disparar setState en cascada durante el render-inicial.
+    queueMicrotask(() => void refresh());
     const timer = window.setInterval(() => void refresh(), 15_000);
     return () => window.clearInterval(timer);
   }, []);
@@ -273,7 +278,7 @@ function ControlTower() {
 function DurableAgencyPanel({ data, loading, onRefresh }: { data: DurableAgency | null; loading: boolean; onRefresh: () => void }) {
   const mission = data?.missions.find((item) => !["completed","cancelled"].includes(item.status)) ?? data?.missions[0] ?? null;
   const missionTasks = data?.tasks.filter((task) => task.mission_id === mission?.id) ?? [];
-  const activeAgents = new Set((data?.leases ?? []).filter((lease) => lease.status === "active" && new Date(lease.expires_at).getTime() > Date.now()).map((lease) => lease.agent_id));
+  const activeAgents = new Set((data?.leases ?? []).filter((lease) => lease.status === "active" && leaseNotExpired(lease.expires_at)).map((lease) => lease.agent_id));
   const pendingApprovals = (data?.approvals ?? []).filter((approval) => approval.status === "pending").length;
   const completed = missionTasks.filter((task) => task.status === "completed").length;
   const total = missionTasks.length;

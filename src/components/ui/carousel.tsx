@@ -95,7 +95,9 @@ const Carousel = React.forwardRef<
       return;
     }
 
-    onSelect(api);
+    // Sincroniza el estado de embla tras el montaje sin setState síncrono
+    // en el cuerpo del efecto (los listeners hacen el resto).
+    queueMicrotask(() => onSelect(api));
     api.on("reInit", onSelect);
     api.on("select", onSelect);
 

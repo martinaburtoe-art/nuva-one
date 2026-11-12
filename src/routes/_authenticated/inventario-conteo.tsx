@@ -44,7 +44,7 @@ function InventoryCount() {
   }, [active?.id]);
 
   useEffect(() => {
-    void refreshProducts();
+    queueMicrotask(() => void refreshProducts());
   }, [refreshProducts]);
 
   const matched = useMemo(() => products.find((product) => String(product.barcode ?? "").trim().toLowerCase() === barcode.trim().toLowerCase() || String(product.sku ?? "").trim().toLowerCase() === barcode.trim().toLowerCase()), [products, barcode]);
