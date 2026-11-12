@@ -79,7 +79,7 @@ export function AiChatBubble() {
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom))] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:bottom-6 md:right-6 md:h-14 md:w-14"
+        className="fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom))] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 lg:bottom-6 lg:right-6 lg:h-14 lg:w-14"
         aria-label="Asistente IA"
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
@@ -87,7 +87,7 @@ export function AiChatBubble() {
 
       <div
         className={cn(
-          "fixed bottom-[calc(6.5rem_+_env(safe-area-inset-bottom))] right-4 z-50 w-[min(360px,calc(100vw-2rem))] max-h-[calc(100dvh_-_8.5rem_-_env(safe-area-inset-bottom))] origin-bottom-right transition-all duration-200 md:bottom-24 md:right-6 md:max-h-[calc(100dvh_-_8rem)]",
+          "fixed bottom-[calc(6.5rem_+_env(safe-area-inset-bottom))] right-4 z-50 w-[min(360px,calc(100vw-2rem))] max-h-[calc(100dvh_-_8.5rem_-_env(safe-area-inset-bottom))] origin-bottom-right transition-all duration-200 lg:bottom-24 lg:right-6 lg:max-h-[calc(100dvh_-_8rem)]",
           open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
         )}
       >
@@ -102,7 +102,7 @@ export function AiChatBubble() {
             </div>
           </div>
 
-          <div className="min-h-0 h-80 max-h-[45dvh] space-y-3 overflow-y-auto overscroll-contain p-4 md:max-h-[50dvh]">
+          <div className="min-h-0 h-80 max-h-[45dvh] space-y-3 overflow-y-auto overscroll-contain p-4 lg:max-h-[50dvh]">
             {messages.length === 0 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">Prueba con:</p>
@@ -147,7 +147,7 @@ export function AiChatBubble() {
             )}
           </div>
 
-          <form onSubmit={handleSend} className="flex shrink-0 gap-2 border-t p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] md:pb-3">
+          <form onSubmit={handleSend} className="flex shrink-0 gap-2 border-t p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] lg:pb-3">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
