@@ -29,6 +29,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   WifiOff,
+  BookOpen,
 } from "lucide-react";
 
 const navItems = [
@@ -38,6 +39,7 @@ const navItems = [
   { to: "/customers", label: "Clientes", icon: Users },
   { to: "/billing", label: "Facturación SII", icon: Receipt },
   { to: "/purchases", label: "Compras", icon: Package },
+  { to: "/catalog", label: "Catálogo", icon: BookOpen },
   { to: "/inventory", label: "Inventario", icon: Boxes },
   { to: "/finance", label: "Finanzas", icon: CreditCard },
   { to: "/analytics", label: "Indicadores", icon: BarChart3 },
