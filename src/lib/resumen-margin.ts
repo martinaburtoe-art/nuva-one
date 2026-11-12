@@ -21,7 +21,8 @@ export function calculateGrossMargin(
     for (const rawItem of sale.items) {
       if (!rawItem || typeof rawItem !== "object") return null;
       const item = rawItem as Record<string, unknown>;
-      const productId = typeof item.product_id === "string" ? item.product_id : "";
+      const productId = typeof item.product_id === "string" ? item.product_id.trim() : "";
+      if (item.qty === null || item.qty === undefined || item.qty === "" || item.price === null || item.price === undefined || item.price === "") return null;
       const quantity = Number(item.qty);
       const price = Number(item.price);
       if (!productId || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0) {
