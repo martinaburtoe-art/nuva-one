@@ -78,13 +78,14 @@ export function hasResumenActivity(input: {
   customersCount?: number;
   cashRegisterOpen?: boolean;
 }): boolean {
-  return [
+  const hasRecords = [
     input.productsCount,
     input.salesCount,
-    input.income,
-    input.expense,
     input.quotesCount,
     input.customersCount,
-  ].some((value) => Number.isFinite(Number(value)) && Number(value) > 0)
-    || Boolean(input.cashRegisterOpen);
+  ].some((value) => Number.isFinite(Number(value)) && Number(value) > 0);
+  const hasFinancialMovement = [input.income, input.expense]
+    .some((value) => Number.isFinite(Number(value)) && Number(value) !== 0);
+
+  return hasRecords || hasFinancialMovement || Boolean(input.cashRegisterOpen);
 }
