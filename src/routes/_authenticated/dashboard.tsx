@@ -281,7 +281,10 @@ function Dashboard() {
     loading: !invalidDateRange && (
       (kpis === undefined && !kpisError) ||
       (inventoryQuery.data === undefined && !inventoryQuery.isError) ||
-      (salesCountQuery.data === undefined && !salesCountQuery.isError)
+      (salesCountQuery.data === undefined && !salesCountQuery.isError) ||
+      (quotesQuery.data === undefined && !quotesQuery.isError) ||
+      (customersQuery.data === undefined && !customersQuery.isError) ||
+      (!cashRegisterQuery.isFetched && !cashRegisterQuery.isError)
     ),
     kpisError: Boolean(kpisError),
     integrationErrorCount: integrationErrors.length,
@@ -449,12 +452,12 @@ function Dashboard() {
               <span className={operationalStatus.tone === "clear" ? "nuva-resumen-status-pill is-clear" : operationalStatus.tone === "attention" ? "nuva-resumen-status-pill is-attention" : "nuva-resumen-status-pill"}>{operationalStatus.label}</span>
             </div>
             <div className="nuva-resumen-operational-stats">
-              <div><span>Ventas registradas</span><strong>{salesCountQuery.data ?? "—"}</strong></div>
-              <div><span>Productos con stock bajo</span><strong className={inventoryQuery.data?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{inventoryQuery.data?.lowStockCount ?? "—"}</strong></div>
-              <div><span>Cotizaciones abiertas</span><strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "—" : integrations.pendingQuotes ?? 0}</strong></div>
-              <div><span>Clientes registrados</span><strong>{customersQuery.isLoading ? "—" : customersQuery.isError ? "—" : integrations.customersCount ?? 0}</strong></div>
-              <div><span>Estado de caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "No disponible" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
-              <div><span>Valor cotizado</span><strong>{quotesQuery.isLoading || quotesQuery.isError ? "—" : fmtCLP(integrations.pendingQuoteValue ?? 0)}</strong></div>
+              <div data-metric="sales"><span>Ventas registradas</span><strong>{salesCountQuery.data ?? "—"}</strong></div>
+              <div data-metric="low-stock"><span>Productos con stock bajo</span><strong className={inventoryQuery.data?.lowStockCount ? "nuva-resumen-value-attention" : ""}>{inventoryQuery.data?.lowStockCount ?? "—"}</strong></div>
+              <div data-metric="open-quotes"><span>Cotizaciones abiertas</span><strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "—" : integrations.pendingQuotes ?? 0}</strong></div>
+              <div data-metric="customers"><span>Clientes registrados</span><strong>{customersQuery.isLoading ? "—" : customersQuery.isError ? "—" : integrations.customersCount ?? 0}</strong></div>
+              <div data-metric="cash-register"><span>Estado de caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "No disponible" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
+              <div data-metric="quote-value"><span>Valor cotizado</span><strong>{quotesQuery.isLoading || quotesQuery.isError ? "—" : fmtCLP(integrations.pendingQuoteValue ?? 0)}</strong></div>
             </div>
             <div className="nuva-resumen-status-copy">
               {operationalStatus.description}
