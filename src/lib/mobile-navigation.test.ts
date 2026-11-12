@@ -35,6 +35,14 @@ describe("splitMobileNavigation", () => {
     expect(result.more).toEqual([]);
   });
 
+  it("encuentra módulos aunque la búsqueda omita tildes", () => {
+    const result = splitMobileNavigation([
+      ...items,
+      { to: "/finance-accounting", label: "Contabilidad y tributación", section: "Finanzas" },
+    ], "tributacion");
+    expect(result.more.map((item) => item.to)).toContain("/finance-accounting");
+  });
+
   it("respeta el orden y no duplica elementos", () => {
     const result = splitMobileNavigation(items);
     const all = [...result.primary, ...result.more];
