@@ -19,12 +19,14 @@ INSERT INTO public.businesses (id, name, owner_id, plan)
 VALUES ('00000000-0000-0000-0000-0000000000b1', 'Recovery Test Business', '00000000-0000-0000-0000-0000000000a1', 'starter');
 
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
-VALUES ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000b1', 'pending', 2000, '[]'::jsonb, false, 0);
+VALUES
+('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000b1', 'pending', 2000, '[]'::jsonb, false, 0),
+('00000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000b1', 'pending', 1000, '[]'::jsonb, false, 0);
 
 INSERT INTO public.payment_intents (id,business_id,sale_id,provider,token,commerce_order,amount,status)
 VALUES
 ('00000000-0000-0000-0000-0000000000e1','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d1','flow','recovery-token-paid','recovery-order-paid',1000,'pending'),
-('00000000-0000-0000-0000-0000000000e2','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d1','flow','recovery-token-rejected','recovery-order-rejected',500,'pending');
+('00000000-0000-0000-0000-0000000000e2','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d2','flow','recovery-token-rejected','recovery-order-rejected',500,'pending');
 
 INSERT INTO public.payment_creation_requests (
   id,business_id,sale_id,provider,idempotency_key,commerce_order,amount,subject,status,payment_intent_id
@@ -32,7 +34,7 @@ INSERT INTO public.payment_creation_requests (
   '00000000-0000-0000-0000-0000000000f1','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d1',
   'flow','recovery-key-paid','recovery-order-paid',1000,'Recovery paid test','recovery_required','00000000-0000-0000-0000-0000000000e1'
 ),(
-  '00000000-0000-0000-0000-0000000000f2','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d1',
+  '00000000-0000-0000-0000-0000000000f2','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d2',
   'flow','recovery-key-rejected','recovery-order-rejected',500,'Recovery rejected test','recovery_required',NULL
 );
 
