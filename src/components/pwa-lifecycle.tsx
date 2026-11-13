@@ -13,7 +13,10 @@ function isStandalone() {
 }
 
 function isIos() {
-  return typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (typeof navigator === "undefined") return false;
+  const userAgentMatch = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const ipadDesktopMode = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  return userAgentMatch || ipadDesktopMode;
 }
 
 function isAndroid() {
