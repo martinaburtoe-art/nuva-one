@@ -22,6 +22,7 @@ export type ScoreComponent = {
 export type NuvaScore = {
   total: number | null; // null si no hay ningún componente calculable
   components: ScoreComponent[];
+  coverage: { available: number; total: 5 };
 };
 
 function scoreFromRatio(ratio: number, goodAt: number, badAt: number): number {
@@ -198,14 +199,14 @@ export function useNuvaScore() {
       }
 
       if (components.length === 0) {
-        return { total: null, components: [] };
+        return { total: null, components: [], coverage: { available: 0, total: 5 } };
       }
 
       const total = Math.round(
         (components.reduce((s, c) => s + c.points, 0) / (components.length * 20)) * 100,
       );
 
-      return { total, components };
+      return { total, components, coverage: { available: components.length, total: 5 } };
     },
   });
 }
