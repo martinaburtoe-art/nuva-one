@@ -336,6 +336,22 @@ BEGIN
 END;
 $function$;
 
+-- Pending non-credit sales (including online checkout) must remain unpaid until
+-- a confirmed payment is inserted. The previous trigger defaulted every non-credit
+-- sale to fully paid even when status='pending', making provider settlement impossible.
+CREATE OR REPLACE FUNCTION public.default_paid_amount()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $function$
+BEGIN
+  IF NEW.status = 'paid' AND NOT NEW.is_credit AND COALESCE(NEW.paid_amount, 0) = 0 THEN
+    NEW.paid_amount := NEW.total;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
 -- The only settlement entry point is service-role-only. Provider verification
 -- happens in the server handler; this function revalidates amount/order and
 -- atomically writes payment, sale balance, intent status and webhook receipt.
