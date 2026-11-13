@@ -188,7 +188,8 @@ export function buildIndustryDashboardMetrics(
     }
     const missing = spec.sources.filter((source) => {
       const item = evidence[source];
-      return !item?.available || item.records <= 0;
+      // A closed cash register is a valid operational state, not missing data.
+      return !item?.available || (item.records <= 0 && source !== "cash");
     });
     if (missing.length > 0) {
       return {
