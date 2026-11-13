@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(65);
+SELECT plan(70);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -194,6 +194,49 @@ SELECT throws_ok(
 );
 SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e5'), 0, 'overpayment creates no payment row');
 SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'), 4000::numeric, 'rejected overpayment leaves sale balance unchanged');
+
+SELECT is(
+  public.settle_payment_intent('flow', 'token-does-not-exist', 'paid', 500, 'order-does-not-exist')->>'outcome',
+  'unknown_token',
+  'settlement refuses an unknown provider token'
+);
+
+INSERT INTO public.payment_intents (
+  id, business_id, sale_id, provider, token, commerce_order, amount, status
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000000e6',
+  '00000000-0000-0000-0000-0000000000b1',
+  '00000000-0000-0000-0000-0000000000d1',
+  'flow', 'token-rollback', 'order-rollback', 500, 'pending'
+);
+
+CREATE OR REPLACE FUNCTION public.test_fail_payment_insert()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $
+BEGIN
+  RAISE EXCEPTION 'forced payment accounting failure'
+    USING ERRCODE = 'P0001';
+END;
+$;
+
+CREATE TRIGGER test_fail_payment_insert
+BEFORE INSERT ON public.payments
+FOR EACH ROW EXECUTE FUNCTION public.test_fail_payment_insert();
+
+SELECT throws_ok(
+  $ SELECT public.settle_payment_intent('flow', 'token-rollback', 'paid', 500, 'order-rollback') $,
+  'P0001',
+  'forced payment accounting failure',
+  'a payment trigger failure aborts the whole settlement transaction'
+);
+SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e6'), 'pending', 'failed settlement leaves intent pending');
+SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e6'), 0, 'failed settlement leaves no payment row');
+SELECT is((SELECT count(*)::int FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-rollback'), 0, 'failed settlement rolls back webhook receipt');
+
+DROP TRIGGER test_fail_payment_insert ON public.payments;
+DROP FUNCTION public.test_fail_payment_insert();
 
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
 
