@@ -76,6 +76,66 @@ function makeFakeSupabase() {
 
   return {
     from: (table: string) => builder(table),
+    rpc: async (fn: string, args: Record<string, any>) => {
+      if (fn !== "settle_payment_intent") {
+        return { data: null, error: new Error("RPC inesperado") };
+      }
+      const { p_provider: provider, p_token: token, p_provider_status: providerStatus,
+        p_provider_amount: providerAmount, p_provider_commerce_order: commerceOrder } = args;
+      let event = tables.payment_webhook_events.find(
+        (row) => row.provider === provider && row.token === token,
+      );
+      if (!event) {
+        event = { provider, token, processed: false };
+        tables.payment_webhook_events.push(event);
+      }
+      if (event.processed) return { data: { outcome: "already_processed" }, error: null };
+
+      const intent = tables.payment_intents.find(
+        (row) => row.provider === provider && row.token === token,
+      );
+      if (!intent) return { data: { outcome: "unknown_token" }, error: null };
+      if (intent.status === "paid") {
+        event.processed = true;
+        return { data: { outcome: "already_paid" }, error: null };
+      }
+      if (intent.status === "rejected" || intent.status === "expired") {
+        event.processed = true;
+        return { data: { outcome: "terminal_state" }, error: null };
+      }
+      if (providerStatus === "pending") {
+        return { data: { outcome: "resolved_pending" }, error: null };
+      }
+      if (providerStatus === "rejected") {
+        intent.status = "rejected";
+        event.processed = true;
+        return { data: { outcome: "resolved_rejected" }, error: null };
+      }
+      if (providerStatus !== "paid") {
+        return { data: { outcome: "provider_status_unresolved" }, error: null };
+      }
+      if (
+        providerAmount === null || Number(providerAmount) !== Number(intent.amount) ||
+        !commerceOrder || commerceOrder !== intent.commerce_order
+      ) {
+        return { data: { outcome: "provider_mismatch" }, error: null };
+      }
+      if (intent.sale_id) {
+        const existing = tables.payments.find((row) => row.payment_intent_id === (intent.id ?? token));
+        if (!existing) {
+          tables.payments.push({
+            business_id: intent.business_id,
+            sale_id: intent.sale_id,
+            amount: intent.amount,
+            method: provider,
+            payment_intent_id: intent.id ?? token,
+          });
+        }
+      }
+      intent.status = "paid";
+      event.processed = true;
+      return { data: { outcome: "resolved_paid" }, error: null };
+    },
     _tables: tables,
   };
 }
@@ -225,6 +285,6 @@ describe("Flujo de contratación — suscripciones starter y pro (T-35)", () => 
     expect(sb._tables.payments.length).toBe(0);
     // El evento no queda marcado como processed para permitir reintento
     const events = sb._tables.payment_webhook_events.filter((e) => e.token === token);
-    expect(events[0]?.processed).toBeUndefined();
+    expect(events[0]?.processed).toBe(false);
   });
 });
