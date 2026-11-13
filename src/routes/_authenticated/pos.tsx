@@ -106,6 +106,7 @@ function POS() {
     fingerprint: string;
     saleId: string;
     idempotencyKey: string;
+    terminal?: boolean;
   } | null>(null);
 
   const { data: receiptDoc } = useQuery({
@@ -285,6 +286,41 @@ function POS() {
 
   async function checkout() {
     if (!canPay || checkoutLock.current) return;
+    const attemptStorageKey = `nuva:pos-online-attempt:${active?.id ?? "unknown"}`;
+
+    if (method !== "online") {
+      let stored: string | null = null;
+      try {
+        stored = localStorage.getItem(attemptStorageKey);
+      } catch {
+        toast.error("No se puede comprobar si existe un cobro online pendiente. No se registrará otro medio de pago.");
+        return;
+      }
+
+      let attempt = onlinePaymentAttemptRef.current;
+      if (!attempt && stored) {
+        try {
+          attempt = JSON.parse(stored);
+          onlinePaymentAttemptRef.current = attempt;
+        } catch {
+          toast.error("Existe una referencia de cobro dañada. No se registrará otro pago hasta revisarla.");
+          return;
+        }
+      }
+
+      if (attempt?.terminal) {
+        onlinePaymentAttemptRef.current = null;
+        try {
+          localStorage.removeItem(attemptStorageKey);
+        } catch {
+          // Terminal provider result; safe to proceed with a new sale.
+        }
+      } else if (attempt || stored) {
+        toast.error("Hay un link de pago online pendiente. Verifica su resultado antes de cobrar por otro medio.");
+        return;
+      }
+    }
+
     // Defensa en profundidad: validar stock disponible al momento del cobro,
     // por si cambió entre agregar al carrito y hacer checkout.
     for (const i of cart) {
@@ -316,7 +352,6 @@ function POS() {
         });
         let saved: any;
         let idempotencyKey: string;
-        const attemptStorageKey = `nuva:pos-online-attempt:${active?.id ?? "unknown"}`;
         let previousAttempt = onlinePaymentAttemptRef.current;
         let storedAttempt: string | null = null;
 
@@ -335,7 +370,7 @@ function POS() {
               typeof parsed?.saleId === "string" &&
               typeof parsed?.idempotencyKey === "string"
             ) {
-              previousAttempt = parsed;
+              previousAttempt = { ...parsed, terminal: parsed.terminal === true };
               onlinePaymentAttemptRef.current = parsed;
             } else {
               toast.error("La referencia de un cobro anterior no se puede verificar. No se generará otro intento.");
@@ -348,10 +383,20 @@ function POS() {
         }
 
         if (previousAttempt && previousAttempt.fingerprint !== cartFingerprint) {
-          toast.error(
-            "Hay un intento de cobro anterior sin resolver. Recupera ese intento antes de generar otro para evitar un posible doble cobro.",
-          );
-          return;
+          if (previousAttempt.terminal) {
+            onlinePaymentAttemptRef.current = null;
+            previousAttempt = null;
+            try {
+              localStorage.removeItem(attemptStorageKey);
+            } catch {
+              // The provider already reported a terminal result.
+            }
+          } else {
+            toast.error(
+              "Hay un intento de cobro anterior sin resolver. Recupera ese intento antes de generar otro para evitar un posible doble cobro.",
+            );
+            return;
+          }
         }
 
         if (previousAttempt?.fingerprint === cartFingerprint) {
@@ -430,46 +475,30 @@ function POS() {
             } catch {
               // The server has already confirmed the payment as settled.
             }
+            setOnlinePayment(null);
             setCart([]);
+            setReceived(0);
+            setMethod("efectivo");
+            clearCustomer();
             toast.success("Este pago ya estaba confirmado y conciliado.");
             return;
           }
 
           if (json.code === "PAYMENT_ATTEMPT_TERMINAL") {
-            const previous = onlinePaymentAttemptRef.current;
-            if (previous) {
-              const nextAttempt = {
-                ...previous,
-                idempotencyKey: crypto.randomUUID(),
-              };
-              try {
-                const serializedAttempt = JSON.stringify(nextAttempt);
-                localStorage.setItem(attemptStorageKey, serializedAttempt);
-                if (localStorage.getItem(attemptStorageKey) !== serializedAttempt) {
-                  throw new Error("new idempotency key could not be persisted");
-                }
-                onlinePaymentAttemptRef.current = nextAttempt;
-              } catch {
-                toast.error("El intento terminó, pero no se pudo guardar una nueva clave segura. No se generará otro cobro.");
-                return;
-              }
+            onlinePaymentAttemptRef.current = null;
+            try {
+              localStorage.removeItem(attemptStorageKey);
+            } catch {
+              // Provider confirmed that the previous intent is terminal.
             }
+            setOnlinePayment(null);
           }
 
           toast.error(json.error ?? "No se pudo generar el link de pago");
           return;
         }
         setOnlinePayment({ url: json.payment_url, saleId: saved?.id });
-        onlinePaymentAttemptRef.current = null;
-        try {
-          localStorage.removeItem(attemptStorageKey);
-        } catch {
-          // The successful payment link is already available to the user.
-        }
-        setCart([]);
-        setReceived(0);
-        setMethod("efectivo");
-        clearCustomer();
+        toast.success("Link generado. El carrito queda reservado hasta confirmar o resolver el pago.");
       } catch {
         toast.error("Error de conexión con la pasarela de pago");
       } finally {
@@ -1030,29 +1059,41 @@ function POS() {
               </DialogTitle>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
-              Envía este link al cliente para que pague.
+              Envía este link al cliente. Después de pagar, vuelve aquí y pulsa “Verificar pago”. El carrito permanecerá reservado hasta confirmar el resultado.
             </p>
             <div className="break-all rounded-lg border bg-muted/40 p-3 text-xs">
               {onlinePayment?.url}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={async () => {
+                    if (onlinePayment)
+                      await navigator.clipboard.writeText(onlinePayment.url).catch(() => {});
+                    toast.success("Link copiado");
+                  }}
+                >
+                  <Copy className="mr-1.5 h-4 w-4" />
+                  Copiar
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => onlinePayment && window.open(onlinePayment.url, "_blank")}
+                >
+                  Abrir link
+                </Button>
+              </div>
               <Button
                 variant="outline"
-                className="flex-1"
-                onClick={async () => {
-                  if (onlinePayment)
-                    await navigator.clipboard.writeText(onlinePayment.url).catch(() => {});
-                  toast.success("Link copiado");
+                disabled={creatingLink}
+                onClick={() => {
+                  setOnlinePayment(null);
+                  void checkout();
                 }}
               >
-                <Copy className="mr-1.5 h-4 w-4" />
-                Copiar
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => onlinePayment && window.open(onlinePayment.url, "_blank")}
-              >
-                Abrir link
+                Verificar pago
               </Button>
             </div>
           </DialogContent>
