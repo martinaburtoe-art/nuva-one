@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, isValid, parse } from "date-fns";
+import { endOfMonth, format, isValid, parse, startOfMonth, subDays, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,22 @@ function autoFormatDMY(raw: string): string {
   const month = digits.slice(2, 4);
   const year = digits.slice(4, 8);
   return [day, month, year].filter(Boolean).join("-");
+}
+
+export type DateRangePreset = { id: string; label: string; from: string; to: string };
+
+/** Rangos rápidos calculados en la zona horaria local del dispositivo. */
+export function getDateRangePresets(now = new Date()): DateRangePreset[] {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const previousMonth = subMonths(today, 1);
+  const toDMY = (date: Date) => format(date, "dd-MM-yyyy");
+
+  return [
+    { id: "last-7-days", label: "7 días", from: toDMY(subDays(today, 6)), to: toDMY(today) },
+    { id: "last-30-days", label: "30 días", from: toDMY(subDays(today, 29)), to: toDMY(today) },
+    { id: "current-month", label: "Este mes", from: toDMY(startOfMonth(today)), to: toDMY(today) },
+    { id: "previous-month", label: "Mes anterior", from: toDMY(startOfMonth(previousMonth)), to: toDMY(endOfMonth(previousMonth)) },
+  ];
 }
 
 /** dd-mm-aaaa -> aaaa-mm-dd (ISO), o null si la fecha está incompleta/ inválida. */
@@ -73,7 +89,7 @@ function DateField({
               <CalendarIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="nuva-mobile-calendar-sheet w-auto p-0" align="start" side="bottom" sideOffset={8}>
             <Calendar
               mode="single"
               locale={es}
@@ -105,10 +121,31 @@ export function DateRangeFilter({
   onFromChange: (v: string) => void;
   onToChange: (v: string) => void;
 }) {
+  const presets = getDateRangePresets();
+  const activePreset = presets.find((preset) => preset.from === from && preset.to === to);
+
   return (
     <div className="nuva-date-range-filter grid min-w-0 grid-cols-2 items-end gap-2">
       <DateField label="Desde" value={from} onChange={onFromChange} />
       <DateField label="Hasta" value={to} onChange={onToChange} />
+      <div className="nuva-date-range-presets col-span-2" role="group" aria-label="Periodos rápidos">
+        {presets.map((preset) => (
+          <Button
+            key={preset.id}
+            type="button"
+            size="sm"
+            variant={activePreset?.id === preset.id ? "secondary" : "ghost"}
+            className="min-h-11"
+            aria-pressed={activePreset?.id === preset.id}
+            onClick={() => {
+              onFromChange(preset.from);
+              onToChange(preset.to);
+            }}
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 }
