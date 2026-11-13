@@ -220,7 +220,7 @@ function Onboarding() {
               <div className="mt-7 grid gap-5 sm:grid-cols-2">
                 <div className="space-y-3">
                   <Label>Industria</Label>
-                  <Select value={industry} onValueChange={(value) => { setIndustry(value); const selected = getIndustryProfile(industryProfile); if (selected && selected.coreIndustry !== value) setIndustryProfile(""); }}>
+                  <Select value={industry} onValueChange={(value) => { setIndustry(value); const selected = getIndustryProfile(industryProfile); if (selected && selected.coreIndustry !== value) { setIndustryProfile(""); setIndustryAnswers({}); } }}>
                     <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
@@ -244,6 +244,7 @@ function Onboarding() {
                     value={industryProfile}
                     onValueChange={(value) => {
                       setIndustryProfile(value);
+                      setIndustryAnswers({});
                       const profile = getIndustryProfile(value);
                       if (profile) setIndustry(profile.coreIndustry);
                     }}
