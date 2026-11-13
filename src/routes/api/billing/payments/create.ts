@@ -198,13 +198,13 @@ export const Route = createFileRoute("/api/billing/payments/create")({
               if (!claimRefresh.data) {
                 const latestClaim = await admin
                   .from("payment_creation_requests")
-                  .select("status")
+                  .select("status, payment_intent_id")
                   .eq("id", existing.id)
                   .maybeSingle();
                 if (latestClaim.error) throw latestClaim.error;
                 if (
-                  latestClaim.data?.status === "recovery_required" ||
-                  latestClaim.data?.status === "closed"
+                  latestClaim.data?.status !== "created" ||
+                  latestClaim.data?.payment_intent_id !== savedIntent.id
                 ) {
                   return json(
                     {
