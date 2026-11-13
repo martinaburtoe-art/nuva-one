@@ -39,6 +39,14 @@ describe("industry dashboard metric manifest", () => {
     expect(complete.find((metric) => metric.id === "margin_by_product")?.status).toBe("available");
   });
 
+  it("never promotes roadmap-only metrics just because raw tables have data", () => {
+    const metrics = buildIndustryDashboardMetrics("hardware_store", {
+      sales: { available: true, records: 20, complete: true },
+      inventory: { available: true, records: 30, complete: true },
+    });
+    expect(metrics.find((metric) => metric.id === "stockout_risk")?.status).toBe("planned");
+  });
+
   it("keeps capabilities without a verified operational source in planned state", () => {
     const metrics = buildIndustryDashboardMetrics("beauty_wellness", {
       sales: { available: true, records: 10 },
