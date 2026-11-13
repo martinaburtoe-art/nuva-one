@@ -1,10 +1,11 @@
 BEGIN;
-SELECT plan(57);
+SELECT plan(60);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
 SELECT has_table('public', 'payment_creation_requests', 'payment creation claims are persisted');
 SELECT has_index('public', 'payments', 'uq_payments_payment_intent_id', 'one payment row per intent is enforced');
+SELECT has_index('public', 'payment_creation_requests', 'uq_payment_creation_requests_unresolved_sale', 'one unresolved provider creation per sale is enforced');
 SELECT has_index('public', 'payment_intents', 'uq_payment_intents_provider_commerce_order', 'provider commerce orders are unique');
 SELECT has_index('public', 'inventory_movements', 'uq_inventory_adjustments_source_product', 'inventory source keys are unique per product');
 SELECT ok(to_regprocedure('public.settle_payment_intent(text,text,text,numeric,text)') IS NOT NULL, 'atomic settlement RPC exists');
@@ -55,11 +56,35 @@ SELECT throws_ok(
   'same tenant idempotency key cannot create a second provider request'
 );
 SELECT throws_ok(
-  $$ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
-     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'nuva-order-claim-1', 1000, 'POS test') $$,
+  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'nuva-order-claim-1', 1000, 'POS test') $,
   '23505',
   NULL,
   'provider commerce order cannot be reused by another request'
+);
+SELECT throws_ok(
+  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'nuva-order-claim-2', 1000, 'POS test') $,
+  '23505',
+  NULL,
+  'a sale cannot have two unresolved external payment creation requests'
+);
+UPDATE public.payment_creation_requests
+   SET status = 'created',
+       payment_intent_id = '00000000-0000-0000-0000-0000000000e2'
+ WHERE idempotency_key = 'idempotency-key-1';
+INSERT INTO public.payment_creation_requests (
+  business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject, status
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000000b1',
+  '00000000-0000-0000-0000-0000000000d1',
+  'flow', 'idempotency-key-3', 'nuva-order-claim-3', 1000, 'POS test', 'creating'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.payment_creation_requests WHERE sale_id = '00000000-0000-0000-0000-0000000000d1'),
+  2,
+  'a new deliberate attempt is allowed after the previous request is created'
 );
 SELECT ok(
   NOT has_table_privilege('anon', 'public.payment_creation_requests', 'SELECT'),
