@@ -231,7 +231,7 @@ function PaymentRecoveryPage() {
                       className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-[#0d111b] dark:focus:ring-indigo-400/10"
                     />
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <button onClick={() => void act(row.id, "check_provider")} disabled={Boolean(busyId)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+                      <button onClick={() => void act(row.id, "check_provider")} disabled={Boolean(busyId) || row.provider === "vsb"} title={row.provider === "vsb" ? "Conciliación deshabilitada hasta validar el contrato oficial VSB" : undefined} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
                         {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />} Verificar pasarela
                       </button>
                       {!row.payment_intent_id && (
