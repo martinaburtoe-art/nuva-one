@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(91);
+SELECT plan(92);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -25,6 +25,11 @@ VALUES ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000
 
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
 VALUES ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000b1', 'pending', 5000, '[]'::jsonb, false, 0);
+SELECT is(
+  (SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'),
+  0::numeric,
+  'a pending non-credit sale remains unpaid until a confirmed payment is settled'
+);
 
 INSERT INTO public.payment_intents (id, business_id, sale_id, provider, token, commerce_order, amount, status)
 VALUES
