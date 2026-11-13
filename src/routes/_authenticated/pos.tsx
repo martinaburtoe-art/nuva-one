@@ -102,6 +102,11 @@ function POS() {
   const [registering, setRegistering] = useState(false);
   // Ref síncrona: bloquea doble toque antes de que React alcance a renderizar el estado pending.
   const checkoutLock = useRef(false);
+  const onlinePaymentAttemptRef = useRef<{
+    fingerprint: string;
+    saleId: string;
+    idempotencyKey: string;
+  } | null>(null);
 
   const { data: receiptDoc } = useQuery({
     queryKey: ["sale-billing-doc", showReceipt?.saleId],
@@ -298,38 +303,111 @@ function POS() {
     if (method === "online") {
       setCreatingLink(true);
       try {
-        const saved: any = await insert.mutateAsync({
-          customer_name: matchedCustomer?.name ?? "Venta mostrador",
-          customer_id: matchedCustomer?.id ?? null,
-          channel: "tienda",
-          status: "pending",
-          is_credit: true,
+        const cartFingerprint = JSON.stringify({
+          businessId: active?.id,
+          customerId: matchedCustomer?.id ?? null,
+          customerName: matchedCustomer?.name ?? "mostrador",
           total,
-          sale_date: today,
-          payment_method: method,
           items: cart.map((i) => ({
             product_id: i.product_id,
-            name: i.name,
             qty: i.qty,
             price: i.price,
-          })) as any,
-          notes,
+          })),
         });
+        let saved: any;
+        let idempotencyKey: string;
+        const attemptStorageKey = `nuva:pos-online-attempt:${active?.id ?? "unknown"}`;
+        let previousAttempt = onlinePaymentAttemptRef.current;
+
+        if (!previousAttempt) {
+          try {
+            const stored = localStorage.getItem(attemptStorageKey);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (
+                typeof parsed?.fingerprint === "string" &&
+                typeof parsed?.saleId === "string" &&
+                typeof parsed?.idempotencyKey === "string"
+              ) {
+                previousAttempt = parsed;
+                onlinePaymentAttemptRef.current = parsed;
+              }
+            }
+          } catch {
+            // A corrupt/blocked local store must not prevent a new checkout.
+          }
+        }
+
+        if (previousAttempt && previousAttempt.fingerprint !== cartFingerprint) {
+          toast.error(
+            "Hay un intento de cobro anterior sin resolver. Recupera ese intento antes de generar otro para evitar un posible doble cobro.",
+          );
+          return;
+        }
+
+        if (previousAttempt?.fingerprint === cartFingerprint) {
+          // Retry the same persisted sale and key; never create another order
+          // after an ambiguous network response.
+          saved = { id: previousAttempt.saleId };
+          idempotencyKey = previousAttempt.idempotencyKey;
+        } else {
+          saved = await insert.mutateAsync({
+            customer_name: matchedCustomer?.name ?? "Venta mostrador",
+            customer_id: matchedCustomer?.id ?? null,
+            channel: "tienda",
+            status: "pending",
+            is_credit: true,
+            total,
+            sale_date: today,
+            payment_method: method,
+            items: cart.map((i) => ({
+              product_id: i.product_id,
+              name: i.name,
+              qty: i.qty,
+              price: i.price,
+            })) as any,
+            notes,
+          });
+          idempotencyKey = crypto.randomUUID();
+          const attempt = {
+            fingerprint: cartFingerprint,
+            saleId: saved.id,
+            idempotencyKey,
+          };
+          onlinePaymentAttemptRef.current = attempt;
+          try {
+            localStorage.setItem(attemptStorageKey, JSON.stringify(attempt));
+          } catch {
+            // The in-memory lock still protects retries during this page life.
+          }
+        }
+
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
         const res = await fetch("/api/billing/payments/create", {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "Idempotency-Key": idempotencyKey,
+          },
           body: JSON.stringify({
             business_id: active?.id,
             sale_id: saved?.id,
             amount: total,
             subject: `Venta ${matchedCustomer?.name ?? "mostrador"}`,
+            idempotency_key: idempotencyKey,
           }),
         });
         const json = await res.json();
         if (!json.ok) return toast.error(json.error ?? "No se pudo generar el link de pago");
         setOnlinePayment({ url: json.payment_url, saleId: saved?.id });
+        onlinePaymentAttemptRef.current = null;
+        try {
+          localStorage.removeItem(attemptStorageKey);
+        } catch {
+          // The successful payment link is already available to the user.
+        }
         setCart([]);
         setReceived(0);
         setMethod("efectivo");
