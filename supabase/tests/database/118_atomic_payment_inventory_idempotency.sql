@@ -40,7 +40,7 @@ INSERT INTO public.payment_creation_requests (
 VALUES (
   '00000000-0000-0000-0000-0000000000b1',
   '00000000-0000-0000-0000-0000000000d1',
-  'flow', 'idempotency-key-1', 'nuva-order-claim-1', 1000, 'POS test', 'creating'
+  'flow', 'idempotency-key-1', 'order-paid-once', 1000, 'POS test', 'creating'
 );
 
 SELECT is(
@@ -57,7 +57,7 @@ SELECT throws_ok(
 );
 SELECT throws_ok(
   $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
-     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'nuva-order-claim-1', 1000, 'POS test') $,
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'order-paid-once', 1000, 'POS test') $,
   '23505',
   NULL,
   'provider commerce order cannot be reused by another request'
