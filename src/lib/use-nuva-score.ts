@@ -115,14 +115,11 @@ export function useNuvaScore() {
         });
       }
 
-      // 2) Margen: sobre ventas del mes actual, usando costo real del producto.
-      // Historial margin is calculated only from immutable sale-time cost snapshots.
-      // The current product cost can change after a sale and must never rewrite history.
+      // 2) Margen: solo con costo unitario congelado en cada línea al vender.
+      // El costo actual del catálogo no reemplaza el costo histórico de una venta.
       const salesThisMonth = sales.filter((s) => s.sale_date >= currentMonthStart);
       if (salesThisMonth.length > 0) {
-        const margin = calculateGrossMargin(
-          salesThisMonth,
-        );
+        const margin = calculateGrossMargin(salesThisMonth);
         const marginPoints = margin ? scoreFromRatio(margin.marginRatio, 0.35, 0.1) : null;
         const marginDetail = margin ? `Margen bruto de ${(margin.marginRatio * 100).toFixed(0)}% este mes` : "";
         if (marginPoints !== null) {
