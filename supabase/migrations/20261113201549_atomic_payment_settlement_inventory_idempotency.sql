@@ -406,7 +406,7 @@ BEGIN
   END IF;
 
   IF v_intent.status IN ('rejected', 'expired') THEN
-    IF p_provider_status IN ('paid', 'pending') OR p_provider_status NOT IN ('rejected', 'expired') THEN
+    IF p_provider_status IS NULL OR p_provider_status NOT IN ('rejected', 'expired') THEN
       v_recovery_reason := CASE
         WHEN p_provider_status = 'paid' THEN 'late_paid_after_terminal'
         ELSE 'terminal_provider_state_unconfirmed'
@@ -472,7 +472,8 @@ BEGIN
      WHERE provider = v_intent.provider
        AND commerce_order = v_intent.commerce_order
        AND status <> 'closed'
-       AND COALESCE(last_error, '') NOT LIKE 'late_paid_after_terminal%';
+       AND COALESCE(last_error, '') NOT LIKE 'late_paid_after_terminal%'
+       AND COALESCE(last_error, '') NOT LIKE 'terminal_provider_state_unconfirmed%';
     UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
     RETURN jsonb_build_object('outcome', 'terminal_state', 'intent_id', v_intent.id);
   END IF;
