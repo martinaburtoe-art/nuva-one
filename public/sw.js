@@ -3,7 +3,8 @@
  * Only content-hashed Vite assets are cache-first; navigation always reaches the server.
  */
 const CACHE_PREFIX = "nuva-static-";
-const CACHE_NAME = "nuva-static-v1";
+const CACHE_NAME = "nuva-static-v2";
+const MAX_CACHED_ASSETS = 120;
 const HASHED_ASSET = /\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css|woff2?|png|jpe?g|webp|svg)$/i;
 
 self.addEventListener("install", () => {
@@ -33,8 +34,13 @@ self.addEventListener("fetch", (event) => {
     const cached = await cache.match(request);
     if (cached) return cached;
     const response = await fetch(request);
-    if (response.ok && (response.type === "basic" || response.type === "cors")) {
+    if (response.ok && response.type === "basic") {
       await cache.put(request, response.clone());
+      const keys = await cache.keys();
+      const overflow = keys.length - MAX_CACHED_ASSETS;
+      if (overflow > 0) {
+        await Promise.all(keys.slice(0, overflow).map((key) => cache.delete(key)));
+      }
     }
     return response;
   })());
