@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/billing/payments/webhook")({
 
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          await handlePaymentWebhook(supabaseAdmin, provider, token);
+          await handlePaymentWebhook(supabaseAdmin as any, provider, token);
           // Los estados no definitivos y tokens desconocidos se responden 200;
           // los fallos internos/transitorios deben permitir un reintento del proveedor.
           return new Response("OK");
