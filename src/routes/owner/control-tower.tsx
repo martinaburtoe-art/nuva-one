@@ -317,6 +317,7 @@ function ControlTower() {
               <p className="mt-3 max-w-3xl text-sm leading-6 text-white/50">Centro privado del propietario para supervisar Nüva One y conversar con el Constructor interno.</p>
             </div>
             <button onClick={() => void refresh()} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Actualizar</button>
+            <a href="/owner/payment-recovery" className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-300/20 bg-amber-300/10 px-4 py-2.5 text-sm text-amber-100 hover:bg-amber-300/15">Conciliación de pagos</a>
           </div>
         </header>
 
