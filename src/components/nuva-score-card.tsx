@@ -26,13 +26,6 @@ function ringColor(total: number): string {
   return "oklch(0.6 0.22 25)";
 }
 
-function scoreLabel(total: number): string {
-  if (total >= 85) return "Excelente";
-  if (total >= 70) return "Saludable";
-  if (total >= 40) return "Atención";
-  return "Crítico";
-}
-
 function actionFor(key: string): { href: string; label: string } {
   if (key === "inventario") return { href: "/inventory", label: "Ver inventario" };
   if (key === "margen" || key === "liquidez")
