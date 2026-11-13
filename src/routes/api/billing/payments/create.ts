@@ -96,12 +96,25 @@ export const Route = createFileRoute("/api/billing/payments/create")({
 
           const { data: savedIntent, error: savedIntentError } = await admin
             .from("payment_intents")
-            .select("id, payment_url")
+            .select("id, payment_url, status")
             .eq("provider", provider)
             .eq("commerce_order", existing.commerce_order)
             .maybeSingle();
 
           if (savedIntentError) throw savedIntentError;
+          if (savedIntent?.status === "paid") {
+            return json(
+              { error: "Este intento ya fue pagado y conciliado. No se generará otro cobro para él.", code: "PAYMENT_ALREADY_SETTLED" },
+              409,
+            );
+          }
+          if (savedIntent?.status === "rejected" || savedIntent?.status === "expired") {
+            return json(
+              { error: "El intento anterior terminó sin pago. Puedes iniciar un nuevo intento con una clave nueva.", code: "PAYMENT_ATTEMPT_TERMINAL" },
+              409,
+            );
+          }
+
           if (savedIntent?.payment_url) {
             if (existing.status !== "created" || existing.payment_intent_id !== savedIntent.id) {
               await admin
