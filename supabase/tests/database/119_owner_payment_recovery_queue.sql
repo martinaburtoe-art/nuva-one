@@ -71,7 +71,7 @@ SELECT is(
   public.owner_reconcile_payment_recovery(
     '00000000-0000-0000-0000-0000000000f1',
     '00000000-0000-0000-0000-0000000000a1',
-    'pending', NULL, NULL
+    'pending', 1000, 'recovery-order-paid'
   )->>'outcome',
   'provider_pending',
   'pending provider response leaves the request quarantined'
