@@ -132,6 +132,29 @@ export const Route = createFileRoute("/api/billing/payments/create")({
               .maybeSingle();
             if (refreshedRequest.error) throw refreshedRequest.error;
             existing.status = refreshedRequest.data?.status ?? existing.status;
+
+            // A late payment from an older terminal intent may quarantine a
+            // newer request for the same sale. Check the sale-wide claim too.
+            if (saleId) {
+              const activeRecovery = await admin
+                .from("payment_creation_requests")
+                .select("id, commerce_order")
+                .eq("business_id", businessId)
+                .eq("sale_id", saleId)
+                .eq("status", "recovery_required")
+                .maybeSingle();
+              if (activeRecovery.error) throw activeRecovery.error;
+              if (activeRecovery.data) {
+                return json(
+                  {
+                    error: "Otro intento de esta venta requiere conciliación. No se generará un nuevo cobro.",
+                    code: "PAYMENT_RECOVERY_REQUIRED",
+                    commerce_order: activeRecovery.data.commerce_order,
+                  },
+                  409,
+                );
+              }
+            }
           }
 
           if (existing.status === "recovery_required") {
