@@ -24,7 +24,7 @@ INSERT INTO public.products (id, business_id, name, price, stock)
 VALUES ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000b1', 'Idempotent Widget', 1000, 10);
 
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
-VALUES ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000b1', 'pending', 5000, '[]'::jsonb, true, 0);
+VALUES ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000b1', 'pending', 5000, '[]'::jsonb, false, 0);
 
 INSERT INTO public.payment_intents (id, business_id, sale_id, provider, token, commerce_order, amount, status)
 VALUES
