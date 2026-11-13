@@ -13,6 +13,8 @@ describe("industry dashboard metric manifest", () => {
     expect(metrics.find((metric) => metric.id === "stock_health")?.status).toBe("available");
     expect(metrics.find((metric) => metric.id === "margin_by_product")?.status).toBe("planned");
     expect(metrics.find((metric) => metric.id === "stockout_risk")?.status).toBe("planned");
+    expect(metrics.find((metric) => metric.id === "daily_sales")?.evidenceCounts).toEqual({ sales: 24 });
+    expect(metrics.find((metric) => metric.id === "stock_health")?.evidenceCounts).toEqual({ inventory: 80 });
   });
 
   it("does not mark a metric available when its source is empty", () => {
@@ -45,6 +47,19 @@ describe("industry dashboard metric manifest", () => {
       inventory: { available: true, records: 30, complete: true },
     });
     expect(metrics.find((metric) => metric.id === "stockout_risk")?.status).toBe("planned");
+  });
+
+  it("does not describe a customer directory as recent customer activity", () => {
+    const metrics = buildIndustryDashboardMetrics("professional_services", {
+      customers: { available: true, records: 9 },
+      sales: { available: true, records: 4 },
+      quotes: { available: true, records: 2 },
+      expenses: { available: true, records: 1 },
+    });
+    const customers = metrics.find((metric) => metric.id === "customer_activity");
+    expect(customers?.label).toBe("Cartera de clientes");
+    expect(customers?.description).toContain("no implica actividad reciente");
+    expect(customers?.evidenceCounts).toEqual({ customers: 9 });
   });
 
   it("keeps capabilities without a verified operational source in planned state", () => {
