@@ -17,6 +17,8 @@ import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparableWindow } from "@/lib/resumen-period-comparison";
+import { getIndustryProfile } from "@/lib/industry-profiles";
+import { buildIndustryDashboardMetrics } from "@/lib/industry-dashboard";
 import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
@@ -65,6 +67,21 @@ function Dashboard() {
     catch { setOnboardingFocus("Todo"); }
   }, []);
 
+  const { data: industryProfileData } = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-industry-profile", active?.id],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase.from("businesses") as any)
+        .select("industry_profile, industry_secondary_profiles")
+        .eq("id", active!.id)
+        .maybeSingle();
+      if (error?.code === "42703" || error?.code === "PGRST204" || /industry_profile/i.test(error?.message ?? "")) return null;
+      if (error) throw error;
+      return data as { industry_profile: string | null; industry_secondary_profiles: string[] | null } | null;
+    },
+  });
+
   const { data: kpis, error: kpisError } = useQuery({
     enabled: !!active?.id && !invalidDateRange,
     queryKey: ["kpis", active?.id, chartWindowStart, chartWindowEnd, categories],
@@ -88,7 +105,7 @@ function Dashboard() {
       ]);
       const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
       const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
-      return { income, expense, net: income - expense };
+      return { income, expense, net: income - expense, incomeRecords: sales.length, expenseRecords: expenses.length };
     },
   });
 
