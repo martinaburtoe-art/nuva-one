@@ -112,7 +112,7 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
             return Response.json({ error: "La solicitud ya no está pendiente de conciliación." }, { status: 409 });
           }
 
-          let intentId = recovery.payment_intent_id as string | null;
+          const intentId = recovery.payment_intent_id as string | null;
           let intent: any = null;
           if (intentId) {
             const result = await db.from("payment_intents")
