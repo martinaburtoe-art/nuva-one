@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getIndustryProfile, INDUSTRY_PROFILES } from "@/lib/industry-profiles";
+import { serializeIndustryAnswers, type IndustryAnswerDraft } from "@/lib/industry-profile-answers";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -63,6 +64,7 @@ function Onboarding() {
   const [name, setName] = useState("");
   const [industry, setIndustry] = useState("other");
   const [industryProfile, setIndustryProfile] = useState("");
+  const [industryAnswers, setIndustryAnswers] = useState<IndustryAnswerDraft>({});
   const [industrySchemaAvailable, setIndustrySchemaAvailable] = useState(false);
   const [industrySchemaChecked, setIndustrySchemaChecked] = useState(false);
   const [size, setSize] = useState("1-5");
@@ -114,7 +116,7 @@ function Onboarding() {
       if (selectedProfile) {
         businessPayload.industry_profile = selectedProfile.id;
         businessPayload.industry_secondary_profiles = [];
-        businessPayload.industry_config = { schemaVersion: 1, answers: {} };
+        businessPayload.industry_config = { schemaVersion: 1, answers: serializeIndustryAnswers(selectedProfile.id, industryAnswers) };
         businessPayload.industry_config_version = 1;
         businessPayload.industry_profile_updated_at = new Date().toISOString();
       }
