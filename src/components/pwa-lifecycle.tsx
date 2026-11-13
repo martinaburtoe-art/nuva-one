@@ -23,6 +23,7 @@ function isAndroid() {
 export function PwaLifecycle() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [updateReady, setUpdateReady] = useState(false);
+  const [updateApplying, setUpdateApplying] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -35,6 +36,7 @@ export function PwaLifecycle() {
     const onInstalled = () => {
       setIsInstalled(true);
       setInstallPrompt(null);
+      setDismissed(true);
       toast.success("Nüva One quedó instalada en tu dispositivo.");
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -42,14 +44,6 @@ export function PwaLifecycle() {
 
     let registration: ServiceWorkerRegistration | undefined;
     let disposed = false;
-    let reloadOnControllerChange = false;
-
-    const onControllerChange = () => {
-      if (!reloadOnControllerChange) return;
-      reloadOnControllerChange = false;
-      window.location.reload();
-    };
-    navigator.serviceWorker?.addEventListener("controllerchange", onControllerChange);
 
     if ("serviceWorker" in navigator && window.isSecureContext) {
       navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" })
@@ -79,7 +73,6 @@ export function PwaLifecycle() {
       disposed = true;
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
-      navigator.serviceWorker?.removeEventListener("controllerchange", onControllerChange);
       window.removeEventListener("focus", checkForUpdate);
       document.removeEventListener("visibilitychange", onVisibility);
     };
@@ -96,34 +89,53 @@ export function PwaLifecycle() {
       }
       return;
     }
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === "accepted") setIsInstalled(true);
-    setInstallPrompt(null);
+    try {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === "accepted") {
+        setIsInstalled(true);
+        setDismissed(true);
+      }
+      setInstallPrompt(null);
+    } catch {
+      toast.error("No se pudo iniciar la instalación. Inténtalo desde el menú del navegador.");
+    }
   }
 
-  function applyUpdate() {
-    // The waiting worker receives the command through its registration below.
-    navigator.serviceWorker?.getRegistration("/").then((reg) => {
-      if (!reg?.waiting) {
+  async function applyUpdate() {
+    if (updateApplying) return;
+    setUpdateApplying(true);
+    try {
+      const registration = await navigator.serviceWorker?.getRegistration("/");
+      const worker = registration?.waiting;
+      if (!worker) {
         setUpdateReady(false);
+        setUpdateApplying(false);
+        toast.info("Nüva One ya está actualizada.");
         return;
       }
-      const worker = reg.waiting;
       const onChange = () => {
         navigator.serviceWorker.removeEventListener("controllerchange", onChange);
         window.location.reload();
       };
-      navigator.serviceWorker.addEventListener("controllerchange", onChange);
+      navigator.serviceWorker.addEventListener("controllerchange", onChange, { once: true });
       worker.postMessage({ type: "SKIP_WAITING" });
-    });
+    } catch {
+      setUpdateApplying(false);
+      toast.error("No se pudo aplicar la actualización. Vuelve a intentarlo.");
+    }
   }
 
   const canInstall = !isInstalled && (Boolean(installPrompt) || isIos() || isAndroid());
   if ((!canInstall && !updateReady) || dismissed) return null;
 
   return (
-    <aside className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-[120] mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_12px_40px_rgba(20,25,60,.16)] backdrop-blur-xl">
+    <aside
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-[120] mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_12px_40px_rgba(20,25,60,.16)] backdrop-blur-xl"
+    >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-800">
           {updateReady ? <RefreshCw className="h-5 w-5" /> : <Download className="h-5 w-5" />}
@@ -138,7 +150,9 @@ export function PwaLifecycle() {
         </div>
       </div>
       {updateReady ? (
-        <button type="button" onClick={applyUpdate} className="min-h-10 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800">Actualizar</button>
+        <button type="button" onClick={() => void applyUpdate()} disabled={updateApplying} className="min-h-10 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800 disabled:cursor-wait disabled:opacity-60">
+          {updateApplying ? "Actualizando…" : "Actualizar"}
+        </button>
       ) : canInstall ? (
         <button type="button" onClick={() => void install()} className="min-h-10 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800">Instalar</button>
       ) : null}
