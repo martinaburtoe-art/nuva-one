@@ -45,6 +45,8 @@ jobs:
           else
             echo "P0 configuration contract is not present on this base ref yet"
           fi
+      - name: Test evidence-gated sector dashboard metrics
+        run: npx vitest run src/lib/industry-dashboard.test.ts
       - name: Typecheck application
         run: npm run typecheck
       - name: Build production bundle
