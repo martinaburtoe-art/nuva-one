@@ -12,8 +12,11 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         const amount = Number(body.amount);
         const subject = String(body.subject || "Pago Nüva One");
         const saleId = body.sale_id ? String(body.sale_id) : null;
-        if (!businessId || !amount) {
-          return new Response(JSON.stringify({ error: "Faltan datos" }), { status: 400 });
+        if (!businessId || !Number.isSafeInteger(amount) || amount <= 0) {
+          return new Response(
+            JSON.stringify({ error: "Indica un negocio y un importe CLP entero mayor que cero" }),
+            { status: 400, headers: { "Content-Type": "application/json" } },
+          );
         }
 
         const client = await authedUserClient(request);
@@ -27,6 +30,43 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             status: 429,
             headers: { "Content-Type": "application/json" },
           });
+        }
+
+        if (saleId) {
+          const { data: sale, error: saleError } = await client
+            .from("sales")
+            .select("id, total, paid_amount, status")
+            .eq("id", saleId)
+            .eq("business_id", businessId)
+            .maybeSingle();
+
+          if (saleError) {
+            return new Response(JSON.stringify({ error: "No se pudo validar la venta" }), {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          if (!sale) {
+            return new Response(JSON.stringify({ error: "La venta no existe o no pertenece al negocio" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          const remaining = Math.round(
+            (Number(sale.total) - Number(sale.paid_amount ?? 0)) * 100,
+          ) / 100;
+          if (sale.status === "cancelled" || !Number.isFinite(remaining) || remaining <= 0) {
+            return new Response(JSON.stringify({ error: "La venta no admite nuevos cobros" }), {
+              status: 409,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          if (amount > remaining) {
+            return new Response(
+              JSON.stringify({ error: "El importe supera el saldo pendiente de la venta", remaining }),
+              { status: 409, headers: { "Content-Type": "application/json" } },
+            );
+          }
         }
 
         const { data: integration } = await client
