@@ -80,7 +80,9 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM public.inventory_movements
-    WHERE source_type IS NOT NULL AND source_id IS NOT NULL
+    WHERE source_type IS NOT NULL
+      AND source_id IS NOT NULL
+      AND source_type NOT IN ('sale', 'sale_reversal', 'purchase', 'purchase_reversal', 'product_initial_stock')
     GROUP BY business_id, product_id, source_type, source_id
     HAVING count(*) > 1
   ) THEN
@@ -89,9 +91,11 @@ BEGIN
 END;
 $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_inventory_movements_source_product
+CREATE UNIQUE INDEX IF NOT EXISTS uq_inventory_adjustments_source_product
   ON public.inventory_movements(business_id, product_id, source_type, source_id)
-  WHERE source_type IS NOT NULL AND source_id IS NOT NULL;
+  WHERE source_type IS NOT NULL
+    AND source_id IS NOT NULL
+    AND source_type NOT IN ('sale', 'sale_reversal', 'purchase', 'purchase_reversal', 'product_initial_stock');
 
 -- Preserve the existing role check, row lock and stock floor while making a
 -- repeated source key a read-only replay of the original movement.
@@ -138,7 +142,9 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  IF p_source_type IS NOT NULL AND p_source_id IS NOT NULL THEN
+  IF p_source_type IS NOT NULL
+     AND p_source_id IS NOT NULL
+     AND p_source_type NOT IN ('sale', 'sale_reversal', 'purchase', 'purchase_reversal', 'product_initial_stock') THEN
     SELECT m.*
       INTO v_existing
       FROM public.inventory_movements m
@@ -182,6 +188,144 @@ BEGIN
   );
 
   RETURN QUERY SELECT p_product_id, v_before, v_after;
+END;
+$function$;
+
+-- Purchase stock effects have their own lifecycle key (purchases.stock_applied).
+-- Keep that state machine atomic, record every apply/reversal, and reject a
+-- cancellation/edit when the purchased quantity has already been consumed.
+CREATE OR REPLACE FUNCTION public.sync_purchase_effects()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  item jsonb;
+  tx_id uuid;
+  v_product_id uuid;
+  v_qty integer;
+  v_before integer;
+  v_after integer;
+  old_effect_must_be_reverted boolean := false;
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD.stock_applied THEN
+    old_effect_must_be_reverted :=
+      OLD.business_id IS DISTINCT FROM NEW.business_id
+      OR OLD.status IS DISTINCT FROM NEW.status
+      OR OLD.items IS DISTINCT FROM NEW.items
+      OR OLD.total IS DISTINCT FROM NEW.total
+      OR OLD.purchase_date IS DISTINCT FROM NEW.purchase_date
+      OR OLD.supplier_name IS DISTINCT FROM NEW.supplier_name;
+
+    IF old_effect_must_be_reverted THEN
+      FOR item IN SELECT * FROM jsonb_array_elements(COALESCE(OLD.items, '[]'::jsonb))
+      LOOP
+        IF NULLIF(item->>'product_id', '') IS NOT NULL THEN
+          v_product_id := (item->>'product_id')::uuid;
+          v_qty := COALESCE((item->>'qty')::integer, 0);
+          IF v_qty <= 0 THEN
+            RAISE EXCEPTION 'La cantidad comprada debe ser mayor que cero'
+              USING ERRCODE = '22023';
+          END IF;
+
+          SELECT p.stock
+            INTO v_before
+            FROM public.products p
+           WHERE p.id = v_product_id
+             AND p.business_id = OLD.business_id
+           FOR UPDATE;
+
+          IF NOT FOUND THEN
+            RAISE EXCEPTION 'Producto de compra no encontrado en el negocio'
+              USING ERRCODE = '23503';
+          END IF;
+          IF v_before < v_qty THEN
+            RAISE EXCEPTION 'No es posible revertir compra: stock insuficiente'
+              USING ERRCODE = '23514';
+          END IF;
+
+          v_after := v_before - v_qty;
+          UPDATE public.products SET stock = v_after WHERE id = v_product_id;
+
+          INSERT INTO public.inventory_movements (
+            business_id, product_id, quantity_delta, stock_before, stock_after,
+            movement_type, reason, source_type, source_id
+          )
+          VALUES (
+            OLD.business_id, v_product_id, -v_qty, v_before, v_after,
+            'purchase_reversal', 'Reversión de compra', 'purchase_reversal', OLD.id
+          );
+        END IF;
+      END LOOP;
+
+      IF OLD.transaction_id IS NOT NULL THEN
+        DELETE FROM public.transactions WHERE id = OLD.transaction_id;
+      END IF;
+
+      NEW.stock_applied := false;
+      NEW.transaction_id := NULL;
+    END IF;
+  END IF;
+
+  IF NEW.status IN ('received', 'paid') AND NOT NEW.stock_applied THEN
+    FOR item IN SELECT * FROM jsonb_array_elements(COALESCE(NEW.items, '[]'::jsonb))
+    LOOP
+      IF NULLIF(item->>'product_id', '') IS NOT NULL THEN
+        v_product_id := (item->>'product_id')::uuid;
+        v_qty := COALESCE((item->>'qty')::integer, 0);
+        IF v_qty <= 0 THEN
+          RAISE EXCEPTION 'La cantidad comprada debe ser mayor que cero'
+            USING ERRCODE = '22023';
+        END IF;
+
+        SELECT p.stock
+          INTO v_before
+          FROM public.products p
+         WHERE p.id = v_product_id
+           AND p.business_id = NEW.business_id
+         FOR UPDATE;
+
+        IF NOT FOUND THEN
+          RAISE EXCEPTION 'Producto de compra no encontrado en el negocio'
+            USING ERRCODE = '23503';
+        END IF;
+
+        v_after := v_before + v_qty;
+        UPDATE public.products SET stock = v_after WHERE id = v_product_id;
+
+        INSERT INTO public.inventory_movements (
+          business_id, product_id, quantity_delta, stock_before, stock_after,
+          movement_type, reason, source_type, source_id
+        )
+        VALUES (
+          NEW.business_id, v_product_id, v_qty, v_before, v_after,
+          'purchase', 'Entrada por compra', 'purchase', NEW.id
+        );
+      END IF;
+    END LOOP;
+
+    IF NEW.transaction_id IS NULL AND NEW.total > 0 THEN
+      INSERT INTO public.transactions (
+        business_id, type, category, amount, description, tx_date
+      )
+      VALUES (
+        NEW.business_id,
+        'expense',
+        COALESCE(NEW.category, 'Otro'),
+        NEW.total,
+        'Compra: ' || COALESCE(NEW.supplier_name, 'Proveedor'),
+        NEW.purchase_date
+      )
+      RETURNING id INTO tx_id;
+
+      NEW.transaction_id := tx_id;
+    END IF;
+
+    NEW.stock_applied := true;
+  END IF;
+
+  RETURN NEW;
 END;
 $function$;
 
