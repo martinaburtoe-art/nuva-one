@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(28);
+SELECT plan(30);
 
 SELECT has_table('public', 'payment_recovery_audit', 'payment recovery decisions have an audit table');
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.payment_recovery_audit'::regclass), 'recovery audit table has row-level security enabled');
@@ -104,6 +104,16 @@ SELECT is(
   public.owner_reconcile_payment_recovery(
     '00000000-0000-0000-0000-0000000000f2',
     '00000000-0000-0000-0000-0000000000a1',
+    'rejected', 500, 'wrong-commerce-order'
+  )->>'outcome',
+  'provider_mismatch',
+  'a rejection for a different provider order cannot release the reservation'
+);
+SELECT is((SELECT status FROM public.payment_creation_requests WHERE id='00000000-0000-0000-0000-0000000000f2'), 'recovery_required', 'mismatched rejection keeps the request quarantined');
+SELECT is(
+  public.owner_reconcile_payment_recovery(
+    '00000000-0000-0000-0000-0000000000f2',
+    '00000000-0000-0000-0000-0000000000a1',
     'rejected', 500, 'recovery-order-rejected'
   )->>'outcome',
   'verified_rejected',
@@ -111,7 +121,7 @@ SELECT is(
 );
 SELECT is((SELECT status FROM public.payment_creation_requests WHERE id='00000000-0000-0000-0000-0000000000f2'), 'closed', 'verified rejection closes the request');
 SELECT is((SELECT status FROM public.payment_intents WHERE id='00000000-0000-0000-0000-0000000000e2'), 'rejected', 'verified rejection updates the linked intent');
-SELECT is((SELECT count(*)::int FROM public.payment_recovery_audit), 5, 'every link and provider verification is recorded');
+SELECT is((SELECT count(*)::int FROM public.payment_recovery_audit), 6, 'every link and provider verification is recorded');
 
 SELECT * FROM finish();
 ROLLBACK;
