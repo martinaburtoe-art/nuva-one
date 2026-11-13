@@ -366,6 +366,48 @@ describe("handlePaymentWebhook", () => {
     expect(sb._tables.payment_webhook_events[0].processed).toBe(true);
   });
 
+  it("no libera un intento expirado si Flow todavía lo reporta pendiente", async () => {
+    const created = await (
+      await import("../fiscal/adapters/flow.server")
+    ).flowAdapter.createPayment(
+      { apiKey: mock.API_KEY, secretKey: mock.SECRET, apiUrl: "", environment: "dev" },
+      {
+        amount: 1800,
+        subject: "Estado terminal no confirmado",
+        commerceOrder: "sale-terminal-pending",
+        returnUrl: "https://x/return",
+        webhookUrl: "https://x/webhook",
+      },
+    );
+    const token = created.token!;
+
+    sb._tables.payment_intents.push({
+      business_id: businessId,
+      sale_id: "sale-terminal-pending",
+      provider: "flow",
+      token,
+      commerce_order: "sale-terminal-pending",
+      amount: 1800,
+      status: "expired",
+    });
+    sb._tables.billing_integrations.push({
+      business_id: businessId,
+      type: "payment",
+      provider: "flow",
+      status: "connected",
+      environment: "dev",
+      api_key: mock.API_KEY,
+      secret_key: mock.SECRET,
+      api_url: "",
+    });
+
+    const result = await handlePaymentWebhook(sb, "flow", token);
+    expect(result.outcome).toBe("terminal_provider_state_unconfirmed");
+    expect(sb._tables.payments).toHaveLength(0);
+    expect(sb._tables.payment_intents[0].status).toBe("expired");
+    expect(sb._tables.payment_webhook_events[0].processed).toBe(false);
+  });
+
   it("token desconocido no rompe y no inserta nada", async () => {
     const r = await handlePaymentWebhook(sb, "flow", "token-fantasma");
     expect(r.outcome).toBe("unknown_token");
