@@ -221,7 +221,19 @@ BEGIN
     IF v_request.payment_intent_id IS NULL THEN
       UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
     END IF;
-    IF v_request.sale_id IS NOT NULL THEN
+    SELECT p.id INTO v_payment_id
+      FROM public.payments p
+     WHERE p.payment_intent_id = v_intent.id
+     LIMIT 1;
+    IF v_payment_id IS NOT NULL THEN
+      UPDATE public.payment_intents
+         SET status = 'paid', resolved_at = COALESCE(resolved_at,now())
+       WHERE id = v_intent.id;
+      UPDATE public.payment_creation_requests
+         SET status = 'closed', payment_intent_id = v_intent.id, updated_at = now()
+       WHERE id = v_request.id;
+      v_outcome := 'already_settled';
+    ELSIF v_request.sale_id IS NOT NULL THEN
       SELECT s.* INTO v_sale
         FROM public.sales s
        WHERE s.id = v_request.sale_id
