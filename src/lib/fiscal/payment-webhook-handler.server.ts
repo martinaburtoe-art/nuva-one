@@ -2,7 +2,16 @@ import { getPaymentAdapter, decryptPaymentCreds } from "./payment-service.server
 
 export type SupabaseLike = {
   from: (table: string) => any;
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: any; error: any }>;
+  rpc: (
+    fn: "settle_payment_intent",
+    args: {
+      p_provider: string;
+      p_token: string;
+      p_provider_status: string;
+      p_provider_amount: number | null;
+      p_provider_commerce_order: string | null;
+    },
+  ) => Promise<{ data: any; error: any }>;
 };
 
 /**
