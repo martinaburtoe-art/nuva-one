@@ -53,7 +53,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_payment_intent_id
 CREATE TABLE IF NOT EXISTS public.payment_creation_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id uuid NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
-  sale_id uuid REFERENCES public.sales(id) ON DELETE SET NULL,
+  sale_id uuid REFERENCES public.sales(id) ON DELETE RESTRICT,
   provider text NOT NULL CHECK (provider IN ('flow', 'vsb')),
   idempotency_key text NOT NULL CHECK (length(idempotency_key) BETWEEN 8 AND 128),
   commerce_order text NOT NULL,
