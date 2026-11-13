@@ -187,9 +187,9 @@ function Sales() {
             !canWrite ? undefined : (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button className="shadow-elegant">
-                    <Plus className="mr-1.5 h-4 w-4" />
-                    Nueva venta
+                  <Button className={recentlySaved ? "border border-success/30 bg-success/10 text-success shadow-none hover:bg-success/15" : "shadow-elegant"} disabled={recentlySaved} aria-live="polite">
+                    {recentlySaved ? <CheckCircle2 className="mr-1.5 h-4 w-4" /> : <Plus className="mr-1.5 h-4 w-4" />}
+                    {recentlySaved ? "Venta registrada" : "Nueva venta"}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl rounded-2xl">
@@ -413,9 +413,9 @@ function Sales() {
                       <Label htmlFor="notes">Notas</Label>
                       <Input id="notes" name="notes" />
                     </div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="hidden grid-cols-1 gap-2 sm:grid-cols-2 lg:grid">
                       <Button type="submit" disabled={insert.isPending || fastSale.isPending}>
-                        Guardar venta
+                        {insert.isPending ? "Guardando…" : "Guardar venta"}
                       </Button>
                       <Button
                         type="button"
@@ -432,6 +432,18 @@ function Sales() {
                       </p>
                     )}
                   </form>
+                  <ContextualActionDock
+                    formId="sale-create-form"
+                    primaryLabel="Guardar venta"
+                    primaryPendingLabel="Guardando venta…"
+                    primaryPending={insert.isPending}
+                    primaryDisabled={!customerName.trim()}
+                    secondaryLabel="Venta rápida"
+                    secondaryPendingLabel="Procesando venta rápida…"
+                    secondaryPending={fastSale.isPending}
+                    secondaryDisabled={!items.some((item) => item.product_id && item.qty > 0)}
+                    onSecondaryAction={runFastSale}
+                  />
                 </DialogContent>
               </Dialog>
             )
