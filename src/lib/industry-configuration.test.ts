@@ -44,6 +44,12 @@ describe("industry configuration contract", () => {
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.plannedCapabilities).toContain("unit_conversions");
   });
+  it("requires explicit product conversion between distinct package formats", () => {
+    const r = buildIndustryConfiguration("wholesale_distribution", { inventory: { baseUnit: "caja", purchaseUnits: ["pallet"], saleUnits: ["caja"] } });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.plannedCapabilities).toContain("unit_conversions");
+  });
+
   it("rejects incompatible purchase/sale dimensions", () => {
     const r = buildIndustryConfiguration("neighborhood_grocery", { inventory: { baseUnit: "kg", purchaseUnits: ["caja"], saleUnits: ["un"] } });
     expect(r.ok).toBe(false);
