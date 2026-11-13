@@ -508,7 +508,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           );
         }
 
-        const { error: claimUpdateError } = await admin
+        const { data: updatedClaim, error: claimUpdateError } = await admin
           .from("payment_creation_requests")
           .update({
             status: "created",
@@ -516,10 +516,46 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             updated_at: new Date().toISOString(),
             last_error: null,
           })
-          .eq("id", claim.id);
+          .eq("id", claim.id)
+          .eq("status", "creating")
+          .select("id")
+          .maybeSingle();
 
-        if (claimUpdateError) {
-          // A retry finds the intent by commerce_order and returns its saved URL.
+        if (claimUpdateError || !updatedClaim) {
+          const currentClaim = await admin
+            .from("payment_creation_requests")
+            .select("status, last_error")
+            .eq("id", claim.id)
+            .maybeSingle();
+
+          if (currentClaim.data?.status === "recovery_required") {
+            // A late terminal callback quarantined this sale while the
+            // provider request was in flight. Never reactivate its link.
+            await admin
+              .from("payment_intents")
+              .update({ status: "expired", resolved_at: new Date().toISOString() })
+              .eq("id", paymentIntent.id)
+              .eq("status", "pending");
+            await admin
+              .from("payment_creation_requests")
+              .update({
+                payment_intent_id: paymentIntent.id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", claim.id)
+              .eq("status", "recovery_required");
+            return json(
+              {
+                error: "La venta quedó en conciliación mientras se creaba el link. El nuevo intento fue bloqueado.",
+                code: "PAYMENT_RECOVERY_REQUIRED",
+                commerce_order: commerceOrder,
+              },
+              409,
+            );
+          }
+
+          // A retry finds the intent by commerce_order and resolves whether
+          // the webhook already settled or rejected it.
           return json(
             {
               error: "El cobro fue creado y guardado; se está recuperando su referencia interna.",
