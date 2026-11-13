@@ -58,3 +58,21 @@ The `prefers-reduced-motion: reduce` mode disables spatial and decorative animat
 
 ## Reference fidelity
 The exact `@noxen.studio` Instagram profile/Reels have not yet been verified in this work session. Do not claim a visual match until direct profile or Reel URLs are supplied and reviewed. Use this system as Nüva's own motion language in the meantime.
+
+
+## Reference study: Instagram Reels de @noxen.studio
+
+Consultados con vidIQ el 13-11-2026. Los videos se usan como referencias de interacción y narrativa, no como especificación para copiar literalmente.
+
+- [Reel: creación de botón y workflow](https://www.instagram.com/reel/DSUtRtSiFAj/): comandos contextuales filtrados al escribir, configuración con preview, submenús y feedback de finalización. Aplicación: filtros contextuales con respuesta inmediata y feedback de éxito reservado a operaciones realmente completadas.
+- [Reel: Notion AI](https://www.instagram.com/reel/DSC1VZqiRcG/): presentación humana, subtítulos legibles en cápsulas, marca persistente y cierre minimalista. Aplicación: microcopy de estado claro, badges compactos y jerarquía legible; no fijar elementos que compitan con navegación o contenido.
+- [Reel: selección múltiple](https://www.instagram.com/reel/DR4fwnADodI/): UI aparece como overlay breve, contador de selección y barra contextual. Aplicación: estados de selección anunciados y acciones contextuales solo en listas donde existan operaciones por lote seguras y explícitas.
+
+### Decisiones de producto para Nüva One
+
+1. Priorizar velocidad y contexto: mostrar el control relevante junto a la acción que lo invoca, sin reemplazar innecesariamente toda la pantalla.
+2. En Android, los filtros y calendarios usan superficies compactas, límites de altura, scroll contenido y áreas táctiles cómodas.
+3. Los rangos rápidos de Resumen son inclusivos y se calculan con la fecha local del dispositivo: 7 días, 30 días, mes actual y mes anterior.
+4. Los contadores de selección deben ser accesibles (aria-live) y las acciones destructivas nunca deben aparecer junto a acciones frecuentes sin confirmación explícita.
+5. Reservar celebraciones visuales para hitos u operaciones completadas; no animar valores financieros ni crear confeti para la actualización ordinaria de KPIs.
+6. Toda animación nueva debe respetar prefers-reduced-motion y mantener el contenido utilizable sin movimiento.
