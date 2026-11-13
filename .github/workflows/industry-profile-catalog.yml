@@ -32,6 +32,8 @@ jobs:
           cache: "npm"
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
+      - name: Verify migration filenames and ordering
+        run: npm run verify:migrations
       - name: Test Chilean industry profiles
         run: npx vitest run src/lib/industry-profiles.test.ts
       - name: Test capability release gates
