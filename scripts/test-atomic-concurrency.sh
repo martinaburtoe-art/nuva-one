@@ -41,6 +41,7 @@ INSERT INTO public.products (id, business_id, name, price, stock)
 VALUES ('$PRODUCT_ID', '$BUSINESS_ID', 'Concurrency widget', 1000, 10);
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
 VALUES ('$SALE_ID', '$BUSINESS_ID', 'pending', 5000, '[]'::jsonb, false, 0);
+UPDATE public.sales SET total = 5000, paid_amount = 0 WHERE id = '$SALE_ID';
 INSERT INTO public.payment_intents (
   id, business_id, sale_id, provider, token, commerce_order, amount, status
 )
