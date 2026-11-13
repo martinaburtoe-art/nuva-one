@@ -344,12 +344,13 @@ function Dashboard() {
     return buildIndustryDashboardMetrics(selectedIndustryProfile.id, {
       sales: { available: salesCountQuery.data !== undefined && !salesCountQuery.isError, records: salesCountQuery.data ?? 0 },
       inventory: { available: inventoryQuery.data !== undefined && !inventoryQuery.isError, records: inventoryQuery.data?.productsCount ?? 0 },
-      cash: { available: false, records: 0 },
+      // This query proves only the current open/closed register state, not cash movements.
+      cash: { available: cashRegisterQuery.isFetched && !cashRegisterQuery.isError, records: cashRegisterQuery.data ? 1 : 0 },
       quotes: { available: quotesQuery.data !== undefined && !quotesQuery.isError, records: quotesQuery.data?.totalCount ?? 0 },
       customers: { available: customersQuery.data !== undefined && !customersQuery.isError, records: customersQuery.data ?? 0 },
       expenses: { available: kpis !== undefined && !kpisError, records: kpis?.expenseRecords ?? 0 },
     });
-  }, [selectedIndustryProfile, salesCountQuery.data, salesCountQuery.isError, inventoryQuery.data, inventoryQuery.isError, quotesQuery.data, quotesQuery.isError, customersQuery.data, customersQuery.isError, kpis, kpisError]);
+  }, [selectedIndustryProfile, salesCountQuery.data, salesCountQuery.isError, inventoryQuery.data, inventoryQuery.isError, quotesQuery.data, quotesQuery.isError, customersQuery.data, customersQuery.isError, cashRegisterQuery.data, cashRegisterQuery.isFetched, cashRegisterQuery.isError, kpis, kpisError]);
   const operationalStatus = getResumenOperationalStatus({
     hasBusiness: Boolean(active?.id),
     invalidDateRange,
