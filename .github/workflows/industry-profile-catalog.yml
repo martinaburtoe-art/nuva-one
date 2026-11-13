@@ -30,6 +30,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Test Chilean industry profiles
         run: npx vitest run src/lib/industry-profiles.test.ts
+      - name: Test capability release gates
+        run: npx vitest run src/lib/industry-capability-readiness.test.ts
       - name: Typecheck application
         run: npm run typecheck
       - name: Build production bundle
