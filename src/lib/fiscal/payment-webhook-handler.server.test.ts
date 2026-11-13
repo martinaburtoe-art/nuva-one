@@ -313,10 +313,10 @@ describe("handlePaymentWebhook", () => {
     expect(sb._tables.payments).toHaveLength(1);
   });
 
-  it("token desconocido queda registrado sin crear un abono", async () => {
+  it("token desconocido no rompe y no inserta nada", async () => {
     const r = await handlePaymentWebhook(sb, "flow", "token-fantasma");
     expect(r.outcome).toBe("unknown_token");
     expect(sb._tables.payments.length).toBe(0);
-    expect(sb._tables.payment_webhook_events).toHaveLength(1);
+    expect(sb._tables.payment_webhook_events).toHaveLength(0);
   });
 });
