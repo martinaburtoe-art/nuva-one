@@ -2,6 +2,25 @@ import { describe, expect, it } from "vitest";
 import { buildIndustryConfiguration } from "@/lib/industry-configuration";
 
 describe("industry configuration contract", () => {
+  it("accepts only explicit boolean answers from the selected profile", () => {
+    const valid = buildIndustryConfiguration("hardware_store", {
+      answers: { operation_1: true, operation_2: false },
+    });
+    expect(valid.ok).toBe(true);
+    if (valid.ok) expect(valid.configuration.answers).toEqual({ operation_1: true, operation_2: false });
+
+    const unknown = buildIndustryConfiguration("hardware_store", {
+      answers: { operation_99: true },
+    });
+    expect(unknown.ok).toBe(false);
+
+    const invalid = buildIndustryConfiguration("hardware_store", {
+      answers: { operation_1: "yes" as unknown as boolean },
+    });
+    expect(invalid.ok).toBe(false);
+  });
+
+
   it("uses opt-in defaults and does not enable optional operations", () => {
     const r = buildIndustryConfiguration("hardware_store");
     expect(r.ok).toBe(true);
