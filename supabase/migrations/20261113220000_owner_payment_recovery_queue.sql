@@ -62,7 +62,8 @@ BEGIN
   IF p_evidence IS NULL OR jsonb_typeof(p_evidence) IS DISTINCT FROM 'object' THEN
     RAISE EXCEPTION 'evidence must be a JSON object' USING ERRCODE = '22023';
   END IF;
-  IF p_evidence ?| ARRAY['token','secret','secret_key','api_key','credentials','raw_payload','authorization'] THEN
+  IF p_evidence ?| ARRAY['token','access_token','refresh_token','secret','secret_key','api_key','credentials','raw_payload','authorization','password','private_key']
+     OR p_evidence::text ~* '"(token|access_token|refresh_token|secret|secret_key|api_key|credentials|raw_payload|authorization|password|private_key)"[[:space:]]*:' THEN
     RAISE EXCEPTION 'sensitive provider material cannot be stored as evidence' USING ERRCODE = '22023';
   END IF;
 
