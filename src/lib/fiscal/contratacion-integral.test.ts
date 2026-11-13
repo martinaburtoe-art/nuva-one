@@ -267,6 +267,7 @@ describe("Flujo de contratación — suscripciones starter y pro (T-35)", () => 
     expect(r.outcome).toBe("unknown_token");
     expect(sb._tables.payments.length).toBe(0);
     expect(sb._tables.payment_intents.length).toBe(0);
+    expect(sb._tables.payment_webhook_events.length).toBe(0);
   });
 
   it("estado pendiente no marca como procesado (reintentos seguros) (paso 7)", async () => {
