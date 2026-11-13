@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(17);
 
 select has_column('public', 'businesses', 'industry_profile', 'businesses has nullable operational profile');
 select has_column('public', 'businesses', 'industry_secondary_profiles', 'businesses has secondary profiles');
@@ -19,6 +19,36 @@ select ok(
   (select is_nullable = 'YES' from information_schema.columns
    where table_schema = 'public' and table_name = 'businesses' and column_name = 'industry_profile'),
   'existing businesses can remain without an inferred sector profile'
+);
+
+-- Check constraints are part of the database boundary, not merely frontend validation.
+select ok(
+  (select convalidated from pg_constraint
+   where conrelid = 'public.businesses'::regclass
+     and conname = 'businesses_industry_profile_slug_check'
+     and contype = 'c'),
+  'primary profile slug constraint exists and is validated'
+);
+select ok(
+  (select convalidated from pg_constraint
+   where conrelid = 'public.businesses'::regclass
+     and conname = 'businesses_industry_secondary_profiles_check'
+     and contype = 'c'),
+  'secondary profile allowlist and cardinality constraint exists and is validated'
+);
+select ok(
+  (select convalidated from pg_constraint
+   where conrelid = 'public.businesses'::regclass
+     and conname = 'businesses_industry_config_object_check'
+     and contype = 'c'),
+  'industry configuration must remain a JSON object'
+);
+select ok(
+  (select convalidated from pg_constraint
+   where conrelid = 'public.businesses'::regclass
+     and conname = 'businesses_industry_config_version_check'
+     and contype = 'c'),
+  'industry configuration version must be positive'
 );
 
 select * from finish();
