@@ -199,6 +199,60 @@ describe("handlePaymentWebhook", () => {
     expect(sb._tables.payments.length).toBe(1); // nunca 2 o 3
   });
 
+
+  it("rechaza una confirmación cuyo importe o referencia no coincide con el intento local", async () => {
+    const created = await (
+      await import("../fiscal/adapters/flow.server")
+    ).flowAdapter.createPayment(
+      { apiKey: mock.API_KEY, secretKey: mock.SECRET, apiUrl: "", environment: "dev" },
+      {
+        amount: 5000,
+        subject: "Test validación",
+        commerceOrder: "sale-verified",
+        returnUrl: "https://x/return",
+        webhookUrl: "https://x/webhook",
+      },
+    );
+    const token = created.token!;
+    mock.setPaid(token);
+
+    sb._tables.payment_intents.push({
+      business_id: businessId,
+      sale_id: "sale-verified",
+      provider: "flow",
+      token,
+      commerce_order: "sale-verified",
+      amount: 5000,
+      status: "pending",
+    });
+    sb._tables.billing_integrations.push({
+      business_id: businessId,
+      type: "payment",
+      provider: "flow",
+      status: "connected",
+      environment: "dev",
+      api_key: mock.API_KEY,
+      secret_key: mock.SECRET,
+      api_url: "",
+    });
+
+    mock.setPaymentDetails(token, { amount: 4999 });
+    const wrongAmount = await handlePaymentWebhook(sb, "flow", token);
+    expect(wrongAmount.outcome).toBe("provider_mismatch");
+    expect(sb._tables.payments).toHaveLength(0);
+    expect(sb._tables.payment_intents[0].status).toBe("pending");
+
+    mock.setPaymentDetails(token, { amount: 5000, commerceOrder: "sale-other" });
+    const wrongOrder = await handlePaymentWebhook(sb, "flow", token);
+    expect(wrongOrder.outcome).toBe("provider_mismatch");
+    expect(sb._tables.payments).toHaveLength(0);
+
+    mock.setPaymentDetails(token, { commerceOrder: "sale-verified" });
+    const verified = await handlePaymentWebhook(sb, "flow", token);
+    expect(verified.outcome).toBe("resolved_paid");
+    expect(sb._tables.payments).toHaveLength(1);
+  });
+
   it("token desconocido no rompe y no inserta nada", async () => {
     const r = await handlePaymentWebhook(sb, "flow", "token-fantasma");
     expect(r.outcome).toBe("unknown_token");
