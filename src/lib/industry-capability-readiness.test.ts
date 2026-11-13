@@ -14,6 +14,12 @@ describe("industry capability release gates", () => {
     }
   });
 
+  it("has readiness coverage for every capability referenced by every profile", () => {
+    const referenced = new Set(INDUSTRY_PROFILES.flatMap((profile) => profile.capabilities));
+    const registered = new Set(Object.keys(INDUSTRY_CAPABILITY_READINESS));
+    expect([...referenced].filter((capability) => !registered.has(capability)).sort()).toEqual([]);
+  });
+
   it("only exposes capabilities backed by current product workflows", () => {
     const available = Object.entries(INDUSTRY_CAPABILITY_READINESS)
       .filter(([, readiness]) => readiness.status === "available")
@@ -29,6 +35,15 @@ describe("industry capability release gates", () => {
       "barcode",
       "quotes",
       "dispatch",
+      "cash_register",
+    ]);
+  });
+
+  it("does not expose any planned capability as enabled for the grocery pack", () => {
+    const grocery = INDUSTRY_PROFILES.find((profile) => profile.id === "neighborhood_grocery");
+    expect(grocery).toBeDefined();
+    expect(getAvailableIndustryCapabilities(grocery!.capabilities)).toEqual([
+      "barcode",
       "cash_register",
     ]);
   });
