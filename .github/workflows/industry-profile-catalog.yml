@@ -53,3 +53,45 @@ jobs:
         run: npm run typecheck
       - name: Build production bundle
         run: npm run build
+
+  validate-industry-migration:
+    name: Validate sector persistence with local Supabase and pgTAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2.1.1
+        with:
+          version: "2.115.0"
+      - name: Authenticate to GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Start ephemeral local Supabase database
+        run: |
+          set -euo pipefail
+          started=false
+          for attempt in 1 2 3 4 5; do
+            echo "Starting local Supabase stack (attempt ${attempt}/5)"
+            if timeout 300s supabase start -x studio,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta; then
+              started=true
+              break
+            fi
+            supabase status || true
+            docker ps -a || true
+            supabase stop --no-backup || true
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 60)); fi
+          done
+          if [ "$started" != "true" ]; then
+            echo "Supabase local stack failed to start"
+            exit 1
+          fi
+      - name: Rebuild clean database from every migration
+        run: supabase db reset --local
+      - name: Run full pgTAP suite including tenant profile persistence
+        run: supabase test db
+      - name: Stop ephemeral local Supabase
+        if: always()
+        run: supabase stop --no-backup || true
