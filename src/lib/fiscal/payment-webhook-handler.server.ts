@@ -51,13 +51,11 @@ export async function handlePaymentWebhook(
   // become an unbounded event-storage sink for arbitrary provider/token pairs.
   if (!intent) return { outcome: "unknown_token" };
 
-  // A terminal intent needs no external round-trip. The RPC still serializes
-  // the event and marks it processed under the same transaction.
+  // A locally rejected/expired intent is rechecked with the provider before
+  // releasing its sale reservation. Some providers can report a late payment;
+  // those must be quarantined, never treated as a safe retry.
   if (intent.status === "paid") {
     return settle(supabaseAdmin, provider, token, "paid", null, null);
-  }
-  if (intent.status === "rejected" || intent.status === "expired") {
-    return settle(supabaseAdmin, provider, token, "rejected", null, null);
   }
 
   const { data: integration, error: integrationError } = await supabaseAdmin
@@ -70,10 +68,10 @@ export async function handlePaymentWebhook(
     .maybeSingle();
 
   if (integrationError) throw integrationError;
-  if (!integration) return { outcome: "no_integration" };
+  if (!integration) throw new Error("No existe una integración activa para verificar este pago");
 
   const adapter = getPaymentAdapter(provider);
-  if (!adapter) return { outcome: "no_adapter" };
+  if (!adapter) throw new Error("No existe un adaptador de pago para verificar este proveedor");
 
   const { apiKey, secretKey } = decryptPaymentCreds(integration as any);
   const statusResult = await adapter.checkStatus(
