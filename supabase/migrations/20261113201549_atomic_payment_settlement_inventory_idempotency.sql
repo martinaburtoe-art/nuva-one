@@ -448,6 +448,7 @@ BEGIN
      WHERE provider = v_intent.provider
        AND commerce_order = v_intent.commerce_order
        AND status <> 'closed';
+    UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
     RETURN jsonb_build_object('outcome', 'provider_mismatch', 'intent_id', v_intent.id);
   END IF;
 
