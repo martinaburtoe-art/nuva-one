@@ -175,3 +175,131 @@ El perfil debe reorganizar el Resumen por prioridad de decisión, no duplicar ta
 - **Distribuidora:** pedidos pendientes, fill rate, entregas comprometidas, saldo de clientes cuando el módulo de crédito esté disponible y margen neto solo con costos completos.
 
 Cada tarjeta debe mostrar período, fuente, hora de actualización, estado de cobertura y acción siguiente. Si una capacidad no existe, el Resumen no debe mostrar una tarjeta vacía ni simular datos: debe omitirla o presentarla como “configuración pendiente” sin atribuirle un KPI.
+
+
+---
+
+## Segunda ola — perfiles operativos de alto potencial
+
+Estos cuatro packs amplían el diseño sectorial. Son especificaciones de producto y no activan capacidades que el registro de madurez marque como planificadas.
+
+## Pack P1 — Ropa, calzado y accesorios
+
+### Configuración y catálogo
+- ¿Qué categorías, marcas, temporadas y colecciones manejas?
+- ¿Cada modelo tiene combinaciones de talla, color, material y género?
+- ¿Usas SKU propio, EAN por variante o ambos?
+- ¿Vendes en tienda, ecommerce, redes sociales o varios canales?
+- ¿Qué política de cambio, devolución y garantía aplicas?
+
+### Flujo operativo
+1. Crear un modelo padre y sus variantes; cada combinación vendible debe tener SKU/código único.
+2. Registrar recepción por variante y temporada; impedir que una talla/color se consolide como un único saldo.
+3. Consultar curva de tallas, disponibilidad por local y productos sin rotación.
+4. Registrar venta y canal; asociar cambio/devolución al documento original.
+5. Medir sell-through, margen y markdown por colección al cierre de temporada.
+
+### Datos y reglas
+- Modelo, variante tipada (talla/color), SKU, código de barras, temporada, marca y costo vigente.
+- Devoluciones con motivo, estado de inspección y reintegro de stock solo después de aprobar condición.
+- No inferir equivalencia de tallas entre marcas ni disponibilidad de una variante desde el stock agregado del modelo.
+
+### KPIs de Resumen
+- Sell-through = unidades vendidas / unidades recibidas de la colección.
+- Curva rota: variantes con tallas críticas agotadas frente a la curva objetivo definida por el negocio.
+- Rotación por talla/color, margen por colección y stock de temporadas anteriores.
+- Los indicadores de variante quedan pendientes hasta que exista el modelo de SKU variante.
+
+## Pack P1 — Taller mecánico y repuestos
+
+### Configuración y contexto
+- ¿Atiendes vehículos livianos, pesados, motos, maquinaria o flotas?
+- ¿Necesitas patente, VIN/chasis, marca, modelo, año y kilometraje?
+- ¿Cotizas repuestos y mano de obra en una misma orden?
+- ¿Controlas agenda, diagnóstico, autorización del cliente y garantía del trabajo?
+
+### Flujo operativo
+1. Registrar cliente y vehículo como activos relacionados; validar patente/VIN para evitar duplicados.
+2. Abrir solicitud de servicio y registrar síntoma/diagnóstico sin convertirlo automáticamente en diagnóstico técnico confirmado.
+3. Preparar cotización con repuestos, horas, servicios externos y vigencia.
+4. Registrar autorización del cliente antes de ejecutar trabajos adicionales.
+5. Descontar repuestos desde la orden al completar el trabajo; registrar técnico, tiempos y evidencias.
+6. Entregar vehículo, registrar garantía y seguimiento; asociar retrabajos a la orden original.
+
+### Datos y reglas
+- Vehículo, historial de kilometraje con fecha, orden de trabajo, tareas, repuestos, mano de obra, autorización y entrega.
+- Una cotización no reserva repuestos hasta que exista un flujo de reserva transaccional.
+- No mostrar margen por orden si faltan costos de repuestos, horas o servicios externos.
+
+### KPIs de Resumen
+- Órdenes abiertas por etapa, tiempo de ciclo y trabajos esperando autorización.
+- Horas vendidas vs. horas registradas; retrabajos y garantías abiertas.
+- Margen por orden solo con costo completo de repuestos y mano de obra.
+
+## Pack P1 — Restaurante, cafetería y food service
+
+### Configuración y contexto
+- ¿Atiendes en salón, retiro, delivery, eventos o food truck?
+- ¿Tienes carta, menú diario, combos o productos personalizables?
+- ¿Controlas ingredientes por receta, producción diaria y mermas?
+- ¿Necesitas mesas, comandas, reservas, turnos y propinas?
+
+### Flujo operativo
+1. Configurar carta, modificadores y canales de venta.
+2. Definir receta versionada, unidad de compra, unidad de consumo y rendimiento real.
+3. Registrar recepción de ingredientes y lotes/vencimientos cuando la trazabilidad esté habilitada.
+4. Capturar comanda y tiempos por etapa; separar anulaciones, cortesías y devoluciones.
+5. Cerrar turno conciliando ventas, medios de pago, propinas y caja.
+6. Comparar costo teórico de receta con consumo real únicamente cuando inventario y recetas estén integrados.
+
+### Datos y reglas
+- Receta con versión, ingredientes, rendimientos, mermas, modificadores, canal y estación.
+- Diferenciar costo teórico de costo real; no llamar food cost real a una estimación de receta.
+- No descontar ingredientes ni gestionar mesas/comandas hasta implementar y probar el flujo completo.
+
+### KPIs de Resumen
+- Ventas por canal y franja, ticket promedio, anulaciones y tiempo de preparación si hay timestamps válidos.
+- Food cost teórico claramente identificado; costo real y merma solo tras trazabilidad de consumo.
+- Reservas y ocupación únicamente con calendario y capacidad implementados.
+
+## Pack P1 — Servicios profesionales y agencias B2B
+
+### Configuración y contexto
+- ¿Cobras por hora, proyecto, bolsa de horas, entregable o mensualidad?
+- ¿Trabajas con contratos, renovaciones, hitos y aprobaciones?
+- ¿Necesitas asignar consultores, colaboradores y proveedores a cada cliente?
+- ¿Registras horas, gastos reembolsables y entregables?
+
+### Flujo operativo
+1. Calificar oportunidad y registrar alcance, decisores y próxima acción.
+2. Crear propuesta con alcance, exclusiones, precio, hitos y vigencia.
+3. Convertir propuesta aceptada en proyecto con presupuesto y responsables.
+4. Registrar horas y gastos contra proyecto con aprobación.
+5. Emitir hitos/facturación según condiciones pactadas y controlar cobranza.
+6. Cerrar proyecto comparando presupuesto, horas, gastos, ingreso y margen real.
+
+### Datos y reglas
+- Proyecto, contrato, versión de propuesta, hito, entregable, asignación, timesheet y gasto.
+- Separar horas planificadas, registradas y facturables; no asumir que toda hora registrada se factura.
+- Restringir tarifas internas, costos salariales y márgenes según permisos financieros.
+
+### KPIs de Resumen
+- Pipeline ponderado solo si existen etapas y probabilidades configuradas.
+- Utilización = horas facturables / capacidad disponible; requiere calendarios y carga de trabajo fiables.
+- Margen por proyecto, desviación de horas, hitos atrasados y DSO solo con datos financieros completos.
+
+---
+
+## Priorización de implementación por valor y dependencias
+
+| Ola | Perfil | Primer resultado de producto | Dependencia crítica |
+|---|---|---|---|
+| P0 | Ferretería | Catálogo técnico y cotización por obra | Variantes y unidades |
+| P0 | Almacén/minimarket | Recepción, caja y control de perecibles | Lotes, vencimientos y fracciones |
+| P0 | Distribuidora | Pedido mayorista y despacho | Listas de precios, bodegas y picking |
+| P1 | Ropa/calzado | Curva de variantes y sell-through | SKU por variante y devoluciones |
+| P1 | Taller mecánico | Orden de trabajo y autorización | Vehículos, mano de obra y repuestos |
+| P1 | Restaurante | Recetas, comandas y food cost | BOM, consumo y caja por canal |
+| P1 | Servicios B2B | Propuesta→proyecto→hitos | Proyectos, horas y gastos |
+
+No desplegar un pack P1 como módulo terminado hasta cerrar sus dependencias. El primer lanzamiento sectorial debe adaptar onboarding, vocabulario, filtros y Resumen usando capacidades existentes; las dependencias de datos se construyen como proyectos separados con pruebas de integridad y permisos.
