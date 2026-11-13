@@ -106,7 +106,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
 
           // A user retry doubles as a server-to-server status check. This lets
           // the POS resolve a delayed webhook without creating another order.
-          if (savedIntent?.status === "pending" && existing.status !== "recovery_required") {
+          if (["pending", "rejected", "expired"].includes(savedIntent?.status) && existing.status !== "recovery_required") {
             try {
               await handlePaymentWebhook(admin as any, existing.provider, savedIntent.token);
             } catch {
@@ -134,6 +134,17 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             existing.status = refreshedRequest.data?.status ?? existing.status;
           }
 
+          if (existing.status === "recovery_required") {
+            return json(
+              {
+                error: "El proveedor confirmó un resultado que requiere conciliación. El link queda bloqueado para evitar otro cobro.",
+                code: "PAYMENT_RECOVERY_REQUIRED",
+                commerce_order: existing.commerce_order,
+              },
+              409,
+            );
+          }
+
           if (savedIntent?.status === "paid") {
             await admin
               .from("payment_creation_requests")
@@ -145,23 +156,14 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             );
           }
           if (savedIntent?.status === "rejected" || savedIntent?.status === "expired") {
-            await admin
-              .from("payment_creation_requests")
-              .update({ status: "closed", payment_intent_id: savedIntent.id, updated_at: new Date().toISOString() })
-              .eq("id", existing.id);
+            if (existing.status !== "closed") {
+              return json(
+                { error: "El estado terminal del proveedor no pudo confirmarse. El intento queda bloqueado para evitar un doble cobro.", code: "PAYMENT_RECOVERY_REQUIRED" },
+                409,
+              );
+            }
             return json(
               { error: "El intento anterior terminó sin pago. Puedes iniciar un nuevo intento con una clave nueva.", code: "PAYMENT_ATTEMPT_TERMINAL" },
-              409,
-            );
-          }
-
-          if (existing.status === "recovery_required") {
-            return json(
-              {
-                error: "El proveedor confirmó un resultado que requiere conciliación. El link queda bloqueado para evitar otro cobro.",
-                code: "PAYMENT_RECOVERY_REQUIRED",
-                commerce_order: existing.commerce_order,
-              },
               409,
             );
           }
@@ -255,7 +257,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
               return json({ error: "No se pudo recuperar el intento de cobro existente" }, 500);
             }
 
-            if (activeIntent?.status === "pending" && activeSaleRequest.status !== "recovery_required") {
+            if (["pending", "rejected", "expired"].includes(activeIntent?.status) && activeSaleRequest.status !== "recovery_required") {
               try {
                 await handlePaymentWebhook(admin as any, activeSaleRequest.provider, activeIntent.token);
               } catch {
@@ -287,6 +289,17 @@ export const Route = createFileRoute("/api/billing/payments/create")({
               activeSaleRequest.status = refreshedRequest.data?.status ?? activeSaleRequest.status;
             }
 
+            if (activeSaleRequest.status === "recovery_required") {
+              return json(
+                {
+                  error: "El intento de pago requiere conciliación y no se puede reutilizar ni duplicar.",
+                  code: "PAYMENT_RECOVERY_REQUIRED",
+                  commerce_order: activeSaleRequest.commerce_order,
+                },
+                409,
+              );
+            }
+
             if (activeIntent?.status === "paid") {
               await admin
                 .from("payment_creation_requests")
@@ -299,19 +312,18 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             }
 
             if (activeIntent?.status === "rejected" || activeIntent?.status === "expired") {
-              await admin
-                .from("payment_creation_requests")
-                .update({ status: "closed", payment_intent_id: activeIntent.id, updated_at: new Date().toISOString() })
-                .eq("id", activeSaleRequest.id);
-            } else if (activeSaleRequest.status === "recovery_required") {
-              return json(
-                {
-                  error: "El intento de pago requiere conciliación y no se puede reutilizar ni duplicar.",
-                  code: "PAYMENT_RECOVERY_REQUIRED",
-                  commerce_order: activeSaleRequest.commerce_order,
-                },
-                409,
-              );
+              if (activeSaleRequest.status !== "closed") {
+                return json(
+                  {
+                    error: "El estado terminal del proveedor no pudo confirmarse. El intento queda bloqueado para evitar un doble cobro.",
+                    code: "PAYMENT_RECOVERY_REQUIRED",
+                    commerce_order: activeSaleRequest.commerce_order,
+                  },
+                  409,
+                );
+              }
+              // Provider rejection is verified and the request is closed;
+              // a new idempotency key may now create a deliberate attempt.
             } else if (activeIntent?.payment_url && activeIntent.status === "pending") {
               if (
                 Number(activeSaleRequest.amount) !== amount ||
