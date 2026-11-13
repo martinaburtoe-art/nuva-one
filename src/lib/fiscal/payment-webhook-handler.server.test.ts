@@ -90,6 +90,76 @@ function makeFakeSupabase() {
 
   return {
     from: (table: string) => builder(table),
+    rpc: async (fn: string, args: Record<string, any>) => {
+      if (fn !== "settle_payment_intent") {
+        return { data: null, error: new Error("RPC inesperado") };
+      }
+      const { p_provider: provider, p_token: token, p_provider_status: providerStatus,
+        p_provider_amount: providerAmount, p_provider_commerce_order: commerceOrder } = args;
+      let event = tables.payment_webhook_events.find(
+        (row) => row.provider === provider && row.token === token,
+      );
+      if (!event) {
+        event = { provider, token, processed: false };
+        tables.payment_webhook_events.push(event);
+      }
+      if (event.processed) return { data: { outcome: "already_processed" }, error: null };
+
+      const intent = tables.payment_intents.find(
+        (row) => row.provider === provider && row.token === token,
+      );
+      if (!intent) return { data: { outcome: "unknown_token" }, error: null };
+      if (intent.status === "paid") {
+        event.processed = true;
+        return { data: { outcome: "already_paid" }, error: null };
+      }
+      if (intent.status === "rejected" || intent.status === "expired") {
+        if (providerStatus === "paid") {
+          event.processed = true;
+          return { data: { outcome: "late_paid_after_terminal" }, error: null };
+        }
+        if (providerStatus === "rejected" || providerStatus === "expired") {
+          event.processed = true;
+          return { data: { outcome: "terminal_state" }, error: null };
+        }
+        if (providerStatus === "pending") {
+          return { data: { outcome: "terminal_provider_state_unconfirmed" }, error: null };
+        }
+        return { data: { outcome: "provider_status_unresolved" }, error: null };
+      }
+      if (providerStatus === "pending") {
+        return { data: { outcome: "resolved_pending" }, error: null };
+      }
+      if (providerStatus === "rejected") {
+        intent.status = "rejected";
+        event.processed = true;
+        return { data: { outcome: "resolved_rejected" }, error: null };
+      }
+      if (providerStatus !== "paid") {
+        return { data: { outcome: "provider_status_unresolved" }, error: null };
+      }
+      if (
+        providerAmount === null || Number(providerAmount) !== Number(intent.amount) ||
+        !commerceOrder || commerceOrder !== intent.commerce_order
+      ) {
+        return { data: { outcome: "provider_mismatch" }, error: null };
+      }
+      if (intent.sale_id) {
+        const existing = tables.payments.find((row) => row.payment_intent_id === (intent.id ?? token));
+        if (!existing) {
+          tables.payments.push({
+            business_id: intent.business_id,
+            sale_id: intent.sale_id,
+            amount: intent.amount,
+            method: provider,
+            payment_intent_id: intent.id ?? token,
+          });
+        }
+      }
+      intent.status = "paid";
+      event.processed = true;
+      return { data: { outcome: "resolved_paid" }, error: null };
+    },
     _tables: tables,
   };
 }
@@ -199,9 +269,149 @@ describe("handlePaymentWebhook", () => {
     expect(sb._tables.payments.length).toBe(1); // nunca 2 o 3
   });
 
+
+  it("rechaza una confirmación cuyo importe o referencia no coincide con el intento local", async () => {
+    const created = await (
+      await import("../fiscal/adapters/flow.server")
+    ).flowAdapter.createPayment(
+      { apiKey: mock.API_KEY, secretKey: mock.SECRET, apiUrl: "", environment: "dev" },
+      {
+        amount: 5000,
+        subject: "Test validación",
+        commerceOrder: "sale-verified",
+        returnUrl: "https://x/return",
+        webhookUrl: "https://x/webhook",
+      },
+    );
+    const token = created.token!;
+    mock.setPaid(token);
+
+    sb._tables.payment_intents.push({
+      business_id: businessId,
+      sale_id: "sale-verified",
+      provider: "flow",
+      token,
+      commerce_order: "sale-verified",
+      amount: 5000,
+      status: "pending",
+    });
+    sb._tables.billing_integrations.push({
+      business_id: businessId,
+      type: "payment",
+      provider: "flow",
+      status: "connected",
+      environment: "dev",
+      api_key: mock.API_KEY,
+      secret_key: mock.SECRET,
+      api_url: "",
+    });
+
+    mock.setPaymentDetails(token, { amount: 4999 });
+    const wrongAmount = await handlePaymentWebhook(sb, "flow", token);
+    expect(wrongAmount.outcome).toBe("provider_mismatch");
+    expect(sb._tables.payments).toHaveLength(0);
+    expect(sb._tables.payment_intents[0].status).toBe("pending");
+
+    mock.setPaymentDetails(token, { amount: 5000, commerceOrder: "sale-other" });
+    const wrongOrder = await handlePaymentWebhook(sb, "flow", token);
+    expect(wrongOrder.outcome).toBe("provider_mismatch");
+    expect(sb._tables.payments).toHaveLength(0);
+
+    mock.setPaymentDetails(token, { commerceOrder: "sale-verified" });
+    const verified = await handlePaymentWebhook(sb, "flow", token);
+    expect(verified.outcome).toBe("resolved_paid");
+    expect(sb._tables.payments).toHaveLength(1);
+  });
+
+  it("pone en cuarentena un pago tardío confirmado tras expiración local", async () => {
+    const created = await (
+      await import("../fiscal/adapters/flow.server")
+    ).flowAdapter.createPayment(
+      { apiKey: mock.API_KEY, secretKey: mock.SECRET, apiUrl: "", environment: "dev" },
+      {
+        amount: 2500,
+        subject: "Pago tardío",
+        commerceOrder: "sale-late-paid",
+        returnUrl: "https://x/return",
+        webhookUrl: "https://x/webhook",
+      },
+    );
+    const token = created.token!;
+    mock.setPaid(token);
+
+    sb._tables.payment_intents.push({
+      business_id: businessId,
+      sale_id: "sale-late-paid",
+      provider: "flow",
+      token,
+      commerce_order: "sale-late-paid",
+      amount: 2500,
+      status: "expired",
+    });
+    sb._tables.billing_integrations.push({
+      business_id: businessId,
+      type: "payment",
+      provider: "flow",
+      status: "connected",
+      environment: "dev",
+      api_key: mock.API_KEY,
+      secret_key: mock.SECRET,
+      api_url: "",
+    });
+
+    const result = await handlePaymentWebhook(sb, "flow", token);
+    expect(result.outcome).toBe("late_paid_after_terminal");
+    expect(sb._tables.payments).toHaveLength(0);
+    expect(sb._tables.payment_intents[0].status).toBe("expired");
+    expect(sb._tables.payment_webhook_events[0].processed).toBe(true);
+  });
+
+  it("no libera un intento expirado si Flow todavía lo reporta pendiente", async () => {
+    const created = await (
+      await import("../fiscal/adapters/flow.server")
+    ).flowAdapter.createPayment(
+      { apiKey: mock.API_KEY, secretKey: mock.SECRET, apiUrl: "", environment: "dev" },
+      {
+        amount: 1800,
+        subject: "Estado terminal no confirmado",
+        commerceOrder: "sale-terminal-pending",
+        returnUrl: "https://x/return",
+        webhookUrl: "https://x/webhook",
+      },
+    );
+    const token = created.token!;
+
+    sb._tables.payment_intents.push({
+      business_id: businessId,
+      sale_id: "sale-terminal-pending",
+      provider: "flow",
+      token,
+      commerce_order: "sale-terminal-pending",
+      amount: 1800,
+      status: "expired",
+    });
+    sb._tables.billing_integrations.push({
+      business_id: businessId,
+      type: "payment",
+      provider: "flow",
+      status: "connected",
+      environment: "dev",
+      api_key: mock.API_KEY,
+      secret_key: mock.SECRET,
+      api_url: "",
+    });
+
+    const result = await handlePaymentWebhook(sb, "flow", token);
+    expect(result.outcome).toBe("terminal_provider_state_unconfirmed");
+    expect(sb._tables.payments).toHaveLength(0);
+    expect(sb._tables.payment_intents[0].status).toBe("expired");
+    expect(sb._tables.payment_webhook_events[0].processed).toBe(false);
+  });
+
   it("token desconocido no rompe y no inserta nada", async () => {
     const r = await handlePaymentWebhook(sb, "flow", "token-fantasma");
     expect(r.outcome).toBe("unknown_token");
     expect(sb._tables.payments.length).toBe(0);
+    expect(sb._tables.payment_webhook_events).toHaveLength(0);
   });
 });
