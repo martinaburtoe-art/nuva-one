@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, BarChart3, CalendarClock, CheckCircle2, CircleDollarSign, Plus, Receipt, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
@@ -27,6 +27,7 @@ export function CostsWorkspace() {
   const insert = useBizInsert("costs");
   const del = useBizDelete("costs");
   const [open, setOpen] = useState(false);
+  const submitLock = useRef(false);
   const [form, setForm] = useState({ description: "", category: "Operación", cost_type: "operacional", behavior: "variable", allocation: "indirecto", amount_net: 0, vat_rate: "19", incurred_at: new Date().toISOString().slice(0, 10), due_date: "", payment_status: "pending", payment_method: "transferencia", document_type: "sin_documento", document_number: "", tax_treatment: "pending", cost_center: "", recurring: false, recurring_frequency: "monthly", notes: "" });
 
   const totals = useMemo(() => {
@@ -42,12 +43,18 @@ export function CostsWorkspace() {
   const update = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitLock.current) return;
+    submitLock.current = true;
     const net = Number(form.amount_net) || 0;
     const rate = Number(form.vat_rate) || 0;
     const vat = Math.round(net * rate / 100);
-    await insert.mutateAsync({ ...form, amount_net: net, vat_rate: rate, vat_amount: vat, total_amount: net + vat, recurring: form.recurring });
-    setOpen(false);
-    setForm((f) => ({ ...f, description: "", amount_net: 0, document_number: "", notes: "" }));
+    try {
+      await insert.mutateAsync({ ...form, amount_net: net, vat_rate: rate, vat_amount: vat, total_amount: net + vat, recurring: form.recurring });
+      setOpen(false);
+      setForm((f) => ({ ...f, description: "", amount_net: 0, document_number: "", notes: "" }));
+    } finally {
+      submitLock.current = false;
+    }
   };
 
   return <ModuleGuard module="purchases"><div className="space-y-6">
