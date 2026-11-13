@@ -40,7 +40,7 @@ VALUES ('$BUSINESS_ID', 'Atomic concurrency test', '$USER_ID', 'starter');
 INSERT INTO public.products (id, business_id, name, price, stock)
 VALUES ('$PRODUCT_ID', '$BUSINESS_ID', 'Concurrency widget', 1000, 10);
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
-VALUES ('$SALE_ID', '$BUSINESS_ID', 'pending', 5000, '[]'::jsonb, true, 0);
+VALUES ('$SALE_ID', '$BUSINESS_ID', 'pending', 5000, '[]'::jsonb, false, 0);
 INSERT INTO public.payment_intents (
   id, business_id, sale_id, provider, token, commerce_order, amount, status
 )
