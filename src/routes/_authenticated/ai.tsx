@@ -141,6 +141,11 @@ function AiPage() {
     },
   });
   const loading = status === "submitted" || status === "streaming";
+  const requestStatusLabel = status === "submitted"
+    ? "Preparando el análisis..." 
+    : status === "streaming"
+      ? "Nüva Agent está generando la respuesta..." 
+      : "";
 
   const suggestions: Record<Specialist, string[]> = {
     orchestrator: [
@@ -282,7 +287,7 @@ function AiPage() {
                 </p>
               </div>
             </div>
-            <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
+            <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6" aria-busy={loading}>
               {messages.length === 0 && (
                 <div className="mx-auto max-w-3xl pt-6 md:pt-10">
                   <div className="text-center">
@@ -331,8 +336,8 @@ function AiPage() {
                 </div>
               ))}
               {loading && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Nüva Agent está analizando...
+                <div role="status" aria-live="polite" className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> {requestStatusLabel}
                 </div>
               )}
             </div>
