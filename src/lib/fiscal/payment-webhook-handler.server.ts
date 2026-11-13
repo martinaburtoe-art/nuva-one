@@ -15,6 +15,10 @@ export async function handlePaymentWebhook(
   provider: string,
   token: string,
 ): Promise<{ outcome: string }> {
+  if (provider !== "flow" && provider !== "vsb") {
+    return { outcome: "unsupported_provider" };
+  }
+
   const { data: intent, error: intentError } = await supabaseAdmin
     .from("payment_intents")
     .select("*")
@@ -24,10 +28,9 @@ export async function handlePaymentWebhook(
 
   if (intentError) throw intentError;
 
-  // Let Postgres record unknown callbacks and return an idempotent outcome.
-  if (!intent) {
-    return settle(supabaseAdmin, provider, token, "unknown", null, null);
-  }
+  // Unknown tokens are not persisted: the public webhook endpoint must not
+  // become an unbounded event-storage sink for arbitrary provider/token pairs.
+  if (!intent) return { outcome: "unknown_token" };
 
   // A terminal intent needs no external round-trip. The RPC still serializes
   // the event and marks it processed under the same transaction.
