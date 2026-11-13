@@ -24,7 +24,7 @@ VALUES ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000
 INSERT INTO public.payment_intents (id,business_id,sale_id,provider,token,commerce_order,amount,status)
 VALUES
 ('00000000-0000-0000-0000-0000000000e1','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d1','flow','recovery-token-paid','recovery-order-paid',1000,'pending'),
-('00000000-0000-0000-0000-0000000000e2','00000000-0000-0000-0000-0000000000d1','00000000-0000-0000-0000-0000000000d1','flow','recovery-token-rejected','recovery-order-rejected',500,'pending');
+('00000000-0000-0000-0000-0000000000e2','00000000-0000-0000-0000-0000000000b1','00000000-0000-0000-0000-0000000000d1','flow','recovery-token-rejected','recovery-order-rejected',500,'pending');
 
 INSERT INTO public.payment_creation_requests (
   id,business_id,sale_id,provider,idempotency_key,commerce_order,amount,subject,status,payment_intent_id
@@ -104,7 +104,7 @@ SELECT is(
   public.owner_reconcile_payment_recovery(
     '00000000-0000-0000-0000-0000000000f2',
     '00000000-0000-0000-0000-0000000000a1',
-    'rejected', NULL, NULL
+    'rejected', 500, 'recovery-order-rejected'
   )->>'outcome',
   'verified_rejected',
   'verified provider rejection safely releases the reservation'
