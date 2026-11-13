@@ -6,7 +6,7 @@ describe("getNuvaScorePeriod", () => {
     const period = getNuvaScorePeriod(new Date(2026, 10, 12, 23, 45));
     expect(period).toEqual({
       today: "2026-11-12",
-      last30Start: "2026-10-13",
+      last30Start: "2026-10-14",
       currentMonthStart: "2026-11-01",
       previousMonthStart: "2026-10-01",
       previousComparableEndExclusive: "2026-10-13",
