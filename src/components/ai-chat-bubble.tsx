@@ -81,11 +81,15 @@ export function AiChatBubble() {
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom))] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 lg:bottom-6 lg:right-6 lg:h-14 lg:w-14"
         aria-label="Asistente IA"
+        aria-expanded={open}
+        aria-controls="nuva-assistant-conversation"
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
       </button>
 
       <div
+        id="nuva-assistant-conversation"
+        aria-label="Conversación con el asistente Nüva One"
         className={cn(
           "fixed bottom-[calc(6.5rem_+_env(safe-area-inset-bottom))] right-4 z-50 w-[min(360px,calc(100vw-2rem))] max-h-[calc(100dvh_-_8.5rem_-_env(safe-area-inset-bottom))] origin-bottom-right transition-all duration-200 lg:bottom-24 lg:right-6 lg:max-h-[calc(100dvh_-_8rem)]",
           open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
@@ -102,7 +106,10 @@ export function AiChatBubble() {
             </div>
           </div>
 
-          <div className="min-h-0 h-80 max-h-[45dvh] space-y-3 overflow-y-auto overscroll-contain p-4 lg:max-h-[50dvh]">
+          <div
+            className="min-h-0 h-80 max-h-[45dvh] space-y-3 overflow-y-auto overscroll-contain p-4 lg:max-h-[50dvh]"
+            aria-busy={isLoading}
+          >
             {messages.length === 0 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">Prueba con:</p>
@@ -141,8 +148,9 @@ export function AiChatBubble() {
               </div>
             ))}
             {isLoading && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="h-3 w-3 animate-spin" /> Pensando...
+              <div role="status" aria-live="polite" className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 aria-hidden="true" className="h-3 w-3 animate-spin" />
+                {status === "submitted" ? "Preparando la consulta..." : "Nüva está generando la respuesta..."}
               </div>
             )}
           </div>
