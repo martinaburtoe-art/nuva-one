@@ -1,0 +1,36 @@
+name: Industry Profile Catalog
+
+on:
+  push:
+    branches:
+      - "feat/industry-intelligence-**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: industry-profile-catalog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-industry-catalog:
+    name: Validate sector registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Test Chilean industry profiles
+        run: npx vitest run src/lib/industry-profiles.test.ts
+      - name: Typecheck application
+        run: npm run typecheck
+      - name: Build production bundle
+        run: npm run build
