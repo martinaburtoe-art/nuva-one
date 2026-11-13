@@ -20,9 +20,6 @@ VALUES ('00000000-0000-0000-0000-0000000000a1'),
 INSERT INTO public.businesses (id, name, owner_id, plan)
 VALUES ('00000000-0000-0000-0000-0000000000b1', 'Atomic Settlement Test', '00000000-0000-0000-0000-0000000000a1', 'starter');
 
-INSERT INTO public.business_members (business_id, user_id, role)
-VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', 'owner');
-
 INSERT INTO public.products (id, business_id, name, price, stock)
 VALUES ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000b1', 'Idempotent Widget', 1000, 10);
 
@@ -245,9 +242,6 @@ SELECT is(
 
 INSERT INTO public.businesses (id, name, owner_id, plan)
 VALUES ('00000000-0000-0000-0000-0000000000b2', 'Second tenant test', '00000000-0000-0000-0000-0000000000a2', 'starter');
-
-INSERT INTO public.business_members (business_id, user_id, role)
-VALUES ('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-0000000000a2', 'owner');
 
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
 VALUES ('00000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000b2', 'pending', 1000, '[]'::jsonb, true, 0);
