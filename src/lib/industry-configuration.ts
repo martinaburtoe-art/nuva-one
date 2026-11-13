@@ -103,9 +103,14 @@ export function buildIndustryConfiguration(profileId: IndustryProfileId | string
   }
   const purchaseUnits = units(inv, "purchaseUnits", allowed, errors);
   const saleUnits = units(inv, "saleUnits", allowed, errors);
-  if (baseUnit && [...purchaseUnits, ...saleUnits].some((unit) => DIMENSIONS[unit] !== DIMENSIONS[baseUnit!])) {
-    errors.push({ code: "incompatible_units", path: "inventory", message: "Las unidades deben pertenecer a la misma dimensión. La equivalencia requiere un factor específico del producto." });
+  if (baseUnit && [...purchaseUnits, ...saleUnits].some((unit) => {
+    const unitDimension = DIMENSIONS[unit];
+    const baseDimension = DIMENSIONS[baseUnit!];
+    return unitDimension !== baseDimension && unitDimension !== "package";
+  })) {
+    errors.push({ code: "incompatible_units", path: "inventory", message: "Las unidades de medida deben ser dimensionalmente compatibles. Los formatos de empaque requieren una conversión explícita por producto." });
   }
+  const requiresProductConversion = Boolean(baseUnit && [...purchaseUnits, ...saleUnits].some((unit) => DIMENSIONS[unit] !== DIMENSIONS[baseUnit!]));
   const configuration: IndustryConfiguration = {
     ...defaults(profile.id), channels,
     inventory: { baseUnit, purchaseUnits, saleUnits, trackLots: bool(inv, "trackLots", "inventory", errors), trackExpiry: bool(inv, "trackExpiry", "inventory", errors), allowFractionalQuantity: bool(inv, "allowFractionalQuantity", "inventory", errors), multipleWarehouses: bool(inv, "multipleWarehouses", "inventory", errors) },
@@ -119,6 +124,7 @@ export function buildIndustryConfiguration(profileId: IndustryProfileId | string
   if (configuration.inventory.allowFractionalQuantity) requested.add("fractional_units");
   if (configuration.inventory.trackLots || configuration.inventory.trackExpiry) requested.add("lots_expiry");
   if (configuration.inventory.multipleWarehouses) requested.add("multi_warehouse");
+  if (requiresProductConversion) requested.add("unit_conversions");
   if (configuration.commercial.priceLists) requested.add("price_lists");
   if (configuration.commercial.volumePricing) requested.add("volume_pricing");
   if (configuration.commercial.customerCredit) requested.add("credit_accounts");
