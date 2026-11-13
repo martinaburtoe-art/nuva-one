@@ -103,12 +103,20 @@ export const Route = createFileRoute("/api/billing/payments/create")({
 
           if (savedIntentError) throw savedIntentError;
           if (savedIntent?.status === "paid") {
+            await admin
+              .from("payment_creation_requests")
+              .update({ status: "closed", payment_intent_id: savedIntent.id, updated_at: new Date().toISOString() })
+              .eq("id", existing.id);
             return json(
               { error: "Este intento ya fue pagado y conciliado. No se generará otro cobro para él.", code: "PAYMENT_ALREADY_SETTLED" },
               409,
             );
           }
           if (savedIntent?.status === "rejected" || savedIntent?.status === "expired") {
+            await admin
+              .from("payment_creation_requests")
+              .update({ status: "closed", payment_intent_id: savedIntent.id, updated_at: new Date().toISOString() })
+              .eq("id", existing.id);
             return json(
               { error: "El intento anterior terminó sin pago. Puedes iniciar un nuevo intento con una clave nueva.", code: "PAYMENT_ATTEMPT_TERMINAL" },
               409,
@@ -180,26 +188,84 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         }
 
         if (saleId) {
-          const { data: unresolvedSaleRequest, error: unresolvedSaleError } = await admin
+          const { data: activeSaleRequest, error: activeSaleError } = await admin
             .from("payment_creation_requests")
-            .select("commerce_order, status")
+            .select("*")
             .eq("business_id", businessId)
             .eq("sale_id", saleId)
-            .in("status", ["creating", "recovery_required"])
+            .in("status", ["creating", "created", "recovery_required"])
             .maybeSingle();
 
-          if (unresolvedSaleError) {
-            return json({ error: "No se pudo comprobar si existe otro intento pendiente" }, 500);
+          if (activeSaleError) {
+            return json({ error: "No se pudo comprobar si existe otro intento de cobro" }, 500);
           }
-          if (unresolvedSaleRequest) {
-            return json(
-              {
-                error: "La venta ya tiene un intento externo sin resolver. No se creará otro cobro hasta conciliarlo.",
-                code: "PAYMENT_RECOVERY_REQUIRED",
-                commerce_order: unresolvedSaleRequest.commerce_order,
-              },
-              409,
-            );
+
+          if (activeSaleRequest) {
+            const { data: activeIntent, error: activeIntentError } = await admin
+              .from("payment_intents")
+              .select("id, payment_url, status")
+              .eq("provider", activeSaleRequest.provider)
+              .eq("commerce_order", activeSaleRequest.commerce_order)
+              .maybeSingle();
+
+            if (activeIntentError) {
+              return json({ error: "No se pudo recuperar el intento de cobro existente" }, 500);
+            }
+
+            if (activeIntent?.status === "paid") {
+              await admin
+                .from("payment_creation_requests")
+                .update({ status: "closed", payment_intent_id: activeIntent.id, updated_at: new Date().toISOString() })
+                .eq("id", activeSaleRequest.id);
+              return json(
+                { error: "La venta ya tiene un pago conciliado. No se generará otro cobro.", code: "PAYMENT_ALREADY_SETTLED" },
+                409,
+              );
+            }
+
+            if (activeIntent?.status === "rejected" || activeIntent?.status === "expired") {
+              await admin
+                .from("payment_creation_requests")
+                .update({ status: "closed", payment_intent_id: activeIntent.id, updated_at: new Date().toISOString() })
+                .eq("id", activeSaleRequest.id);
+            } else if (activeIntent?.payment_url && activeIntent.status === "pending") {
+              if (
+                Number(activeSaleRequest.amount) !== amount ||
+                activeSaleRequest.subject !== subject ||
+                activeSaleRequest.provider !== provider
+              ) {
+                return json(
+                  { error: "La venta ya tiene un link activo con otros datos. Resuelve ese intento antes de cambiar el importe.", code: "PAYMENT_ACTIVE_INTENT" },
+                  409,
+                );
+              }
+
+              await admin
+                .from("payment_creation_requests")
+                .update({
+                  status: "created",
+                  payment_intent_id: activeIntent.id,
+                  updated_at: new Date().toISOString(),
+                  last_error: null,
+                })
+                .eq("id", activeSaleRequest.id);
+
+              return json({
+                ok: true,
+                payment_url: activeIntent.payment_url,
+                payment_intent_id: activeIntent.id,
+                reused: true,
+              });
+            } else {
+              return json(
+                {
+                  error: "La venta ya tiene un intento externo sin resolver. No se creará otro cobro hasta conciliarlo.",
+                  code: "PAYMENT_RECOVERY_REQUIRED",
+                  commerce_order: activeSaleRequest.commerce_order,
+                },
+                409,
+              );
+            }
           }
         }
 
