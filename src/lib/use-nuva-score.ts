@@ -74,7 +74,7 @@ export function useNuvaScore() {
           .select("total, items, sale_date")
           .eq("business_id", bid)
           .neq("status", "cancelled")
-          .gte("sale_date", startOfLastMonth)
+          .gte("sale_date", previousMonthStart)
           .lte("sale_date", todayIso)
           .order("id")
           .range(from, to)),
