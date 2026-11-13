@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS public.payment_creation_requests (
   amount numeric(12,2) NOT NULL CHECK (amount > 0),
   subject text NOT NULL,
   status text NOT NULL DEFAULT 'creating'
-    CHECK (status IN ('creating', 'created', 'recovery_required')),
+    CHECK (status IN ('creating', 'created', 'recovery_required', 'closed')),
   payment_intent_id uuid REFERENCES public.payment_intents(id) ON DELETE SET NULL,
   last_error text,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -68,12 +68,12 @@ CREATE TABLE IF NOT EXISTS public.payment_creation_requests (
   CONSTRAINT payment_creation_requests_business_key UNIQUE (business_id, idempotency_key),
   CONSTRAINT payment_creation_requests_provider_order UNIQUE (provider, commerce_order),
   CONSTRAINT payment_creation_requests_created_has_intent
-    CHECK (status <> 'created' OR payment_intent_id IS NOT NULL)
+    CHECK (status NOT IN ('created', 'closed') OR payment_intent_id IS NOT NULL)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_creation_requests_unresolved_sale
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_creation_requests_active_sale
   ON public.payment_creation_requests(business_id, sale_id)
-  WHERE sale_id IS NOT NULL AND status IN ('creating', 'recovery_required');
+  WHERE sale_id IS NOT NULL AND status IN ('creating', 'created', 'recovery_required');
 
 ALTER TABLE public.payment_creation_requests ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.payment_creation_requests FROM PUBLIC, anon, authenticated;
@@ -389,11 +389,25 @@ BEGIN
   END IF;
 
   IF v_intent.status = 'paid' THEN
+    UPDATE public.payment_creation_requests
+       SET status = 'closed',
+           payment_intent_id = v_intent.id,
+           updated_at = now()
+     WHERE provider = v_intent.provider
+       AND commerce_order = v_intent.commerce_order
+       AND status <> 'closed';
     UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
     RETURN jsonb_build_object('outcome', 'already_paid', 'intent_id', v_intent.id);
   END IF;
 
   IF v_intent.status IN ('rejected', 'expired') THEN
+    UPDATE public.payment_creation_requests
+       SET status = 'closed',
+           payment_intent_id = v_intent.id,
+           updated_at = now()
+     WHERE provider = v_intent.provider
+       AND commerce_order = v_intent.commerce_order
+       AND status <> 'closed';
     UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
     RETURN jsonb_build_object('outcome', 'terminal_state', 'intent_id', v_intent.id);
   END IF;
@@ -407,6 +421,13 @@ BEGIN
        SET status = 'rejected',
            resolved_at = COALESCE(resolved_at, now())
      WHERE id = v_intent.id;
+    UPDATE public.payment_creation_requests
+       SET status = 'closed',
+           payment_intent_id = v_intent.id,
+           updated_at = now()
+     WHERE provider = v_intent.provider
+       AND commerce_order = v_intent.commerce_order
+       AND status <> 'closed';
     UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
     RETURN jsonb_build_object('outcome', 'resolved_rejected', 'intent_id', v_intent.id);
   END IF;
@@ -469,6 +490,14 @@ BEGIN
      SET status = 'paid',
          resolved_at = COALESCE(resolved_at, now())
    WHERE id = v_intent.id;
+
+  UPDATE public.payment_creation_requests
+     SET status = 'closed',
+         payment_intent_id = v_intent.id,
+         updated_at = now()
+   WHERE provider = v_intent.provider
+     AND commerce_order = v_intent.commerce_order
+     AND status <> 'closed';
 
   UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
 
