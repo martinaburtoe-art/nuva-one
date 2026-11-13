@@ -10,7 +10,7 @@ describe("industry configuration contract", () => {
   it("captures ferreteria preferences but gates unavailable capabilities", () => {
     const r = buildIndustryConfiguration("hardware_store", { channels: ["counter", "delivery"], inventory: { baseUnit: "un", purchaseUnits: ["caja"], saleUnits: ["un"], allowFractionalQuantity: true, multipleWarehouses: true }, commercial: { priceLists: true, volumePricing: true }, operations: { scheduledDispatch: true } });
     expect(r.ok).toBe(true);
-    if (r.ok) { expect(r.availableCapabilities).toEqual(["dispatch"]); expect(r.plannedCapabilities).toEqual(expect.arrayContaining(["fractional_units", "multi_warehouse", "price_lists", "volume_pricing"])); }
+    if (r.ok) { expect(r.availableCapabilities).toEqual([]); expect(r.plannedCapabilities).toEqual(expect.arrayContaining(["fractional_units", "multi_warehouse", "price_lists", "volume_pricing", "dispatch_scheduling"])); }
   });
   it("requires lot tracking before expiry tracking", () => {
     const r = buildIndustryConfiguration("neighborhood_grocery", { inventory: { trackExpiry: true } });
@@ -31,6 +31,11 @@ describe("industry configuration contract", () => {
     const r = buildIndustryConfiguration("wholesale_distribution", { channels: ["wholesale", "delivery"], inventory: { multipleWarehouses: true }, commercial: { priceLists: true, customerCredit: true, volumePricing: true } });
     expect(r.ok).toBe(true);
     if (r.ok) { expect(r.availableCapabilities).toEqual([]); expect(r.plannedCapabilities).toEqual(expect.arrayContaining(["multi_warehouse", "price_lists", "credit_accounts", "volume_pricing"])); }
+  });
+  it("does not claim P1 profiles have a complete P0 configuration schema", () => {
+    const r = buildIndustryConfiguration("restaurant_cafe");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.map((e) => e.code)).toContain("profile_not_in_p0");
   });
   it("rejects unknown fields, channels and profiles", () => {
     expect(buildIndustryConfiguration("unknown_profile").ok).toBe(false);
