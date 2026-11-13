@@ -557,8 +557,8 @@ function Dashboard() {
 
         <section className="nuva-resumen-panel" aria-label="Análisis comparativo y señales del negocio" style={{ marginBottom: 20 }}>
           <div className="nuva-resumen-panel-heading">
-            <div><p className="nuva-resumen-section-label">ANÁLISIS DE DESEMPEÑO</p><h2>Qué cambió y dónde mirar</h2><p>Comparación contra el período inmediatamente anterior de igual duración.</p></div>
-            {comparisonWindow && <span className="nuva-resumen-status-pill">{comparisonWindow.from} — {comparisonWindow.to}</span>}
+            <div className="nuva-resumen-comparison-copy"><p className="nuva-resumen-section-label">ANÁLISIS DE DESEMPEÑO</p><h2>Qué cambió y dónde mirar</h2><p>Compara tus resultados actuales con el período anterior de igual duración.</p></div>
+            {comparisonWindow && <span className="nuva-resumen-comparison-period">Período anterior <strong>{formatComparisonDate(comparisonWindow.from)} – {formatComparisonDate(comparisonWindow.to)}</strong></span>}
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <ComparisonMetric label="Ingresos" current={incomeChange} currentValue={kpis ? fmtCLP(kpis.income) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.income) : null} loading={comparisonQuery.isLoading} inverse={false} />
@@ -647,6 +647,11 @@ function Dashboard() {
   );
 }
 
+function formatComparisonDate(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
+}
+
 function ComparisonMetric({ label, current, currentValue, previousValue, loading = false, inverse = false }: { label: string; current: number | null; currentValue: string; previousValue: string | null; loading?: boolean; inverse?: boolean }) {
   const positive = current !== null && (inverse ? current < 0 : current > 0);
   const negative = current !== null && (inverse ? current > 0 : current < 0);
@@ -654,8 +659,8 @@ function ComparisonMetric({ label, current, currentValue, previousValue, loading
     <p className="text-xs font-medium text-muted-foreground">{label}</p>
     <strong className="mt-1 block text-xl tracking-tight">{currentValue}</strong>
     {loading ? <p className="mt-2 text-xs text-muted-foreground">Calculando comparación…</p> : previousValue === null ? <p className="mt-2 text-xs text-muted-foreground">Sin período comparable</p> : <p className={`mt-2 text-xs font-semibold ${positive ? "text-emerald-700" : negative ? "text-rose-700" : "text-muted-foreground"}`}>
-      {current === null ? "Base anterior igual a cero" : `${current > 0 ? "+" : ""}${current.toFixed(1)}% vs. período anterior`}
-      <span className="ml-1 font-normal text-muted-foreground">· anterior {previousValue}</span>
+      {current === null ? "Sin base anterior: no se calcula variación porcentual." : `${current > 0 ? "+" : ""}${current.toFixed(1)}% frente al período anterior`}
+      <span className="mt-1 block font-normal text-muted-foreground">Período anterior: {previousValue}</span>
     </p>}
   </div>;
 }
