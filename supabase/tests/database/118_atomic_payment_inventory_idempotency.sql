@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(70);
+SELECT plan(73);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -200,6 +200,32 @@ SELECT is(
   'unknown_token',
   'settlement refuses an unknown provider token'
 );
+
+INSERT INTO public.businesses (id, name, owner_id, plan)
+VALUES ('00000000-0000-0000-0000-0000000000b2', 'Second tenant test', '00000000-0000-0000-0000-0000000000a2', 'starter');
+
+INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
+VALUES ('00000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000b2', 'pending', 1000, '[]'::jsonb, true, 0);
+
+ALTER TABLE public.payment_intents DISABLE TRIGGER trg_enforce_same_business_payment_intents;
+INSERT INTO public.payment_intents (
+  id, business_id, sale_id, provider, token, commerce_order, amount, status
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000000e7',
+  '00000000-0000-0000-0000-0000000000b1',
+  '00000000-0000-0000-0000-0000000000d2',
+  'flow', 'token-cross-business', 'order-cross-business', 500, 'pending'
+);
+ALTER TABLE public.payment_intents ENABLE TRIGGER trg_enforce_same_business_payment_intents;
+
+SELECT is(
+  public.settle_payment_intent('flow', 'token-cross-business', 'paid', 500, 'order-cross-business')->>'outcome',
+  'sale_not_found',
+  'settlement rejects a sale owned by a different business'
+);
+SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e7'), 'pending', 'cross-business settlement does not mark the foreign intent paid');
+SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e7'), 0, 'cross-business settlement creates no payment');
 
 INSERT INTO public.payment_intents (
   id, business_id, sale_id, provider, token, commerce_order, amount, status
