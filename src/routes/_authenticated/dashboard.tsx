@@ -407,7 +407,7 @@ function Dashboard() {
                   {Object.keys(metric.evidenceCounts).length > 0 && (
                     <p className="mt-2 border-t border-border/60 pt-2 text-[10px] text-muted-foreground">
                       Evidencia: {Object.entries(metric.evidenceCounts).map(([source, count]) => {
-                        const labels: Record<string, string> = { sales: "ventas", inventory: "productos", cash: "movimientos", quotes: "cotizaciones", customers: "clientes", expenses: "gastos" };
+                        const labels: Record<string, string> = { sales: "ventas", inventory: "productos", cash: "cajas abiertas", quotes: "cotizaciones", customers: "clientes", expenses: "gastos" };
                         return labels[source] ? `${count} ${labels[source]}` : null;
                       }).filter(Boolean).join(" · ")}
                     </p>
