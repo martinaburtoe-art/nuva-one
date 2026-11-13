@@ -132,6 +132,8 @@ jobs:
             fi
           done
           exit 1
+      - name: Concurrent payment and inventory idempotency
+        run: bash scripts/test-atomic-concurrency.sh
       - name: Recovery drill — rebuild schema from migrations
         run: |
           set -o pipefail
