@@ -57,7 +57,7 @@ The `prefers-reduced-motion: reduce` mode disables spatial and decorative animat
 - [ ] Production build and automated tests pass.
 
 ## Reference fidelity
-The exact `@noxen.studio` Instagram profile/Reels have not yet been verified in this work session. Do not claim a visual match until direct profile or Reel URLs are supplied and reviewed. Use this system as Nüva's own motion language in the meantime.
+The public `@noxen.studio` profile and selected Reels were reviewed through vidIQ on 2026-11-13. Their interaction patterns are documented in the reference study below; this is an adaptation of selected patterns, not a claim of pixel-perfect replication.
 
 
 ## Reference study: Instagram Reels de @noxen.studio
