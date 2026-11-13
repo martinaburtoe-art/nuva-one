@@ -189,6 +189,11 @@ BEGIN
      OR v_intent.commerce_order <> v_request.commerce_order
      OR v_intent.amount <> v_request.amount THEN
     v_outcome := 'intent_missing_or_mismatched';
+  ELSIF p_provider_amount IS NULL
+     OR p_provider_amount IS DISTINCT FROM v_request.amount
+     OR p_provider_commerce_order IS NULL
+     OR p_provider_commerce_order IS DISTINCT FROM v_request.commerce_order THEN
+    v_outcome := 'provider_mismatch';
   ELSIF p_provider_status = 'pending' THEN
     IF v_request.payment_intent_id IS NULL THEN
       UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
@@ -212,11 +217,6 @@ BEGIN
     ELSE
       v_outcome := 'intent_already_paid';
     END IF;
-  ELSIF p_provider_amount IS NULL
-     OR p_provider_amount IS DISTINCT FROM v_request.amount
-     OR p_provider_commerce_order IS NULL
-     OR p_provider_commerce_order IS DISTINCT FROM v_request.commerce_order THEN
-    v_outcome := 'provider_mismatch';
   ELSE
     IF v_request.payment_intent_id IS NULL THEN
       UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
