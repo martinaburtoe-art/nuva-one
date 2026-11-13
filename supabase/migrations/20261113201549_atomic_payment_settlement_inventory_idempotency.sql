@@ -69,12 +69,17 @@ CREATE TABLE IF NOT EXISTS public.payment_creation_requests (
   CONSTRAINT payment_creation_requests_provider_order UNIQUE (provider, commerce_order)
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_creation_requests_unresolved_sale
+  ON public.payment_creation_requests(business_id, sale_id)
+  WHERE sale_id IS NOT NULL AND status IN ('creating', 'recovery_required');
+
 ALTER TABLE public.payment_creation_requests ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.payment_creation_requests FROM PUBLIC, anon, authenticated;
 GRANT ALL ON TABLE public.payment_creation_requests TO service_role;
 
--- Inventory source keys are scoped to a product because a purchase/receipt
--- commonly creates one movement per product under the same source document.
+-- Caller-keyed manual/scanner adjustments are unique per product/source.
+-- Sales and purchases have separate lifecycle state machines and can legitimately
+-- emit multiple movements per document/product across edits and reversals.
 DO $$
 BEGIN
   IF EXISTS (
