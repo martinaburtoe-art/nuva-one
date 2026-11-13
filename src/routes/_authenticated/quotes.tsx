@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/page-utils";
@@ -73,6 +73,8 @@ function Quotes() {
   const [customer, setCustomer] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  // Evita dobles solicitudes desde taps consecutivos; la RPC mantiene la garantía transaccional en BD.
+  const convertingQuoteIdsRef = useRef(new Set<string>());
   const [discountPct, setDiscountPct] = useState(0);
   const [validUntil, setValidUntil] = useState("");
   const [terms, setTerms] = useState(
@@ -143,6 +145,8 @@ function Quotes() {
   }
 
   async function convertToSale(quote: any) {
+    if (convertingQuoteIdsRef.current.has(quote.id)) return;
+    convertingQuoteIdsRef.current.add(quote.id);
     setConvertingId(quote.id);
     try {
       const { error } = await supabase.rpc("convert_quote_to_sale", { p_quote_id: quote.id });
@@ -153,6 +157,7 @@ function Quotes() {
     } catch (e: any) {
       toast.error(e.message ?? "No se pudo convertir a venta");
     } finally {
+      convertingQuoteIdsRef.current.delete(quote.id);
       setConvertingId(null);
     }
   }
