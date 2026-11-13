@@ -440,6 +440,14 @@ BEGIN
      OR p_provider_amount IS DISTINCT FROM v_intent.amount
      OR p_provider_commerce_order IS NULL
      OR p_provider_commerce_order IS DISTINCT FROM v_intent.commerce_order THEN
+    UPDATE public.payment_creation_requests
+       SET status = 'recovery_required',
+           payment_intent_id = v_intent.id,
+           last_error = 'provider_mismatch',
+           updated_at = now()
+     WHERE provider = v_intent.provider
+       AND commerce_order = v_intent.commerce_order
+       AND status <> 'closed';
     RETURN jsonb_build_object('outcome', 'provider_mismatch', 'intent_id', v_intent.id);
   END IF;
 
@@ -452,15 +460,42 @@ BEGIN
      FOR UPDATE;
 
     IF NOT FOUND THEN
+      UPDATE public.payment_creation_requests
+         SET status = 'recovery_required',
+             payment_intent_id = v_intent.id,
+             last_error = 'sale_not_found',
+             updated_at = now()
+       WHERE provider = v_intent.provider
+         AND commerce_order = v_intent.commerce_order
+         AND status <> 'closed';
+      UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
       RETURN jsonb_build_object('outcome', 'sale_not_found', 'intent_id', v_intent.id);
     END IF;
 
     IF v_sale.status IN ('draft', 'cancelled') THEN
+      UPDATE public.payment_creation_requests
+         SET status = 'recovery_required',
+             payment_intent_id = v_intent.id,
+             last_error = 'sale_not_collectible',
+             updated_at = now()
+       WHERE provider = v_intent.provider
+         AND commerce_order = v_intent.commerce_order
+         AND status <> 'closed';
+      UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
       RETURN jsonb_build_object('outcome', 'sale_not_collectible', 'intent_id', v_intent.id);
     END IF;
 
     v_remaining := COALESCE(v_sale.total, 0) - COALESCE(v_sale.paid_amount, 0);
     IF v_remaining <= 0 OR v_intent.amount > v_remaining THEN
+      UPDATE public.payment_creation_requests
+         SET status = 'recovery_required',
+             payment_intent_id = v_intent.id,
+             last_error = 'sale_balance_exceeded',
+             updated_at = now()
+       WHERE provider = v_intent.provider
+         AND commerce_order = v_intent.commerce_order
+         AND status <> 'closed';
+      UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
       RETURN jsonb_build_object(
         'outcome', 'sale_balance_exceeded',
         'intent_id', v_intent.id,
