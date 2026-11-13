@@ -1,11 +1,12 @@
 import "@/resumen-premium.css";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DateRangeFilter, dmyToIso } from "@/components/date-range-filter";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { ModuleGuard } from "@/components/module-guard";
@@ -21,7 +22,7 @@ import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparabl
 import { getIndustryProfile } from "@/lib/industry-profiles";
 import { buildIndustryDashboardMetrics } from "@/lib/industry-dashboard";
 import { toast } from "sonner";
-import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet, ChevronDown, ShoppingCart, Boxes } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { active } = useActiveBusiness();
+  const navigate = useNavigate();
   const [onboardingFocus, setOnboardingFocus] = useState("Todo");
   const [seedingDemo, setSeedingDemo] = useState(false);
 
@@ -375,9 +377,34 @@ function Dashboard() {
               <h1>Resumen</h1>
               <p className="nuva-resumen-subtitle">Una lectura clara de tus operaciones, resultados y próximos focos de atención.</p>
             </div>
-            {primaryDataReady && !hasActivity && <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
-              {seedingDemo ? "Preparando demo…" : "Crear espacio demo"}
-            </Button>}
+            <div className="flex flex-wrap items-center gap-2">
+              {primaryDataReady && !hasActivity && <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
+                {seedingDemo ? "Preparando demo…" : "Crear espacio demo"}
+              </Button>}
+              <div className="inline-flex items-center gap-1" aria-label="Acciones rápidas del negocio">
+                <Button size="sm" onClick={() => navigate({ to: "/pos" })} className="shadow-sm">
+                  <ShoppingCart className="mr-1.5 h-4 w-4" /> Nueva venta
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" size="icon" variant="outline" aria-label="Más acciones de negocio" className="h-9 w-9">
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onSelect={() => navigate({ to: "/quotes" })}>
+                      <FileText className="mr-2 h-4 w-4" /> Nueva cotización
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => navigate({ to: "/purchases" })}>
+                      <Package className="mr-2 h-4 w-4" /> Registrar compra
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => navigate({ to: "/inventory" })}>
+                      <Boxes className="mr-2 h-4 w-4" /> Revisar inventario
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </div>
         </header>
 
