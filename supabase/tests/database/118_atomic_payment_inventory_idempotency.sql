@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(64);
+SELECT plan(65);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -184,6 +184,13 @@ SELECT is(
 SELECT ok(
   (SELECT processed FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-overpay'),
   'verified overpayment webhook is closed after recording the recovery requirement'
+);
+SELECT throws_ok(
+  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-6', 'order-after-overpay', 1000, 'POS retry') $,
+  '23505',
+  NULL,
+  'recovery_required sale remains reserved until manual reconciliation'
 );
 SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e5'), 0, 'overpayment creates no payment row');
 SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'), 4000::numeric, 'rejected overpayment leaves sale balance unchanged');
