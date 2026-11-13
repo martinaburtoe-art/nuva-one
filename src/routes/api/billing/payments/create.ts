@@ -95,7 +95,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             );
           }
 
-          let { data: savedIntent, error: savedIntentError } = await admin
+          const { data: initialSavedIntent, error: savedIntentError } = await admin
             .from("payment_intents")
             .select("id, token, payment_url, status")
             .eq("provider", provider)
@@ -103,6 +103,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             .maybeSingle();
 
           if (savedIntentError) throw savedIntentError;
+          let savedIntent = initialSavedIntent;
 
           // A user retry doubles as a server-to-server status check. This lets
           // the POS resolve a delayed webhook without creating another order.
@@ -328,7 +329,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           }
 
           if (activeSaleRequest) {
-            let { data: activeIntent, error: activeIntentError } = await admin
+            const { data: initialActiveIntent, error: activeIntentError } = await admin
               .from("payment_intents")
               .select("id, token, payment_url, status")
               .eq("provider", activeSaleRequest.provider)
@@ -338,6 +339,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             if (activeIntentError) {
               return json({ error: "No se pudo recuperar el intento de cobro existente" }, 500);
             }
+            let activeIntent = initialActiveIntent;
 
             if (["pending", "rejected", "expired"].includes(activeIntent?.status) && activeSaleRequest.status !== "recovery_required") {
               try {
