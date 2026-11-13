@@ -1,6 +1,6 @@
 # Tenant persistence draft — industry profiles
 
-**Status:** design draft only. Not an executable migration and not applied to any database.
+**Status:** additive migration staged in PR #321 at `supabase/migrations/20261112090000_business_industry_profile_persistence.sql`; pgTAP contract staged at `supabase/tests/database/117_business_industry_profile_persistence.sql`. Neither has been applied to production or a hosted Supabase branch.
 **Schema inspected:** production project schema metadata, 12 November 2026.
 **Scope:** additive columns on the existing `public.businesses` row; no new table, no RLS rewrite, no production data mutation.
 
@@ -29,7 +29,9 @@ The existing seven-value `business_industry` enum is a macro classification. It 
 
 Existing businesses remain valid: the primary profile stays NULL until an owner chooses one. No guessed backfill from `industry` or `giro`.
 
-## SQL draft for review (do not execute from this document)
+## Migration implementation and review notes
+
+The executable SQL is maintained in the migration file above, not copied into this design document. It adds only nullable/defaulted business columns and guarded check constraints. It does not alter RLS policies, grants, triggers, existing rows, `business_industry`, or `giro`.
 
 ```sql
 alter table public.businesses
@@ -140,6 +142,7 @@ Recommended JSON shape after validation in application code:
 
 Rules:
 1. Only store sector-specific operational preferences here; avoid customer, employee, payment, or clinical records.
+2. Onboarding answers use stable keys `operation_1`…`operation_n` from the selected profile registry. Persist only explicit yes/no answers as booleans; unanswered questions are omitted. Switching the profile resets the draft answers.
 2. Validate the shape with the app's schema validator at the write boundary.
 3. Store only answers actually supplied by the owner. Unknown answers remain absent, not false.
 4. Apply profile defaults first, then owner overrides; a user cannot override a capability's release gate from planned to available.
@@ -161,14 +164,13 @@ Rules:
 
 ## Rollout order
 
-1. Approve and create a temporary Supabase development branch (hourly cost; no branch exists yet).
-2. Generate the migration using the repository's Supabase CLI workflow; do not hand-invent a migration version.
-3. Apply only to the development branch.
-4. Run pgTAP and schema/type generation against that branch.
-5. Integrate the persisted fields into the account onboarding and business settings UI.
-6. Validate tenant isolation and business-owner permissions.
-7. Obtain independent review and preview verification for the exact commit.
-8. Only then consider production migration; never merge the development branch into production as a shortcut.
+1. Validate migration history with `npm run verify:migrations`.
+2. Run the repository's ephemeral local Supabase CI stack, `supabase db reset --local`, and pgTAP; this uses GitHub-hosted CI, not a paid Supabase branch.
+3. Generate database types from the clean local schema and run full typecheck/build.
+4. Keep onboarding feature-gated until the deployed database exposes the new columns.
+5. Validate authenticated owner writes and cross-tenant isolation in the ephemeral database.
+6. Obtain independent review and preview verification for the exact commit.
+7. Only after explicit approval, schedule production migration. Do not create a hosted Supabase branch or incur a new service cost without approval.
 
 ## Explicit non-goals for this first migration
 

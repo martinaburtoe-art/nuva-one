@@ -50,5 +50,6 @@ describe("industry capability release gates", () => {
 
   it("does not treat fractional movement records as end-to-end fractional stock", () => {
     expect(getCapabilityReadiness("fractional_units").status).toBe("planned");
+    expect(getCapabilityReadiness("dispatch_scheduling").status).toBe("planned");
   });
 });

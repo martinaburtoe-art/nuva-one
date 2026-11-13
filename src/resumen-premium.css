@@ -1882,3 +1882,161 @@
     min-height: 200px;
   }
 }
+
+
+/* Mobile repair: comparison headings and floating controls must never obscure data. */
+.nuva-app .nuva-resumen-comparison-period {
+  display: flex;
+  flex: 0 1 260px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--nuva-line, #e7e7e2);
+  border-radius: 12px;
+  color: var(--nuva-muted, #737780);
+  background: var(--color-card, #fff);
+  font-size: 10px;
+  line-height: 1.35;
+}
+.nuva-app .nuva-resumen-comparison-period strong {
+  color: var(--nuva-ink, #292b30);
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.nuva-app .nuva-resumen-comparison-copy { min-width: 0; flex: 1 1 220px; }
+.nuva-app .nuva-resumen-comparison-copy h2 { overflow-wrap: normal; }
+.nuva-app .nuva-resumen-comparison-copy > p:last-child { max-width: 52ch; line-height: 1.5; }
+.nuva-app .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] { min-width: 0; overflow: visible; }
+.nuva-app .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .grid { min-width: 0; }
+.nuva-app .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .grid > div { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .nuva-app main:has(.nuva-resumen-canvas) { padding-bottom: calc(10.5rem + env(safe-area-inset-bottom)) !important; }
+  .nuva-app .nuva-resumen-canvas { padding-bottom: calc(10.5rem + env(safe-area-inset-bottom)) !important; }
+  .nuva-app .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] { padding: 15px 13px; }
+  .nuva-app .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .nuva-resumen-panel-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-width: 0;
+    margin-bottom: 14px;
+  }
+  .nuva-app .nuva-resumen-comparison-copy { width: 100%; }
+  .nuva-app .nuva-resumen-comparison-copy h2 { font-size: clamp(18px, 5vw, 21px); line-height: 1.2; letter-spacing: -.035em; }
+  .nuva-app .nuva-resumen-comparison-copy > p:last-child { font-size: 12px; line-height: 1.45; }
+  .nuva-app .nuva-resumen-comparison-period { width: 100%; flex: none; }
+  .nuva-app .nuva-resumen-comparison-period strong { white-space: normal; }
+  .nuva-app .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .grid > div { padding: 13px; }
+  .nuva-app .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .grid > div > strong { font-size: clamp(20px, 5.5vw, 25px); line-height: 1.2; }
+}
+
+
+/* Android: keep the performance title, explanation and comparison period in
+   separate rows. The compact desktop flex header caused the date chip to
+   collide with long Spanish headings on narrow screens. */
+@media (max-width: 767px) {
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-comparison-heading {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-comparison-copy {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-comparison-copy .nuva-resumen-section-label {
+    margin: 0 0 6px;
+    line-height: 1.35;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-comparison-copy h2 {
+    max-width: 100%;
+    margin: 0;
+    font-size: clamp(19px, 5.2vw, 23px);
+    line-height: 1.2;
+    letter-spacing: -.035em;
+    overflow-wrap: anywhere;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-comparison-copy > p:last-child {
+    max-width: 42ch;
+    margin: 7px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-comparison-period {
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 32px;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 6px 10px;
+    border: 1px solid var(--nuva-line);
+    border-radius: 999px;
+    background: var(--color-card);
+    color: var(--color-muted-foreground);
+    font-size: 11px;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-comparison-period strong {
+    color: var(--color-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] {
+    min-width: 0;
+    padding: 16px 14px;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .grid {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .grid > div {
+    min-width: 0;
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-panel[aria-label="Análisis comparativo y señales del negocio"] > .grid strong {
+    display: block;
+    max-width: 100%;
+    font-size: clamp(20px, 5.5vw, 25px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-action {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-action:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--color-primary) 65%, transparent);
+  outline-offset: 3px;
+}

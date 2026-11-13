@@ -61,6 +61,10 @@ export const INDUSTRY_CAPABILITY_READINESS: Record<IndustryCapability, Capabilit
     status: "available",
     evidence: "Shipments module and persisted shipment events exist.",
   },
+  dispatch_scheduling: {
+    status: "planned",
+    evidence: "Persisted shipments exist, but no full scheduled dispatch calendar, capacity allocation and route-slot workflow is verified.",
+  },
   recipes_bom: {
     status: "planned",
     evidence: "No recipe or bill-of-materials costing and consumption workflow is verified.",
