@@ -24,7 +24,7 @@ export type IndustryMetricDefinition = {
   evidenceCounts: Partial<Record<IndustryDashboardSource, number>>;
 };
 
-type MetricSpec = Omit<IndustryMetricDefinition, "status" | "reason"> & {
+type MetricSpec = Omit<IndustryMetricDefinition, "status" | "reason" | "evidenceCounts"> & {
   plannedReason?: string;
   completeEvidenceRequired?: boolean;
 };
