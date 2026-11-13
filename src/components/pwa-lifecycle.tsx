@@ -51,12 +51,7 @@ export function PwaLifecycle() {
     let disposed = false;
 
     if ("serviceWorker" in navigator && window.isSecureContext) {
-      const serviceWorkerUrl = new URL("/sw.js", window.location.origin);
-      const buildRevision = (
-        import.meta.env as ImportMetaEnv & { VITE_NUVA_BUILD_REVISION: string }
-      ).VITE_NUVA_BUILD_REVISION;
-      serviceWorkerUrl.searchParams.set("rev", buildRevision);
-      navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/", updateViaCache: "none" })
+      navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" })
         .then((reg) => {
           if (disposed) return;
           registration = reg;
@@ -150,7 +145,7 @@ export function PwaLifecycle() {
       role="status"
       aria-live="polite"
       aria-atomic="true"
-      className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-[120] mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_12px_40px_rgba(20,25,60,.16)] backdrop-blur-xl"
+      className="fixed inset-x-3 top-[calc(4rem+env(safe-area-inset-top)+8px)] z-[120] mx-auto flex max-w-xl lg:bottom-3 lg:top-auto flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_12px_40px_rgba(20,25,60,.16)] backdrop-blur-xl"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-800">

@@ -1,0 +1,202 @@
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Lock, Plus, RefreshCw, Save, Sparkles, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useActiveBusiness } from "@/lib/use-business";
+import { INDUSTRY_PROFILES, getIndustryProfile } from "@/lib/industry-profiles";
+import { serializeIndustryAnswers, type IndustryAnswerDraft } from "@/lib/industry-profile-answers";
+import { toast } from "sonner";
+
+type PersistedIndustry = {
+  industry_profile: string | null;
+  industry_secondary_profiles: string[] | null;
+  industry_config: { schemaVersion?: number; answers?: Record<string, boolean> } | null;
+};
+
+function toDraft(profileId: string | null, answers: Record<string, boolean> | null | undefined): IndustryAnswerDraft {
+  const profile = getIndustryProfile(profileId);
+  if (!profile) return {};
+  return Object.fromEntries(profile.operationalQuestions.flatMap((_, index) => {
+    const key = "operation_" + (index + 1);
+    return typeof answers?.[key] === "boolean" ? [[key, answers[key] ? "yes" : "no"]] : [];
+  }));
+}
+
+export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
+  const { active } = useActiveBusiness();
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [schemaAvailable, setSchemaAvailable] = useState(false);
+  const [profileId, setProfileId] = useState("");
+  const [answers, setAnswers] = useState<IndustryAnswerDraft>({});
+  const [secondaryProfiles, setSecondaryProfiles] = useState<string[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const profile = useMemo(() => getIndustryProfile(profileId), [profileId]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!active?.id) {
+      setProfileId("");
+      setSecondaryProfiles([]);
+      setAnswers({});
+      setSchemaAvailable(false);
+      setLoadError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadError(null);
+    setProfileId("");
+    setSecondaryProfiles([]);
+    setAnswers({});
+    (supabase.from("businesses") as any)
+      .select("industry_profile, industry_secondary_profiles, industry_config")
+      .eq("id", active.id)
+      .maybeSingle()
+      .then(({ data, error }: { data: PersistedIndustry | null; error: { code?: string; message?: string } | null }) => {
+        if (!mounted) return;
+        const missing = error?.code === "42703" || error?.code === "PGRST204" || /industry_profile|industry_config/i.test(error?.message ?? "");
+        if (missing) {
+          setSchemaAvailable(false);
+          setLoadError(null);
+        } else if (error) {
+          setSchemaAvailable(false);
+          setLoadError("No fue posible leer la configuración sectorial de este negocio.");
+        } else {
+          setSchemaAvailable(true);
+          const selected = data?.industry_profile ?? "";
+          setProfileId(selected);
+          setSecondaryProfiles(data?.industry_secondary_profiles ?? []);
+          setAnswers(toDraft(selected, data?.industry_config?.answers));
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setSchemaAvailable(false);
+        setLoadError("No fue posible conectar con la configuración sectorial. Inténtalo nuevamente.");
+        setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [active?.id]);
+
+  function changeProfile(next: string) {
+    setProfileId(next);
+    setAnswers({});
+  }
+
+  async function save() {
+    if (!active?.id || !profile || !canManage || !schemaAvailable || saving) return;
+    setSaving(true);
+    try {
+      const businessId = active.id;
+      const payload = {
+        industry: profile.coreIndustry,
+        industry_profile: profile.id,
+        industry_secondary_profiles: [...new Set(secondaryProfiles)].filter((id) => id !== profile.id && Boolean(getIndustryProfile(id))).slice(0, 3),
+        industry_config: { schemaVersion: 1, answers: serializeIndustryAnswers(profile.id, answers) },
+        industry_config_version: 1,
+        industry_profile_updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await (supabase.from("businesses") as any)
+        .update(payload)
+        .eq("id", businessId)
+        .select("id")
+        .maybeSingle();
+      if (error) {
+        toast.error(error.message?.includes("industry_profile") ? "La migración sectorial aún no está disponible en esta base de datos." : "No se pudo guardar el perfil sectorial.");
+        return;
+      }
+      if (!data?.id) {
+        toast.error("No se confirmó ningún cambio. Verifica que tengas permisos para administrar este negocio.");
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-industry-profile", businessId] });
+      toast.success("Perfil sectorial actualizado");
+    } catch {
+      toast.error("No se pudo completar el guardado por un problema de conexión.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Sparkles className="h-4 w-4" /></div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold">Inteligencia sectorial</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Define el rubro operativo para adaptar el Resumen y las recomendaciones. No modifica tu giro tributario ni activa funciones que aún no están disponibles.</p>
+        </div>
+      </div>
+      {loading ? <p className="mt-4 text-sm text-muted-foreground">Cargando configuración…</p> : !active?.id ? <p className="mt-4 text-sm text-muted-foreground">Selecciona un negocio activo para consultar su perfil sectorial.</p> : loadError ? <p role="alert" className="mt-4 text-sm text-destructive">{loadError}</p> : !schemaAvailable ? (
+        <div className="mt-4 rounded-lg border border-dashed p-3 text-sm text-muted-foreground"><Lock className="mr-2 inline h-4 w-4" />La estructura de base de datos para perfiles sectoriales está pendiente de migración. No se ha modificado ningún dato.</div>
+      ) : (
+        <>
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="industry-profile-settings">Rubro principal</Label>
+            <Select value={profileId} onValueChange={changeProfile} disabled={!canManage}>
+              <SelectTrigger id="industry-profile-settings"><SelectValue placeholder="Selecciona el rubro de tu negocio" /></SelectTrigger>
+              <SelectContent className="max-h-80">
+                {INDUSTRY_PROFILES.map((item) => <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {profile && <p className="text-xs text-muted-foreground">{profile.summary}</p>}
+          </div>
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="industry-secondary-profile">Rubros secundarios (negocio mixto)</Label>
+            <div className="flex flex-wrap gap-2">
+              {secondaryProfiles.filter((id) => id !== profileId).map((id) => {
+                const secondary = getIndustryProfile(id);
+                if (!secondary) return null;
+                return <span key={id} className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs">
+                  {secondary.label}
+                  <button type="button" aria-label={"Quitar " + secondary.label} disabled={!canManage} onClick={() => setSecondaryProfiles((current) => current.filter((item) => item !== id))} className="rounded-full p-0.5 hover:bg-muted disabled:opacity-50"><X className="h-3 w-3" /></button>
+                </span>;
+              })}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Select value="none" onValueChange={(id) => setSecondaryProfiles((current) => current.length < 3 && id !== profileId && !current.includes(id) ? [...current, id] : current)} disabled={!canManage || secondaryProfiles.filter((id) => id !== profileId).length >= 3}>
+                <SelectTrigger id="industry-secondary-profile" className="sm:max-w-sm"><SelectValue placeholder="Agregar otro rubro" /></SelectTrigger>
+                <SelectContent className="max-h-80">
+                  <SelectItem value="none" disabled>Selecciona un rubro secundario</SelectItem>
+                  {INDUSTRY_PROFILES.filter((item) => item.id !== profileId && !secondaryProfiles.includes(item.id)).map((item) => <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="self-center text-xs text-muted-foreground">{secondaryProfiles.filter((id) => id !== profileId).length}/3 rubros secundarios</p>
+            </div>
+            <p className="text-xs text-muted-foreground">Los rubros secundarios solo ajustan el contexto del negocio; no duplican inventario, ventas ni clientes.</p>
+          </div>
+          {profile && profile.operationalQuestions.length > 0 && (
+            <div className="mt-5 space-y-3">
+              <div><h4 className="text-sm font-medium">Cómo opera tu negocio</h4><p className="text-xs text-muted-foreground">Responde solo lo que corresponda. Las preguntas sin respuesta no se guardan.</p></div>
+              {profile.operationalQuestions.map((question, index) => {
+                const key = "operation_" + (index + 1);
+                return <div key={key} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_190px] sm:items-center">
+                  <Label className="leading-5">{question}</Label>
+                  <Select value={answers[key] ?? "unanswered"} onValueChange={(value) => setAnswers((current) => ({ ...current, [key]: value === "yes" || value === "no" ? value : undefined }))} disabled={!canManage}>
+                    <SelectTrigger aria-label={question}><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unanswered">Sin responder</SelectItem>
+                      <SelectItem value="yes">Sí</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>;
+              })}
+            </div>
+          )}
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            {!canManage && <p className="text-xs text-muted-foreground"><Lock className="mr-1 inline h-3 w-3" />Solo propietario o administrador puede editar.</p>}
+            <Button onClick={save} disabled={!canManage || !profile || saving || loading} className="ml-auto">{saving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar rubro y contexto</Button>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}

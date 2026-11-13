@@ -18,6 +18,8 @@ import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
 import { isProductLowStock } from "@/lib/resumen-stock-threshold";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparableWindow } from "@/lib/resumen-period-comparison";
+import { getIndustryProfile } from "@/lib/industry-profiles";
+import { buildIndustryDashboardMetrics } from "@/lib/industry-dashboard";
 import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
@@ -66,6 +68,21 @@ function Dashboard() {
     catch { setOnboardingFocus("Todo"); }
   }, []);
 
+  const { data: industryProfileData } = useQuery({
+    enabled: !!active?.id,
+    queryKey: ["dashboard-industry-profile", active?.id],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase.from("businesses") as any)
+        .select("industry_profile, industry_secondary_profiles")
+        .eq("id", active!.id)
+        .maybeSingle();
+      if (error?.code === "42703" || error?.code === "PGRST204" || /industry_profile/i.test(error?.message ?? "")) return null;
+      if (error) throw error;
+      return data as { industry_profile: string | null; industry_secondary_profiles: string[] | null } | null;
+    },
+  });
+
   const { data: kpis, error: kpisError } = useQuery({
     enabled: !!active?.id && !invalidDateRange,
     queryKey: ["kpis", active?.id, chartWindowStart, chartWindowEnd, categories],
@@ -89,7 +106,7 @@ function Dashboard() {
       ]);
       const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
       const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
-      return { income, expense, net: income - expense };
+      return { income, expense, net: income - expense, incomeRecords: sales.length, expenseRecords: expenses.length };
     },
   });
 
@@ -145,14 +162,17 @@ function Dashboard() {
   });
 
   const salesCountQuery = useQuery({
-    enabled: !!active?.id,
-    queryKey: ["dashboard-sales-count", active?.id],
+    enabled: !!active?.id && !invalidDateRange,
+    queryKey: ["dashboard-sales-count", active?.id, chartWindowStart, chartWindowEnd],
     staleTime: 60_000,
     queryFn: async () => {
-      const { count, error } = await supabase.from("sales")
+      let query = supabase.from("sales")
         .select("id", { count: "exact", head: true })
         .eq("business_id", active!.id)
-        .neq("status", "cancelled");
+        .neq("status", "cancelled")
+        .lte("sale_date", chartWindowEnd);
+      if (chartWindowStart) query = query.gte("sale_date", chartWindowStart);
+      const { count, error } = await query;
       if (error) throw error;
       return count ?? 0;
     },
@@ -315,6 +335,19 @@ function Dashboard() {
       setSeedingDemo(false);
     }
   }
+  const selectedIndustryProfile = getIndustryProfile(industryProfileData?.industry_profile);
+  const industryMetrics = useMemo(() => {
+    if (!selectedIndustryProfile) return [];
+    return buildIndustryDashboardMetrics(selectedIndustryProfile.id, {
+      sales: { available: salesCountQuery.data !== undefined && !salesCountQuery.isError, records: salesCountQuery.data ?? 0 },
+      inventory: { available: inventoryQuery.data !== undefined && !inventoryQuery.isError, records: inventoryQuery.data?.productsCount ?? 0 },
+      // This query proves only the current open/closed register state, not cash movements.
+      cash: { available: cashRegisterQuery.isFetched && !cashRegisterQuery.isError, records: cashRegisterQuery.data ? 1 : 0 },
+      quotes: { available: quotesQuery.data !== undefined && !quotesQuery.isError, records: quotesQuery.data?.totalCount ?? 0 },
+      customers: { available: customersQuery.data !== undefined && !customersQuery.isError, records: customersQuery.data ?? 0 },
+      expenses: { available: kpis !== undefined && !kpisError, records: kpis?.expenseRecords ?? 0 },
+    });
+  }, [selectedIndustryProfile, salesCountQuery.data, salesCountQuery.isError, inventoryQuery.data, inventoryQuery.isError, quotesQuery.data, quotesQuery.isError, customersQuery.data, customersQuery.isError, cashRegisterQuery.data, cashRegisterQuery.isFetched, cashRegisterQuery.isError, kpis, kpisError]);
   const operationalStatus = getResumenOperationalStatus({
     hasBusiness: Boolean(active?.id),
     invalidDateRange,
@@ -348,6 +381,40 @@ function Dashboard() {
           </div>
         </header>
 
+        {selectedIndustryProfile && (
+          <section className="mb-5 rounded-2xl border border-border/70 bg-card/85 p-4 shadow-sm sm:p-5" aria-label="Resumen adaptado a tu rubro">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">INTELIGENCIA SECTORIAL</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">{selectedIndustryProfile.label}</h2>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">{selectedIndustryProfile.summary}</p>
+              </div>
+              <span className="w-fit shrink-0 rounded-full border bg-background px-3 py-1 text-[10px] font-medium text-muted-foreground">Perfil de negocio</span>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {industryMetrics.map((metric) => (
+                <div key={metric.id} className="rounded-xl border border-border/70 bg-background/80 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-semibold leading-snug">{metric.label}</p>
+                    <span className={metric.status === "available" ? "shrink-0 rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-semibold text-emerald-700 dark:text-emerald-300" : metric.status === "insufficient_data" ? "shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-[9px] font-semibold text-amber-700 dark:text-amber-300" : "shrink-0 rounded-full bg-muted px-2 py-1 text-[9px] font-semibold text-muted-foreground"}>
+                      {metric.status === "available" ? "Fuente activa" : metric.status === "insufficient_data" ? "Faltan datos" : "En desarrollo"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{metric.status === "available" ? metric.description : metric.reason}</p>
+                  {Object.keys(metric.evidenceCounts).length > 0 && (
+                    <p className="mt-2 border-t border-border/60 pt-2 text-[10px] text-muted-foreground">
+                      Evidencia: {Object.entries(metric.evidenceCounts).map(([source, count]) => {
+                        const labels: Record<string, string> = { sales: "ventas", inventory: "productos", cash: "cajas abiertas", quotes: "cotizaciones", customers: "clientes", expenses: "gastos" };
+                        return labels[source] ? `${count} ${labels[source]}` : null;
+                      }).filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">Los indicadores se habilitan según la evidencia disponible en tus módulos. Las funciones aún no implementadas se mantienen identificadas como desarrollo, sin estimaciones ni cifras inventadas.</p>
+          </section>
+        )}
         <section className="nuva-resumen-hero" aria-label="Resultado financiero del período">
           <div className="nuva-resumen-hero-main">
             <div className="nuva-resumen-hero-kicker"><span className="nuva-resumen-hero-spark" aria-hidden="true" /> LECTURA EJECUTIVA <span aria-hidden="true">·</span> {financialPeriodLabel}</div>
@@ -483,12 +550,17 @@ function Dashboard() {
             <strong>{inventoryQuery.data?.inventoryValue === null ? "Costo incompleto" : inventoryQuery.data ? fmtCLP(inventoryQuery.data.inventoryValue) : "—"}</strong>
             <p>{inventoryQuery.data?.inventoryValue === null ? "Completa el costo de adquisición y revisa cantidades" : `${inventoryQuery.data?.productsCount ?? "—"} productos registrados`}</p>
           </article>
+          <Link to="/quotes" className="nuva-resumen-kpi nuva-resumen-kpi-action" aria-label="Abrir cotizaciones">
+            <div className="nuva-resumen-kpi-top"><span>COTIZACIONES ABIERTAS</span><span className="nuva-resumen-kpi-icon"><FileText className="h-4 w-4" /></span></div>
+            <strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "No disponible" : integrations.pendingQuotes ?? 0}</strong>
+            <p>{quotesQuery.isError ? "Revisa la conexión de cotizaciones" : "Ver y dar seguimiento"}</p>
+          </Link>
         </section>
 
         <section className="nuva-resumen-panel" aria-label="Análisis comparativo y señales del negocio" style={{ marginBottom: 20 }}>
-          <div className="nuva-resumen-panel-heading">
-            <div><p className="nuva-resumen-section-label">ANÁLISIS DE DESEMPEÑO</p><h2>Qué cambió y dónde mirar</h2><p>Comparación contra el período inmediatamente anterior de igual duración.</p></div>
-            {comparisonWindow && <span className="nuva-resumen-status-pill">{comparisonWindow.from} — {comparisonWindow.to}</span>}
+          <div className="nuva-resumen-panel-heading nuva-resumen-comparison-heading">
+            <div className="nuva-resumen-comparison-copy"><p className="nuva-resumen-section-label">ANÁLISIS DE DESEMPEÑO</p><h2>Qué cambió y dónde mirar</h2><p>Compara tus resultados actuales con el período anterior de igual duración.</p></div>
+            {comparisonWindow && <span className="nuva-resumen-comparison-period">Período anterior <strong>{formatComparisonDate(comparisonWindow.from)} – {formatComparisonDate(comparisonWindow.to)}</strong></span>}
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <ComparisonMetric label="Ingresos" current={incomeChange} currentValue={kpis ? fmtCLP(kpis.income) : "—"} previousValue={comparisonQuery.data ? fmtCLP(comparisonQuery.data.income) : null} loading={comparisonQuery.isLoading} inverse={false} />
@@ -577,6 +649,11 @@ function Dashboard() {
   );
 }
 
+function formatComparisonDate(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
+}
+
 function ComparisonMetric({ label, current, currentValue, previousValue, loading = false, inverse = false }: { label: string; current: number | null; currentValue: string; previousValue: string | null; loading?: boolean; inverse?: boolean }) {
   const positive = current !== null && (inverse ? current < 0 : current > 0);
   const negative = current !== null && (inverse ? current > 0 : current < 0);
@@ -584,8 +661,8 @@ function ComparisonMetric({ label, current, currentValue, previousValue, loading
     <p className="text-xs font-medium text-muted-foreground">{label}</p>
     <strong className="mt-1 block text-xl tracking-tight">{currentValue}</strong>
     {loading ? <p className="mt-2 text-xs text-muted-foreground">Calculando comparación…</p> : previousValue === null ? <p className="mt-2 text-xs text-muted-foreground">Sin período comparable</p> : <p className={`mt-2 text-xs font-semibold ${positive ? "text-emerald-700" : negative ? "text-rose-700" : "text-muted-foreground"}`}>
-      {current === null ? "Base anterior igual a cero" : `${current > 0 ? "+" : ""}${current.toFixed(1)}% vs. período anterior`}
-      <span className="ml-1 font-normal text-muted-foreground">· anterior {previousValue}</span>
+      {current === null ? "Sin base anterior: no se calcula variación porcentual." : `${current > 0 ? "+" : ""}${current.toFixed(1)}% frente al período anterior`}
+      <span className="mt-1 block font-normal text-muted-foreground">Período anterior: {previousValue}</span>
     </p>}
   </div>;
 }
