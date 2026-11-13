@@ -8,7 +8,7 @@ select has_column('public', 'businesses', 'industry_config_version', 'businesses
 select has_column('public', 'businesses', 'industry_profile_updated_at', 'businesses has explicit profile update timestamp');
 
 select col_type_is('public', 'businesses', 'industry_profile', 'text', 'profile is stored as a text slug');
-select col_type_is('public', 'businesses', 'industry_secondary_profiles', '_text', 'secondary profiles are stored as text array');
+select col_type_is('public', 'businesses', 'industry_secondary_profiles', 'text[]', 'secondary profiles are stored as text array');
 select col_type_is('public', 'businesses', 'industry_config', 'jsonb', 'configuration is JSONB');
 select col_type_is('public', 'businesses', 'industry_config_version', 'integer', 'configuration version is integer');
 select col_not_null('public', 'businesses', 'industry_secondary_profiles', 'secondary profile list has safe empty default');
