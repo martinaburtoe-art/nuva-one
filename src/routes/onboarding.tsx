@@ -263,6 +263,29 @@ function Onboarding() {
                       <p className="text-sm font-medium">{getIndustryProfile(industryProfile)!.pluralLabel}</p>
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{getIndustryProfile(industryProfile)!.summary}</p>
                       <p className="mt-2 text-[11px] text-primary">Nüva adaptará el contexto de tu Resumen y sus recomendaciones a este rubro.</p>
+                      <div className="mt-3 space-y-2 border-t border-primary/10 pt-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Contexto operativo opcional</p>
+                        {getIndustryProfile(industryProfile)!.operationalQuestions.map((question, index) => {
+                          const key = "operation_" + (index + 1);
+                          return (
+                            <div key={key} className="flex flex-col gap-2 rounded-lg bg-background/70 p-2.5 sm:flex-row sm:items-center sm:justify-between">
+                              <span className="text-xs leading-relaxed">{question}</span>
+                              <Select
+                                value={industryAnswers[key] ?? ""}
+                                onValueChange={(value) => setIndustryAnswers((current) => ({ ...current, [key]: value as "yes" | "no" }))}
+                              >
+                                <SelectTrigger className="h-8 w-full text-xs sm:w-32">
+                                  <SelectValue placeholder="Sin responder" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="yes">Sí</SelectItem>
+                                  <SelectItem value="no">No</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                   {industrySchemaChecked && !industrySchemaAvailable && (
