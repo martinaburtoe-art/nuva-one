@@ -553,6 +553,11 @@ function Dashboard() {
             <strong>{inventoryQuery.data?.inventoryValue === null ? "Costo incompleto" : inventoryQuery.data ? fmtCLP(inventoryQuery.data.inventoryValue) : "—"}</strong>
             <p>{inventoryQuery.data?.inventoryValue === null ? "Completa el costo de adquisición y revisa cantidades" : `${inventoryQuery.data?.productsCount ?? "—"} productos registrados`}</p>
           </article>
+          <Link to="/quotes" className="nuva-resumen-kpi nuva-resumen-kpi-action" aria-label="Abrir cotizaciones">
+            <div className="nuva-resumen-kpi-top"><span>COTIZACIONES ABIERTAS</span><span className="nuva-resumen-kpi-icon"><FileText className="h-4 w-4" /></span></div>
+            <strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "No disponible" : integrations.pendingQuotes ?? 0}</strong>
+            <p>{quotesQuery.isError ? "Revisa la conexión de cotizaciones" : "Ver y dar seguimiento"}</p>
+          </Link>
         </section>
 
         <section className="nuva-resumen-panel" aria-label="Análisis comparativo y señales del negocio" style={{ marginBottom: 20 }}>
