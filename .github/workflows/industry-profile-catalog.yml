@@ -38,6 +38,8 @@ jobs:
         run: npx vitest run src/lib/industry-capability-readiness.test.ts
       - name: Test adaptive onboarding plans
         run: npx vitest run src/lib/industry-onboarding.test.ts
+      - name: Test tenant industry configuration contract
+        run: npx vitest run src/lib/industry-configuration.test.ts
       - name: Typecheck application
         run: npm run typecheck
       - name: Build production bundle
