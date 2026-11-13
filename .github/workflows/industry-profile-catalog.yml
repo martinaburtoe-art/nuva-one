@@ -40,6 +40,8 @@ jobs:
         run: npx vitest run src/lib/industry-capability-readiness.test.ts
       - name: Test adaptive onboarding plans
         run: npx vitest run src/lib/industry-onboarding.test.ts
+      - name: Test explicit sector onboarding answers
+        run: npx vitest run src/lib/industry-profile-answers.test.ts
       - name: Test tenant industry configuration contract
         run: |
           if [ -f src/lib/industry-configuration.test.ts ]; then
