@@ -26,7 +26,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_intents_provider_commerce_order
 
 ALTER TABLE public.payments
   ADD COLUMN IF NOT EXISTS payment_intent_id uuid
-  REFERENCES public.payment_intents(id) ON DELETE SET NULL;
+  REFERENCES public.payment_intents(id) ON DELETE RESTRICT;
 
 DO $$
 BEGIN
