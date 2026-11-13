@@ -1,17 +1,13 @@
 import { getPaymentAdapter, decryptPaymentCreds } from "./payment-service.server";
 
-// Subconjunto del cliente de Supabase que esta función necesita -- permite
-// inyectar un mock en tests sin depender del cliente real.
 export type SupabaseLike = {
   from: (table: string) => any;
 };
 
 /**
- * Procesa una notificación de pago (Flow/VSB) de forma idempotente y
- * segura: SIEMPRE verifica el estado real contra el proveedor
- * (server-to-server) antes de aplicar un abono, nunca confía en el POST
- * recibido por sí solo. Puede llamarse repetidas veces con el mismo
- * (provider, token) sin duplicar el abono.
+ * Verifica siempre el estado directamente con el proveedor. La aplicación
+ * transaccional del abono se endurecerá en la siguiente migración atómica;
+ * aquí cerramos primero la validación de identidad e importe del cobro.
  */
 export async function handlePaymentWebhook(
   supabaseAdmin: SupabaseLike,
@@ -25,25 +21,27 @@ export async function handlePaymentWebhook(
     .eq("token", token)
     .maybeSingle();
 
-  if (existingEvent?.processed) {
-    return { outcome: "already_processed" };
-  }
+  if (existingEvent?.processed) return { outcome: "already_processed" };
 
   if (!existingEvent) {
-    await supabaseAdmin.from("payment_webhook_events").insert({
+    const { error } = await supabaseAdmin.from("payment_webhook_events").insert({
       provider,
       token,
       received_at: new Date().toISOString(),
     });
+    // Una colisión por notificaciones simultáneas es esperable por el índice
+    // único. Otros errores no deben ocultarse: el endpoint responderá 503.
+    if (error && !String(error.code ?? "").includes("23505")) throw error;
   }
 
-  const { data: intent } = await supabaseAdmin
+  const { data: intent, error: intentError } = await supabaseAdmin
     .from("payment_intents")
     .select("*")
     .eq("provider", provider)
     .eq("token", token)
     .maybeSingle();
 
+  if (intentError) throw intentError;
   if (!intent) return { outcome: "unknown_token" };
 
   if (intent.status === "paid") {
@@ -55,7 +53,7 @@ export async function handlePaymentWebhook(
     return { outcome: "already_paid" };
   }
 
-  const { data: integration } = await supabaseAdmin
+  const { data: integration, error: integrationError } = await supabaseAdmin
     .from("billing_integrations")
     .select("*")
     .eq("business_id", intent.business_id)
@@ -64,6 +62,7 @@ export async function handlePaymentWebhook(
     .eq("status", "connected")
     .maybeSingle();
 
+  if (integrationError) throw integrationError;
   if (!integration) return { outcome: "no_integration" };
 
   const adapter = getPaymentAdapter(provider);
@@ -80,40 +79,56 @@ export async function handlePaymentWebhook(
     token,
   );
 
+  if (!statusResult.ok) return { outcome: "provider_unavailable" };
+
   if (statusResult.status === "paid") {
+    // Un token válido no basta: el importe y la referencia deben coincidir
+    // con el intento local. Se falla cerrado si el proveedor no entrega ambos.
+    const providerAmount =
+      statusResult.amount === null ? null : Math.round(Number(statusResult.amount));
+    const intentAmount = Math.round(Number(intent.amount));
+    if (
+      !statusResult.commerceOrder ||
+      statusResult.commerceOrder !== intent.commerce_order ||
+      providerAmount === null ||
+      !Number.isFinite(providerAmount) ||
+      providerAmount !== intentAmount
+    ) {
+      return { outcome: "provider_mismatch" };
+    }
+
     if (intent.sale_id) {
-      await supabaseAdmin.from("payments").insert({
+      const { error: paymentError } = await supabaseAdmin.from("payments").insert({
         business_id: intent.business_id,
         sale_id: intent.sale_id,
         amount: intent.amount,
         method: provider,
       });
+      if (paymentError) throw paymentError;
     }
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from("payment_intents")
       .update({ status: "paid", resolved_at: new Date().toISOString() })
       .eq("provider", provider)
       .eq("token", token);
+    if (updateError) throw updateError;
   } else if (statusResult.status === "rejected") {
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from("payment_intents")
       .update({ status: "rejected", resolved_at: new Date().toISOString() })
       .eq("provider", provider)
       .eq("token", token);
+    if (updateError) throw updateError;
   } else {
-    // "pending"/"unknown": el estado todavía no es definitivo. A propósito
-    // NO marcamos processed=true acá -- si Flow reintenta la notificación
-    // más tarde (o si el pago se confirma después), este mismo token debe
-    // poder volver a verificarse contra el proveedor en vez de quedar
-    // congelado como "ya procesado" sin haberse resuelto nunca.
     return { outcome: `resolved_${statusResult.status}` };
   }
 
-  await supabaseAdmin
+  const { error: eventError } = await supabaseAdmin
     .from("payment_webhook_events")
     .update({ processed: true })
     .eq("provider", provider)
     .eq("token", token);
+  if (eventError) throw eventError;
 
   return { outcome: `resolved_${statusResult.status}` };
 }
