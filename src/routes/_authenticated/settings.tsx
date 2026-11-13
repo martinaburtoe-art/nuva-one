@@ -135,6 +135,7 @@ function Settings() {
 function IndustryProfileSettingsCard({ canManage }: { canManage: boolean }) {
   const { active } = useActiveBusiness();
   const [profileId, setProfileId] = useState("");
+  const [originalProfileId, setOriginalProfileId] = useState("");
   const [schemaReady, setSchemaReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -159,7 +160,9 @@ function IndustryProfileSettingsCard({ canManage }: { canManage: boolean }) {
         setSchemaReady(false);
       } else {
         setSchemaReady(true);
-        setProfileId(typeof data?.industry_profile === "string" ? data.industry_profile : "");
+        const loadedProfileId = typeof data?.industry_profile === "string" ? data.industry_profile : "";
+        setProfileId(loadedProfileId);
+        setOriginalProfileId(loadedProfileId);
         setStoredConfig(data?.industry_config && typeof data.industry_config === "object" && !Array.isArray(data.industry_config) ? data.industry_config : {});
         setStoredSecondary(Array.isArray(data?.industry_secondary_profiles) ? data.industry_secondary_profiles.filter((value: unknown): value is string => typeof value === "string") : []);
       }
@@ -174,7 +177,7 @@ function IndustryProfileSettingsCard({ canManage }: { canManage: boolean }) {
     const profile = profileId ? getIndustryProfile(profileId) : null;
     if (profileId && !profile) { toast.error("El perfil seleccionado no es válido."); return; }
     const nextSecondary = storedSecondary.filter((id) => id !== profileId);
-    const nextConfig = profileId === (active as any).industry_profile
+    const nextConfig = profileId === originalProfileId
       ? storedConfig
       : { ...storedConfig, schemaVersion: 1, answers: {} };
     setSaving(true);
