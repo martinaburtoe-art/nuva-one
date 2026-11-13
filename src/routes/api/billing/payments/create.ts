@@ -169,8 +169,19 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           }
 
           if (savedIntent?.payment_url) {
-            if (existing.status !== "created" || existing.payment_intent_id !== savedIntent.id) {
-              await admin
+            if (existing.status === "closed") {
+              return json(
+                {
+                  error: "La solicitud anterior está cerrada y no se reactivará automáticamente.",
+                  code: "PAYMENT_RECOVERY_REQUIRED",
+                  commerce_order: existing.commerce_order,
+                },
+                409,
+              );
+            }
+
+            if (existing.status === "creating") {
+              const claimRefresh = await admin
                 .from("payment_creation_requests")
                 .update({
                   status: "created",
@@ -178,8 +189,47 @@ export const Route = createFileRoute("/api/billing/payments/create")({
                   updated_at: new Date().toISOString(),
                   last_error: null,
                 })
-                .eq("id", existing.id);
+                .eq("id", existing.id)
+                .eq("status", "creating")
+                .select("id")
+                .maybeSingle();
+
+              if (claimRefresh.error) throw claimRefresh.error;
+              if (!claimRefresh.data) {
+                const latestClaim = await admin
+                  .from("payment_creation_requests")
+                  .select("status")
+                  .eq("id", existing.id)
+                  .maybeSingle();
+                if (latestClaim.error) throw latestClaim.error;
+                if (
+                  latestClaim.data?.status === "recovery_required" ||
+                  latestClaim.data?.status === "closed"
+                ) {
+                  return json(
+                    {
+                      error: "La solicitud cambió a un estado protegido y no se reactivará.",
+                      code: "PAYMENT_RECOVERY_REQUIRED",
+                      commerce_order: existing.commerce_order,
+                    },
+                    409,
+                  );
+                }
+              }
+            } else if (
+              existing.status === "created" &&
+              existing.payment_intent_id !== savedIntent.id
+            ) {
+              return json(
+                {
+                  error: "La referencia del intento no coincide con la solicitud registrada.",
+                  code: "PAYMENT_RECOVERY_REQUIRED",
+                  commerce_order: existing.commerce_order,
+                },
+                409,
+              );
             }
+
             return json({
               ok: true,
               payment_url: savedIntent.payment_url,
