@@ -55,6 +55,17 @@ const actionLabel: Record<string, string> = {
   note: "Nota de conciliación",
 };
 
+function auditEvidenceLabel(evidence: Record<string, unknown>) {
+  const parts: string[] = [];
+  if (typeof evidence.source === "string") parts.push(`Origen: ${evidence.source}`);
+  if (typeof evidence.provider_status === "string") parts.push(`Estado proveedor: ${evidence.provider_status}`);
+  if (typeof evidence.outcome === "string") parts.push(`Resultado: ${evidence.outcome}`);
+  if (typeof evidence.provider_amount === "number" || typeof evidence.provider_amount === "string") parts.push(`Importe proveedor: ${money(Number(evidence.provider_amount))}`);
+  if (typeof evidence.provider_commerce_order === "string") parts.push(`Orden proveedor: ${evidence.provider_commerce_order}`);
+  if (evidence.verified === false) parts.push("No verificado");
+  return parts.join(" · ");
+}
+
 function PaymentRecoveryPage() {
   const [requests, setRequests] = useState<RecoveryRequest[]>([]);
   const [audit, setAudit] = useState<RecoveryAudit[]>([]);
@@ -255,7 +266,11 @@ function PaymentRecoveryPage() {
                       <ol className="space-y-3">
                         {history.map((item) => (
                           <li key={item.id} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between">
-                            <div><p className="font-medium">{actionLabel[item.action] ?? item.action}</p><p className="text-xs text-slate-500">{item.note}</p></div>
+                            <div>
+                              <p className="font-medium">{actionLabel[item.action] ?? item.action}</p>
+                              <p className="text-xs text-slate-500">{item.note}</p>
+                              {auditEvidenceLabel(item.evidence) && <p className="mt-1 break-words text-[11px] text-slate-400">{auditEvidenceLabel(item.evidence)}</p>}
+                            </div>
                             <time className="shrink-0 text-xs text-slate-500">{date(item.created_at)}</time>
                           </li>
                         ))}
