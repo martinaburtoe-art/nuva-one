@@ -28,7 +28,8 @@ export function PwaLifecycle() {
   const [updateReady, setUpdateReady] = useState(false);
   const [updateApplying, setUpdateApplying] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [installDismissed, setInstallDismissed] = useState(false);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
 
   useEffect(() => {
     setIsInstalled(isStandalone());
@@ -39,7 +40,7 @@ export function PwaLifecycle() {
     const onInstalled = () => {
       setIsInstalled(true);
       setInstallPrompt(null);
-      setDismissed(true);
+      setInstallDismissed(true);
       toast.success("Nüva One quedó instalada en tu dispositivo.");
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -53,12 +54,16 @@ export function PwaLifecycle() {
         .then((reg) => {
           if (disposed) return;
           registration = reg;
-          if (reg.waiting) setUpdateReady(true);
+          if (reg.waiting) {
+            setUpdateReady(true);
+            setUpdateDismissed(false);
+          }
           reg.addEventListener("updatefound", () => {
             const installing = reg.installing;
             installing?.addEventListener("statechange", () => {
               if (installing.state === "installed" && navigator.serviceWorker.controller) {
                 setUpdateReady(true);
+                setUpdateDismissed(false);
               }
             });
           });
@@ -97,7 +102,7 @@ export function PwaLifecycle() {
       const choice = await installPrompt.userChoice;
       if (choice.outcome === "accepted") {
         setIsInstalled(true);
-        setDismissed(true);
+        setInstallDismissed(true);
       }
       setInstallPrompt(null);
     } catch {
@@ -130,7 +135,9 @@ export function PwaLifecycle() {
   }
 
   const canInstall = !isInstalled && (Boolean(installPrompt) || isIos() || isAndroid());
-  if ((!canInstall && !updateReady) || dismissed) return null;
+  const showInstall = canInstall && !installDismissed;
+  const showUpdate = updateReady && !updateDismissed;
+  if (!showInstall && !showUpdate) return null;
 
   return (
     <aside
@@ -159,7 +166,12 @@ export function PwaLifecycle() {
       ) : canInstall ? (
         <button type="button" onClick={() => void install()} className="min-h-10 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800">Instalar</button>
       ) : null}
-      <button type="button" aria-label="Cerrar aviso" onClick={() => setDismissed(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+      <button
+        type="button"
+        aria-label="Cerrar aviso"
+        onClick={() => updateReady ? setUpdateDismissed(true) : setInstallDismissed(true)}
+        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+      >
         <X className="h-4 w-4" />
       </button>
     </aside>
