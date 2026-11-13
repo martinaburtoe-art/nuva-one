@@ -96,6 +96,8 @@ function AiPage() {
   const [token, setToken] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [completionAnnouncement, setCompletionAnnouncement] = useState("");
   const [specialist, setSpecialist] = useState<Specialist>("orchestrator");
   const { active } = useActiveBusiness();
   const tokenRef = useRef<string | null>(null);
@@ -128,6 +130,7 @@ function AiPage() {
       },
       prepareSendMessagesRequest: ({ messages }) => ({ body: { messages, specialist } }),
     }),
+    onFinish: () => setCompletionAnnouncement("Respuesta recibida."),
     onError: (err) => {
       let msg = err.message || "Error al conectar con Nüva Agent. Intenta nuevamente.";
       try {
@@ -136,11 +139,18 @@ function AiPage() {
       } catch {
         /* plain message */
       }
+      setRequestError(msg);
       if (/límite.*(diari|starter)/i.test(msg)) setLimitReached(true);
       else toast.error(msg);
     },
   });
   const loading = status === "submitted" || status === "streaming";
+  const requestStatusLabel = status === "submitted"
+    ? "Preparando el análisis..."
+    : status === "streaming"
+      ? "Nüva Agent está generando la respuesta..."
+      : "";
+
 
   const suggestions: Record<Specialist, string[]> = {
     orchestrator: [
@@ -201,6 +211,8 @@ function AiPage() {
       return;
     }
     setLimitReached(false);
+    setRequestError(null);
+    setCompletionAnnouncement("");
     await sendMessage({ text: input });
     setInput("");
   }
@@ -282,7 +294,7 @@ function AiPage() {
                 </p>
               </div>
             </div>
-            <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
+            <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6" aria-busy={loading}>
               {messages.length === 0 && (
                 <div className="mx-auto max-w-3xl pt-6 md:pt-10">
                   <div className="text-center">
@@ -331,8 +343,16 @@ function AiPage() {
                 </div>
               ))}
               {loading && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Nüva Agent está analizando...
+                <div role="status" aria-live="polite" className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> {requestStatusLabel}
+                </div>
+              )}
+              {completionAnnouncement && !loading && (
+                <p role="status" aria-live="polite" className="text-xs text-muted-foreground">{completionAnnouncement}</p>
+              )}
+              {requestError && (
+                <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {requestError}
                 </div>
               )}
             </div>
