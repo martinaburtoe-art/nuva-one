@@ -59,7 +59,7 @@ SELECT throws_ok(
     '00000000-0000-0000-0000-0000000000a1',
     'note',
     'Do not store credentials',
-    '{"api_key":"must-not-persist"}'::jsonb,
+    '{"metadata":{"api_key":"must-not-persist"}}'::jsonb,
     NULL
   ) $$,
   '22023',
