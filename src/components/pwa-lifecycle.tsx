@@ -145,7 +145,7 @@ export function PwaLifecycle() {
       role="status"
       aria-live="polite"
       aria-atomic="true"
-      className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-[120] mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_12px_40px_rgba(20,25,60,.16)] backdrop-blur-xl"
+      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom)+12px)] z-[120] mx-auto flex max-w-xl lg:bottom-3 flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_12px_40px_rgba(20,25,60,.16)] backdrop-blur-xl"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-800">
