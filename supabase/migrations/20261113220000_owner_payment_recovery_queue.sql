@@ -66,10 +66,11 @@ BEGIN
     RAISE EXCEPTION 'sensitive provider material cannot be stored as evidence' USING ERRCODE = '22023';
   END IF;
 
+  -- Lock order is payment intent -> recovery request, matching the webhook
+  -- settlement path and preventing request/intent lock inversion deadlocks.
   SELECT r.* INTO v_request
     FROM public.payment_creation_requests r
-   WHERE r.id = p_request_id
-   FOR UPDATE;
+   WHERE r.id = p_request_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'recovery request not found' USING ERRCODE = 'P0002';
   END IF;
@@ -84,12 +85,28 @@ BEGIN
     SELECT i.* INTO v_intent
       FROM public.payment_intents i
      WHERE i.id = p_payment_intent_id
-       AND i.business_id = v_request.business_id
-       AND i.provider = v_request.provider
-       AND i.commerce_order = v_request.commerce_order
-       AND i.amount = v_request.amount
      FOR UPDATE;
     IF NOT FOUND THEN
+      RAISE EXCEPTION 'payment intent does not exist' USING ERRCODE = 'P0002';
+    END IF;
+  END IF;
+
+  SELECT r.* INTO v_request
+    FROM public.payment_creation_requests r
+   WHERE r.id = p_request_id
+   FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'recovery request not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF v_request.status <> 'recovery_required' THEN
+    RAISE EXCEPTION 'request is not awaiting recovery' USING ERRCODE = '55000';
+  END IF;
+
+  IF p_action = 'link_intent' THEN
+    IF v_intent.business_id <> v_request.business_id
+       OR v_intent.provider <> v_request.provider
+       OR v_intent.commerce_order <> v_request.commerce_order
+       OR v_intent.amount <> v_request.amount THEN
       RAISE EXCEPTION 'payment intent does not match the recovery request' USING ERRCODE = '23514';
     END IF;
     IF v_request.payment_intent_id IS NOT NULL
@@ -141,6 +158,7 @@ SECURITY DEFINER
 SET search_path = pg_catalog, public, auth
 AS $function$
 DECLARE
+  v_request_snapshot public.payment_creation_requests%ROWTYPE;
   v_request public.payment_creation_requests%ROWTYPE;
   v_intent public.payment_intents%ROWTYPE;
   v_sale public.sales%ROWTYPE;
@@ -159,6 +177,47 @@ BEGIN
     RAISE EXCEPTION 'unsupported provider status' USING ERRCODE = '22023';
   END IF;
 
+  -- Snapshot without a lock, then lock in the same order as settle_payment_intent:
+  -- payment intent -> sale (for paid results) -> recovery request.
+  SELECT r.* INTO v_request_snapshot
+    FROM public.payment_creation_requests r
+   WHERE r.id = p_request_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'recovery request not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF v_request_snapshot.status <> 'recovery_required' THEN
+    RETURN jsonb_build_object('outcome', 'request_not_recoverable', 'status', v_request_snapshot.status);
+  END IF;
+
+  SELECT i.* INTO v_intent
+    FROM public.payment_intents i
+   WHERE i.id = v_request_snapshot.payment_intent_id
+      OR (
+        v_request_snapshot.payment_intent_id IS NULL
+        AND i.business_id = v_request_snapshot.business_id
+        AND i.provider = v_request_snapshot.provider
+        AND i.commerce_order = v_request_snapshot.commerce_order
+      )
+   ORDER BY (i.id = v_request_snapshot.payment_intent_id) DESC
+   LIMIT 1
+   FOR UPDATE;
+
+  IF FOUND
+     AND v_intent.business_id = v_request_snapshot.business_id
+     AND v_intent.provider = v_request_snapshot.provider
+     AND v_intent.commerce_order = v_request_snapshot.commerce_order
+     AND v_intent.amount = v_request_snapshot.amount
+     AND p_provider_status = 'paid'
+     AND p_provider_amount = v_request_snapshot.amount
+     AND p_provider_commerce_order = v_request_snapshot.commerce_order
+     AND v_request_snapshot.sale_id IS NOT NULL THEN
+    SELECT s.* INTO v_sale
+      FROM public.sales s
+     WHERE s.id = v_request_snapshot.sale_id
+       AND s.business_id = v_request_snapshot.business_id
+     FOR UPDATE;
+  END IF;
+
   SELECT r.* INTO v_request
     FROM public.payment_creation_requests r
    WHERE r.id = p_request_id
@@ -170,20 +229,13 @@ BEGIN
     RETURN jsonb_build_object('outcome', 'request_not_recoverable', 'status', v_request.status);
   END IF;
 
-  SELECT i.* INTO v_intent
-    FROM public.payment_intents i
-   WHERE i.id = v_request.payment_intent_id
-      OR (
-        v_request.payment_intent_id IS NULL
-        AND i.business_id = v_request.business_id
-        AND i.provider = v_request.provider
-        AND i.commerce_order = v_request.commerce_order
-      )
-   ORDER BY (i.id = v_request.payment_intent_id) DESC
-   LIMIT 1
-   FOR UPDATE;
-
-  IF NOT FOUND
+  IF v_request.business_id IS DISTINCT FROM v_request_snapshot.business_id
+     OR v_request.sale_id IS DISTINCT FROM v_request_snapshot.sale_id
+     OR v_request.provider IS DISTINCT FROM v_request_snapshot.provider
+     OR v_request.commerce_order IS DISTINCT FROM v_request_snapshot.commerce_order
+     OR v_request.amount IS DISTINCT FROM v_request_snapshot.amount THEN
+    v_outcome := 'request_changed_during_verification';
+  ELSIF v_intent.id IS NULL
      OR v_intent.business_id <> v_request.business_id
      OR v_intent.provider <> v_request.provider
      OR v_intent.commerce_order <> v_request.commerce_order
@@ -234,12 +286,7 @@ BEGIN
        WHERE id = v_request.id;
       v_outcome := 'already_settled';
     ELSIF v_request.sale_id IS NOT NULL THEN
-      SELECT s.* INTO v_sale
-        FROM public.sales s
-       WHERE s.id = v_request.sale_id
-         AND s.business_id = v_request.business_id
-       FOR UPDATE;
-      IF NOT FOUND THEN
+      IF v_sale.id IS NULL THEN
         v_outcome := 'sale_not_found';
       ELSIF v_sale.status IN ('draft','cancelled') THEN
         v_outcome := 'sale_not_collectible';
@@ -248,15 +295,9 @@ BEGIN
         IF v_remaining <= 0 OR v_request.amount > v_remaining THEN
           v_outcome := 'sale_balance_exceeded';
         ELSE
-          SELECT p.id INTO v_payment_id
-            FROM public.payments p
-           WHERE p.payment_intent_id = v_intent.id
-           LIMIT 1;
-          IF v_payment_id IS NULL THEN
-            INSERT INTO public.payments(payment_intent_id,business_id,sale_id,amount,method)
-            VALUES(v_intent.id,v_request.business_id,v_request.sale_id,v_request.amount,v_request.provider)
-            RETURNING id INTO v_payment_id;
-          END IF;
+          INSERT INTO public.payments(payment_intent_id,business_id,sale_id,amount,method)
+          VALUES(v_intent.id,v_request.business_id,v_request.sale_id,v_request.amount,v_request.provider)
+          RETURNING id INTO v_payment_id;
           UPDATE public.payment_intents
              SET status = 'paid', resolved_at = COALESCE(resolved_at,now())
            WHERE id = v_intent.id;
