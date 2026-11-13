@@ -357,6 +357,9 @@ DECLARE
   v_sale public.sales%ROWTYPE;
   v_payment_id uuid;
   v_remaining numeric(12,2);
+  v_active_request_id uuid;
+  v_active_intent_id uuid;
+  v_recovery_reason text;
 BEGIN
   IF NULLIF(trim(p_provider), '') IS NULL OR NULLIF(trim(p_token), '') IS NULL THEN
     RAISE EXCEPTION 'Proveedor y token son obligatorios' USING ERRCODE = '22023';
@@ -373,10 +376,6 @@ BEGIN
      AND e.token = p_token
    FOR UPDATE;
 
-  IF v_event.processed THEN
-    RETURN jsonb_build_object('outcome', 'already_processed');
-  END IF;
-
   SELECT i.*
     INTO v_intent
     FROM public.payment_intents i
@@ -386,6 +385,12 @@ BEGIN
 
   IF NOT FOUND THEN
     RETURN jsonb_build_object('outcome', 'unknown_token');
+  END IF;
+
+  -- Terminal intents are rechecked even after a processed rejection so a
+  -- late provider confirmation cannot be silently ignored.
+  IF v_event.processed AND v_intent.status NOT IN ('rejected', 'expired') THEN
+    RETURN jsonb_build_object('outcome', 'already_processed');
   END IF;
 
   IF v_intent.status = 'paid' THEN
@@ -401,38 +406,75 @@ BEGIN
   END IF;
 
   IF v_intent.status IN ('rejected', 'expired') THEN
-    IF p_provider_status = 'paid' THEN
+    IF p_provider_status IN ('paid', 'pending') OR p_provider_status NOT IN ('rejected', 'expired') THEN
+      v_recovery_reason := CASE
+        WHEN p_provider_status = 'paid' THEN 'late_paid_after_terminal'
+        ELSE 'terminal_provider_state_unconfirmed'
+      END;
+
+      -- Keep the original attempt for audit, but quarantine any newer active
+      -- attempt for the same sale to avoid two links remaining collectible.
       UPDATE public.payment_creation_requests
-         SET status = 'recovery_required',
-             payment_intent_id = v_intent.id,
-             last_error = 'late_paid_after_terminal',
+         SET last_error = v_recovery_reason,
              updated_at = now()
        WHERE provider = v_intent.provider
          AND commerce_order = v_intent.commerce_order;
-      UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
-      RETURN jsonb_build_object('outcome', 'late_paid_after_terminal', 'intent_id', v_intent.id);
-    END IF;
 
-    IF p_provider_status IN ('rejected', 'expired') THEN
-      UPDATE public.payment_creation_requests
-         SET status = 'closed',
-             payment_intent_id = v_intent.id,
-             updated_at = now()
-       WHERE provider = v_intent.provider
-         AND commerce_order = v_intent.commerce_order
-         AND status <> 'closed';
-      UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
-      RETURN jsonb_build_object('outcome', 'terminal_state', 'intent_id', v_intent.id);
+      v_active_request_id := NULL;
+      v_active_intent_id := NULL;
+      IF v_intent.sale_id IS NOT NULL THEN
+        SELECT r.id, r.payment_intent_id
+          INTO v_active_request_id, v_active_intent_id
+          FROM public.payment_creation_requests r
+         WHERE r.sale_id = v_intent.sale_id
+           AND r.status IN ('creating', 'created', 'recovery_required')
+         ORDER BY r.created_at DESC
+         LIMIT 1
+         FOR UPDATE;
+      END IF;
+
+      IF v_active_request_id IS NOT NULL THEN
+        UPDATE public.payment_creation_requests
+           SET status = 'recovery_required',
+               last_error = v_recovery_reason || ':' || v_intent.commerce_order,
+               updated_at = now()
+         WHERE id = v_active_request_id;
+
+        IF v_active_intent_id IS NOT NULL AND v_active_intent_id <> v_intent.id THEN
+          UPDATE public.payment_intents
+             SET status = 'expired',
+                 resolved_at = COALESCE(resolved_at, now())
+           WHERE id = v_active_intent_id
+             AND status = 'pending';
+        END IF;
+      ELSE
+        UPDATE public.payment_creation_requests
+           SET status = 'recovery_required',
+               payment_intent_id = v_intent.id,
+               last_error = v_recovery_reason,
+               updated_at = now()
+         WHERE provider = v_intent.provider
+           AND commerce_order = v_intent.commerce_order;
+      END IF;
+
+      IF p_provider_status = 'paid' THEN
+        UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
+        RETURN jsonb_build_object('outcome', 'late_paid_after_terminal', 'intent_id', v_intent.id);
+      END IF;
+
+      RETURN jsonb_build_object('outcome', 'terminal_provider_state_unconfirmed', 'intent_id', v_intent.id);
     END IF;
 
     UPDATE public.payment_creation_requests
-       SET status = 'recovery_required',
+       SET status = 'closed',
            payment_intent_id = v_intent.id,
-           last_error = 'terminal_provider_state_unconfirmed',
            updated_at = now()
      WHERE provider = v_intent.provider
-       AND commerce_order = v_intent.commerce_order;
-    RETURN jsonb_build_object('outcome', 'terminal_provider_state_unconfirmed', 'intent_id', v_intent.id);
+       AND commerce_order = v_intent.commerce_order
+       AND status <> 'closed'
+       AND COALESCE(last_error, '') NOT LIKE 'late_paid_after_terminal%';
+    UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
+    RETURN jsonb_build_object('outcome', 'terminal_state', 'intent_id', v_intent.id);
   END IF;
 
   IF p_provider_status = 'pending' THEN
