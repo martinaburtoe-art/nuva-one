@@ -4,6 +4,7 @@ import {
   buildIndustryOnboardingPlan,
   getIndustryOnboardingPlans,
   isIndustryCapabilityEnabled,
+  buildIndustryOnboardingSelection,
 } from "@/lib/industry-onboarding";
 
 describe("industry onboarding plans", () => {
@@ -36,6 +37,31 @@ describe("industry onboarding plans", () => {
     expect(plan.enabledCapabilities).toEqual(["barcode", "quotes", "dispatch", "cash_register"]);
     expect(plan.plannedCapabilities).toContain("product_variants");
     expect(plan.plannedCapabilities).toContain("fractional_units");
+  });
+
+  it("combines mixed business profiles without duplicating the primary profile", () => {
+    const selection = buildIndustryOnboardingSelection(
+      "hardware_store",
+      ["neighborhood_grocery", "wholesale_distribution", "hardware_store"],
+    );
+    expect(selection.primary.profile.id).toBe("hardware_store");
+    expect(selection.secondary.map((plan) => plan.profile.id)).toEqual([
+      "neighborhood_grocery",
+      "wholesale_distribution",
+    ]);
+    expect(selection.suggestedUnits).toContain("pallet");
+    expect(selection.enabledCapabilities).toEqual(expect.arrayContaining(["barcode", "quotes", "cash_register"]));
+    expect(selection.maxSecondaryProfiles).toBe(3);
+    expect(selection.unknownSecondaryProfileIds).toEqual([]);
+  });
+
+  it("reports unknown and excess secondary profiles for explicit validation", () => {
+    const selection = buildIndustryOnboardingSelection(
+      "professional_services",
+      ["hardware_store", "neighborhood_grocery", "restaurant_cafe", "auto_repair_parts", "unknown"],
+    );
+    expect(selection.secondary).toHaveLength(3);
+    expect(selection.unknownSecondaryProfileIds).toEqual(["auto_repair_parts", "unknown"]);
   });
 
   it("never treats planned sector capabilities as enabled", () => {
