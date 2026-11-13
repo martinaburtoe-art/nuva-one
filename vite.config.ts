@@ -4,6 +4,9 @@
 //     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+import { readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 const homepageShowcasePlugin = {
@@ -24,6 +27,31 @@ const homepageShowcasePlugin = {
   },
 };
 
+
+const pwaReleaseStampPlugin = {
+  name: "nuva-pwa-release-stamp",
+  apply: "build" as const,
+  async writeBundle(outputOptions: { dir?: string }) {
+    const outputDir = outputOptions.dir ?? "dist";
+    const serviceWorkerPath = resolve(outputDir, "sw.js");
+    const source = await readFile(serviceWorkerPath, "utf8");
+    const revision =
+      process.env.VERCEL_GIT_COMMIT_SHA ||
+      process.env.GITHUB_SHA ||
+      process.env.SOURCE_VERSION ||
+      new Date().toISOString();
+    const withoutPreviousStamp = source.replace(
+      /\\n?\\/\\/ Nüva One build revision: .*\\n?$/,
+      "",
+    );
+    await writeFile(
+      serviceWorkerPath,
+      `${withoutPreviousStamp}\\n// Nüva One build revision: ${revision}\\n`,
+      "utf8",
+    );
+  },
+};
+
 export default defineConfig({
   tanstackStart: {
     // Keep the SSR server entry and enable route-component code splitting.
@@ -37,6 +65,6 @@ export default defineConfig({
   // standard Vercel Build Output API v3 bundle.
   nitro: { preset: "vercel" },
   vite: {
-    plugins: [homepageShowcasePlugin],
+    plugins: [homepageShowcasePlugin, pwaReleaseStampPlugin],
   },
 });
