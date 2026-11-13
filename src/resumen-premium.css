@@ -2029,3 +2029,14 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+
+.nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-action {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-action:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--color-primary) 65%, transparent);
+  outline-offset: 3px;
+}
