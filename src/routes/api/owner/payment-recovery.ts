@@ -19,6 +19,18 @@ function safeError(error: unknown) {
   return error instanceof Error ? error.message : "PAYMENT_RECOVERY_FAILED";
 }
 
+async function recordRecoveryNote(db: ReturnType<typeof adminClient>, requestId: string, actorId: string, note: string, evidence: Record<string, unknown>) {
+  const { error } = await db.rpc("owner_record_payment_recovery_action", {
+    p_request_id: requestId,
+    p_actor_user_id: actorId,
+    p_action: "note",
+    p_note: note,
+    p_evidence: evidence,
+    p_payment_intent_id: null,
+  });
+  if (error) throw error;
+}
+
 export const Route = createFileRoute("/api/owner/payment-recovery")({
   server: {
     handlers: {
@@ -125,7 +137,10 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
           }
 
           if (action === "link_intent") {
-            if (!intent) return Response.json({ error: "No existe un intento que coincida con el negocio, proveedor y orden." }, { status: 404 });
+            if (!intent) {
+              await recordRecoveryNote(db, requestId, auth.userId, "No se encontró un intento coincidente para vincular.", { source: "server_database_lookup", outcome: "intent_not_found", verified: false });
+              return Response.json({ error: "No existe un intento que coincida con el negocio, proveedor y orden." }, { status: 404 });
+            }
             const { data, error } = await db.rpc("owner_record_payment_recovery_action", {
               p_request_id: requestId,
               p_actor_user_id: auth.userId,
@@ -159,16 +174,23 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
           }
 
           // VSB remains fail-closed until its official reconciliation contract is approved.
-          if (recovery.provider === "vsb") return Response.json({ error: "La conciliación VSB permanece deshabilitada hasta validar el contrato oficial del proveedor." }, { status: 409 });
+          if (recovery.provider === "vsb") {
+            await recordRecoveryNote(db, requestId, auth.userId, "La conciliación VSB está bloqueada hasta validar su contrato oficial.", { source: "provider_policy", provider: "vsb", outcome: "provider_disabled", verified: false });
+            return Response.json({ error: "La conciliación VSB permanece deshabilitada hasta validar el contrato oficial del proveedor." }, { status: 409 });
+          }
 
           // Provider lookup and all credential decryption remain server-side.
-          if (!intent) return Response.json({ error: "No hay un intento de pago asociado. Vincúlalo primero para verificar la pasarela." }, { status: 409 });
+          if (!intent) {
+            await recordRecoveryNote(db, requestId, auth.userId, "No existe un intento asociado para consultar la pasarela.", { source: "server_database_lookup", outcome: "intent_not_found", verified: false });
+            return Response.json({ error: "No hay un intento de pago asociado. Vincúlalo primero para verificar la pasarela." }, { status: 409 });
+          }
           if (
             intent.business_id !== recovery.business_id ||
             intent.provider !== recovery.provider ||
             intent.commerce_order !== recovery.commerce_order ||
             Number(intent.amount) !== Number(recovery.amount)
           ) {
+            await recordRecoveryNote(db, requestId, auth.userId, "El intento encontrado no coincide con los datos originales; se mantiene en cuarentena.", { source: "server_database_lookup", outcome: "intent_mismatch", verified: false });
             return Response.json({ error: "El intento no coincide con los datos originales; permanece en cuarentena." }, { status: 409 });
           }
 
@@ -180,19 +202,34 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
             .eq("status", "connected")
             .maybeSingle();
           if (integrationResult.error) throw integrationResult.error;
-          if (!integrationResult.data) return Response.json({ error: "No existe una integración activa para verificar el pago." }, { status: 409 });
+          if (!integrationResult.data) {
+            await recordRecoveryNote(db, requestId, auth.userId, "No existe una integración activa para consultar la pasarela.", { source: "integration_lookup", outcome: "integration_unavailable", verified: false });
+            return Response.json({ error: "No existe una integración activa para verificar el pago." }, { status: 409 });
+          }
 
           const adapter = getPaymentAdapter(recovery.provider);
-          if (!adapter) return Response.json({ error: "Proveedor no compatible con la conciliación." }, { status: 409 });
+          if (!adapter) {
+            await recordRecoveryNote(db, requestId, auth.userId, "El proveedor no tiene un adaptador habilitado para conciliación.", { source: "provider_policy", provider: recovery.provider, outcome: "adapter_unavailable", verified: false });
+            return Response.json({ error: "Proveedor no compatible con la conciliación." }, { status: 409 });
+          }
           const { apiKey, secretKey } = decryptPaymentCreds(integrationResult.data);
-          const providerResult = await adapter.checkStatus({
-            apiKey,
-            secretKey,
-            apiUrl: integrationResult.data.api_url || "",
-            environment: integrationResult.data.environment,
-          }, intent.token);
+          let providerResult;
+          try {
+            providerResult = await adapter.checkStatus({
+              apiKey,
+              secretKey,
+              apiUrl: integrationResult.data.api_url || "",
+              environment: integrationResult.data.environment,
+            }, intent.token);
+          } catch {
+            await recordRecoveryNote(db, requestId, auth.userId, "La consulta server-to-server a la pasarela falló; el cobro permanece en cuarentena.", { source: "provider_api", provider: recovery.provider, outcome: "provider_unavailable", verified: false });
+            return Response.json({ error: "La pasarela no pudo verificar el estado. La solicitud sigue en cuarentena." }, { status: 503 });
+          }
 
-          if (!providerResult.ok) return Response.json({ error: "La pasarela no pudo verificar el estado. La solicitud sigue en cuarentena." }, { status: 503 });
+          if (!providerResult.ok) {
+            await recordRecoveryNote(db, requestId, auth.userId, "La pasarela no confirmó el estado del cobro; el caso permanece en cuarentena.", { source: "provider_api", provider: recovery.provider, outcome: "provider_unavailable", verified: false });
+            return Response.json({ error: "La pasarela no pudo verificar el estado. La solicitud sigue en cuarentena." }, { status: 503 });
+          }
           if (!["paid", "pending", "rejected"].includes(providerResult.status)) {
             const { error: auditError } = await db.rpc("owner_record_payment_recovery_action", {
               p_request_id: requestId,
