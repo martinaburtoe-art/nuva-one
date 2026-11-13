@@ -102,6 +102,10 @@ export function startMockFlowServer(port: number) {
       const p = payments.get(token);
       if (p) p.status = 3;
     },
+    setPaymentDetails: (token: string, details: Partial<{ commerceOrder: string; amount: number }>) => {
+      const p = payments.get(token);
+      if (p) Object.assign(p, details);
+    },
     API_KEY,
     SECRET,
   };
