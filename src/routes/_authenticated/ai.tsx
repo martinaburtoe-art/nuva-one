@@ -96,6 +96,9 @@ function AiPage() {
   const [token, setToken] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [completionAnnouncement, setCompletionAnnouncement] = useState("");
+  const wasLoadingRef = useRef(false);
   const [specialist, setSpecialist] = useState<Specialist>("orchestrator");
   const { active } = useActiveBusiness();
   const tokenRef = useRef<string | null>(null);
@@ -136,16 +139,29 @@ function AiPage() {
       } catch {
         /* plain message */
       }
+      setRequestError(msg);
       if (/límite.*(diari|starter)/i.test(msg)) setLimitReached(true);
       else toast.error(msg);
     },
   });
   const loading = status === "submitted" || status === "streaming";
   const requestStatusLabel = status === "submitted"
-    ? "Preparando el análisis..." 
+    ? "Preparando el análisis..."
     : status === "streaming"
-      ? "Nüva Agent está generando la respuesta..." 
+      ? "Nüva Agent está generando la respuesta..."
       : "";
+
+  useEffect(() => {
+    if (loading) {
+      wasLoadingRef.current = true;
+      setCompletionAnnouncement("");
+    } else if (wasLoadingRef.current && status === "ready") {
+      wasLoadingRef.current = false;
+      setCompletionAnnouncement("Respuesta recibida.");
+    } else if (status === "error") {
+      wasLoadingRef.current = false;
+    }
+  }, [loading, status]);
 
   const suggestions: Record<Specialist, string[]> = {
     orchestrator: [
@@ -206,6 +222,8 @@ function AiPage() {
       return;
     }
     setLimitReached(false);
+    setRequestError(null);
+    setCompletionAnnouncement("");
     await sendMessage({ text: input });
     setInput("");
   }
@@ -338,6 +356,14 @@ function AiPage() {
               {loading && (
                 <div role="status" aria-live="polite" className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> {requestStatusLabel}
+                </div>
+              )}
+              {completionAnnouncement && !loading && (
+                <p role="status" aria-live="polite" className="text-xs text-muted-foreground">{completionAnnouncement}</p>
+              )}
+              {requestError && (
+                <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {requestError}
                 </div>
               )}
             </div>
