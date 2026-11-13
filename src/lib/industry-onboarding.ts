@@ -98,16 +98,12 @@ export function buildIndustryOnboardingSelection(
   const uniqueSecondaryIds = [...new Set(secondaryProfileIds)]
     .filter((id) => id !== primary.profile.id);
   const acceptedIds = uniqueSecondaryIds.slice(0, 3);
-  const overflowIds = uniqueSecondaryIds.slice(3);
   const secondary = acceptedIds
     .map((id) => getIndustryProfile(id))
     .filter((profile): profile is IndustryProfile => Boolean(profile))
     .map((profile) => buildIndustryOnboardingPlan(profile.id));
   const acceptedSet = new Set(secondary.map((plan) => plan.profile.id));
-  const unknownSecondaryProfileIds = [
-    ...uniqueSecondaryIds.filter((id) => !acceptedSet.has(id)),
-    ...overflowIds,
-  ];
+  const unknownSecondaryProfileIds = uniqueSecondaryIds.filter((id) => !acceptedSet.has(id));
 
   const allPlans = [primary, ...secondary];
   const unique = <T,>(values: T[]) => [...new Set(values)];
