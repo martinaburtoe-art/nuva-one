@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS public.payment_creation_requests (
   subject text NOT NULL,
   status text NOT NULL DEFAULT 'creating'
     CHECK (status IN ('creating', 'created', 'recovery_required', 'closed')),
-  payment_intent_id uuid REFERENCES public.payment_intents(id) ON DELETE SET NULL,
+  payment_intent_id uuid REFERENCES public.payment_intents(id) ON DELETE RESTRICT,
   last_error text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
