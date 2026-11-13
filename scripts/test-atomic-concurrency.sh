@@ -37,6 +37,8 @@ db <<SQL
 INSERT INTO auth.users (id) VALUES ('$USER_ID') ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.businesses (id, name, owner_id, plan)
 VALUES ('$BUSINESS_ID', 'Atomic concurrency test', '$USER_ID', 'starter');
+INSERT INTO public.business_members (business_id, user_id, role)
+VALUES ('$BUSINESS_ID', '$USER_ID', 'owner');
 INSERT INTO public.products (id, business_id, name, price, stock)
 VALUES ('$PRODUCT_ID', '$BUSINESS_ID', 'Concurrency widget', 1000, 10);
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
