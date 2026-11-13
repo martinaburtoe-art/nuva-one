@@ -418,11 +418,11 @@ export function getIndustryProfilesByCore(coreIndustry: CoreIndustry): IndustryP
 }
 
 function normalizeIndustrySearch(value: string): string {
-  return value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("es-CL");
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-CL");
 }
 
 export function searchIndustryProfiles(query: string): IndustryProfile[] {
-  const tokens = normalizeIndustrySearch(query).trim().split(/\\s+/).filter(Boolean);
+  const tokens = normalizeIndustrySearch(query).trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return [...INDUSTRY_PROFILES];
   return INDUSTRY_PROFILES.filter((profile) => {
     const searchable = normalizeIndustrySearch([
