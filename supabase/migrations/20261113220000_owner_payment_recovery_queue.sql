@@ -203,7 +203,15 @@ BEGIN
    LIMIT 1
    FOR UPDATE;
 
-  IF FOUND
+  IF v_intent.id IS NOT NULL THEN
+    SELECT p.* INTO v_existing_payment
+      FROM public.payments p
+     WHERE p.payment_intent_id = v_intent.id
+     LIMIT 1;
+  END IF;
+
+  IF v_intent.id IS NOT NULL
+     AND v_existing_payment.id IS NULL
      AND v_intent.business_id = v_request_snapshot.business_id
      AND v_intent.provider = v_request_snapshot.provider
      AND v_intent.commerce_order = v_request_snapshot.commerce_order
@@ -247,6 +255,23 @@ BEGIN
      OR p_provider_commerce_order IS NULL
      OR p_provider_commerce_order IS DISTINCT FROM v_request.commerce_order THEN
     v_outcome := 'provider_mismatch';
+  ELSIF v_existing_payment.id IS NOT NULL THEN
+    v_payment_id := v_existing_payment.id;
+    IF v_existing_payment.business_id IS DISTINCT FROM v_request.business_id
+       OR v_existing_payment.sale_id IS DISTINCT FROM v_request.sale_id
+       OR v_existing_payment.amount IS DISTINCT FROM v_request.amount THEN
+      v_outcome := 'existing_payment_mismatch';
+    ELSIF p_provider_status = 'paid' THEN
+      UPDATE public.payment_intents
+         SET status = 'paid', resolved_at = COALESCE(resolved_at,now())
+       WHERE id = v_intent.id;
+      UPDATE public.payment_creation_requests
+         SET status = 'closed', payment_intent_id = v_intent.id, updated_at = now()
+       WHERE id = v_request.id;
+      v_outcome := 'already_settled';
+    ELSE
+      v_outcome := 'existing_payment_provider_conflict';
+    END IF;
   ELSIF p_provider_status = 'pending' THEN
     IF v_request.payment_intent_id IS NULL THEN
       UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
@@ -274,26 +299,7 @@ BEGIN
     IF v_request.payment_intent_id IS NULL THEN
       UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
     END IF;
-    SELECT p.* INTO v_existing_payment
-      FROM public.payments p
-     WHERE p.payment_intent_id = v_intent.id
-     LIMIT 1;
-    IF v_existing_payment.id IS NOT NULL THEN
-      v_payment_id := v_existing_payment.id;
-      IF v_existing_payment.business_id IS DISTINCT FROM v_request.business_id
-         OR v_existing_payment.sale_id IS DISTINCT FROM v_request.sale_id
-         OR v_existing_payment.amount IS DISTINCT FROM v_request.amount THEN
-        v_outcome := 'existing_payment_mismatch';
-      ELSE
-        UPDATE public.payment_intents
-           SET status = 'paid', resolved_at = COALESCE(resolved_at,now())
-         WHERE id = v_intent.id;
-        UPDATE public.payment_creation_requests
-           SET status = 'closed', payment_intent_id = v_intent.id, updated_at = now()
-         WHERE id = v_request.id;
-        v_outcome := 'already_settled';
-      END IF;
-    ELSIF v_request.sale_id IS NOT NULL THEN
+    IF v_request.sale_id IS NOT NULL THEN
       IF v_sale.id IS NULL THEN
         v_outcome := 'sale_not_found';
       ELSIF v_sale.status IN ('draft','cancelled') THEN
