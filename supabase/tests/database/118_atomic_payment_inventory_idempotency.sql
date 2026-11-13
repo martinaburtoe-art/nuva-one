@@ -214,19 +214,19 @@ VALUES (
 CREATE OR REPLACE FUNCTION public.test_fail_payment_insert()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
   RAISE EXCEPTION 'forced payment accounting failure'
     USING ERRCODE = 'P0001';
 END;
-$;
+$$;
 
 CREATE TRIGGER test_fail_payment_insert
 BEFORE INSERT ON public.payments
 FOR EACH ROW EXECUTE FUNCTION public.test_fail_payment_insert();
 
 SELECT throws_ok(
-  $ SELECT public.settle_payment_intent('flow', 'token-rollback', 'paid', 500, 'order-rollback') $,
+  $$ SELECT public.settle_payment_intent('flow', 'token-rollback', 'paid', 500, 'order-rollback') $$,
   'P0001',
   'forced payment accounting failure',
   'a payment trigger failure aborts the whole settlement transaction'
