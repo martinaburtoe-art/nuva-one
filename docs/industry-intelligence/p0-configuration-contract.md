@@ -49,3 +49,7 @@ The reviewed additive business-scoped proposal remains: industry_profile, indust
 5. Implement actual inventory and sector workflows before activating their capability flags.
 6. Add sector-specific Resumen indicators only when backed by real sources and coverage.
 7. Authenticated desktop/mobile QA; preserve POS, scanner, stock concurrency, checkout and RLS.
+
+
+## Automated validation
+The sector catalog workflow runs the configuration contract test when this file and its test are present on the pull-request merge ref, followed by application typecheck and production build.
