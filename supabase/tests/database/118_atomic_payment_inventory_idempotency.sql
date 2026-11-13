@@ -132,7 +132,7 @@ SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0
 SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e1'), 'paid', 'intent status is committed with payment');
 SELECT is((SELECT payment_intent_id FROM public.payments WHERE id = (SELECT id FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e1')), '00000000-0000-0000-0000-0000000000e1'::uuid, 'payment row preserves intent identity');
 SELECT throws_ok(
-  $ DELETE FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e1' $,
+  $$ DELETE FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e1' $$,
   '23503',
   NULL,
   'a settled payment keeps its originating intent for audit traceability'
