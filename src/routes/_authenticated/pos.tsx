@@ -318,23 +318,32 @@ function POS() {
         let idempotencyKey: string;
         const attemptStorageKey = `nuva:pos-online-attempt:${active?.id ?? "unknown"}`;
         let previousAttempt = onlinePaymentAttemptRef.current;
+        let storedAttempt: string | null = null;
 
-        if (!previousAttempt) {
+        try {
+          storedAttempt = localStorage.getItem(attemptStorageKey);
+        } catch {
+          toast.error("El navegador no permite guardar la clave segura del cobro. No se contactó a la pasarela.");
+          return;
+        }
+
+        if (!previousAttempt && storedAttempt) {
           try {
-            const stored = localStorage.getItem(attemptStorageKey);
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              if (
-                typeof parsed?.fingerprint === "string" &&
-                typeof parsed?.saleId === "string" &&
-                typeof parsed?.idempotencyKey === "string"
-              ) {
-                previousAttempt = parsed;
-                onlinePaymentAttemptRef.current = parsed;
-              }
+            const parsed = JSON.parse(storedAttempt);
+            if (
+              typeof parsed?.fingerprint === "string" &&
+              typeof parsed?.saleId === "string" &&
+              typeof parsed?.idempotencyKey === "string"
+            ) {
+              previousAttempt = parsed;
+              onlinePaymentAttemptRef.current = parsed;
+            } else {
+              toast.error("La referencia de un cobro anterior no se puede verificar. No se generará otro intento.");
+              return;
             }
           } catch {
-            // A corrupt/blocked local store must not prevent a new checkout.
+            toast.error("La referencia de un cobro anterior está dañada. No se generará otro intento.");
+            return;
           }
         }
 
@@ -375,11 +384,24 @@ function POS() {
             idempotencyKey,
           };
           onlinePaymentAttemptRef.current = attempt;
-          try {
-            localStorage.setItem(attemptStorageKey, JSON.stringify(attempt));
-          } catch {
-            // The in-memory lock still protects retries during this page life.
+        }
+
+        // Persist and verify the key before any request can reach the provider.
+        const attemptToPersist = {
+          fingerprint: cartFingerprint,
+          saleId: saved.id,
+          idempotencyKey,
+        };
+        try {
+          const serializedAttempt = JSON.stringify(attemptToPersist);
+          localStorage.setItem(attemptStorageKey, serializedAttempt);
+          if (localStorage.getItem(attemptStorageKey) !== serializedAttempt) {
+            throw new Error("idempotency key persistence could not be verified");
           }
+          onlinePaymentAttemptRef.current = attemptToPersist;
+        } catch {
+          toast.error("No se pudo guardar la clave del cobro. No se contactó a la pasarela; vuelve a intentarlo.");
+          return;
         }
 
         const { data: sessionData } = await supabase.auth.getSession();
@@ -400,7 +422,18 @@ function POS() {
           }),
         });
         const json = await res.json();
-        if (!json.ok) return toast.error(json.error ?? "No se pudo generar el link de pago");
+        if (!json.ok) {
+          if (["PAYMENT_ALREADY_SETTLED", "PAYMENT_ATTEMPT_TERMINAL"].includes(json.code)) {
+            onlinePaymentAttemptRef.current = null;
+            try {
+              localStorage.removeItem(attemptStorageKey);
+            } catch {
+              // The server has already classified the prior attempt as terminal.
+            }
+          }
+          toast.error(json.error ?? "No se pudo generar el link de pago");
+          return;
+        }
         setOnlinePayment({ url: json.payment_url, saleId: saved?.id });
         onlinePaymentAttemptRef.current = null;
         try {
