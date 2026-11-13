@@ -3,6 +3,7 @@ import { getCapabilityReadiness } from "@/lib/industry-capability-readiness";
 
 export type BusinessChannel = "counter" | "delivery" | "online" | "wholesale" | "appointment";
 export type IndustryConfigurationInput = {
+  answers?: Readonly<Record<string, boolean>>;
   channels?: readonly BusinessChannel[];
   inventory?: {
     baseUnit?: string | null;
@@ -19,6 +20,7 @@ export type IndustryConfigurationInput = {
 export type IndustryConfiguration = {
   schemaVersion: 1;
   profileId: IndustryProfileId;
+  answers: Record<string, boolean>;
   channels: BusinessChannel[];
   inventory: { baseUnit: string | null; purchaseUnits: string[]; saleUnits: string[]; trackLots: boolean; trackExpiry: boolean; allowFractionalQuantity: boolean; multipleWarehouses: boolean };
   commercial: { priceLists: boolean; volumePricing: boolean; customerCredit: boolean };
@@ -42,7 +44,7 @@ const PROFILE_UNITS: Partial<Record<IndustryProfileId, readonly string[]>> = {
   wholesale_distribution: ["un", "pack", "caja", "pallet", "kg", "g", "lt", "ml", "ton"],
 };
 const defaults = (profileId: IndustryProfileId): IndustryConfiguration => ({
-  schemaVersion: 1, profileId, channels: [],
+  schemaVersion: 1, profileId, answers: {}, channels: [],
   inventory: { baseUnit: null, purchaseUnits: [], saleUnits: [], trackLots: false, trackExpiry: false, allowFractionalQuantity: false, multipleWarehouses: false },
   commercial: { priceLists: false, volumePricing: false, customerCredit: false },
   operations: { quoteByProject: false, scheduledDispatch: false, returnsAndWarranty: false },
@@ -73,7 +75,17 @@ export function buildIndustryConfiguration(profileId: IndustryProfileId | string
   if (!PROFILE_UNITS[profile.id]) return { ok: false, errors: [{ code: "profile_not_in_p0", path: "profileId", message: "La configuración operativa detallada todavía está limitada a los tres perfiles P0." }] };
   const errors: IndustryConfigurationError[] = [];
   const root = input as unknown as Record<string, unknown>;
-  unknownKeys(root, ["channels", "inventory", "commercial", "operations"], "", errors);
+  unknownKeys(root, ["answers", "channels", "inventory", "commercial", "operations"], "", errors);
+  const rawAnswers = root.answers === undefined ? {} : root.answers;
+  if (!record(rawAnswers)) errors.push({ code: "invalid_type", path: "answers", message: "Se esperaba un objeto de respuestas." });
+  const answerRecord = record(rawAnswers) ? rawAnswers : {};
+  const allowedAnswerKeys = profile.operationalQuestions.map((_, index) => "operation_" + (index + 1));
+  unknownKeys(answerRecord, allowedAnswerKeys, "answers", errors);
+  const answers: Record<string, boolean> = {};
+  Object.entries(answerRecord).forEach(([key, value]) => {
+    if (typeof value !== "boolean") errors.push({ code: "invalid_type", path: "answers." + key, message: "La respuesta debe ser booleana." });
+    else answers[key] = value;
+  });
   let channels: BusinessChannel[] = [];
   if (root.channels !== undefined) {
     if (!Array.isArray(root.channels) || root.channels.some((x) => typeof x !== "string")) errors.push({ code: "invalid_type", path: "channels", message: "Se esperaba una lista de canales." });
@@ -113,7 +125,7 @@ export function buildIndustryConfiguration(profileId: IndustryProfileId | string
   }
   const requiresProductConversion = Boolean(baseUnit && [...purchaseUnits, ...saleUnits].some((unit) => DIMENSIONS[unit] !== DIMENSIONS[baseUnit!]));
   const configuration: IndustryConfiguration = {
-    ...defaults(profile.id), channels,
+    ...defaults(profile.id), answers, channels,
     inventory: { baseUnit, purchaseUnits, saleUnits, trackLots: bool(inv, "trackLots", "inventory", errors), trackExpiry: bool(inv, "trackExpiry", "inventory", errors), allowFractionalQuantity: bool(inv, "allowFractionalQuantity", "inventory", errors), multipleWarehouses: bool(inv, "multipleWarehouses", "inventory", errors) },
     commercial: { priceLists: bool(com, "priceLists", "commercial", errors), volumePricing: bool(com, "volumePricing", "commercial", errors), customerCredit: bool(com, "customerCredit", "commercial", errors) },
     operations: { quoteByProject: bool(ops, "quoteByProject", "operations", errors), scheduledDispatch: bool(ops, "scheduledDispatch", "operations", errors), returnsAndWarranty: bool(ops, "returnsAndWarranty", "operations", errors) },
