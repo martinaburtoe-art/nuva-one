@@ -83,6 +83,7 @@ import { Route as ForoTopicIdRouteImport } from './routes/foro/$topicId'
 import { Route as NegociosIndexRouteImport } from './routes/negocios/index'
 import { Route as NegociosSlugRouteImport } from './routes/negocios/$slug'
 import { Route as OwnerControlTowerRouteImport } from './routes/owner/control-tower'
+import { Route as OwnerPaymentRecoveryRouteImport } from './routes/owner/payment-recovery'
 import { Route as PublicCatalogSlugRouteImport } from './routes/public-catalog.$slug'
 import { Route as ApiBusinessExplainRouteImport } from './routes/api/business/explain'
 import { Route as ApiCronNuvaIntelligenceWorkerRouteImport } from './routes/api/cron/nuva-intelligence-worker'
@@ -93,6 +94,7 @@ import { Route as ApiOwnerAgencyExecuteRouteImport } from './routes/api/owner/ag
 import { Route as ApiOwnerAgencyLogsRouteImport } from './routes/api/owner/agency-logs'
 import { Route as ApiOwnerAgencyStatusRouteImport } from './routes/api/owner/agency-status'
 import { Route as ApiOwnerOperationalMetricsRouteImport } from './routes/api/owner/operational-metrics'
+import { Route as ApiOwnerPaymentRecoveryRouteImport } from './routes/api/owner/payment-recovery'
 import { Route as ApiBillingMercadopagoCreateRouteImport } from './routes/api/billing/mercadopago/create'
 import { Route as ApiBillingMercadopagoManageRouteImport } from './routes/api/billing/mercadopago/manage'
 import { Route as ApiBillingMercadopagoWebhookRouteImport } from './routes/api/billing/mercadopago/webhook'
@@ -497,6 +499,11 @@ const OwnerControlTowerRoute = OwnerControlTowerRouteImport.update({
   path: '/control-tower',
   getParentRoute: () => OwnerRoute,
 } as any)
+const OwnerPaymentRecoveryRoute = OwnerPaymentRecoveryRouteImport.update({
+  id: '/payment-recovery',
+  path: '/payment-recovery',
+  getParentRoute: () => OwnerRoute,
+} as any)
 const PublicCatalogSlugRoute = PublicCatalogSlugRouteImport.update({
   id: '/public-catalog/$slug',
   path: '/public-catalog/$slug',
@@ -550,6 +557,11 @@ const ApiOwnerOperationalMetricsRoute =
     path: '/api/owner/operational-metrics',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiOwnerPaymentRecoveryRoute = ApiOwnerPaymentRecoveryRouteImport.update({
+  id: '/api/owner/payment-recovery',
+  path: '/api/owner/payment-recovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBillingMercadopagoCreateRoute =
   ApiBillingMercadopagoCreateRouteImport.update({
     id: '/api/billing/mercadopago/create',
@@ -689,6 +701,7 @@ export interface FileRoutesByFullPath {
   '/foro/$topicId': typeof ForoTopicIdRoute
   '/negocios/$slug': typeof NegociosSlugRoute
   '/owner/control-tower': typeof OwnerControlTowerRoute
+  '/owner/payment-recovery': typeof OwnerPaymentRecoveryRoute
   '/public-catalog/$slug': typeof PublicCatalogSlugRoute
   '/foro/': typeof ForoIndexRoute
   '/negocios/': typeof NegociosIndexRoute
@@ -701,6 +714,7 @@ export interface FileRoutesByFullPath {
   '/api/owner/agency-logs': typeof ApiOwnerAgencyLogsRoute
   '/api/owner/agency-status': typeof ApiOwnerAgencyStatusRoute
   '/api/owner/operational-metrics': typeof ApiOwnerOperationalMetricsRoute
+  '/api/owner/payment-recovery': typeof ApiOwnerPaymentRecoveryRoute
   '/api/billing/mercadopago/create': typeof ApiBillingMercadopagoCreateRoute
   '/api/billing/mercadopago/manage': typeof ApiBillingMercadopagoManageRoute
   '/api/billing/mercadopago/webhook': typeof ApiBillingMercadopagoWebhookRoute
@@ -981,6 +995,7 @@ export interface FileRouteTypes {
     | '/foro/$topicId'
     | '/negocios/$slug'
     | '/owner/control-tower'
+    | '/owner/payment-recovery'
     | '/public-catalog/$slug'
     | '/foro/'
     | '/negocios/'
@@ -993,6 +1008,7 @@ export interface FileRouteTypes {
     | '/api/owner/agency-logs'
     | '/api/owner/agency-status'
     | '/api/owner/operational-metrics'
+    | '/api/owner/payment-recovery'
     | '/api/billing/mercadopago/create'
     | '/api/billing/mercadopago/manage'
     | '/api/billing/mercadopago/webhook'
@@ -1242,6 +1258,7 @@ export interface RootRouteChildren {
   ApiOwnerAgencyLogsRoute: typeof ApiOwnerAgencyLogsRoute
   ApiOwnerAgencyStatusRoute: typeof ApiOwnerAgencyStatusRoute
   ApiOwnerOperationalMetricsRoute: typeof ApiOwnerOperationalMetricsRoute
+  ApiOwnerPaymentRecoveryRoute: typeof ApiOwnerPaymentRecoveryRoute
   ApiBillingMercadopagoCreateRoute: typeof ApiBillingMercadopagoCreateRoute
   ApiBillingMercadopagoManageRoute: typeof ApiBillingMercadopagoManageRoute
   ApiBillingMercadopagoWebhookRoute: typeof ApiBillingMercadopagoWebhookRoute
@@ -1775,6 +1792,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerControlTowerRouteImport
       parentRoute: typeof OwnerRoute
     }
+    '/owner/payment-recovery': {
+      id: '/owner/payment-recovery'
+      path: '/payment-recovery'
+      fullPath: '/owner/payment-recovery'
+      preLoaderRoute: typeof OwnerPaymentRecoveryRouteImport
+      parentRoute: typeof OwnerRoute
+    }
     '/public-catalog/$slug': {
       id: '/public-catalog/$slug'
       path: '/public-catalog/$slug'
@@ -1843,6 +1867,13 @@ declare module '@tanstack/react-router' {
       path: '/api/owner/operational-metrics'
       fullPath: '/api/owner/operational-metrics'
       preLoaderRoute: typeof ApiOwnerOperationalMetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/owner/payment-recovery': {
+      id: '/api/owner/payment-recovery'
+      path: '/api/owner/payment-recovery'
+      fullPath: '/api/owner/payment-recovery'
+      preLoaderRoute: typeof ApiOwnerPaymentRecoveryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/billing/mercadopago/create': {
@@ -2023,10 +2054,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface OwnerRouteChildren {
   OwnerControlTowerRoute: typeof OwnerControlTowerRoute
+  OwnerPaymentRecoveryRoute: typeof OwnerPaymentRecoveryRoute
 }
 
 const OwnerRouteChildren: OwnerRouteChildren = {
   OwnerControlTowerRoute: OwnerControlTowerRoute,
+  OwnerPaymentRecoveryRoute: OwnerPaymentRecoveryRoute,
 }
 
 const OwnerRouteWithChildren = OwnerRoute._addFileChildren(OwnerRouteChildren)
@@ -2074,6 +2107,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOwnerAgencyLogsRoute: ApiOwnerAgencyLogsRoute,
   ApiOwnerAgencyStatusRoute: ApiOwnerAgencyStatusRoute,
   ApiOwnerOperationalMetricsRoute: ApiOwnerOperationalMetricsRoute,
+  ApiOwnerPaymentRecoveryRoute: ApiOwnerPaymentRecoveryRoute,
   ApiBillingMercadopagoCreateRoute: ApiBillingMercadopagoCreateRoute,
   ApiBillingMercadopagoManageRoute: ApiBillingMercadopagoManageRoute,
   ApiBillingMercadopagoWebhookRoute: ApiBillingMercadopagoWebhookRoute,
