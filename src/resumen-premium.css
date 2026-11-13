@@ -2040,3 +2040,46 @@
   outline: 3px solid color-mix(in oklab, var(--color-primary) 65%, transparent);
   outline-offset: 3px;
 }
+
+
+/* Motion enhancement: Resumen hierarchy enters in a short, readable sequence. */
+@media (prefers-reduced-motion: no-preference) {
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-header,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-hero,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-mobile-brief,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-toolbar,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-grid > *,
+  .nuva-app .nuva-resumen-canvas > .nuva-resumen-panel,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-workspace-grid > *,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-score-section {
+    animation: nuva-resumen-rise-in 300ms var(--nuva-ease, cubic-bezier(.22,1,.36,1)) both;
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-grid > :nth-child(1) { animation-delay: 35ms; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-grid > :nth-child(2) { animation-delay: 75ms; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-grid > :nth-child(3) { animation-delay: 115ms; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi-grid > :nth-child(4) { animation-delay: 155ms; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-workspace-grid > :nth-child(2) { animation-delay: 65ms; }
+  .nuva-app .nuva-resumen-canvas > .nuva-resumen-panel[aria-label="Rendimiento financiero"] { animation-delay: 80ms; }
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-score-section { animation-delay: 100ms; }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-panel,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-shortcuts > a {
+    transition:
+      transform 200ms var(--nuva-ease, cubic-bezier(.22,1,.36,1)),
+      box-shadow 200ms var(--nuva-ease, cubic-bezier(.22,1,.36,1)),
+      border-color 200ms var(--nuva-ease, cubic-bezier(.22,1,.36,1)),
+      background-color 200ms var(--nuva-ease, cubic-bezier(.22,1,.36,1));
+  }
+
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-kpi:active,
+  .nuva-app .nuva-resumen-canvas .nuva-resumen-shortcuts > a:active {
+    transform: scale(.99);
+  }
+}
+
+@keyframes nuva-resumen-rise-in {
+  from { opacity: 0; transform: translate3d(0, 9px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
