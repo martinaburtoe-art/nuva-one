@@ -108,7 +108,8 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
               .eq("id", intentId).maybeSingle();
             if (result.error) throw result.error;
             intent = result.data;
-          } else {
+          }
+          if (!intent) {
             const result = await db.from("payment_intents")
               .select("id,business_id,provider,token,commerce_order,amount,status")
               .eq("business_id", recovery.business_id)
@@ -152,6 +153,9 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
             if (error) throw error;
             return Response.json({ ok: true, result: data });
           }
+
+          // VSB remains fail-closed until its official reconciliation contract is approved.
+          if (recovery.provider === "vsb") return Response.json({ error: "La conciliación VSB permanece deshabilitada hasta validar el contrato oficial del proveedor." }, { status: 409 });
 
           // Provider lookup and all credential decryption remain server-side.
           if (!intent) return Response.json({ error: "No hay un intento de pago asociado. Vincúlalo primero para verificar la pasarela." }, { status: 409 });
