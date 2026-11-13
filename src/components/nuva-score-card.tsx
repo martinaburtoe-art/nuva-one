@@ -77,10 +77,12 @@ export function NuvaScoreCard() {
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">Nüva Score</h3>
             <span className="rounded-full border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {scoreLabel(total)}
+              {score.coverage.available < score.coverage.total ? "Parcial" : scoreLabel(total)}
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Salud general de tu negocio</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Salud general de tu negocio · {score.coverage.available}/{score.coverage.total} indicadores disponibles
+          </p>
         </div>
         <div className="relative h-24 w-24 shrink-0">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
@@ -111,6 +113,13 @@ export function NuvaScoreCard() {
           </div>
         </div>
       </div>
+
+      {score.coverage.available < score.coverage.total && (
+        <p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-5 text-muted-foreground">
+          Resultado parcial: se calcula únicamente con indicadores respaldados por datos completos.
+          Los indicadores sin información suficiente no se estiman ni penalizan.
+        </p>
+      )}
 
       <div className="mt-5 space-y-3">
         {components.map((c) => {
