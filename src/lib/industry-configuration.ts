@@ -3,6 +3,7 @@ import { getCapabilityReadiness } from "@/lib/industry-capability-readiness";
 
 export type BusinessChannel = "counter" | "delivery" | "online" | "wholesale" | "appointment";
 export type IndustryConfigurationInput = {
+  schemaVersion?: 1;
   answers?: Readonly<Record<string, boolean>>;
   channels?: readonly BusinessChannel[];
   inventory?: {
@@ -75,7 +76,8 @@ export function buildIndustryConfiguration(profileId: IndustryProfileId | string
   if (!PROFILE_UNITS[profile.id]) return { ok: false, errors: [{ code: "profile_not_in_p0", path: "profileId", message: "La configuración operativa detallada todavía está limitada a los tres perfiles P0." }] };
   const errors: IndustryConfigurationError[] = [];
   const root = input as unknown as Record<string, unknown>;
-  unknownKeys(root, ["answers", "channels", "inventory", "commercial", "operations"], "", errors);
+  unknownKeys(root, ["schemaVersion", "answers", "channels", "inventory", "commercial", "operations"], "", errors);
+  if (root.schemaVersion !== undefined && root.schemaVersion !== 1) errors.push({ code: "invalid_value", path: "schemaVersion", message: "Versión de configuración no admitida." });
   const rawAnswers = root.answers === undefined ? {} : root.answers;
   if (!record(rawAnswers)) errors.push({ code: "invalid_type", path: "answers", message: "Se esperaba un objeto de respuestas." });
   const answerRecord = record(rawAnswers) ? rawAnswers : {};
