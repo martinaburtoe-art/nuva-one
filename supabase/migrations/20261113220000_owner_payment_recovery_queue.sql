@@ -163,6 +163,7 @@ DECLARE
   v_intent public.payment_intents%ROWTYPE;
   v_sale public.sales%ROWTYPE;
   v_payment_id uuid;
+  v_existing_payment public.payments%ROWTYPE;
   v_remaining numeric(12,2);
   v_outcome text;
   v_audit_id uuid;
@@ -273,18 +274,25 @@ BEGIN
     IF v_request.payment_intent_id IS NULL THEN
       UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
     END IF;
-    SELECT p.id INTO v_payment_id
+    SELECT p.* INTO v_existing_payment
       FROM public.payments p
      WHERE p.payment_intent_id = v_intent.id
      LIMIT 1;
-    IF v_payment_id IS NOT NULL THEN
-      UPDATE public.payment_intents
-         SET status = 'paid', resolved_at = COALESCE(resolved_at,now())
-       WHERE id = v_intent.id;
-      UPDATE public.payment_creation_requests
-         SET status = 'closed', payment_intent_id = v_intent.id, updated_at = now()
-       WHERE id = v_request.id;
-      v_outcome := 'already_settled';
+    IF v_existing_payment.id IS NOT NULL THEN
+      v_payment_id := v_existing_payment.id;
+      IF v_existing_payment.business_id IS DISTINCT FROM v_request.business_id
+         OR v_existing_payment.sale_id IS DISTINCT FROM v_request.sale_id
+         OR v_existing_payment.amount IS DISTINCT FROM v_request.amount THEN
+        v_outcome := 'existing_payment_mismatch';
+      ELSE
+        UPDATE public.payment_intents
+           SET status = 'paid', resolved_at = COALESCE(resolved_at,now())
+         WHERE id = v_intent.id;
+        UPDATE public.payment_creation_requests
+           SET status = 'closed', payment_intent_id = v_intent.id, updated_at = now()
+         WHERE id = v_request.id;
+        v_outcome := 'already_settled';
+      END IF;
     ELSIF v_request.sale_id IS NOT NULL THEN
       IF v_sale.id IS NULL THEN
         v_outcome := 'sale_not_found';
