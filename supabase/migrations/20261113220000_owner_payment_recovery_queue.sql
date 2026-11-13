@@ -53,7 +53,7 @@ BEGIN
   IF p_actor_user_id IS NULL OR p_request_id IS NULL THEN
     RAISE EXCEPTION 'request and owner are required' USING ERRCODE = '22023';
   END IF;
-  IF p_action NOT IN ('link_intent', 'refund_required', 'manual_adjustment_required', 'note') THEN
+  IF p_action IS NULL OR p_action NOT IN ('link_intent', 'refund_required', 'manual_adjustment_required', 'note') THEN
     RAISE EXCEPTION 'unsupported recovery action' USING ERRCODE = '22023';
   END IF;
   IF p_note IS NULL OR length(trim(p_note)) NOT BETWEEN 5 AND 1000 THEN
@@ -155,7 +155,7 @@ BEGIN
   IF p_actor_user_id IS NULL OR p_request_id IS NULL THEN
     RAISE EXCEPTION 'request and owner are required' USING ERRCODE = '22023';
   END IF;
-  IF p_provider_status NOT IN ('pending','paid','rejected','expired') THEN
+  IF p_provider_status IS NULL OR p_provider_status NOT IN ('pending','paid','rejected','expired') THEN
     RAISE EXCEPTION 'unsupported provider status' USING ERRCODE = '22023';
   END IF;
 
@@ -190,8 +190,14 @@ BEGIN
      OR v_intent.amount <> v_request.amount THEN
     v_outcome := 'intent_missing_or_mismatched';
   ELSIF p_provider_status = 'pending' THEN
+    IF v_request.payment_intent_id IS NULL THEN
+      UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
+    END IF;
     v_outcome := 'provider_pending';
   ELSIF p_provider_status IN ('rejected','expired') THEN
+    IF v_request.payment_intent_id IS NULL THEN
+      UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
+    END IF;
     IF v_intent.status <> 'paid' THEN
       UPDATE public.payment_intents
          SET status = p_provider_status,
@@ -212,6 +218,9 @@ BEGIN
      OR p_provider_commerce_order IS DISTINCT FROM v_request.commerce_order THEN
     v_outcome := 'provider_mismatch';
   ELSE
+    IF v_request.payment_intent_id IS NULL THEN
+      UPDATE public.payment_creation_requests SET payment_intent_id = v_intent.id, updated_at = now() WHERE id = v_request.id;
+    END IF;
     IF v_request.sale_id IS NOT NULL THEN
       SELECT s.* INTO v_sale
         FROM public.sales s
@@ -242,7 +251,7 @@ BEGIN
           UPDATE public.payment_creation_requests
              SET status = 'closed', payment_intent_id = v_intent.id, updated_at = now()
            WHERE id = v_request.id;
-          v_outcome := CASE WHEN v_payment_id IS NULL THEN 'resolved_paid' ELSE 'resolved_paid' END;
+          v_outcome := 'resolved_paid';
         END IF;
       END IF;
     ELSE
