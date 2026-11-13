@@ -108,7 +108,15 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           // the POS resolve a delayed webhook without creating another order.
           if (["pending", "rejected", "expired"].includes(savedIntent?.status) && existing.status !== "recovery_required") {
             try {
-              await handlePaymentWebhook(admin as any, existing.provider, savedIntent.token);
+              const verification = await handlePaymentWebhook(admin as any, existing.provider, savedIntent.token);
+              if (
+                ["provider_unavailable", "no_integration", "no_adapter", "provider_status_unresolved"].includes(verification.outcome)
+              ) {
+                return json(
+                  { error: "La pasarela no pudo confirmar el estado del intento. No se permitirá crear otro link.", code: "PAYMENT_STATUS_UNAVAILABLE" },
+                  503,
+                );
+              }
             } catch {
               return json(
                 { error: "No se pudo verificar el estado del pago. El intento se conserva y no se creará otro.", code: "PAYMENT_STATUS_UNAVAILABLE" },
@@ -333,7 +341,15 @@ export const Route = createFileRoute("/api/billing/payments/create")({
 
             if (["pending", "rejected", "expired"].includes(activeIntent?.status) && activeSaleRequest.status !== "recovery_required") {
               try {
-                await handlePaymentWebhook(admin as any, activeSaleRequest.provider, activeIntent.token);
+                const verification = await handlePaymentWebhook(admin as any, activeSaleRequest.provider, activeIntent.token);
+                if (
+                  ["provider_unavailable", "no_integration", "no_adapter", "provider_status_unresolved"].includes(verification.outcome)
+                ) {
+                  return json(
+                    { error: "La pasarela no pudo confirmar el estado del link activo. No se creará otro cobro.", code: "PAYMENT_STATUS_UNAVAILABLE" },
+                    503,
+                  );
+                }
               } catch {
                 return json(
                   { error: "No se pudo verificar el estado del link activo. No se creará otro cobro.", code: "PAYMENT_STATUS_UNAVAILABLE" },
