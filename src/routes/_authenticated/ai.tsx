@@ -98,7 +98,6 @@ function AiPage() {
   const [limitReached, setLimitReached] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [completionAnnouncement, setCompletionAnnouncement] = useState("");
-  const wasLoadingRef = useRef(false);
   const [specialist, setSpecialist] = useState<Specialist>("orchestrator");
   const { active } = useActiveBusiness();
   const tokenRef = useRef<string | null>(null);
@@ -131,6 +130,7 @@ function AiPage() {
       },
       prepareSendMessagesRequest: ({ messages }) => ({ body: { messages, specialist } }),
     }),
+    onFinish: () => setCompletionAnnouncement("Respuesta recibida."),
     onError: (err) => {
       let msg = err.message || "Error al conectar con Nüva Agent. Intenta nuevamente.";
       try {
@@ -151,17 +151,6 @@ function AiPage() {
       ? "Nüva Agent está generando la respuesta..."
       : "";
 
-  useEffect(() => {
-    if (loading) {
-      wasLoadingRef.current = true;
-      setCompletionAnnouncement("");
-    } else if (wasLoadingRef.current && status === "ready") {
-      wasLoadingRef.current = false;
-      setCompletionAnnouncement("Respuesta recibida.");
-    } else if (status === "error") {
-      wasLoadingRef.current = false;
-    }
-  }, [loading, status]);
 
   const suggestions: Record<Specialist, string[]> = {
     orchestrator: [
