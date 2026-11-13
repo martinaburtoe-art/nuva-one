@@ -24,6 +24,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getIndustryProfile, INDUSTRY_PROFILES } from "@/lib/industry-profiles";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -61,6 +62,9 @@ function Onboarding() {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [industry, setIndustry] = useState("other");
+  const [industryProfile, setIndustryProfile] = useState("");
+  const [industrySchemaAvailable, setIndustrySchemaAvailable] = useState(false);
+  const [industrySchemaChecked, setIndustrySchemaChecked] = useState(false);
   const [size, setSize] = useState("1-5");
   const [goal, setGoal] = useState("sales");
   const [loadingDemo, setLoadingDemo] = useState(false);
@@ -70,6 +74,18 @@ function Onboarding() {
       if (!data.user) navigate({ to: "/auth" });
     });
   }, [navigate]);
+
+  useEffect(() => {
+    let mounted = true;
+    (supabase.from("businesses") as any).select("industry_profile").limit(1).then(({ error }: { error: { code?: string; message?: string } | null }) => {
+      if (!mounted) return;
+      const schemaMissing = error?.code === "42703" || error?.code === "PGRST204" || /industry_profile/i.test(error?.message ?? "");
+      setIndustrySchemaAvailable(!error);
+      setIndustrySchemaChecked(true);
+      if (error && !schemaMissing) toast.error("No pudimos verificar la configuración sectorial.");
+    });
+    return () => { mounted = false; };
+  }, []);
 
   async function loadDemoBusiness() {
     setLoadingDemo(true);
@@ -91,9 +107,20 @@ function Onboarding() {
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("No autenticado");
+      const selectedProfile = industryProfile ? getIndustryProfile(industryProfile) : null;
+      if (industryProfile && !selectedProfile) throw new Error("El rubro seleccionado no es válido.");
+      if (selectedProfile && !industrySchemaAvailable) throw new Error("La persistencia sectorial todavía no está habilitada en la base de datos.");
+      const businessPayload: Record<string, unknown> = { name, industry: (selectedProfile?.coreIndustry ?? industry) as any, size };
+      if (selectedProfile) {
+        businessPayload.industry_profile = selectedProfile.id;
+        businessPayload.industry_secondary_profiles = [];
+        businessPayload.industry_config = { schemaVersion: 1, answers: {} };
+        businessPayload.industry_config_version = 1;
+        businessPayload.industry_profile_updated_at = new Date().toISOString();
+      }
       const { data, error } = await supabase
         .from("businesses")
-        .insert({ name, industry: industry as any, size } as any)
+        .insert(businessPayload as any)
         .select("id")
         .single();
       if (error) throw error;
@@ -191,7 +218,7 @@ function Onboarding() {
               <div className="mt-7 grid gap-5 sm:grid-cols-2">
                 <div className="space-y-3">
                   <Label>Industria</Label>
-                  <Select value={industry} onValueChange={setIndustry}>
+                  <Select value={industry} onValueChange={(value) => { setIndustry(value); const selected = getIndustryProfile(industryProfile); if (selected && selected.coreIndustry !== value) setIndustryProfile(""); }}>
                     <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
@@ -205,6 +232,40 @@ function Onboarding() {
                       <SelectItem value="other">Otro</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-3 sm:col-span-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label>Rubro específico del negocio</Label>
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Personalización sectorial</span>
+                  </div>
+                  <Select
+                    value={industryProfile}
+                    onValueChange={(value) => {
+                      setIndustryProfile(value);
+                      const profile = getIndustryProfile(value);
+                      if (profile) setIndustry(profile.coreIndustry);
+                    }}
+                    disabled={!industrySchemaAvailable}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder={industrySchemaChecked ? "Selecciona tu rubro (opcional)" : "Verificando configuración…"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INDUSTRY_PROFILES.map((profile) => (
+                        <SelectItem key={profile.id} value={profile.id}>{profile.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {industryProfile && getIndustryProfile(industryProfile) && (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-sm font-medium">{getIndustryProfile(industryProfile)!.pluralLabel}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{getIndustryProfile(industryProfile)!.summary}</p>
+                      <p className="mt-2 text-[11px] text-primary">Nüva adaptará el contexto de tu Resumen y sus recomendaciones a este rubro.</p>
+                    </div>
+                  )}
+                  {industrySchemaChecked && !industrySchemaAvailable && (
+                    <p className="text-xs text-muted-foreground">El catálogo de rubros ya está preparado. La selección se habilitará cuando la migración de persistencia sea aprobada y desplegada.</p>
+                  )}
                 </div>
                 <div className="space-y-3">
                   <Label>Tamaño del equipo</Label>
@@ -301,8 +362,8 @@ function Onboarding() {
                 <div className="text-xs text-muted-foreground">Tu configuración</div>
                 <div className="mt-2 font-medium">{name}</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {industry === "other" ? "Otro" : industry} ·{" "}
-                  {size === "solo" ? "Solo yo" : `${size} personas`}
+                  {industryProfile ? getIndustryProfile(industryProfile)?.label : (industry === "other" ? "Otro" : industry)} ·{" "}
+                  {size === "solo" ? "Solo yo" : String(size) + " personas"}
                 </div>
                 <div className="mt-2 text-xs text-primary">
                   Foco inicial: {goals.find((item) => item.id === goal)?.title}
