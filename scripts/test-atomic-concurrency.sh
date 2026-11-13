@@ -85,3 +85,39 @@ MOVEMENT_COUNT="$(db -Atc "SELECT count(*) FROM public.inventory_movements WHERE
 [[ "$STOCK" == "8" ]] || { echo "FAIL: expected stock 8, got $STOCK"; cat /tmp/nuva-inventory-{a,b}.log; exit 1; }
 [[ "$MOVEMENT_COUNT" == "1" ]] || { echo "FAIL: expected 1 movement, got $MOVEMENT_COUNT"; exit 1; }
 echo "PASS: two concurrent identical inventory requests applied one stock delta and one movement"
+
+PURCHASE_ID="00000000-0000-0000-0000-0000000000f5"
+echo "Seeding a purchase to test concurrent receipt transitions"
+db <<SQL
+INSERT INTO public.purchases (id, business_id, status, total, purchase_date, items)
+VALUES (
+  '$PURCHASE_ID', '$BUSINESS_ID', 'pending', 0, current_date,
+  jsonb_build_array(jsonb_build_object('product_id', '$PRODUCT_ID', 'qty', 3))
+);
+SQL
+
+echo "Forcing two receipt updates to contend on the same purchase row"
+docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  -c "BEGIN; SELECT id FROM public.purchases WHERE id = '$PURCHASE_ID' FOR UPDATE; SELECT pg_sleep(3); COMMIT;" \
+  >/tmp/nuva-purchase-lock.log 2>&1 &
+PURCHASE_LOCK_PID=$!
+sleep 0.4
+docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  -c "UPDATE public.purchases SET status = 'received' WHERE id = '$PURCHASE_ID';" \
+  >/tmp/nuva-purchase-a.log 2>&1 &
+PURCHASE_A_PID=$!
+docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  -c "UPDATE public.purchases SET status = 'received' WHERE id = '$PURCHASE_ID';" \
+  >/tmp/nuva-purchase-b.log 2>&1 &
+PURCHASE_B_PID=$!
+wait "$PURCHASE_LOCK_PID"
+wait "$PURCHASE_A_PID"
+wait "$PURCHASE_B_PID"
+
+PURCHASE_STOCK="$(db -Atc "SELECT stock FROM public.products WHERE id = '$PRODUCT_ID';" | tr -d '[:space:]')"
+PURCHASE_MOVEMENTS="$(db -Atc "SELECT count(*) FROM public.inventory_movements WHERE source_type='purchase' AND source_id='$PURCHASE_ID';" | tr -d '[:space:]')"
+STOCK_APPLIED="$(db -Atc "SELECT stock_applied FROM public.purchases WHERE id='$PURCHASE_ID';" | tr -d '[:space:]')"
+[[ "$PURCHASE_STOCK" == "11" ]] || { echo "FAIL: expected purchase stock 11, got $PURCHASE_STOCK"; cat /tmp/nuva-purchase-{a,b}.log; exit 1; }
+[[ "$PURCHASE_MOVEMENTS" == "1" ]] || { echo "FAIL: expected 1 purchase movement, got $PURCHASE_MOVEMENTS"; exit 1; }
+[[ "$STOCK_APPLIED" == "t" ]] || { echo "FAIL: purchase stock_applied flag is $STOCK_APPLIED"; exit 1; }
+echo "PASS: two concurrent receipt updates applied purchase stock and movement exactly once"
