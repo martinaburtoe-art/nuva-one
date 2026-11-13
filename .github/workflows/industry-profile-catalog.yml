@@ -1,9 +1,6 @@
 name: Industry Profile Catalog
 
 on:
-  push:
-    branches:
-      - "feat/industry-intelligence-**"
   pull_request:
     branches:
       - "fix/resumen-mobile-release-20261112"
@@ -14,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: industry-profile-catalog-${{ github.ref }}
+  group: industry-profile-catalog-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
