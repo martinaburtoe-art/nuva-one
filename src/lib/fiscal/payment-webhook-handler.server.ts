@@ -19,6 +19,16 @@ export async function handlePaymentWebhook(
     return { outcome: "unsupported_provider" };
   }
 
+  const { data: existingEvent, error: eventError } = await supabaseAdmin
+    .from("payment_webhook_events")
+    .select("processed")
+    .eq("provider", provider)
+    .eq("token", token)
+    .maybeSingle();
+
+  if (eventError) throw eventError;
+  if (existingEvent?.processed) return { outcome: "already_processed" };
+
   const { data: intent, error: intentError } = await supabaseAdmin
     .from("payment_intents")
     .select("*")
