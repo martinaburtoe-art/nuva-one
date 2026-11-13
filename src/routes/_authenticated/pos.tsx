@@ -423,14 +423,39 @@ function POS() {
         });
         const json = await res.json();
         if (!json.ok) {
-          if (["PAYMENT_ALREADY_SETTLED", "PAYMENT_ATTEMPT_TERMINAL"].includes(json.code)) {
+          if (json.code === "PAYMENT_ALREADY_SETTLED") {
             onlinePaymentAttemptRef.current = null;
             try {
               localStorage.removeItem(attemptStorageKey);
             } catch {
-              // The server has already classified the prior attempt as terminal.
+              // The server has already confirmed the payment as settled.
+            }
+            setCart([]);
+            toast.success("Este pago ya estaba confirmado y conciliado.");
+            return;
+          }
+
+          if (json.code === "PAYMENT_ATTEMPT_TERMINAL") {
+            const previous = onlinePaymentAttemptRef.current;
+            if (previous) {
+              const nextAttempt = {
+                ...previous,
+                idempotencyKey: crypto.randomUUID(),
+              };
+              try {
+                const serializedAttempt = JSON.stringify(nextAttempt);
+                localStorage.setItem(attemptStorageKey, serializedAttempt);
+                if (localStorage.getItem(attemptStorageKey) !== serializedAttempt) {
+                  throw new Error("new idempotency key could not be persisted");
+                }
+                onlinePaymentAttemptRef.current = nextAttempt;
+              } catch {
+                toast.error("El intento terminó, pero no se pudo guardar una nueva clave segura. No se generará otro cobro.");
+                return;
+              }
             }
           }
+
           toast.error(json.error ?? "No se pudo generar el link de pago");
           return;
         }
