@@ -18,6 +18,7 @@ import { MfaSetup } from "@/components/mfa-setup";
 import { AuditLogView } from "@/components/audit-log-view";
 import { TeamManagement } from "@/components/team-management";
 import { MAX_BUSINESS_PHOTOS, uploadBusinessPhoto, deleteBusinessPhoto, validateBusinessPhoto } from "@/lib/business-photo";
+import { IndustryProfileSettings } from "@/components/industry-profile-settings";
 import { INDUSTRY_PROFILES, getIndustryProfile } from "@/lib/industry-profiles";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -107,6 +108,8 @@ function Settings() {
           <IndustryProfileSettingsCard canManage={canManage} />
 
           <PublicProfileCard canManage={canManage} />
+
+          <IndustryProfileSettings canManage={canManage} />
 
           {isOwner && (
             <Card className="border-destructive/30 p-4 sm:p-5">
