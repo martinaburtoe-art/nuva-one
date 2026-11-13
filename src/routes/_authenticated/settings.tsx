@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Shield, AlertTriangle, Lock, ClipboardList, Globe, ImagePlus, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +18,7 @@ import { MfaSetup } from "@/components/mfa-setup";
 import { AuditLogView } from "@/components/audit-log-view";
 import { TeamManagement } from "@/components/team-management";
 import { MAX_BUSINESS_PHOTOS, uploadBusinessPhoto, deleteBusinessPhoto, validateBusinessPhoto } from "@/lib/business-photo";
+import { INDUSTRY_PROFILES, getIndustryProfile } from "@/lib/industry-profiles";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Configuración — Nüva One" }] }),
@@ -102,6 +104,8 @@ function Settings() {
             </div>
           </Card>
 
+          <IndustryProfileSettingsCard canManage={canManage} />
+
           <PublicProfileCard canManage={canManage} />
 
           {isOwner && (
@@ -125,6 +129,113 @@ function Settings() {
         <TabsContent value="billing"><BillingTab /></TabsContent>
       </Tabs>
     </>
+  );
+}
+
+function IndustryProfileSettingsCard({ canManage }: { canManage: boolean }) {
+  const { active } = useActiveBusiness();
+  const [profileId, setProfileId] = useState("");
+  const [schemaReady, setSchemaReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [storedConfig, setStoredConfig] = useState<Record<string, unknown>>({});
+  const [storedSecondary, setStoredSecondary] = useState<string[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      if (!active) { setLoading(false); return; }
+      setLoading(true);
+      const { data, error } = await (supabase.from("businesses") as any)
+        .select("industry_profile, industry_secondary_profiles, industry_config, industry_config_version")
+        .eq("id", active.id)
+        .maybeSingle();
+      if (!mounted) return;
+      const missing = error?.code === "42703" || error?.code === "PGRST204" || /industry_profile|industry_config/i.test(error?.message ?? "");
+      if (missing) {
+        setSchemaReady(false);
+      } else if (error) {
+        toast.error("No se pudo cargar el perfil sectorial.");
+        setSchemaReady(false);
+      } else {
+        setSchemaReady(true);
+        setProfileId(typeof data?.industry_profile === "string" ? data.industry_profile : "");
+        setStoredConfig(data?.industry_config && typeof data.industry_config === "object" && !Array.isArray(data.industry_config) ? data.industry_config : {});
+        setStoredSecondary(Array.isArray(data?.industry_secondary_profiles) ? data.industry_secondary_profiles.filter((value: unknown): value is string => typeof value === "string") : []);
+      }
+      setLoading(false);
+    }
+    void load();
+    return () => { mounted = false; };
+  }, [active?.id]);
+
+  async function saveProfile() {
+    if (!active || !canManage || saving || !schemaReady) return;
+    const profile = profileId ? getIndustryProfile(profileId) : null;
+    if (profileId && !profile) { toast.error("El perfil seleccionado no es válido."); return; }
+    const nextSecondary = storedSecondary.filter((id) => id !== profileId);
+    const nextConfig = profileId === (active as any).industry_profile
+      ? storedConfig
+      : { ...storedConfig, schemaVersion: 1, answers: {} };
+    setSaving(true);
+    const { error } = await (supabase.from("businesses") as any).update({
+      industry_profile: profile?.id ?? null,
+      industry_secondary_profiles: nextSecondary,
+      industry_config: nextConfig,
+      industry_config_version: 1,
+      industry_profile_updated_at: new Date().toISOString(),
+      ...(profile ? { industry: profile.coreIndustry } : {}),
+    }).eq("id", active.id);
+    setSaving(false);
+    if (error) {
+      toast.error("No se pudo guardar el perfil sectorial. No se modificaron las funciones activas.");
+      return;
+    }
+    toast.success("Perfil sectorial actualizado.");
+    window.location.reload();
+  }
+
+  return (
+    <Card className="p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">Inteligencia sectorial</h3>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Define el rubro operativo principal para adaptar los indicadores y recomendaciones de Nüva One. No cambia el giro registrado ante el SII ni habilita módulos que aún estén en desarrollo.
+          </p>
+        </div>
+        <Badge variant="outline">Configuración por negocio</Badge>
+      </div>
+      {loading ? (
+        <p className="mt-4 text-sm text-muted-foreground">Comprobando disponibilidad del perfil…</p>
+      ) : !schemaReady ? (
+        <div className="mt-4 rounded-lg border border-dashed p-3 text-sm text-muted-foreground" role="status">
+          La configuración sectorial está preparada en el código, pero todavía falta aplicar la migración de base de datos en este entorno. Tus datos actuales no se modifican.
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="space-y-2">
+            <Label htmlFor="industry-profile-settings">Rubro operativo</Label>
+            <Select value={profileId || "not_set"} onValueChange={(value) => setProfileId(value === "not_set" ? "" : value)} disabled={!canManage || saving}>
+              <SelectTrigger id="industry-profile-settings"><SelectValue placeholder="Selecciona el rubro principal" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="not_set">Sin definir por ahora</SelectItem>
+                {INDUSTRY_PROFILES.map((profile) => (
+                  <SelectItem key={profile.id} value={profile.id}>{profile.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {profileId && getIndustryProfile(profileId) && (
+              <p className="text-xs text-muted-foreground">{getIndustryProfile(profileId)?.summary}</p>
+            )}
+            {!canManage && <p className="text-xs text-muted-foreground">Solo el propietario o administradores pueden modificar este dato.</p>}
+          </div>
+          <Button onClick={saveProfile} disabled={!canManage || saving || loading}>
+            {saving ? "Guardando…" : "Guardar rubro"}
+          </Button>
+        </div>
+      )}
+    </Card>
   );
 }
 
