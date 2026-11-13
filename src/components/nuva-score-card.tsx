@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { useNuvaScore, type ScoreComponent } from "@/lib/use-nuva-score";
 import { AlertTriangle, ArrowUpRight, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getNuvaScoreLabel } from "@/lib/nuva-score-coverage";
 
 const statusIcon: Record<ScoreComponent["status"], typeof CheckCircle2> = {
   good: CheckCircle2,
@@ -77,7 +78,7 @@ export function NuvaScoreCard() {
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">Nüva Score</h3>
             <span className="rounded-full border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {score.coverage.available < score.coverage.total ? "Parcial" : scoreLabel(total)}
+              {getNuvaScoreLabel(total, score.coverage.available, score.coverage.total)}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
