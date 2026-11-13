@@ -1,12 +1,12 @@
 BEGIN;
-SELECT plan(44);
+SELECT plan(57);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
 SELECT has_table('public', 'payment_creation_requests', 'payment creation claims are persisted');
 SELECT has_index('public', 'payments', 'uq_payments_payment_intent_id', 'one payment row per intent is enforced');
 SELECT has_index('public', 'payment_intents', 'uq_payment_intents_provider_commerce_order', 'provider commerce orders are unique');
-SELECT has_index('public', 'inventory_movements', 'uq_inventory_movements_source_product', 'inventory source keys are unique per product');
+SELECT has_index('public', 'inventory_movements', 'uq_inventory_adjustments_source_product', 'inventory source keys are unique per product');
 SELECT ok(to_regprocedure('public.settle_payment_intent(text,text,text,numeric,text)') IS NOT NULL, 'atomic settlement RPC exists');
 SELECT ok(has_function_privilege('service_role', 'public.settle_payment_intent(text,text,text,numeric,text)', 'EXECUTE'), 'service_role can settle payment intents');
 SELECT ok(NOT has_function_privilege('authenticated', 'public.settle_payment_intent(text,text,text,numeric,text)', 'EXECUTE'), 'authenticated users cannot settle payment intents');
@@ -180,6 +180,57 @@ SELECT throws_ok(
   'El ajuste dejaría el stock en negativo',
   'inventory stock cannot become negative'
 );
+
+INSERT INTO public.purchases (
+  id, business_id, status, total, purchase_date, items
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000000f5',
+  '00000000-0000-0000-0000-0000000000b1',
+  'pending',
+  0,
+  current_date,
+  jsonb_build_array(
+    jsonb_build_object('product_id', '00000000-0000-0000-0000-0000000000c1', 'qty', 2),
+    jsonb_build_object('product_id', '00000000-0000-0000-0000-0000000000c1', 'qty', 1)
+  )
+);
+
+UPDATE public.purchases SET status = 'received'
+WHERE id = '00000000-0000-0000-0000-0000000000f5';
+SELECT is((SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-0000000000c1'), 10, 'receiving a purchase adds each line quantity once');
+SELECT is((SELECT count(*)::int FROM public.inventory_movements WHERE source_type = 'purchase' AND source_id = '00000000-0000-0000-0000-0000000000f5'), 2, 'purchase receipt records each product line movement');
+
+UPDATE public.purchases SET status = 'received'
+WHERE id = '00000000-0000-0000-0000-0000000000f5';
+SELECT is((SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-0000000000c1'), 10, 'repeated received status does not apply stock twice');
+SELECT is((SELECT count(*)::int FROM public.inventory_movements WHERE source_type = 'purchase' AND source_id = '00000000-0000-0000-0000-0000000000f5'), 2, 'repeated received status creates no duplicate movement');
+
+UPDATE public.purchases SET status = 'pending'
+WHERE id = '00000000-0000-0000-0000-0000000000f5';
+SELECT is((SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-0000000000c1'), 7, 'moving a received purchase back to pending reverses its stock effect');
+SELECT is((SELECT count(*)::int FROM public.inventory_movements WHERE source_type = 'purchase_reversal' AND source_id = '00000000-0000-0000-0000-0000000000f5'), 2, 'purchase reversal is recorded per line');
+
+UPDATE public.purchases SET status = 'received'
+WHERE id = '00000000-0000-0000-0000-0000000000f5';
+SELECT is((SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-0000000000c1'), 10, 'a deliberate re-receipt applies the purchase effect once again');
+SELECT is((SELECT count(*)::int FROM public.inventory_movements WHERE source_type = 'purchase' AND source_id = '00000000-0000-0000-0000-0000000000f5'), 4, 'a deliberate re-receipt adds new auditable movements');
+
+SELECT is(
+  (SELECT stock_after
+     FROM public.adjust_product_stock('00000000-0000-0000-0000-0000000000c1', -8, 'Consumo de prueba', 'test_receipt', '00000000-0000-0000-0000-0000000000f6')),
+  2,
+  'inventory can consume part of received purchase stock'
+);
+SELECT throws_ok(
+  $ UPDATE public.purchases SET status = 'pending' WHERE id = '00000000-0000-0000-0000-0000000000f5' $,
+  '23514',
+  'No es posible revertir compra: stock insuficiente',
+  'purchase reversal is rejected when its stock has already been consumed'
+);
+SELECT is((SELECT status::text FROM public.purchases WHERE id = '00000000-0000-0000-0000-0000000000f5'), 'received', 'failed purchase reversal rolls back purchase status');
+SELECT ok((SELECT stock_applied FROM public.purchases WHERE id = '00000000-0000-0000-0000-0000000000f5'), 'failed purchase reversal preserves stock_applied');
+SELECT is((SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-0000000000c1'), 2, 'failed purchase reversal rolls back every stock decrement');
 
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
 SELECT throws_ok(
