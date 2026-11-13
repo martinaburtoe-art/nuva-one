@@ -106,7 +106,6 @@ function POS() {
     fingerprint: string;
     saleId: string;
     idempotencyKey: string;
-    terminal?: boolean;
   } | null>(null);
 
   const { data: receiptDoc } = useQuery({
@@ -308,14 +307,7 @@ function POS() {
         }
       }
 
-      if (attempt?.terminal) {
-        onlinePaymentAttemptRef.current = null;
-        try {
-          localStorage.removeItem(attemptStorageKey);
-        } catch {
-          // Terminal provider result; safe to proceed with a new sale.
-        }
-      } else if (attempt || stored) {
+      if (attempt || stored) {
         toast.error("Hay un link de pago online pendiente. Verifica su resultado antes de cobrar por otro medio.");
         return;
       }
@@ -370,7 +362,7 @@ function POS() {
               typeof parsed?.saleId === "string" &&
               typeof parsed?.idempotencyKey === "string"
             ) {
-              previousAttempt = { ...parsed, terminal: parsed.terminal === true };
+              previousAttempt = parsed;
               onlinePaymentAttemptRef.current = parsed;
             } else {
               toast.error("La referencia de un cobro anterior no se puede verificar. No se generará otro intento.");
@@ -383,20 +375,10 @@ function POS() {
         }
 
         if (previousAttempt && previousAttempt.fingerprint !== cartFingerprint) {
-          if (previousAttempt.terminal) {
-            onlinePaymentAttemptRef.current = null;
-            previousAttempt = null;
-            try {
-              localStorage.removeItem(attemptStorageKey);
-            } catch {
-              // The provider already reported a terminal result.
-            }
-          } else {
-            toast.error(
-              "Hay un intento de cobro anterior sin resolver. Recupera ese intento antes de generar otro para evitar un posible doble cobro.",
-            );
-            return;
-          }
+          toast.error(
+            "Hay un intento de cobro anterior sin resolver. Recupera ese intento antes de generar otro para evitar un posible doble cobro.",
+          );
+          return;
         }
 
         if (previousAttempt?.fingerprint === cartFingerprint) {
