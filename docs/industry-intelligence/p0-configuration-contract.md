@@ -14,7 +14,7 @@ A preference cannot enable a feature, grant access, bypass a module guard, or ch
 
 ## Profile coverage
 
-The catalogue contains 24 operational profiles. Onboarding and business settings can select a primary profile and capture explicit yes/no answers to that profile's operational questions. Unknown/unanswered responses are not inferred or persisted. Changing the selected profile clears stale answers before saving.
+The catalogue contains 23 operational profiles. Onboarding and business settings can select a primary profile and capture explicit yes/no answers to that profile's operational questions. Unknown/unanswered responses are not inferred or persisted. Changing the selected profile clears stale answers before saving.
 
 Detailed operational configuration is deliberately P0-only for:
 - Ferretería y materiales.
