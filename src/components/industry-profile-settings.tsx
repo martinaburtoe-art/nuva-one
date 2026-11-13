@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, RefreshCw, Save, Sparkles } from "lucide-react";
+import { Lock, Plus, RefreshCw, Save, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
 import { INDUSTRY_PROFILES, getIndustryProfile } from "@/lib/industry-profiles";
@@ -98,7 +98,7 @@ export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
       const payload = {
         industry: profile.coreIndustry,
         industry_profile: profile.id,
-        industry_secondary_profiles: secondaryProfiles.filter((id) => id !== profile.id),
+        industry_secondary_profiles: [...new Set(secondaryProfiles)].filter((id) => id !== profile.id && Boolean(getIndustryProfile(id))).slice(0, 3),
         industry_config: { schemaVersion: 1, answers: serializeIndustryAnswers(profile.id, answers) },
         industry_config_version: 1,
         industry_profile_updated_at: new Date().toISOString(),
@@ -147,6 +147,30 @@ export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
               </SelectContent>
             </Select>
             {profile && <p className="text-xs text-muted-foreground">{profile.summary}</p>}
+          </div>
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="industry-secondary-profile">Rubros secundarios (negocio mixto)</Label>
+            <div className="flex flex-wrap gap-2">
+              {secondaryProfiles.filter((id) => id !== profileId).map((id) => {
+                const secondary = getIndustryProfile(id);
+                if (!secondary) return null;
+                return <span key={id} className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs">
+                  {secondary.label}
+                  <button type="button" aria-label={"Quitar " + secondary.label} disabled={!canManage} onClick={() => setSecondaryProfiles((current) => current.filter((item) => item !== id))} className="rounded-full p-0.5 hover:bg-muted disabled:opacity-50"><X className="h-3 w-3" /></button>
+                </span>;
+              })}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Select value="none" onValueChange={(id) => setSecondaryProfiles((current) => current.length < 3 && id !== profileId && !current.includes(id) ? [...current, id] : current)} disabled={!canManage || secondaryProfiles.filter((id) => id !== profileId).length >= 3}>
+                <SelectTrigger id="industry-secondary-profile" className="sm:max-w-sm"><SelectValue placeholder="Agregar otro rubro" /></SelectTrigger>
+                <SelectContent className="max-h-80">
+                  <SelectItem value="none" disabled>Selecciona un rubro secundario</SelectItem>
+                  {INDUSTRY_PROFILES.filter((item) => item.id !== profileId && !secondaryProfiles.includes(item.id)).map((item) => <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="self-center text-xs text-muted-foreground">{secondaryProfiles.filter((id) => id !== profileId).length}/3 rubros secundarios</p>
+            </div>
+            <p className="text-xs text-muted-foreground">Los rubros secundarios solo ajustan el contexto del negocio; no duplican inventario, ventas ni clientes.</p>
           </div>
           {profile && profile.operationalQuestions.length > 0 && (
             <div className="mt-5 space-y-3">
