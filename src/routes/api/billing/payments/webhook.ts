@@ -20,13 +20,15 @@ export const Route = createFileRoute("/api/billing/payments/webhook")({
         const token = form?.get("token")?.toString();
         if (!token) return new Response("Falta token", { status: 400 });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await handlePaymentWebhook(supabaseAdmin, provider, token);
-
-        // Siempre 200 para que el proveedor no reintente indefinidamente;
-        // los casos "no reconocido"/"sin integración" quedan en el log de
-        // payment_webhook_events para revisar manualmente si hace falta.
-        return new Response("OK");
+        try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          await handlePaymentWebhook(supabaseAdmin, provider, token);
+          // Los estados no definitivos y tokens desconocidos se responden 200;
+          // los fallos internos/transitorios deben permitir un reintento del proveedor.
+          return new Response("OK");
+        } catch {
+          return new Response("No se pudo procesar la notificación", { status: 503 });
+        }
       },
     },
   },
