@@ -57,14 +57,14 @@ SELECT throws_ok(
 );
 SELECT throws_ok(
   $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
-     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'order-paid-once', 1000, 'POS test') $,
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'order-paid-once', 1000, 'POS test') $$,
   '23505',
   NULL,
   'provider commerce order cannot be reused by another request'
 );
 SELECT throws_ok(
   $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
-     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'nuva-order-claim-2', 1000, 'POS test') $,
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'nuva-order-claim-2', 1000, 'POS test') $$,
   '23505',
   NULL,
   'a sale cannot have two unresolved external payment creation requests'
@@ -75,7 +75,7 @@ UPDATE public.payment_creation_requests
  WHERE idempotency_key = 'idempotency-key-1';
 SELECT throws_ok(
   $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
-     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-3', 'nuva-order-claim-3', 1000, 'POS test') $,
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-3', 'nuva-order-claim-3', 1000, 'POS test') $$,
   '23505',
   NULL,
   'a created request keeps its sale reserved while the provider intent is pending'
@@ -187,7 +187,7 @@ SELECT ok(
 );
 SELECT throws_ok(
   $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
-     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-6', 'order-after-overpay', 1000, 'POS retry') $,
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-6', 'order-after-overpay', 1000, 'POS retry') $$,
   '23505',
   NULL,
   'recovery_required sale remains reserved until manual reconciliation'
@@ -289,7 +289,7 @@ SELECT is(
   'inventory can consume part of received purchase stock'
 );
 SELECT throws_ok(
-  $ UPDATE public.purchases SET status = 'pending' WHERE id = '00000000-0000-0000-0000-0000000000f5' $,
+  $ UPDATE public.purchases SET status = 'pending' WHERE id = '00000000-0000-0000-0000-0000000000f5' $$,
   '23514',
   'No es posible revertir compra: stock insuficiente',
   'purchase reversal is rejected when its stock has already been consumed'
