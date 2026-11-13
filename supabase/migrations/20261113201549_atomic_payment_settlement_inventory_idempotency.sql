@@ -401,15 +401,38 @@ BEGIN
   END IF;
 
   IF v_intent.status IN ('rejected', 'expired') THEN
+    IF p_provider_status = 'paid' THEN
+      UPDATE public.payment_creation_requests
+         SET status = 'recovery_required',
+             payment_intent_id = v_intent.id,
+             last_error = 'late_paid_after_terminal',
+             updated_at = now()
+       WHERE provider = v_intent.provider
+         AND commerce_order = v_intent.commerce_order;
+      UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
+      RETURN jsonb_build_object('outcome', 'late_paid_after_terminal', 'intent_id', v_intent.id);
+    END IF;
+
+    IF p_provider_status IN ('rejected', 'expired') THEN
+      UPDATE public.payment_creation_requests
+         SET status = 'closed',
+             payment_intent_id = v_intent.id,
+             updated_at = now()
+       WHERE provider = v_intent.provider
+         AND commerce_order = v_intent.commerce_order
+         AND status <> 'closed';
+      UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
+      RETURN jsonb_build_object('outcome', 'terminal_state', 'intent_id', v_intent.id);
+    END IF;
+
     UPDATE public.payment_creation_requests
-       SET status = 'closed',
+       SET status = 'recovery_required',
            payment_intent_id = v_intent.id,
+           last_error = 'terminal_provider_state_unconfirmed',
            updated_at = now()
      WHERE provider = v_intent.provider
-       AND commerce_order = v_intent.commerce_order
-       AND status <> 'closed';
-    UPDATE public.payment_webhook_events SET processed = true WHERE id = v_event.id;
-    RETURN jsonb_build_object('outcome', 'terminal_state', 'intent_id', v_intent.id);
+       AND commerce_order = v_intent.commerce_order;
+    RETURN jsonb_build_object('outcome', 'terminal_provider_state_unconfirmed', 'intent_id', v_intent.id);
   END IF;
 
   IF p_provider_status = 'pending' THEN
