@@ -1,7 +1,7 @@
 import { getPaymentAdapter, decryptPaymentCreds } from "./payment-service.server";
 
 export type SupabaseLike = {
-  from: (table: string) => any;
+  from: (table: "payment_webhook_events" | "payment_intents" | "billing_integrations") => any;
   rpc: (
     fn: "settle_payment_intent",
     args: {
