@@ -102,7 +102,7 @@ export function buildIndustryOnboardingSelection(
     .map((id) => getIndustryProfile(id))
     .filter((profile): profile is IndustryProfile => Boolean(profile))
     .map((profile) => buildIndustryOnboardingPlan(profile.id));
-  const acceptedSet = new Set(secondary.map((plan) => plan.profile.id));
+  const acceptedSet = new Set<string>(secondary.map((plan) => plan.profile.id));
   const unknownSecondaryProfileIds = uniqueSecondaryIds.filter((id) => !acceptedSet.has(id));
 
   const allPlans = [primary, ...secondary];
