@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(25);
+SELECT plan(28);
 
 SELECT has_table('public', 'payment_recovery_audit', 'payment recovery decisions have an audit table');
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.payment_recovery_audit'::regclass), 'recovery audit table has row-level security enabled');
