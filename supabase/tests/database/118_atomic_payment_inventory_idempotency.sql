@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(74);
+SELECT plan(75);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -131,6 +131,12 @@ SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '
 SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'), 4000::numeric, 'payment trigger updates the sale balance');
 SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e1'), 'paid', 'intent status is committed with payment');
 SELECT is((SELECT payment_intent_id FROM public.payments WHERE id = (SELECT id FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e1')), '00000000-0000-0000-0000-0000000000e1'::uuid, 'payment row preserves intent identity');
+SELECT throws_ok(
+  $ DELETE FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e1' $,
+  '23503',
+  NULL,
+  'a settled payment keeps its originating intent for audit traceability'
+);
 SELECT ok((SELECT processed FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-paid-once'), 'webhook event is marked processed in the same transaction');
 
 SELECT throws_ok(
