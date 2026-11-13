@@ -165,6 +165,12 @@ function Sales() {
     setDueDate("");
   }
 
+  function runFastSale() {
+    if (submitLockRef.current || insert.isPending || fastSale.isPending) return;
+    submitLockRef.current = true;
+    fastSale.mutate();
+  }
+
   function stockHint(productId: string | null) {
     if (!productId) return null;
     const p = productsById.get(productId);
@@ -415,7 +421,7 @@ function Sales() {
                         type="button"
                         variant="secondary"
                         disabled={insert.isPending || fastSale.isPending}
-                        onClick={() => fastSale.mutate()}
+                        onClick={runFastSale}
                       >
                         {fastSale.isPending ? "Procesando…" : "Venta rápida"}
                       </Button>
