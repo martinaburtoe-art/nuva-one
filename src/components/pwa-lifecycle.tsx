@@ -148,18 +148,18 @@ export function PwaLifecycle() {
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-800">
-          {updateReady ? <RefreshCw className="h-5 w-5" /> : <Download className="h-5 w-5" />}
+          {showUpdate ? <RefreshCw className="h-5 w-5" /> : <Download className="h-5 w-5" />}
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-900">
-            {updateReady ? "Nueva versión disponible" : "Lleva Nüva One a tu celular"}
+            {showUpdate ? "Nueva versión disponible" : "Lleva Nüva One a tu celular"}
           </p>
           <p className="text-xs leading-5 text-slate-600">
-            {updateReady ? "Guarda tu trabajo y actualiza cuando estés listo." : "Acceso directo desde tu pantalla de inicio."}
+            {showUpdate ? "Guarda tu trabajo y actualiza cuando estés listo." : "Acceso directo desde tu pantalla de inicio."}
           </p>
         </div>
       </div>
-      {updateReady ? (
+      {showUpdate ? (
         <button type="button" onClick={() => void applyUpdate()} disabled={updateApplying} className="min-h-10 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800 disabled:cursor-wait disabled:opacity-60">
           {updateApplying ? "Actualizando…" : "Actualizar"}
         </button>
@@ -169,7 +169,7 @@ export function PwaLifecycle() {
       <button
         type="button"
         aria-label="Cerrar aviso"
-        onClick={() => updateReady ? setUpdateDismissed(true) : setInstallDismissed(true)}
+        onClick={() => showUpdate ? setUpdateDismissed(true) : setInstallDismissed(true)}
         className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
       >
         <X className="h-4 w-4" />
