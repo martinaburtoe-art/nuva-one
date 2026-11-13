@@ -47,15 +47,20 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             });
           }
           if (!sale) {
-            return new Response(JSON.stringify({ error: "La venta no existe o no pertenece al negocio" }), {
-              status: 404,
-              headers: { "Content-Type": "application/json" },
-            });
+            return new Response(
+              JSON.stringify({ error: "La venta no existe o no pertenece al negocio" }),
+              { status: 404, headers: { "Content-Type": "application/json" } },
+            );
           }
           const remaining = Math.round(
             (Number(sale.total) - Number(sale.paid_amount ?? 0)) * 100,
           ) / 100;
-          if (sale.status === "cancelled" || !Number.isFinite(remaining) || remaining <= 0) {
+          if (
+            sale.status === "draft" ||
+            sale.status === "cancelled" ||
+            !Number.isFinite(remaining) ||
+            remaining <= 0
+          ) {
             return new Response(JSON.stringify({ error: "La venta no admite nuevos cobros" }), {
               status: 409,
               headers: { "Content-Type": "application/json" },
