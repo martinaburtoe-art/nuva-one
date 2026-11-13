@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(75);
+SELECT plan(76);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -201,6 +201,12 @@ SELECT throws_ok(
 );
 SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e5'), 0, 'overpayment creates no payment row');
 SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'), 4000::numeric, 'rejected overpayment leaves sale balance unchanged');
+SELECT throws_ok(
+  $ DELETE FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e5' $,
+  '23503',
+  NULL,
+  'a recovery request keeps its originating provider intent for reconciliation'
+);
 
 SELECT is(
   public.settle_payment_intent('flow', 'token-does-not-exist', 'paid', 500, 'order-does-not-exist')->>'outcome',
