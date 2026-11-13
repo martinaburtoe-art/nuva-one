@@ -266,10 +266,10 @@ BEGIN
         END IF;
       END LOOP;
 
-      IF OLD.transaction_id IS NOT NULL THEN
-        DELETE FROM public.transactions WHERE id = OLD.transaction_id;
-      END IF;
-
+      -- The existing AFTER UPDATE cleanup trigger deletes the old generated
+      -- transaction once this source-row update has completed. Deleting here
+      -- (inside this BEFORE trigger) would invoke ON DELETE SET NULL against
+      -- the same purchase row and raise SQLSTATE 27000.
       NEW.stock_applied := false;
       NEW.transaction_id := NULL;
     END IF;
