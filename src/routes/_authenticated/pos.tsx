@@ -484,6 +484,28 @@ function POS() {
             return;
           }
 
+          if (
+            ["PAYMENT_RECOVERY_REQUIRED", "PAYMENT_STATUS_UNAVAILABLE", "PAYMENT_CREATION_RECOVERY"].includes(json.code)
+          ) {
+            const previous = onlinePaymentAttemptRef.current;
+            if (previous?.terminal) {
+              const blockedAttempt = { ...previous, terminal: false };
+              try {
+                const serializedAttempt = JSON.stringify(blockedAttempt);
+                localStorage.setItem(attemptStorageKey, serializedAttempt);
+                if (localStorage.getItem(attemptStorageKey) !== serializedAttempt) {
+                  throw new Error("recovery guard could not be persisted");
+                }
+                onlinePaymentAttemptRef.current = blockedAttempt;
+              } catch {
+                // Keep the in-memory guard; never downgrade to cash after an
+                // unresolved provider state.
+                onlinePaymentAttemptRef.current = blockedAttempt;
+              }
+            }
+            setOnlinePayment(null);
+          }
+
           if (json.code === "PAYMENT_ATTEMPT_TERMINAL") {
             const previous = onlinePaymentAttemptRef.current;
             if (previous) {
