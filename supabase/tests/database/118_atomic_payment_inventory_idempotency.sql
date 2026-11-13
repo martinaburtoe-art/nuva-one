@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(76);
+SELECT plan(85);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -276,6 +276,42 @@ SELECT is((SELECT count(*)::int FROM public.payment_webhook_events WHERE provide
 
 DROP TRIGGER test_fail_payment_insert ON public.payments;
 DROP FUNCTION public.test_fail_payment_insert();
+
+INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
+VALUES
+  ('00000000-0000-0000-0000-0000000000d3', '00000000-0000-0000-0000-0000000000b1', 'pending', 1000, '[]'::jsonb, false, 0),
+  ('00000000-0000-0000-0000-0000000000d4', '00000000-0000-0000-0000-0000000000b1', 'pending', 1000, '[]'::jsonb, false, 0);
+
+INSERT INTO public.payment_intents (id, business_id, sale_id, provider, token, commerce_order, amount, status)
+VALUES
+  ('00000000-0000-0000-0000-0000000000e8', '00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d3', 'flow', 'token-late-paid', 'order-late-paid', 500, 'expired'),
+  ('00000000-0000-0000-0000-0000000000e9', '00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d4', 'flow', 'token-terminal-pending', 'order-terminal-pending', 500, 'expired');
+
+INSERT INTO public.payment_creation_requests (
+  business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject, status, payment_intent_id
+)
+VALUES
+  ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d3', 'flow', 'late-paid-key-1', 'order-late-paid', 500, 'Late payment test', 'created', '00000000-0000-0000-0000-0000000000e8'),
+  ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d4', 'flow', 'terminal-pending-key', 'order-terminal-pending', 500, 'Pending terminal test', 'created', '00000000-0000-0000-0000-0000000000e9');
+
+SELECT is(
+  public.settle_payment_intent('flow', 'token-late-paid', 'paid', 500, 'order-late-paid')->>'outcome',
+  'late_paid_after_terminal',
+  'a provider-confirmed late payment after local expiry is quarantined'
+);
+SELECT is((SELECT status FROM public.payment_creation_requests WHERE idempotency_key = 'late-paid-key-1'), 'recovery_required', 'late paid request remains reserved for reconciliation');
+SELECT ok((SELECT processed FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-late-paid'), 'late paid webhook is closed after entering recovery');
+SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e8'), 'expired', 'late paid does not rewrite the prior terminal intent state');
+SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e8'), 0, 'late paid is not silently applied to a closed sale attempt');
+
+SELECT is(
+  public.settle_payment_intent('flow', 'token-terminal-pending', 'pending', NULL, NULL)->>'outcome',
+  'terminal_provider_state_unconfirmed',
+  'a locally expired intent with provider still pending is not released'
+);
+SELECT is((SELECT status FROM public.payment_creation_requests WHERE idempotency_key = 'terminal-pending-key'), 'recovery_required', 'unconfirmed terminal request remains reserved');
+SELECT ok(NOT (SELECT processed FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-terminal-pending'), 'unconfirmed terminal webhook remains retryable');
+SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e9'), 0, 'unconfirmed terminal payment is not applied');
 
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
 
