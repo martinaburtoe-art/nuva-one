@@ -16,13 +16,17 @@ Read-only inspection of Supabase project `vnzyecnbdqbfuxawzrda` on 2026-11-12 fo
 Proposed additive columns:
 
 ```sql
-industry_profile text not null default 'general_business',
+industry_profile text null,
+industry_secondary_profiles text[] not null default '{}',
 industry_config jsonb not null default '{}'::jsonb,
-industry_config_version integer not null default 1
+industry_config_version integer not null default 1,
+industry_profile_updated_at timestamptz null
 ```
 
 Contract:
-- `industry_profile` references a code from the application registry. It is not a tax code.
+- `industry_profile` references a code from the application registry. It is not a tax code. It remains nullable for existing businesses until an owner explicitly selects a profile; do not infer/backfill a vertical from `industry` or `giro`.
+- `industry_secondary_profiles` stores up to three additional operating profiles for mixed businesses, excluding the primary profile and duplicates.
+- `industry_profile_updated_at` changes in the same business-row update as the profile/config.
 - `industry_config` contains only non-sensitive operational preferences. Example:
   ```json
   {
@@ -83,7 +87,7 @@ Conceptual model:
 ## 4. Compatibility and migration sequence
 
 1. **Inventory discovery:** map every current product write/read path, POS, scanner, purchase receipt, transfer, stocktake, sales line, shipment, reports, RPC, trigger and unique constraint.
-2. **Profile persistence:** add profile/config columns with safe defaults; no enum rewrite. Backfill all current businesses to `general_business` initially, then propose mappings only after reviewing real existing values and user confirmation where ambiguous.
+2. **Profile persistence:** add nullable primary-profile plus secondary-profile/config columns with safe defaults; no enum rewrite and no automatic backfill. Existing businesses remain unchanged until an owner selects a profile. New onboarding may recommend a profile but must preserve an explicit "not sure / decide later" path.
 3. **Onboarding:** save the selected profile with the business row atomically; keep old clients working by selecting existing columns until deployment compatibility is confirmed.
 4. **Variant schema:** introduce family/variant IDs and nullable legacy compatibility path. No bulk product rewrite in the first migration.
 5. **Units:** introduce base units and conversion registry; pilot with a controlled set of new products first.
