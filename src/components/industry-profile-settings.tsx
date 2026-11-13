@@ -40,9 +40,20 @@ export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
 
   useEffect(() => {
     let mounted = true;
-    if (!active?.id) { setLoading(false); return; }
+    if (!active?.id) {
+      setProfileId("");
+      setSecondaryProfiles([]);
+      setAnswers({});
+      setSchemaAvailable(false);
+      setLoadError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setLoadError(null);
+    setProfileId("");
+    setSecondaryProfiles([]);
+    setAnswers({});
     (supabase.from("businesses") as any)
       .select("industry_profile, industry_secondary_profiles, industry_config")
       .eq("id", active.id)
@@ -54,6 +65,7 @@ export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
           setSchemaAvailable(false);
           setLoadError(null);
         } else if (error) {
+          setSchemaAvailable(false);
           setLoadError("No fue posible leer la configuración sectorial de este negocio.");
         } else {
           setSchemaAvailable(true);
@@ -62,6 +74,12 @@ export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
           setSecondaryProfiles(data?.industry_secondary_profiles ?? []);
           setAnswers(toDraft(selected, data?.industry_config?.answers));
         }
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setSchemaAvailable(false);
+        setLoadError("No fue posible conectar con la configuración sectorial. Inténtalo nuevamente.");
         setLoading(false);
       });
     return () => { mounted = false; };
@@ -73,24 +91,38 @@ export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
   }
 
   async function save() {
-    if (!active?.id || !profile || !canManage || !schemaAvailable) return;
+    if (!active?.id || !profile || !canManage || !schemaAvailable || saving) return;
     setSaving(true);
-    const payload = {
-      industry: profile.coreIndustry,
-      industry_profile: profile.id,
-      industry_secondary_profiles: secondaryProfiles.filter((id) => id !== profile.id),
-      industry_config: { schemaVersion: 1, answers: serializeIndustryAnswers(profile.id, answers) },
-      industry_config_version: 1,
-      industry_profile_updated_at: new Date().toISOString(),
-    };
-    const { error } = await (supabase.from("businesses") as any).update(payload).eq("id", active.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message?.includes("industry_profile") ? "La migración sectorial aún no está disponible en esta base de datos." : "No se pudo guardar el perfil sectorial.");
-      return;
+    try {
+      const businessId = active.id;
+      const payload = {
+        industry: profile.coreIndustry,
+        industry_profile: profile.id,
+        industry_secondary_profiles: secondaryProfiles.filter((id) => id !== profile.id),
+        industry_config: { schemaVersion: 1, answers: serializeIndustryAnswers(profile.id, answers) },
+        industry_config_version: 1,
+        industry_profile_updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await (supabase.from("businesses") as any)
+        .update(payload)
+        .eq("id", businessId)
+        .select("id")
+        .maybeSingle();
+      if (error) {
+        toast.error(error.message?.includes("industry_profile") ? "La migración sectorial aún no está disponible en esta base de datos." : "No se pudo guardar el perfil sectorial.");
+        return;
+      }
+      if (!data?.id) {
+        toast.error("No se confirmó ningún cambio. Verifica que tengas permisos para administrar este negocio.");
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-industry-profile", businessId] });
+      toast.success("Perfil sectorial actualizado");
+    } catch {
+      toast.error("No se pudo completar el guardado por un problema de conexión.");
+    } finally {
+      setSaving(false);
     }
-    await queryClient.invalidateQueries({ queryKey: ["dashboard-industry-profile", active.id] });
-    toast.success("Perfil sectorial actualizado");
   }
 
   return (
