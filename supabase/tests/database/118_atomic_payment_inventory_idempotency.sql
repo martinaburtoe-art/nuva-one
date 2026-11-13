@@ -56,14 +56,14 @@ SELECT throws_ok(
   'same tenant idempotency key cannot create a second provider request'
 );
 SELECT throws_ok(
-  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+  $$ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
      VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'order-paid-once', 1000, 'POS test') $$,
   '23505',
   NULL,
   'provider commerce order cannot be reused by another request'
 );
 SELECT throws_ok(
-  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+  $$ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
      VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-2', 'nuva-order-claim-2', 1000, 'POS test') $$,
   '23505',
   NULL,
@@ -74,7 +74,7 @@ UPDATE public.payment_creation_requests
        payment_intent_id = '00000000-0000-0000-0000-0000000000e1'
  WHERE idempotency_key = 'idempotency-key-1';
 SELECT throws_ok(
-  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+  $$ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
      VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-3', 'nuva-order-claim-3', 1000, 'POS test') $$,
   '23505',
   NULL,
@@ -186,7 +186,7 @@ SELECT ok(
   'verified overpayment webhook is closed after recording the recovery requirement'
 );
 SELECT throws_ok(
-  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+  $$ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
      VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-6', 'order-after-overpay', 1000, 'POS retry') $$,
   '23505',
   NULL,
