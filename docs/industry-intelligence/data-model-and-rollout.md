@@ -1,6 +1,6 @@
 # Industry Intelligence — data model and rollout contract
 
-This document is a design proposal, not an applied migration. Production schema is unchanged.
+The additive tenant-profile migration is staged in PR #321 (`20261112090000_business_industry_profile_persistence.sql`) with a pgTAP schema contract. It is not applied to production; production schema remains unchanged.
 
 ## 1. Current verified constraints
 
