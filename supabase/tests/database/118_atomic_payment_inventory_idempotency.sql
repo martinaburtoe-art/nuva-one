@@ -1,11 +1,11 @@
 BEGIN;
-SELECT plan(60);
+SELECT plan(62);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
 SELECT has_table('public', 'payment_creation_requests', 'payment creation claims are persisted');
 SELECT has_index('public', 'payments', 'uq_payments_payment_intent_id', 'one payment row per intent is enforced');
-SELECT has_index('public', 'payment_creation_requests', 'uq_payment_creation_requests_unresolved_sale', 'one unresolved provider creation per sale is enforced');
+SELECT has_index('public', 'payment_creation_requests', 'uq_payment_creation_requests_active_sale', 'one unresolved provider creation per sale is enforced');
 SELECT has_index('public', 'payment_intents', 'uq_payment_intents_provider_commerce_order', 'provider commerce orders are unique');
 SELECT has_index('public', 'inventory_movements', 'uq_inventory_adjustments_source_product', 'inventory source keys are unique per product');
 SELECT ok(to_regprocedure('public.settle_payment_intent(text,text,text,numeric,text)') IS NOT NULL, 'atomic settlement RPC exists');
@@ -71,20 +71,14 @@ SELECT throws_ok(
 );
 UPDATE public.payment_creation_requests
    SET status = 'created',
-       payment_intent_id = '00000000-0000-0000-0000-0000000000e2'
+       payment_intent_id = '00000000-0000-0000-0000-0000000000e1'
  WHERE idempotency_key = 'idempotency-key-1';
-INSERT INTO public.payment_creation_requests (
-  business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject, status
-)
-VALUES (
-  '00000000-0000-0000-0000-0000000000b1',
-  '00000000-0000-0000-0000-0000000000d1',
-  'flow', 'idempotency-key-3', 'nuva-order-claim-3', 1000, 'POS test', 'creating'
-);
-SELECT is(
-  (SELECT count(*)::int FROM public.payment_creation_requests WHERE sale_id = '00000000-0000-0000-0000-0000000000d1'),
-  2,
-  'a new deliberate attempt is allowed after the previous request is created'
+SELECT throws_ok(
+  $ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
+     VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-3', 'nuva-order-claim-3', 1000, 'POS test') $,
+  '23505',
+  NULL,
+  'a created request keeps its sale reserved while the provider intent is pending'
 );
 SELECT ok(
   NOT has_table_privilege('anon', 'public.payment_creation_requests', 'SELECT'),
@@ -101,6 +95,24 @@ SELECT is(
   public.settle_payment_intent('flow', 'token-paid-once', 'paid', 4000, 'order-paid-once')->>'outcome',
   'resolved_paid',
   'a verified payment is settled'
+);
+SELECT is(
+  (SELECT status FROM public.payment_creation_requests WHERE idempotency_key = 'idempotency-key-1'),
+  'closed',
+  'atomic settlement closes the active payment creation request'
+);
+INSERT INTO public.payment_creation_requests (
+  business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject, status
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000000b1',
+  '00000000-0000-0000-0000-0000000000d1',
+  'flow', 'idempotency-key-3', 'nuva-order-claim-3', 1000, 'POS test', 'creating'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.payment_creation_requests WHERE sale_id = '00000000-0000-0000-0000-0000000000d1'),
+  2,
+  'a new deliberate attempt is allowed after the previous intent settles'
 );
 SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e1'), 1, 'settlement creates exactly one payment row');
 SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'), 4000::numeric, 'payment trigger updates the sale balance');
