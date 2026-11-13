@@ -289,7 +289,7 @@ SELECT is(
   'inventory can consume part of received purchase stock'
 );
 SELECT throws_ok(
-  $ UPDATE public.purchases SET status = 'pending' WHERE id = '00000000-0000-0000-0000-0000000000f5' $$,
+  $$ UPDATE public.purchases SET status = 'pending' WHERE id = '00000000-0000-0000-0000-0000000000f5' $$,
   '23514',
   'No es posible revertir compra: stock insuficiente',
   'purchase reversal is rejected when its stock has already been consumed'
