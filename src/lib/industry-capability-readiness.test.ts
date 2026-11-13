@@ -25,7 +25,12 @@ describe("industry capability release gates", () => {
   it("filters planned capabilities from the enabled list", () => {
     const hardware = INDUSTRY_PROFILES.find((profile) => profile.id === "hardware_store");
     expect(hardware).toBeDefined();
-    expect(getAvailableIndustryCapabilities(hardware!.capabilities)).toEqual(["barcode", "quotes", "cash_register"]);
+    expect(getAvailableIndustryCapabilities(hardware!.capabilities)).toEqual([
+      "barcode",
+      "quotes",
+      "dispatch",
+      "cash_register",
+    ]);
   });
 
   it("does not treat fractional movement records as end-to-end fractional stock", () => {
