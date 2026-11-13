@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { authorizeAgencyOwner } from "@/lib/agency/owner-auth.server";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { decryptPaymentCreds, getPaymentAdapter } from "@/lib/fiscal/payment-service.server";
+import { checkRateLimit } from "@/lib/rate-limit.server";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -87,6 +88,8 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
           return Response.json({ error: "Escribe una nota de al menos 5 caracteres para dejar trazabilidad." }, { status: 400 });
         }
         if (note.length > 1000) return Response.json({ error: "La nota supera el máximo de 1000 caracteres." }, { status: 400 });
+        const allowed = await checkRateLimit(`owner-payment-recovery:${auth.userId}:${requestId}`, 20, 3600);
+        if (!allowed) return Response.json({ error: "Demasiadas verificaciones para esta solicitud. Intenta más tarde." }, { status: 429 });
 
         try {
           const db = adminClient();
