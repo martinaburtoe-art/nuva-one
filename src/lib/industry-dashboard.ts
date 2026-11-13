@@ -21,6 +21,7 @@ export type IndustryMetricDefinition = {
   sources: IndustryDashboardSource[];
   status: IndustryMetricStatus;
   reason: string;
+  evidenceCounts: Partial<Record<IndustryDashboardSource, number>>;
 };
 
 type MetricSpec = Omit<IndustryMetricDefinition, "status" | "reason"> & {
@@ -67,8 +68,8 @@ const METRICS: Record<string, MetricSpec> = {
   },
   customer_activity: {
     id: "customer_activity",
-    label: "Actividad de clientes",
-    description: "Actividad registrada en la cartera de clientes.",
+    label: "Cartera de clientes",
+    description: "Clientes registrados en el negocio; no implica actividad reciente.",
     sources: ["customers"],
   },
   margin_by_product: {
@@ -159,8 +160,14 @@ export function buildIndustryDashboardMetrics(
 ): IndustryMetricDefinition[] {
   return PROFILE_METRICS[profileId].map((metricId) => {
     const spec = METRICS[metricId];
+    const evidenceCounts = Object.fromEntries(spec.sources.flatMap((source) => {
+      const item = evidence[source];
+      return item?.available && Number.isFinite(item.records) && item.records >= 0
+        ? [[source, item.records]]
+        : [];
+    })) as Partial<Record<IndustryDashboardSource, number>>;
     if (spec.plannedReason && !spec.completeEvidenceRequired) {
-      return { ...spec, status: "planned", reason: spec.plannedReason };
+      return { ...spec, status: "planned", reason: spec.plannedReason, evidenceCounts };
     }
     if (spec.completeEvidenceRequired) {
       const completeEvidence = spec.sources.length > 0 && spec.sources.every((source) => {
@@ -168,7 +175,7 @@ export function buildIndustryDashboardMetrics(
         return item?.available === true && item.complete === true;
       });
       if (!completeEvidence) {
-        return { ...spec, status: "planned", reason: spec.plannedReason ?? "La cobertura de datos está incompleta." };
+        return { ...spec, status: "planned", reason: spec.plannedReason ?? "La cobertura de datos está incompleta.", evidenceCounts };
       }
     }
     if (spec.sources.length === 0) {
@@ -176,6 +183,7 @@ export function buildIndustryDashboardMetrics(
         ...spec,
         status: "planned",
         reason: spec.plannedReason ?? "La fuente de datos necesaria todavía no está disponible.",
+        evidenceCounts,
       };
     }
     const missing = spec.sources.filter((source) => {
@@ -187,12 +195,14 @@ export function buildIndustryDashboardMetrics(
         ...spec,
         status: "insufficient_data",
         reason: "Falta evidencia operativa en: " + missing.join(", ") + ".",
+        evidenceCounts,
       };
     }
     return {
       ...spec,
       status: "available",
       reason: "Fuentes operativas presentes; mostrar el valor calculado por el módulo de origen.",
+      evidenceCounts,
     };
   });
 }
