@@ -76,7 +76,8 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
         const auth = await authorizeAgencyOwner(request);
         if (!auth.ok) return Response.json({ error: auth.error }, { status: auth.status });
 
-        const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+        const parsedBody = await request.json().catch(() => ({}));
+        const body = parsedBody && typeof parsedBody === "object" ? parsedBody as Record<string, unknown> : {};
         const requestId = typeof body.request_id === "string" ? body.request_id : "";
         const action = typeof body.action === "string" ? body.action : "";
         const note = typeof body.note === "string" ? body.note.trim() : "";
@@ -88,10 +89,10 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
           return Response.json({ error: "Escribe una nota de al menos 5 caracteres para dejar trazabilidad." }, { status: 400 });
         }
         if (note.length > 1000) return Response.json({ error: "La nota supera el máximo de 1000 caracteres." }, { status: 400 });
-        const allowed = await checkRateLimit(`owner-payment-recovery:${auth.userId}:${requestId}`, 20, 3600);
-        if (!allowed) return Response.json({ error: "Demasiadas verificaciones para esta solicitud. Intenta más tarde." }, { status: 429 });
-
         try {
+          const allowed = await checkRateLimit(`owner-payment-recovery:${auth.userId}:${requestId}`, 20, 3600);
+          if (!allowed) return Response.json({ error: "Demasiadas verificaciones para esta solicitud. Intenta más tarde." }, { status: 429 });
+
           const db = adminClient();
           const { data: recovery, error: recoveryError } = await db
             .from("payment_creation_requests")
