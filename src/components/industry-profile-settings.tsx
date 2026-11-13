@@ -134,7 +134,7 @@ export function IndustryProfileSettings({ canManage }: { canManage: boolean }) {
           <p className="mt-1 text-sm text-muted-foreground">Define el rubro operativo para adaptar el Resumen y las recomendaciones. No modifica tu giro tributario ni activa funciones que aún no están disponibles.</p>
         </div>
       </div>
-      {loading ? <p className="mt-4 text-sm text-muted-foreground">Cargando configuración…</p> : loadError ? <p role="alert" className="mt-4 text-sm text-destructive">{loadError}</p> : !schemaAvailable ? (
+      {loading ? <p className="mt-4 text-sm text-muted-foreground">Cargando configuración…</p> : !active?.id ? <p className="mt-4 text-sm text-muted-foreground">Selecciona un negocio activo para consultar su perfil sectorial.</p> : loadError ? <p role="alert" className="mt-4 text-sm text-destructive">{loadError}</p> : !schemaAvailable ? (
         <div className="mt-4 rounded-lg border border-dashed p-3 text-sm text-muted-foreground"><Lock className="mr-2 inline h-4 w-4" />La estructura de base de datos para perfiles sectoriales está pendiente de migración. No se ha modificado ningún dato.</div>
       ) : (
         <>
