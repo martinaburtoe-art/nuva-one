@@ -106,6 +106,7 @@ function POS() {
     fingerprint: string;
     saleId: string;
     idempotencyKey: string;
+    terminal?: boolean;
   } | null>(null);
 
   const { data: receiptDoc } = useQuery({
@@ -307,7 +308,14 @@ function POS() {
         }
       }
 
-      if (attempt || stored) {
+      if (attempt?.terminal) {
+        onlinePaymentAttemptRef.current = null;
+        try {
+          localStorage.removeItem(attemptStorageKey);
+        } catch {
+          // Provider has confirmed a terminal result.
+        }
+      } else if (attempt || stored) {
         toast.error("Hay un link de pago online pendiente. Verifica su resultado antes de cobrar por otro medio.");
         return;
       }
@@ -362,7 +370,7 @@ function POS() {
               typeof parsed?.saleId === "string" &&
               typeof parsed?.idempotencyKey === "string"
             ) {
-              previousAttempt = parsed;
+              previousAttempt = { ...parsed, terminal: parsed.terminal === true };
               onlinePaymentAttemptRef.current = parsed;
             } else {
               toast.error("La referencia de un cobro anterior no se puede verificar. No se generará otro intento.");
@@ -375,10 +383,20 @@ function POS() {
         }
 
         if (previousAttempt && previousAttempt.fingerprint !== cartFingerprint) {
-          toast.error(
-            "Hay un intento de cobro anterior sin resolver. Recupera ese intento antes de generar otro para evitar un posible doble cobro.",
-          );
-          return;
+          if (previousAttempt.terminal) {
+            onlinePaymentAttemptRef.current = null;
+            previousAttempt = null;
+            try {
+              localStorage.removeItem(attemptStorageKey);
+            } catch {
+              // Provider has confirmed a terminal result.
+            }
+          } else {
+            toast.error(
+              "Hay un intento de cobro anterior sin resolver. Recupera ese intento antes de generar otro para evitar un posible doble cobro.",
+            );
+            return;
+          }
         }
 
         if (previousAttempt?.fingerprint === cartFingerprint) {
@@ -467,11 +485,24 @@ function POS() {
           }
 
           if (json.code === "PAYMENT_ATTEMPT_TERMINAL") {
-            onlinePaymentAttemptRef.current = null;
-            try {
-              localStorage.removeItem(attemptStorageKey);
-            } catch {
-              // Provider confirmed that the previous intent is terminal.
+            const previous = onlinePaymentAttemptRef.current;
+            if (previous) {
+              const nextAttempt = {
+                ...previous,
+                idempotencyKey: crypto.randomUUID(),
+                terminal: true,
+              };
+              try {
+                const serializedAttempt = JSON.stringify(nextAttempt);
+                localStorage.setItem(attemptStorageKey, serializedAttempt);
+                if (localStorage.getItem(attemptStorageKey) !== serializedAttempt) {
+                  throw new Error("terminal retry key could not be persisted");
+                }
+                onlinePaymentAttemptRef.current = nextAttempt;
+              } catch {
+                toast.error("El intento terminó, pero no se pudo guardar una nueva clave segura.");
+                return;
+              }
             }
             setOnlinePayment(null);
           }
