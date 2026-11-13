@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "feat/industry-intelligence-**"
+  pull_request:
+    branches:
+      - "fix/resumen-mobile-release-20261112"
   workflow_dispatch:
 
 permissions:
