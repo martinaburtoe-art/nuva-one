@@ -1,6 +1,6 @@
 # P0 sector configuration contract
 
-Status: application-level validation foundation. This is not database persistence, onboarding UI, or a claim that planned workflows are live.
+Status: application-level validation foundation for the three P0 profiles only. P1/P2 profiles are intentionally rejected by this detailed schema until their own contracts are implemented. This is not database persistence, onboarding UI, or a claim that planned workflows are live.
 
 ## Separation of concerns
 
@@ -32,6 +32,7 @@ Capture wholesale/delivery channels, units, multiple warehouses, customer price 
 - Defaults are conservative and opt-in.
 - Require lot tracking before expiry tracking.
 - Never infer package conversion ratios.
+- Keep shipment dispatch separate from scheduled dispatch: an existing shipment workflow does not prove calendar scheduling, capacity allocation or route-slot management.
 - Return requested, available and planned capabilities separately.
 - Only evidence-backed available capabilities may be exposed as enabled.
 - Configuration is not an authorization boundary.
