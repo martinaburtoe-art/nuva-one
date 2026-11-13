@@ -15,6 +15,7 @@ import { goalsLabel } from "@/lib/resumen-goals";
 import { getResumenOperationalStatus, hasResumenActivity } from "@/lib/resumen-operational-status";
 import { buildResumenChartData } from "@/lib/resumen-chart-data";
 import { calculateInventoryValueAtCost } from "@/lib/resumen-inventory-value";
+import { isProductLowStock } from "@/lib/resumen-stock-threshold";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparableWindow } from "@/lib/resumen-period-comparison";
 import { getIndustryProfile } from "@/lib/industry-profiles";
@@ -151,11 +152,7 @@ function Dashboard() {
         supabase.from("products").select("id, stock, cost, low_stock_threshold, reorder_point")
           .eq("business_id", active!.id).order("id").range(from, to),
       );
-      const lowStockCount = products.filter((product: any) => {
-        const stock = Number(product.stock ?? 0);
-        const threshold = Number(product.low_stock_threshold ?? product.reorder_point ?? 0);
-        return threshold > 0 && stock <= threshold;
-      }).length;
+      const lowStockCount = products.filter(isProductLowStock).length;
       return {
         inventoryValue: calculateInventoryValueAtCost(products),
         productsCount: products.length,
