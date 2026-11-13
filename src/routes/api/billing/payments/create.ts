@@ -166,6 +166,30 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           }
         }
 
+        if (saleId) {
+          const { data: unresolvedSaleRequest, error: unresolvedSaleError } = await admin
+            .from("payment_creation_requests")
+            .select("commerce_order, status")
+            .eq("business_id", businessId)
+            .eq("sale_id", saleId)
+            .in("status", ["creating", "recovery_required"])
+            .maybeSingle();
+
+          if (unresolvedSaleError) {
+            return json({ error: "No se pudo comprobar si existe otro intento pendiente" }, 500);
+          }
+          if (unresolvedSaleRequest) {
+            return json(
+              {
+                error: "La venta ya tiene un intento externo sin resolver. No se creará otro cobro hasta conciliarlo.",
+                code: "PAYMENT_RECOVERY_REQUIRED",
+                commerce_order: unresolvedSaleRequest.commerce_order,
+              },
+              409,
+            );
+          }
+        }
+
         const commerceOrder = `nuva-${crypto.randomUUID()}`;
         const { data: claim, error: claimError } = await admin
           .from("payment_creation_requests")
@@ -186,6 +210,25 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           if (claimError.code === "23505") {
             const raced = await loadExisting();
             if (raced) return respondFromExisting(raced);
+            if (saleId) {
+              const { data: unresolvedRace } = await admin
+                .from("payment_creation_requests")
+                .select("commerce_order, status")
+                .eq("business_id", businessId)
+                .eq("sale_id", saleId)
+                .in("status", ["creating", "recovery_required"])
+                .maybeSingle();
+              if (unresolvedRace) {
+                return json(
+                  {
+                    error: "La venta ya tiene un intento externo sin resolver. No se creará otro cobro hasta conciliarlo.",
+                    code: "PAYMENT_RECOVERY_REQUIRED",
+                    commerce_order: unresolvedRace.commerce_order,
+                  },
+                  409,
+                );
+              }
+            }
           }
           return json({ error: "No se pudo reservar el intento de cobro" }, 500);
         }
