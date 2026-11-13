@@ -13,6 +13,8 @@ import { extractChatErrorMessage } from "@/lib/chat-error";
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [completionAnnouncement, setCompletionAnnouncement] = useState("");
   const { active } = useActiveBusiness();
 
   // Read auth/business via refs + a custom fetch (evaluated per-request)
@@ -47,11 +49,26 @@ export function AiChatBubble() {
       },
     }),
     onError: (err) => {
-      toast.error(extractChatErrorMessage(err.message));
+      const message = extractChatErrorMessage(err.message);
+      setRequestError(message);
+      toast.error(message);
     },
   });
 
   const isLoading = status === "submitted" || status === "streaming";
+  const wasLoadingRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      wasLoadingRef.current = true;
+      setCompletionAnnouncement("");
+    } else if (wasLoadingRef.current && status === "ready") {
+      wasLoadingRef.current = false;
+      setCompletionAnnouncement("Respuesta recibida.");
+    } else if (status === "error") {
+      wasLoadingRef.current = false;
+    }
+  }, [isLoading, status]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -71,6 +88,8 @@ export function AiChatBubble() {
       }
     }
 
+    setRequestError(null);
+    setCompletionAnnouncement("");
     await sendMessage({ text: input });
     setInput("");
   }
@@ -151,6 +170,14 @@ export function AiChatBubble() {
               <div role="status" aria-live="polite" className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Loader2 aria-hidden="true" className="h-3 w-3 animate-spin" />
                 {status === "submitted" ? "Preparando la consulta..." : "Nüva está generando la respuesta..."}
+              </div>
+            )}
+            {completionAnnouncement && !isLoading && (
+              <p role="status" aria-live="polite" className="text-xs text-muted-foreground">{completionAnnouncement}</p>
+            )}
+            {requestError && (
+              <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                {requestError}
               </div>
             )}
           </div>
