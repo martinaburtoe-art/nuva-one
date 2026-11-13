@@ -11,6 +11,20 @@ db() {
   docker exec -i "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"
 }
 
+wait_for_lock_holder() {
+  local app_name="$1"
+  for attempt in $(seq 1 50); do
+    local active
+    active="$(db -Atc "SELECT count(*) FROM pg_stat_activity WHERE application_name = '$app_name' AND state = 'active' AND query LIKE '%pg_sleep(3)%';" | tr -d '[:space:]')"
+    if [[ "$active" == "1" ]]; then
+      return 0
+    fi
+    sleep 0.1
+  done
+  echo "ERROR: lock holder $app_name did not reach its protected sleep"
+  return 1
+}
+
 USER_ID="00000000-0000-0000-0000-0000000000a1"
 BUSINESS_ID="00000000-0000-0000-0000-0000000000b1"
 PRODUCT_ID="00000000-0000-0000-0000-0000000000c1"
@@ -37,11 +51,11 @@ VALUES (
 SQL
 
 echo "Forcing two webhook settlements to contend on the same intent row"
-docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+docker exec "$DB_CONTAINER" env PGAPPNAME=nuva-payment-lock psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "BEGIN; SELECT id FROM public.payment_intents WHERE id = '$INTENT_ID' FOR UPDATE; SELECT pg_sleep(3); COMMIT;" \
   >/tmp/nuva-payment-lock.log 2>&1 &
 PAYMENT_LOCK_PID=$!
-sleep 0.4
+wait_for_lock_holder "nuva-payment-lock"
 docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "SELECT public.settle_payment_intent('flow','concurrency-payment-token','paid',4000,'concurrency-payment-order');" \
   >/tmp/nuva-payment-a.log 2>&1 &
@@ -63,11 +77,11 @@ EVENT_PROCESSED="$(db -Atc "SELECT processed FROM public.payment_webhook_events 
 echo "PASS: two concurrent webhooks created exactly one payment and one sale-balance effect"
 
 echo "Forcing two inventory adjustments to contend on the same product row"
-docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+docker exec "$DB_CONTAINER" env PGAPPNAME=nuva-inventory-lock psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "BEGIN; SELECT id FROM public.products WHERE id = '$PRODUCT_ID' FOR UPDATE; SELECT pg_sleep(3); COMMIT;" \
   >/tmp/nuva-inventory-lock.log 2>&1 &
 INVENTORY_LOCK_PID=$!
-sleep 0.4
+wait_for_lock_holder "nuva-inventory-lock"
 docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "BEGIN; SELECT set_config('request.jwt.claim.sub','$USER_ID',true); SELECT * FROM public.adjust_product_stock('$PRODUCT_ID',-2,'Concurrent adjustment','concurrency_test','$INVENTORY_SOURCE_ID'); COMMIT;" \
   >/tmp/nuva-inventory-a.log 2>&1 &
@@ -97,11 +111,11 @@ VALUES (
 SQL
 
 echo "Forcing two receipt updates to contend on the same purchase row"
-docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+docker exec "$DB_CONTAINER" env PGAPPNAME=nuva-purchase-lock psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "BEGIN; SELECT id FROM public.purchases WHERE id = '$PURCHASE_ID' FOR UPDATE; SELECT pg_sleep(3); COMMIT;" \
   >/tmp/nuva-purchase-lock.log 2>&1 &
 PURCHASE_LOCK_PID=$!
-sleep 0.4
+wait_for_lock_holder "nuva-purchase-lock"
 docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "UPDATE public.purchases SET status = 'received' WHERE id = '$PURCHASE_ID';" \
   >/tmp/nuva-purchase-a.log 2>&1 &
