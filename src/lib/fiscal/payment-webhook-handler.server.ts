@@ -11,7 +11,7 @@ export type SupabaseLike = {
       p_provider_amount: number | null;
       p_provider_commerce_order: string | null;
     },
-  ) => Promise<{ data: any; error: any }>;
+  ) => PromiseLike<{ data: any; error: any }>;
 };
 
 /**
