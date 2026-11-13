@@ -25,7 +25,7 @@ export function getNuvaScorePeriod(now: Date): NuvaScorePeriod {
     new Date(now.getFullYear(), now.getMonth() - 1, comparablePreviousLastDay + 1),
   );
   const last30Start = toLocalIsoDate(
-    new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30),
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29),
   );
 
   return {
