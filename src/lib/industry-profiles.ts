@@ -51,6 +51,7 @@ export type IndustryCapability =
   | "volume_pricing"
   | "quotes"
   | "dispatch"
+  | "dispatch_scheduling"
   | "recipes_bom"
   | "production_orders"
   | "appointments"
