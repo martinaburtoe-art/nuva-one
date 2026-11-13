@@ -556,7 +556,7 @@ function Dashboard() {
         </section>
 
         <section className="nuva-resumen-panel" aria-label="Análisis comparativo y señales del negocio" style={{ marginBottom: 20 }}>
-          <div className="nuva-resumen-panel-heading">
+          <div className="nuva-resumen-panel-heading nuva-resumen-comparison-heading">
             <div className="nuva-resumen-comparison-copy"><p className="nuva-resumen-section-label">ANÁLISIS DE DESEMPEÑO</p><h2>Qué cambió y dónde mirar</h2><p>Compara tus resultados actuales con el período anterior de igual duración.</p></div>
             {comparisonWindow && <span className="nuva-resumen-comparison-period">Período anterior <strong>{formatComparisonDate(comparisonWindow.from)} – {formatComparisonDate(comparisonWindow.to)}</strong></span>}
           </div>
