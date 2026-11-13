@@ -48,6 +48,7 @@ export function AiChatBubble() {
         return fetch(input, { ...init, headers });
       },
     }),
+    onFinish: () => setCompletionAnnouncement("Respuesta recibida."),
     onError: (err) => {
       const message = extractChatErrorMessage(err.message);
       setRequestError(message);
@@ -56,19 +57,6 @@ export function AiChatBubble() {
   });
 
   const isLoading = status === "submitted" || status === "streaming";
-  const wasLoadingRef = useRef(false);
-
-  useEffect(() => {
-    if (isLoading) {
-      wasLoadingRef.current = true;
-      setCompletionAnnouncement("");
-    } else if (wasLoadingRef.current && status === "ready") {
-      wasLoadingRef.current = false;
-      setCompletionAnnouncement("Respuesta recibida.");
-    } else if (status === "error") {
-      wasLoadingRef.current = false;
-    }
-  }, [isLoading, status]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
