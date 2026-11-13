@@ -14,3 +14,11 @@ describe("getDateRangePresets", () => {
     expect(presets[3]).toMatchObject({ from: "01-10-2026", to: "31-10-2026" });
   });
 });
+
+  it("handles leap-year February and the previous-year boundary", () => {
+    const leapYearPresets = getDateRangePresets(new Date(2024, 2, 15, 12));
+    expect(leapYearPresets[3]).toMatchObject({ from: "01-02-2024", to: "29-02-2024" });
+
+    const januaryPresets = getDateRangePresets(new Date(2027, 0, 5, 12));
+    expect(januaryPresets[3]).toMatchObject({ from: "01-12-2026", to: "31-12-2026" });
+  });
