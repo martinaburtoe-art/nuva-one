@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(62);
+SELECT plan(64);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -114,6 +114,19 @@ SELECT is(
   2,
   'a new deliberate attempt is allowed after the previous intent settles'
 );
+UPDATE public.payment_creation_requests
+   SET status = 'closed',
+       payment_intent_id = '00000000-0000-0000-0000-0000000000e2'
+ WHERE idempotency_key = 'idempotency-key-3';
+INSERT INTO public.payment_creation_requests (
+  business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject, status, payment_intent_id
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000000b1',
+  '00000000-0000-0000-0000-0000000000d1',
+  'flow', 'idempotency-key-5', 'order-overpay', 2000, 'POS overpay test', 'created',
+  '00000000-0000-0000-0000-0000000000e5'
+);
 SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e1'), 1, 'settlement creates exactly one payment row');
 SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'), 4000::numeric, 'payment trigger updates the sale balance');
 SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e1'), 'paid', 'intent status is committed with payment');
@@ -162,6 +175,15 @@ SELECT is(
   public.settle_payment_intent('flow', 'token-overpay', 'paid', 2000, 'order-overpay')->>'outcome',
   'sale_balance_exceeded',
   'settlement rejects an amount above the locked sale balance'
+);
+SELECT is(
+  (SELECT status FROM public.payment_creation_requests WHERE idempotency_key = 'idempotency-key-5'),
+  'recovery_required',
+  'a verified charge exceeding the sale balance is quarantined for reconciliation'
+);
+SELECT ok(
+  (SELECT processed FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-overpay'),
+  'verified overpayment webhook is closed after recording the recovery requirement'
 );
 SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e5'), 0, 'overpayment creates no payment row');
 SELECT is((SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'), 4000::numeric, 'rejected overpayment leaves sale balance unchanged');
