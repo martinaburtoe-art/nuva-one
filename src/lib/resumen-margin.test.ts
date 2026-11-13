@@ -2,45 +2,44 @@ import { describe, expect, it } from "vitest";
 import { calculateGrossMargin } from "./resumen-margin";
 
 describe("calculateGrossMargin", () => {
-  it("calculates margin from complete, real acquisition costs", () => {
+  it("calculates margin from sale-time cost snapshots on every line", () => {
     const result = calculateGrossMargin([
       { items: [
-        { product_id: "p1", qty: 2, price: 1000 },
-        { product_id: "p2", qty: 1, price: 500 },
+        { product_id: "p1", qty: 2, price: 1000, unit_cost_snapshot: 600 },
+        { product_id: "p2", qty: 1, price: 500, unit_cost_snapshot: 200 },
       ] },
-    ], new Map([["p1", 600], ["p2", 200]]));
+    ]);
     expect(result).toEqual({ revenue: 2500, cost: 1400, marginRatio: 0.44 });
   });
 
-  it("returns no margin when any sold product has no known cost", () => {
+  it("does not substitute current product cost when a sale has no snapshot", () => {
     expect(calculateGrossMargin([
       { items: [{ product_id: "p1", qty: 1, price: 1000 }] },
-    ], new Map())).toBeNull();
+    ])).toBeNull();
+  });
+
+  it("returns no margin when any line has a missing or invalid cost snapshot", () => {
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: 1000, unit_cost_snapshot: null }] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: 1000, unit_cost_snapshot: -1 }] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: 1000, unit_cost_snapshot: "invalid" }] }])).toBeNull();
   });
 
   it("returns no margin for incomplete or invalid sale lines", () => {
-    const costs = new Map([["p1", 500]]);
-    expect(calculateGrossMargin([{ items: null }], costs)).toBeNull();
-    expect(calculateGrossMargin([{ items: [] }], costs)).toBeNull();
-    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 0, price: 1000 }] }], costs)).toBeNull();
-    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: -1 }] }], costs)).toBeNull();
-    expect(calculateGrossMargin([{ items: [{ qty: 1, price: 1000 }] }], costs)).toBeNull();
-    expect(calculateGrossMargin([{ items: ["malformed-json"] }], costs)).toBeNull();
-    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: null, price: 1000 }] }], costs)).toBeNull();
-    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: null }] }], costs)).toBeNull();
+    expect(calculateGrossMargin([{ items: null }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 0, price: 1000, unit_cost_snapshot: 500 }] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: -1, unit_cost_snapshot: 500 }] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ qty: 1, price: 1000, unit_cost_snapshot: 500 }] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: ["malformed-json"] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: null, price: 1000, unit_cost_snapshot: 500 }] }])).toBeNull();
+    expect(calculateGrossMargin([{ items: [{ product_id: "p1", qty: 1, price: null, unit_cost_snapshot: 500 }] }])).toBeNull();
   });
 
-  it("accepts a genuine zero acquisition cost without inventing a cost", () => {
+  it("accepts a genuine zero acquisition-cost snapshot", () => {
     const result = calculateGrossMargin([
-      { items: [{ product_id: "free", qty: 1, price: 1000 }] },
-    ], new Map([["free", 0]]));
+      { items: [{ product_id: "free", qty: 1, price: 1000, unit_cost_snapshot: 0 }] },
+    ]);
     expect(result).not.toBeNull();
     expect(result?.marginRatio).toBe(1);
-  });
-
-  it("rejects negative acquisition costs", () => {
-    expect(calculateGrossMargin([
-      { items: [{ product_id: "p1", qty: 1, price: 1000 }] },
-    ], new Map([["p1", -100]]))).toBeNull();
   });
 });
