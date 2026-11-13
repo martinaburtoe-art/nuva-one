@@ -21,6 +21,7 @@ import {
   type MobileScannerSession,
 } from "@/lib/mobile-scanner-bridge";
 import { toast } from "sonner";
+import { ModuleGuard } from "@/components/module-guard";
 
 export const Route = createFileRoute("/_authenticated/mobile-scanner")({
   head: () => ({ meta: [{ title: "Nüva Scanner Móvil" }] }),
@@ -30,6 +31,14 @@ export const Route = createFileRoute("/_authenticated/mobile-scanner")({
 const STORAGE_KEY = "nuva.mobile-scanner.session";
 
 function MobileScanner() {
+  return (
+    <ModuleGuard module="pos">
+      <MobileScannerContent />
+    </ModuleGuard>
+  );
+}
+
+function MobileScannerContent() {
   const [pairCode, setPairCode] = useState("");
   const [session, setSession] = useState<MobileScannerSession | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);

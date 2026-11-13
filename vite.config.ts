@@ -24,6 +24,12 @@ const homepageShowcasePlugin = {
   },
 };
 
+const buildRevision =
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.GITHUB_SHA ||
+  process.env.SOURCE_VERSION ||
+  new Date().toISOString();
+
 export default defineConfig({
   tanstackStart: {
     // Keep the SSR server entry and enable route-component code splitting.
@@ -37,6 +43,9 @@ export default defineConfig({
   // standard Vercel Build Output API v3 bundle.
   nitro: { preset: "vercel" },
   vite: {
+    define: {
+      "import.meta.env.VITE_NUVA_BUILD_REVISION": JSON.stringify(buildRevision),
+    },
     plugins: [homepageShowcasePlugin],
   },
 });

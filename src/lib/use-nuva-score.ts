@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
+import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
+import { calculateGrossMargin } from "@/lib/resumen-margin";
+import { getNuvaScorePeriod } from "@/lib/nuva-score-periods";
+import { isProductLowStock } from "@/lib/resumen-stock-threshold";
 
 // Nüva Score: 5 componentes de 0 a 20 puntos cada uno, sumando 0-100.
 // Cada componente se calcula desde datos reales ya existentes en el
@@ -19,6 +23,7 @@ export type ScoreComponent = {
 export type NuvaScore = {
   total: number | null; // null si no hay ningún componente calculable
   components: ScoreComponent[];
+  coverage: { available: number; total: 5 };
 };
 
 function scoreFromRatio(ratio: number, goodAt: number, badAt: number): number {
@@ -48,44 +53,48 @@ export function useNuvaScore() {
     queryKey: ["nuva-score", active?.id],
     queryFn: async (): Promise<NuvaScore> => {
       const bid = active!.id;
-      const now = new Date();
-      const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-        .toISOString()
-        .slice(0, 10);
-      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        .toISOString()
-        .slice(0, 10);
-      const last30 = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
-      const todayIso = now.toISOString().slice(0, 10);
+      const period = getNuvaScorePeriod(new Date());
+      const { currentMonthStart, previousMonthStart, previousComparableEndExclusive, last30Start, today: todayIso } = period;
 
-      const [txRes, productsRes, salesRes, creditSalesRes] = await Promise.all([
-        supabase
+      const [tx, products, sales, creditSales] = await Promise.all([
+        fetchAllResumenRows((from, to) => supabase
           .from("transactions")
           .select("type, amount, tx_date")
           .eq("business_id", bid)
-          .gte("tx_date", last30),
-        supabase
+          .gte("tx_date", last30Start)
+          .lte("tx_date", todayIso)
+          .order("id")
+          .range(from, to)),
+        fetchAllResumenRows((from, to) => supabase
           .from("products")
-          .select("cost, price, stock, low_stock_threshold")
-          .eq("business_id", bid),
-        supabase
+          .select("id, stock, low_stock_threshold, reorder_point")
+          .eq("business_id", bid)
+          .order("id")
+          .range(from, to)),
+        fetchAllResumenRows((from, to) => supabase
           .from("sales")
           .select("total, items, sale_date")
           .eq("business_id", bid)
           .neq("status", "cancelled")
-          .gte("sale_date", startOfLastMonth),
-        supabase
+          .gte("sale_date", previousMonthStart)
+          .lte("sale_date", todayIso)
+          .order("id")
+          .range(from, to)),
+        fetchAllResumenRows((from, to) => supabase
           .from("sales")
           .select("total, paid_amount, due_date")
           .eq("business_id", bid)
           .eq("is_credit", true)
-          .neq("status", "cancelled"),
+          .neq("status", "cancelled")
+          .order("id")
+          .range(from, to)),
       ]);
 
       const components: ScoreComponent[] = [];
 
       // 1) Liquidez: flujo de caja neto de los últimos 30 días.
-      const tx = txRes.data ?? [];
+      // Todos los conjuntos se leen paginados; el límite por respuesta de
+      // Supabase no debe sesgar el score de negocios con más de 1.000 filas.
       if (tx.length > 0) {
         const income = tx
           .filter((t) => t.type === "income")
@@ -108,47 +117,13 @@ export function useNuvaScore() {
         });
       }
 
-      // 2) Margen: sobre ventas del mes actual, usando costo real del producto.
-      const products = productsRes.data ?? [];
-      const costByProduct = new Map<string, number>();
-      // No tenemos product_id en products.select porque no se pidió -- lo
-      // recalculamos abajo con una consulta separada solo si hay ventas.
-      const salesThisMonth = (salesRes.data ?? []).filter((s) => s.sale_date >= startOfThisMonth);
+      // 2) Margen: solo con costo unitario congelado en cada línea al vender.
+      // El costo actual del catálogo no reemplaza el costo histórico de una venta.
+      const salesThisMonth = sales.filter((s) => s.sale_date >= currentMonthStart);
       if (salesThisMonth.length > 0) {
-        const productIds = new Set<string>();
-        salesThisMonth.forEach((s) => {
-          (s.items as Array<{ product_id?: string }> | null)?.forEach((it) => {
-            if (it.product_id) productIds.add(it.product_id);
-          });
-        });
-        let marginPoints: number | null = null;
-        let marginDetail = "";
-        if (productIds.size > 0) {
-          const { data: costRows } = await supabase
-            .from("products")
-            .select("id, cost")
-            .eq("business_id", bid)
-            .in("id", Array.from(productIds));
-          (costRows ?? []).forEach((r) => costByProduct.set(r.id, Number(r.cost)));
-
-          let revenue = 0;
-          let cost = 0;
-          salesThisMonth.forEach((s) => {
-            (s.items as Array<{ product_id?: string; qty: number; price: number }> | null)?.forEach(
-              (it) => {
-                const lineRevenue = Number(it.price) * Number(it.qty);
-                revenue += lineRevenue;
-                const unitCost = it.product_id ? (costByProduct.get(it.product_id) ?? 0) : 0;
-                cost += unitCost * Number(it.qty);
-              },
-            );
-          });
-          if (revenue > 0) {
-            const marginRatio = (revenue - cost) / revenue;
-            marginPoints = scoreFromRatio(marginRatio, 0.35, 0.1);
-            marginDetail = `Margen bruto de ${(marginRatio * 100).toFixed(0)}% este mes`;
-          }
-        }
+        const margin = calculateGrossMargin(salesThisMonth);
+        const marginPoints = margin ? scoreFromRatio(margin.marginRatio, 0.35, 0.1) : null;
+        const marginDetail = margin ? `Margen bruto de ${(margin.marginRatio * 100).toFixed(0)}% este mes` : "";
         if (marginPoints !== null) {
           components.push({
             key: "margen",
@@ -161,7 +136,7 @@ export function useNuvaScore() {
       }
 
       // 3) Cobranza: % de cuentas por cobrar vencidas sobre el total pendiente.
-      const creditSales = creditSalesRes.data ?? [];
+      
       const pending = creditSales.filter((s) => Number(s.paid_amount) < Number(s.total));
       if (pending.length > 0) {
         const totalPending = pending.reduce(
@@ -189,7 +164,7 @@ export function useNuvaScore() {
 
       // 4) Inventario: % de productos en stock crítico (<= umbral bajo).
       if (products.length > 0) {
-        const critical = products.filter((p) => Number(p.stock) <= Number(p.low_stock_threshold));
+        const critical = products.filter(isProductLowStock);
         const ratio = critical.length / products.length;
         const points = scoreFromRatio(ratio, 0.05, 0.4);
         components.push({
@@ -204,10 +179,10 @@ export function useNuvaScore() {
         });
       }
 
-      // 5) Crecimiento: ventas de este mes vs mes anterior.
+      // 5) Crecimiento: ventas acumuladas del mes actual vs. los mismos días del mes anterior.
       const totalThisMonth = salesThisMonth.reduce((s, r) => s + Number(r.total), 0);
-      const totalLastMonth = (salesRes.data ?? [])
-        .filter((s) => s.sale_date >= startOfLastMonth && s.sale_date < startOfThisMonth)
+      const totalLastMonth = sales
+        .filter((s) => s.sale_date >= previousMonthStart && s.sale_date < previousComparableEndExclusive)
         .reduce((s, r) => s + Number(r.total), 0);
       if (totalLastMonth > 0) {
         const growth = (totalThisMonth - totalLastMonth) / totalLastMonth;
@@ -216,20 +191,20 @@ export function useNuvaScore() {
           key: "crecimiento",
           label: "Crecimiento",
           points,
-          detail: `Ventas ${growth >= 0 ? "+" : ""}${(growth * 100).toFixed(0)}% vs. mes anterior`,
+          detail: `Ventas ${growth >= 0 ? "+" : ""}${(growth * 100).toFixed(0)}% vs. mismos días del mes anterior`,
           status: statusFromPoints(points),
         });
       }
 
       if (components.length === 0) {
-        return { total: null, components: [] };
+        return { total: null, components: [], coverage: { available: 0, total: 5 } };
       }
 
       const total = Math.round(
         (components.reduce((s, c) => s + c.points, 0) / (components.length * 20)) * 100,
       );
 
-      return { total, components };
+      return { total, components, coverage: { available: components.length, total: 5 } };
     },
   });
 }

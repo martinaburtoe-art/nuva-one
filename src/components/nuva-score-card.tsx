@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { useNuvaScore, type ScoreComponent } from "@/lib/use-nuva-score";
 import { AlertTriangle, ArrowUpRight, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getNuvaScoreLabel } from "@/lib/nuva-score-coverage";
 
 const statusIcon: Record<ScoreComponent["status"], typeof CheckCircle2> = {
   good: CheckCircle2,
@@ -25,18 +26,11 @@ function ringColor(total: number): string {
   return "oklch(0.6 0.22 25)";
 }
 
-function scoreLabel(total: number): string {
-  if (total >= 85) return "Excelente";
-  if (total >= 70) return "Saludable";
-  if (total >= 40) return "Atención";
-  return "Crítico";
-}
-
 function actionFor(key: string): { href: string; label: string } {
   if (key === "inventario") return { href: "/inventory", label: "Ver inventario" };
   if (key === "margen" || key === "liquidez")
     return { href: "/finance", label: "Analizar finanzas" };
-  if (key === "cobranza") return { href: "/crm", label: "Revisar cobranza" };
+  if (key === "cobranza") return { href: "/customers", label: "Revisar cobranza" };
   if (key === "crecimiento") return { href: "/sales", label: "Ver ventas" };
   return { href: "/dashboard", label: "Ver dashboard" };
 }
@@ -77,10 +71,12 @@ export function NuvaScoreCard() {
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">Nüva Score</h3>
             <span className="rounded-full border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {scoreLabel(total)}
+              {getNuvaScoreLabel(total, score.coverage.available, score.coverage.total)}
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Salud general de tu negocio</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Salud general de tu negocio · {score.coverage.available}/{score.coverage.total} indicadores disponibles
+          </p>
         </div>
         <div className="relative h-24 w-24 shrink-0">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
@@ -111,6 +107,13 @@ export function NuvaScoreCard() {
           </div>
         </div>
       </div>
+
+      {score.coverage.available < score.coverage.total && (
+        <p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-5 text-muted-foreground">
+          Resultado parcial: se calcula únicamente con indicadores respaldados por datos completos.
+          Los indicadores sin información suficiente no se estiman ni penalizan.
+        </p>
+      )}
 
       <div className="mt-5 space-y-3">
         {components.map((c) => {

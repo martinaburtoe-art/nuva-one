@@ -36,10 +36,11 @@ export function useActiveBusinessId() {
 
 export function useActiveBusiness() {
   const [activeId, setActiveId] = useActiveBusinessId();
-  const { data: businesses, isLoading } = useBusinesses();
+  const { data: businesses, isLoading, isError, refetch } = useBusinesses();
   const active = businesses?.find((b) => b.id === activeId) ?? null;
   // No auto-seleccionar negocio: el usuario elige explícitamente cuál usar.
-  return { active, businesses: businesses ?? [], setActiveId, isLoading };
+  // Expose query state so modules can distinguish an empty account from a failed lookup.
+  return { active, businesses: businesses ?? [], setActiveId, isLoading, isError, refetch };
 }
 
 export type MemberRole = "owner" | "admin" | "staff" | "viewer";

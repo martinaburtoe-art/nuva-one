@@ -23,27 +23,58 @@ import {
   Calculator,
   CalendarClock,
   Users,
-  Receipt,
   ScanBarcode,
   Plus,
   ArrowDownToLine,
   ArrowUpFromLine,
   WifiOff,
+  BookOpen,
+  Brain,
+  Truck,
+  MessagesSquare,
+  UserRoundCog,
+  ShieldCheck,
+  Link2,
 } from "lucide-react";
 
 const navItems = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { to: "/pos", label: "Caja", icon: Calculator },
+  { to: "/caja-control", label: "Control de caja", icon: CreditCard },
+  { to: "/mobile-scanner", label: "Scanner móvil", icon: ScanBarcode },
   { to: "/sales", label: "Ventas", icon: ShoppingCart },
   { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/billing", label: "Facturación SII", icon: Receipt },
+  { to: "/customer-action-center", label: "Centro de acción CRM", icon: FileText },
+  { to: "/customers-intelligence", label: "Inteligencia de clientes", icon: Brain },
   { to: "/purchases", label: "Compras", icon: Package },
+  { to: "/catalog", label: "Catálogo", icon: BookOpen },
   { to: "/inventory", label: "Inventario", icon: Boxes },
+  { to: "/inventario-conteo", label: "Conteo físico", icon: Boxes },
+  { to: "/inventario-operaciones", label: "Operaciones de inventario", icon: Package },
+  { to: "/shipments", label: "Envíos & Entregas", icon: Truck },
   { to: "/finance", label: "Finanzas", icon: CreditCard },
+  { to: "/finance-accounting", label: "Contabilidad y tributación", icon: FileText },
+  { to: "/finance-professional", label: "Centro financiero profesional", icon: Calculator },
+  { to: "/financial-dashboard", label: "Panel financiero", icon: BarChart3 },
+  { to: "/financial-control", label: "Control financiero", icon: ShieldCheck },
+  { to: "/financial-integrity", label: "Integridad financiera", icon: ShieldCheck },
   { to: "/analytics", label: "Indicadores", icon: BarChart3 },
   { to: "/quotes", label: "Cotizaciones", icon: FileText },
+  { to: "/pricing-calculator", label: "Calculadora de precios", icon: Calculator },
+  { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain },
+  { to: "/business-health", label: "Salud del negocio", icon: BarChart3 },
+  { to: "/business-simulator", label: "Simulador de negocio", icon: Calculator },
+  { to: "/executive-command-center", label: "Centro Ejecutivo", icon: Sparkles },
   { to: "/ai", label: "Asistente IA", icon: Sparkles },
+  { to: "/foro", label: "Comunidad", icon: MessagesSquare },
   { to: "/shifts", label: "Turnos", icon: CalendarClock },
+  { to: "/people", label: "Nüva People", icon: UserRoundCog },
+  { to: "/people-employees", label: "Colaboradores", icon: Users },
+  { to: "/people-attendance", label: "Asistencia y jornada", icon: CalendarClock },
+  { to: "/people-compliance", label: "Centro de cumplimiento", icon: ShieldCheck },
+  { to: "/people-lifecycle", label: "Vacaciones y permisos", icon: CalendarClock },
+  { to: "/people-payroll", label: "Remuneraciones", icon: Calculator },
+  { to: "/conexiones", label: "Nüva Connect", icon: Link2 },
   { to: "/settings", label: "Configuración", icon: Settings },
 ] as const;
 
@@ -56,7 +87,7 @@ const quickActions = [
     icon: Plus,
   },
   {
-    to: "/inventory",
+    to: "/mobile-scanner",
     label: "Abrir scanner",
     keywords: "escanear scanner código barra barcode",
     icon: ScanBarcode,
@@ -129,7 +160,7 @@ export function GlobalSearch({ visibleNav }: { visibleNav?: readonly { to: strin
             online ? "Abrir búsqueda y acciones rápidas" : "Abrir acciones rápidas sin conexión"
           }
           onClick={() => setOpen(true)}
-          className="fixed bottom-[4.5rem] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-background shadow-lg ring-1 ring-black/5 md:hidden"
+          className="fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom))] left-4 right-auto z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-background shadow-lg ring-1 ring-black/5 lg:hidden"
         >
           <ScanBarcode className="h-5 w-5 text-primary" aria-hidden="true" />
           {!online && (
