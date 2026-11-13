@@ -135,6 +135,7 @@ export function DateRangeFilter({
             type="button"
             size="sm"
             variant={activePreset?.id === preset.id ? "secondary" : "ghost"}
+            className="min-h-11"
             aria-pressed={activePreset?.id === preset.id}
             onClick={() => {
               onFromChange(preset.from);
