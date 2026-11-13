@@ -1453,10 +1453,10 @@ Formato de cada entrada:
 - especialista: orchestrator
 - prioridad: P1
 - estado: PENDIENTE
-- dependencias: T-20,T-21,T-22,T-27,T-28,T-32
+- dependencias: T-33
 - criterios_de_aceptacion: Investigar cada tarea bloqueada (T-20, T-21, T-22, T-27, T-28, T-32), documentar qué permiso o recurso falta, preparar alternativas que no requieran autorización de deploy ni cambios en producción, y proponer camino para desbloquearlas.
 - pruebas_requeridas: documento de bloqueos con alternativas viables; sin cambios en producción
-- evidencia: registro de bloqueos + alternativas preparadas
+- evidencia: auditoría de solo lectura 2026-11-09 en `docs/nuva-agency/audits/2026-11-09-agency-closure-audit.md`; investigación y alternativas formales pendientes de ejecución por Orchestrator.
 - seguridad: solo investigación y documentación
 
 ## T-136 — Resolver dependencias pendientes para desbloquear tareas: T-134
