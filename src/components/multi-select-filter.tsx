@@ -21,17 +21,17 @@ export function MultiSelectFilter({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="nuva-category-filter w-full justify-between">
+        <Button variant="outline" size="sm" className="nuva-category-filter w-full justify-between" aria-label={`${label}${selected.length > 0 ? `, ${selected.length} seleccionados` : ""}`}>
           {label}
           {selected.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 text-xs text-primary">
+            <span aria-live="polite" className="ml-1.5 rounded-full bg-primary/15 px-1.5 text-xs text-primary">
               {selected.length}
             </span>
           )}
           <ChevronDown className="ml-1.5 h-3.5 w-3.5 opacity-60" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 p-2">
+      <PopoverContent align="start" side="bottom" sideOffset={8} className="nuva-mobile-filter-sheet w-56 p-2">
         {options.length === 0 && <p className="p-2 text-xs text-muted-foreground">Sin opciones</p>}
         <div className="max-h-64 space-y-1 overflow-y-auto">
           {options.map((opt) => (
