@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
 import { getPaymentAdapter, decryptPaymentCreds } from "@/lib/fiscal/payment-service.server";
 import { checkRateLimit } from "@/lib/rate-limit.server";
+import { handlePaymentWebhook } from "@/lib/fiscal/payment-webhook-handler.server";
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -94,14 +95,45 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             );
           }
 
-          const { data: savedIntent, error: savedIntentError } = await admin
+          let { data: savedIntent, error: savedIntentError } = await admin
             .from("payment_intents")
-            .select("id, payment_url, status")
+            .select("id, token, payment_url, status")
             .eq("provider", provider)
             .eq("commerce_order", existing.commerce_order)
             .maybeSingle();
 
           if (savedIntentError) throw savedIntentError;
+
+          // A user retry doubles as a server-to-server status check. This lets
+          // the POS resolve a delayed webhook without creating another order.
+          if (savedIntent?.status === "pending" && existing.status !== "recovery_required") {
+            try {
+              await handlePaymentWebhook(admin as any, existing.provider, savedIntent.token);
+            } catch {
+              return json(
+                { error: "No se pudo verificar el estado del pago. El intento se conserva y no se creará otro.", code: "PAYMENT_STATUS_UNAVAILABLE" },
+                503,
+              );
+            }
+
+            const refreshedIntent = await admin
+              .from("payment_intents")
+              .select("id, token, payment_url, status")
+              .eq("provider", provider)
+              .eq("commerce_order", existing.commerce_order)
+              .maybeSingle();
+            if (refreshedIntent.error) throw refreshedIntent.error;
+            savedIntent = refreshedIntent.data ?? savedIntent;
+
+            const refreshedRequest = await admin
+              .from("payment_creation_requests")
+              .select("status")
+              .eq("id", existing.id)
+              .maybeSingle();
+            if (refreshedRequest.error) throw refreshedRequest.error;
+            existing.status = refreshedRequest.data?.status ?? existing.status;
+          }
+
           if (savedIntent?.status === "paid") {
             await admin
               .from("payment_creation_requests")
@@ -212,15 +244,47 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           }
 
           if (activeSaleRequest) {
-            const { data: activeIntent, error: activeIntentError } = await admin
+            let { data: activeIntent, error: activeIntentError } = await admin
               .from("payment_intents")
-              .select("id, payment_url, status")
+              .select("id, token, payment_url, status")
               .eq("provider", activeSaleRequest.provider)
               .eq("commerce_order", activeSaleRequest.commerce_order)
               .maybeSingle();
 
             if (activeIntentError) {
               return json({ error: "No se pudo recuperar el intento de cobro existente" }, 500);
+            }
+
+            if (activeIntent?.status === "pending" && activeSaleRequest.status !== "recovery_required") {
+              try {
+                await handlePaymentWebhook(admin as any, activeSaleRequest.provider, activeIntent.token);
+              } catch {
+                return json(
+                  { error: "No se pudo verificar el estado del link activo. No se creará otro cobro.", code: "PAYMENT_STATUS_UNAVAILABLE" },
+                  503,
+                );
+              }
+
+              const refreshedIntent = await admin
+                .from("payment_intents")
+                .select("id, token, payment_url, status")
+                .eq("provider", activeSaleRequest.provider)
+                .eq("commerce_order", activeSaleRequest.commerce_order)
+                .maybeSingle();
+              if (refreshedIntent.error) {
+                return json({ error: "No se pudo recuperar el estado del intento" }, 500);
+              }
+              activeIntent = refreshedIntent.data ?? activeIntent;
+
+              const refreshedRequest = await admin
+                .from("payment_creation_requests")
+                .select("status")
+                .eq("id", activeSaleRequest.id)
+                .maybeSingle();
+              if (refreshedRequest.error) {
+                return json({ error: "No se pudo recuperar el estado de la solicitud" }, 500);
+              }
+              activeSaleRequest.status = refreshedRequest.data?.status ?? activeSaleRequest.status;
             }
 
             if (activeIntent?.status === "paid") {
