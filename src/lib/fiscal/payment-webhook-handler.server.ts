@@ -28,16 +28,6 @@ export async function handlePaymentWebhook(
     return { outcome: "unsupported_provider" };
   }
 
-  const { data: existingEvent, error: eventError } = await supabaseAdmin
-    .from("payment_webhook_events")
-    .select("processed")
-    .eq("provider", provider)
-    .eq("token", token)
-    .maybeSingle();
-
-  if (eventError) throw eventError;
-  if (existingEvent?.processed) return { outcome: "already_processed" };
-
   const { data: intent, error: intentError } = await supabaseAdmin
     .from("payment_intents")
     .select("*")
@@ -50,6 +40,24 @@ export async function handlePaymentWebhook(
   // Unknown tokens are not persisted: the public webhook endpoint must not
   // become an unbounded event-storage sink for arbitrary provider/token pairs.
   if (!intent) return { outcome: "unknown_token" };
+
+  const { data: existingEvent, error: eventError } = await supabaseAdmin
+    .from("payment_webhook_events")
+    .select("processed")
+    .eq("provider", provider)
+    .eq("token", token)
+    .maybeSingle();
+
+  if (eventError) throw eventError;
+  // A terminal intent must be rechecked: a late provider confirmation may
+  // require manual reconciliation even after an earlier rejection event.
+  if (
+    existingEvent?.processed &&
+    intent.status !== "rejected" &&
+    intent.status !== "expired"
+  ) {
+    return { outcome: "already_processed" };
+  }
 
   // A locally rejected/expired intent is rechecked with the provider before
   // releasing its sale reservation. Some providers can report a late payment;
