@@ -15,10 +15,6 @@ function adminClient() {
   });
 }
 
-function safeError(error: unknown) {
-  return error instanceof Error ? error.message : "PAYMENT_RECOVERY_FAILED";
-}
-
 async function recordRecoveryNote(db: ReturnType<typeof adminClient>, requestId: string, actorId: string, note: string, evidence: Record<string, unknown>) {
   const { error } = await db.rpc("owner_record_payment_recovery_action", {
     p_request_id: requestId,
@@ -253,8 +249,8 @@ export const Route = createFileRoute("/api/owner/payment-recovery")({
           if (error) throw error;
           return Response.json({ ok: true, result: data });
         } catch (error) {
-          console.error("Owner payment recovery POST failed", error);
-          return Response.json({ error: safeError(error) }, { status: 502 });
+          console.error("Owner payment recovery POST failed", error instanceof Error ? error.name : "unknown error");
+          return Response.json({ error: "No fue posible completar la conciliación. El cobro permanece en cuarentena." }, { status: 502 });
         }
       },
     },
