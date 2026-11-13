@@ -24,7 +24,7 @@ export type IndustryConfiguration = {
   commercial: { priceLists: boolean; volumePricing: boolean; customerCredit: boolean };
   operations: { quoteByProject: boolean; scheduledDispatch: boolean; returnsAndWarranty: boolean };
 };
-export type IndustryConfigurationError = { code: "unknown_profile" | "unknown_field" | "invalid_type" | "invalid_value" | "incompatible_units" | "expiry_requires_lots"; path: string; message: string };
+export type IndustryConfigurationError = { code: "unknown_profile" | "profile_not_in_p0" | "unknown_field" | "invalid_type" | "invalid_value" | "incompatible_units" | "expiry_requires_lots"; path: string; message: string };
 export type IndustryConfigurationResult =
   | { ok: true; configuration: IndustryConfiguration; requestedCapabilities: IndustryCapability[]; availableCapabilities: IndustryCapability[]; plannedCapabilities: IndustryCapability[] }
   | { ok: false; errors: IndustryConfigurationError[] };
@@ -70,6 +70,7 @@ function units(v: Record<string, unknown>, key: "purchaseUnits" | "saleUnits", a
 export function buildIndustryConfiguration(profileId: IndustryProfileId | string, input: IndustryConfigurationInput = {}): IndustryConfigurationResult {
   const profile = getIndustryProfile(profileId);
   if (!profile) return { ok: false, errors: [{ code: "unknown_profile", path: "profileId", message: "Perfil sectorial desconocido." }] };
+  if (!PROFILE_UNITS[profile.id]) return { ok: false, errors: [{ code: "profile_not_in_p0", path: "profileId", message: "La configuración operativa detallada todavía está limitada a los tres perfiles P0." }] };
   const errors: IndustryConfigurationError[] = [];
   const root = input as unknown as Record<string, unknown>;
   unknownKeys(root, ["channels", "inventory", "commercial", "operations"], "", errors);
@@ -129,7 +130,7 @@ export function buildIndustryConfiguration(profileId: IndustryProfileId | string
   if (configuration.commercial.volumePricing) requested.add("volume_pricing");
   if (configuration.commercial.customerCredit) requested.add("credit_accounts");
   if (configuration.operations.quoteByProject) requested.add("projects");
-  if (configuration.operations.scheduledDispatch) requested.add("dispatch");
+  if (configuration.operations.scheduledDispatch) requested.add("dispatch_scheduling");
   if (configuration.operations.returnsAndWarranty) requested.add("returns_warranty");
   const requestedCapabilities = [...requested];
   const availableCapabilities = requestedCapabilities.filter((c) => getCapabilityReadiness(c).status === "available");
