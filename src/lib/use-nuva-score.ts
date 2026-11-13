@@ -4,7 +4,6 @@ import { useActiveBusiness } from "@/lib/use-business";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 import { calculateGrossMargin } from "@/lib/resumen-margin";
 import { getNuvaScorePeriod } from "@/lib/nuva-score-periods";
-import { isProductLowStock } from "@/lib/resumen-stock-threshold";
 
 // Nüva Score: 5 componentes de 0 a 20 puntos cada uno, sumando 0-100.
 // Cada componente se calcula desde datos reales ya existentes en el
@@ -164,7 +163,10 @@ export function useNuvaScore() {
 
       // 4) Inventario: % de productos en stock crítico (<= umbral bajo).
       if (products.length > 0) {
-        const critical = products.filter(isProductLowStock);
+        const critical = products.filter((p) => {
+          const threshold = Number(p.low_stock_threshold ?? p.reorder_point ?? 0);
+          return threshold > 0 && Number(p.stock ?? 0) <= threshold;
+        });
         const ratio = critical.length / products.length;
         const points = scoreFromRatio(ratio, 0.05, 0.4);
         components.push({

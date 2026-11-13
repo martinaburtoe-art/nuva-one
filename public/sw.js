@@ -3,8 +3,7 @@
  * Only content-hashed Vite assets are cache-first; navigation always reaches the server.
  */
 const CACHE_PREFIX = "nuva-static-";
-const BUILD_REVISION = "__NUVA_BUILD_REVISION__";
-const CACHE_NAME = `${CACHE_PREFIX}${BUILD_REVISION}`;
+const CACHE_NAME = "nuva-static-v2";
 const MAX_CACHED_ASSETS = 120;
 const HASHED_ASSET = /\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css|woff2?|png|jpe?g|webp|svg)$/i;
 

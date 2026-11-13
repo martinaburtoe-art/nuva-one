@@ -51,12 +51,7 @@ export function PwaLifecycle() {
     let disposed = false;
 
     if ("serviceWorker" in navigator && window.isSecureContext) {
-      const serviceWorkerUrl = new URL("/sw.js", window.location.origin);
-      const buildRevision = (
-        import.meta.env as ImportMetaEnv & { VITE_NUVA_BUILD_REVISION: string }
-      ).VITE_NUVA_BUILD_REVISION;
-      serviceWorkerUrl.searchParams.set("rev", buildRevision);
-      navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/", updateViaCache: "none" })
+      navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" })
         .then((reg) => {
           if (disposed) return;
           registration = reg;
