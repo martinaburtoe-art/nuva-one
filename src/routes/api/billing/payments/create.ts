@@ -295,13 +295,13 @@ export const Route = createFileRoute("/api/billing/payments/create")({
                 .select("commerce_order, status")
                 .eq("business_id", businessId)
                 .eq("sale_id", saleId)
-                .in("status", ["creating", "recovery_required"])
+                .in("status", ["creating", "created", "recovery_required"])
                 .maybeSingle();
               if (unresolvedRace) {
                 return json(
                   {
-                    error: "La venta ya tiene un intento externo sin resolver. No se creará otro cobro hasta conciliarlo.",
-                    code: "PAYMENT_RECOVERY_REQUIRED",
+                    error: "La venta ya tiene una solicitud activa. Reintenta con esta misma clave para recuperar el link existente.",
+                    code: "PAYMENT_ACTIVE_INTENT",
                     commerce_order: unresolvedRace.commerce_order,
                   },
                   409,
