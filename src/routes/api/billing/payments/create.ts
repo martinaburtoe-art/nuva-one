@@ -123,6 +123,17 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             );
           }
 
+          if (existing.status === "recovery_required") {
+            return json(
+              {
+                error: "El proveedor confirmó un resultado que requiere conciliación. El link queda bloqueado para evitar otro cobro.",
+                code: "PAYMENT_RECOVERY_REQUIRED",
+                commerce_order: existing.commerce_order,
+              },
+              409,
+            );
+          }
+
           if (savedIntent?.payment_url) {
             if (existing.status !== "created" || existing.payment_intent_id !== savedIntent.id) {
               await admin
@@ -228,6 +239,15 @@ export const Route = createFileRoute("/api/billing/payments/create")({
                 .from("payment_creation_requests")
                 .update({ status: "closed", payment_intent_id: activeIntent.id, updated_at: new Date().toISOString() })
                 .eq("id", activeSaleRequest.id);
+            } else if (activeSaleRequest.status === "recovery_required") {
+              return json(
+                {
+                  error: "El intento de pago requiere conciliación y no se puede reutilizar ni duplicar.",
+                  code: "PAYMENT_RECOVERY_REQUIRED",
+                  commerce_order: activeSaleRequest.commerce_order,
+                },
+                409,
+              );
             } else if (activeIntent?.payment_url && activeIntent.status === "pending") {
               if (
                 Number(activeSaleRequest.amount) !== amount ||
