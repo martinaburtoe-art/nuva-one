@@ -336,6 +336,21 @@ BEGIN
 END;
 $function$;
 
+-- The lifecycle cleanup triggers clear transaction_id on the parent row before
+-- deleting the generated transaction. ON DELETE SET NULL attempted a second update
+-- of that same sale/purchase tuple from the FK action and caused SQLSTATE 27000.
+ALTER TABLE public.sales
+  DROP CONSTRAINT IF EXISTS sales_transaction_id_fkey;
+ALTER TABLE public.sales
+  ADD CONSTRAINT sales_transaction_id_fkey
+  FOREIGN KEY (transaction_id) REFERENCES public.transactions(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.purchases
+  DROP CONSTRAINT IF EXISTS purchases_transaction_id_fkey;
+ALTER TABLE public.purchases
+  ADD CONSTRAINT purchases_transaction_id_fkey
+  FOREIGN KEY (transaction_id) REFERENCES public.transactions(id) ON DELETE RESTRICT;
+
 -- Pending non-credit sales (including online checkout) must remain unpaid until
 -- a confirmed payment is inserted. The previous trigger defaulted every non-credit
 -- sale to fully paid even when status='pending', making provider settlement impossible.
