@@ -142,6 +142,7 @@ Recommended JSON shape after validation in application code:
 
 Rules:
 1. Only store sector-specific operational preferences here; avoid customer, employee, payment, or clinical records.
+2. Onboarding answers use stable keys `operation_1`…`operation_n` from the selected profile registry. Persist only explicit yes/no answers as booleans; unanswered questions are omitted. Switching the profile resets the draft answers.
 2. Validate the shape with the app's schema validator at the write boundary.
 3. Store only answers actually supplied by the owner. Unknown answers remain absent, not false.
 4. Apply profile defaults first, then owner overrides; a user cannot override a capability's release gate from planned to available.
