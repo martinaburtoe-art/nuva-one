@@ -232,6 +232,7 @@ function PaymentRecoveryPage() {
 
                   <div className="border-t border-slate-100 bg-slate-50/70 p-5 dark:border-white/10 dark:bg-white/[0.02]">
                     <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor={`note-${row.id}`}>Nota / fundamento de la decisión</label>
+                    <p className="mb-2 text-[11px] text-slate-500">No ingreses tokens, claves API, credenciales ni payloads privados en esta nota.</p>
                     <textarea
                       id={`note-${row.id}`}
                       value={notes[row.id] ?? ""}
