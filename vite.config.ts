@@ -41,12 +41,12 @@ const pwaReleaseStampPlugin = {
       process.env.SOURCE_VERSION ||
       new Date().toISOString();
     const withoutPreviousStamp = source.replace(
-      /\\n?\\/\\/ Nüva One build revision: .*\\n?$/,
+      /\n?\/\/ Nüva One build revision: .*\n?$/,
       "",
     );
     await writeFile(
       serviceWorkerPath,
-      `${withoutPreviousStamp}\\n// Nüva One build revision: ${revision}\\n`,
+      `${withoutPreviousStamp}\n// Nüva One build revision: ${revision}\n`,
       "utf8",
     );
   },
