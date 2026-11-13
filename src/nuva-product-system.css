@@ -233,15 +233,20 @@
   .nuva-app *,
   .nuva-app *::before,
   .nuva-app *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    animation: none !important;
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
+    transition-property: color, background-color, border-color, box-shadow, fill, stroke !important;
+    transition-duration: 120ms !important;
   }
   .nuva-app .nuva-surface-interactive:hover,
   .nuva-app .nuva-nav-item:hover,
   .nuva-app .nuva-surface-interactive:active,
-  .nuva-app .nuva-nav-item:active { transform: none; }
+  .nuva-app .nuva-nav-item:active,
+  .nuva-app .nuva-motion-card:active,
+  .nuva-app nav[aria-label="Navegación principal móvil"] > a:active,
+  .nuva-app nav[aria-label="Navegación principal móvil"] button:active {
+    transform: none !important;
+  }
 }
 
 
