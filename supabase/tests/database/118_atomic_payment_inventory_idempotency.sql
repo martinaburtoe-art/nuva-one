@@ -25,6 +25,10 @@ VALUES ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000
 
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
 VALUES ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000b1', 'pending', 5000, '[]'::jsonb, false, 0);
+-- Assert the test fixture's receivable explicitly; payment settlement must not
+-- be coupled to a production default-paid convention for non-credit sales.
+UPDATE public.sales SET total = 5000, paid_amount = 0
+WHERE id = '00000000-0000-0000-0000-0000000000d1';
 SELECT is(
   (SELECT paid_amount FROM public.sales WHERE id = '00000000-0000-0000-0000-0000000000d1'),
   0::numeric,
