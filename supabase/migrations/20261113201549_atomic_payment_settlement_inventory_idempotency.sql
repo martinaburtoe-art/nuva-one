@@ -1,5 +1,5 @@
 -- Atomic payment settlement + distributed inventory idempotency.
--- Generated with Supabase CLI; additive only. Never applied to production in this change.
+-- Additive migration only. Never applied to production in this change.
 
 BEGIN;
 
@@ -319,7 +319,7 @@ BEGIN
       VALUES (
         NEW.business_id,
         'expense',
-        COALESCE(NEW.category, 'Otro'),
+        'Compras',
         NEW.total,
         'Compra: ' || COALESCE(NEW.supplier_name, 'Proveedor'),
         NEW.purchase_date
