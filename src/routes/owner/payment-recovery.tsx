@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, CreditCard, ExternalLink, FileText, Link2, Loader2, RefreshCw, ShieldCheck, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, CreditCard, FileText, Link2, Loader2, RefreshCw, ShieldCheck, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type RecoveryRequest = {
