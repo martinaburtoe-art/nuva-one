@@ -243,3 +243,116 @@
   .nuva-app .nuva-surface-interactive:active,
   .nuva-app .nuva-nav-item:active { transform: none; }
 }
+
+
+/* Mobile motion layer — tactile feedback, clear active state, restrained route entry. */
+.nuva-app nav[aria-label="Navegación principal móvil"] {
+  isolation: isolate;
+  background: color-mix(in oklab, var(--color-background) 88%, white);
+  border-color: color-mix(in oklab, var(--color-border) 78%, transparent);
+  box-shadow: 0 -8px 28px rgb(15 23 42 / 0.055);
+}
+
+@supports (backdrop-filter: blur(18px)) {
+  .nuva-app nav[aria-label="Navegación principal móvil"] {
+    backdrop-filter: blur(18px) saturate(1.25);
+    -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  }
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] > a,
+.nuva-app nav[aria-label="Navegación principal móvil"] > [data-state],
+.nuva-app nav[aria-label="Navegación principal móvil"] button {
+  position: relative;
+  min-width: 0;
+  min-height: 64px;
+  border-radius: 12px;
+  transition:
+    color var(--nuva-duration-fast) var(--nuva-ease),
+    background-color var(--nuva-duration-fast) var(--nuva-ease),
+    transform var(--nuva-duration-fast) var(--nuva-ease);
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] {
+  color: var(--nuva-indigo);
+  background: color-mix(in oklab, var(--nuva-indigo) 7%, transparent);
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 22px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--nuva-indigo);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--nuva-indigo) 32%, transparent);
+  transform: translateX(-50%);
+  animation: nuva-tab-indicator-in 220ms var(--nuva-ease) both;
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] > a svg,
+.nuva-app nav[aria-label="Navegación principal móvil"] button svg {
+  transition: transform var(--nuva-duration-fast) var(--nuva-ease);
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] svg {
+  transform: translateY(-1px) scale(1.08);
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] button[aria-expanded="true"] {
+  color: var(--nuva-indigo);
+  background: color-mix(in oklab, var(--nuva-indigo) 8%, transparent);
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] button:active,
+.nuva-app nav[aria-label="Navegación principal móvil"] > a:active {
+  transform: scale(0.96);
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] :focus-visible {
+  outline: 2px solid var(--nuva-indigo);
+  outline-offset: -2px;
+}
+
+/* Route roots enter with a short, low-distance transition; no layout animation. */
+.nuva-app main > :first-child {
+  animation: nuva-route-enter 280ms var(--nuva-ease) both;
+}
+
+.nuva-app .nuva-motion-card {
+  transition:
+    transform var(--nuva-duration) var(--nuva-ease),
+    box-shadow var(--nuva-duration) var(--nuva-ease),
+    border-color var(--nuva-duration) var(--nuva-ease);
+  will-change: auto;
+}
+
+.nuva-app .nuva-motion-card:active {
+  transform: scale(0.992);
+}
+
+@keyframes nuva-tab-indicator-in {
+  from { opacity: 0; width: 8px; }
+  to { opacity: 1; width: 22px; }
+}
+
+@keyframes nuva-route-enter {
+  from { opacity: 0; transform: translate3d(0, 7px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"]::before,
+  .nuva-app main > :first-child {
+    animation: none !important;
+  }
+
+  .nuva-app nav[aria-label="Navegación principal móvil"] > a,
+  .nuva-app nav[aria-label="Navegación principal móvil"] button,
+  .nuva-app .nuva-motion-card {
+    transition: none !important;
+    transform: none !important;
+  }
+}
