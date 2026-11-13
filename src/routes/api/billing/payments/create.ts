@@ -386,15 +386,59 @@ export const Route = createFileRoute("/api/billing/payments/create")({
                 );
               }
 
-              await admin
-                .from("payment_creation_requests")
-                .update({
-                  status: "created",
-                  payment_intent_id: activeIntent.id,
-                  updated_at: new Date().toISOString(),
-                  last_error: null,
-                })
-                .eq("id", activeSaleRequest.id);
+              if (activeSaleRequest.status === "creating") {
+                const claimRefresh = await admin
+                  .from("payment_creation_requests")
+                  .update({
+                    status: "created",
+                    payment_intent_id: activeIntent.id,
+                    updated_at: new Date().toISOString(),
+                    last_error: null,
+                  })
+                  .eq("id", activeSaleRequest.id)
+                  .eq("status", "creating")
+                  .select("id")
+                  .maybeSingle();
+
+                if (claimRefresh.error) {
+                  return json({ error: "No se pudo actualizar el intento activo" }, 500);
+                }
+                if (!claimRefresh.data) {
+                  const latestClaim = await admin
+                    .from("payment_creation_requests")
+                    .select("status, payment_intent_id")
+                    .eq("id", activeSaleRequest.id)
+                    .maybeSingle();
+                  if (latestClaim.error) {
+                    return json({ error: "No se pudo verificar el intento activo" }, 500);
+                  }
+                  if (
+                    latestClaim.data?.status !== "created" ||
+                    latestClaim.data?.payment_intent_id !== activeIntent.id
+                  ) {
+                    return json(
+                      {
+                        error: "La solicitud cambió a un estado protegido y no se reactivará.",
+                        code: "PAYMENT_RECOVERY_REQUIRED",
+                        commerce_order: activeSaleRequest.commerce_order,
+                      },
+                      409,
+                    );
+                  }
+                }
+              } else if (
+                activeSaleRequest.status !== "created" ||
+                activeSaleRequest.payment_intent_id !== activeIntent.id
+              ) {
+                return json(
+                  {
+                    error: "La referencia del link activo no coincide con la solicitud registrada.",
+                    code: "PAYMENT_RECOVERY_REQUIRED",
+                    commerce_order: activeSaleRequest.commerce_order,
+                  },
+                  409,
+                );
+              }
 
               return json({
                 ok: true,
