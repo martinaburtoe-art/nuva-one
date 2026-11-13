@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
 import { fetchAllResumenRows } from "@/lib/resumen-fetch-all";
 import { calculateGrossMargin } from "@/lib/resumen-margin";
+import { getNuvaScorePeriod } from "@/lib/nuva-score-periods";
 
 // Nüva Score: 5 componentes de 0 a 20 puntos cada uno, sumando 0-100.
 // Cada componente se calcula desde datos reales ya existentes en el
@@ -50,20 +51,15 @@ export function useNuvaScore() {
     queryKey: ["nuva-score", active?.id],
     queryFn: async (): Promise<NuvaScore> => {
       const bid = active!.id;
-      const now = new Date();
-      const toLocalIsoDate = (date: Date) =>
-        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      const startOfThisMonth = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth(), 1));
-      const startOfLastMonth = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-      const last30 = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
-      const todayIso = toLocalIsoDate(now);
+      const period = getNuvaScorePeriod(new Date());
+      const { currentMonthStart, previousMonthStart, previousComparableEndExclusive, last30Start, today: todayIso } = period;
 
       const [tx, products, sales, creditSales] = await Promise.all([
         fetchAllResumenRows((from, to) => supabase
           .from("transactions")
           .select("type, amount, tx_date")
           .eq("business_id", bid)
-          .gte("tx_date", last30)
+          .gte("tx_date", last30Start)
           .lte("tx_date", todayIso)
           .order("id")
           .range(from, to)),
@@ -126,7 +122,7 @@ export function useNuvaScore() {
           costByProduct.set(product.id, Number(product.cost));
         }
       });
-      const salesThisMonth = sales.filter((s) => s.sale_date >= startOfThisMonth);
+      const salesThisMonth = sales.filter((s) => s.sale_date >= currentMonthStart);
       if (salesThisMonth.length > 0) {
         const margin = calculateGrossMargin(
           salesThisMonth,
@@ -192,10 +188,10 @@ export function useNuvaScore() {
         });
       }
 
-      // 5) Crecimiento: ventas de este mes vs mes anterior.
+      // 5) Crecimiento: ventas acumuladas del mes actual vs. los mismos días del mes anterior.
       const totalThisMonth = salesThisMonth.reduce((s, r) => s + Number(r.total), 0);
       const totalLastMonth = sales
-        .filter((s) => s.sale_date >= startOfLastMonth && s.sale_date < startOfThisMonth)
+        .filter((s) => s.sale_date >= previousMonthStart && s.sale_date < previousComparableEndExclusive)
         .reduce((s, r) => s + Number(r.total), 0);
       if (totalLastMonth > 0) {
         const growth = (totalThisMonth - totalLastMonth) / totalLastMonth;
@@ -204,7 +200,7 @@ export function useNuvaScore() {
           key: "crecimiento",
           label: "Crecimiento",
           points,
-          detail: `Ventas ${growth >= 0 ? "+" : ""}${(growth * 100).toFixed(0)}% vs. mes anterior`,
+          detail: `Ventas ${growth >= 0 ? "+" : ""}${(growth * 100).toFixed(0)}% vs. mismos días del mes anterior`,
           status: statusFromPoints(points),
         });
       }
