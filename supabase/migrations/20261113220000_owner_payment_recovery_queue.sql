@@ -298,7 +298,7 @@ BEGIN
     'audit_id',v_audit_id,
     'request_id',v_request.id,
     'payment_intent_id',v_intent.id,
-    'status',CASE WHEN v_outcome IN ('verified_rejected','verified_expired','resolved_paid','resolved_paid_without_sale') THEN 'closed' ELSE 'recovery_required' END,
+    'status',CASE WHEN v_outcome IN ('verified_rejected','verified_expired','resolved_paid','resolved_paid_without_sale','already_settled') THEN 'closed' ELSE 'recovery_required' END,
     'payment_id',v_payment_id
   );
 END;
