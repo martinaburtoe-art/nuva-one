@@ -125,7 +125,15 @@ export function buildIndustryConfiguration(profileId: IndustryProfileId | string
   })) {
     errors.push({ code: "incompatible_units", path: "inventory", message: "Las unidades de medida deben ser dimensionalmente compatibles. Los formatos de empaque requieren una conversión explícita por producto." });
   }
-  const requiresProductConversion = Boolean(baseUnit && [...purchaseUnits, ...saleUnits].some((unit) => DIMENSIONS[unit] !== DIMENSIONS[baseUnit!]));
+  // Package formats (box, pallet, sack, roll, etc.) are not interchangeable by dimension.
+  // Any change between distinct package formats must use an explicit product-level ratio.
+  const requiresProductConversion = Boolean(baseUnit && [...purchaseUnits, ...saleUnits].some((unit) =>
+    unit !== baseUnit && (
+      DIMENSIONS[unit] !== DIMENSIONS[baseUnit!] ||
+      DIMENSIONS[unit] === "package" ||
+      DIMENSIONS[baseUnit!] === "package"
+    )
+  ));
   const configuration: IndustryConfiguration = {
     ...defaults(profile.id), answers, channels,
     inventory: { baseUnit, purchaseUnits, saleUnits, trackLots: bool(inv, "trackLots", "inventory", errors), trackExpiry: bool(inv, "trackExpiry", "inventory", errors), allowFractionalQuantity: bool(inv, "allowFractionalQuantity", "inventory", errors), multipleWarehouses: bool(inv, "multipleWarehouses", "inventory", errors) },
