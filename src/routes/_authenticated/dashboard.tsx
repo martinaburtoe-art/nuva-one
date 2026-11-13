@@ -165,14 +165,17 @@ function Dashboard() {
   });
 
   const salesCountQuery = useQuery({
-    enabled: !!active?.id,
-    queryKey: ["dashboard-sales-count", active?.id],
+    enabled: !!active?.id && !invalidDateRange,
+    queryKey: ["dashboard-sales-count", active?.id, chartWindowStart, chartWindowEnd],
     staleTime: 60_000,
     queryFn: async () => {
-      const { count, error } = await supabase.from("sales")
+      let query = supabase.from("sales")
         .select("id", { count: "exact", head: true })
         .eq("business_id", active!.id)
-        .neq("status", "cancelled");
+        .neq("status", "cancelled")
+        .lte("sale_date", chartWindowEnd);
+      if (chartWindowStart) query = query.gte("sale_date", chartWindowStart);
+      const { count, error } = await query;
       if (error) throw error;
       return count ?? 0;
     },
@@ -339,14 +342,14 @@ function Dashboard() {
   const industryMetrics = useMemo(() => {
     if (!selectedIndustryProfile) return [];
     return buildIndustryDashboardMetrics(selectedIndustryProfile.id, {
-      sales: { available: kpis !== undefined && !kpisError, records: kpis?.incomeRecords ?? 0 },
+      sales: { available: salesCountQuery.data !== undefined && !salesCountQuery.isError, records: salesCountQuery.data ?? 0 },
       inventory: { available: inventoryQuery.data !== undefined && !inventoryQuery.isError, records: inventoryQuery.data?.productsCount ?? 0 },
       cash: { available: false, records: 0 },
       quotes: { available: quotesQuery.data !== undefined && !quotesQuery.isError, records: quotesQuery.data?.totalCount ?? 0 },
       customers: { available: customersQuery.data !== undefined && !customersQuery.isError, records: customersQuery.data ?? 0 },
       expenses: { available: kpis !== undefined && !kpisError, records: kpis?.expenseRecords ?? 0 },
     });
-  }, [selectedIndustryProfile, kpis, kpisError, inventoryQuery.data, inventoryQuery.isError, quotesQuery.data, quotesQuery.isError, customersQuery.data, customersQuery.isError]);
+  }, [selectedIndustryProfile, salesCountQuery.data, salesCountQuery.isError, inventoryQuery.data, inventoryQuery.isError, quotesQuery.data, quotesQuery.isError, customersQuery.data, customersQuery.isError, kpis, kpisError]);
   const operationalStatus = getResumenOperationalStatus({
     hasBusiness: Boolean(active?.id),
     invalidDateRange,
