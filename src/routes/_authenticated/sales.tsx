@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,11 +33,12 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, ShoppingCart, X, Clock } from "lucide-react";
+import { Plus, Trash2, ShoppingCart, X, Clock, CheckCircle2 } from "lucide-react";
 import { useBizList, useBizPage, useBizInsert, useBizDelete, useBizUpdate, fmtCLP } from "@/lib/biz-data";
 import { useMyRole, canWriteOperations, useActiveBusiness } from "@/lib/use-business";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ContextualActionDock } from "@/components/contextual-action-dock";
 const SalesProductAnalytics = lazy(() => import("@/components/sales-product-analytics").then((m) => ({ default: m.SalesProductAnalytics })));
 
 export const Route = createFileRoute("/_authenticated/sales")({
@@ -52,7 +53,15 @@ function Sales() {
   const { active } = useActiveBusiness();
   const qc = useQueryClient();
   const canWrite = canWriteOperations(myRole);
+  const submitLockRef = useRef(false);
+  const [recentlySaved, setRecentlySaved] = useState(false);
   const [salesPage, setSalesPage] = useState(1);
+
+  useEffect(() => {
+    if (!recentlySaved) return;
+    const timer = window.setTimeout(() => setRecentlySaved(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [recentlySaved]);
   const { data: salesPageData, isLoading } = useBizPage<any>("sales", { page: salesPage, pageSize: 25, order: "sale_date", select: "id,customer_name,sale_date,channel,payment_method,items,status,is_credit,paid_amount,total,due_date" });
   const sales = salesPageData?.rows ?? [];
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true, select: "id,name,sku,category,stock,price,cost" });
@@ -77,7 +86,10 @@ function Sales() {
       setManualTotal(null);
       setIsCredit(false);
       setDueDate("");
+      setRecentlySaved(true);
+      toast.success("Venta registrada correctamente");
     },
+    onSettled: () => { submitLockRef.current = false; },
     onError: (error: Error) => {
       toast.error(error.message ?? "No se pudo registrar la venta rápida.");
     }
@@ -118,6 +130,8 @@ function Sales() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (submitLockRef.current || insert.isPending || fastSale.isPending) return;
+    submitLockRef.current = true;
     const fd = new FormData(e.currentTarget);
     const validItems = items.filter((i) => i.name.trim() !== "");
     try {
@@ -137,7 +151,11 @@ function Sales() {
       // El trigger sync_sale_effects rechaza si hay stock insuficiente u otro error de integridad.
       toast.error(error?.message ?? "No se pudo registrar la venta. Verifica el stock disponible.");
       return;
+    } finally {
+      submitLockRef.current = false;
     }
+    setRecentlySaved(true);
+    toast.success("Venta registrada correctamente");
     setOpen(false);
     setCustomerName("");
     setCustomerId(null);
@@ -172,7 +190,7 @@ function Sales() {
                   <DialogHeader>
                     <DialogTitle>Registrar venta</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={onSubmit} className="space-y-5">
+                  <form id="sale-create-form" onSubmit={onSubmit} className="space-y-5 pb-28 lg:pb-0">
                     <div>
                       <Label htmlFor="customer_name">Cliente</Label>
                       <Input
