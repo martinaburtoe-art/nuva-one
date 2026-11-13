@@ -335,6 +335,18 @@ function Dashboard() {
       setSeedingDemo(false);
     }
   }
+  const selectedIndustryProfile = getIndustryProfile(industryProfileData?.industry_profile);
+  const industryMetrics = useMemo(() => {
+    if (!selectedIndustryProfile) return [];
+    return buildIndustryDashboardMetrics(selectedIndustryProfile.id, {
+      sales: { available: kpis !== undefined && !kpisError, records: kpis?.incomeRecords ?? 0 },
+      inventory: { available: inventoryQuery.data !== undefined && !inventoryQuery.isError, records: inventoryQuery.data?.productsCount ?? 0 },
+      cash: { available: false, records: 0 },
+      quotes: { available: quotesQuery.data !== undefined && !quotesQuery.isError, records: quotesQuery.data?.totalCount ?? 0 },
+      customers: { available: customersQuery.data !== undefined && !customersQuery.isError, records: customersQuery.data ?? 0 },
+      expenses: { available: kpis !== undefined && !kpisError, records: kpis?.expenseRecords ?? 0 },
+    });
+  }, [selectedIndustryProfile, kpis, kpisError, inventoryQuery.data, inventoryQuery.isError, quotesQuery.data, quotesQuery.isError, customersQuery.data, customersQuery.isError]);
   const operationalStatus = getResumenOperationalStatus({
     hasBusiness: Boolean(active?.id),
     invalidDateRange,
@@ -368,6 +380,32 @@ function Dashboard() {
           </div>
         </header>
 
+        {selectedIndustryProfile && (
+          <section className="mb-5 rounded-2xl border border-border/70 bg-card/85 p-4 shadow-sm sm:p-5" aria-label="Resumen adaptado a tu rubro">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">INTELIGENCIA SECTORIAL</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">{selectedIndustryProfile.label}</h2>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">{selectedIndustryProfile.summary}</p>
+              </div>
+              <span className="w-fit shrink-0 rounded-full border bg-background px-3 py-1 text-[10px] font-medium text-muted-foreground">Perfil de negocio</span>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {industryMetrics.map((metric) => (
+                <div key={metric.id} className="rounded-xl border border-border/70 bg-background/80 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-semibold leading-snug">{metric.label}</p>
+                    <span className={metric.status === "available" ? "shrink-0 rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-semibold text-emerald-700 dark:text-emerald-300" : metric.status === "insufficient_data" ? "shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-[9px] font-semibold text-amber-700 dark:text-amber-300" : "shrink-0 rounded-full bg-muted px-2 py-1 text-[9px] font-semibold text-muted-foreground"}>
+                      {metric.status === "available" ? "Fuente activa" : metric.status === "insufficient_data" ? "Faltan datos" : "En desarrollo"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{metric.status === "available" ? metric.description : metric.reason}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">Los indicadores se habilitan según la evidencia disponible en tus módulos. Las funciones aún no implementadas se mantienen identificadas como desarrollo, sin estimaciones ni cifras inventadas.</p>
+          </section>
+        )}
         <section className="nuva-resumen-hero" aria-label="Resultado financiero del período">
           <div className="nuva-resumen-hero-main">
             <div className="nuva-resumen-hero-kicker"><span className="nuva-resumen-hero-spark" aria-hidden="true" /> LECTURA EJECUTIVA <span aria-hidden="true">·</span> {financialPeriodLabel}</div>
