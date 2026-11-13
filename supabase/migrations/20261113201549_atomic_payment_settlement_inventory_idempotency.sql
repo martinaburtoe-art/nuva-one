@@ -66,7 +66,9 @@ CREATE TABLE IF NOT EXISTS public.payment_creation_requests (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT payment_creation_requests_business_key UNIQUE (business_id, idempotency_key),
-  CONSTRAINT payment_creation_requests_provider_order UNIQUE (provider, commerce_order)
+  CONSTRAINT payment_creation_requests_provider_order UNIQUE (provider, commerce_order),
+  CONSTRAINT payment_creation_requests_created_has_intent
+    CHECK (status <> 'created' OR payment_intent_id IS NOT NULL)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_creation_requests_unresolved_sale
