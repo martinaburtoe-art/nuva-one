@@ -44,8 +44,8 @@ const METRICS: Record<string, MetricSpec> = {
   },
   cash_position: {
     id: "cash_position",
-    label: "Caja y movimientos",
-    description: "Movimientos de caja registrados; no equivale a flujo proyectado.",
+    label: "Estado de caja",
+    description: "Indica si existe una caja abierta en este momento; no representa movimientos ni flujo proyectado.",
     sources: ["cash"],
   },
   expense_control: {
