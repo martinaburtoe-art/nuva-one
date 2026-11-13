@@ -25,6 +25,7 @@ export type IndustryMetricDefinition = {
 
 type MetricSpec = Omit<IndustryMetricDefinition, "status" | "reason"> & {
   plannedReason?: string;
+  completeEvidenceRequired?: boolean;
 };
 
 const METRICS: Record<string, MetricSpec> = {
@@ -76,6 +77,7 @@ const METRICS: Record<string, MetricSpec> = {
     description: "Requiere costo de adquisición completo y conciliado por producto.",
     sources: ["sales", "inventory"],
     plannedReason: "No se habilita sin cobertura completa y verificable de costos por producto.",
+    completeEvidenceRequired: true,
   },
   stockout_risk: {
     id: "stockout_risk",
@@ -157,13 +159,16 @@ export function buildIndustryDashboardMetrics(
 ): IndustryMetricDefinition[] {
   return PROFILE_METRICS[profileId].map((metricId) => {
     const spec = METRICS[metricId];
-    if (spec.plannedReason) {
+    if (spec.plannedReason && !spec.completeEvidenceRequired) {
+      return { ...spec, status: "planned", reason: spec.plannedReason };
+    }
+    if (spec.completeEvidenceRequired) {
       const completeEvidence = spec.sources.length > 0 && spec.sources.every((source) => {
         const item = evidence[source];
         return item?.available === true && item.complete === true;
       });
       if (!completeEvidence) {
-        return { ...spec, status: "planned", reason: spec.plannedReason };
+        return { ...spec, status: "planned", reason: spec.plannedReason ?? "La cobertura de datos está incompleta." };
       }
     }
     if (spec.sources.length === 0) {
