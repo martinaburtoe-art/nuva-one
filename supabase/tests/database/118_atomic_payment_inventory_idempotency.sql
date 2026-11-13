@@ -255,7 +255,19 @@ VALUES ('00000000-0000-0000-0000-0000000000b2', 'Second tenant test', '00000000-
 INSERT INTO public.sales (id, business_id, status, total, items, is_credit, paid_amount)
 VALUES ('00000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000b2', 'pending', 1000, '[]'::jsonb, true, 0);
 
-ALTER TABLE public.payment_intents DISABLE TRIGGER trg_enforce_same_business_payment_intents;
+DO $
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgrelid = 'public.payment_intents'::regclass
+      AND tgname = 'trg_enforce_same_business_payment_intents'
+      AND NOT tgisinternal
+  ) THEN
+    ALTER TABLE public.payment_intents DISABLE TRIGGER trg_enforce_same_business_payment_intents;
+  END IF;
+END;
+$;
 INSERT INTO public.payment_intents (
   id, business_id, sale_id, provider, token, commerce_order, amount, status
 )
@@ -265,7 +277,19 @@ VALUES (
   '00000000-0000-0000-0000-0000000000d2',
   'flow', 'token-cross-business', 'order-cross-business', 500, 'pending'
 );
-ALTER TABLE public.payment_intents ENABLE TRIGGER trg_enforce_same_business_payment_intents;
+DO $
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgrelid = 'public.payment_intents'::regclass
+      AND tgname = 'trg_enforce_same_business_payment_intents'
+      AND NOT tgisinternal
+  ) THEN
+    ALTER TABLE public.payment_intents ENABLE TRIGGER trg_enforce_same_business_payment_intents;
+  END IF;
+END;
+$;
 
 SELECT is(
   public.settle_payment_intent('flow', 'token-cross-business', 'paid', 500, 'order-cross-business')->>'outcome',
