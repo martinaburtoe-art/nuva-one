@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(73);
+SELECT plan(74);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -155,6 +155,7 @@ SELECT is(
 );
 SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e2'), 'pending', 'mismatched intent remains pending');
 SELECT is((SELECT count(*)::int FROM public.payments WHERE payment_intent_id = '00000000-0000-0000-0000-0000000000e2'), 0, 'mismatched provider data creates no payment');
+SELECT ok((SELECT processed FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-mismatch'), 'mismatched provider event is quarantined and closed for reconciliation');
 
 SELECT is(
   public.settle_payment_intent('flow', 'token-pending', 'pending', NULL, NULL)->>'outcome',
