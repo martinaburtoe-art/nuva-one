@@ -57,22 +57,41 @@ The `prefers-reduced-motion: reduce` mode disables spatial and decorative animat
 - [ ] Production build and automated tests pass.
 
 ## Reference fidelity
-The public `@noxen.studio` profile and selected Reels were reviewed through vidIQ on 2026-11-13. Their interaction patterns are documented in the reference study below; this is an adaptation of selected patterns, not a claim of pixel-perfect replication.
+The correct reference account is **[@moxen.studio](https://www.instagram.com/moxen.studio/)**, not @noxen.studio. The public profile and selected Reels were inspected through vidIQ on 2026-11-13. These notes distinguish observed behavior from inferred implementation and adapt the patterns to Nüva One rather than copying visual effects literally.
 
+## Reference study: Instagram Reels de @moxen.studio
 
-## Reference study: Instagram Reels de @noxen.studio
+### 1. Estribo — contextual floating action bar
+[Watch Reel](https://www.instagram.com/reel/DfromayBbxr/)
+- Observed: a floating primary-action bar changes between expanded, compact/retracted, and hidden states according to scroll behavior and keyboard/form context.
+- UX principle: the action dock should yield viewport space when the user scrolls quickly, focuses an input, or reaches a region where it would obstruct content.
+- Nüva One application: only introduce a contextual bottom action dock for workflows that genuinely need a persistent primary action (e.g. a multi-step creation/edit flow). It must never compete with the global mobile navigation or cover form fields.
+- Engineering guardrails: use viewport/scroll state carefully, clean up listeners, account for the virtual keyboard and safe-area insets, and preserve a minimum 44px interactive target even when visually compact. Hidden controls must not remain in keyboard tab order.
 
-Consultados con vidIQ el 13-11-2026. Los videos se usan como referencias de interacción y narrativa, no como especificación para copiar literalmente.
+### 2. Fulgor — AI generation state machine
+[Watch Reel](https://www.instagram.com/reel/DfqWROsBOnP/)
+- Observed: an AI action progresses from idle, to a visible thinking/loading state, then expands an inline result panel with follow-up actions such as copy/regenerate.
+- UX principle: make the system's state legible and keep the result in context rather than blocking the whole screen.
+- Nüva One application: use this pattern for Nüva Intelligence / AI explanations and insight generation. The loading indicator must correspond to a real pending request; show a compact skeleton or restrained perimeter progress, then reveal the actual returned result.
+- Engineering guardrails: expose `aria-busy`, `aria-expanded`, `aria-controls` and a polite status region as appropriate. Stop motion when the request resolves or fails. Never simulate token streaming or fabricate intermediate financial/business values. Provide retry and copy only when those actions are implemented.
 
-- [Reel: creación de botón y workflow](https://www.instagram.com/reel/DSUtRtSiFAj/): comandos contextuales filtrados al escribir, configuración con preview, submenús y feedback de finalización. Aplicación: filtros contextuales con respuesta inmediata y feedback de éxito reservado a operaciones realmente completadas.
-- [Reel: Notion AI](https://www.instagram.com/reel/DSC1VZqiRcG/): presentación humana, subtítulos legibles en cápsulas, marca persistente y cierre minimalista. Aplicación: microcopy de estado claro, badges compactos y jerarquía legible; no fijar elementos que compitan con navegación o contenido.
-- [Reel: selección múltiple](https://www.instagram.com/reel/DR4fwnADodI/): UI aparece como overlay breve, contador de selección y barra contextual. Aplicación: estados de selección anunciados y acciones contextuales solo en listas donde existan operaciones por lote seguras y explícitas.
+### 3. Pastilla — action confirmation micro-interactions
+[Watch Reel](https://www.instagram.com/reel/DfqRKBJhYr0/)
+- Observed: distinct button states communicate progress/completion, saved state, sent state and a more expressive spring response. The Reel demonstrates label/icon transitions, a progress spinner, checkmark confirmation and a brief elastic press.
+- UX principle: the control itself confirms what happened; the animation is a supplement to a clear state label.
+- Nüva One application: apply restrained versions to real asynchronous actions such as report export, save, invoice send, or other confirmed operations. A saved toggle should expose its actual pressed state; a completed request should show a check and a clear completed label.
+- Engineering guardrails: never show success before the server confirms success; prevent duplicate submissions with idempotency/pending state; use `aria-live="polite"` for status changes and `aria-pressed` for toggles. Keep the hit area stable while the visual layer animates. Reduced motion replaces spatial/spring motion with immediate state change or a short fade.
 
-### Decisiones de producto para Nüva One
+### Additional patterns identified in the public Reels list
+- **Aplomo** describes protection against duplicate submission under repeated taps and unstable networks. This is a reliability pattern, not merely a visual effect: Nüva One must enforce pending-state locking and server-side idempotency for critical submit actions.
+- **Estría / Vitrea / Esmalte / Pompa** explore glass, chrome, lacquer and refractive surfaces. These are visual experiments, not default dashboard treatments. Nüva One should retain its restrained pearl/graphite/indigo system and avoid heavy filters, continuous pointer tracking or expensive blur on mid-range Android devices.
+- **Cursores** presents multiple named cursors acting together. This may inform future collaboration indicators only if Nüva One has real concurrent editing/presence; do not imply live collaboration where none exists.
 
-1. Priorizar velocidad y contexto: mostrar el control relevante junto a la acción que lo invoca, sin reemplazar innecesariamente toda la pantalla.
-2. En Android, los filtros y calendarios usan superficies compactas, límites de altura, scroll contenido y áreas táctiles cómodas.
-3. Los rangos rápidos de Resumen son inclusivos y se calculan con la fecha local del dispositivo: 7 días, 30 días, mes actual y mes anterior.
-4. Los contadores de selección deben ser accesibles (aria-live) y las acciones destructivas nunca deben aparecer junto a acciones frecuentes sin confirmación explícita.
-5. Reservar celebraciones visuales para hitos u operaciones completadas; no animar valores financieros ni crear confeti para la actualización ordinaria de KPIs.
-6. Toda animación nueva debe respetar prefers-reduced-motion y mantener el contenido utilizable sin movimiento.
+## Decisions for Nüva One
+1. Prioritize functional motion over decorative motion: every transition must communicate a real state or improve a real workflow.
+2. Keep the visual identity premium and restrained; borrow interaction logic, not the source studio's gradients, colors, chrome or playful physics wholesale.
+3. Keep contextual controls close to the action that invokes them. A floating dock is conditional, never a second global navigation.
+4. AI feedback must represent actual request lifecycle states and display returned data only.
+5. Submission feedback must be coupled to duplicate-submit protection and authoritative server outcomes.
+6. All motion must respect `prefers-reduced-motion`, keyboard navigation, screen readers, stable touch targets and Android performance.
+7. No new animation may conceal errors, invent financial progress, or make a nonfunctional control appear functional.
