@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
+import { getPwaNoticeKind } from "@/lib/pwa-notice";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -135,9 +136,9 @@ export function PwaLifecycle() {
   }
 
   const canInstall = !isInstalled && (Boolean(installPrompt) || isIos() || isAndroid());
-  const showInstall = canInstall && !installDismissed;
-  const showUpdate = updateReady && !updateDismissed;
-  if (!showInstall && !showUpdate) return null;
+  const notice = getPwaNoticeKind({ canInstall, installDismissed, updateReady, updateDismissed });
+  if (!notice) return null;
+  const showUpdate = notice === "update";
 
   return (
     <aside
