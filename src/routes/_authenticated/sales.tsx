@@ -155,7 +155,6 @@ function Sales() {
       submitLockRef.current = false;
     }
     setRecentlySaved(true);
-    toast.success("Venta registrada correctamente");
     setOpen(false);
     setCustomerName("");
     setCustomerId(null);
