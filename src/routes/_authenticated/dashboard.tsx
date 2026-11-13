@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { active } = useActiveBusiness();
+  const navigate = useNavigate();
   const [onboardingFocus, setOnboardingFocus] = useState("Todo");
   const [seedingDemo, setSeedingDemo] = useState(false);
 
