@@ -65,7 +65,7 @@ export function useNuvaScore() {
           .range(from, to)),
         fetchAllResumenRows((from, to) => supabase
           .from("products")
-          .select("id, cost, price, stock, low_stock_threshold, reorder_point")
+          .select("id, stock, low_stock_threshold, reorder_point")
           .eq("business_id", bid)
           .order("id")
           .range(from, to)),
@@ -116,17 +116,12 @@ export function useNuvaScore() {
       }
 
       // 2) Margen: sobre ventas del mes actual, usando costo real del producto.
-      const costByProduct = new Map<string, number>();
-      products.forEach((product) => {
-        if (product.cost !== null && product.cost !== undefined && Number.isFinite(Number(product.cost)) && Number(product.cost) >= 0) {
-          costByProduct.set(product.id, Number(product.cost));
-        }
-      });
+      // Historial margin is calculated only from immutable sale-time cost snapshots.
+      // The current product cost can change after a sale and must never rewrite history.
       const salesThisMonth = sales.filter((s) => s.sale_date >= currentMonthStart);
       if (salesThisMonth.length > 0) {
         const margin = calculateGrossMargin(
           salesThisMonth,
-          costByProduct,
         );
         const marginPoints = margin ? scoreFromRatio(margin.marginRatio, 0.35, 0.1) : null;
         const marginDetail = margin ? `Margen bruto de ${(margin.marginRatio * 100).toFixed(0)}% este mes` : "";
