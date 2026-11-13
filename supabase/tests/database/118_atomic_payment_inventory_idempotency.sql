@@ -40,7 +40,7 @@ INSERT INTO public.payment_creation_requests (
 VALUES (
   '00000000-0000-0000-0000-0000000000b1',
   '00000000-0000-0000-0000-0000000000d1',
-  'flow', 'idempotency-key-1', 'order-paid-once', 1000, 'POS test', 'creating'
+  'flow', 'idempotency-key-1', 'order-paid-once', 4000, 'POS test', 'creating'
 );
 
 SELECT is(
