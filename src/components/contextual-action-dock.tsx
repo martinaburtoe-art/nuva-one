@@ -114,7 +114,7 @@ export function ContextualActionDock({
           compact ? "min-w-12 px-3" : "min-w-0 flex-1",
         )}
       >
-        {primaryPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
+        {primaryPending ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
         {!compact && <span>{primaryPending ? primaryPendingLabel : primaryLabel}</span>}
       </button>
       {onSecondaryAction && (
@@ -129,7 +129,7 @@ export function ContextualActionDock({
             compact ? "min-w-12 px-3" : "min-w-0 flex-1",
           )}
         >
-          {secondaryPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Zap className="h-4 w-4" aria-hidden="true" />}
+          {secondaryPending ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Zap className="h-4 w-4" aria-hidden="true" />}
           {!compact && <span>{secondaryPending ? secondaryPendingLabel : secondaryLabel}</span>}
         </button>
       )}
