@@ -46,6 +46,13 @@ describe("Nüva Chilean industry profiles", () => {
     expect(searchIndustryProfiles("mecánico").map((profile) => profile.id)).toContain("auto_repair_parts");
   });
 
+  it("finds sectors when users omit accents or search with multiple words", () => {
+    expect(searchIndustryProfiles("ferreteria").map((profile) => profile.id)).toContain("hardware_store");
+    expect(searchIndustryProfiles("panaderia").map((profile) => profile.id)).toContain("bakery_pastry");
+    expect(searchIndustryProfiles("taller repuestos").map((profile) => profile.id)).toContain("auto_repair_parts");
+    expect(searchIndustryProfiles("distribuidora mayorista").map((profile) => profile.id)).toContain("wholesale_distribution");
+  });
+
   it("returns all profiles for an empty query", () => {
     expect(searchIndustryProfiles("")).toHaveLength(INDUSTRY_PROFILES.length);
   });
