@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(85);
+SELECT plan(91);
 
 SELECT has_column('public', 'payment_intents', 'payment_url', 'payment intents retain the original provider redirect');
 SELECT has_column('public', 'payments', 'payment_intent_id', 'payments link to their originating intent');
@@ -195,6 +195,32 @@ SELECT ok(
   (SELECT processed FROM public.payment_webhook_events WHERE provider = 'flow' AND token = 'token-overpay'),
   'verified overpayment webhook is closed after recording the recovery requirement'
 );
+
+INSERT INTO public.payment_creation_requests (
+  business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject, status, payment_intent_id
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000000b1',
+  '00000000-0000-0000-0000-0000000000d1',
+  'flow',
+  'idempotency-key-7',
+  'order-rejected',
+  1000,
+  'Previously rejected attempt',
+  'closed',
+  '00000000-0000-0000-0000-0000000000e4'
+);
+
+SELECT is(
+  public.settle_payment_intent('flow', 'token-rejected', 'paid', 1000, 'order-rejected')->>'outcome',
+  'late_paid_after_terminal',
+  'a processed rejection is rechecked when the provider later confirms payment'
+);
+SELECT is((SELECT status FROM public.payment_creation_requests WHERE idempotency_key = 'idempotency-key-7'), 'closed', 'the original terminal request remains an immutable audit record');
+SELECT is((SELECT last_error FROM public.payment_creation_requests WHERE idempotency_key = 'idempotency-key-7'), 'late_paid_after_terminal', 'the original request records the late provider confirmation');
+SELECT is((SELECT status FROM public.payment_creation_requests WHERE idempotency_key = 'idempotency-key-5'), 'recovery_required', 'a newer active request for the same sale is quarantined');
+SELECT is((SELECT last_error FROM public.payment_creation_requests WHERE idempotency_key = 'idempotency-key-5'), 'late_paid_after_terminal:order-rejected', 'the active request records which older order settled late');
+SELECT is((SELECT status FROM public.payment_intents WHERE id = '00000000-0000-0000-0000-0000000000e5'), 'expired', 'the newer pending provider intent is disabled locally');
 SELECT throws_ok(
   $$ INSERT INTO public.payment_creation_requests (business_id, sale_id, provider, idempotency_key, commerce_order, amount, subject)
      VALUES ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d1', 'flow', 'idempotency-key-6', 'order-after-overpay', 1000, 'POS retry') $$,
