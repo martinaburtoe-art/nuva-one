@@ -332,23 +332,43 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           return json({ error: "No se pudo reservar el intento de cobro" }, 500);
         }
 
-        const { apiKey, secretKey } = decryptPaymentCreds(integration as any);
         const origin = new URL(request.url).origin;
-        const result = await adapter.createPayment(
-          {
-            apiKey,
-            secretKey,
-            apiUrl: (integration as any).api_url || "",
-            environment: (integration as any).environment,
-          },
-          {
-            amount,
-            subject,
-            commerceOrder,
-            returnUrl: `${origin}/ventas?payment=${commerceOrder}`,
-            webhookUrl: `${origin}/api/billing/payments/webhook?provider=${provider}`,
-          },
-        );
+        let result: any;
+        try {
+          const { apiKey, secretKey } = decryptPaymentCreds(integration as any);
+          result = await adapter.createPayment(
+            {
+              apiKey,
+              secretKey,
+              apiUrl: (integration as any).api_url || "",
+              environment: (integration as any).environment,
+            },
+            {
+              amount,
+              subject,
+              commerceOrder,
+              returnUrl: `${origin}/ventas?payment=${commerceOrder}`,
+              webhookUrl: `${origin}/api/billing/payments/webhook?provider=${provider}`,
+            },
+          );
+        } catch {
+          await admin
+            .from("payment_creation_requests")
+            .update({
+              status: "recovery_required",
+              last_error: "provider_request_ambiguous",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", claim.id);
+          return json(
+            {
+              error: "No se pudo confirmar la respuesta de la pasarela. El intento quedó bloqueado para conciliación; no se repetirá automáticamente.",
+              code: "PAYMENT_RECOVERY_REQUIRED",
+              commerce_order: commerceOrder,
+            },
+            502,
+          );
+        }
 
         if (!result.ok || !result.token || !result.paymentUrl) {
           await admin
@@ -370,20 +390,28 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           );
         }
 
-        const { data: paymentIntent, error: intentError } = await admin
-          .from("payment_intents")
-          .insert({
-            business_id: businessId,
-            sale_id: saleId,
-            provider,
-            token: result.token,
-            commerce_order: commerceOrder,
-            amount,
-            status: "pending",
-            payment_url: result.paymentUrl,
-          })
-          .select("id, payment_url")
-          .single();
+        let paymentIntent: any = null;
+        let intentError: any = null;
+        try {
+          const insertedIntent = await admin
+            .from("payment_intents")
+            .insert({
+              business_id: businessId,
+              sale_id: saleId,
+              provider,
+              token: result.token,
+              commerce_order: commerceOrder,
+              amount,
+              status: "pending",
+              payment_url: result.paymentUrl,
+            })
+            .select("id, payment_url")
+            .single();
+          paymentIntent = insertedIntent.data;
+          intentError = insertedIntent.error;
+        } catch {
+          intentError = new Error("payment_intent_persistence_threw");
+        }
 
         if (intentError || !paymentIntent) {
           await admin
