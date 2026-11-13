@@ -417,11 +417,20 @@ export function getIndustryProfilesByCore(coreIndustry: CoreIndustry): IndustryP
   return INDUSTRY_PROFILES.filter((profile) => profile.coreIndustry === coreIndustry);
 }
 
+function normalizeIndustrySearch(value: string): string {
+  return value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("es-CL");
+}
+
 export function searchIndustryProfiles(query: string): IndustryProfile[] {
-  const normalized = query.trim().toLocaleLowerCase("es-CL");
-  if (!normalized) return [...INDUSTRY_PROFILES];
-  return INDUSTRY_PROFILES.filter((profile) =>
-    [profile.label, profile.pluralLabel, profile.summary, ...profile.examples]
-      .some((value) => value.toLocaleLowerCase("es-CL").includes(normalized)),
-  );
+  const tokens = normalizeIndustrySearch(query).trim().split(/\\s+/).filter(Boolean);
+  if (tokens.length === 0) return [...INDUSTRY_PROFILES];
+  return INDUSTRY_PROFILES.filter((profile) => {
+    const searchable = normalizeIndustrySearch([
+      profile.label,
+      profile.pluralLabel,
+      profile.summary,
+      ...profile.examples,
+    ].join(" "));
+    return tokens.every((token) => searchable.includes(token));
+  });
 }
