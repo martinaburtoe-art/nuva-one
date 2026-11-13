@@ -117,7 +117,12 @@ describe("Flujo de contratación — suscripciones starter y pro (T-35)", () => 
 
   it("starter: cobro de $11.990 aprobado activa la suscripción (pasos 5,6,7,8,9)", async () => {
     vi.mocked(getPaymentAdapter).mockReturnValue({
-      checkStatus: vi.fn().mockResolvedValue({ status: "paid" }),
+      checkStatus: vi.fn().mockResolvedValue({
+        ok: true,
+        status: "paid",
+        commerceOrder: "sub-starter-sale-starter-1",
+        amount: 11_990,
+      }),
       createPayment: vi.fn(),
     });
 
@@ -139,7 +144,12 @@ describe("Flujo de contratación — suscripciones starter y pro (T-35)", () => 
 
   it("pro: cobro de $27.990 aprobado activa la suscripción (pasos 5,6,7,8,9)", async () => {
     vi.mocked(getPaymentAdapter).mockReturnValue({
-      checkStatus: vi.fn().mockResolvedValue({ status: "paid" }),
+      checkStatus: vi.fn().mockResolvedValue({
+        ok: true,
+        status: "paid",
+        commerceOrder: "sub-pro-sale-pro-1",
+        amount: 27_990,
+      }),
       createPayment: vi.fn(),
     });
 
@@ -155,7 +165,7 @@ describe("Flujo de contratación — suscripciones starter y pro (T-35)", () => 
 
   it("pro: cobro rechazado marca el intento como rechazado, sin abono duplicado (pasos 7,12)", async () => {
     vi.mocked(getPaymentAdapter).mockReturnValue({
-      checkStatus: vi.fn().mockResolvedValue({ status: "rejected" }),
+      checkStatus: vi.fn().mockResolvedValue({ ok: true, status: "rejected" }),
       createPayment: vi.fn(),
     });
 
@@ -171,7 +181,12 @@ describe("Flujo de contratación — suscripciones starter y pro (T-35)", () => 
 
   it("idempotencia: mismo token procesado N veces no duplica el abono (paso 7)", async () => {
     vi.mocked(getPaymentAdapter).mockReturnValue({
-      checkStatus: vi.fn().mockResolvedValue({ status: "paid" }),
+      checkStatus: vi.fn().mockResolvedValue({
+        ok: true,
+        status: "paid",
+        commerceOrder: "sub-starter-sale-idem-1",
+        amount: 11_990,
+      }),
       createPayment: vi.fn(),
     });
 
@@ -196,7 +211,7 @@ describe("Flujo de contratación — suscripciones starter y pro (T-35)", () => 
 
   it("estado pendiente no marca como procesado (reintentos seguros) (paso 7)", async () => {
     vi.mocked(getPaymentAdapter).mockReturnValue({
-      checkStatus: vi.fn().mockResolvedValue({ status: "pending" }),
+      checkStatus: vi.fn().mockResolvedValue({ ok: true, status: "pending" }),
       createPayment: vi.fn(),
     });
 
