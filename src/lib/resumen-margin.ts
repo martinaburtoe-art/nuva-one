@@ -5,13 +5,13 @@ export type GrossMarginResult = {
 };
 
 /**
- * Calculates gross margin only when every sold line has a valid quantity,
- * selling price, product reference, and non-negative acquisition cost.
- * Sale item JSON is treated as untrusted input; missing costs are never zero.
+ * Calculates historical gross margin only from a cost snapshot stored on each
+ * sale line at the time of sale. Current product cost is NOT a valid substitute:
+ * supplier price changes must not rewrite historical profitability.
+ * Missing snapshots or incomplete lines make the whole result unavailable.
  */
 export function calculateGrossMargin(
   sales: readonly { items: unknown }[],
-  costByProduct: ReadonlyMap<string, number>,
 ): GrossMarginResult | null {
   let revenue = 0;
   let cost = 0;
@@ -22,14 +22,20 @@ export function calculateGrossMargin(
       if (!rawItem || typeof rawItem !== "object") return null;
       const item = rawItem as Record<string, unknown>;
       const productId = typeof item.product_id === "string" ? item.product_id.trim() : "";
-      if (item.qty === null || item.qty === undefined || item.qty === "" || item.price === null || item.price === undefined || item.price === "") return null;
-      const quantity = Number(item.qty);
-      const price = Number(item.price);
-      if (!productId || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0) {
-        return null;
-      }
-      const unitCost = costByProduct.get(productId);
-      if (unitCost === undefined || !Number.isFinite(unitCost) || unitCost < 0) return null;
+      const quantityRaw = item.qty;
+      const priceRaw = item.price;
+      const costRaw = item.unit_cost_snapshot;
+      if (!productId || quantityRaw === null || quantityRaw === undefined || quantityRaw === ""
+        || priceRaw === null || priceRaw === undefined || priceRaw === ""
+        || costRaw === null || costRaw === undefined || costRaw === "") return null;
+
+      const quantity = Number(quantityRaw);
+      const price = Number(priceRaw);
+      const unitCost = Number(costRaw);
+      if (!Number.isFinite(quantity) || quantity <= 0
+        || !Number.isFinite(price) || price < 0
+        || !Number.isFinite(unitCost) || unitCost < 0) return null;
+
       revenue += price * quantity;
       cost += unitCost * quantity;
     }
