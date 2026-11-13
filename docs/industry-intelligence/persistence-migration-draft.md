@@ -71,6 +71,7 @@ alter table public.businesses
   add constraint businesses_industry_secondary_profiles_check
   check (
     cardinality(industry_secondary_profiles) <= 3
+    and array_position(industry_secondary_profiles, null) is null
     and (
       industry_profile is null
       or not (industry_profile = any(industry_secondary_profiles))
