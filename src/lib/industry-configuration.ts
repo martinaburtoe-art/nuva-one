@@ -31,10 +31,10 @@ export type IndustryConfigurationResult =
 
 const CHANNELS: readonly BusinessChannel[] = ["counter", "delivery", "online", "wholesale", "appointment"];
 const DIMENSIONS: Record<string, string> = {
-  un: "count", par: "count", pack: "count", display: "count", caja: "count", pallet: "count",
+  un: "count", par: "count",
+  pack: "package", display: "package", caja: "package", pallet: "package", saco: "package", rollo: "package", barra: "package", bandeja: "package",
   kg: "mass", g: "mass", ton: "mass", mm: "length", cm: "length", m: "length", km: "length",
   "m²": "area", "m³": "volume", lt: "volume", ml: "volume",
-  saco: "package", rollo: "package", barra: "package", bandeja: "package",
 };
 const PROFILE_UNITS: Partial<Record<IndustryProfileId, readonly string[]>> = {
   hardware_store: ["un", "m", "m²", "m³", "kg", "saco", "caja", "rollo", "barra", "pallet", "mm", "cm"],
