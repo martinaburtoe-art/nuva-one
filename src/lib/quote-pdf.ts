@@ -235,7 +235,7 @@ export async function generateQuotePdf(
     doc.setTextColor(255, 255, 255);
     doc.text("DESCRIPCIÓN", margin + 10, y + 16);
     doc.text("CANT.", margin + 318, y + 16, { align: "right" });
-    doc.text(priceBasis === "gross" && taxTreatment === "taxable" ? "PRECIO UNIT. IVA INCL." : priceBasis === "gross" ? "PRECIO UNIT." : "PRECIO UNIT. NETO", margin + 420, y + 16, { align: "right" });
+    doc.text("PRECIO UNIT. NETO", margin + 420, y + 16, { align: "right" });
     doc.text("TOTAL", pageW - margin - 10, y + 16, { align: "right" });
     y += 25;
   }
@@ -307,6 +307,9 @@ export async function generateQuotePdf(
   }
 
   sectionTitle("Detalle de productos y servicios");
+  if (priceBasis === "gross" && taxTreatment === "taxable") {
+    paragraph("Los precios ingresados incluyen IVA; el detalle se presenta en base neta y el impuesto se desglosa al final.", margin, contentW, 7.5, 10, MUTED);
+  }
   drawTableHeader();
 
   (quote.items ?? []).forEach((item, index) => {
@@ -349,10 +352,20 @@ export async function generateQuotePdf(
         doc.setFontSize(8);
         setText(INK);
         doc.text(String(item.qty ?? 0), margin + 318, y + 17, { align: "right" });
-        doc.text(fmtCLP(Number(item.price ?? 0)), margin + 420, y + 17, { align: "right" });
+        const enteredUnitPrice = Number(item.price ?? 0);
+        const netUnitPrice =
+          priceBasis === "gross" && taxTreatment === "taxable"
+            ? Math.round((enteredUnitPrice * 100) / (100 + vatRate))
+            : enteredUnitPrice;
+        const enteredLineTotal = Math.round(Number(item.qty ?? 0) * enteredUnitPrice);
+        const netLineTotal =
+          priceBasis === "gross" && taxTreatment === "taxable"
+            ? Math.round((enteredLineTotal * 100) / (100 + vatRate))
+            : enteredLineTotal;
+        doc.text(fmtCLP(netUnitPrice), margin + 420, y + 17, { align: "right" });
         doc.setFont("helvetica", "bold");
         doc.text(
-          fmtCLP(Math.round(Number(item.qty ?? 0) * Number(item.price ?? 0))),
+          fmtCLP(netLineTotal),
           pageW - margin - 10,
           y + 17,
           { align: "right" },
