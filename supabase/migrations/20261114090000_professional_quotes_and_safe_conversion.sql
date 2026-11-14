@@ -71,7 +71,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_assign_quote_number ON public.quotes;
 CREATE TRIGGER trg_assign_quote_number
-  BEFORE INSERT ON public.quotes
+  BEFORE INSERT OR UPDATE OF quote_number, business_id ON public.quotes
   FOR EACH ROW EXECUTE FUNCTION public.assign_quote_number();
 
 -- Draft sales must not enter the financial posting queue. Posting begins only
