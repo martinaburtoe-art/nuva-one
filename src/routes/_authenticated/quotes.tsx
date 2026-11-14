@@ -320,7 +320,7 @@ function Quotes() {
       ? quote.customer_snapshot
       : linkedCustomer
         ? { tax_id: linkedCustomer.tax_id ?? "", address: linkedCustomer.address ?? "", email: linkedCustomer.email ?? "", phone: linkedCustomer.phone ?? "", contact_name: linkedCustomer.shipping_contact_name ?? "", shipping_comuna: linkedCustomer.shipping_comuna ?? "", shipping_city: linkedCustomer.shipping_city ?? "" }
-        : { tax_id: "", address: "", email: "", phone: "", contact_name: "" };
+        : { tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" };
     setCustomerDetails(snapshot);
     setSubject(quote.subject ?? "");
     setDiscountPct(Number(quote.discount_pct) || 0);
@@ -449,7 +449,7 @@ function Quotes() {
                         onValueChange={(v) => {
                           if (v === "__none__") {
                             setCustomerId(null);
-                            setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "" });
+                            setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
                             return;
                           }
                           const c = (customers ?? []).find((x: any) => x.id === v);
