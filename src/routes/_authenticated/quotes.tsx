@@ -96,9 +96,7 @@ function QuoteDocumentPreview({
   const lineNetAmount = (item: Item) =>
     calculateQuoteLineNetAmount(item, taxTreatment, 19, priceBasis ?? "net");
   const displayedUnitPrice = (item: Item) =>
-    priceBasis === "gross" && taxTreatment === "taxable"
-      ? Math.round(Number(item.price || 0) * 100 / 119)
-      : Number(item.price || 0);
+    Number(item.qty) > 0 ? Math.round(lineNetAmount(item) / Number(item.qty)) : 0;
   return (
     <aside className="min-w-0 rounded-2xl border bg-muted/30 p-3 xl:sticky xl:top-0 xl:max-h-[calc(94vh-5rem)] xl:overflow-y-auto">
       <div className="mb-3 flex items-center justify-between gap-2 px-1">
