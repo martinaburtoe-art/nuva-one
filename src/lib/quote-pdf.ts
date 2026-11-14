@@ -232,7 +232,7 @@ export async function generateQuotePdf(
     doc.setTextColor(255, 255, 255);
     doc.text("DESCRIPCIÓN", margin + 10, y + 16);
     doc.text("CANT.", margin + 318, y + 16, { align: "right" });
-    doc.text(priceBasis === "gross" ? "PRECIO UNIT. IVA INCL." : "PRECIO UNIT. NETO", margin + 420, y + 16, { align: "right" });
+    doc.text(priceBasis === "gross" && taxTreatment === "taxable" ? "PRECIO UNIT. IVA INCL." : priceBasis === "gross" ? "PRECIO UNIT." : "PRECIO UNIT. NETO", margin + 420, y + 16, { align: "right" });
     doc.text("TOTAL", pageW - margin - 10, y + 16, { align: "right" });
     y += 25;
   }
@@ -289,7 +289,7 @@ export async function generateQuotePdf(
   y += panelH + 22;
 
   sectionTitle("Modalidad de precios");
-  paragraph(priceBasis === "gross" ? "Los precios unitarios ingresados incluyen IVA. El impuesto se desglosa desde el valor bruto." : "Los precios unitarios ingresados son netos, antes de IVA.", margin, contentW, 8, 11, MUTED);
+  paragraph(priceBasis === "gross" ? (taxTreatment === "taxable" ? "Los precios unitarios ingresados incluyen IVA. El impuesto se desglosa desde el valor bruto." : "Los precios unitarios se expresan en valores brutos. La operación seleccionada no agrega IVA.") : "Los precios unitarios ingresados son netos, antes de IVA.", margin, contentW, 8, 11, MUTED);
   y += 8;
 
   if (quote.subject) {
