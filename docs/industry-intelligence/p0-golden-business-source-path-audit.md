@@ -277,3 +277,53 @@ Each fixture uses a separate synthetic tenant and unique IDs. Tests run inside r
 5. Keep profile configuration, capability readiness, authorization, plan entitlement and rollout as separate gates.
 
 **Out of scope:** production migrations, backfills, deployments, RLS redesign, permission expansion, payment provider changes, inventory concurrency redesign or marking planned capabilities available.
+
+
+---
+
+## 9. Read-only production verification — 14 November 2026
+
+The static findings above were checked against the connected Nüva One Supabase production database using read-only `SELECT` queries. No writes, migrations, backfills or test fixtures were run.
+
+### Active database trigger wiring
+
+The current production trigger catalog reports:
+
+- `sales.trg_sync_sale_effects` → `public.sync_sale_effects()`.
+- `sales.trg_validate_sale_inventory` → `public.validate_sale_inventory()`.
+- `purchases.trg_sync_purchase_effects` → `public.sync_purchase_effects()`.
+
+The production database also has `public.apply_sale_effects()` defined, and its body inserts into `inventory_movements`, but no active sales trigger in the inspected trigger list calls that function. The active `sync_sale_effects()` and `sync_purchase_effects()` bodies do not insert movement rows.
+
+### Aggregate reconciliation of existing stock-applied records
+
+Read-only aggregate join between stock-applied sale/purchase rows with product lines and `inventory_movements` by `business_id + source_type + source_id` returned:
+
+| Source | Stock-applied records with product lines | With movement record | Missing movement record |
+|---|---:|---:|---:|
+| Sales | 37 | 20 | 17 |
+| Purchases | 12 | 6 | 6 |
+
+The missing set includes pre-ledger records, so the total missing counts must not be interpreted as all caused by the trigger replacement. The more decisive post-ledger signal is:
+
+- After the latest movement timestamp (2026-09-20 03:11:07 UTC), there are **7 sale records** with product lines and stock applied but no corresponding movement row.
+- In the same interval, there are **4 purchase records** with product lines and stock applied but no corresponding movement row.
+- The latest stock-applied sale/purchase records in this aggregate are dated 2026-09-28 03:09:56 UTC.
+- The latest inventory movement row is dated 2026-09-20 03:11:07 UTC.
+
+This is now a **production-observed ledger gap**, not just a source-level hypothesis. It establishes missing movement trace records for those aggregate counts, but does not by itself establish whether any stock balance is incorrect. Do not fabricate historical movements or backfill until a reconciliation plan can prove each missing source line, stock_before/after and idempotent uniqueness.
+
+### Production fast-sale RPC contract
+
+Read-only inspection of `pg_proc` confirms production signature:
+
+`create_fast_sale(uuid,text,text,text,boolean,date,jsonb,text)`
+
+Arguments are customer, customer name, channel, payment method, credit flag, due date, items and notes. There is no selected business ID argument. Its body chooses an active membership by `ORDER BY created_at LIMIT 1`, matching the source-level finding in Issue #345.
+
+### Operational safety and next action
+
+- The production check was read-only.
+- No business IDs, customer names, product names or transaction-level records were exported into this report.
+- Do not run a repair or backfill in production.
+- Next, reproduce both issues in an isolated Supabase development branch/test database, implement additive fixes and pgTAP assertions, then reconcile a dry-run report before any separately authorized production remediation.
