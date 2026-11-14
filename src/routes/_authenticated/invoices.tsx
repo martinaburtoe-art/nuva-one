@@ -101,7 +101,7 @@ function Invoices() {
     mutationFn: async ({ invoiceId, dueDate }: { invoiceId: string; dueDate: string }) => {
       const { error } = await supabase.rpc("issue_internal_invoice", {
         p_invoice_id: invoiceId,
-        p_due_date: dueDate || null,
+        p_due_date: dueDate || undefined,
       });
       if (error) throw error;
     },
@@ -124,7 +124,7 @@ function Invoices() {
         p_invoice_id: paymentInvoice.id,
         p_amount: amount,
         p_payment_method: paymentMethod,
-        p_payment_reference: paymentReference || null,
+        p_payment_reference: paymentReference || undefined,
         p_idempotency_key: idempotencyKey,
       });
       if (error) throw error;
