@@ -509,7 +509,7 @@ export async function generateInvoicePdf(
   customer?: Customer | null,
   invoiceNumber?: number,
   dueDate?: string | null,
-  paymentSummary?: { paidAmount: number; balanceDue: number; documentStatus: string },
+  paymentSummary?: { paidAmount: number; balanceDue: number; documentStatus: string; brandColor?: string; showLogo?: boolean; showTaxId?: boolean; footerNote?: string | null },
 ) {
   return generateQuotePdf(invoice, business, customer, {
     documentKind: "invoice",
