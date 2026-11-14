@@ -111,6 +111,7 @@ function QuoteDocumentPreview({
             <div className="break-words text-xs font-semibold">{customer?.name || customerName || "Nombre del cliente"}</div>
             <div className="mt-1 space-y-0.5 break-words text-[9px] text-slate-500">
               {(customer?.tax_id || customerDetails.tax_id) && <div>RUT: {customer?.tax_id || customerDetails.tax_id}</div>}
+              {(customer?.contact_name || customerDetails.contact_name) && <div>Contacto: {customer?.contact_name || customerDetails.contact_name}</div>}
               {(customer?.address || customerDetails.address) && <div>{customer?.address || customerDetails.address}</div>}
               {(customer?.email || customerDetails.email) && <div>{customer?.email || customerDetails.email}</div>}
               {(customer?.phone || customerDetails.phone) && <div>{customer?.phone || customerDetails.phone}</div>}
@@ -216,6 +217,10 @@ function Quotes() {
     }
     try {
       const calculated = calculateQuoteTotals(validItems, discountPct, taxTreatment, vatRate);
+      if (calculated.total <= 0) {
+        toast.error("El total de la cotización debe ser mayor que cero.");
+        return;
+      }
       const savedQuoteId = await insert.mutateAsync({
         customer_name: customer.trim(),
         customer_id: customerId,
