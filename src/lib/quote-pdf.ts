@@ -1,5 +1,5 @@
 import { fmtCLP } from "@/lib/biz-data";
-import { formatQuoteNumber, type QuoteTaxTreatment } from "@/lib/quote-calculations";
+import { formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
 
 type QuoteItem = {
   name: string;
@@ -22,6 +22,7 @@ type Quote = {
   discount_pct?: number | null;
   total: number;
   tax_treatment?: QuoteTaxTreatment | null;
+  price_basis?: QuotePriceBasis | null;
   vat_rate?: number | null;
   created_at: string;
   valid_until?: string | null;
@@ -94,6 +95,7 @@ export async function generateQuotePdf(
   const customer = customerInput ?? {};
   const businessName = business.name?.trim() || "Empresa";
   const taxTreatment = quote.tax_treatment ?? "taxable";
+  const priceBasis = quote.price_basis ?? "net";
   const vatRate = taxTreatment === "taxable" ? Number(quote.vat_rate ?? 19) : 0;
   const taxLabel =
     taxTreatment === "exempt"
@@ -230,7 +232,7 @@ export async function generateQuotePdf(
     doc.setTextColor(255, 255, 255);
     doc.text("DESCRIPCIÓN", margin + 10, y + 16);
     doc.text("CANT.", margin + 318, y + 16, { align: "right" });
-    doc.text("PRECIO UNIT.", margin + 420, y + 16, { align: "right" });
+    doc.text(priceBasis === "gross" ? "PRECIO UNIT. IVA INCL." : "PRECIO UNIT. NETO", margin + 420, y + 16, { align: "right" });
     doc.text("TOTAL", pageW - margin - 10, y + 16, { align: "right" });
     y += 25;
   }
@@ -285,6 +287,10 @@ export async function generateQuotePdf(
     maxWidth: colW - 14,
   });
   y += panelH + 22;
+
+  sectionTitle("Modalidad de precios");
+  paragraph(priceBasis === "gross" ? "Los precios unitarios ingresados incluyen IVA. El impuesto se desglosa desde el valor bruto." : "Los precios unitarios ingresados son netos, antes de IVA.", margin, contentW, 8, 11, MUTED);
+  y += 8;
 
   if (quote.subject) {
     sectionTitle("Asunto / proyecto");
