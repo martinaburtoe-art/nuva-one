@@ -177,7 +177,8 @@ function Quotes() {
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
 
   const vatRate = taxTreatment === "taxable" ? 19 : 0;
-  const totals = calculateQuoteTotals(items.filter((item) => item.name.trim()), discountPct, taxTreatment, vatRate);
+  const previewItems = items.filter((item) => item.name.trim() && Number(item.qty) > 0 && Number(item.price) >= 0 && Number.isFinite(Number(item.qty)) && Number.isFinite(Number(item.price)));
+  const totals = calculateQuoteTotals(previewItems, discountPct, taxTreatment, vatRate);
   const { subtotal, discountAmount, tax, total } = totals;
   const selectedCustomer = (customers ?? []).find((entry: any) => entry.id === customerId) ?? null;
 
@@ -468,7 +469,7 @@ function Quotes() {
                           min={0}
                           max={100}
                           value={discountPct}
-                          onChange={(e) => setDiscountPct(Number(e.target.value))}
+                          onChange={(e) => setDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
                         />
                       </div>
                       <div>
