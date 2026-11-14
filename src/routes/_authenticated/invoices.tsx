@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useBizList, fmtCLP } from "@/lib/biz-data";
-import { calculateQuoteTotals } from "@/lib/quote-calculations";
+import { calculateQuoteLineNetAmount, calculateQuoteTotals } from "@/lib/quote-calculations";
 import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
 
@@ -573,8 +573,23 @@ function Invoices() {
                     <h3 className="mb-2 text-sm font-semibold">Detalle de conceptos</h3>
                     <div className="overflow-x-auto rounded-xl border">
                       <table className="w-full min-w-[480px] text-sm">
-                        <thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="p-2">Concepto</th><th className="p-2 text-right">Cantidad</th><th className="p-2 text-right">Precio</th><th className="p-2 text-right">Importe</th></tr></thead>
-                        <tbody>{lines.map((line: any, index: number) => <tr key={index} className="border-b last:border-0"><td className="p-2"><div className="font-medium">{line.name ?? "Concepto"}</div>{line.description && <div className="text-xs text-muted-foreground">{line.description}</div>}</td><td className="p-2 text-right tabular-nums">{Number(line.qty ?? 0)}</td><td className="p-2 text-right tabular-nums">{fmtCLP(Number(line.price ?? 0))}</td><td className="p-2 text-right tabular-nums">{fmtCLP(Number(line.qty ?? 0) * Number(line.price ?? 0))}</td></tr>)}</tbody>
+                        <thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="p-2">Concepto</th><th className="p-2 text-right">Cantidad</th><th className="p-2 text-right">Precio unit. neto</th><th className="p-2 text-right">Importe neto</th></tr></thead>
+                        <tbody>{lines.map((line: any, index: number) => {
+                          const quantity = Number(line.qty ?? 0);
+                          let netLineAmount = 0;
+                          try {
+                            netLineAmount = calculateQuoteLineNetAmount(
+                              { name: String(line.name ?? "Concepto"), qty: quantity, price: Number(line.price ?? 0) },
+                              detailInvoice.tax_treatment ?? "taxable",
+                              Number(detailInvoice.vat_rate ?? 19),
+                              detailInvoice.price_basis ?? "net",
+                            );
+                          } catch {
+                            netLineAmount = Math.round(quantity * Number(line.price ?? 0));
+                          }
+                          const netUnitPrice = quantity > 0 ? Math.round(netLineAmount / quantity) : 0;
+                          return <tr key={index} className="border-b last:border-0"><td className="p-2"><div className="font-medium">{line.name ?? "Concepto"}</div>{line.description && <div className="text-xs text-muted-foreground">{line.description}</div>}</td><td className="p-2 text-right tabular-nums">{quantity}</td><td className="p-2 text-right tabular-nums">{fmtCLP(netUnitPrice)}</td><td className="p-2 text-right tabular-nums">{fmtCLP(netLineAmount)}</td></tr>;
+                        })}</tbody>
                       </table>
                     </div>
                     <div className="mt-3 space-y-1 text-sm">
