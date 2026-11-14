@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.invoices (
   subtotal NUMERIC(14,2) NOT NULL CHECK (subtotal >= 0),
   discount_amount NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
   tax_treatment TEXT NOT NULL CHECK (tax_treatment IN ('taxable','exempt','non_taxable')),
+  price_basis TEXT NOT NULL DEFAULT 'net' CHECK (price_basis IN ('net','gross')),
   vat_rate NUMERIC(5,2) NOT NULL DEFAULT 19 CHECK (vat_rate >= 0 AND vat_rate <= 100),
   tax_amount NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (tax_amount >= 0),
   total NUMERIC(14,2) NOT NULL CHECK (total >= 0),
@@ -168,12 +169,12 @@ BEGIN
   INSERT INTO public.invoices (
     business_id, customer_id, quote_id, invoice_number, status,
     customer_name, customer_snapshot, issuer_snapshot, items_snapshot,
-    subject, subtotal, discount_amount, tax_treatment, vat_rate,
+    subject, subtotal, discount_amount, tax_treatment, price_basis, vat_rate,
     tax_amount, total, terms, notes, created_by
   ) VALUES (
     v_quote.business_id, v_quote.customer_id, p_quote_id, v_number, 'draft',
     v_quote.customer_name, v_customer_snapshot, COALESCE(v_issuer_snapshot, '{}'::jsonb), v_quote.items,
-    v_quote.subject, v_quote.subtotal, v_discount, v_quote.tax_treatment,
+    v_quote.subject, v_quote.subtotal, v_discount, v_quote.tax_treatment, v_quote.price_basis,
     CASE WHEN v_quote.tax_treatment = 'taxable' THEN v_quote.vat_rate ELSE 0 END,
     v_quote.tax, v_quote.total, v_quote.terms,
     'Documento interno de cobro originado desde cotización ' || COALESCE(v_quote.quote_number::text, p_quote_id::text)
