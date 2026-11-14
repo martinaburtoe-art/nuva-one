@@ -15,6 +15,7 @@ describe("quote calculations", () => {
       tax: 3420,
       vatRate: 19,
       taxTreatment: "taxable",
+      priceBasis: "net",
       total: 21420,
     });
   });
