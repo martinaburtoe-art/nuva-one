@@ -80,7 +80,7 @@ type QuotePreviewProps = {
   totals: { subtotal: number; discountAmount: number; tax: number; total: number };
   discountPct: number;
   taxTreatment: QuoteTaxTreatment;
-  priceBasis: QuotePriceBasis;
+  priceBasis: QuotePriceBasis | null;
   notes: string;
   terms: string;
   validUntil: string;
@@ -132,7 +132,7 @@ function QuoteDocumentPreview({
           <div>
             <div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">VÁLIDA HASTA</div>
             <div className="text-xs font-semibold">{validUntil ? new Date(validUntil + "T12:00:00").toLocaleDateString("es-CL") : "No especificada"}</div>
-            <div className="mt-1 text-[9px] text-slate-500">{priceBasis === "gross" ? (taxTreatment === "taxable" ? "Valores unitarios con IVA incluido" : "Valores unitarios brutos") : "Valores unitarios netos"} en CLP</div>
+            <div className="mt-1 text-[9px] text-slate-500">{!priceBasis ? "Selecciona modalidad de precios" : priceBasis === "gross" ? (taxTreatment === "taxable" ? "Valores unitarios con IVA incluido" : "Valores unitarios brutos") : "Valores unitarios netos"}</div>
           </div>
         </div>
         <div className="mb-2 text-[9px] font-bold tracking-[0.14em] text-slate-400">DETALLE DE PRODUCTOS Y SERVICIOS</div>
@@ -160,6 +160,7 @@ function QuoteDocumentPreview({
         {terms && <div className="mt-5"><div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">CONDICIONES COMERCIALES</div><p className="whitespace-pre-wrap break-words text-[9px] leading-relaxed text-slate-600">{terms}</p></div>}
         <div className="mt-8 border-t border-slate-200 pt-3 text-[8px] text-slate-400">Documento comercial. No constituye factura ni documento tributario electrónico.</div>
       </div>
+      {!priceBasis && <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-2 text-center text-[10px] text-amber-800">Modalidad histórica desconocida: los totales de esta vista son provisionales. Selecciona neto o bruto antes de guardar.</p>}
       <p className="mt-3 text-center text-[10px] text-muted-foreground">La descarga final genera el PDF A4 con paginación automática y los datos registrados.</p>
     </aside>
   );
@@ -687,7 +688,7 @@ function Quotes() {
                       totals={totals}
                       discountPct={discountPct}
                       taxTreatment={taxTreatment}
-                      priceBasis={priceBasis ?? "net"}
+                      priceBasis={priceBasis}
                       notes={notes}
                       terms={terms}
                       validUntil={validUntil}
