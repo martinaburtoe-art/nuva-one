@@ -11062,6 +11062,21 @@ export type Database = {
         Returns: Json
       }
       convert_quote_to_sale: { Args: { p_quote_id: string }; Returns: string }
+      convert_accepted_quote_to_invoice: { Args: { p_quote_id: string }; Returns: string }
+      issue_internal_invoice: {
+        Args: { p_due_date?: string | null; p_invoice_id: string }
+        Returns: string
+      }
+      record_internal_invoice_payment: {
+        Args: {
+          p_amount: number
+          p_idempotency_key: string
+          p_invoice_id: string
+          p_payment_method: string
+          p_payment_reference?: string | null
+        }
+        Returns: string
+      }
       create_demo_business_for_current_user: { Args: never; Returns: string }
       create_fast_sale: {
         Args: {
