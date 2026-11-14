@@ -35,7 +35,7 @@ import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Build
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { calculateQuoteTotals, formatQuoteNumber, type QuoteTaxTreatment } from "@/lib/quote-calculations";
+import { calculateQuoteTotals, formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
 // quote-pdf is imported dynamically inside the handler so jspdf never enters the SSR/worker bundle.
 import { toast } from "sonner";
 
@@ -80,6 +80,7 @@ type QuotePreviewProps = {
   totals: { subtotal: number; discountAmount: number; tax: number; total: number };
   discountPct: number;
   taxTreatment: QuoteTaxTreatment;
+  priceBasis: QuotePriceBasis;
   notes: string;
   terms: string;
   validUntil: string;
@@ -87,7 +88,7 @@ type QuotePreviewProps = {
 
 function QuoteDocumentPreview({
   business, customer, customerName, subject, customerDetails, items, totals, discountPct,
-  taxTreatment, notes, terms, validUntil,
+  taxTreatment, priceBasis, notes, terms, validUntil,
 }: QuotePreviewProps) {
   const vatLabel = taxTreatment === "taxable" ? "IVA (19%)" : taxTreatment === "exempt" ? "Exenta de IVA" : "No afecta a IVA";
   return (
@@ -131,7 +132,7 @@ function QuoteDocumentPreview({
           <div>
             <div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">VÁLIDA HASTA</div>
             <div className="text-xs font-semibold">{validUntil ? new Date(validUntil + "T12:00:00").toLocaleDateString("es-CL") : "No especificada"}</div>
-            <div className="mt-1 text-[9px] text-slate-500">Valores unitarios netos en CLP</div>
+            <div className="mt-1 text-[9px] text-slate-500">{priceBasis === "gross" ? "Valores unitarios con IVA incluido" : "Valores unitarios netos"} en CLP</div>
           </div>
         </div>
         <div className="mb-2 text-[9px] font-bold tracking-[0.14em] text-slate-400">DETALLE DE PRODUCTOS Y SERVICIOS</div>
@@ -187,17 +188,18 @@ function Quotes() {
   const convertingQuoteIdsRef = useRef(new Set<string>());
   const [discountPct, setDiscountPct] = useState(0);
   const [taxTreatment, setTaxTreatment] = useState<QuoteTaxTreatment>("taxable");
+  const [priceBasis, setPriceBasis] = useState<QuotePriceBasis>("net");
   const [notes, setNotes] = useState("");
   const [validUntil, setValidUntil] = useState(defaultQuoteValidityDate);
   const [terms, setTerms] = useState(
-    "Cotización válida por 15 días. Valores unitarios netos en pesos chilenos. El IVA se desglosa según el tratamiento tributario indicado. Forma de pago a coordinar.",
+    "Cotización válida por 15 días. Precios expresados según modalidad seleccionada (netos o IVA incluido). El IVA se desglosa según el tratamiento tributario indicado. Forma de pago a coordinar.",
   );
 
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
 
   const vatRate = taxTreatment === "taxable" ? 19 : 0;
   const previewItems = items.filter((item) => item.name.trim() && Number(item.qty) > 0 && Number(item.price) >= 0 && Number.isFinite(Number(item.qty)) && Number.isFinite(Number(item.price)));
-  const totals = calculateQuoteTotals(previewItems, discountPct, taxTreatment, vatRate);
+  const totals = calculateQuoteTotals(previewItems, discountPct, taxTreatment, vatRate, priceBasis);
   const { subtotal, discountAmount, tax, total } = totals;
   const selectedCustomer = (customers ?? []).find((entry: any) => entry.id === customerId) ?? null;
 
@@ -235,7 +237,7 @@ function Quotes() {
       return;
     }
     try {
-      const calculated = calculateQuoteTotals(validItems, discountPct, taxTreatment, vatRate);
+      const calculated = calculateQuoteTotals(validItems, discountPct, taxTreatment, vatRate, priceBasis);
       if (calculated.total <= 0) {
         toast.error("El total de la cotización debe ser mayor que cero.");
         return;
@@ -252,6 +254,7 @@ function Quotes() {
         total: calculated.total,
         tax_treatment: taxTreatment,
         vat_rate: vatRate,
+        price_basis: priceBasis,
         valid_until: validUntil || null,
         notes: notes.trim() || null,
         terms: terms.trim() || null,
@@ -271,6 +274,7 @@ function Quotes() {
       setSubject("");
       setDiscountPct(0);
       setTaxTreatment("taxable");
+      setPriceBasis("net");
       setNotes("");
       setValidUntil(defaultQuoteValidityDate());
       setOpen(false);
@@ -306,6 +310,7 @@ function Quotes() {
     setSubject(quote.subject ?? "");
     setDiscountPct(Number(quote.discount_pct) || 0);
     setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
+    setPriceBasis((quote.price_basis as QuotePriceBasis) || "net");
     setNotes(quote.notes ?? "");
     setValidUntil(quote.valid_until ?? "");
     setTerms(quote.terms ?? terms);
@@ -333,11 +338,16 @@ function Quotes() {
 
   async function downloadPdf(quote: any): Promise<boolean> {
     try {
+      if (!quote.price_basis) {
+        toast.error("Esta cotización histórica no registra si sus precios eran netos o incluían IVA. Duplícala, selecciona la modalidad correcta y descarga la nueva versión.");
+        return false;
+      }
       const verified = calculateQuoteTotals(
         quote.items ?? [],
         Number(quote.discount_pct) || 0,
         (quote.tax_treatment as QuoteTaxTreatment) || "taxable",
         Number(quote.vat_rate ?? 19),
+        quote.price_basis as QuotePriceBasis,
       );
       const amountsMatch =
         Math.abs(verified.subtotal - Number(quote.subtotal)) <= 1 &&
@@ -566,6 +576,17 @@ function Quotes() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
+                        <Label htmlFor="price-basis">Los precios ingresados son</Label>
+                        <Select value={priceBasis} onValueChange={(value) => setPriceBasis(value as QuotePriceBasis)}>
+                          <SelectTrigger id="price-basis"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="net">Netos (sin IVA)</SelectItem>
+                            <SelectItem value="gross">IVA incluido</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="mt-1 text-xs text-muted-foreground">Selecciona cómo están expresados los precios del catálogo o ingresados manualmente.</p>
+                      </div>
+                      <div>
                         <Label htmlFor="tax-treatment">Tratamiento tributario</Label>
                         <Select value={taxTreatment} onValueChange={(value) => setTaxTreatment(value as QuoteTaxTreatment)}>
                           <SelectTrigger id="tax-treatment"><SelectValue /></SelectTrigger>
@@ -662,6 +683,7 @@ function Quotes() {
                       totals={totals}
                       discountPct={discountPct}
                       taxTreatment={taxTreatment}
+                      priceBasis={priceBasis}
                       notes={notes}
                       terms={terms}
                       validUntil={validUntil}
