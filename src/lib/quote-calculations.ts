@@ -19,6 +19,28 @@ export type QuoteTotals = {
   total: number;
 };
 
+export function calculateQuoteLineNetAmount(
+  item: QuoteCalculationItem,
+  taxTreatment: QuoteTaxTreatment,
+  vatRate = 19,
+  priceBasis: QuotePriceBasis = "net",
+): number {
+  const qty = Number(item.qty);
+  const price = Number(item.price);
+  if (!Number.isFinite(qty) || qty <= 0) throw new Error("Cada cantidad debe ser mayor que cero.");
+  if (!Number.isFinite(price) || price < 0) throw new Error("Cada precio debe ser cero o mayor.");
+  const enteredLine = Math.round(qty * price);
+  const effectiveRate = taxTreatment === "taxable" ? vatRate : 0;
+  const netLine =
+    priceBasis === "gross" && effectiveRate > 0
+      ? Math.round((enteredLine * 100) / (100 + effectiveRate))
+      : enteredLine;
+  if (!Number.isSafeInteger(netLine) || netLine < 0) {
+    throw new Error("El importe supera el límite monetario admitido.");
+  }
+  return netLine;
+}
+
 export function calculateQuoteTotals(
   items: QuoteCalculationItem[],
   discountPct: number,
@@ -40,17 +62,8 @@ export function calculateQuoteTotals(
   }
 
   const subtotal = items.reduce((sum, item) => {
-    const qty = Number(item.qty);
-    const price = Number(item.price);
-    if (!Number.isFinite(qty) || qty <= 0) throw new Error("Cada cantidad debe ser mayor que cero.");
-    if (!Number.isFinite(price) || price < 0) throw new Error("Cada precio debe ser cero o mayor.");
-    const enteredLine = Math.round(qty * price);
-    const effectiveRate = taxTreatment === "taxable" ? vatRate : 0;
-    const netLine =
-      priceBasis === "gross" && effectiveRate > 0
-        ? Math.round((enteredLine * 100) / (100 + effectiveRate))
-        : enteredLine;
-    if (!Number.isSafeInteger(netLine) || !Number.isSafeInteger(sum + netLine)) {
+    const netLine = calculateQuoteLineNetAmount(item, taxTreatment, vatRate, priceBasis);
+    if (!Number.isSafeInteger(sum + netLine)) {
       throw new Error("El importe supera el límite monetario admitido.");
     }
     return sum + netLine;
