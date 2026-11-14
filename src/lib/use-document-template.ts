@@ -21,6 +21,7 @@ export function useDocumentTemplate() {
         .select("*")
         .eq("business_id", active!.id)
         .eq("is_default", true)
+        .eq("document_kind", "all")
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
