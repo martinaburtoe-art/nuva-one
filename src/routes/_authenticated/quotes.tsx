@@ -191,6 +191,8 @@ function Quotes() {
         name: p.name,
         qty: copy[idx].qty || 1,
         price: Number(p.price),
+        sku: p.sku ?? "",
+        unit: p.unit ?? "",
       };
     setItems(copy);
   }
@@ -242,6 +244,9 @@ function Quotes() {
         ? quote.items.map((it: any) => ({
             product_id: it.product_id ?? null,
             name: it.name,
+            description: it.description ?? "",
+            sku: it.sku ?? "",
+            unit: it.unit ?? "",
             qty: Number(it.qty) || 1,
             price: Number(it.price) || 0,
           }))
@@ -252,6 +257,7 @@ function Quotes() {
     setDiscountPct(Number(quote.discount_pct) || 0);
     setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
     setNotes(quote.notes ?? "");
+    setValidUntil(quote.valid_until ?? "");
     setTerms(quote.terms ?? terms);
     setOpen(true);
     toast.info("Cotización duplicada como borrador, revisa y guarda");
@@ -277,6 +283,20 @@ function Quotes() {
 
   async function downloadPdf(quote: any) {
     try {
+      const verified = calculateQuoteTotals(
+        quote.items ?? [],
+        Number(quote.discount_pct) || 0,
+        (quote.tax_treatment as QuoteTaxTreatment) || "taxable",
+        Number(quote.vat_rate ?? 19),
+      );
+      const amountsMatch =
+        Math.abs(verified.subtotal - Number(quote.subtotal)) <= 1 &&
+        Math.abs(verified.tax - Number(quote.tax)) <= 1 &&
+        Math.abs(verified.total - Number(quote.total)) <= 1;
+      if (!amountsMatch) {
+        toast.error("No se generó el PDF: esta cotización histórica tiene importes que no cuadran. Duplícala como borrador y revisa sus valores antes de compartirla.");
+        return;
+      }
       const { generateQuotePdf } = await import("@/lib/quote-pdf");
       const customerRecord = (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
       await generateQuotePdf(
@@ -303,7 +323,7 @@ function Quotes() {
       <>
         <PageHeader
           title="Cotizaciones"
-          description="Crea cotizaciones desde tu catálogo y convierte las aceptadas en ventas con un clic"
+          description="Prepara propuestas comerciales profesionales con cálculos validados y PDF descargable"
           action={
             !canWrite ? undefined : (
               <Dialog open={open} onOpenChange={setOpen}>
@@ -372,9 +392,15 @@ function Quotes() {
                             <div className="col-span-6">
                               <Select
                                 value={it.product_id ?? "__free__"}
-                                onValueChange={(v) =>
-                                  v === "__free__" ? null : pickProduct(idx, v)
-                                }
+                                onValueChange={(v) => {
+                                  if (v === "__free__") {
+                                    const next = [...items];
+                                    next[idx] = { ...next[idx], product_id: null, sku: "", unit: "" };
+                                    setItems(next);
+                                  } else {
+                                    pickProduct(idx, v);
+                                  }
+                                }}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecciona un producto" />
@@ -416,7 +442,8 @@ function Quotes() {
                             <Input
                               className="col-span-2"
                               type="number"
-                              min={1}
+                              min={0.01}
+                              step="0.01"
                               value={it.qty}
                               onChange={(e) => {
                                 const c = [...items];
