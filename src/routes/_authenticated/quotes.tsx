@@ -48,7 +48,7 @@ const statusLabel: Record<string, { l: string; c: string }> = {
   draft: { l: "Borrador", c: "bg-muted text-muted-foreground" },
   sent: { l: "Enviada", c: "bg-primary/15 text-primary" },
   viewed: { l: "Vista", c: "bg-warning/15 text-warning" },
-  accepted: { l: "Aceptada", c: "bg-success/15 text-success" },
+  accepted: { l: "Aceptada · registro interno", c: "bg-success/15 text-success" },
   rejected: { l: "Rechazada", c: "bg-destructive/15 text-destructive" },
   expired: { l: "Expirada", c: "bg-muted text-muted-foreground" },
 };
@@ -451,8 +451,8 @@ function Quotes() {
                             <Input
                               className="col-span-2"
                               type="number"
-                              min={0.01}
-                              step="0.01"
+                              min={it.product_id ? 1 : 0.01}
+                              step={it.product_id ? 1 : "0.01"}
                               value={it.qty}
                               onChange={(e) => {
                                 const c = [...items];
