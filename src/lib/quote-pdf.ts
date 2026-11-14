@@ -132,7 +132,8 @@ export async function generateQuotePdf(
         const ratio = props.width / props.height;
         const w = ratio >= 1 ? maxW : maxH * ratio;
         const h = ratio >= 1 ? maxW / ratio : maxH;
-        doc.addImage(logo, "PNG", margin, 24 + (maxH - h) / 2, w, h);
+        const imageFormat = logo.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
+        doc.addImage(logo, imageFormat, margin, 24 + (maxH - h) / 2, w, h);
         brandX = margin + 60;
       } catch {
         brandX = margin;
@@ -289,45 +290,62 @@ export async function generateQuotePdf(
     const descriptionLines = item.description
       ? (doc.splitTextToSize(String(item.description), 245) as string[])
       : [];
-    const rowH = Math.max(34, 13 + titleLines.length * 10 + descriptionLines.length * 9);
-    if (y + rowH > footerY - 18) {
-      doc.addPage();
-      drawHeader();
-      y = 116;
-      drawTableHeader();
+    const metaLine = [item.sku ? `SKU ${item.sku}` : null, item.unit ? `Unidad: ${item.unit}` : null]
+      .filter(Boolean)
+      .join(" · ");
+    const entries = [
+      ...titleLines.map((text) => ({ text, kind: "title" as const })),
+      ...(metaLine ? [{ text: metaLine, kind: "meta" as const }] : []),
+      ...descriptionLines.map((text) => ({ text, kind: "description" as const })),
+    ];
+    let offset = 0;
+    let firstFragment = true;
+    while (offset < entries.length || firstFragment) {
+      if (footerY - 18 - y < 32) {
+        doc.addPage();
+        drawHeader();
+        y = 116;
+        drawTableHeader();
+      }
+      const maxLines = Math.max(1, Math.floor((footerY - 18 - y - 10) / 11));
+      const fragment = entries.slice(offset, offset + maxLines);
+      const rowH = Math.max(30, fragment.length * 11 + 10);
+      if (index % 2 === 0) {
+        doc.setFillColor(...PALE);
+        doc.rect(margin, y, contentW, rowH, "F");
+      }
+      fragment.forEach((entry, lineIndex) => {
+        doc.setFont("helvetica", entry.kind === "title" ? "bold" : "normal");
+        doc.setFontSize(entry.kind === "title" ? 8.5 : entry.kind === "meta" ? 7 : 7.5);
+        setText(entry.kind === "title" ? INK : MUTED);
+        doc.text(entry.text, margin + 10, y + 14 + lineIndex * 11);
+      });
+      if (firstFragment) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        setText(INK);
+        doc.text(String(item.qty ?? 0), margin + 318, y + 17, { align: "right" });
+        doc.text(fmtCLP(Number(item.price ?? 0)), margin + 420, y + 17, { align: "right" });
+        doc.setFont("helvetica", "bold");
+        doc.text(
+          fmtCLP(Math.round(Number(item.qty ?? 0) * Number(item.price ?? 0))),
+          pageW - margin - 10,
+          y + 17,
+          { align: "right" },
+        );
+      }
+      doc.setDrawColor(...BORDER);
+      doc.line(margin, y + rowH, pageW - margin, y + rowH);
+      y += rowH;
+      offset += fragment.length;
+      firstFragment = false;
+      if (offset < entries.length) {
+        doc.addPage();
+        drawHeader();
+        y = 116;
+        drawTableHeader();
+      }
     }
-    if (index % 2 === 0) {
-      doc.setFillColor(...PALE);
-      doc.rect(margin, y, contentW, rowH, "F");
-    }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    setText(INK);
-    doc.text(titleLines, margin + 10, y + 14);
-    let detailY = y + 14 + titleLines.length * 10;
-    if (item.sku || item.unit) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      setText(MUTED);
-      doc.text([item.sku ? `SKU ${item.sku}` : null, item.unit ? `Unidad: ${item.unit}` : null].filter(Boolean).join(" · "), margin + 10, detailY);
-      detailY += 9;
-    }
-    if (descriptionLines.length) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
-      setText(MUTED);
-      doc.text(descriptionLines, margin + 10, detailY);
-    }
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    setText(INK);
-    doc.text(String(item.qty ?? 0), margin + 318, y + 17, { align: "right" });
-    doc.text(fmtCLP(Number(item.price ?? 0)), margin + 420, y + 17, { align: "right" });
-    doc.setFont("helvetica", "bold");
-    doc.text(fmtCLP(Math.round(Number(item.qty ?? 0) * Number(item.price ?? 0))), pageW - margin - 10, y + 17, { align: "right" });
-    doc.setDrawColor(...BORDER);
-    doc.line(margin, y + rowH, pageW - margin, y + rowH);
-    y += rowH;
   });
 
   y += 18;
