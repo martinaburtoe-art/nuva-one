@@ -11047,6 +11047,7 @@ export type Database = {
       create_demo_business_for_current_user: { Args: never; Returns: string }
       create_fast_sale: {
         Args: {
+          p_business_id: string
           p_channel?: string
           p_customer_id?: string
           p_customer_name?: string
