@@ -11064,7 +11064,7 @@ export type Database = {
       convert_quote_to_sale: { Args: { p_quote_id: string }; Returns: string }
       convert_accepted_quote_to_invoice: { Args: { p_quote_id: string }; Returns: string }
       issue_internal_invoice: {
-        Args: { p_due_date?: string | null; p_invoice_id: string }
+        Args: { p_due_date?: string; p_invoice_id: string }
         Returns: string
       }
       record_internal_invoice_payment: {
@@ -11073,7 +11073,7 @@ export type Database = {
           p_idempotency_key: string
           p_invoice_id: string
           p_payment_method: string
-          p_payment_reference?: string | null
+          p_payment_reference?: string
         }
         Returns: string
       }
