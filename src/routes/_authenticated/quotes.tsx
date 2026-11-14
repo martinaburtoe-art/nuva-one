@@ -135,6 +135,7 @@ function QuoteDocumentPreview({
               {(customerDetails.tax_id || customer?.tax_id) && <div>RUT: {customerDetails.tax_id || customer?.tax_id}</div>}
               {(customerDetails.contact_name || customer?.contact_name) && <div>Contacto: {customerDetails.contact_name || customer?.contact_name}</div>}
               {(customerDetails.address || customer?.address) && <div>{customerDetails.address || customer?.address}</div>}
+              {([customerDetails.shipping_comuna || customer?.shipping_comuna, customerDetails.shipping_city || customer?.shipping_city].filter(Boolean).join(", ")) && <div>{[customerDetails.shipping_comuna || customer?.shipping_comuna, customerDetails.shipping_city || customer?.shipping_city].filter(Boolean).join(", ")}</div>}
               {(customerDetails.email || customer?.email) && <div>{customerDetails.email || customer?.email}</div>}
               {(customerDetails.phone || customer?.phone) && <div>{customerDetails.phone || customer?.phone}</div>}
             </div>
