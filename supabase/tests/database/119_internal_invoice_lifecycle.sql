@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(24);
+SELECT plan(25);
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-00000000aa01');
@@ -64,6 +64,11 @@ SELECT is(
   (SELECT document_kind FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
   'internal_invoice',
   'document is explicitly distinguished from a Chilean DTE'
+);
+SELECT is(
+  (SELECT issuer_snapshot->>'name' FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+  'Nüva Invoice Test',
+  'invoice preserves issuer identity snapshot'
 );
 
 SET LOCAL ROLE authenticated;
