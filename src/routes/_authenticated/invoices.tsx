@@ -44,6 +44,7 @@ function Invoices() {
   const { data: invoices = [], isLoading, isError } = useBizList<any>("invoices", { order: "created_at", ascending: false });
   const { data: payments = [] } = useBizList<any>("invoice_payments", { order: "confirmed_at", ascending: false });
   const { data: quotes = [] } = useBizList<any>("quotes", { order: "created_at", ascending: false });
+  const { data: sales = [] } = useBizList<any>("sales");
   const { data: invoiceEvents = [] } = useBizList<any>("invoice_events", { order: "created_at", ascending: false });
 
   const [paymentInvoice, setPaymentInvoice] = useState<any>(null);
@@ -67,9 +68,11 @@ function Invoices() {
     [invoices],
   );
 
+  const soldQuoteIds = useMemo(() => new Set(sales.map((sale: any) => sale.quote_id).filter(Boolean)), [sales]);
+
   const acceptedQuotes = useMemo(
-    () => quotes.filter((quote: any) => quote.status === "accepted" && quote.price_basis && !convertedQuoteIds.has(quote.id)),
-    [quotes, convertedQuoteIds],
+    () => quotes.filter((quote: any) => quote.status === "accepted" && quote.price_basis && !convertedQuoteIds.has(quote.id) && !soldQuoteIds.has(quote.id)),
+    [quotes, convertedQuoteIds, soldQuoteIds],
   );
 
   const totals = useMemo(() => ({
