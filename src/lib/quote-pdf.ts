@@ -335,7 +335,7 @@ export async function generateQuotePdf(
   const discountAmount = Math.round(Number(quote.subtotal) * (discountPct / 100));
   const summaryRows = [
     ["Subtotal neto", fmtCLP(Number(quote.subtotal))],
-    ...(discountPct > 0 ? [[`Descuento (${discountPct}%)`, `-${fmtCLP(discountAmount)}`] : []),
+    ...(discountPct > 0 ? [[`Descuento (${discountPct}%)`, `-${fmtCLP(discountAmount)}`]] : []),
     [taxLabel, fmtCLP(Number(quote.tax))],
   ];
   const summaryH = summaryRows.length * 18 + 46;
