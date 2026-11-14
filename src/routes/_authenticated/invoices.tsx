@@ -40,6 +40,7 @@ function Invoices() {
   const { active } = useActiveBusiness();
   const { data: role } = useMyRole();
   const canWrite = canWriteOperations(role);
+  const canManageTemplates = role === "owner" || role === "admin";
   const qc = useQueryClient();
   const { data: invoices = [], isLoading, isError } = useBizList<any>("invoices", { order: "created_at", ascending: false });
   const { data: payments = [] } = useBizList<any>("invoice_payments", { order: "confirmed_at", ascending: false });
@@ -132,7 +133,7 @@ function Invoices() {
   const saveTemplate = useMutation({
     mutationFn: async () => {
       if (!active?.id) throw new Error("No hay un negocio activo.");
-      if (!canWrite) throw new Error("No tienes permisos para modificar la plantilla.");
+      if (!canManageTemplates) throw new Error("Solo owner y admin pueden modificar las plantillas.");
       const name = templateName.trim();
       if (!name || name.length > 80) throw new Error("El nombre debe tener entre 1 y 80 caracteres.");
       if (!/^#[0-9a-fA-F]{6}$/.test(templateBrandColor)) throw new Error("Selecciona un color de marca válido.");
@@ -405,7 +406,7 @@ function Invoices() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setTemplateDialogOpen(false)} disabled={saveTemplate.isPending}>Cancelar</Button>
-                <Button onClick={() => saveTemplate.mutate()} disabled={!canWrite || saveTemplate.isPending}>
+                <Button onClick={() => saveTemplate.mutate()} disabled={!canManageTemplates || saveTemplate.isPending}>
                   <Save className="mr-1.5 h-4 w-4" /> {saveTemplate.isPending ? "Guardando…" : "Guardar plantilla"}
                 </Button>
               </div>
