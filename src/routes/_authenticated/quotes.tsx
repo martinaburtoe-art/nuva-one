@@ -91,6 +91,16 @@ function QuoteDocumentPreview({
   taxTreatment, priceBasis, notes, terms, validUntil,
 }: QuotePreviewProps) {
   const vatLabel = taxTreatment === "taxable" ? "IVA (19%)" : taxTreatment === "exempt" ? "Exenta de IVA" : "No afecta a IVA";
+  const lineNetAmount = (item: Item) => {
+    const enteredLine = Math.round(Number(item.qty || 0) * Number(item.price || 0));
+    return priceBasis === "gross" && taxTreatment === "taxable"
+      ? Math.round((enteredLine * 100) / 119)
+      : enteredLine;
+  };
+  const displayedUnitPrice = (item: Item) =>
+    priceBasis === "gross" && taxTreatment === "taxable"
+      ? Math.round(Number(item.price || 0) * 100 / 119)
+      : Number(item.price || 0);
   return (
     <aside className="min-w-0 rounded-2xl border bg-muted/30 p-3 xl:sticky xl:top-0 xl:max-h-[calc(94vh-5rem)] xl:overflow-y-auto">
       <div className="mb-3 flex items-center justify-between gap-2 px-1">
@@ -135,9 +145,9 @@ function QuoteDocumentPreview({
             <div className="mt-1 text-[9px] text-slate-500">{!priceBasis ? "Selecciona modalidad de precios" : priceBasis === "gross" ? (taxTreatment === "taxable" ? "Valores unitarios con IVA incluido" : "Valores unitarios brutos") : "Valores unitarios netos"}</div>
           </div>
         </div>
-        <div className="mb-2 text-[9px] font-bold tracking-[0.14em] text-slate-400">DETALLE DE PRODUCTOS Y SERVICIOS</div>
+        <div className="mb-2 text-[9px] font-bold tracking-[0.14em] text-slate-400">DETALLE DE PRODUCTOS Y SERVICIOS</div>{priceBasis === "gross" && taxTreatment === "taxable" && <div className="mb-2 text-[8px] text-slate-500">Los precios ingresados incluyen IVA; el detalle se presenta en base neta y el impuesto se desglosa al final.</div>}
         <table className="w-full border-collapse text-[9px]">
-          <thead><tr className="border-y border-slate-200 text-left text-[8px] uppercase tracking-wide text-slate-500"><th className="py-2 pr-2">Descripción</th><th className="py-2 text-right">Cant.</th><th className="py-2 text-right">{priceBasis === "gross" && taxTreatment === "taxable" ? "Precio c/IVA" : "Precio unit."}</th><th className="py-2 pl-2 text-right">Total</th></tr></thead>
+          <thead><tr className="border-y border-slate-200 text-left text-[8px] uppercase tracking-wide text-slate-500"><th className="py-2 pr-2">Descripción</th><th className="py-2 text-right">Cant.</th><th className="py-2 text-right">Precio unit. neto</th><th className="py-2 pl-2 text-right">Total</th></tr></thead>
           <tbody>
             {items.filter((item) => item.name.trim()).map((item, index) => (
               <tr key={index} className="border-b border-slate-100 align-top">
