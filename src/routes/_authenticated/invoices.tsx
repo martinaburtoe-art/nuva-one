@@ -73,9 +73,9 @@ function Invoices() {
   );
 
   const totals = useMemo(() => ({
-    issued: invoices.filter((i: any) => ["issued", "partially_paid", "overdue"].includes(i.status)).reduce((s: number, i: any) => s + Number(i.total ?? 0), 0),
+    issued: invoices.filter((i: any) => Boolean(i.issued_at) && i.status !== "voided").reduce((s: number, i: any) => s + Number(i.total ?? 0), 0),
     collected: invoices.reduce((s: number, i: any) => s + (paidByInvoice.get(i.id) ?? 0), 0),
-    pending: invoices.reduce((s: number, i: any) => s + Math.max(0, Number(i.total ?? 0) - (paidByInvoice.get(i.id) ?? 0)), 0),
+    pending: invoices.filter((i: any) => ["issued", "partially_paid", "overdue"].includes(i.status)).reduce((s: number, i: any) => s + Math.max(0, Number(i.total ?? 0) - (paidByInvoice.get(i.id) ?? 0)), 0),
   }), [invoices, paidByInvoice]);
 
   const refresh = () => {
@@ -136,7 +136,7 @@ function Invoices() {
       setPaymentAmount("");
       setPaymentReference("");
       setIdempotencyKey("");
-      toast.success("Abono registrado y reflejado en los ingresos de caja.");
+      toast.success("Abono registrado y reflejado en el flujo de caja.");
     },
     onError: (error: any) => toast.error(error?.message ?? "No se pudo registrar el abono."),
   });
@@ -155,6 +155,7 @@ function Invoices() {
         discount_pct: Number(invoice.subtotal) > 0
           ? (Number(invoice.discount_amount) / Number(invoice.subtotal)) * 100
           : 0,
+        discount_amount: Number(invoice.discount_amount),
         total: Number(invoice.total),
         tax_treatment: invoice.tax_treatment,
         price_basis: invoice.price_basis,
@@ -164,7 +165,13 @@ function Invoices() {
         notes: invoice.notes,
         terms: invoice.terms,
         subject: invoice.subject,
-      } as any, invoice.issuer_snapshot ?? { name: active?.name }, customer, Number(invoice.invoice_number), invoice.due_date);
+      } as any, invoice.issuer_snapshot ?? { name: active?.name }, customer, Number(invoice.invoice_number), invoice.due_date, {
+        paidAmount: paidByInvoice.get(invoice.id) ?? 0,
+        balanceDue: ["draft", "voided"].includes(invoice.status)
+          ? 0
+          : Math.max(0, Number(invoice.total) - (paidByInvoice.get(invoice.id) ?? 0)),
+        documentStatus: invoice.status,
+      });
     } catch (error: any) {
       toast.error(error?.message ?? "No se pudo generar el PDF del documento.");
     }
