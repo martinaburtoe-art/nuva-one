@@ -30,11 +30,11 @@ CREATE POLICY document_templates_member_select ON public.document_templates
 DROP POLICY IF EXISTS document_templates_admin_insert ON public.document_templates;
 CREATE POLICY document_templates_admin_insert ON public.document_templates
   FOR INSERT WITH CHECK (
-    created_by IS NULL OR created_by = (SELECT auth.uid())
-  )
-  WITH CHECK (private.has_business_role(
-    business_id, (SELECT auth.uid()), ARRAY['owner','admin']::public.member_role[]
-  ));
+    (created_by IS NULL OR created_by = (SELECT auth.uid()))
+    AND private.has_business_role(
+      business_id, (SELECT auth.uid()), ARRAY['owner','admin']::public.member_role[]
+    )
+  );
 
 DROP POLICY IF EXISTS document_templates_admin_update ON public.document_templates;
 CREATE POLICY document_templates_admin_update ON public.document_templates
