@@ -1,11 +1,16 @@
 BEGIN;
-SELECT plan(29);
+SELECT plan(30);
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-00000000aa01');
 
-INSERT INTO public.businesses (id, name, owner_id, plan)
-VALUES ('00000000-0000-0000-0000-00000000bb01', 'Nüva Invoice Test', '00000000-0000-0000-0000-00000000aa01', 'starter');
+INSERT INTO public.businesses (id, name, owner_id, plan, giro, address, comuna, public_contact_email, public_contact_phone)
+VALUES (
+  '00000000-0000-0000-0000-00000000bb01', 'Nüva Invoice Test',
+  '00000000-0000-0000-0000-00000000aa01', 'starter',
+  'Servicios profesionales', 'Av. Uno 123', 'Santiago',
+  'contacto@example.test', '+56911111111'
+);
 
 INSERT INTO public.quotes (
   id, business_id, customer_name, items, subtotal, discount_pct, tax, total,
@@ -90,6 +95,11 @@ SELECT is(
   (SELECT issuer_snapshot->>'name' FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
   'Nüva Invoice Test',
   'invoice preserves issuer identity snapshot'
+);
+SELECT is(
+  (SELECT issuer_snapshot->>'address' FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+  'Av. Uno 123',
+  'invoice preserves issuer address snapshot for the PDF'
 );
 
 SET LOCAL ROLE authenticated;
