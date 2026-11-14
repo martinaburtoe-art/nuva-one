@@ -34,7 +34,7 @@ SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
 
 SELECT lives_ok(
-  $$SELECT public.convert_accepted_quote_to_invoice('00000000-0000-0000-0000-00000000dd01')$$,
+  $q$SELECT public.convert_accepted_quote_to_invoice('00000000-0000-0000-0000-00000000dd01')$q$,
   'an accepted quote converts into an internal invoice draft'
 );
 
@@ -79,7 +79,7 @@ SELECT is(
   'repeated quote conversion returns the same invoice'
 );
 SELECT throws_ok(
-  $$SELECT public.convert_accepted_quote_to_invoice('00000000-0000-0000-0000-00000000dd02')$$,
+  $q$SELECT public.convert_accepted_quote_to_invoice('00000000-0000-0000-0000-00000000dd02')$q$,
   'P0001',
   'La cotización debe estar aceptada antes de emitir un documento de cobro',
   'draft quote cannot be converted into an invoice'
@@ -92,7 +92,7 @@ SELECT is(
 );
 
 SELECT lives_ok(
-  $$SELECT public.issue_internal_invoice((SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'), CURRENT_DATE + 15)$$,
+  $q$SELECT public.issue_internal_invoice((SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'), CURRENT_DATE + 15)$q$,
   'authorized operator can issue the internal collection document'
 );
 RESET ROLE;
@@ -116,10 +116,10 @@ SELECT is(
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
 SELECT lives_ok(
-  $SELECT public.record_internal_invoice_payment(
+  $q$SELECT public.record_internal_invoice_payment(
     (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
     1000, 'transferencia', 'TRX-001', 'manual-invoice-payment-001'
-  )$,
+  )$q$,
   'authorized operator can record a partial manual payment'
 );
 RESET ROLE;
@@ -168,19 +168,19 @@ SELECT is(
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
 SELECT throws_ok(
-  $SELECT public.record_internal_invoice_payment(
+  $q$SELECT public.record_internal_invoice_payment(
     (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
     1381, 'transferencia', 'TRX-OVER', 'manual-invoice-payment-over'
-  )$,
+  )$q$,
   'P0001',
   'El abono supera el saldo pendiente',
   'payment cannot exceed the remaining invoice balance'
 );
 SELECT lives_ok(
-  $SELECT public.record_internal_invoice_payment(
+  $q$SELECT public.record_internal_invoice_payment(
     (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
     1380, 'transferencia', 'TRX-002', 'manual-invoice-payment-002'
-  )$,
+  )$q$,
   'remaining balance can be settled with a second payment'
 );
 RESET ROLE;
