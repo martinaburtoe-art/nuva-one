@@ -60,6 +60,15 @@ const BORDER: [number, number, number] = [226, 230, 236];
 const PALE: [number, number, number] = [247, 248, 250];
 const ACCENT: [number, number, number] = [179, 143, 88];
 
+function parseHexColor(value?: string | null): [number, number, number] | null {
+  if (!value || !/^#[0-9a-fA-F]{6}$/.test(value)) return null;
+  return [
+    Number.parseInt(value.slice(1, 3), 16),
+    Number.parseInt(value.slice(3, 5), 16),
+    Number.parseInt(value.slice(5, 7), 16),
+  ];
+}
+
 async function loadLogoDataUrl(url?: string | null): Promise<string | null> {
   if (!url) return null;
   try {
@@ -90,7 +99,7 @@ export async function generateQuotePdf(
   quote: Quote,
   businessInput: Business | string,
   customerInput?: Customer | null,
-  options?: { documentKind?: "quote" | "invoice"; documentNumber?: number; dueDate?: string | null; documentStatus?: string; paidAmount?: number; balanceDue?: number }, 
+  options?: { documentKind?: "quote" | "invoice"; documentNumber?: number; dueDate?: string | null; documentStatus?: string; paidAmount?: number; balanceDue?: number; brandColor?: string; showLogo?: boolean; showTaxId?: boolean; footerNote?: string | null }, 
 ) {
   const business: Business =
     typeof businessInput === "string" ? { name: businessInput } : businessInput;
@@ -103,6 +112,7 @@ export async function generateQuotePdf(
   const taxTreatment = quote.tax_treatment ?? "taxable";
   const priceBasis = quote.price_basis ?? "net";
   const vatRate = taxTreatment === "taxable" ? Number(quote.vat_rate ?? 19) : 0;
+  const brandColor = parseHexColor(options?.brandColor) ?? NAVY;
   const taxLabel =
     taxTreatment === "exempt"
       ? "Operación exenta de IVA"
@@ -119,7 +129,7 @@ export async function generateQuotePdf(
   const margin = 42;
   const contentW = pageW - margin * 2;
   const footerY = pageH - 42;
-  const logo = await loadLogoDataUrl(business.logo_url);
+  const logo = options?.showLogo === false ? null : await loadLogoDataUrl(business.logo_url);
   let y = 0;
 
   const setText = (color: [number, number, number]) => doc.setTextColor(...color);
@@ -155,11 +165,11 @@ export async function generateQuotePdf(
     doc.setFontSize(14);
     const businessNameWidth = doc.getTextWidth(businessName);
     doc.setFontSize(Math.min(14, Math.max(8, (14 * 250) / Math.max(1, businessNameWidth))));
-    setText(NAVY);
+    setText(brandColor);
     doc.text(businessName, brandX, 34);
 
     const businessLines = [
-      business.tax_id ? `RUT: ${business.tax_id}` : null,
+      options?.showTaxId === false ? null : (business.tax_id ? `RUT: ${business.tax_id}` : null),
       business.giro,
       [business.address, business.comuna].filter(Boolean).join(", "),
       [business.public_contact_phone, business.public_contact_email].filter(Boolean).join(" · "),
@@ -174,7 +184,7 @@ export async function generateQuotePdf(
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    setText(NAVY);
+    setText(brandColor);
     doc.text(isInvoice ? "DOCUMENTO DE COBRO" : "COTIZACIÓN", pageW - margin, 34, { align: "right" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
@@ -199,7 +209,11 @@ export async function generateQuotePdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     setText(MUTED);
-    doc.text(isInvoice ? "Documento interno de cobro · No constituye DTE ni factura tributaria del SII" : "Documento comercial · No constituye factura ni documento tributario electrónico", margin, footerY + 4);
+    const legalFooter = isInvoice
+      ? "Documento interno de cobro · No constituye DTE ni factura tributaria del SII"
+      : "Documento comercial · No constituye factura ni documento tributario electrónico";
+    const customFooter = options?.footerNote?.trim().slice(0, 64);
+    doc.text(customFooter ? `${legalFooter} · ${customFooter}` : legalFooter, margin, footerY + 4, { maxWidth: contentW - 72 });
     doc.text(`Página ${page} de ${pages}`, pageW - margin, footerY + 4, { align: "right" });
   }
 
@@ -438,7 +452,7 @@ export async function generateQuotePdf(
     doc.text(fmtCLP(paidAmount), pageW - margin - 10, y, { align: "right" });
     y += 18;
     doc.setFont("helvetica", "bold");
-    setText(NAVY);
+    setText(brandColor);
     doc.text("Saldo pendiente", summaryX, y);
     doc.text(fmtCLP(balanceDue), pageW - margin - 10, y, { align: "right" });
     y += 20;
