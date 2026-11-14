@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useBizList, fmtCLP } from "@/lib/biz-data";
+import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
 
 export const Route = createFileRoute("/_authenticated/invoices")({
@@ -47,14 +48,7 @@ function Invoices() {
   const { data: quotes = [] } = useBizList<any>("quotes", { order: "created_at", ascending: false });
   const { data: sales = [] } = useBizList<any>("sales");
   const { data: invoiceEvents = [] } = useBizList<any>("invoice_events", { order: "created_at", ascending: false });
-  const { data: documentTemplates = [] } = useBizList<any>("document_templates", { order: "updated_at", ascending: false });
-
-  const defaultTemplate = useMemo(
-    () => documentTemplates.find((template: any) => template.is_default && template.document_kind === "all")
-      ?? documentTemplates.find((template: any) => template.is_default)
-      ?? null,
-    [documentTemplates],
-  );
+  const { data: defaultTemplate = null } = useDocumentTemplate();
 
   const [paymentInvoice, setPaymentInvoice] = useState<any>(null);
   const [detailInvoice, setDetailInvoice] = useState<any>(null);
