@@ -374,7 +374,10 @@ function Quotes() {
       }
       const { generateQuotePdf } = await import("@/lib/quote-pdf");
       const hasCustomerSnapshot = quote.customer_snapshot && Object.keys(quote.customer_snapshot).length > 0;
-      const customerRecord = hasCustomerSnapshot ? quote.customer_snapshot : (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+      const sourceCustomer = hasCustomerSnapshot ? quote.customer_snapshot : (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+      const customerRecord = sourceCustomer
+        ? { ...sourceCustomer, contact_name: sourceCustomer.contact_name ?? sourceCustomer.shipping_contact_name ?? null }
+        : null;
       await generateQuotePdf(
         quote,
         {
