@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(26);
+SELECT plan(29);
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-00000000aa01');
@@ -28,6 +28,17 @@ INSERT INTO public.quotes (
   'Cliente sin aceptar',
   jsonb_build_array(jsonb_build_object('name','Servicio','qty',1,'price',1000)),
   1000, 0, 190, 1190, 'draft', 'taxable', 19, 'net'
+);
+
+INSERT INTO public.quotes (
+  id, business_id, customer_name, items, subtotal, discount_pct, tax, total,
+  status, tax_treatment, vat_rate, price_basis
+) VALUES (
+  '00000000-0000-0000-0000-00000000dd03',
+  '00000000-0000-0000-0000-00000000bb01',
+  'Cliente para venta',
+  jsonb_build_array(jsonb_build_object('name','Instalación','qty',1,'price',1000)),
+  1000, 0, 190, 1190, 'accepted', 'taxable', 19, 'net'
 );
 
 SET LOCAL ROLE authenticated;
@@ -65,6 +76,16 @@ SELECT is(
   'internal_invoice',
   'document is explicitly distinguished from a Chilean DTE'
 );
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
+SELECT throws_ok(
+  $q$SELECT public.convert_quote_to_sale('00000000-0000-0000-0000-00000000dd01')$q$,
+  'P0001',
+  'La cotización ya fue convertida en documento interno de cobro',
+  'an invoiced quote cannot also become a sale'
+);
+RESET ROLE;
 SELECT is(
   (SELECT issuer_snapshot->>'name' FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
   'Nüva Invoice Test',
@@ -214,6 +235,21 @@ SELECT is(
   2,
   'each distinct confirmed payment creates one cash-flow transaction'
 );
+
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
+SELECT lives_ok(
+  $q$SELECT public.convert_quote_to_sale('00000000-0000-0000-0000-00000000dd03')$q$,
+  'an accepted quote can still convert into a draft sale when no invoice exists'
+);
+SELECT throws_ok(
+  $q$SELECT public.convert_accepted_quote_to_invoice('00000000-0000-0000-0000-00000000dd03')$q$,
+  'P0001',
+  'La cotización ya fue convertida en venta',
+  'a quote already converted to a sale cannot also become an invoice'
+);
+RESET ROLE;
 
 SELECT * FROM finish();
 ROLLBACK;
