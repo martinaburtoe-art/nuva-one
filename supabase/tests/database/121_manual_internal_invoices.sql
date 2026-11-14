@@ -35,6 +35,12 @@ SELECT is(
   'server recalculates net, discount and Chilean VAT correctly'
 );
 SELECT is(
+  (SELECT document_kind FROM public.invoices
+   WHERE business_id = '00000000-0000-0000-0000-00000000ed01'),
+  'internal_invoice',
+  'manual document remains explicitly classified as an internal invoice'
+);
+SELECT is(
   (SELECT event_type FROM public.invoice_events e
    JOIN public.invoices i ON i.id = e.invoice_id
    WHERE i.business_id = '00000000-0000-0000-0000-00000000ed01'),
