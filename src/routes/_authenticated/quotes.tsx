@@ -193,7 +193,7 @@ function Quotes() {
   const [notes, setNotes] = useState("");
   const [validUntil, setValidUntil] = useState(defaultQuoteValidityDate);
   const [terms, setTerms] = useState(
-    "Cotización válida por 15 días. Precios expresados según modalidad seleccionada (netos o IVA incluido). El IVA se desglosa según el tratamiento tributario indicado. Forma de pago a coordinar.",
+    "Cotización válida por 15 días. Precios expresados según modalidad seleccionada (netos o brutos). Los impuestos se desglosan según el tratamiento tributario indicado. Forma de pago a coordinar.",
   );
 
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
