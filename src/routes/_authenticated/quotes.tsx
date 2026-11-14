@@ -33,6 +33,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
+import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness } from "@/lib/use-business";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { calculateQuoteLineNetAmount, calculateQuoteTotals, formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
@@ -192,7 +193,7 @@ function Quotes() {
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
   const { data: invoices } = useBizList<any>("invoices");
-  const { data: documentTemplates = [] } = useBizList<any>("document_templates");
+  const { data: documentTemplate = null } = useDocumentTemplate();
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
   const insert = useBizInsert("quotes");
   const upd = useBizUpdate("quotes");
@@ -482,9 +483,7 @@ function Quotes() {
         },
         customerRecord,
         (() => {
-          const template = documentTemplates.find((entry: any) => entry.is_default && entry.document_kind === "all")
-            ?? documentTemplates.find((entry: any) => entry.is_default);
-          const design = template?.design ?? {};
+          const design = documentTemplate?.design ?? {};
           return {
             brandColor: design.brandColor,
             showLogo: design.showLogo !== false,
