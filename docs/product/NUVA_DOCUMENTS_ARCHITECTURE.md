@@ -1,6 +1,6 @@
 # Nüva Documents — Architecture & Delivery Specification
 
-**Status:** implementation foundation / pending codebase integration audit  
+**Status:** architecture foundation / source and production audits completed; implementation gated by production drift  
 **Date:** 2026-11-14  
 **Target:** Nüva One (React + TypeScript + Vite + TanStack Router + Supabase/PostgreSQL + Inngest)  
 **Reference product:** InvoiceFly; reproduce useful workflows, not proprietary UI/assets/code.
@@ -36,7 +36,7 @@ The first release is a reliable quotation lifecycle, not a generic document-buil
 
 ## 3. Domain model
 
-Prefer existing canonical tenant, customer, product, inventory and sales tables. Before creating migrations, map their actual names, keys, RLS policies, triggers and existing quote implementation. Do not introduce parallel customer/product/sales sources.
+Prefer the existing canonical tenant, customer, product, inventory, sales and **quotes** tables. The repository already contains `src/routes/_authenticated/quotes.tsx` and `src/lib/quote-pdf.ts`; do not create a parallel `commercial_documents` system for the first release. Evolve the existing quote aggregate and add only the minimum schema required after reconciling production drift. The logical entities below are target capabilities, not a mandate to create new tables or duplicate sources.
 
 Proposed logical entities (physical names must be reconciled with existing schema):
 - commercial_documents: tenant_id, document_type, number, status, customer_id, currency, issue_date, valid_until, title, customer_snapshot, issuer_snapshot, totals_snapshot, terms_snapshot, template_version, created_by, issued_at, converted_to_id, version.
@@ -133,17 +133,30 @@ Track funnel metrics: drafts, issued, delivered, opened, accepted, rejected, exp
 - verify production SHA and migration state after controlled deployment.
 - Do not rerun previously certified unrelated audits unless a changed dependency invalidates their evidence.
 
-## 10. Required codebase reconnaissance before implementation
+## 10. Source and production reconnaissance — completed 14-11-2026
 
-The current repository's package manifest confirms React/TypeScript/Vite/TanStack/Supabase, jsPDF and Inngest dependencies. The GitHub connector could not resolve root README or guessed source paths, and code search did not return relevant source matches. Therefore the exact current routes, schema, existing quote module, PDF implementation, RLS conventions and sales conversion API remain unverified.
+The GitHub repository tree and relevant files were inspected:
+- Existing route: `src/routes/_authenticated/quotes.tsx`.
+- Existing PDF generator: `src/lib/quote-pdf.ts`.
+- Existing schema/migrations: base `public.quotes`, `quotes_premium`, follow-up fields, discount constraints, secure conversion and unique quote-sale link migration files.
+- Existing business-scoped hooks: `useBizList`, `useBizInsert`, `useBizUpdate`, `useBizDelete`.
+- Existing customer/catalog sources and business profile fields are available; do not duplicate them.
 
-Before writing application code:
-1. Obtain a current repository tree or local checkout and identify canonical routes/components/hooks.
-2. Search existing schema/migrations for quote, estimate, proposal, invoice, sales order, customer, product and sequence tables.
-3. Inspect RLS policies, storage policies, tenant resolver, role model and audit/event conventions.
-4. Trace the existing sales conversion path and inventory side effects.
-5. Reuse existing components and tables wherever possible; stop if an existing implementation already covers a capability.
-6. Build P0 incrementally behind a feature flag; do not apply migrations or deploy automatically.
+The production Supabase project was queried read-only. No DDL, writes, RPC execution, RLS changes or deployments were performed.
+
+**Production blockers found:**
+1. `public.quotes` in production does not contain `quote_number`, although the route expects it and the premium migration exists in GitHub.
+2. The remote migration history does not record the premium numbering and later unique-link/secure-conversion migrations expected from the repository.
+3. Six existing quote rows were inspected in aggregate. Rows with discounts have stored totals that do not reflect the discount; the default editor wording also says “IVA incluido” while the current calculation adds 19% over the entered unit prices. Historical values must not be silently recalculated.
+4. The installed `convert_quote_to_sale(uuid)` definition declares 16 INSERT target columns but only 15 VALUES expressions. It was inspected, not executed. Its payment and accounting semantics also require review: acceptance is not proof of collection.
+5. Existing business profile fields include `name`, `tax_id`, `giro`, `address`, `comuna`, `public_contact_email`, `public_contact_phone`, `logo_url`; customer fields include `name`, `tax_id`, `address`, `email`, `phone` and shipping details.
+
+Detailed evidence and read-only findings:
+- `docs/product/NUVA_QUOTES_CURRENT_STATE_AUDIT.md`
+- `docs/product/NUVA_QUOTES_MARKET_RESEARCH_AND_PRODUCT_SPEC.md`
+- `docs/product/NUVA_QUOTES_PRODUCTION_SCHEMA_AUDIT_20261114.md`
+
+**Implementation order:** reconcile migration history and live schema in an isolated environment; define backward-compatible financial semantics for new vs historical quotes; repair and test conversion without fabricating payment; then build the shared document model, live A4 preview and paginated PDF. Do not merge or deploy this documentation PR as a feature release.
 
 ## 11. InvoiceFly reference analysis
 
