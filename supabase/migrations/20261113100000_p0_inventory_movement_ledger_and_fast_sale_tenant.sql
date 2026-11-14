@@ -410,7 +410,7 @@ BEGIN
     p_business_id, p_customer_id, NULLIF(TRIM(p_customer_name), ''),
     LOWER(COALESCE(NULLIF(TRIM(p_channel), ''), 'tienda')),
     LOWER(COALESCE(NULLIF(TRIM(p_payment_method), ''), 'efectivo')),
-    CASE WHEN p_is_credit THEN 'pending' ELSE 'paid' END,
+    CASE WHEN p_is_credit THEN 'pending'::public.sale_status ELSE 'paid'::public.sale_status END,
     v_total, p_notes, p_items, p_is_credit, p_due_date,
     CASE WHEN p_is_credit THEN 0 ELSE v_total END,
     false,
