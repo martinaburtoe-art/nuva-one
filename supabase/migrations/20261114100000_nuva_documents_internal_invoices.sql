@@ -161,8 +161,13 @@ BEGIN
   SELECT jsonb_build_object(
     'name', b.name,
     'tax_id', b.tax_id,
+    'giro', b.giro,
+    'address', b.address,
+    'comuna', b.comuna,
     'logo_url', b.logo_url,
-    'industry', b.industry
+    'industry', b.industry,
+    'contact_email', b.public_contact_email,
+    'contact_phone', b.public_contact_phone
   ) INTO v_issuer_snapshot
   FROM public.businesses b
   WHERE b.id = v_quote.business_id;
