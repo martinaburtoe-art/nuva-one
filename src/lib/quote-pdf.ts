@@ -14,6 +14,8 @@ type Quote = {
   id?: string;
   quote_number?: number | null;
   customer_name: string;
+  subject?: string | null;
+  customer_snapshot?: Record<string, string | null> | null;
   items: QuoteItem[];
   subtotal: number;
   tax: number;
@@ -44,6 +46,7 @@ type Customer = {
   address?: string | null;
   email?: string | null;
   phone?: string | null;
+  contact_name?: string | null;
   shipping_comuna?: string | null;
   shipping_city?: string | null;
 };
@@ -256,6 +259,7 @@ export async function generateQuotePdf(
   setText(MUTED);
   const customerDetails = [
     customer.tax_id ? `RUT: ${customer.tax_id}` : null,
+    customer.contact_name ? `Contacto: ${customer.contact_name}` : null,
     customer.address,
     [customer.shipping_comuna, customer.shipping_city].filter(Boolean).join(", "),
     customer.email,
@@ -281,6 +285,12 @@ export async function generateQuotePdf(
     maxWidth: colW - 14,
   });
   y += panelH + 22;
+
+  if (quote.subject) {
+    sectionTitle("Asunto / proyecto");
+    paragraph(quote.subject, margin, contentW, 10, 14, INK);
+    y += 8;
+  }
 
   sectionTitle("Detalle de productos y servicios");
   drawTableHeader();
@@ -409,7 +419,7 @@ export async function generateQuotePdf(
 
   doc.setProperties({
     title: `${formatQuoteNumber(quote.quote_number)} · ${businessName}`,
-    subject: "Cotización comercial",
+    subject: quote.subject || "Cotización comercial",
     author: businessName,
     creator: "Nüva One",
   });
