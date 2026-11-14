@@ -681,7 +681,6 @@ export interface FileRoutesByFullPath {
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
-  '/invoices': typeof AuthenticatedInvoicesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
@@ -778,6 +777,7 @@ export interface FileRoutesByTo {
   '/pricing-calculator': typeof AuthenticatedPricingCalculatorRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/quotes': typeof AuthenticatedQuotesRoute
+  '/invoices': typeof AuthenticatedInvoicesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shifts': typeof AuthenticatedShiftsRoute
