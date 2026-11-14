@@ -89,11 +89,16 @@ export async function generateQuotePdf(
   quote: Quote,
   businessInput: Business | string,
   customerInput?: Customer | null,
+  options?: { documentKind?: "quote" | "invoice"; documentNumber?: number; dueDate?: string | null },
 ) {
   const business: Business =
     typeof businessInput === "string" ? { name: businessInput } : businessInput;
   const customer = customerInput ?? {};
   const businessName = business.name?.trim() || "Empresa";
+  const isInvoice = options?.documentKind === "invoice";
+  const documentNumber = isInvoice
+    ? "FAC-" + String(options?.documentNumber ?? quote.quote_number ?? 0).padStart(6, "0")
+    : formatQuoteNumber(quote.quote_number);
   const taxTreatment = quote.tax_treatment ?? "taxable";
   const priceBasis = quote.price_basis ?? "net";
   const vatRate = taxTreatment === "taxable" ? Number(quote.vat_rate ?? 19) : 0;
@@ -169,11 +174,11 @@ export async function generateQuotePdf(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     setText(NAVY);
-    doc.text("COTIZACIÓN", pageW - margin, 34, { align: "right" });
+    doc.text(isInvoice ? "DOCUMENTO DE COBRO" : "COTIZACIÓN", pageW - margin, 34, { align: "right" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     setText(ACCENT);
-    doc.text(formatQuoteNumber(quote.quote_number), pageW - margin, 52, { align: "right" });
+    doc.text(documentNumber, pageW - margin, 52, { align: "right" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     setText(MUTED);
@@ -193,7 +198,7 @@ export async function generateQuotePdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     setText(MUTED);
-    doc.text("Documento comercial · No constituye factura ni documento tributario electrónico", margin, footerY + 4);
+    doc.text(isInvoice ? "Documento interno de cobro · No constituye DTE ni factura tributaria del SII" : "Documento comercial · No constituye factura ni documento tributario electrónico", margin, footerY + 4);
     doc.text(`Página ${page} de ${pages}`, pageW - margin, footerY + 4, { align: "right" });
   }
 
@@ -267,7 +272,7 @@ export async function generateQuotePdf(
   doc.setFontSize(7.5);
   setText(MUTED);
   doc.text("PREPARADA PARA", margin + 14, y + 17);
-  doc.text("VIGENCIA DE LA OFERTA", margin + 14 + colW, y + 17);
+  doc.text(isInvoice ? "VENCIMIENTO" : "VIGENCIA DE LA OFERTA", margin + 14 + colW, y + 17);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   setText(INK);
@@ -282,8 +287,8 @@ export async function generateQuotePdf(
   doc.setFontSize(10);
   setText(INK);
   doc.text(
-    quote.valid_until
-      ? new Date(`${quote.valid_until}T12:00:00`).toLocaleDateString("es-CL")
+    (isInvoice ? options?.dueDate : quote.valid_until)
+      ? new Date(`${isInvoice ? options?.dueDate : quote.valid_until}T12:00:00`).toLocaleDateString("es-CL")
       : "No especificada",
     margin + 14 + colW,
     y + 38,
@@ -291,7 +296,7 @@ export async function generateQuotePdf(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setText(MUTED);
-  doc.text("Precios y condiciones sujetos a esta propuesta.", margin + 14 + colW, y + 54, {
+  doc.text(isInvoice ? "Documento interno de cobro. Verifica los pagos registrados y el saldo pendiente." : "Precios y condiciones sujetos a esta propuesta.", margin + 14 + colW, y + 54, {
     maxWidth: colW - 14,
   });
   y += panelH + 22;
@@ -436,8 +441,8 @@ export async function generateQuotePdf(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   setText(MUTED);
-  doc.text("Nombre y firma del cliente", margin, y + 31);
-  doc.text("Fecha de aceptación", margin + 270, y + 31);
+  doc.text(isInvoice ? "Recepción / conformidad (si corresponde)" : "Nombre y firma del cliente", margin, y + 31);
+  doc.text(isInvoice ? "Fecha de recepción" : "Fecha de aceptación", margin + 270, y + 31);
 
   const pages = doc.internal.getNumberOfPages();
   for (let page = 1; page <= pages; page++) {
@@ -446,18 +451,33 @@ export async function generateQuotePdf(
   }
 
   doc.setProperties({
-    title: `${formatQuoteNumber(quote.quote_number)} · ${businessName}`,
-    subject: quote.subject || "Cotización comercial",
+    title: `${documentNumber} · ${businessName}`,
+    subject: quote.subject || (isInvoice ? "Documento interno de cobro" : "Cotización comercial"),
     author: businessName,
     creator: "Nüva One",
   });
 
   const filename = [
-    "Cotizacion",
-    quote.quote_number ? String(quote.quote_number).padStart(4, "0") : "Borrador",
+    isInvoice ? "Documento-Cobro" : "Cotizacion",
+    isInvoice ? String(options?.documentNumber ?? quote.quote_number ?? 0).padStart(6, "0") : (quote.quote_number ? String(quote.quote_number).padStart(4, "0") : "Borrador"),
     safeFilePart(customer.name || quote.customer_name || "cliente"),
     new Date(quote.created_at).toISOString().slice(0, 10),
   ].join("-");
 
   doc.save(`${filename}.pdf`);
+}
+
+
+export async function generateInvoicePdf(
+  invoice: Quote,
+  business: Business | string,
+  customer?: Customer | null,
+  invoiceNumber?: number,
+  dueDate?: string | null,
+) {
+  return generateQuotePdf(invoice, business, customer, {
+    documentKind: "invoice",
+    documentNumber: invoiceNumber,
+    dueDate,
+  });
 }
