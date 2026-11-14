@@ -163,12 +163,14 @@ SELECT is(
   (
     SELECT business_id
     FROM public.sales
-    WHERE id = public.create_fast_sale(
-      p_business_id := '00000000-0000-0000-0000-00000000b902',
-      p_items := jsonb_build_array(jsonb_build_object(
-        'product_id', '00000000-0000-0000-0000-00000000c902',
-        'qty', 2
-      ))
+    WHERE id = (
+      SELECT public.create_fast_sale(
+        p_business_id := '00000000-0000-0000-0000-00000000b902',
+        p_items := jsonb_build_array(jsonb_build_object(
+          'product_id', '00000000-0000-0000-0000-00000000c902',
+          'qty', 2
+        ))
+      )
     )
   ),
   '00000000-0000-0000-0000-00000000b902'::uuid,
@@ -184,6 +186,10 @@ SELECT is(
   8,
   'fast sale leaves business A stock untouched'
 );
+-- inventory_movements is intentionally not selectable by authenticated.
+-- Keep the RPC invocation under authenticated, then inspect the internal ledger
+-- as the test runner without widening application grants or RLS.
+RESET ROLE;
 SELECT is(
   (SELECT count(*)::int FROM public.inventory_movements
    WHERE source_type = 'sale'
