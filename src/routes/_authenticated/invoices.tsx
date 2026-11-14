@@ -124,7 +124,7 @@ function Invoices() {
         p_invoice_id: paymentInvoice.id,
         p_amount: amount,
         p_payment_method: paymentMethod,
-        p_payment_reference: paymentReference || undefined,
+        p_payment_reference: paymentReference,
         p_idempotency_key: idempotencyKey,
       });
       if (error) throw error;
