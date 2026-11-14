@@ -76,8 +76,6 @@ type QuotePreviewProps = {
   customerName: string;
   subject: string;
   customerDetails: any;
-  subject: string;
-  customerDetails: any;
   items: Item[];
   totals: { subtotal: number; discountAmount: number; tax: number; total: number };
   discountPct: number;
