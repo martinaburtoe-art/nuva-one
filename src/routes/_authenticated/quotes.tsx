@@ -153,8 +153,8 @@ function QuoteDocumentPreview({
               <tr key={index} className="border-b border-slate-100 align-top">
                 <td className="max-w-[150px] py-2 pr-2"><div className="font-semibold">{item.name}</div>{item.description && <div className="mt-0.5 whitespace-pre-wrap text-[8px] leading-relaxed text-slate-500">{item.description}</div>}</td>
                 <td className="py-2 text-right tabular-nums">{item.qty || 0}</td>
-                <td className="py-2 text-right tabular-nums">{fmtCLP(item.price || 0)}</td>
-                <td className="py-2 pl-2 text-right font-medium tabular-nums">{fmtCLP(Math.round((item.qty || 0) * (item.price || 0)))}</td>
+                <td className="py-2 text-right tabular-nums">{fmtCLP(displayedUnitPrice(item))}</td>
+                <td className="py-2 pl-2 text-right font-medium tabular-nums">{fmtCLP(lineNetAmount(item))}</td>
               </tr>
             ))}
             {!items.some((item) => item.name.trim()) && <tr><td colSpan={4} className="py-8 text-center text-slate-400">Los productos y servicios aparecerán aquí</td></tr>}
