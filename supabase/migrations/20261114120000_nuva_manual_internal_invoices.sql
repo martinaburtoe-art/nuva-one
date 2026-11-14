@@ -42,7 +42,7 @@ DECLARE
   v_notes TEXT;
   v_index INTEGER := 0;
 BEGIN
-  IF p_business_id IS NULL OR jsonb_typeof(p_payload) <> 'object' THEN
+  IF p_business_id IS NULL OR jsonb_typeof(p_payload) IS DISTINCT FROM 'object' THEN
     RAISE EXCEPTION 'Datos del documento inválidos';
   END IF;
 
