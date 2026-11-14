@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, ReceiptText, Wallet, CircleCheck, ArrowRight, Download } from "lucide-react";
+import { FileText, ReceiptText, Wallet, CircleCheck, ArrowRight, Download, Eye, History } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/page-utils";
@@ -44,8 +44,10 @@ function Invoices() {
   const { data: invoices = [], isLoading, isError } = useBizList<any>("invoices", { order: "created_at", ascending: false });
   const { data: payments = [] } = useBizList<any>("invoice_payments", { order: "confirmed_at", ascending: false });
   const { data: quotes = [] } = useBizList<any>("quotes", { order: "created_at", ascending: false });
+  const { data: invoiceEvents = [] } = useBizList<any>("invoice_events", { order: "created_at", ascending: false });
 
   const [paymentInvoice, setPaymentInvoice] = useState<any>(null);
+  const [detailInvoice, setDetailInvoice] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("transferencia");
   const [paymentReference, setPaymentReference] = useState("");
@@ -270,6 +272,7 @@ function Invoices() {
                         <td className="p-3 text-right font-semibold tabular-nums">{fmtCLP(outstanding)}</td>
                         <td className="p-3 text-right">
                           <div className="flex justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => setDetailInvoice(invoice)} title="Ver detalle"><Eye className="h-4 w-4" /></Button>
                             {invoice.status === "draft" && canWrite && <Button size="sm" variant="outline" disabled={issue.isPending} onClick={() => issue.mutate({ invoiceId: invoice.id, dueDate: localDate(new Date(Date.now() + 15 * 86400000)) })}>Emitir</Button>}
                             <Button size="sm" variant="ghost" onClick={() => void downloadInvoice(invoice)} title="Descargar PDF"><Download className="h-4 w-4" /></Button>
                             {["issued", "partially_paid", "overdue"].includes(status) && canWrite && outstanding > 0 && <Button size="sm" variant="outline" onClick={() => openPayment(invoice)}>Registrar abono</Button>}
@@ -283,6 +286,54 @@ function Invoices() {
             </div>
           )}
         </Card>
+
+        <Dialog open={!!detailInvoice} onOpenChange={(open) => { if (!open) setDetailInvoice(null); }}>
+          <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+            <DialogHeader><DialogTitle>Detalle del documento de cobro</DialogTitle></DialogHeader>
+            {detailInvoice && (() => {
+              const detailPayments = payments.filter((p: any) => p.invoice_id === detailInvoice.id);
+              const detailEvents = invoiceEvents.filter((e: any) => e.invoice_id === detailInvoice.id);
+              const paid = paidByInvoice.get(detailInvoice.id) ?? 0;
+              const lines = Array.isArray(detailInvoice.items_snapshot) ? detailInvoice.items_snapshot : [];
+              return (
+                <div className="space-y-5">
+                  <div className="grid gap-3 rounded-xl border p-4 sm:grid-cols-3">
+                    <div><p className="text-xs text-muted-foreground">Documento</p><p className="font-mono font-semibold">FAC-{String(detailInvoice.invoice_number).padStart(6, "0")}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Cliente</p><p className="font-semibold">{detailInvoice.customer_name}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Estado</p><Badge variant={detailInvoice.status === "paid" ? "default" : "secondary"}>{labels[detailInvoice.status] ?? detailInvoice.status}</Badge></div>
+                    <div><p className="text-xs text-muted-foreground">Total</p><p className="font-semibold">{fmtCLP(Number(detailInvoice.total))}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Abonado</p><p className="font-semibold">{fmtCLP(paid)}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Saldo</p><p className="font-semibold">{fmtCLP(Math.max(0, Number(detailInvoice.total) - paid))}</p></div>
+                  </div>
+                  <section>
+                    <h3 className="mb-2 text-sm font-semibold">Detalle de conceptos</h3>
+                    <div className="overflow-x-auto rounded-xl border">
+                      <table className="w-full min-w-[480px] text-sm">
+                        <thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="p-2">Concepto</th><th className="p-2 text-right">Cantidad</th><th className="p-2 text-right">Precio</th><th className="p-2 text-right">Importe</th></tr></thead>
+                        <tbody>{lines.map((line: any, index: number) => <tr key={index} className="border-b last:border-0"><td className="p-2"><div className="font-medium">{line.name ?? "Concepto"}</div>{line.description && <div className="text-xs text-muted-foreground">{line.description}</div>}</td><td className="p-2 text-right tabular-nums">{Number(line.qty ?? 0)}</td><td className="p-2 text-right tabular-nums">{fmtCLP(Number(line.price ?? 0))}</td><td className="p-2 text-right tabular-nums">{fmtCLP(Number(line.qty ?? 0) * Number(line.price ?? 0))}</td></tr>)}</tbody>
+                      </table>
+                    </div>
+                    <div className="mt-3 space-y-1 text-sm">
+                      <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmtCLP(Number(detailInvoice.subtotal))}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Descuento</span><span>-{fmtCLP(Number(detailInvoice.discount_amount))}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">{detailInvoice.tax_treatment === "taxable" ? `IVA (${detailInvoice.vat_rate}%)` : detailInvoice.tax_treatment === "exempt" ? "Exento" : "No afecto"}</span><span>{fmtCLP(Number(detailInvoice.tax_amount))}</span></div>
+                      <div className="flex justify-between border-t pt-2 font-semibold"><span>Total</span><span>{fmtCLP(Number(detailInvoice.total))}</span></div>
+                    </div>
+                  </section>
+                  <section>
+                    <h3 className="mb-2 text-sm font-semibold">Abonos registrados</h3>
+                    {detailPayments.length === 0 ? <p className="text-sm text-muted-foreground">Todavía no hay pagos registrados.</p> : <div className="space-y-2">{detailPayments.map((p: any) => <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"><div><div className="font-medium">{p.payment_method} · {p.status === "confirmed" ? "Confirmado" : p.status}</div><div className="text-xs text-muted-foreground">{new Date(p.confirmed_at).toLocaleString("es-CL")}{p.payment_reference ? ` · ${p.payment_reference}` : ""}</div></div><strong>{fmtCLP(Number(p.amount))}</strong></div>)}</div>}
+                  </section>
+                  <section>
+                    <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold"><History className="h-4 w-4" /> Historial de actividad</h3>
+                    {detailEvents.length === 0 ? <p className="text-sm text-muted-foreground">Sin eventos registrados.</p> : <ol className="space-y-2">{detailEvents.map((event: any) => <li key={event.id} className="flex gap-3 rounded-lg border p-3"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" /><div><div className="text-sm font-medium">{event.event_type.replaceAll("_", " ")}</div><div className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString("es-CL")}</div></div></li>)}</ol>}
+                  </section>
+                  <p className="text-xs text-muted-foreground">Documento comercial interno. No corresponde a una factura electrónica ni a un DTE emitido ante el SII.</p>
+                </div>
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={!!paymentInvoice} onOpenChange={(open) => { if (!open && !recordPayment.isPending) setPaymentInvoice(null); }}>
           <DialogContent className="max-w-md">
