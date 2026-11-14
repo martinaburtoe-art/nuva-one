@@ -11073,7 +11073,7 @@ export type Database = {
           p_idempotency_key: string
           p_invoice_id: string
           p_payment_method: string
-          p_payment_reference?: string
+          p_payment_reference: string
         }
         Returns: string
       }
