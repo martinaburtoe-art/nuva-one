@@ -255,7 +255,7 @@ export async function generateQuotePdf(
   ].filter(Boolean) as string[];
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  const customerNameLines = doc.splitTextToSize(customer.name || quote.customer_name || "Cliente", colW - 12).slice(0, 3) as string[];
+  const customerNameLines = doc.splitTextToSize(customer.name || quote.customer_name || "Cliente", colW - 12) as string[];
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   const customerDetailLines = customerDetails.flatMap((line) => doc.splitTextToSize(line, colW - 12) as string[]);
