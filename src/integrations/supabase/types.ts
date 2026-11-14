@@ -8367,7 +8367,7 @@ export type Database = {
           customer_name: string
           subject: string | null
           customer_snapshot: Json
-          quote_number: number | null
+          quote_number: number
           tax_treatment: string
           vat_rate: number
           discount_pct: number
@@ -8389,7 +8389,7 @@ export type Database = {
           customer_name: string
           subject?: string | null
           customer_snapshot?: Json
-          quote_number?: number | null
+          quote_number?: number
           tax_treatment?: string
           vat_rate?: number
           discount_pct?: number
