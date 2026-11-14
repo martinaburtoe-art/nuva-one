@@ -192,6 +192,7 @@ function Quotes() {
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
   const { data: invoices } = useBizList<any>("invoices");
+  const { data: documentTemplates = [] } = useBizList<any>("document_templates");
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
   const insert = useBizInsert("quotes");
   const upd = useBizUpdate("quotes");
@@ -480,6 +481,17 @@ function Quotes() {
           public_contact_phone: (active as any)?.public_contact_phone ?? null,
         },
         customerRecord,
+        (() => {
+          const template = documentTemplates.find((entry: any) => entry.is_default && entry.document_kind === "all")
+            ?? documentTemplates.find((entry: any) => entry.is_default);
+          const design = template?.design ?? {};
+          return {
+            brandColor: design.brandColor,
+            showLogo: design.showLogo !== false,
+            showTaxId: design.showTaxId !== false,
+            footerNote: design.footerNote,
+          };
+        })(),
       );
       return true;
     } catch (error: any) {
