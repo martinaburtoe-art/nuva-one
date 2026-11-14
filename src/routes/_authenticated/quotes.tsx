@@ -191,6 +191,7 @@ function Quotes() {
   const { data, isLoading } = useBizList<any>("quotes", { order: "created_at" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
+  const { data: invoices } = useBizList<any>("invoices");
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
   const insert = useBizInsert("quotes");
   const upd = useBizUpdate("quotes");
@@ -216,6 +217,8 @@ function Quotes() {
   );
 
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
+  const invoicedQuoteIds = new Set((invoices ?? []).map((invoice: any) => invoice.quote_id).filter(Boolean));
+  const canConvertToDocument = (quoteId: string) => !convertedQuoteIds.has(quoteId) && !invoicedQuoteIds.has(quoteId);
 
   const vatRate = taxTreatment === "taxable" ? 19 : 0;
   const previewItems = items.filter((item) => item.name.trim() && Number(item.qty) > 0 && Number(item.price) >= 0 && Number.isFinite(Number(item.qty)) && Number.isFinite(Number(item.price)));
@@ -898,7 +901,7 @@ function Quotes() {
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        {q.status === "accepted" && q.price_basis && canWrite && (
+                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -909,7 +912,7 @@ function Quotes() {
                             <ReceiptText className="h-4 w-4 text-primary" />
                           </Button>
                         )}
-                        {q.status === "accepted" && q.price_basis && !convertedQuoteIds.has(q.id) && canWrite && (
+                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && (
                           <Button
                             variant="ghost"
                             size="icon"
