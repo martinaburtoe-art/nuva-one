@@ -192,7 +192,7 @@ function Quotes() {
   const [items, setItems] = useState<Item[]>([{ product_id: null, name: "", qty: 1, price: 0 }]);
   const [customer, setCustomer] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [customerDetails, setCustomerDetails] = useState({ tax_id: "", address: "", email: "", phone: "", contact_name: "" });
+  const [customerDetails, setCustomerDetails] = useState({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
   const [subject, setSubject] = useState("");
   const [convertingId, setConvertingId] = useState<string | null>(null);
   // Evita dobles solicitudes desde taps consecutivos; la RPC mantiene la garantía transaccional en BD.
@@ -285,7 +285,7 @@ function Quotes() {
       setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
       setCustomer("");
       setCustomerId(null);
-      setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "" });
+      setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
       setSubject("");
       setDiscountPct(0);
       setTaxTreatment("taxable");
@@ -319,7 +319,7 @@ function Quotes() {
     const snapshot = quote.customer_snapshot && Object.keys(quote.customer_snapshot).length > 0
       ? quote.customer_snapshot
       : linkedCustomer
-        ? { tax_id: linkedCustomer.tax_id ?? "", address: linkedCustomer.address ?? "", email: linkedCustomer.email ?? "", phone: linkedCustomer.phone ?? "", contact_name: linkedCustomer.contact_name ?? "" }
+        ? { tax_id: linkedCustomer.tax_id ?? "", address: linkedCustomer.address ?? "", email: linkedCustomer.email ?? "", phone: linkedCustomer.phone ?? "", contact_name: linkedCustomer.shipping_contact_name ?? "", shipping_comuna: linkedCustomer.shipping_comuna ?? "", shipping_city: linkedCustomer.shipping_city ?? "" }
         : { tax_id: "", address: "", email: "", phone: "", contact_name: "" };
     setCustomerDetails(snapshot);
     setSubject(quote.subject ?? "");
@@ -422,13 +422,22 @@ function Quotes() {
                       <Input
                         id="customer"
                         value={customer}
-                        onChange={(e) => setCustomer(e.target.value)}
+                        onChange={(e) => {
+                          const nextName = e.target.value;
+                          setCustomer(nextName);
+                          if (customerId && nextName.trim() !== selectedCustomer?.name) {
+                            setCustomerId(null);
+                            setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
+                          }
+                        }}
                         placeholder="Nombre o razón social del cliente"
                       />
                       <div className="mt-3 grid grid-cols-2 gap-2">
                         <div><Label htmlFor="customer-rut">RUT (opcional)</Label><Input id="customer-rut" value={customerDetails.tax_id} onChange={(e) => setCustomerDetails((value) => ({ ...value, tax_id: e.target.value }))} placeholder="12.345.678-9" /></div>
                         <div><Label htmlFor="customer-contact">Contacto</Label><Input id="customer-contact" value={customerDetails.contact_name} onChange={(e) => setCustomerDetails((value) => ({ ...value, contact_name: e.target.value }))} placeholder="Persona de contacto" /></div>
                         <div className="col-span-2"><Label htmlFor="customer-address">Dirección</Label><Input id="customer-address" value={customerDetails.address} onChange={(e) => setCustomerDetails((value) => ({ ...value, address: e.target.value }))} placeholder="Dirección comercial o de prestación" /></div>
+                        <div><Label htmlFor="customer-comuna">Comuna</Label><Input id="customer-comuna" value={customerDetails.shipping_comuna} onChange={(e) => setCustomerDetails((value) => ({ ...value, shipping_comuna: e.target.value }))} placeholder="Comuna" /></div>
+                        <div><Label htmlFor="customer-city">Ciudad / región</Label><Input id="customer-city" value={customerDetails.shipping_city} onChange={(e) => setCustomerDetails((value) => ({ ...value, shipping_city: e.target.value }))} placeholder="Ciudad, región" /></div>
                         <div><Label htmlFor="customer-email">Correo</Label><Input id="customer-email" type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((value) => ({ ...value, email: e.target.value }))} placeholder="cliente@empresa.cl" /></div>
                         <div><Label htmlFor="customer-phone">Teléfono</Label><Input id="customer-phone" value={customerDetails.phone} onChange={(e) => setCustomerDetails((value) => ({ ...value, phone: e.target.value }))} placeholder="+56 9 ..." /></div>
                       </div>
@@ -444,7 +453,7 @@ function Quotes() {
                           setCustomerId(v);
                           if (c) {
                             setCustomer(c.name);
-                            setCustomerDetails({ tax_id: c.tax_id ?? "", address: c.address ?? "", email: c.email ?? "", phone: c.phone ?? "", contact_name: c.contact_name ?? "" });
+                            setCustomerDetails({ tax_id: c.tax_id ?? "", address: c.address ?? "", email: c.email ?? "", phone: c.phone ?? "", contact_name: c.shipping_contact_name ?? "", shipping_comuna: c.shipping_comuna ?? "", shipping_city: c.shipping_city ?? "" });
                           }
                         }}
                       >
