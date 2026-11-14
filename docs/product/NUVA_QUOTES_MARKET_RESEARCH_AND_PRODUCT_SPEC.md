@@ -50,6 +50,7 @@ Reglas de producto:
 - La integración DTE/SII debe ser un flujo separado, validado y autorizado, con su propio estado y trazabilidad.
 
 Fuentes oficiales:
+- SII, tasa general del IVA (19 %, FAQ actualizada el 10-06-2025): https://www.sii.cl/preguntas_frecuentes/impuestos_mensuales/001_130_0572.htm
 - SII, Operación IVA: https://www.sii.cl/destacados/operacion_iva/
 - SII, documentos tributarios electrónicos: https://www.sii.cl/destacados/factura_electronica/index.html
 - SII, formato DTE versión 2.5 (febrero 2026): https://www.sii.cl/factura_electronica/factura_mercado/formato_dte_202602.pdf
