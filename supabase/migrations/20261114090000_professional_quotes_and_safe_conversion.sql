@@ -141,7 +141,13 @@ BEGIN
   ) VALUES (
     v_quote.business_id, v_quote.customer_id, v_quote.customer_name,
     'cotizacion', NULL, 'draft',
-    v_quote.total, 'Borrador generado desde cotización aceptada',
+    v_quote.total,
+    'Borrador desde cotización ' || COALESCE(v_quote.quote_number::text, p_quote_id::text)
+      || CASE WHEN v_quote.subject IS NOT NULL THEN ' · ' || v_quote.subject ELSE '' END
+      || '. Base neta: ' || round(v_quote.subtotal, 0)::text || ' CLP'
+      || '; descuento: ' || round(v_quote.discount_pct, 2)::text || '%'
+      || '; impuesto: ' || round(v_quote.tax, 0)::text || ' CLP'
+      || '; modalidad de precios: ' || COALESCE(v_quote.price_basis, 'no registrada') || '.',
     CURRENT_DATE, v_quote.items, p_quote_id, FALSE, TRUE,
     NULL, 0, 'QUOTE-' || substr(p_quote_id::text, 1, 12),
     v_quote.tax_treatment, v_quote.vat_rate
