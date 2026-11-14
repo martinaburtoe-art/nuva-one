@@ -188,7 +188,7 @@ function Quotes() {
   const convertingQuoteIdsRef = useRef(new Set<string>());
   const [discountPct, setDiscountPct] = useState(0);
   const [taxTreatment, setTaxTreatment] = useState<QuoteTaxTreatment>("taxable");
-  const [priceBasis, setPriceBasis] = useState<QuotePriceBasis>("net");
+  const [priceBasis, setPriceBasis] = useState<QuotePriceBasis | null>("net");
   const [notes, setNotes] = useState("");
   const [validUntil, setValidUntil] = useState(defaultQuoteValidityDate);
   const [terms, setTerms] = useState(
@@ -199,7 +199,7 @@ function Quotes() {
 
   const vatRate = taxTreatment === "taxable" ? 19 : 0;
   const previewItems = items.filter((item) => item.name.trim() && Number(item.qty) > 0 && Number(item.price) >= 0 && Number.isFinite(Number(item.qty)) && Number.isFinite(Number(item.price)));
-  const totals = calculateQuoteTotals(previewItems, discountPct, taxTreatment, vatRate, priceBasis);
+  const totals = calculateQuoteTotals(previewItems, discountPct, taxTreatment, vatRate, priceBasis ?? "net");
   const { subtotal, discountAmount, tax, total } = totals;
   const selectedCustomer = (customers ?? []).find((entry: any) => entry.id === customerId) ?? null;
 
@@ -226,6 +226,10 @@ function Quotes() {
     }
     if (!validItems.length) {
       toast.error("Agrega al menos un producto o servicio.");
+      return;
+    }
+    if (!priceBasis) {
+      toast.error("Selecciona si los precios ingresados son netos o incluyen impuestos.");
       return;
     }
     if (!validUntil) {
@@ -310,7 +314,7 @@ function Quotes() {
     setSubject(quote.subject ?? "");
     setDiscountPct(Number(quote.discount_pct) || 0);
     setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
-    setPriceBasis((quote.price_basis as QuotePriceBasis) || "net");
+    setPriceBasis((quote.price_basis as QuotePriceBasis) || null);
     setNotes(quote.notes ?? "");
     setValidUntil(quote.valid_until ?? "");
     setTerms(quote.terms ?? terms);
@@ -577,8 +581,8 @@ function Quotes() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label htmlFor="price-basis">Los precios ingresados son</Label>
-                        <Select value={priceBasis} onValueChange={(value) => setPriceBasis(value as QuotePriceBasis)}>
-                          <SelectTrigger id="price-basis"><SelectValue /></SelectTrigger>
+                        <Select value={priceBasis ?? undefined} onValueChange={(value) => setPriceBasis(value as QuotePriceBasis)}>
+                          <SelectTrigger id="price-basis"><SelectValue placeholder="Selecciona modalidad" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="net">Netos (sin IVA)</SelectItem>
                             <SelectItem value="gross">Brutos (impuesto incluido)</SelectItem>
@@ -683,7 +687,7 @@ function Quotes() {
                       totals={totals}
                       discountPct={discountPct}
                       taxTreatment={taxTreatment}
-                      priceBasis={priceBasis}
+                      priceBasis={priceBasis ?? "net"}
                       notes={notes}
                       terms={terms}
                       validUntil={validUntil}
