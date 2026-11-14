@@ -129,6 +129,10 @@ BEGIN
     RAISE EXCEPTION 'La cotización debe estar aceptada antes de convertirla';
   END IF;
 
+  IF v_quote.price_basis IS NULL THEN
+    RAISE EXCEPTION 'La cotización histórica no tiene modalidad de precios. Duplíquela y defina neto o bruto antes de convertirla';
+  END IF;
+
   IF jsonb_typeof(v_quote.items) <> 'array'
      OR jsonb_array_length(v_quote.items) = 0 THEN
     RAISE EXCEPTION 'La cotización no contiene productos';
