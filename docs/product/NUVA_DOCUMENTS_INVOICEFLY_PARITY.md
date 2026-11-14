@@ -243,7 +243,7 @@ La siguiente base ya fue añadida al repositorio, pendiente de validación CI y 
   - Tabla append-only `invoice_events` para trazabilidad de conversión, emisión y pagos.
   - RLS: lectura de miembros; escrituras de tablas financieras revocadas al cliente y mutaciones únicamente por RPC autorizados.
   - RPC de conversión cotización aceptada → factura interna en borrador; emisión explícita; registro manual de abonos parciales con control de saldo e idempotencia.
-  - Cada abono manual confirmado crea una transacción de ingreso en `public.transactions`; no genera venta, no descuenta stock y no pretende emitir DTE.
+  - Cada abono manual confirmado crea una transacción de ingreso en `public.transactions`; no genera venta, no descuenta stock y no pretende emitir DTE. La transacción alimenta el flujo de caja/tesorería existente; todavía no se crea asiento contable ni elemento de la cola de contabilización, que hoy admite fuentes sale/purchase. Esa integración contable queda como gate antes de certificar conciliación completa.
 - `supabase/tests/database/119_internal_invoice_lifecycle.sql`
   - 25 aserciones pgTAP previstas para conversión, snapshots, separación DTE, emisión, pagos parciales, idempotencia, límites de saldo y reflejo en transacciones.
 - `src/routes/_authenticated/invoices.tsx`
