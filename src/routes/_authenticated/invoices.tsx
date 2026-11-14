@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, ReceiptText, Wallet, CircleCheck, ArrowRight, Download, Eye, History, Palette, Save } from "lucide-react";
+import { FileText, ReceiptText, Wallet, CircleCheck, ArrowRight, Download, Eye, History, Palette, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/page-utils";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useBizList, fmtCLP } from "@/lib/biz-data";
+import { calculateQuoteTotals } from "@/lib/quote-calculations";
 import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
 
@@ -46,6 +47,7 @@ function Invoices() {
   const { data: invoices = [], isLoading, isError } = useBizList<any>("invoices", { order: "created_at", ascending: false });
   const { data: payments = [] } = useBizList<any>("invoice_payments", { order: "confirmed_at", ascending: false });
   const { data: quotes = [] } = useBizList<any>("quotes", { order: "created_at", ascending: false });
+  const { data: customers = [] } = useBizList<any>("customers", { order: "name", ascending: true });
   const { data: sales = [] } = useBizList<any>("sales");
   const { data: invoiceEvents = [] } = useBizList<any>("invoice_events", { order: "created_at", ascending: false });
   const { data: defaultTemplate = null } = useDocumentTemplate();
@@ -57,6 +59,17 @@ function Invoices() {
   const [paymentReference, setPaymentReference] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [manualCustomerName, setManualCustomerName] = useState("");
+  const [manualCustomerId, setManualCustomerId] = useState<string | null>(null);
+  const [manualCustomerSnapshot, setManualCustomerSnapshot] = useState<any>({});
+  const [manualSubject, setManualSubject] = useState("");
+  const [manualItems, setManualItems] = useState([{ name: "", qty: 1, price: 0 }]);
+  const [manualTaxTreatment, setManualTaxTreatment] = useState<"taxable" | "exempt" | "non_taxable">("taxable");
+  const [manualPriceBasis, setManualPriceBasis] = useState<"net" | "gross">("net");
+  const [manualDiscountPct, setManualDiscountPct] = useState(0);
+  const [manualTerms, setManualTerms] = useState("Pago según condiciones acordadas con el cliente.");
+  const [manualNotes, setManualNotes] = useState("");
   const [templateName, setTemplateName] = useState("Plantilla principal");
   const [templateBrandColor, setTemplateBrandColor] = useState("#182741");
   const [templateShowLogo, setTemplateShowLogo] = useState(true);
@@ -158,6 +171,60 @@ function Invoices() {
     onError: (error: any) => toast.error(error?.message ?? "No se pudo guardar la plantilla."),
   });
 
+  const manualTotals = useMemo(() => {
+    try {
+      const validItems = manualItems.filter((item) => item.name.trim());
+      return validItems.length
+        ? calculateQuoteTotals(validItems, manualDiscountPct, manualTaxTreatment, 19, manualPriceBasis)
+        : null;
+    } catch {
+      return null;
+    }
+  }, [manualItems, manualDiscountPct, manualTaxTreatment, manualPriceBasis]);
+
+  const createManualInvoice = useMutation({
+    mutationFn: async () => {
+      if (!active?.id) throw new Error("No hay un negocio activo.");
+      if (!canWrite) throw new Error("No tienes permisos para crear documentos.");
+      const validItems = manualItems.filter((item) => item.name.trim());
+      if (!manualCustomerName.trim()) throw new Error("Indica el nombre del cliente.");
+      if (!validItems.length) throw new Error("Agrega al menos un producto o servicio.");
+      const totals = calculateQuoteTotals(validItems, manualDiscountPct, manualTaxTreatment, 19, manualPriceBasis);
+      if (totals.total <= 0) throw new Error("El total debe ser mayor que cero.");
+      const { data, error } = await supabase.rpc("create_manual_internal_invoice" as any, {
+        p_business_id: active.id,
+        p_payload: {
+          customer_id: manualCustomerId,
+          customer_name: manualCustomerName.trim(),
+          customer_snapshot: { ...manualCustomerSnapshot, name: manualCustomerName.trim() },
+          subject: manualSubject.trim() || null,
+          items: validItems,
+          tax_treatment: manualTaxTreatment,
+          price_basis: manualPriceBasis,
+          vat_rate: 19,
+          discount_pct: manualDiscountPct,
+          terms: manualTerms.trim() || null,
+          notes: manualNotes.trim() || null,
+        },
+      } as any);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      refresh();
+      setManualDialogOpen(false);
+      setManualCustomerName("");
+      setManualCustomerId(null);
+      setManualCustomerSnapshot({});
+      setManualSubject("");
+      setManualItems([{ name: "", qty: 1, price: 0 }]);
+      setManualDiscountPct(0);
+      setManualNotes("");
+      toast.success("Documento de cobro creado en borrador.");
+    },
+    onError: (error: any) => toast.error(error?.message ?? "No se pudo crear el documento."),
+  });
+
   const recordPayment = useMutation({
     mutationFn: async () => {
       if (!paymentInvoice) throw new Error("Selecciona un documento");
@@ -252,6 +319,9 @@ function Invoices() {
           description="Convierte cotizaciones aceptadas en documentos internos, emite vencimientos y registra abonos con trazabilidad."
           action={
             <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" onClick={() => setManualDialogOpen(true)} disabled={!canWrite}>
+                <Plus className="mr-1.5 h-4 w-4" /> Nuevo documento
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -366,6 +436,77 @@ function Invoices() {
             </div>
           )}
         </Card>
+
+        <Dialog open={manualDialogOpen} onOpenChange={(open) => { if (!createManualInvoice.isPending) setManualDialogOpen(open); }}>
+          <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nuevo documento interno de cobro</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Crea un documento directamente desde el cliente y sus líneas, sin cotización previa. Se guardará como borrador; no emite un DTE ni una factura tributaria del SII.</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="manual-invoice-customer">Cliente existente (opcional)</Label>
+                  <select id="manual-invoice-customer" className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={manualCustomerId ?? "__none__"} onChange={(event) => {
+                    const id = event.target.value === "__none__" ? null : event.target.value;
+                    const customer = customers.find((entry: any) => entry.id === id);
+                    setManualCustomerId(id);
+                    if (customer) {
+                      setManualCustomerName(customer.name ?? "");
+                      setManualCustomerSnapshot({ tax_id: customer.tax_id ?? "", address: customer.address ?? "", email: customer.email ?? "", phone: customer.phone ?? "", contact_name: customer.shipping_contact_name ?? "" });
+                    } else setManualCustomerSnapshot({});
+                  }}>
+                    <option value="__none__">Escribir cliente manualmente</option>
+                    {customers.map((customer: any) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="manual-invoice-customer-name">Nombre del cliente</Label>
+                  <Input id="manual-invoice-customer-name" maxLength={180} value={manualCustomerName} onChange={(event) => { setManualCustomerName(event.target.value); if (manualCustomerId) { setManualCustomerId(null); setManualCustomerSnapshot({}); } }} placeholder="Empresa o persona" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="manual-invoice-subject">Concepto / asunto (opcional)</Label>
+                  <Input id="manual-invoice-subject" value={manualSubject} onChange={(event) => setManualSubject(event.target.value)} placeholder="Servicios profesionales de noviembre" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Productos y servicios</Label>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setManualItems((items) => [...items, { name: "", qty: 1, price: 0 }])} disabled={manualItems.length >= 100}><Plus className="mr-1 h-3.5 w-3.5" /> Agregar línea</Button>
+                </div>
+                {manualItems.map((item, index) => <div key={index} className="grid grid-cols-12 gap-2 rounded-lg border p-2">
+                  <div className="col-span-12 sm:col-span-6"><Label htmlFor={`manual-item-name-${index}`}>Descripción</Label><Input id={`manual-item-name-${index}`} maxLength={240} value={item.name} onChange={(event) => setManualItems((items) => items.map((line, i) => i === index ? { ...line, name: event.target.value } : line))} placeholder="Producto o servicio" /></div>
+                  <div className="col-span-4 sm:col-span-2"><Label htmlFor={`manual-item-qty-${index}`}>Cantidad</Label><Input id={`manual-item-qty-${index}`} type="number" min="0.01" step="0.01" value={item.qty} onChange={(event) => setManualItems((items) => items.map((line, i) => i === index ? { ...line, qty: Number(event.target.value) } : line))} /></div>
+                  <div className="col-span-6 sm:col-span-3"><Label htmlFor={`manual-item-price-${index}`}>Precio CLP</Label><Input id={`manual-item-price-${index}`} type="number" min="0" step="1" value={item.price} onChange={(event) => setManualItems((items) => items.map((line, i) => i === index ? { ...line, price: Number(event.target.value) } : line))} /></div>
+                  <div className="col-span-2 flex items-end"><Button type="button" size="icon" variant="ghost" aria-label="Eliminar línea" disabled={manualItems.length === 1} onClick={() => setManualItems((items) => items.filter((_, i) => i !== index))}><Trash2 className="h-4 w-4" /></Button></div>
+                </div>)}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div><Label htmlFor="manual-price-basis">Modalidad de precios</Label><select id="manual-price-basis" className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={manualPriceBasis} onChange={(event) => setManualPriceBasis(event.target.value as "net" | "gross")}><option value="net">Precios netos</option><option value="gross">Precios brutos (IVA incluido)</option></select></div>
+                <div><Label htmlFor="manual-tax-treatment">Tratamiento tributario</Label><select id="manual-tax-treatment" className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={manualTaxTreatment} onChange={(event) => setManualTaxTreatment(event.target.value as "taxable" | "exempt" | "non_taxable")}><option value="taxable">Afecto a IVA (19%)</option><option value="exempt">Exento</option><option value="non_taxable">No afecto</option></select></div>
+                <div><Label htmlFor="manual-discount">Descuento (%)</Label><Input id="manual-discount" type="number" min="0" max="100" value={manualDiscountPct} onChange={(event) => setManualDiscountPct(Math.min(100, Math.max(0, Number(event.target.value) || 0)))} /></div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><Label htmlFor="manual-invoice-terms">Condiciones de pago</Label><Input id="manual-invoice-terms" value={manualTerms} onChange={(event) => setManualTerms(event.target.value)} /></div>
+                <div><Label htmlFor="manual-invoice-notes">Notas (opcional)</Label><Input id="manual-invoice-notes" value={manualNotes} onChange={(event) => setManualNotes(event.target.value)} /></div>
+              </div>
+              <div className="rounded-xl border bg-muted/30 p-4">
+                {manualTotals ? <div className="ml-auto max-w-xs space-y-1 text-sm">
+                  <div className="flex justify-between"><span>Subtotal neto</span><span>{fmtCLP(manualTotals.subtotal)}</span></div>
+                  <div className="flex justify-between"><span>Descuento</span><span>-{fmtCLP(manualTotals.discountAmount)}</span></div>
+                  <div className="flex justify-between"><span>{manualTaxTreatment === "taxable" ? "IVA (19%)" : manualTaxTreatment === "exempt" ? "Exento" : "No afecto"}</span><span>{fmtCLP(manualTotals.tax)}</span></div>
+                  <div className="flex justify-between border-t pt-2 text-base font-semibold"><span>Total CLP</span><span>{fmtCLP(manualTotals.total)}</span></div>
+                </div> : <p className="text-sm text-muted-foreground">Completa el cliente y al menos una línea con importe válido para calcular el total.</p>}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setManualDialogOpen(false)} disabled={createManualInvoice.isPending}>Cancelar</Button>
+                <Button onClick={() => createManualInvoice.mutate()} disabled={!canWrite || createManualInvoice.isPending || !manualTotals || !manualCustomerName.trim()}>
+                  {createManualInvoice.isPending ? "Creando…" : "Crear borrador"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
           <DialogContent className="max-w-lg">
