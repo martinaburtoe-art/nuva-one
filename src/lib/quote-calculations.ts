@@ -1,4 +1,5 @@
 export type QuoteTaxTreatment = "taxable" | "exempt" | "non_taxable";
+export type QuotePriceBasis = "net" | "gross";
 
 export type QuoteCalculationItem = {
   name: string;
@@ -14,6 +15,7 @@ export type QuoteTotals = {
   tax: number;
   vatRate: number;
   taxTreatment: QuoteTaxTreatment;
+  priceBasis: QuotePriceBasis;
   total: number;
 };
 
@@ -22,12 +24,16 @@ export function calculateQuoteTotals(
   discountPct: number,
   taxTreatment: QuoteTaxTreatment,
   vatRate = 19,
+  priceBasis: QuotePriceBasis = "net",
 ): QuoteTotals {
   if (!Number.isFinite(discountPct) || discountPct < 0 || discountPct > 100) {
     throw new Error("El descuento debe estar entre 0 y 100.");
   }
   if (!Number.isFinite(vatRate) || vatRate < 0 || vatRate > 100) {
     throw new Error("La tasa de impuesto no es válida.");
+  }
+  if (!["net", "gross"].includes(priceBasis)) {
+    throw new Error("La modalidad de precios no es válida.");
   }
   if (!["taxable", "exempt", "non_taxable"].includes(taxTreatment)) {
     throw new Error("El tratamiento tributario no es válido.");
@@ -38,11 +44,16 @@ export function calculateQuoteTotals(
     const price = Number(item.price);
     if (!Number.isFinite(qty) || qty <= 0) throw new Error("Cada cantidad debe ser mayor que cero.");
     if (!Number.isFinite(price) || price < 0) throw new Error("Cada precio debe ser cero o mayor.");
-    const line = Math.round(qty * price);
-    if (!Number.isSafeInteger(line) || !Number.isSafeInteger(sum + line)) {
+    const enteredLine = Math.round(qty * price);
+    const effectiveRate = taxTreatment === "taxable" ? vatRate : 0;
+    const netLine =
+      priceBasis === "gross" && effectiveRate > 0
+        ? Math.round((enteredLine * 100) / (100 + effectiveRate))
+        : enteredLine;
+    if (!Number.isSafeInteger(netLine) || !Number.isSafeInteger(sum + netLine)) {
       throw new Error("El importe supera el límite monetario admitido.");
     }
-    return sum + line;
+    return sum + netLine;
   }, 0);
 
   const discountAmount = Math.round((subtotal * discountPct) / 100);
@@ -59,6 +70,7 @@ export function calculateQuoteTotals(
     tax,
     vatRate: effectiveRate,
     taxTreatment,
+    priceBasis,
     total,
   };
 }
