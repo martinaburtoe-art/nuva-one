@@ -8365,6 +8365,9 @@ export type Database = {
           created_at: string
           customer_id: string | null
           customer_name: string
+          quote_number: number | null
+          tax_treatment: string
+          vat_rate: number
           discount_pct: number
           id: string
           items: Json
@@ -8382,6 +8385,9 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name: string
+          quote_number?: number | null
+          tax_treatment?: string
+          vat_rate?: number
           discount_pct?: number
           id?: string
           items?: Json
@@ -8399,6 +8405,9 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name?: string
+          quote_number?: number | null
+          tax_treatment?: string
+          vat_rate?: number
           discount_pct?: number
           id?: string
           items?: Json
