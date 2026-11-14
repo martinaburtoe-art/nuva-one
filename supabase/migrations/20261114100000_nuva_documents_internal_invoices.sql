@@ -240,8 +240,8 @@ DECLARE
   v_remaining NUMERIC(14,2);
   v_new_status TEXT;
 BEGIN
-  IF p_amount IS NULL OR p_amount <= 0 OR p_amount <> round(p_amount, 2) THEN
-    RAISE EXCEPTION 'El abono debe ser un importe positivo con máximo dos decimales';
+  IF p_amount IS NULL OR p_amount <= 0 OR p_amount <> round(p_amount, 0) THEN
+    RAISE EXCEPTION 'El abono debe ser un importe positivo en pesos enteros';
   END IF;
   IF length(trim(COALESCE(p_payment_method, ''))) = 0 OR length(trim(COALESCE(p_payment_method, ''))) > 80 THEN
     RAISE EXCEPTION 'Indica un medio de pago válido';
