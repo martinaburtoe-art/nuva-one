@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(25);
+SELECT plan(26);
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-00000000aa01');
@@ -111,6 +111,19 @@ SELECT is(
   2,
   'invoice lifecycle is recorded in an auditable event timeline'
 );
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
+SELECT throws_ok(
+  $q$SELECT public.record_internal_invoice_payment(
+    (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+    1000.5, 'transferencia', 'TRX-DECIMAL', 'manual-invoice-payment-decimal'
+  )$q$,
+  'P0001',
+  'El abono debe ser un importe positivo en pesos enteros',
+  'CLP payment amounts must be whole pesos'
+);
+RESET ROLE;
 
 
 SET LOCAL ROLE authenticated;
