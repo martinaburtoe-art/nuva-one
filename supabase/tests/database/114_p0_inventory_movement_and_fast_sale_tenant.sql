@@ -159,22 +159,26 @@ SELECT is(
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000a901', true);
 
+SELECT set_config(
+  'test.fast_sale_id',
+  public.create_fast_sale(
+    p_business_id := '00000000-0000-0000-0000-00000000b902',
+    p_items := jsonb_build_array(jsonb_build_object(
+      'product_id', '00000000-0000-0000-0000-00000000c902',
+      'qty', 2
+    ))
+  )::TEXT,
+  true
+);
+RESET ROLE;
 SELECT is(
   (
     SELECT business_id
     FROM public.sales
-    WHERE id = (
-      SELECT public.create_fast_sale(
-        p_business_id := '00000000-0000-0000-0000-00000000b902',
-        p_items := jsonb_build_array(jsonb_build_object(
-          'product_id', '00000000-0000-0000-0000-00000000c902',
-          'qty', 2
-        ))
-      )
-    )
+    WHERE id = current_setting('test.fast_sale_id', true)::UUID
   ),
   '00000000-0000-0000-0000-00000000b902'::uuid,
-  'fast sale writes to the explicitly selected business B'
+  'authenticated fast sale writes to the explicitly selected business B'
 );
 SELECT is(
   (SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-00000000c902'),
@@ -187,9 +191,8 @@ SELECT is(
   'fast sale leaves business A stock untouched'
 );
 -- inventory_movements is intentionally not selectable by authenticated.
--- Keep the RPC invocation under authenticated, then inspect the internal ledger
--- as the test runner without widening application grants or RLS.
-RESET ROLE;
+-- The RPC ran above under authenticated; inspect the internal ledger as the
+-- test runner without widening application grants or RLS.
 SELECT is(
   (SELECT count(*)::int FROM public.inventory_movements
    WHERE source_type = 'sale'
