@@ -91,6 +91,8 @@ function QuoteDocumentPreview({
   taxTreatment, priceBasis, notes, terms, validUntil,
 }: QuotePreviewProps) {
   const vatLabel = taxTreatment === "taxable" ? "IVA (19%)" : taxTreatment === "exempt" ? "Exenta de IVA" : "No afecta a IVA";
+  const unitPriceLabel = taxTreatment === "taxable" ? "Precio unit. neto" : "Precio unitario";
+  const subtotalLabel = taxTreatment === "taxable" ? "Subtotal neto" : "Subtotal";
   const lineNetAmount = (item: Item) => {
     const enteredLine = Math.round(Number(item.qty || 0) * Number(item.price || 0));
     return priceBasis === "gross" && taxTreatment === "taxable"
@@ -148,11 +150,11 @@ function QuoteDocumentPreview({
         </div>
         <div className="mb-2 text-[9px] font-bold tracking-[0.14em] text-slate-400">DETALLE DE PRODUCTOS Y SERVICIOS</div>{priceBasis === "gross" && taxTreatment === "taxable" && <div className="mb-2 text-[8px] text-slate-500">Los precios ingresados incluyen IVA; el detalle se presenta en base neta y el impuesto se desglosa al final.</div>}
         <table className="w-full border-collapse text-[9px]">
-          <thead><tr className="border-y border-slate-200 text-left text-[8px] uppercase tracking-wide text-slate-500"><th className="py-2 pr-2">Descripción</th><th className="py-2 text-right">Cant.</th><th className="py-2 text-right">Precio unit. neto</th><th className="py-2 pl-2 text-right">Total</th></tr></thead>
+          <thead><tr className="border-y border-slate-200 text-left text-[8px] uppercase tracking-wide text-slate-500"><th className="py-2 pr-2">Descripción</th><th className="py-2 text-right">Cant.</th><th className="py-2 text-right">{unitPriceLabel}</th><th className="py-2 pl-2 text-right">Total</th></tr></thead>
           <tbody>
             {items.filter((item) => item.name.trim()).map((item, index) => (
               <tr key={index} className="border-b border-slate-100 align-top">
-                <td className="max-w-[150px] py-2 pr-2"><div className="font-semibold">{item.name}</div>{item.description && <div className="mt-0.5 whitespace-pre-wrap text-[8px] leading-relaxed text-slate-500">{item.description}</div>}</td>
+                <td className="max-w-[150px] py-2 pr-2"><div className="font-semibold">{item.name}</div>{(item.sku || item.unit) && <div className="mt-0.5 text-[7px] text-slate-400">{[item.sku ? `SKU ${item.sku}` : null, item.unit ? `Unidad: ${item.unit}` : null].filter(Boolean).join(" · ")}</div>}{item.description && <div className="mt-0.5 whitespace-pre-wrap text-[8px] leading-relaxed text-slate-500">{item.description}</div>}</td>
                 <td className="py-2 text-right tabular-nums">{item.qty || 0}</td>
                 <td className="py-2 text-right tabular-nums">{fmtCLP(displayedUnitPrice(item))}</td>
                 <td className="py-2 pl-2 text-right font-medium tabular-nums">{fmtCLP(lineNetAmount(item))}</td>
@@ -162,7 +164,7 @@ function QuoteDocumentPreview({
           </tbody>
         </table>
         <div className="ml-auto mt-5 max-w-[230px] space-y-2 text-[9px]">
-          <div className="flex justify-between gap-3"><span className="text-slate-500">Subtotal neto</span><span className="tabular-nums">{fmtCLP(totals.subtotal)}</span></div>
+          <div className="flex justify-between gap-3"><span className="text-slate-500">{subtotalLabel}</span><span className="tabular-nums">{fmtCLP(totals.subtotal)}</span></div>
           {discountPct > 0 && <div className="flex justify-between gap-3 text-rose-600"><span>Descuento ({discountPct}%)</span><span>-{fmtCLP(totals.discountAmount)}</span></div>}
           <div className="flex justify-between gap-3"><span className="text-slate-500">{vatLabel}</span><span className="tabular-nums">{fmtCLP(totals.tax)}</span></div>
           <div className="flex justify-between rounded-md bg-slate-900 px-3 py-3 text-white"><span className="font-bold tracking-wide">TOTAL</span><span className="text-sm font-bold tabular-nums">{fmtCLP(totals.total)}</span></div>
