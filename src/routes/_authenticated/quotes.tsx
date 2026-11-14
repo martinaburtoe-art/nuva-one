@@ -277,7 +277,13 @@ function Quotes() {
     );
     setCustomer(quote.customer_name ?? "");
     setCustomerId(quote.customer_id ?? null);
-    setCustomerDetails(quote.customer_snapshot ?? {});
+    const linkedCustomer = (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+    const snapshot = quote.customer_snapshot && Object.keys(quote.customer_snapshot).length > 0
+      ? quote.customer_snapshot
+      : linkedCustomer
+        ? { tax_id: linkedCustomer.tax_id ?? "", address: linkedCustomer.address ?? "", email: linkedCustomer.email ?? "", phone: linkedCustomer.phone ?? "", contact_name: linkedCustomer.contact_name ?? "" }
+        : { tax_id: "", address: "", email: "", phone: "", contact_name: "" };
+    setCustomerDetails(snapshot);
     setSubject(quote.subject ?? "");
     setDiscountPct(Number(quote.discount_pct) || 0);
     setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
