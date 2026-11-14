@@ -600,7 +600,7 @@ function Quotes() {
                             <SelectItem value="non_taxable">No afecta a IVA</SelectItem>
                           </SelectContent>
                         </Select>
-                        <p className="mt-1 text-xs text-muted-foreground">El cálculo separa la base neta y el impuesto según la modalidad seleccionada.</p>
+                        <p className="mt-1 text-xs text-muted-foreground">El tratamiento se aplica a todas las líneas. Si una operación combina tratamientos distintos, emite cotizaciones separadas.</p>
                       </div>
                       <div>
                         <Label htmlFor="discount">Descuento (%)</Label>
