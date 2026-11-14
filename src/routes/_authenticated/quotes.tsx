@@ -231,6 +231,21 @@ function Quotes() {
     setItems(copy);
   }
 
+  function startNewQuote() {
+    setEditingQuoteId(null);
+    setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
+    setCustomer("");
+    setCustomerId(null);
+    setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
+    setSubject("");
+    setDiscountPct(0);
+    setTaxTreatment("taxable");
+    setPriceBasis("net");
+    setNotes("");
+    setValidUntil(defaultQuoteValidityDate());
+    setTerms("Cotización válida por 15 días. Precios expresados según modalidad seleccionada (netos o brutos). Los impuestos se desglosan según el tratamiento tributario indicado. Forma de pago a coordinar.");
+  }
+
   async function save() {
     const validItems = items.filter((item) => item.name.trim() !== "");
     if (!customer.trim()) {
