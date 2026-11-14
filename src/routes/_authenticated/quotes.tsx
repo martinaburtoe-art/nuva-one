@@ -679,7 +679,10 @@ function Quotes() {
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
                     </TableCell>
-                    <TableCell className="font-medium">{q.customer_name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{q.customer_name}</div>
+                      {q.subject && <div className="mt-0.5 max-w-[260px] truncate text-xs font-normal text-muted-foreground">{q.subject}</div>}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(q.created_at).toLocaleDateString("es-CL")}
                     </TableCell>
