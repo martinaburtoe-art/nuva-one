@@ -361,7 +361,7 @@ Use synthetic records only. Each scenario should run against isolated tenant fix
 ### GB-BEV-01 — case to single-unit sale
 - Receive 10 cases with explicit 12-unit factor.
 - Sell 3 individual units and 1 case.
-- Expected: 9 cases-equivalent remain (108 units total minus 15 = 105 units; display only in a consistent canonical unit), purchase cost preserved and no fractional drift.
+- Expected: 105 units remain (8 full cases + 9 units), purchase cost preserved and no fractional drift. The canonical balance is 105 units; any case-equivalent display must show 8 cases + 9 units, not round to 9 cases.
 - Negative: factor missing or changed after sale; commit must block or use captured factor, never silently reinterpret.
 
 ### GB-BEV-02 — returnable deposit reconciliation
