@@ -57,6 +57,19 @@ type Item = { product_id: string | null; name: string; description?: string; sku
 
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
 
+function localDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function defaultQuoteValidityDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 15);
+  return localDateString(date);
+}
+
 type QuotePreviewProps = {
   business: any;
   customer: any;
@@ -177,7 +190,7 @@ function Quotes() {
   const [discountPct, setDiscountPct] = useState(0);
   const [taxTreatment, setTaxTreatment] = useState<QuoteTaxTreatment>("taxable");
   const [notes, setNotes] = useState("");
-  const [validUntil, setValidUntil] = useState("");
+  const [validUntil, setValidUntil] = useState(defaultQuoteValidityDate);
   const [terms, setTerms] = useState(
     "Cotización válida por 15 días. Valores unitarios netos en pesos chilenos. El IVA se desglosa según el tratamiento tributario indicado. Forma de pago a coordinar.",
   );
@@ -213,6 +226,10 @@ function Quotes() {
     }
     if (!validItems.length) {
       toast.error("Agrega al menos un producto o servicio.");
+      return;
+    }
+    if (validUntil && validUntil < localDateString(new Date())) {
+      toast.error("La fecha de vigencia no puede estar en el pasado.");
       return;
     }
     try {
@@ -253,7 +270,7 @@ function Quotes() {
       setDiscountPct(0);
       setTaxTreatment("taxable");
       setNotes("");
-      setValidUntil("");
+      setValidUntil(defaultQuoteValidityDate());
       setOpen(false);
       toast.success(pdfDownloaded ? "Cotización guardada y PDF descargado." : "Cotización guardada. Puedes descargar el PDF desde el listado.");
     } catch (error: any) {
