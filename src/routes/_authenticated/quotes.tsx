@@ -251,7 +251,7 @@ function Quotes() {
         customer_name: customer.trim(),
         customer_id: customerId,
         subject: subject.trim() || null,
-        customer_snapshot: { name: customer.trim(), ...customerDetails },
+        customer_snapshot: { ...customerDetails, name: customer.trim() },
         items: validItems as any,
         subtotal: calculated.subtotal,
         discount_pct: calculated.discountPct,
