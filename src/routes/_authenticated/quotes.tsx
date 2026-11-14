@@ -209,7 +209,7 @@ function Quotes() {
     }
     try {
       const calculated = calculateQuoteTotals(validItems, discountPct, taxTreatment, vatRate);
-      await insert.mutateAsync({
+      const savedQuoteId = await insert.mutateAsync({
         customer_name: customer.trim(),
         customer_id: customerId,
         items: validItems as any,
@@ -224,6 +224,13 @@ function Quotes() {
         terms: terms.trim() || null,
         status: "draft",
       });
+      const { data: savedQuote, error: savedQuoteError } = await supabase
+        .from("quotes")
+        .select("*")
+        .eq("id", savedQuoteId)
+        .eq("business_id", active?.id ?? "")
+        .single();
+      const pdfDownloaded = !savedQuoteError && savedQuote ? await downloadPdf(savedQuote) : false;
       setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
       setCustomer("");
       setCustomerId(null);
@@ -232,7 +239,7 @@ function Quotes() {
       setNotes("");
       setValidUntil("");
       setOpen(false);
-      toast.success("Cotización guardada como borrador. Descárgala para revisarla y compartirla.");
+      toast.success(pdfDownloaded ? "Cotización guardada y PDF descargado." : "Cotización guardada. Puedes descargar el PDF desde el listado.");
     } catch (error: any) {
       toast.error(error?.message ?? "No se pudo guardar la cotización.");
     }
@@ -281,7 +288,7 @@ function Quotes() {
     }
   }
 
-  async function downloadPdf(quote: any) {
+  async function downloadPdf(quote: any): Promise<boolean> {
     try {
       const verified = calculateQuoteTotals(
         quote.items ?? [],
@@ -295,7 +302,7 @@ function Quotes() {
         Math.abs(verified.total - Number(quote.total)) <= 1;
       if (!amountsMatch) {
         toast.error("No se generó el PDF: esta cotización histórica tiene importes que no cuadran. Duplícala como borrador y revisa sus valores antes de compartirla.");
-        return;
+        return false;
       }
       const { generateQuotePdf } = await import("@/lib/quote-pdf");
       const customerRecord = (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
@@ -313,8 +320,10 @@ function Quotes() {
         },
         customerRecord,
       );
+      return true;
     } catch (error: any) {
       toast.error(error?.message ?? "No se pudo generar el PDF.");
+      return false;
     }
   }
 
@@ -558,7 +567,7 @@ function Quotes() {
                         onClick={save}
                         disabled={insert.isPending}
                       >
-                        {insert.isPending ? "Guardando..." : "Guardar cotización como borrador"}
+                        {insert.isPending ? "Guardando..." : "Guardar y descargar PDF"}
                       </Button>
                       <p className="text-xs text-muted-foreground">Guardar no envía la cotización. Descarga el PDF y compártelo por el canal que utilices; el estado de envío solo se actualizará cuando exista una integración real.</p>
                     </div>
