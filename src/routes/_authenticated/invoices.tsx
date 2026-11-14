@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, ReceiptText, Wallet, CircleCheck, Clock3, ArrowRight, Plus, X } from "lucide-react";
+import { FileText, ReceiptText, Wallet, CircleCheck, ArrowRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/page-utils";
@@ -139,6 +139,35 @@ function Invoices() {
     onError: (error: any) => toast.error(error?.message ?? "No se pudo registrar el abono."),
   });
 
+  async function downloadInvoice(invoice: any) {
+    try {
+      const { generateInvoicePdf } = await import("@/lib/quote-pdf");
+      const customer = invoice.customer_snapshot ?? { name: invoice.customer_name };
+      await generateInvoicePdf({
+        quote_number: Number(invoice.invoice_number),
+        customer_name: invoice.customer_name,
+        customer_snapshot: customer,
+        items: Array.isArray(invoice.items_snapshot) ? invoice.items_snapshot : [],
+        subtotal: Number(invoice.subtotal),
+        tax: Number(invoice.tax_amount),
+        discount_pct: Number(invoice.subtotal) > 0
+          ? (Number(invoice.discount_amount) / Number(invoice.subtotal)) * 100
+          : 0,
+        total: Number(invoice.total),
+        tax_treatment: invoice.tax_treatment,
+        price_basis: invoice.price_basis,
+        vat_rate: Number(invoice.vat_rate),
+        created_at: invoice.issued_at ?? invoice.created_at,
+        valid_until: invoice.due_date,
+        notes: invoice.notes,
+        terms: invoice.terms,
+        subject: invoice.subject,
+      } as any, invoice.issuer_snapshot ?? { name: active?.name }, customer, Number(invoice.invoice_number), invoice.due_date);
+    } catch (error: any) {
+      toast.error(error?.message ?? "No se pudo generar el PDF del documento.");
+    }
+  }
+
   function openPayment(invoice: any) {
     const outstanding = Math.max(0, Number(invoice.total) - (paidByInvoice.get(invoice.id) ?? 0));
     setPaymentInvoice(invoice);
@@ -242,6 +271,7 @@ function Invoices() {
                         <td className="p-3 text-right">
                           <div className="flex justify-end gap-1">
                             {invoice.status === "draft" && canWrite && <Button size="sm" variant="outline" disabled={issue.isPending} onClick={() => issue.mutate({ invoiceId: invoice.id, dueDate: localDate(new Date(Date.now() + 15 * 86400000)) })}>Emitir</Button>}
+                            <Button size="sm" variant="ghost" onClick={() => void downloadInvoice(invoice)} title="Descargar PDF"><Download className="h-4 w-4" /></Button>
                             {["issued", "partially_paid", "overdue"].includes(status) && canWrite && outstanding > 0 && <Button size="sm" variant="outline" onClick={() => openPayment(invoice)}>Registrar abono</Button>}
                           </div>
                         </td>
