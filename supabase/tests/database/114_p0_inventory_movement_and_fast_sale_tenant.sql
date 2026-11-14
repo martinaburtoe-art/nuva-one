@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(27);
+SELECT plan(31);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000a901'),
@@ -263,6 +263,44 @@ SELECT ok(
     'EXECUTE'
   ),
   'anonymous users cannot execute the explicit-business fast-sale RPC'
+);
+
+-- A purchase receipt cannot be reversed through stock that is reserved or blocked.
+INSERT INTO public.purchases (id, business_id, status, total, items)
+VALUES (
+  '00000000-0000-0000-0000-00000000d902',
+  '00000000-0000-0000-0000-00000000b901',
+  'received', 2000,
+  jsonb_build_array(jsonb_build_object(
+    'product_id', '00000000-0000-0000-0000-00000000c901',
+    'qty', 2, 'name', 'Ledger Product A'
+  ))
+);
+SELECT is(
+  (SELECT stock FROM public.products WHERE id='00000000-0000-0000-0000-00000000c901'),
+  10,
+  'additional purchase receipt increases stock before reserved-stock reversal test'
+);
+UPDATE public.products SET reserved_stock=9
+WHERE id='00000000-0000-0000-0000-00000000c901';
+SELECT throws_ok(
+  $UPDATE public.purchases SET status='cancelled'
+    WHERE id='00000000-0000-0000-0000-00000000d902'$,
+  '23514',
+  'PURCHASE_REVERSAL_STOCK_RESERVED',
+  'purchase reversal is rejected when it would consume reserved or blocked stock'
+);
+SELECT is(
+  (SELECT stock FROM public.products WHERE id='00000000-0000-0000-0000-00000000c901'),
+  10,
+  'rejected purchase reversal leaves stock unchanged'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.inventory_movements
+   WHERE source_type='purchase_reversal'
+     AND source_id='00000000-0000-0000-0000-00000000d902'),
+  0,
+  'rejected purchase reversal appends no compensating movement'
 );
 
 SELECT * FROM finish();
