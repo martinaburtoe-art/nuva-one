@@ -120,13 +120,13 @@ function QuoteDocumentPreview({
         <div className="my-5 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
           <div className="min-w-0">
             <div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">PREPARADA PARA</div>
-            <div className="break-words text-xs font-semibold">{customer?.name || customerName || "Nombre del cliente"}</div>
+            <div className="break-words text-xs font-semibold">{customerName || customer?.name || "Nombre del cliente"}</div>
             <div className="mt-1 space-y-0.5 break-words text-[9px] text-slate-500">
-              {(customer?.tax_id || customerDetails.tax_id) && <div>RUT: {customer?.tax_id || customerDetails.tax_id}</div>}
-              {(customer?.contact_name || customerDetails.contact_name) && <div>Contacto: {customer?.contact_name || customerDetails.contact_name}</div>}
-              {(customer?.address || customerDetails.address) && <div>{customer?.address || customerDetails.address}</div>}
-              {(customer?.email || customerDetails.email) && <div>{customer?.email || customerDetails.email}</div>}
-              {(customer?.phone || customerDetails.phone) && <div>{customer?.phone || customerDetails.phone}</div>}
+              {(customerDetails.tax_id || customer?.tax_id) && <div>RUT: {customerDetails.tax_id || customer?.tax_id}</div>}
+              {(customerDetails.contact_name || customer?.contact_name) && <div>Contacto: {customerDetails.contact_name || customer?.contact_name}</div>}
+              {(customerDetails.address || customer?.address) && <div>{customerDetails.address || customer?.address}</div>}
+              {(customerDetails.email || customer?.email) && <div>{customerDetails.email || customer?.email}</div>}
+              {(customerDetails.phone || customer?.phone) && <div>{customerDetails.phone || customer?.phone}</div>}
             </div>
           </div>
           <div>
