@@ -19,6 +19,26 @@ describe("quote calculations", () => {
     });
   });
 
+  it("extracts included VAT from gross unit prices without adding it twice", () => {
+    expect(calculateQuoteTotals(
+      [{ name: "Producto", qty: 1, price: 1190 }],
+      0,
+      "taxable",
+      19,
+      "gross",
+    )).toMatchObject({ subtotal: 1000, tax: 190, total: 1190, priceBasis: "gross" });
+  });
+
+  it("applies discounts to the net tax base when entered prices include VAT", () => {
+    expect(calculateQuoteTotals(
+      [{ name: "Producto", qty: 1, price: 1190 }],
+      10,
+      "taxable",
+      19,
+      "gross",
+    )).toMatchObject({ subtotal: 1000, discountAmount: 100, taxableBase: 900, tax: 171, total: 1071 });
+  });
+
   it("does not add VAT to exempt or non-taxable operations", () => {
     for (const treatment of ["exempt", "non_taxable"] as const) {
       const result = calculateQuoteTotals([{ name: "Servicio", qty: 1, price: 19990 }], 0, treatment);
