@@ -106,6 +106,7 @@ function Invoices() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["invoices", active?.id] });
     qc.invalidateQueries({ queryKey: ["invoice_payments", active?.id] });
+    qc.invalidateQueries({ queryKey: ["invoice_events", active?.id] });
     qc.invalidateQueries({ queryKey: ["transactions", active?.id] });
   };
 
