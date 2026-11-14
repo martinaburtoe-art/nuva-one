@@ -292,6 +292,7 @@ function Quotes() {
       setCustomerId(null);
       setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
       setSubject("");
+      setEditingQuoteId(null);
       setDiscountPct(0);
       setTaxTreatment("taxable");
       setPriceBasis("net");
@@ -806,6 +807,7 @@ function Quotes() {
                     </TableCell>
                     <TableCell>
                       <select
+                        disabled={!canWrite}
                         value={q.status}
                         onChange={(e) => {
                           if (e.target.value === "sent" || e.target.value === "viewed") {
