@@ -2,7 +2,7 @@
 -- These are isolated database integration scenarios, not a claim of browser/UI E2E.
 -- Each vertical gets its own tenant, catalog, purchase, sale and compensating reversals.
 BEGIN;
-SELECT plan(28);
+SELECT plan(20);
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-00000000a801');
