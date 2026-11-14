@@ -168,6 +168,8 @@ DECLARE
   product_id UUID;
   stock_before INTEGER;
   stock_after INTEGER;
+  reserved_qty INTEGER;
+  blocked_qty INTEGER;
   old_effect_must_be_reverted BOOLEAN := false;
 BEGIN
   -- Revert the previous receipt as a compensating ledger entry. Never clamp
@@ -194,8 +196,8 @@ BEGIN
               USING ERRCODE = '22023';
           END IF;
 
-          SELECT p.stock
-            INTO stock_before
+          SELECT p.stock, p.reserved_stock, p.blocked_stock
+            INTO stock_before, reserved_qty, blocked_qty
           FROM public.products AS p
           WHERE p.id = product_id
             AND p.business_id = OLD.business_id
@@ -206,9 +208,11 @@ BEGIN
               USING ERRCODE = '23503';
           END IF;
 
-          IF stock_before < qty_needed THEN
-            RAISE EXCEPTION 'PURCHASE_REVERSAL_STOCK_INSUFFICIENT:%:%',
-              product_id, stock_before
+          -- A receipt cannot be rolled back through units already reserved or
+          -- blocked by another operational workflow. Keep the physical stock
+          -- balance at or above those protected quantities.
+          IF stock_before - qty_needed < reserved_qty + blocked_qty THEN
+            RAISE EXCEPTION 'PURCHASE_REVERSAL_STOCK_RESERVED'
               USING ERRCODE = 'check_violation';
           END IF;
 
