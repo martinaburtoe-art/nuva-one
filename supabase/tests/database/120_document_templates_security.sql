@@ -68,7 +68,7 @@ SELECT throws_ok(
   $q$INSERT INTO public.document_templates (business_id, name, document_kind, design)
      VALUES ('00000000-0000-0000-0000-00000000eb01', 'Intruso', 'all', '{}'::jsonb)$q$,
   '42501',
-  NULL,
+  'new row violates row-level security policy for table "document_templates"',
   'a user outside the business cannot create a template'
 );
 RESET ROLE;
