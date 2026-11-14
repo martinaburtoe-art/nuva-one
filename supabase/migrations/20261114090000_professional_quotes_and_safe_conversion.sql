@@ -19,7 +19,8 @@ FROM numbered
 WHERE q.id = numbered.id;
 
 ALTER TABLE public.quotes
-  ALTER COLUMN quote_number SET NOT NULL;
+  ALTER COLUMN quote_number SET NOT NULL,
+  ALTER COLUMN price_basis SET DEFAULT 'net';
 
 ALTER TABLE public.quotes
   DROP CONSTRAINT IF EXISTS quotes_tax_treatment_check,
