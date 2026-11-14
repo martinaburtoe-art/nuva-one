@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, ReceiptText, Wallet, CircleCheck, ArrowRight, Download, Eye, History } from "lucide-react";
+import { FileText, ReceiptText, Wallet, CircleCheck, ArrowRight, Download, Eye, History, Palette, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/page-utils";
@@ -46,6 +46,14 @@ function Invoices() {
   const { data: quotes = [] } = useBizList<any>("quotes", { order: "created_at", ascending: false });
   const { data: sales = [] } = useBizList<any>("sales");
   const { data: invoiceEvents = [] } = useBizList<any>("invoice_events", { order: "created_at", ascending: false });
+  const { data: documentTemplates = [] } = useBizList<any>("document_templates", { order: "updated_at", ascending: false });
+
+  const defaultTemplate = useMemo(
+    () => documentTemplates.find((template: any) => template.is_default && template.document_kind === "all")
+      ?? documentTemplates.find((template: any) => template.is_default)
+      ?? null,
+    [documentTemplates],
+  );
 
   const [paymentInvoice, setPaymentInvoice] = useState<any>(null);
   const [detailInvoice, setDetailInvoice] = useState<any>(null);
@@ -53,6 +61,12 @@ function Invoices() {
   const [paymentMethod, setPaymentMethod] = useState("transferencia");
   const [paymentReference, setPaymentReference] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState("");
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("Plantilla principal");
+  const [templateBrandColor, setTemplateBrandColor] = useState("#182741");
+  const [templateShowLogo, setTemplateShowLogo] = useState(true);
+  const [templateShowTaxId, setTemplateShowTaxId] = useState(true);
+  const [templateFooterNote, setTemplateFooterNote] = useState("");
 
   const paidByInvoice = useMemo(() => {
     const map = new Map<string, number>();
@@ -115,6 +129,40 @@ function Invoices() {
     onError: (error: any) => toast.error(error?.message ?? "No se pudo emitir el documento."),
   });
 
+  const saveTemplate = useMutation({
+    mutationFn: async () => {
+      if (!active?.id) throw new Error("No hay un negocio activo.");
+      if (!canWrite) throw new Error("No tienes permisos para modificar la plantilla.");
+      const name = templateName.trim();
+      if (!name || name.length > 80) throw new Error("El nombre debe tener entre 1 y 80 caracteres.");
+      if (!/^#[0-9a-fA-F]{6}$/.test(templateBrandColor)) throw new Error("Selecciona un color de marca válido.");
+      const payload = {
+        business_id: active.id,
+        name,
+        document_kind: "all",
+        is_default: true,
+        design: {
+          brandColor: templateBrandColor.toUpperCase(),
+          showLogo: templateShowLogo,
+          showTaxId: templateShowTaxId,
+          footerNote: templateFooterNote.trim().slice(0, 64),
+        },
+      };
+      const query = supabase.from("document_templates" as any);
+      const result = defaultTemplate?.id
+        ? await query.update(payload).eq("id", defaultTemplate.id).select().single()
+        : await query.insert(payload).select().single();
+      if (result.error) throw result.error;
+      return result.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["document_templates", active?.id] });
+      setTemplateDialogOpen(false);
+      toast.success("Plantilla guardada. Se aplicará a cotizaciones y documentos nuevos.");
+    },
+    onError: (error: any) => toast.error(error?.message ?? "No se pudo guardar la plantilla."),
+  });
+
   const recordPayment = useMutation({
     mutationFn: async () => {
       if (!paymentInvoice) throw new Error("Selecciona un documento");
@@ -148,6 +196,12 @@ function Invoices() {
     try {
       const { generateInvoicePdf } = await import("@/lib/quote-pdf");
       const customer = invoice.customer_snapshot ?? { name: invoice.customer_name };
+      const design = defaultTemplate?.design ?? {};
+      const pdfBusiness = {
+        ...(invoice.issuer_snapshot ?? { name: active?.name }),
+        logo_url: design.showLogo === false ? null : (invoice.issuer_snapshot?.logo_url ?? active?.logo_url ?? null),
+        tax_id: design.showTaxId === false ? null : (invoice.issuer_snapshot?.tax_id ?? null),
+      };
       await generateInvoicePdf({
         quote_number: Number(invoice.invoice_number),
         customer_name: invoice.customer_name,
@@ -168,7 +222,11 @@ function Invoices() {
         notes: invoice.notes,
         terms: invoice.terms,
         subject: invoice.subject,
-      } as any, invoice.issuer_snapshot ?? { name: active?.name }, customer, Number(invoice.invoice_number), invoice.due_date, {
+      } as any, pdfBusiness, customer, Number(invoice.invoice_number), invoice.due_date, {
+        brandColor: design.brandColor,
+        showLogo: design.showLogo !== false,
+        showTaxId: design.showTaxId !== false,
+        footerNote: design.footerNote,
         paidAmount: paidByInvoice.get(invoice.id) ?? 0,
         balanceDue: ["draft", "voided"].includes(invoice.status)
           ? 0
@@ -198,9 +256,26 @@ function Invoices() {
           title="Documentos de cobro"
           description="Convierte cotizaciones aceptadas en documentos internos, emite vencimientos y registra abonos con trazabilidad."
           action={
-            <Badge variant="outline" className="gap-1.5 px-3 py-1.5">
-              <ReceiptText className="h-3.5 w-3.5" /> Gestión documental
-            </Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const design = defaultTemplate?.design ?? {};
+                  setTemplateName(defaultTemplate?.name ?? "Plantilla principal");
+                  setTemplateBrandColor(/^#[0-9a-fA-F]{6}$/.test(design.brandColor ?? "") ? design.brandColor : "#182741");
+                  setTemplateShowLogo(design.showLogo !== false);
+                  setTemplateShowTaxId(design.showTaxId !== false);
+                  setTemplateFooterNote(design.footerNote ?? "");
+                  setTemplateDialogOpen(true);
+                }}
+              >
+                <Palette className="mr-1.5 h-4 w-4" /> Plantillas
+              </Button>
+              <Badge variant="outline" className="gap-1.5 px-3 py-1.5">
+                <ReceiptText className="h-3.5 w-3.5" /> Gestión documental
+              </Badge>
+            </div>
           }
         />
 
@@ -296,6 +371,48 @@ function Invoices() {
             </div>
           )}
         </Card>
+
+        <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><Palette className="h-5 w-5" /> Plantilla de documentos</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Personaliza la presentación de cotizaciones y documentos internos en PDF. Estos ajustes no cambian impuestos, totales ni validez tributaria.</p>
+              <div>
+                <Label htmlFor="document-template-name">Nombre de la plantilla</Label>
+                <Input id="document-template-name" value={templateName} maxLength={80} onChange={(event) => setTemplateName(event.target.value)} />
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+                <div><Label htmlFor="document-template-color">Color principal</Label><p className="text-xs text-muted-foreground">Se usa en encabezados y elementos de marca</p></div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs">{templateBrandColor.toUpperCase()}</span>
+                  <input id="document-template-color" aria-label="Color principal de documentos" type="color" className="h-10 w-12 cursor-pointer rounded border bg-background p-1" value={templateBrandColor} onChange={(event) => setTemplateBrandColor(event.target.value)} />
+                </div>
+              </div>
+              <label className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+                <span><span className="font-medium">Mostrar logotipo</span><span className="block text-xs text-muted-foreground">Usa el logo configurado en el negocio</span></span>
+                <input type="checkbox" checked={templateShowLogo} onChange={(event) => setTemplateShowLogo(event.target.checked)} className="h-4 w-4 accent-primary" />
+              </label>
+              <label className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+                <span><span className="font-medium">Mostrar RUT del emisor</span><span className="block text-xs text-muted-foreground">Mantiene visible la identificación de la empresa</span></span>
+                <input type="checkbox" checked={templateShowTaxId} onChange={(event) => setTemplateShowTaxId(event.target.checked)} className="h-4 w-4 accent-primary" />
+              </label>
+              <div>
+                <Label htmlFor="document-template-footer">Mensaje complementario del pie (opcional)</Label>
+                <Input id="document-template-footer" value={templateFooterNote} maxLength={64} onChange={(event) => setTemplateFooterNote(event.target.value)} placeholder="Gracias por preferir nuestros servicios" />
+                <p className="mt-1 text-xs text-muted-foreground">Se agrega sin reemplazar la aclaración legal de que el PDF no es un DTE.</p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setTemplateDialogOpen(false)} disabled={saveTemplate.isPending}>Cancelar</Button>
+                <Button onClick={() => saveTemplate.mutate()} disabled={!canWrite || saveTemplate.isPending}>
+                  <Save className="mr-1.5 h-4 w-4" /> {saveTemplate.isPending ? "Guardando…" : "Guardar plantilla"}
+                </Button>
+              </div>
+              {!canWrite && <p className="text-xs text-muted-foreground">Solo owner y admin pueden modificar las plantillas.</p>}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={!!detailInvoice} onOpenChange={(open) => { if (!open) setDetailInvoice(null); }}>
           <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
