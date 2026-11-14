@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS public.invoice_payments (
   currency TEXT NOT NULL DEFAULT 'CLP' CHECK (currency = 'CLP'),
   payment_method TEXT NOT NULL,
   payment_reference TEXT,
+  transaction_id UUID REFERENCES public.transactions(id) ON DELETE SET NULL,
   idempotency_key TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed','voided','refunded')),
   source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual','provider')),
@@ -223,6 +224,7 @@ DECLARE
   v_invoice public.invoices%ROWTYPE;
   v_existing public.invoice_payments%ROWTYPE;
   v_payment_id UUID;
+  v_transaction_id UUID;
   v_paid NUMERIC(14,2);
   v_remaining NUMERIC(14,2);
   v_new_status TEXT;
@@ -274,6 +276,18 @@ BEGIN
     'confirmed', 'manual', auth.uid()
   ) RETURNING id INTO v_payment_id;
 
+  -- A confirmed manual receipt creates exactly one income transaction for cash-flow reporting.
+  -- It does not create a sale, move inventory, or issue a tax document.
+  INSERT INTO public.transactions (business_id, type, category, amount, description, tx_date)
+  VALUES (
+    v_invoice.business_id, 'income', 'Cobros de documentos', p_amount,
+    'Abono documento interno ' || lpad(v_invoice.invoice_number::text, 6, '0')
+      || ' · ' || v_invoice.customer_name,
+    CURRENT_DATE
+  ) RETURNING id INTO v_transaction_id;
+
+  UPDATE public.invoice_payments SET transaction_id = v_transaction_id WHERE id = v_payment_id;
+
   v_paid := v_paid + p_amount;
   v_new_status := CASE WHEN v_paid >= v_invoice.total THEN 'paid' ELSE 'partially_paid' END;
 
@@ -285,7 +299,7 @@ BEGIN
 
   INSERT INTO public.invoice_events (business_id, invoice_id, event_type, event_data, actor_id)
   VALUES (v_invoice.business_id, p_invoice_id, 'payment_recorded',
-    jsonb_build_object('payment_id', v_payment_id, 'amount', p_amount, 'payment_method', p_payment_method, 'paid_total', v_paid, 'remaining', v_invoice.total - v_paid),
+    jsonb_build_object('payment_id', v_payment_id, 'transaction_id', v_transaction_id, 'amount', p_amount, 'payment_method', p_payment_method, 'paid_total', v_paid, 'remaining', v_invoice.total - v_paid),
     auth.uid());
 
   RETURN v_payment_id;
