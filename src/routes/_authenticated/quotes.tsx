@@ -45,9 +45,9 @@ export const Route = createFileRoute("/_authenticated/quotes")({
 });
 
 const allowedQuoteStatusTransitions: Record<string, string[]> = {
-  draft: ["accepted", "rejected", "expired"],
-  sent: ["accepted", "rejected", "expired"],
-  viewed: ["accepted", "rejected", "expired"],
+  draft: ["accepted", "rejected"],
+  sent: ["accepted", "rejected"],
+  viewed: ["accepted", "rejected"],
   accepted: [],
   rejected: [],
   expired: [],
