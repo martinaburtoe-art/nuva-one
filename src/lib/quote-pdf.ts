@@ -353,16 +353,16 @@ export async function generateQuotePdf(
         setText(INK);
         doc.text(String(item.qty ?? 0), margin + 318, y + 17, { align: "right" });
         const enteredUnitPrice = Number(item.price ?? 0);
-        const netUnitPrice =
-          priceBasis === "gross" && taxTreatment === "taxable"
-            ? Math.round((enteredUnitPrice * 100) / (100 + vatRate))
-            : enteredUnitPrice;
         const netLineTotal = calculateQuoteLineNetAmount(
           item,
           taxTreatment,
           vatRate,
           priceBasis,
         );
+        const netUnitPrice =
+          Number(item.qty ?? 0) > 0
+            ? Math.round(netLineTotal / Number(item.qty))
+            : 0;
         doc.text(fmtCLP(netUnitPrice), margin + 420, y + 17, { align: "right" });
         doc.setFont("helvetica", "bold");
         doc.text(
