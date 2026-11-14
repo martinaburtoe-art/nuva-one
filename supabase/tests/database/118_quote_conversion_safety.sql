@@ -7,9 +7,6 @@ values ('00000000-0000-0000-0000-00000000a901');
 insert into public.businesses (id, name, owner_id, plan)
 values ('00000000-0000-0000-0000-00000000b901', 'Quote Conversion Test', '00000000-0000-0000-0000-00000000a901', 'starter');
 
-insert into public.business_members (business_id, user_id, role)
-values ('00000000-0000-0000-0000-00000000b901', '00000000-0000-0000-0000-00000000a901', 'owner');
-
 insert into public.products (id, business_id, name, price, stock)
 values ('00000000-0000-0000-0000-00000000c901', '00000000-0000-0000-0000-00000000b901', 'Quote Widget', 1000, 5);
 
