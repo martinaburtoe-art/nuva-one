@@ -20,6 +20,7 @@ type Quote = {
   subtotal: number;
   tax: number;
   discount_pct?: number | null;
+  discount_amount?: number | null;
   total: number;
   tax_treatment?: QuoteTaxTreatment | null;
   price_basis?: QuotePriceBasis | null;
@@ -89,7 +90,7 @@ export async function generateQuotePdf(
   quote: Quote,
   businessInput: Business | string,
   customerInput?: Customer | null,
-  options?: { documentKind?: "quote" | "invoice"; documentNumber?: number; dueDate?: string | null },
+  options?: { documentKind?: "quote" | "invoice"; documentNumber?: number; dueDate?: string | null; documentStatus?: string; paidAmount?: number; balanceDue?: number }, 
 ) {
   const business: Business =
     typeof businessInput === "string" ? { name: businessInput } : businessInput;
@@ -183,7 +184,7 @@ export async function generateQuotePdf(
     doc.setFontSize(8);
     setText(MUTED);
     doc.text(
-      `Emitida: ${new Date(quote.created_at).toLocaleDateString("es-CL")}`,
+      `${isInvoice && options?.documentStatus === "draft" ? "Preparada" : "Emitida"}: ${new Date(quote.created_at).toLocaleDateString("es-CL")}`, 
       pageW - margin,
       68,
       { align: "right" },
@@ -393,13 +394,16 @@ export async function generateQuotePdf(
 
   y += 18;
   const discountPct = Number(quote.discount_pct ?? 0);
-  const discountAmount = Math.round(Number(quote.subtotal) * (discountPct / 100));
+  const discountAmount = isInvoice && quote.discount_amount != null
+    ? Number(quote.discount_amount)
+    : Math.round(Number(quote.subtotal) * (discountPct / 100));
   const summaryRows = [
     [taxTreatment === "taxable" ? "Subtotal neto" : "Subtotal", fmtCLP(Number(quote.subtotal))],
-    ...(discountPct > 0 ? [[`Descuento (${discountPct}%)`, `-${fmtCLP(discountAmount)}`]] : []),
+    ...(discountAmount > 0 ? [[isInvoice ? "Descuento aplicado" : `Descuento (${discountPct}%)`, `-${fmtCLP(discountAmount)}`]] : []),
     [taxLabel, fmtCLP(Number(quote.tax))],
   ];
-  const summaryH = summaryRows.length * 18 + 46;
+  const showInvoiceBalance = isInvoice && options?.documentStatus !== "draft" && options?.documentStatus !== "voided";
+  const summaryH = summaryRows.length * 18 + 46 + (showInvoiceBalance ? 38 : 0);
   ensureSpace(summaryH);
   const summaryX = pageW - margin - 250;
   doc.setFont("helvetica", "normal");
@@ -422,6 +426,23 @@ export async function generateQuotePdf(
   setText([255, 255, 255]);
   doc.text(fmtCLP(Number(quote.total)), pageW - margin - 10, y + 9, { align: "right" });
   y += 42;
+
+  if (showInvoiceBalance) {
+    const paidAmount = Math.max(0, Number(options?.paidAmount ?? 0));
+    const balanceDue = Math.max(0, Number(options?.balanceDue ?? (Number(quote.total) - paidAmount)));
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    setText(MUTED);
+    doc.text("Abonado", summaryX, y);
+    setText(INK);
+    doc.text(fmtCLP(paidAmount), pageW - margin - 10, y, { align: "right" });
+    y += 18;
+    doc.setFont("helvetica", "bold");
+    setText(NAVY);
+    doc.text("Saldo pendiente", summaryX, y);
+    doc.text(fmtCLP(balanceDue), pageW - margin - 10, y, { align: "right" });
+    y += 20;
+  }
 
   if (quote.notes) {
     sectionTitle("Alcance y notas");
@@ -474,10 +495,12 @@ export async function generateInvoicePdf(
   customer?: Customer | null,
   invoiceNumber?: number,
   dueDate?: string | null,
+  paymentSummary?: { paidAmount: number; balanceDue: number; documentStatus: string },
 ) {
   return generateQuotePdf(invoice, business, customer, {
     documentKind: "invoice",
     documentNumber: invoiceNumber,
     dueDate,
+    ...paymentSummary,
   });
 }
