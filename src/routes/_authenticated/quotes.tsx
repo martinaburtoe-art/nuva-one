@@ -48,7 +48,7 @@ const allowedQuoteStatusTransitions: Record<string, string[]> = {
   draft: ["accepted", "rejected", "expired"],
   sent: ["accepted", "rejected", "expired"],
   viewed: ["accepted", "rejected", "expired"],
-  accepted: ["rejected"],
+  accepted: [],
   rejected: [],
   expired: [],
 };
