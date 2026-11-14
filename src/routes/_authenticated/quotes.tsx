@@ -468,7 +468,7 @@ function Quotes() {
             !canWrite ? undefined : (
               <Dialog open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setEditingQuoteId(null); }}>
                 <DialogTrigger asChild>
-                  <Button className="shadow-elegant">
+                  <Button className="shadow-elegant" onClick={startNewQuote}>
                     <Plus className="mr-1.5 h-4 w-4" />
                     Nueva cotización
                   </Button>
@@ -752,7 +752,7 @@ function Quotes() {
                       <Button
                         className="w-full"
                         onClick={save}
-                        disabled={insert.isPending}
+                        disabled={insert.isPending || upd.isPending}
                       >
                         {insert.isPending || upd.isPending ? "Guardando..." : editingQuoteId ? "Guardar cambios y descargar PDF" : "Guardar y descargar PDF"}
                       </Button>
