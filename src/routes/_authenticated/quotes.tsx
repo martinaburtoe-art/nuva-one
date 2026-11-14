@@ -887,9 +887,11 @@ function Quotes() {
                             <ArrowRightCircle className="h-4 w-4 text-success" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" disabled={!canWrite} onClick={() => del.mutate(q.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {q.status === "draft" && (
+                          <Button variant="ghost" size="icon" disabled={!canWrite} onClick={() => del.mutate(q.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
