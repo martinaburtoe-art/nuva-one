@@ -61,6 +61,10 @@ type QuotePreviewProps = {
   business: any;
   customer: any;
   customerName: string;
+  subject: string;
+  customerDetails: any;
+  subject: string;
+  customerDetails: any;
   items: Item[];
   totals: { subtotal: number; discountAmount: number; tax: number; total: number };
   discountPct: number;
@@ -71,7 +75,7 @@ type QuotePreviewProps = {
 };
 
 function QuoteDocumentPreview({
-  business, customer, customerName, items, totals, discountPct,
+  business, customer, customerName, subject, customerDetails, items, totals, discountPct,
   taxTreatment, notes, terms, validUntil,
 }: QuotePreviewProps) {
   const vatLabel = taxTreatment === "taxable" ? "IVA (19%)" : taxTreatment === "exempt" ? "Exenta de IVA" : "No afecta a IVA";
@@ -100,15 +104,16 @@ function QuoteDocumentPreview({
             <div className="mt-1 text-[9px] text-slate-500">{new Date().toLocaleDateString("es-CL")}</div>
           </div>
         </div>
+        {subject && <div className="mb-4"><div className="text-[8px] font-bold tracking-[0.14em] text-slate-400">ASUNTO / PROYECTO</div><div className="mt-1 text-sm font-semibold text-slate-800">{subject}</div></div>}
         <div className="my-5 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
           <div className="min-w-0">
             <div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">PREPARADA PARA</div>
             <div className="break-words text-xs font-semibold">{customer?.name || customerName || "Nombre del cliente"}</div>
             <div className="mt-1 space-y-0.5 break-words text-[9px] text-slate-500">
-              {customer?.tax_id && <div>RUT: {customer.tax_id}</div>}
-              {customer?.address && <div>{customer.address}</div>}
-              {customer?.email && <div>{customer.email}</div>}
-              {customer?.phone && <div>{customer.phone}</div>}
+              {(customer?.tax_id || customerDetails.tax_id) && <div>RUT: {customer?.tax_id || customerDetails.tax_id}</div>}
+              {(customer?.address || customerDetails.address) && <div>{customer?.address || customerDetails.address}</div>}
+              {(customer?.email || customerDetails.email) && <div>{customer?.email || customerDetails.email}</div>}
+              {(customer?.phone || customerDetails.phone) && <div>{customer?.phone || customerDetails.phone}</div>}
             </div>
           </div>
           <div>
@@ -163,6 +168,8 @@ function Quotes() {
   const [items, setItems] = useState<Item[]>([{ product_id: null, name: "", qty: 1, price: 0 }]);
   const [customer, setCustomer] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerDetails, setCustomerDetails] = useState({ tax_id: "", address: "", email: "", phone: "", contact_name: "" });
+  const [subject, setSubject] = useState("");
   const [convertingId, setConvertingId] = useState<string | null>(null);
   // Evita dobles solicitudes desde taps consecutivos; la RPC mantiene la garantía transaccional en BD.
   const convertingQuoteIdsRef = useRef(new Set<string>());
@@ -212,6 +219,8 @@ function Quotes() {
       const savedQuoteId = await insert.mutateAsync({
         customer_name: customer.trim(),
         customer_id: customerId,
+        subject: subject.trim() || null,
+        customer_snapshot: { name: customer.trim(), ...customerDetails },
         items: validItems as any,
         subtotal: calculated.subtotal,
         discount_pct: calculated.discountPct,
@@ -234,6 +243,8 @@ function Quotes() {
       setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
       setCustomer("");
       setCustomerId(null);
+      setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "" });
+      setSubject("");
       setDiscountPct(0);
       setTaxTreatment("taxable");
       setNotes("");
@@ -261,6 +272,8 @@ function Quotes() {
     );
     setCustomer(quote.customer_name ?? "");
     setCustomerId(quote.customer_id ?? null);
+    setCustomerDetails(quote.customer_snapshot ?? {});
+    setSubject(quote.subject ?? "");
     setDiscountPct(Number(quote.discount_pct) || 0);
     setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
     setNotes(quote.notes ?? "");
@@ -305,7 +318,7 @@ function Quotes() {
         return false;
       }
       const { generateQuotePdf } = await import("@/lib/quote-pdf");
-      const customerRecord = (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+      const customerRecord = quote.customer_snapshot ?? (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
       await generateQuotePdf(
         quote,
         {
@@ -354,17 +367,29 @@ function Quotes() {
                         id="customer"
                         value={customer}
                         onChange={(e) => setCustomer(e.target.value)}
+                        placeholder="Nombre o razón social del cliente"
                       />
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div><Label htmlFor="customer-rut">RUT (opcional)</Label><Input id="customer-rut" value={customerDetails.tax_id} onChange={(e) => setCustomerDetails((value) => ({ ...value, tax_id: e.target.value }))} placeholder="12.345.678-9" /></div>
+                        <div><Label htmlFor="customer-contact">Contacto</Label><Input id="customer-contact" value={customerDetails.contact_name} onChange={(e) => setCustomerDetails((value) => ({ ...value, contact_name: e.target.value }))} placeholder="Persona de contacto" /></div>
+                        <div className="col-span-2"><Label htmlFor="customer-address">Dirección</Label><Input id="customer-address" value={customerDetails.address} onChange={(e) => setCustomerDetails((value) => ({ ...value, address: e.target.value }))} placeholder="Dirección comercial o de prestación" /></div>
+                        <div><Label htmlFor="customer-email">Correo</Label><Input id="customer-email" type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((value) => ({ ...value, email: e.target.value }))} placeholder="cliente@empresa.cl" /></div>
+                        <div><Label htmlFor="customer-phone">Teléfono</Label><Input id="customer-phone" value={customerDetails.phone} onChange={(e) => setCustomerDetails((value) => ({ ...value, phone: e.target.value }))} placeholder="+56 9 ..." /></div>
+                      </div>
                       <Select
                         value={customerId ?? "__none__"}
                         onValueChange={(v) => {
                           if (v === "__none__") {
                             setCustomerId(null);
+                            setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "" });
                             return;
                           }
                           const c = (customers ?? []).find((x: any) => x.id === v);
                           setCustomerId(v);
-                          if (c) setCustomer(c.name);
+                          if (c) {
+                            setCustomer(c.name);
+                            setCustomerDetails({ tax_id: c.tax_id ?? "", address: c.address ?? "", email: c.email ?? "", phone: c.phone ?? "", contact_name: c.contact_name ?? "" });
+                          }
                         }}
                       >
                         <SelectTrigger className="mt-1">
@@ -379,6 +404,10 @@ function Quotes() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="quote-subject">Asunto / proyecto</Label>
+                      <Input id="quote-subject" className="mt-1" value={subject} maxLength={240} onChange={(e) => setSubject(e.target.value)} placeholder="Ej. Implementación de sistema de climatización" />
                     </div>
                     <div>
                       <div className="mb-2 flex items-center justify-between">
@@ -576,6 +605,8 @@ function Quotes() {
                       business={active as any}
                       customer={selectedCustomer}
                       customerName={customer}
+                      subject={subject}
+                      customerDetails={customerDetails}
                       items={items}
                       totals={totals}
                       discountPct={discountPct}
