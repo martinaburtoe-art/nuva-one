@@ -133,6 +133,13 @@ BEGIN
     RETURN v_existing;
   END IF;
 
+  IF EXISTS (
+    SELECT 1 FROM public.sales s
+    WHERE s.business_id = v_quote.business_id AND s.quote_id = p_quote_id
+  ) THEN
+    RAISE EXCEPTION 'La cotización ya fue convertida en venta';
+  END IF;
+
   IF v_quote.status <> 'accepted' THEN
     RAISE EXCEPTION 'La cotización debe estar aceptada antes de emitir un documento de cobro';
   END IF;
@@ -323,3 +330,90 @@ REVOKE ALL ON FUNCTION public.record_internal_invoice_payment(UUID, NUMERIC, TEX
 GRANT EXECUTE ON FUNCTION public.convert_accepted_quote_to_invoice(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.issue_internal_invoice(UUID, DATE) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_internal_invoice_payment(UUID, NUMERIC, TEXT, TEXT, TEXT) TO authenticated;
+
+
+-- A quote may create either a draft sale OR an internal invoice, never both.
+-- Locking the quote row in both RPCs serializes concurrent cross-conversion attempts.
+CREATE OR REPLACE FUNCTION public.convert_quote_to_sale(p_quote_id UUID)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_quote public.quotes%ROWTYPE;
+  v_sale UUID;
+  v_existing UUID;
+BEGIN
+  SELECT q.* INTO v_quote
+  FROM public.quotes q
+  WHERE q.id = p_quote_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Cotización no encontrada';
+  END IF;
+
+  IF NOT private.has_business_role(
+    v_quote.business_id,
+    auth.uid(),
+    ARRAY['owner','admin','staff']::public.member_role[]
+  ) THEN
+    RAISE EXCEPTION 'Sin permisos para convertir esta cotización';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.invoices i
+    WHERE i.business_id = v_quote.business_id AND i.quote_id = p_quote_id
+  ) THEN
+    RAISE EXCEPTION 'La cotización ya fue convertida en documento interno de cobro';
+  END IF;
+
+  SELECT s.id INTO v_existing
+  FROM public.sales s
+  WHERE s.business_id = v_quote.business_id AND s.quote_id = p_quote_id
+  LIMIT 1;
+
+  IF v_existing IS NOT NULL THEN
+    RETURN v_existing;
+  END IF;
+
+  IF v_quote.status <> 'accepted' THEN
+    RAISE EXCEPTION 'La cotización debe estar aceptada antes de convertirla';
+  END IF;
+
+  IF v_quote.price_basis IS NULL THEN
+    RAISE EXCEPTION 'La cotización histórica no tiene modalidad de precios. Duplíquela y defina neto o bruto antes de convertirla';
+  END IF;
+
+  IF jsonb_typeof(v_quote.items) <> 'array'
+     OR jsonb_array_length(v_quote.items) = 0 THEN
+    RAISE EXCEPTION 'La cotización no contiene productos';
+  END IF;
+
+  INSERT INTO public.sales (
+    business_id, customer_id, customer_name, channel, payment_method, status,
+    total, notes, sale_date, items, quote_id, stock_applied, is_credit,
+    due_date, paid_amount, pos_reference, tax_treatment, vat_rate
+  ) VALUES (
+    v_quote.business_id, v_quote.customer_id, v_quote.customer_name,
+    'cotizacion', NULL, 'draft',
+    v_quote.total,
+    'Borrador desde cotización ' || COALESCE(v_quote.quote_number::text, p_quote_id::text)
+      || CASE WHEN v_quote.subject IS NOT NULL THEN ' · ' || v_quote.subject ELSE '' END
+      || '. Base neta: ' || round(v_quote.subtotal, 0)::text || ' CLP'
+      || '; descuento: ' || round(v_quote.discount_pct, 2)::text || '%'
+      || '; impuesto: ' || round(v_quote.tax, 0)::text || ' CLP'
+      || '; modalidad de precios: ' || COALESCE(v_quote.price_basis, 'no registrada') || '.',
+    CURRENT_DATE, v_quote.items, p_quote_id, FALSE, TRUE,
+    NULL, 0, 'QUOTE-' || substr(p_quote_id::text, 1, 12),
+    v_quote.tax_treatment, v_quote.vat_rate
+  )
+  RETURNING id INTO v_sale;
+
+  RETURN v_sale;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.convert_quote_to_sale(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.convert_quote_to_sale(UUID) TO authenticated;
