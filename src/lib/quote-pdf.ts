@@ -142,7 +142,7 @@ export async function generateQuotePdf(
   };
 
   function drawHeader() {
-    doc.setFillColor(...NAVY);
+    doc.setFillColor(...brandColor);
     doc.rect(0, 0, pageW, 7, "F");
     let brandX = margin;
     if (logo) {
@@ -248,7 +248,7 @@ export async function generateQuotePdf(
 
   function drawTableHeader() {
     ensureSpace(30);
-    doc.setFillColor(...NAVY);
+    doc.setFillColor(...brandColor);
     doc.roundedRect(margin, y, contentW, 25, 4, 4, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
@@ -430,7 +430,7 @@ export async function generateQuotePdf(
     y += 18;
   });
   y += 5;
-  doc.setFillColor(...NAVY);
+  doc.setFillColor(...brandColor);
   doc.roundedRect(summaryX, y - 12, 250, 34, 5, 5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
