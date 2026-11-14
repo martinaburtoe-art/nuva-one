@@ -3,7 +3,9 @@
 ALTER TABLE public.quotes
   ADD COLUMN IF NOT EXISTS quote_number INTEGER,
   ADD COLUMN IF NOT EXISTS tax_treatment TEXT NOT NULL DEFAULT 'taxable',
-  ADD COLUMN IF NOT EXISTS vat_rate NUMERIC(5,2) NOT NULL DEFAULT 19;
+  ADD COLUMN IF NOT EXISTS vat_rate NUMERIC(5,2) NOT NULL DEFAULT 19,
+  ADD COLUMN IF NOT EXISTS subject TEXT,
+  ADD COLUMN IF NOT EXISTS customer_snapshot JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 WITH numbered AS (
   SELECT id, ROW_NUMBER() OVER (PARTITION BY business_id ORDER BY created_at, id) AS rn
@@ -27,7 +29,13 @@ ALTER TABLE public.quotes
     CHECK (vat_rate >= 0 AND vat_rate <= 100),
   DROP CONSTRAINT IF EXISTS quotes_non_taxable_rate_check,
   ADD CONSTRAINT quotes_non_taxable_rate_check
-    CHECK (tax_treatment = 'taxable' OR vat_rate = 0);
+    CHECK (tax_treatment = 'taxable' OR vat_rate = 0),
+  DROP CONSTRAINT IF EXISTS quotes_customer_snapshot_object_check,
+  ADD CONSTRAINT quotes_customer_snapshot_object_check
+    CHECK (jsonb_typeof(customer_snapshot) = 'object'),
+  DROP CONSTRAINT IF EXISTS quotes_subject_length_check,
+  ADD CONSTRAINT quotes_subject_length_check
+    CHECK (subject IS NULL OR length(subject) <= 240);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_quotes_business_number
   ON public.quotes (business_id, quote_number);
