@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(10);
+SELECT plan(11);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000ea01'),
@@ -53,6 +53,13 @@ SELECT lives_ok(
   $q$UPDATE public.document_templates SET design = design || '{"showLogo":false}'::jsonb
      WHERE business_id = '00000000-0000-0000-0000-00000000eb01'$q$,
   'business owner can update the document template'
+);
+SELECT throws_ok(
+  $q$INSERT INTO public.document_templates (business_id, name, document_kind, is_default, design)
+     VALUES ('00000000-0000-0000-0000-00000000eb01', 'Plantilla duplicada', 'all', TRUE, '{}'::jsonb)$q$,
+  '23505',
+  'duplicate key value violates unique constraint "document_templates_one_default_per_kind"',
+  'a business cannot have two default templates for the same document kind'
 );
 RESET ROLE;
 
