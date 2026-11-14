@@ -1,5 +1,5 @@
 import { fmtCLP } from "@/lib/biz-data";
-import { formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
+import { calculateQuoteLineNetAmount, formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
 
 type QuoteItem = {
   name: string;
@@ -357,11 +357,12 @@ export async function generateQuotePdf(
           priceBasis === "gross" && taxTreatment === "taxable"
             ? Math.round((enteredUnitPrice * 100) / (100 + vatRate))
             : enteredUnitPrice;
-        const enteredLineTotal = Math.round(Number(item.qty ?? 0) * enteredUnitPrice);
-        const netLineTotal =
-          priceBasis === "gross" && taxTreatment === "taxable"
-            ? Math.round((enteredLineTotal * 100) / (100 + vatRate))
-            : enteredLineTotal;
+        const netLineTotal = calculateQuoteLineNetAmount(
+          item,
+          taxTreatment,
+          vatRate,
+          priceBasis,
+        );
         doc.text(fmtCLP(netUnitPrice), margin + 420, y + 17, { align: "right" });
         doc.setFont("helvetica", "bold");
         doc.text(
