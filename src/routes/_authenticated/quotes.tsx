@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -183,6 +183,7 @@ function QuoteDocumentPreview({
 }
 
 function Quotes() {
+  const navigate = useNavigate();
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const { active } = useActiveBusiness();
@@ -202,6 +203,7 @@ function Quotes() {
   const [subject, setSubject] = useState("");
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [convertingInvoiceId, setConvertingInvoiceId] = useState<string | null>(null);
   // Evita dobles solicitudes desde taps consecutivos; la RPC mantiene la garantía transaccional en BD.
   const convertingQuoteIdsRef = useRef(new Set<string>());
   const [discountPct, setDiscountPct] = useState(0);
@@ -395,6 +397,26 @@ function Quotes() {
     setTerms(quote.terms ?? terms);
     setOpen(true);
     toast.info("Cotización duplicada como borrador, revisa y guarda");
+  }
+
+  async function convertToInvoice(quote: any) {
+    if (convertingQuoteIdsRef.current.has(quote.id)) return;
+    convertingQuoteIdsRef.current.add(quote.id);
+    setConvertingInvoiceId(quote.id);
+    try {
+      const { data, error } = await supabase.rpc("convert_accepted_quote_to_invoice", { p_quote_id: quote.id });
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["invoices", active?.id] });
+      await qc.invalidateQueries({ queryKey: ["invoice_payments", active?.id] });
+      toast.success("Documento interno de cobro preparado. Revisa el borrador antes de emitirlo.");
+      navigate({ to: "/invoices" });
+      return data;
+    } catch (e: any) {
+      toast.error(e.message ?? "No se pudo preparar el documento de cobro");
+    } finally {
+      convertingQuoteIdsRef.current.delete(quote.id);
+      setConvertingInvoiceId(null);
+    }
   }
 
   async function convertToSale(quote: any) {
@@ -876,6 +898,17 @@ function Quotes() {
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
+                        {q.status === "accepted" && q.price_basis && canWrite && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Crear documento interno de cobro"
+                            disabled={convertingInvoiceId === q.id || convertingId === q.id}
+                            onClick={() => convertToInvoice(q)}
+                          >
+                            <ReceiptText className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
                         {q.status === "accepted" && q.price_basis && !convertedQuoteIds.has(q.id) && canWrite && (
                           <Button
                             variant="ghost"
