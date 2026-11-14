@@ -52,13 +52,19 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 BEGIN
-  IF NEW.quote_number IS NULL THEN
-    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.business_id::text, 0));
-    SELECT COALESCE(MAX(quote_number), 0) + 1
-      INTO NEW.quote_number
-      FROM public.quotes
-      WHERE business_id = NEW.business_id;
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.quote_number IS DISTINCT FROM OLD.quote_number
+       OR NEW.business_id IS DISTINCT FROM OLD.business_id THEN
+      RAISE EXCEPTION 'QUOTE_NUMBER_IMMUTABLE';
+    END IF;
+    RETURN NEW;
   END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended(NEW.business_id::text, 0));
+  SELECT COALESCE(MAX(quote_number), 0) + 1
+    INTO NEW.quote_number
+    FROM public.quotes
+    WHERE business_id = NEW.business_id;
   RETURN NEW;
 END;
 $$;
