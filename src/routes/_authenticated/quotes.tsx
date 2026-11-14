@@ -35,7 +35,7 @@ import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Build
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { calculateQuoteTotals, formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
+import { calculateQuoteLineNetAmount, calculateQuoteTotals, formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
 // quote-pdf is imported dynamically inside the handler so jspdf never enters the SSR/worker bundle.
 import { toast } from "sonner";
 
@@ -93,12 +93,8 @@ function QuoteDocumentPreview({
   const vatLabel = taxTreatment === "taxable" ? "IVA (19%)" : taxTreatment === "exempt" ? "Exenta de IVA" : "No afecta a IVA";
   const unitPriceLabel = taxTreatment === "taxable" ? "Precio unit. neto" : "Precio unitario";
   const subtotalLabel = taxTreatment === "taxable" ? "Subtotal neto" : "Subtotal";
-  const lineNetAmount = (item: Item) => {
-    const enteredLine = Math.round(Number(item.qty || 0) * Number(item.price || 0));
-    return priceBasis === "gross" && taxTreatment === "taxable"
-      ? Math.round((enteredLine * 100) / 119)
-      : enteredLine;
-  };
+  const lineNetAmount = (item: Item) =>
+    calculateQuoteLineNetAmount(item, taxTreatment, 19, priceBasis ?? "net");
   const displayedUnitPrice = (item: Item) =>
     priceBasis === "gross" && taxTreatment === "taxable"
       ? Math.round(Number(item.price || 0) * 100 / 119)
