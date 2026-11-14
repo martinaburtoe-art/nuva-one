@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(14);
 
 insert into auth.users (id)
 values ('00000000-0000-0000-0000-00000000a901');
@@ -42,6 +42,12 @@ select ok(
 select ok(
   (select quote_number = 2 from public.quotes where id = '00000000-0000-0000-0000-00000000d902'),
   'next quote receives the next per-business number'
+);
+select throws_ok(
+  $update public.quotes set quote_number = 99 where id = '00000000-0000-0000-0000-00000000d901'$,
+  'P0001',
+  'QUOTE_NUMBER_IMMUTABLE',
+  'quote numbers cannot be modified after creation'
 );
 
 set local role authenticated;
