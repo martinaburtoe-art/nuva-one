@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(13);
+SELECT plan(24);
 
 INSERT INTO auth.users (id)
 VALUES ('00000000-0000-0000-0000-00000000aa01');
@@ -105,6 +105,96 @@ SELECT is(
   (SELECT count(*)::int FROM public.invoice_events WHERE invoice_id = (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01') AND event_type IN ('created_from_quote','issued')),
   2,
   'invoice lifecycle is recorded in an auditable event timeline'
+);
+
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
+SELECT lives_ok(
+  $SELECT public.record_internal_invoice_payment(
+    (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+    1000, 'transferencia', 'TRX-001', 'manual-invoice-payment-001'
+  )$,
+  'authorized operator can record a partial manual payment'
+);
+RESET ROLE;
+
+SELECT is(
+  (SELECT status FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+  'partially_paid',
+  'partial payment moves invoice into partially_paid state'
+);
+SELECT ok(
+  (SELECT p.transaction_id IS NOT NULL
+   FROM public.invoice_payments p
+   JOIN public.invoices i ON i.id = p.invoice_id
+   WHERE i.quote_id = '00000000-0000-0000-0000-00000000dd01'
+     AND p.idempotency_key = 'manual-invoice-payment-001'),
+  'confirmed receipt is linked to its cash-flow transaction'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.transactions
+   WHERE business_id = '00000000-0000-0000-0000-00000000bb01'
+     AND type = 'income' AND category = 'Cobros de documentos'),
+  1,
+  'partial payment creates one income transaction'
+);
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
+SELECT is(
+  public.record_internal_invoice_payment(
+    (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+    1000, 'transferencia', 'TRX-001', 'manual-invoice-payment-001'
+  ),
+  (SELECT id FROM public.invoice_payments WHERE idempotency_key = 'manual-invoice-payment-001'),
+  'repeated payment request returns the original payment id'
+);
+RESET ROLE;
+
+SELECT is(
+  (SELECT count(*)::int FROM public.transactions
+   WHERE business_id = '00000000-0000-0000-0000-00000000bb01'
+     AND type = 'income' AND category = 'Cobros de documentos'),
+  1,
+  'idempotent payment retry does not duplicate cash-flow transaction'
+);
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa01', true);
+SELECT throws_ok(
+  $SELECT public.record_internal_invoice_payment(
+    (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+    1381, 'transferencia', 'TRX-OVER', 'manual-invoice-payment-over'
+  )$,
+  'P0001',
+  'El abono supera el saldo pendiente',
+  'payment cannot exceed the remaining invoice balance'
+);
+SELECT lives_ok(
+  $SELECT public.record_internal_invoice_payment(
+    (SELECT id FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+    1380, 'transferencia', 'TRX-002', 'manual-invoice-payment-002'
+  )$,
+  'remaining balance can be settled with a second payment'
+);
+RESET ROLE;
+
+SELECT is(
+  (SELECT status FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+  'paid',
+  'settled invoice moves to paid state'
+);
+SELECT ok(
+  (SELECT paid_at IS NOT NULL FROM public.invoices WHERE quote_id = '00000000-0000-0000-0000-00000000dd01'),
+  'fully settled invoice records paid timestamp'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.transactions
+   WHERE business_id = '00000000-0000-0000-0000-00000000bb01'
+     AND type = 'income' AND category = 'Cobros de documentos'),
+  2,
+  'each distinct confirmed payment creates one cash-flow transaction'
 );
 
 SELECT * FROM finish();
