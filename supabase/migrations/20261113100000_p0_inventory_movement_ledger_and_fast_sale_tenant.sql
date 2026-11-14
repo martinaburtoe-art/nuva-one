@@ -73,8 +73,13 @@ BEGIN
         END IF;
       END LOOP;
 
+      -- The AFTER UPDATE cleanup trigger deletes the old transaction after
+      -- the sales/purchases row has been updated. Deleting it here would fire
+      -- the FK ON DELETE SET NULL against the same row still being updated.
+      -- That produces SQLSTATE 27000 (tuple already modified by this command).
+      -- Clearing NEW.transaction_id lets the AFTER trigger perform safe cleanup.
       IF OLD.transaction_id IS NOT NULL THEN
-        DELETE FROM public.transactions WHERE id = OLD.transaction_id;
+        NEW.transaction_id := NULL;
       END IF;
 
       NEW.stock_applied := false;
@@ -110,7 +115,7 @@ BEGIN
         END IF;
 
         IF GREATEST(0, stock_before - reserved_qty - blocked_qty) < qty_needed THEN
-          RAISE EXCEPTION 'Stock disponible insuficiente para "%": no hay % unidades disponibles',
+          RAISE EXCEPTION 'Stock insuficiente para "%": no hay % unidades disponibles',
             COALESCE(product_name, item->>'name'), qty_needed
             USING ERRCODE = 'check_violation';
         END IF;
@@ -224,8 +229,13 @@ BEGIN
         END IF;
       END LOOP;
 
+      -- The AFTER UPDATE cleanup trigger deletes the old transaction after
+      -- the sales/purchases row has been updated. Deleting it here would fire
+      -- the FK ON DELETE SET NULL against the same row still being updated.
+      -- That produces SQLSTATE 27000 (tuple already modified by this command).
+      -- Clearing NEW.transaction_id lets the AFTER trigger perform safe cleanup.
       IF OLD.transaction_id IS NOT NULL THEN
-        DELETE FROM public.transactions WHERE id = OLD.transaction_id;
+        NEW.transaction_id := NULL;
       END IF;
 
       NEW.stock_applied := false;
