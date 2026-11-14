@@ -159,8 +159,9 @@ export async function generateQuotePdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     setText(MUTED);
-    businessLines.slice(0, 4).forEach((line, index) => {
-      doc.text(doc.splitTextToSize(line, 265).slice(0, 1), brandX, 48 + index * 10);
+    const businessDetailLines = businessLines.flatMap((line) => doc.splitTextToSize(line, 265) as string[]);
+    businessDetailLines.slice(0, 5).forEach((line, index) => {
+      doc.text(line, brandX, 48 + index * 8.5);
     });
 
     doc.setFont("helvetica", "bold");
@@ -240,25 +241,8 @@ export async function generateQuotePdf(
   drawHeader();
   y = 116;
 
-  // Customer and validity panel
-  const panelH = 76;
-  doc.setFillColor(...PALE);
-  doc.roundedRect(margin, y, contentW, panelH, 6, 6, "F");
+  // Customer and validity panel — height adapts to long names and contact details.
   const colW = (contentW - 28) / 2;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  setText(MUTED);
-  doc.text("PREPARADA PARA", margin + 14, y + 17);
-  doc.text("VIGENCIA DE LA OFERTA", margin + 14 + colW, y + 17);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  setText(INK);
-  doc.text(customer.name || quote.customer_name || "Cliente", margin + 14, y + 34, {
-    maxWidth: colW - 12,
-  });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setText(MUTED);
   const customerDetails = [
     customer.tax_id ? `RUT: ${customer.tax_id}` : null,
     customer.contact_name ? `Contacto: ${customer.contact_name}` : null,
@@ -267,8 +251,30 @@ export async function generateQuotePdf(
     customer.email,
     customer.phone,
   ].filter(Boolean) as string[];
-  customerDetails.slice(0, 3).forEach((line, index) => {
-    doc.text(doc.splitTextToSize(line, colW - 12).slice(0, 1), margin + 14, y + 48 + index * 9);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  const customerNameLines = doc.splitTextToSize(customer.name || quote.customer_name || "Cliente", colW - 12).slice(0, 2) as string[];
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  const customerDetailLines = customerDetails.flatMap((line) => doc.splitTextToSize(line, colW - 12) as string[]);
+  const panelH = Math.max(86, 48 + customerNameLines.length * 12 + customerDetailLines.length * 9);
+  ensureSpace(panelH + 22);
+  doc.setFillColor(...PALE);
+  doc.roundedRect(margin, y, contentW, panelH, 6, 6, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  setText(MUTED);
+  doc.text("PREPARADA PARA", margin + 14, y + 17);
+  doc.text("VIGENCIA DE LA OFERTA", margin + 14 + colW, y + 17);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  setText(INK);
+  doc.text(customerNameLines, margin + 14, y + 34);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  setText(MUTED);
+  customerDetailLines.forEach((line, index) => {
+    doc.text(line, margin + 14, y + 34 + customerNameLines.length * 12 + index * 9);
   });
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
