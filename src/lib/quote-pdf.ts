@@ -235,7 +235,7 @@ export async function generateQuotePdf(
     doc.setTextColor(255, 255, 255);
     doc.text("DESCRIPCIÓN", margin + 10, y + 16);
     doc.text("CANT.", margin + 318, y + 16, { align: "right" });
-    doc.text("PRECIO UNIT. NETO", margin + 420, y + 16, { align: "right" });
+    doc.text(taxTreatment === "taxable" ? "PRECIO UNIT. NETO" : "PRECIO UNITARIO", margin + 420, y + 16, { align: "right" });
     doc.text("TOTAL", pageW - margin - 10, y + 16, { align: "right" });
     y += 25;
   }
@@ -297,7 +297,7 @@ export async function generateQuotePdf(
   y += panelH + 22;
 
   sectionTitle("Modalidad de precios");
-  paragraph(priceBasis === "gross" ? (taxTreatment === "taxable" ? "Los precios unitarios ingresados incluyen IVA. El impuesto se desglosa desde el valor bruto." : "Los precios unitarios se expresan en valores brutos. La operación seleccionada no agrega IVA.") : "Los precios unitarios ingresados son netos, antes de IVA.", margin, contentW, 8, 11, MUTED);
+  paragraph(priceBasis === "gross" ? (taxTreatment === "taxable" ? "Los precios unitarios ingresados incluyen IVA; el detalle se presenta en base neta y el impuesto se desglosa al final." : "Los precios unitarios se expresan en valores brutos. La operación seleccionada no agrega IVA.") : taxTreatment === "taxable" ? "Los precios unitarios ingresados son netos, antes de IVA." : "Los precios ingresados no llevan IVA adicional según el tratamiento seleccionado.", margin, contentW, 8, 11, MUTED);
   y += 8;
 
   if (quote.subject) {
@@ -389,7 +389,7 @@ export async function generateQuotePdf(
   const discountPct = Number(quote.discount_pct ?? 0);
   const discountAmount = Math.round(Number(quote.subtotal) * (discountPct / 100));
   const summaryRows = [
-    ["Subtotal neto", fmtCLP(Number(quote.subtotal))],
+    [[taxTreatment === "taxable" ? "Subtotal neto" : "Subtotal"][0], fmtCLP(Number(quote.subtotal))],
     ...(discountPct > 0 ? [[`Descuento (${discountPct}%)`, `-${fmtCLP(discountAmount)}`]] : []),
     [taxLabel, fmtCLP(Number(quote.tax))],
   ];
