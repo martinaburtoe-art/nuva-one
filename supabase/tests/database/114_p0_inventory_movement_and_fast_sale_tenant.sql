@@ -284,8 +284,8 @@ SELECT is(
 UPDATE public.products SET reserved_stock=9
 WHERE id='00000000-0000-0000-0000-00000000c901';
 SELECT throws_ok(
-  $UPDATE public.purchases SET status='cancelled'
-    WHERE id='00000000-0000-0000-0000-00000000d902'$,
+  $$UPDATE public.purchases SET status='cancelled'
+    WHERE id='00000000-0000-0000-0000-00000000d902'$$,
   '23514',
   'PURCHASE_REVERSAL_STOCK_RESERVED',
   'purchase reversal is rejected when it would consume reserved or blocked stock'
