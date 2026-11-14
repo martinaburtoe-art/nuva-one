@@ -73,7 +73,10 @@ BEGIN
   v_customer_snapshot := v_customer_snapshot || jsonb_build_object('name', v_customer_name);
 
   v_items := p_payload->'items';
-  IF jsonb_typeof(v_items) <> 'array' OR jsonb_array_length(v_items) < 1 OR jsonb_array_length(v_items) > 100 THEN
+  IF jsonb_typeof(v_items) IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'Agrega entre 1 y 100 líneas válidas';
+  END IF;
+  IF jsonb_array_length(v_items) < 1 OR jsonb_array_length(v_items) > 100 THEN
     RAISE EXCEPTION 'Agrega entre 1 y 100 líneas válidas';
   END IF;
 
@@ -98,8 +101,8 @@ BEGIN
     v_name := NULLIF(trim(v_item->>'name'), '');
     v_qty := (v_item->>'qty')::NUMERIC;
     v_price := (v_item->>'price')::NUMERIC;
-    IF v_name IS NULL OR char_length(v_name) > 240 OR v_qty <= 0 OR v_price < 0
-      OR v_qty > 1000000 OR v_price > 100000000000 THEN
+    IF v_name IS NULL OR char_length(v_name) > 240 OR v_qty IS NULL OR v_price IS NULL
+      OR v_qty <= 0 OR v_price < 0 OR v_qty > 1000000 OR v_price > 100000000000 THEN
       RAISE EXCEPTION 'La línea % contiene nombre, cantidad o precio inválido', v_index;
     END IF;
     v_line := round(v_qty * v_price, 0);
