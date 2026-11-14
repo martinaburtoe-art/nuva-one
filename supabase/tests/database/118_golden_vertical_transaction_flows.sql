@@ -13,6 +13,25 @@ VALUES
   ('00000000-0000-0000-0000-00000000b802', 'Golden Ferretería', '00000000-0000-0000-0000-00000000a801', 'starter', 'hardware_store'),
   ('00000000-0000-0000-0000-00000000b803', 'Golden Distribuidora', '00000000-0000-0000-0000-00000000a801', 'starter', 'wholesale_distribution');
 
+-- Seed the minimal chart of accounts required by the existing accounting hooks.
+INSERT INTO public.accounting_accounts (business_id,code,name,account_type,system_key)
+SELECT b.id, a.code, a.name, a.account_type, a.system_key
+FROM public.businesses b
+CROSS JOIN (VALUES
+  ('1.01','Caja','asset','cash'),
+  ('1.02','Inventario','asset','inventory'),
+  ('2.01','Proveedores','liability','accounts_payable'),
+  ('2.02','IVA débito','liability','vat_debit'),
+  ('4.01','Ventas','revenue','sales_revenue'),
+  ('1.03','IVA crédito','asset','vat_credit'),
+  ('6.01','Gastos operacionales','expense','operating_expense')
+) AS a(code,name,account_type,system_key)
+WHERE b.id IN (
+  '00000000-0000-0000-0000-00000000b801',
+  '00000000-0000-0000-0000-00000000b802',
+  '00000000-0000-0000-0000-00000000b803'
+);
+
 INSERT INTO public.products (id, business_id, name, price, stock)
 VALUES
   ('00000000-0000-0000-0000-00000000c801', '00000000-0000-0000-0000-00000000b801', 'Producto minimarket', 1200, 20),
