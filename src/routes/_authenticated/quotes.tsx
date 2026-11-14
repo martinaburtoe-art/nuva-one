@@ -44,6 +44,15 @@ export const Route = createFileRoute("/_authenticated/quotes")({
   component: Quotes,
 });
 
+const allowedQuoteStatusTransitions: Record<string, string[]> = {
+  draft: ["accepted", "rejected", "expired"],
+  sent: ["accepted", "rejected", "expired"],
+  viewed: ["accepted", "rejected", "expired"],
+  accepted: ["rejected"],
+  rejected: [],
+  expired: [],
+};
+
 const statusLabel: Record<string, { l: string; c: string }> = {
   draft: { l: "Borrador", c: "bg-muted text-muted-foreground" },
   sent: { l: "Enviada", c: "bg-primary/15 text-primary" },
@@ -821,18 +830,18 @@ function Quotes() {
                         disabled={!canWrite}
                         value={q.status}
                         onChange={(e) => {
-                          if (e.target.value === "sent" || e.target.value === "viewed") {
-                            toast.info("El envío y la visualización requieren evidencia de entrega real.");
+                          const allowed = allowedQuoteStatusTransitions[q.status] ?? [];
+                          if (!allowed.includes(e.target.value)) {
+                            toast.info("Ese cambio de estado no está permitido. Los estados enviados o vistos requieren evidencia de entrega real.");
                             return;
                           }
                           upd.mutate({ id: q.id, patch: { status: e.target.value } });
                         }}
                         className="rounded-md border bg-background px-2 py-1 text-xs"
                       >
-                        {Object.entries(statusLabel).map(([k, v]) => (
-                          <option key={k} value={k} disabled={k === "sent" || k === "viewed"}>
-                            {v.l}
-                          </option>
+                        <option value={q.status}>{statusLabel[q.status]?.l ?? q.status}</option>
+                        {(allowedQuoteStatusTransitions[q.status] ?? []).map((k) => (
+                          <option key={k} value={k}>{statusLabel[k]?.l ?? k}</option>
                         ))}
                       </select>
                     </TableCell>
