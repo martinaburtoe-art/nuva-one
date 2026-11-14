@@ -481,6 +481,26 @@ function Quotes() {
                                   setItems(c);
                                 }}
                               />
+                              <div className="mt-1 grid grid-cols-2 gap-1.5">
+                                <Input
+                                  placeholder="SKU / código"
+                                  value={it.sku ?? ""}
+                                  onChange={(e) => {
+                                    const c = [...items];
+                                    c[idx].sku = e.target.value;
+                                    setItems(c);
+                                  }}
+                                />
+                                <Input
+                                  placeholder="Unidad (un, h, m²...)"
+                                  value={it.unit ?? ""}
+                                  onChange={(e) => {
+                                    const c = [...items];
+                                    c[idx].unit = e.target.value;
+                                    setItems(c);
+                                  }}
+                                />
+                              </div>
                             </div>
                             <Input
                               className="col-span-2"
