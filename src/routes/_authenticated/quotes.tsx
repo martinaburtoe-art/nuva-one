@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2 } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness } from "@/lib/use-business";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -195,6 +195,7 @@ function Quotes() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
   const [subject, setSubject] = useState("");
+  const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
   // Evita dobles solicitudes desde taps consecutivos; la RPC mantiene la garantía transaccional en BD.
   const convertingQuoteIdsRef = useRef(new Set<string>());
@@ -258,7 +259,7 @@ function Quotes() {
         toast.error("El total de la cotización debe ser mayor que cero.");
         return;
       }
-      const savedQuoteId = await insert.mutateAsync({
+      const quotePayload = {
         customer_name: customer.trim(),
         customer_id: customerId,
         subject: subject.trim() || null,
@@ -275,7 +276,10 @@ function Quotes() {
         notes: notes.trim() || null,
         terms: terms.trim() || null,
         status: "draft",
-      });
+      };
+      const savedQuoteId = editingQuoteId
+        ? (await upd.mutateAsync({ id: editingQuoteId, patch: quotePayload }), editingQuoteId)
+        : await insert.mutateAsync(quotePayload);
       const { data: savedQuote, error: savedQuoteError } = await supabase
         .from("quotes")
         .select("*")
@@ -298,6 +302,44 @@ function Quotes() {
     } catch (error: any) {
       toast.error(error?.message ?? "No se pudo guardar la cotización.");
     }
+  }
+
+  function editDraftQuote(quote: any) {
+    if (quote.status !== "draft") {
+      toast.error("Solo se pueden editar cotizaciones en borrador. Duplica las demás para crear una nueva versión.");
+      return;
+    }
+    setEditingQuoteId(quote.id);
+    setItems(
+      (quote.items ?? []).length
+        ? quote.items.map((it: any) => ({
+            product_id: it.product_id ?? null,
+            name: it.name,
+            description: it.description ?? "",
+            sku: it.sku ?? "",
+            unit: it.unit ?? "",
+            qty: Number(it.qty) || 1,
+            price: Number(it.price) || 0,
+          }))
+        : [{ product_id: null, name: "", qty: 1, price: 0 }],
+    );
+    setCustomer(quote.customer_name ?? "");
+    setCustomerId(quote.customer_id ?? null);
+    const linkedCustomer = (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+    const snapshot = quote.customer_snapshot && Object.keys(quote.customer_snapshot).length > 0
+      ? quote.customer_snapshot
+      : linkedCustomer
+        ? { tax_id: linkedCustomer.tax_id ?? "", address: linkedCustomer.address ?? "", email: linkedCustomer.email ?? "", phone: linkedCustomer.phone ?? "", contact_name: linkedCustomer.shipping_contact_name ?? "", shipping_comuna: linkedCustomer.shipping_comuna ?? "", shipping_city: linkedCustomer.shipping_city ?? "" }
+        : { tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" };
+    setCustomerDetails(snapshot);
+    setSubject(quote.subject ?? "");
+    setDiscountPct(Number(quote.discount_pct) || 0);
+    setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
+    setPriceBasis((quote.price_basis as QuotePriceBasis) || null);
+    setNotes(quote.notes ?? "");
+    setValidUntil(quote.valid_until ?? "");
+    setTerms(quote.terms ?? terms);
+    setOpen(true);
   }
 
   function duplicateQuote(quote: any) {
@@ -408,7 +450,7 @@ function Quotes() {
           description="Prepara propuestas comerciales profesionales con cálculos validados y PDF descargable"
           action={
             !canWrite ? undefined : (
-              <Dialog open={open} onOpenChange={setOpen}>
+              <Dialog open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setEditingQuoteId(null); }}>
                 <DialogTrigger asChild>
                   <Button className="shadow-elegant">
                     <Plus className="mr-1.5 h-4 w-4" />
@@ -417,7 +459,7 @@ function Quotes() {
                 </DialogTrigger>
                 <DialogContent className="max-w-[min(96vw,1480px)] max-h-[94vh] overflow-y-auto rounded-2xl">
                   <DialogHeader>
-                    <DialogTitle>Nueva cotización</DialogTitle>
+                    <DialogTitle>{editingQuoteId ? "Editar cotización en borrador" : "Nueva cotización"}</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)]">
                     <div className="space-y-4">
@@ -696,7 +738,7 @@ function Quotes() {
                         onClick={save}
                         disabled={insert.isPending}
                       >
-                        {insert.isPending ? "Guardando..." : "Guardar y descargar PDF"}
+                        {insert.isPending || upd.isPending ? "Guardando..." : editingQuoteId ? "Guardar cambios y descargar PDF" : "Guardar y descargar PDF"}
                       </Button>
                       <p className="text-xs text-muted-foreground">Guardar no envía la cotización. Descarga el PDF y compártelo por el canal que utilices; el estado de envío solo se actualizará cuando exista una integración real.</p>
                     </div>
@@ -791,6 +833,11 @@ function Quotes() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {q.status === "draft" && (
+                          <Button variant="ghost" size="icon" title="Editar borrador" disabled={!canWrite} onClick={() => editDraftQuote(q)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -807,7 +854,7 @@ function Quotes() {
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        {q.status === "accepted" && !convertedQuoteIds.has(q.id) && (
+                        {q.status === "accepted" && q.price_basis && !convertedQuoteIds.has(q.id) && canWrite && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -818,7 +865,7 @@ function Quotes() {
                             <ArrowRightCircle className="h-4 w-4 text-success" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)}>
+                        <Button variant="ghost" size="icon" disabled={!canWrite} onClick={() => del.mutate(q.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
