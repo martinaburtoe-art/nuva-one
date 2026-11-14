@@ -106,6 +106,7 @@ DECLARE
   v_number BIGINT;
   v_discount NUMERIC(14,2);
   v_customer_snapshot JSONB;
+  v_issuer_snapshot JSONB;
 BEGIN
   SELECT q.* INTO v_quote
   FROM public.quotes q
@@ -149,6 +150,15 @@ BEGIN
   FROM public.invoices WHERE business_id = v_quote.business_id;
 
   v_discount := round(COALESCE(v_quote.subtotal, 0) * COALESCE(v_quote.discount_pct, 0) / 100, 2);
+  SELECT jsonb_build_object(
+    'name', b.name,
+    'tax_id', b.tax_id,
+    'logo_url', b.logo_url,
+    'industry', b.industry
+  ) INTO v_issuer_snapshot
+  FROM public.businesses b
+  WHERE b.id = v_quote.business_id;
+
   v_customer_snapshot := CASE
     WHEN jsonb_typeof(v_quote.customer_snapshot) = 'object' AND v_quote.customer_snapshot <> '{}'::jsonb
       THEN v_quote.customer_snapshot
@@ -162,7 +172,7 @@ BEGIN
     tax_amount, total, terms, notes, created_by
   ) VALUES (
     v_quote.business_id, v_quote.customer_id, p_quote_id, v_number, 'draft',
-    v_quote.customer_name, v_customer_snapshot, '{}'::jsonb, v_quote.items,
+    v_quote.customer_name, v_customer_snapshot, COALESCE(v_issuer_snapshot, '{}'::jsonb), v_quote.items,
     v_quote.subject, v_quote.subtotal, v_discount, v_quote.tax_treatment,
     CASE WHEN v_quote.tax_treatment = 'taxable' THEN v_quote.vat_rate ELSE 0 END,
     v_quote.tax, v_quote.total, v_quote.terms,
