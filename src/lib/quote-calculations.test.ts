@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateQuoteTotals, formatQuoteNumber } from "./quote-calculations";
+import { calculateQuoteLineNetAmount, calculateQuoteTotals, formatQuoteNumber } from "./quote-calculations";
 
 describe("quote calculations", () => {
   it("calculates net taxable prices and applies discount before VAT", () => {
@@ -18,6 +18,15 @@ describe("quote calculations", () => {
       priceBasis: "net",
       total: 21420,
     });
+  });
+
+  it("uses the same rounded net line amount for gross prices", () => {
+    expect(calculateQuoteLineNetAmount(
+      { name: "Servicio", qty: 1.5, price: 1190 },
+      "taxable",
+      19,
+      "gross",
+    )).toBe(1500);
   });
 
   it("extracts included VAT from gross unit prices without adding it twice", () => {
