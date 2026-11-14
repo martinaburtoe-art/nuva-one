@@ -226,7 +226,11 @@ function Quotes() {
       toast.error("Agrega al menos un producto o servicio.");
       return;
     }
-    if (validUntil && validUntil < localDateString(new Date())) {
+    if (!validUntil) {
+      toast.error("Define la fecha de vigencia de la cotización.");
+      return;
+    }
+    if (validUntil < localDateString(new Date())) {
       toast.error("La fecha de vigencia no puede estar en el pasado.");
       return;
     }
