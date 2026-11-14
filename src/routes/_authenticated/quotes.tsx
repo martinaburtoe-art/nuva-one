@@ -132,12 +132,12 @@ function QuoteDocumentPreview({
           <div>
             <div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">VÁLIDA HASTA</div>
             <div className="text-xs font-semibold">{validUntil ? new Date(validUntil + "T12:00:00").toLocaleDateString("es-CL") : "No especificada"}</div>
-            <div className="mt-1 text-[9px] text-slate-500">{priceBasis === "gross" ? "Valores unitarios con IVA incluido" : "Valores unitarios netos"} en CLP</div>
+            <div className="mt-1 text-[9px] text-slate-500">{priceBasis === "gross" ? (taxTreatment === "taxable" ? "Valores unitarios con IVA incluido" : "Valores unitarios brutos") : "Valores unitarios netos"} en CLP</div>
           </div>
         </div>
         <div className="mb-2 text-[9px] font-bold tracking-[0.14em] text-slate-400">DETALLE DE PRODUCTOS Y SERVICIOS</div>
         <table className="w-full border-collapse text-[9px]">
-          <thead><tr className="border-y border-slate-200 text-left text-[8px] uppercase tracking-wide text-slate-500"><th className="py-2 pr-2">Descripción</th><th className="py-2 text-right">Cant.</th><th className="py-2 text-right">Precio</th><th className="py-2 pl-2 text-right">Total</th></tr></thead>
+          <thead><tr className="border-y border-slate-200 text-left text-[8px] uppercase tracking-wide text-slate-500"><th className="py-2 pr-2">Descripción</th><th className="py-2 text-right">Cant.</th><th className="py-2 text-right">{priceBasis === "gross" && taxTreatment === "taxable" ? "Precio c/IVA" : "Precio unit."}</th><th className="py-2 pl-2 text-right">Total</th></tr></thead>
           <tbody>
             {items.filter((item) => item.name.trim()).map((item, index) => (
               <tr key={index} className="border-b border-slate-100 align-top">
@@ -581,7 +581,7 @@ function Quotes() {
                           <SelectTrigger id="price-basis"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="net">Netos (sin IVA)</SelectItem>
-                            <SelectItem value="gross">IVA incluido</SelectItem>
+                            <SelectItem value="gross">Brutos (impuesto incluido)</SelectItem>
                           </SelectContent>
                         </Select>
                         <p className="mt-1 text-xs text-muted-foreground">Selecciona cómo están expresados los precios del catálogo o ingresados manualmente.</p>
@@ -596,7 +596,7 @@ function Quotes() {
                             <SelectItem value="non_taxable">No afecta a IVA</SelectItem>
                           </SelectContent>
                         </Select>
-                        <p className="mt-1 text-xs text-muted-foreground">Los precios ingresados son netos, antes de impuestos.</p>
+                        <p className="mt-1 text-xs text-muted-foreground">El cálculo separa la base neta y el impuesto según la modalidad seleccionada.</p>
                       </div>
                       <div>
                         <Label htmlFor="discount">Descuento (%)</Label>
