@@ -231,3 +231,24 @@ No implementar una tabla genérica sin discriminación que mezcle estados y efec
 - Invoice Fly — gastos y escaneo: https://intercom.help/invoicefly/en/articles/9924814-tracking-expenses
 - SII — factura electrónica y DTE: https://www.sii.cl/factura_electronica/que_es_fact_elect.htm
 - SII — operación IVA: https://www.sii.cl/destacados/operacion_iva/
+
+
+## 10. Implementación incorporada en la rama (14-11-2026)
+
+La siguiente base ya fue añadida al repositorio, pendiente de validación CI y aplicación en entorno aislado:
+
+- `supabase/migrations/20261114100000_nuva_documents_internal_invoices.sql`
+  - Tabla `invoices` para documentos internos de cobro, con snapshot de cliente/emisor/líneas, importes, numeración por negocio y estado.
+  - Tabla `invoice_payments` con idempotencia por negocio, medio/referencia y vínculo a transacción de ingreso.
+  - Tabla append-only `invoice_events` para trazabilidad de conversión, emisión y pagos.
+  - RLS: lectura de miembros; escrituras de tablas financieras revocadas al cliente y mutaciones únicamente por RPC autorizados.
+  - RPC de conversión cotización aceptada → factura interna en borrador; emisión explícita; registro manual de abonos parciales con control de saldo e idempotencia.
+  - Cada abono manual confirmado crea una transacción de ingreso en `public.transactions`; no genera venta, no descuenta stock y no pretende emitir DTE.
+- `supabase/tests/database/119_internal_invoice_lifecycle.sql`
+  - 25 aserciones pgTAP previstas para conversión, snapshots, separación DTE, emisión, pagos parciales, idempotencia, límites de saldo y reflejo en transacciones.
+- `src/routes/_authenticated/invoices.tsx`
+  - Primer espacio de trabajo: cotizaciones aceptadas pendientes de conversión, documentos internos, métricas de montos emitidos/cobrados/pendientes, emisión y registro de abonos.
+- `src/routeTree.gen.ts` y `src/components/dashboard-shell.tsx`
+  - Ruta autenticada `/invoices` y acceso desde navegación, bajo el permiso de cotizaciones.
+
+**No afirmar como completado:** esta implementación no ha sido aún confirmada por CI en el SHA final, no se ha aplicado la migración en staging/producción, no existe aún PDF específico de factura, diseñador de plantillas, portal público, email delivery, integración de pagos online, OCR ni horas facturables. Los abonos actualmente son registros manuales confirmados por un operador y se reflejan en `transactions`; webhooks y conciliación de proveedores requieren una fase separada.
