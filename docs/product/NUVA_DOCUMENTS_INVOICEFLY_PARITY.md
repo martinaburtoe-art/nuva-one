@@ -252,3 +252,28 @@ La siguiente base ya fue añadida al repositorio, pendiente de validación CI y 
   - Ruta autenticada `/invoices` y acceso desde navegación, bajo el permiso de cotizaciones.
 
 **No afirmar como completado:** esta implementación no ha sido aún confirmada por CI en el SHA final, no se ha aplicado la migración en staging/producción, no existe aún PDF específico de factura, diseñador de plantillas, portal público, email delivery, integración de pagos online, OCR ni horas facturables. Los abonos actualmente son registros manuales confirmados por un operador y se reflejan en `transactions`; webhooks y conciliación de proveedores requieren una fase separada.
+
+
+## 11. Ampliación en curso — plantillas y creación directa (14-11-2026)
+
+Se incorporaron cambios adicionales en esta misma rama, aún sujetos a CI y QA en el SHA final:
+
+- `supabase/migrations/20261114110000_nuva_document_templates.sql` y `supabase/tests/database/120_document_templates_security.sql`:
+  - Plantillas persistentes y aisladas por negocio.
+  - Una plantilla predeterminada por tipo documental, con políticas de lectura para miembros y escritura reservada a owner/admin.
+  - Pruebas pgTAP de aislamiento, permisos, persistencia y unicidad de plantilla predeterminada.
+- `src/lib/use-document-template.ts`:
+  - Carga la plantilla compartida predeterminada y conserva el tema integrado si el esquema aún no existe en un entorno previo a la migración.
+- `src/routes/_authenticated/invoices.tsx` y `src/routes/_authenticated/quotes.tsx`:
+  - Editor de plantilla con color de marca, visibilidad de logo/RUT y nota complementaria.
+  - Aplicación del diseño guardado a los PDF de cotizaciones y documentos internos de cobro.
+- `src/lib/quote-pdf.ts`:
+  - Color de marca en encabezados, tablas y totales; controles de logo/RUT y pie adicional.
+  - La aclaración legal de documento comercial/no DTE permanece obligatoria.
+- `supabase/migrations/20261114120000_nuva_manual_internal_invoices.sql` y `supabase/tests/database/121_manual_internal_invoices.sql`:
+  - RPC de creación directa de documentos internos, sin cotización previa.
+  - Recalcula importes, descuento e IVA en servidor; valida rol, cliente del negocio, líneas y límites; numera bajo lock transaccional.
+  - Crea el evento `created_manual` y mantiene el documento como `internal_invoice`.
+- La vista de documentos incluye un formulario para crear el borrador directamente desde cliente y líneas libres, elegir neto/bruto, tratamiento tributario y descuento; la emisión continúa siendo un paso explícito posterior.
+
+**Límite actual:** los cambios anteriores están en código y migraciones de la rama, pero no se deben marcar como release completado hasta que pgTAP, typecheck, build, QA y preview autenticado terminen correctamente. No se han aplicado migraciones a producción ni desplegado a producción. El portal seguro del cliente, entrega por email, pagos Mercado Pago/webhooks, OCR, horas facturables y reportes de paridad siguen pendientes.
