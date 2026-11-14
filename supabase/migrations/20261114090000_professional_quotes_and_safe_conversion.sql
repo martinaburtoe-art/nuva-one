@@ -16,6 +16,9 @@ FROM numbered
 WHERE q.id = numbered.id;
 
 ALTER TABLE public.quotes
+  ALTER COLUMN quote_number SET NOT NULL;
+
+ALTER TABLE public.quotes
   DROP CONSTRAINT IF EXISTS quotes_tax_treatment_check,
   ADD CONSTRAINT quotes_tax_treatment_check
     CHECK (tax_treatment IN ('taxable', 'exempt', 'non_taxable')),
