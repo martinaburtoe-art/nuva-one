@@ -44,7 +44,7 @@ select ok(
   'next quote receives the next per-business number'
 );
 select throws_ok(
-  $UPDATE public.quotes SET quote_number = 99 WHERE id = '00000000-0000-0000-0000-00000000d901'$,
+  $q$UPDATE public.quotes SET quote_number = 99 WHERE id = '00000000-0000-0000-0000-00000000d901'$q$,
   'P0001',
   'QUOTE_NUMBER_IMMUTABLE',
   'quote numbers cannot be modified after creation'
