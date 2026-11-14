@@ -12,7 +12,7 @@ values ('00000000-0000-0000-0000-00000000c901', '00000000-0000-0000-0000-0000000
 
 insert into public.quotes (
   id, business_id, customer_name, items, subtotal, discount_pct, tax, total,
-  status, tax_treatment, vat_rate
+  status, tax_treatment, vat_rate, price_basis
 ) values (
   '00000000-0000-0000-0000-00000000d901',
   '00000000-0000-0000-0000-00000000b901',
@@ -23,7 +23,7 @@ insert into public.quotes (
     'qty', 2,
     'price', 1000
   )),
-  2000, 0, 380, 2380, 'accepted', 'taxable', 19
+  2000, 0, 380, 2380, 'accepted', 'taxable', 19, 'net'
 );
 
 insert into public.quotes (
