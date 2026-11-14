@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(13);
 
 insert into auth.users (id)
 values ('00000000-0000-0000-0000-00000000a901');
@@ -88,6 +88,11 @@ select is(
   (select count(*)::int from public.financial_posting_queue where business_id = '00000000-0000-0000-0000-00000000b901' and source_type = 'sale'),
   0,
   'draft conversion does not queue a financial posting'
+);
+select is(
+  (select count(*)::int from public.financial_cash_ledger where business_id = '00000000-0000-0000-0000-00000000b901' and source_type = 'sale'),
+  0,
+  'draft conversion does not create a cash-ledger inflow'
 );
 
 set local role authenticated;
