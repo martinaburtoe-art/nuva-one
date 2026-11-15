@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { cron } from "inngest";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
@@ -259,6 +260,175 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
       if (send) sent++; else skipped++;
     }
 
-    return { status: "complete", candidates: invoices.length, sent, skipped };
+    // Quote follow-up: send only at 3 days before expiry and on expiry day.
+    // The token is deterministically derived from the provider secret and the
+    // quote revision, so Inngest retries reuse the exact same public link.
+    const quotes = await step.run("load-expiring-quotes", async () => {
+      const { data, error } = await db
+        .from("quotes")
+        .select("id,business_id,quote_number,customer_name,customer_snapshot,issuer_snapshot,subject,total,status,valid_until,updated_at")
+        .in("status", ["sent", "viewed"])
+        .gte("valid_until", todayKey)
+        .lte("valid_until", maxKey)
+        .order("valid_until", { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      return data ?? [];
+    });
+
+    for (const quote of quotes) {
+      const email = quote.customer_snapshot?.email;
+      if (!validEmail(email) || !quote.valid_until) { skipped++; continue; }
+      const validUntil = new Date(`${quote.valid_until}T12:00:00Z`);
+      const daysUntilExpiry = Math.round((validUntil.getTime() - new Date(`${todayKey}T12:00:00Z`).getTime()) / 86400000);
+      const kind = daysUntilExpiry === 3 ? "expires_soon_3d"
+        : daysUntilExpiry === 0 ? "expires_today"
+          : null;
+      if (!kind) continue;
+
+      const idempotencyKey = `quote-reminder:${quote.id}:${kind}:${quote.updated_at}`;
+      const attempt = await step.run(`claim-quote-${quote.id}-${kind}`, async () => {
+        const { data: previous, error: lookupError } = await db.from("document_delivery_attempts")
+          .select("id,status,updated_at,attempts")
+          .eq("business_id", quote.business_id)
+          .eq("idempotency_key", idempotencyKey)
+          .maybeSingle();
+        if (lookupError) throw lookupError;
+        if (previous?.status === "sent") return null;
+        if (previous?.status === "sending" &&
+          Date.now() - new Date(previous.updated_at).getTime() < 15 * 60 * 1000) return null;
+        if (previous) {
+          const { data, error } = await db.from("document_delivery_attempts")
+            .update({
+              status: "sending",
+              attempts: Number(previous.attempts ?? 0) + 1,
+              error_code: null,
+              error_message: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", previous.id)
+            .neq("status", "sent")
+            .select("id")
+            .maybeSingle();
+          if (error) throw error;
+          return data;
+        }
+        const { data, error } = await db.from("document_delivery_attempts").insert({
+          business_id: quote.business_id,
+          document_type: "quote",
+          document_id: quote.id,
+          recipient: email,
+          provider: "resend",
+          channel: "email",
+          status: "sending",
+          idempotency_key: idempotencyKey,
+          attempts: 1,
+          metadata: { reminder_kind: kind, valid_until: quote.valid_until },
+        }).select("id").single();
+        if (error?.code === "23505") return null;
+        if (error) throw error;
+        return data;
+      });
+      if (!attempt) { skipped++; continue; }
+
+      const sentQuoteReminder = await step.run(`send-quote-${quote.id}-${kind}`, async () => {
+        const token = crypto.createHmac("sha256", resendKey).update(idempotencyKey).digest("hex");
+        const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
+        const expiryBoundary = new Date(`${quote.valid_until}T23:59:59.999Z`).getTime();
+        const expiresAt = new Date(Math.min(Date.now() + 7 * 86400000, expiryBoundary)).toISOString();
+        let { data: link, error: linkLookupError } = await db.from("document_share_links")
+          .select("id,expires_at,revoked_at,responded_at")
+          .eq("business_id", quote.business_id)
+          .eq("quote_id", quote.id)
+          .eq("token_hash", tokenHash)
+          .maybeSingle();
+        if (linkLookupError) throw linkLookupError;
+        if (!link) {
+          const { data: createdLink, error: createLinkError } = await db.from("document_share_links").insert({
+            business_id: quote.business_id,
+            quote_id: quote.id,
+            token_hash: tokenHash,
+            expires_at: expiresAt,
+            created_by: null,
+          }).select("id,expires_at,revoked_at,response_action").single();
+          if (createLinkError) throw createLinkError;
+          link = createdLink;
+          await db.from("document_share_events").insert({
+            business_id: quote.business_id,
+            quote_id: quote.id,
+            link_id: link.id,
+            event_type: "link_created",
+            event_data: { source: "automated_reminder", reminder_kind: kind },
+            actor_id: null,
+          });
+        }
+        if (link.revoked_at || link.responded_at || new Date(link.expires_at).getTime() <= Date.now()) {
+          await db.from("document_delivery_attempts").update({
+            status: "failed",
+            error_code: "QUOTE_SHARE_LINK_UNAVAILABLE",
+            error_message: "El enlace de revisión ya no está disponible",
+            updated_at: new Date().toISOString(),
+          }).eq("id", attempt.id);
+          return false;
+        }
+
+        const origin = process.env.SITE_URL || process.env.VITE_SITE_URL || "https://nuva-one.vercel.app";
+        const shareUrl = `${origin}/quote/${token}`;
+        const quoteLabel = `COT-${String(quote.quote_number ?? "").padStart(4, "0")}`;
+        const issuerName = quote.issuer_snapshot?.name ?? "El negocio emisor";
+        const heading = kind === "expires_soon_3d" ? "Tu cotización vence en 3 días" : "Tu cotización vence hoy";
+        const html = `<!doctype html><html><body style="margin:0;background:#f5f6fa;padding:32px 16px;font-family:Arial,sans-serif;color:#182235"><main style="max-width:600px;margin:auto;background:#fff;border:1px solid #e7e9ef;border-radius:16px;padding:32px"><p style="font-size:12px;letter-spacing:1px;color:#687386;text-transform:uppercase">Nüva One · Seguimiento comercial</p><h1 style="font-size:24px;margin:12px 0">${heading}</h1><p>Hola ${escapeHtml(quote.customer_name)},</p><p>${escapeHtml(issuerName)} te recuerda que la cotización <strong>${escapeHtml(quoteLabel)}</strong>${quote.subject ? ` para ${escapeHtml(quote.subject)}` : ""} está pendiente de respuesta.</p><p style="font-size:22px;font-weight:700">CLP ${Math.round(Number(quote.total)).toLocaleString("es-CL")}</p><p style="margin:26px 0"><a href="${shareUrl}" style="display:inline-block;background:#182741;color:#fff;text-decoration:none;padding:14px 22px;border-radius:9px;font-weight:700">Revisar cotización</a></p><p style="font-size:12px;color:#687386">El enlace vence el ${new Date(link.expires_at).toLocaleDateString("es-CL")}. Puedes aceptar o rechazar la propuesta desde el portal.</p><p style="font-size:11px;color:#9aa2af">Enviado con Nüva One. La aceptación es comercial simple; no es firma electrónica avanzada ni DTE.</p></main></body></html>`;
+        try {
+          const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+              "Idempotency-Key": idempotencyKey,
+            },
+            body: JSON.stringify({
+              from,
+              to: [email],
+              subject: `${heading} · ${quoteLabel}`,
+              html,
+            }),
+          });
+          const result = await response.json().catch(() => ({})) as { id?: string; message?: string };
+          if (!response.ok || !result.id) {
+            await db.from("document_delivery_attempts").update({
+              status: "failed",
+              error_code: "RESEND_SEND_FAILED",
+              error_message: String(result.message ?? "El proveedor rechazó el envío").slice(0, 500),
+              updated_at: new Date().toISOString(),
+            }).eq("id", attempt.id);
+            return false;
+          }
+          await db.from("document_delivery_attempts").update({
+            status: "sent",
+            provider_message_id: result.id,
+            sent_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }).eq("id", attempt.id);
+          return true;
+        } catch (error) {
+          await db.from("document_delivery_attempts").update({
+            status: "failed",
+            error_code: "RESEND_NETWORK_ERROR",
+            error_message: String(error instanceof Error ? error.message : "Error de red").slice(0, 500),
+            updated_at: new Date().toISOString(),
+          }).eq("id", attempt.id);
+          return false;
+        }
+      });
+      if (sentQuoteReminder) sent++; else skipped++;
+    }
+
+    return {
+      status: "complete",
+      invoice_candidates: invoices.length,
+      quote_candidates: quotes.length,
+      sent,
+      skipped,
+    };
   },
 );
