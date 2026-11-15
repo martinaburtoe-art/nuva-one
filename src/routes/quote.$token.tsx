@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { FileText, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,10 +38,10 @@ type SharedQuote = {
 
 function SharedQuotePage() {
   const { token } = Route.useParams();
-  const qc = useQueryClient();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
+  const [responseResult, setResponseResult] = useState<"accepted" | "rejected" | null>(null);
   const { data: quote, isLoading, isError, refetch } = useQuery({
     queryKey: ["shared-quote", token],
     queryFn: async () => {
@@ -65,13 +65,13 @@ function SharedQuotePage() {
       return data as { status: string; quote_number: number };
     },
     onSuccess: (result) => {
-      qc.setQueryData(["shared-quote", token], null);
+      setResponseResult(result.status as "accepted" | "rejected");
       toast.success(result.status === "accepted" ? "Cotización aceptada." : "Respuesta registrada.");
-      void refetch();
     },
     onError: (error: any) => toast.error(error?.message ?? "No se pudo registrar la respuesta."),
   });
 
+  if (responseResult) return <main className="mx-auto flex min-h-screen max-w-2xl items-center justify-center p-6"><Card className="w-full p-8 text-center"><CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-success" /><h1 className="text-xl font-semibold">{responseResult === "accepted" ? "Cotización aceptada" : "Respuesta registrada"}</h1><p className="mt-2 text-sm text-muted-foreground">Tu respuesta quedó registrada correctamente. Puedes cerrar esta página; el negocio recibirá el estado actualizado.</p></Card></main>;
   if (isLoading) return <main className="mx-auto flex min-h-screen max-w-3xl items-center justify-center p-6"><Loader2 className="h-6 w-6 animate-spin" /><span className="ml-2 text-sm text-muted-foreground">Cargando cotización segura…</span></main>;
   if (isError || !quote) return <main className="mx-auto flex min-h-screen max-w-2xl items-center justify-center p-6"><Card className="w-full p-8 text-center"><FileText className="mx-auto mb-3 h-9 w-9 text-muted-foreground" /><h1 className="text-xl font-semibold">Este enlace ya no está disponible</h1><p className="mt-2 text-sm text-muted-foreground">Puede haber vencido, haber sido revocado o la cotización ya recibió una respuesta. Solicita un enlace actualizado al negocio.</p></Card></main>;
 
