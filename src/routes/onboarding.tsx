@@ -140,8 +140,25 @@ function Onboarding() {
   const labels = ["Tu negocio", "Tu contexto", "Tu foco", "Listo"];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-mesh px-4 py-8 sm:px-6 sm:py-12">
-      <Card className="w-full max-w-2xl overflow-hidden shadow-elegant">
+    <div className="nuva-onboarding-page flex min-h-screen w-full items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
+      <div className="grid w-full max-w-6xl items-stretch gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(560px,1.08fr)] lg:gap-7">
+        <aside className="nuva-onboarding-visual relative hidden min-h-[720px] overflow-hidden rounded-[30px] p-8 text-white lg:flex lg:flex-col lg:justify-between xl:p-10" aria-label="Nüva One, gestión conectada para tu negocio">
+          <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85" alt="Espacio de trabajo moderno y luminoso" className="absolute inset-0 h-full w-full object-cover" loading="eager" fetchPriority="high" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,18,43,0.55)_0%,rgba(13,18,43,0.22)_36%,rgba(13,18,43,0.92)_100%)]" />
+          <div className="relative z-10 flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/25 bg-white/15 shadow-lg backdrop-blur-xl"><Sparkles className="h-5 w-5" /></span><div><p className="text-sm font-semibold tracking-wide">Nüva One</p><p className="text-[11px] text-white/70">Business operating system</p></div></div>
+          <div className="relative z-10 max-w-md">
+            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-200/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-100 backdrop-blur-md"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.9)]" /> Todo conectado</span>
+            <h2 className="mt-5 text-4xl font-semibold leading-[1.08] tracking-[-0.045em] xl:text-[2.8rem]">Tu negocio merece una visión más clara.</h2>
+            <p className="mt-4 max-w-sm text-sm leading-7 text-white/75">Ventas, inventario, clientes y finanzas trabajando en un solo espacio. Empieza por tu negocio; Nüva se adapta a tu forma de operar.</p>
+            <div className="mt-8 grid grid-cols-3 gap-2">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-xl"><span className="mb-2 grid h-8 w-8 place-items-center rounded-xl bg-rose-300/20 text-rose-100"><CircleDollarSign className="h-4 w-4" /></span><p className="text-[11px] font-medium">Ventas</p><p className="mt-1 text-[9px] text-white/55">Cada movimiento</p></div>
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-xl"><span className="mb-2 grid h-8 w-8 place-items-center rounded-xl bg-cyan-300/20 text-cyan-100"><Boxes className="h-4 w-4" /></span><p className="text-[11px] font-medium">Inventario</p><p className="mt-1 text-[9px] text-white/55">Stock conectado</p></div>
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-xl"><span className="mb-2 grid h-8 w-8 place-items-center rounded-xl bg-violet-300/20 text-violet-100"><BarChart3 className="h-4 w-4" /></span><p className="text-[11px] font-medium">Finanzas</p><p className="mt-1 text-[9px] text-white/55">Decisiones claras</p></div>
+            </div>
+          </div>
+          <p className="relative z-10 text-[10px] tracking-wide text-white/50">Una sola plataforma. Una visión completa.</p>
+        </aside>
+        <Card className="w-full max-w-2xl justify-self-center overflow-hidden rounded-[26px] border-white/70 bg-white/95 shadow-[0_28px_90px_-42px_rgba(28,35,70,0.35)] backdrop-blur-xl lg:max-w-none">
         <div className="border-b bg-card/80 px-6 py-5 sm:px-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
@@ -412,6 +429,7 @@ function Onboarding() {
           Configuración gratuita · Puedes cambiar estos datos después
         </div>
       </Card>
+      </div>
     </div>
   );
 }
