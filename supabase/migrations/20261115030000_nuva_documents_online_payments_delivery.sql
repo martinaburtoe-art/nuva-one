@@ -3,7 +3,12 @@
 -- The browser never marks an invoice as paid; only the provider status check does.
 
 ALTER TABLE public.payment_intents
-  ADD COLUMN IF NOT EXISTS invoice_id UUID REFERENCES public.invoices(id) ON DELETE RESTRICT;
+  ADD COLUMN IF NOT EXISTS invoice_id UUID REFERENCES public.invoices(id) ON DELETE RESTRICT,
+  ADD COLUMN IF NOT EXISTS checkout_url TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS payment_intents_one_pending_invoice_idx
+  ON public.payment_intents(invoice_id)
+  WHERE invoice_id IS NOT NULL AND status = 'pending';
 
 DO $$
 BEGIN
