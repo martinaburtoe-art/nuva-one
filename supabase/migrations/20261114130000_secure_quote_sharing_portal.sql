@@ -49,7 +49,6 @@ CREATE POLICY document_share_events_member_select ON public.document_share_event
   FOR SELECT USING (private.is_business_member(business_id, (SELECT auth.uid())));
 REVOKE ALL ON public.document_share_events FROM PUBLIC, anon;
 GRANT SELECT ON public.document_share_events TO authenticated;
-GRANT SELECT ON public.document_share_events TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.create_quote_share_link(
   p_quote_id UUID, p_token TEXT, p_expires_at TIMESTAMPTZ
