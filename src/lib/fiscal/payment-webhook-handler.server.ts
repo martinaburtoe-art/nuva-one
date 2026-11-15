@@ -4,6 +4,7 @@ import { getPaymentAdapter, decryptPaymentCreds } from "./payment-service.server
 // inyectar un mock en tests sin depender del cliente real.
 export type SupabaseLike = {
   from: (table: string) => any;
+  rpc?: (name: string, args: Record<string, unknown>) => Promise<{ error: any }>;
 };
 
 /**
@@ -93,6 +94,7 @@ export async function handlePaymentWebhook(
     }
 
     if (intent.invoice_id) {
+      if (!supabaseAdmin.rpc) throw new Error("Supabase RPC client unavailable for invoice reconciliation");
       const { error: reconcileError } = await supabaseAdmin.rpc(
         "record_provider_internal_invoice_payment",
         {
