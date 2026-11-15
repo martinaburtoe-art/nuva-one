@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         if (invoiceId) {
           const { data: invoice, error: invoiceError } = await client
             .from("invoices")
-            .select("id,business_id,invoice_number,total,status,customer_name,customer_snapshot")
+            .select("id,business_id,customer_id,invoice_number,total,status,customer_name,customer_snapshot")
             .eq("id", invoiceId)
             .eq("business_id", businessId)
             .maybeSingle();
@@ -58,7 +58,21 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           }
           subject = `Documento interno FAC-${String(invoice.invoice_number).padStart(6, "0")}`;
           const snapshot = invoice.customer_snapshot as Record<string, unknown> | null;
-          payerEmail = typeof snapshot?.email === "string" ? snapshot.email : undefined;
+          payerEmail = typeof snapshot?.email === "string" ? snapshot.email.trim() : undefined;
+          if (!payerEmail && invoice.customer_id) {
+            const { data: customer } = await client.from("customers")
+              .select("email")
+              .eq("id", invoice.customer_id)
+              .eq("business_id", businessId)
+              .maybeSingle();
+            payerEmail = typeof customer?.email === "string" ? customer.email.trim() : undefined;
+          }
+          if (!payerEmail || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(payerEmail)) {
+            return new Response(JSON.stringify({
+              error: "El cliente debe tener un correo válido registrado para iniciar el cobro online.",
+              code: "INVOICE_CUSTOMER_EMAIL_REQUIRED",
+            }), { status: 409 });
+          }
         } else if (!Number.isSafeInteger(amount) || amount <= 0) {
           return new Response(JSON.stringify({ error: "El monto debe ser un entero positivo en CLP" }), { status: 400 });
         }
