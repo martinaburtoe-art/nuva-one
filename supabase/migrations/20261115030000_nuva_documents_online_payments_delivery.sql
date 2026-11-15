@@ -173,5 +173,33 @@ $$;
 REVOKE ALL ON FUNCTION public.record_provider_internal_invoice_payment(UUID, NUMERIC, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.record_provider_internal_invoice_payment(UUID, NUMERIC, TEXT, TEXT, TEXT) TO service_role;
 
+-- Any confirmed payment invalidates outstanding checkout links for that invoice.
+-- This prevents a customer from paying an old full-balance link after a manual
+-- or partial payment has already reduced the balance.
+CREATE OR REPLACE FUNCTION private.expire_pending_invoice_payment_intents()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, pg_temp
+AS $
+BEGIN
+  IF NEW.status = 'confirmed' THEN
+    UPDATE public.payment_intents
+    SET status = 'expired'
+    WHERE invoice_id = NEW.invoice_id AND status = 'pending';
+  END IF;
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS invoice_payments_expire_pending_checkout ON public.invoice_payments;
+CREATE TRIGGER invoice_payments_expire_pending_checkout
+AFTER INSERT OR UPDATE OF status ON public.invoice_payments
+FOR EACH ROW
+WHEN (NEW.status = 'confirmed')
+EXECUTE FUNCTION private.expire_pending_invoice_payment_intents();
+
+REVOKE ALL ON FUNCTION private.expire_pending_invoice_payment_intents() FROM PUBLIC, anon, authenticated, service_role;
+
 COMMENT ON TABLE public.document_delivery_attempts IS
   'Auditable email delivery attempts for Nüva commercial documents; a sent state means accepted by provider, not guaranteed inbox placement.';
