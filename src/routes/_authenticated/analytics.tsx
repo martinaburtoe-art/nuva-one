@@ -134,7 +134,7 @@ function Analytics() {
 
   return (
     <ModuleGuard module="analytics">
-      <>
+      <div className="nuva-workspace nuva-workspace--analytics">
         <PageHeader title="Indicadores" description="Las métricas clave de tu negocio" />
         <Card className="mt-4 p-3 sm:p-4"><div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <div className="min-w-0 lg:flex-1"><DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /></div>
@@ -164,7 +164,7 @@ function Analytics() {
         )}
         <Card className="mt-5 rounded-2xl border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Evolución de ventas</h3><p className="text-xs text-muted-foreground">Ventas registradas en el período visible.</p></div><div role="img" aria-label="Gráfico de evolución de ventas"><ResponsiveContainer width="100%" height={260}><LineChart data={trendData}><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey="fecha" stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Line type="monotone" dataKey="total" stroke="oklch(0.55 0.22 268)" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div></Card>
         <div className="mt-5 grid gap-4 lg:grid-cols-2"><Card className="rounded-2xl border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Ventas por canal</h3><p className="text-xs text-muted-foreground">Distribución del monto vendido.</p></div><ResponsiveContainer width="100%" height={280}><BarChart data={channelData}><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey="canal" stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Bar dataKey="total" fill="oklch(0.55 0.22 268)" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></Card><Card className="rounded-2xl border-border/70 p-4 shadow-sm sm:p-5"><div className="mb-2"><h3 className="font-semibold">Ventas por método de pago</h3><p className="text-xs text-muted-foreground">Distribución del monto vendido.</p></div><ResponsiveContainer width="100%" height={280}><BarChart data={paymentData}><CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.008 270)" /><XAxis dataKey="metodo" stroke="oklch(0.5 0.02 270)" fontSize={12} /><YAxis stroke="oklch(0.5 0.02 270)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => fmtCLP(v)} contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.92 0.008 270)" }} /><Bar dataKey="total" fill="oklch(0.6 0.18 200)" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></Card></div>
-      </>
+      </div>
     </ModuleGuard>
   );
 }
