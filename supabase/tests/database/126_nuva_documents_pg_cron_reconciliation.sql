@@ -1,37 +1,53 @@
 BEGIN;
 SELECT plan(3);
 
--- CI databases do not provision the production Vault secret, so the job may be absent.
--- Whenever it is registered, it must be active and run at the expected cadence.
-SELECT ok(
-  NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'nuva-documents-reconciliation-15m')
-  OR EXISTS (
-    SELECT 1 FROM cron.job
-    WHERE jobname = 'nuva-documents-reconciliation-15m'
-      AND schedule = '*/15 * * * *'
-      AND active
-  ),
-  'the Supabase reconciliation fallback runs every 15 minutes when provisioned'
-);
+CREATE OR REPLACE FUNCTION pg_temp.nuva_documents_cron_check(p_check text)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+  result boolean := true;
+BEGIN
+  -- Local Supabase CI may not enable pg_cron; production provisioning is verified separately.
+  IF to_regclass('cron.job') IS NULL THEN
+    RETURN true;
+  END IF;
 
-SELECT ok(
-  NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'nuva-documents-reconciliation-15m')
-  OR EXISTS (
-    SELECT 1 FROM cron.job
-    WHERE jobname = 'nuva-documents-reconciliation-15m'
-      AND command LIKE '%nuva_documents_cron_secret%'
-      AND command LIKE '%/api/cron/nuva-documents-reconciliation%'
-  ),
-  'the scheduled command reads its bearer secret from Vault and calls the protected endpoint'
-);
+  IF p_check = 'schedule' THEN
+    EXECUTE $query$
+      SELECT NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = $1)
+        OR EXISTS (SELECT 1 FROM cron.job WHERE jobname = $1 AND schedule = $2 AND active)
+    $query$ INTO result USING 'nuva-documents-reconciliation-15m', '*/15 * * * *';
+  ELSIF p_check = 'vault-command' THEN
+    EXECUTE $query$
+      SELECT NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = $1)
+        OR EXISTS (SELECT 1 FROM cron.job WHERE jobname = $1
+          AND command LIKE $2 AND command LIKE $3)
+    $query$ INTO result USING
+      'nuva-documents-reconciliation-15m',
+      '%nuva_documents_cron_secret%',
+      '%/api/cron/nuva-documents-reconciliation%';
+  ELSIF p_check = 'legacy' THEN
+    EXECUTE $query$
+      SELECT NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname IN ($1, $2))
+    $query$ INTO result USING
+      'nuva-quotes-followup-daily', 'nuva-check-overdue-daily';
+  ELSE
+    RETURN false;
+  END IF;
 
-SELECT ok(
-  NOT EXISTS (
-    SELECT 1 FROM cron.job
-    WHERE jobname IN ('nuva-quotes-followup-daily', 'nuva-check-overdue-daily')
-  ),
-  'obsolete quote and overdue cron jobs targeting missing routes are retired'
-);
+  RETURN COALESCE(result, false);
+END;
+$function$;
+
+SELECT ok(pg_temp.nuva_documents_cron_check('schedule'),
+  'the Supabase reconciliation fallback runs every 15 minutes when provisioned');
+
+SELECT ok(pg_temp.nuva_documents_cron_check('vault-command'),
+  'the scheduled command reads its bearer secret from Vault and calls the protected endpoint');
+
+SELECT ok(pg_temp.nuva_documents_cron_check('legacy'),
+  'obsolete quote and overdue cron jobs targeting missing routes are retired');
 
 SELECT * FROM finish();
 ROLLBACK;
