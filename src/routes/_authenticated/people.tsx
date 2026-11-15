@@ -46,7 +46,7 @@ function People() {
     ["Vacaciones y finiquitos", "Solicitudes, saldos y terminaciones", "/people-lifecycle"],
     ["Cumplimiento", "Obligaciones y vencimientos", "/people-compliance"],
   ];
-  return <ModuleGuard module="people"><div className="p-4 md:p-6">
+  return <ModuleGuard module="people"><div className="nuva-workspace nuva-workspace--people p-4 md:p-6">
     <PageHeader title="Nüva People" description="Personas, contratos, asistencia, remuneraciones y cumplimiento conectados con la operación de tu negocio." />
     <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{workspaces.map(([title, desc, to]) => <Link key={to} to={to as any} className="rounded-2xl border p-4 transition hover:bg-muted/40"><p className="font-semibold">{title}</p><p className="mt-1 text-xs text-muted-foreground">{desc}</p></Link>)}</div>
     {isLoading ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Cargando Nüva People">{Array.from({ length: 6 }).map((_, index) => <Card key={index} className="rounded-2xl p-5"><Skeleton className="h-5 w-32" /><Skeleton className="mt-4 h-8 w-24" /></Card>)}</div> : <>
