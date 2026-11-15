@@ -2083,3 +2083,103 @@
   from { opacity: 0; transform: translate3d(0, 9px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
+
+
+/* ── Electric visual layer · Resumen ─────────────────────────────────────
+   Strong focal contrast, vivid module accents and varied surfaces. Accent
+   colors reinforce labels and iconography; values and states remain textual.
+*/
+.nuva-app .nuva-resumen-hero {
+  border-color: rgb(139 92 246 / .42);
+  background:
+    radial-gradient(ellipse at 88% 12%, rgb(34 211 238 / .28), transparent 30%),
+    radial-gradient(ellipse at 8% 100%, rgb(192 132 252 / .24), transparent 42%),
+    linear-gradient(118deg, #11152d 0%, #20265a 54%, #30205f 100%);
+  box-shadow: 0 22px 54px -30px rgb(79 70 229 / .55), inset 0 1px 0 rgb(255 255 255 / .12);
+  color: #f8fafc;
+}
+.nuva-app .nuva-resumen-hero::after {
+  border-color: rgb(34 211 238 / .22);
+  box-shadow: 0 0 0 28px rgb(34 211 238 / .045), 0 0 0 58px rgb(192 132 252 / .04);
+}
+.nuva-app .nuva-resumen-hero-kicker { color: #a5f3fc; }
+.nuva-app .nuva-resumen-hero-spark { background: #67e8f9; box-shadow: 0 0 0 4px rgb(34 211 238 / .18), 0 0 18px rgb(34 211 238 / .55); }
+.nuva-app .nuva-resumen-hero-main h2 { color: #f8fafc; }
+.nuva-app .nuva-resumen-hero-main > p,
+.nuva-app .nuva-resumen-hero-caption,
+.nuva-app .nuva-resumen-hero-breakdown span { color: #c4c9e6; }
+.nuva-app .nuva-resumen-hero-main > strong { color: #bef264; text-shadow: 0 0 30px rgb(163 230 53 / .12); }
+.nuva-app .nuva-resumen-hero-main > strong.is-negative { color: #fda4af; }
+.nuva-app .nuva-resumen-hero-main > strong.is-positive { color: #bef264; }
+.nuva-app .nuva-resumen-hero-side { border-left-color: rgb(255 255 255 / .16); }
+.nuva-app .nuva-resumen-hero-status { color: #e0e7ff; }
+.nuva-app .nuva-resumen-hero-breakdown > div { border-bottom-color: rgb(255 255 255 / .14); }
+.nuva-app .nuva-resumen-hero-breakdown strong { color: #fff; }
+.nuva-app .nuva-resumen-hero-link {
+  border-color: rgb(103 232 249 / .38);
+  background: linear-gradient(100deg, rgb(34 211 238 / .16), rgb(167 139 250 / .16));
+  color: #a5f3fc;
+}
+.nuva-app .nuva-resumen-hero-link:hover { border-color: #67e8f9; background: rgb(34 211 238 / .22); }
+
+.nuva-app .nuva-resumen-kpi {
+  --nuva-kpi-accent: #818cf8;
+  --nuva-kpi-tint: rgb(129 140 248 / .09);
+  overflow: hidden;
+  border-color: color-mix(in oklab, var(--nuva-kpi-accent) 26%, var(--nuva-line));
+  background: linear-gradient(145deg, color-mix(in oklab, var(--nuva-kpi-tint) 68%, white), #fff 78%);
+}
+.nuva-app .nuva-resumen-kpi::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--nuva-kpi-accent), color-mix(in oklab, var(--nuva-kpi-accent) 22%, white));
+  content: "";
+}
+.nuva-app .nuva-resumen-kpi[data-accent="success"] { --nuva-kpi-accent: #65a30d; --nuva-kpi-tint: rgb(163 230 53 / .16); }
+.nuva-app .nuva-resumen-kpi[data-accent="sales"] { --nuva-kpi-accent: #f43f5e; --nuva-kpi-tint: rgb(251 113 133 / .13); }
+.nuva-app .nuva-resumen-kpi[data-accent="inventory"] { --nuva-kpi-accent: #0891b2; --nuva-kpi-tint: rgb(34 211 238 / .15); }
+.nuva-app .nuva-resumen-kpi[data-accent="intelligence"] { --nuva-kpi-accent: #8b5cf6; --nuva-kpi-tint: rgb(192 132 252 / .14); }
+.nuva-app .nuva-resumen-kpi .nuva-resumen-kpi-icon {
+  border-color: color-mix(in oklab, var(--nuva-kpi-accent) 26%, white);
+  background: color-mix(in oklab, var(--nuva-kpi-tint) 82%, white);
+  color: var(--nuva-kpi-accent);
+}
+.nuva-app .nuva-resumen-kpi .nuva-resumen-kpi-top > span:first-child { color: color-mix(in oklab, var(--nuva-kpi-accent) 72%, #454650); }
+.nuva-app .nuva-resumen-kpi > strong { color: #17192c; }
+.nuva-app .nuva-resumen-kpi[data-accent="success"] > strong { color: #4d7c0f; }
+.nuva-app .nuva-resumen-kpi[data-accent="sales"] > strong { color: #be123c; }
+.nuva-app .nuva-resumen-kpi[data-accent="inventory"] > strong { color: #0e7490; }
+.nuva-app .nuva-resumen-kpi[data-accent="intelligence"] > strong { color: #6d28d9; }
+.nuva-app .nuva-resumen-kpi[data-accent]::after { background: var(--nuva-kpi-accent); opacity: .18; }
+
+.nuva-app .nuva-resumen-document-card {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in oklab, var(--nuva-module-accent, #818cf8) 28%, var(--nuva-line));
+  background: linear-gradient(135deg, color-mix(in oklab, var(--nuva-module-accent, #818cf8) 7%, white), white 68%);
+}
+.nuva-app .nuva-resumen-document-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--nuva-module-accent, #818cf8);
+  content: "";
+}
+.nuva-app .nuva-resumen-document-card .bg-primary\/10 {
+  background: color-mix(in oklab, var(--nuva-module-accent, #818cf8) 16%, white);
+  color: color-mix(in oklab, var(--nuva-module-accent, #818cf8) 78%, #222);
+}
+
+.nuva-app .nuva-resumen-dot-gold { background: #22c55e; box-shadow: 0 0 0 3px rgb(34 197 94 / .12); }
+.nuva-app .nuva-resumen-dot-indigo { background: #fb7185; box-shadow: 0 0 0 3px rgb(251 113 133 / .12); }
+
+.nuva-app .nuva-resumen-mobile-brief-item:nth-child(1) { border-color: rgb(34 197 94 / .28); background: linear-gradient(145deg, rgb(34 197 94 / .07), white 74%); }
+.nuva-app .nuva-resumen-mobile-brief-item:nth-child(2) { border-color: rgb(34 211 238 / .34); background: linear-gradient(145deg, rgb(34 211 238 / .09), white 74%); }
+.nuva-app .nuva-resumen-mobile-brief-item:nth-child(3) { border-color: rgb(167 139 250 / .32); background: linear-gradient(145deg, rgb(167 139 250 / .09), white 74%); }
+
+@media (max-width: 720px) {
+  .nuva-app .nuva-resumen-hero { grid-template-columns: minmax(0, 1fr); gap: 18px; border-radius: 18px; }
+  .nuva-app .nuva-resumen-hero-side { padding: 16px 0 0; border-left: 0; border-top: 1px solid rgb(255 255 255 / .16); }
+  .nuva-app .nuva-resumen-kpi { min-height: 132px; padding: 15px; }
+}
