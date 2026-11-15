@@ -2356,27 +2356,27 @@
   filter: saturate(1.1) brightness(1.04);
 }
 
-.nuva-app .nuva-workspace--people > div:nth-of-type(3) > div:nth-child(1) > div:last-child {
+.nuva-app .nuva-workspace--people > div:nth-of-type(2) > div:nth-child(1) > div:last-child {
   color: #ea580c;
   background: rgb(251 146 60 / .13);
 }
-.nuva-app .nuva-workspace--people > div:nth-of-type(3) > div:nth-child(2) > div:last-child {
+.nuva-app .nuva-workspace--people > div:nth-of-type(2) > div:nth-child(2) > div:last-child {
   color: #7c3aed;
   background: rgb(167 139 250 / .16);
 }
-.nuva-app .nuva-workspace--people > div:nth-of-type(3) > div:nth-child(3) > div:last-child {
+.nuva-app .nuva-workspace--people > div:nth-of-type(2) > div:nth-child(3) > div:last-child {
   color: #0891b2;
   background: rgb(34 211 238 / .15);
 }
-.nuva-app .nuva-workspace--people > div:nth-of-type(3) > div:nth-child(4) > div:last-child {
+.nuva-app .nuva-workspace--people > div:nth-of-type(2) > div:nth-child(4) > div:last-child {
   color: #db2777;
   background: rgb(244 114 182 / .15);
 }
-.nuva-app .nuva-workspace--people > div:nth-of-type(3) > div:nth-child(5) > div:last-child {
+.nuva-app .nuva-workspace--people > div:nth-of-type(2) > div:nth-child(5) > div:last-child {
   color: #65a30d;
   background: rgb(163 230 53 / .17);
 }
-.nuva-app .nuva-workspace--people > div:nth-of-type(3) > div:nth-child(6) > div:last-child {
+.nuva-app .nuva-workspace--people > div:nth-of-type(2) > div:nth-child(6) > div:last-child {
   color: #4f46e5;
   background: rgb(129 140 248 / .15);
 }
