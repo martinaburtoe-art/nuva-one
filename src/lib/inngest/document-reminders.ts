@@ -205,7 +205,7 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
       const send = await step.run(`send-${invoice.id}-${kind}`, async () => {
         const response = await fetch("https://api.resend.com/emails", {
           method: "POST",
-          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
           body: JSON.stringify({
             from,
             to: [email],
