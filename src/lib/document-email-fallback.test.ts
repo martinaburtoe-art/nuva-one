@@ -14,7 +14,7 @@ describe("buildQuoteMailtoUrl", () => {
     const parsed = new URL(result);
 
     expect(parsed.protocol).toBe("mailto:");
-    expect(parsed.pathname).toBe("cliente@example.cl");
+    expect(decodeURIComponent(parsed.pathname)).toBe("cliente@example.cl");
     expect(parsed.searchParams.get("subject")).toContain("COT-0042");
     expect(parsed.searchParams.get("body")).toContain("https://nuva-one.vercel.app/quote/opaque-token");
     expect(parsed.searchParams.get("body")).toContain("$119.000");
