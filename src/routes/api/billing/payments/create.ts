@@ -140,7 +140,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
             subject,
             commerceOrder,
             email: payerEmail,
-            returnUrl: `${origin}/invoices?payment=${encodeURIComponent(commerceOrder)}`,
+            returnUrl: invoiceId ? `${origin}/payment/confirmation` : `${origin}/invoices?payment=${encodeURIComponent(commerceOrder)}`,
             webhookUrl: `${origin}/api/billing/payments/webhook?provider=${encodeURIComponent(integration.provider)}`,
           },
         );
