@@ -23,9 +23,11 @@ No incluir estos valores en Git, archivos públicos, variables `VITE_*), logs ni
 
 ## Configuración de Resend
 
+La pestaña **Configuración → Facturación** muestra el estado del proveedor y permite enviar un correo de prueba únicamente a la dirección de la cuenta autenticada (solo owner/admin). El endpoint de diagnóstico revela únicamente si las variables están presentes y el dominio del remitente; nunca expone la API key.
+
 1. Verificar el dominio remitente en Resend.
 2. Publicar los registros DNS que indique Resend (SPF, DKIM y, cuando corresponda, DMARC).
-3. Crear una API key con permiso de envío.
+3. Crear una API key con permiso **Sending access**, restringida al dominio de envío.
 4. Guardar `RESEND_API_KEY` y `NUVA_DOCUMENTS_FROM_EMAIL` en Vercel para Production, Preview y Development.
 5. Promover un deployment nuevo para que las funciones reciban las variables.
 
@@ -43,7 +45,7 @@ Sin la signing key, la función está incluida en el código pero no se puede ce
 
 ## Conexión de Flow por negocio
 
-Cada empresa debe conectar sus propias credenciales Flow desde la sección de integraciones de Nüva One. Las credenciales se cifran con `FISCAL_CREDENTIALS_KEY`.
+Cada empresa conecta sus propias credenciales Flow desde **Configuración → Facturación → Cobros online**. Solo owner/admin puede administrarlas. La aplicación valida API Key y Secret Key con `GET /payment/getPayments` (consulta de solo lectura, máximo un registro del día) antes de reemplazar la integración activa; no crea un checkout ni un cargo de prueba. Las credenciales se cifran con `FISCAL_CREDENTIALS_KEY`.
 
 - Los documentos internos aceptan cobro online con el adaptador Flow.
 - El adaptador VSB se mantiene para el flujo de ventas existente, pero no se habilita para facturas internas hasta certificar su contrato.
@@ -74,3 +76,12 @@ Los documentos internos no son DTE. Esta etapa no implementa emisión SII, firma
 - La auditoría de `cron.job_run_details` y `net._http_response` encontró que los cron antiguos `nuva-quotes-followup-daily` y `nuva-check-overdue-daily` estaban recibiendo HTTP 404. La nueva migración los retira; no se dejan tareas programadas apuntando a rutas inexistentes. El cron de bajo stock se conserva.
 - `NUVA_DOCUMENTS_CRON_SECRET` se generó como secreto aleatorio de 256 bits y se guardó en Vercel Production y Supabase Vault. El cron lee el secreto desde `vault.decrypted_secrets`; no se almacena en texto plano dentro del comando programado. Este secreto está separado de `CRON_SECRET`, que permanece vacío para no activar cobros de suscripción ni otros workers no relacionados.
 - `FISCAL_CREDENTIALS_KEY` se generó y guardó como secreto AES-256-GCM de 32 bytes en Vercel para Production, Preview y Development. La comprobación de producción no encontró credenciales de pasarela de negocio almacenadas al generar la clave; mantenerla estable y no rotarla sin migración.
+
+
+## Cierre de activación operativo
+
+- La interfaz de configuración de proveedores está disponible en Configuración → Facturación.
+- El test Resend envía un único correo a la dirección de la cuenta autenticada y está limitado a 3 intentos por hora. Un `200` de Resend confirma aceptación por la API, no entrega en bandeja.
+- Flow se valida en modo lectura antes de almacenar credenciales cifradas. Se recomienda conectar primero Sandbox; cambiar a Producción activa cobros reales para ese negocio.
+- Las claves Resend siguen siendo secretos de plataforma y deben guardarse en Vercel (`RESEND_API_KEY`, `NUVA_DOCUMENTS_FROM_EMAIL`). No deben pegarse en el navegador ni en GitHub.
+- La signing key de Inngest es independiente: sin `INNGEST_SIGNING_KEY` y sincronización exitosa en Inngest, los recordatorios por correo no se consideran activos.
