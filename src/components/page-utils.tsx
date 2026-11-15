@@ -20,7 +20,7 @@ export function PageHeader({
 
   return (
     <>
-      <header className="nuva-module-header mb-7 sm:mb-8">
+      <header className="nuva-module-header mb-7 sm:mb-8" data-nuva-workspace-header>
         <div className="min-w-0 space-y-1.5">
           <h1 className="nuva-module-title">{title}</h1>
           {description && <p className="nuva-module-description">{description}</p>}
