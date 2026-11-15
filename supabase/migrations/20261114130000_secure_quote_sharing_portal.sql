@@ -211,7 +211,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, private, pg_temp
-AS $
+AS $$
 DECLARE v_business_id UUID;
 BEGIN
   SELECT q.business_id INTO v_business_id FROM public.quotes q WHERE q.id = p_quote_id;
@@ -226,7 +226,7 @@ BEGIN
     WHERE l.quote_id = p_quote_id AND l.business_id = v_business_id
     ORDER BY l.created_at DESC;
 END;
-$;
+$$;
 
 REVOKE ALL ON FUNCTION public.create_quote_share_link(UUID, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.get_shared_quote(TEXT) FROM PUBLIC;
