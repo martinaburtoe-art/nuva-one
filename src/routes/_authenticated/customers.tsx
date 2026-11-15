@@ -427,80 +427,59 @@ function Customers() {
               </div>
               <Users className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Etapa</TableHead>
-                  <TableHead className="text-right">Total comprado</TableHead>
-                  <TableHead className="text-right">Última compra</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((c) => {
-                  const stats = statsByCustomer.get(c.id);
-                  return (
-                    <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
-                      <TableCell className="font-medium">
-                        {c.name}
-                        {c.tags?.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {c.tags.map((t) => (
-                              <Badge key={t} variant="secondary" className="text-[10px]">
-                                {t}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {c.phone || c.email || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}
-                        >
-                          {statusLabel[c.status].l}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}
-                        >
-                          {stageLabel[c.pipeline_stage ?? "new"].l}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">{fmtCLP(stats?.total ?? 0)}</TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">
-                        {stats?.last ? new Date(stats.last).toLocaleDateString("es-CL") : "—"}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        {canWrite && (
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                if (confirm(`¿Eliminar a ${c.name}?`)) del.mutate(c.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="grid gap-3 p-3 md:hidden">
+              {filtered.map((c) => {
+                const stats = statsByCustomer.get(c.id);
+                return (
+                  <article key={c.id} className="min-w-0 rounded-xl border bg-background p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words text-sm font-semibold">{c.name}</h3>
+                        <p className="mt-1 break-all text-xs text-muted-foreground">{c.phone || c.email || "Sin datos de contacto"}</p>
+                        {c.tags?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3 border-t pt-3">
+                      <div><p className="text-[11px] text-muted-foreground">Etapa comercial</p><p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}>{stageLabel[c.pipeline_stage ?? "new"].l}</p></div>
+                      <div><p className="text-[11px] text-muted-foreground">Total comprado</p><p className="mt-1 text-sm font-semibold tabular-nums">{fmtCLP(stats?.total ?? 0)}</p></div>
+                      <div className="col-span-2"><p className="text-[11px] text-muted-foreground">Última compra</p><p className="mt-1 text-xs">{stats?.last ? new Date(stats.last).toLocaleDateString("es-CL") : "Sin compras registradas"}</p></div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
+                      <Button variant="outline" size="sm" className="min-h-10" onClick={() => setDetail(c)}>Abrir ficha</Button>
+                      {canWrite && <>
+                        <Button variant="outline" size="sm" className="min-h-10" onClick={() => openEdit(c)}><Pencil className="mr-1.5 h-4 w-4" />Editar</Button>
+                        <Button variant="outline" size="sm" className="min-h-10 text-destructive" onClick={() => { if (confirm(`¿Eliminar a ${c.name}?`)) del.mutate(c.id); }}><Trash2 className="mr-1.5 h-4 w-4" />Eliminar</Button>
+                      </>}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead><TableHead>Contacto</TableHead><TableHead>Estado</TableHead><TableHead>Etapa</TableHead><TableHead className="text-right">Total comprado</TableHead><TableHead className="text-right">Última compra</TableHead><TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((c) => {
+                    const stats = statsByCustomer.get(c.id);
+                    return (
+                      <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
+                        <TableCell className="font-medium">{c.name}{c.tags?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{c.phone || c.email || "—"}</TableCell>
+                        <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span></TableCell>
+                        <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}>{stageLabel[c.pipeline_stage ?? "new"].l}</span></TableCell>
+                        <TableCell className="text-right">{fmtCLP(stats?.total ?? 0)}</TableCell>
+                        <TableCell className="text-right text-sm text-muted-foreground">{stats?.last ? new Date(stats.last).toLocaleDateString("es-CL") : "—"}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>{canWrite && <div className="flex gap-1"><Button variant="ghost" size="icon" aria-label={`Editar ${c.name}`} onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" aria-label={`Eliminar ${c.name}`} onClick={() => { if (confirm(`¿Eliminar a ${c.name}?`)) del.mutate(c.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
             {customerPageData && customerPageData.pageCount > 1 && (
               <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-muted-foreground">
