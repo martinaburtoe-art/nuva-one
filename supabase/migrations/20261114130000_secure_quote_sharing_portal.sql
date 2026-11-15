@@ -107,8 +107,13 @@ BEGIN
     UPDATE public.quotes SET status = 'viewed' WHERE id = v_quote.id;
     v_quote.status := 'viewed';
   END IF;
-  INSERT INTO public.document_share_events (business_id, quote_id, link_id, event_type)
-  VALUES (v_link.business_id, v_quote.id, v_link.id, 'viewed');
+  IF NOT EXISTS (
+    SELECT 1 FROM public.document_share_events e
+    WHERE e.link_id = v_link.id AND e.event_type = 'viewed'
+  ) THEN
+    INSERT INTO public.document_share_events (business_id, quote_id, link_id, event_type)
+    VALUES (v_link.business_id, v_quote.id, v_link.id, 'viewed');
+  END IF;
   SELECT jsonb_build_object(
     'name', b.name, 'tax_id', b.tax_id, 'giro', b.giro, 'address', b.address,
     'comuna', b.comuna, 'logo_url', b.logo_url,
