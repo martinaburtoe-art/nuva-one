@@ -30,3 +30,20 @@ export function splitMobileNavigation<T extends MobileNavigationItem>(
     }),
   };
 }
+
+/**
+ * Groups secondary mobile destinations by their existing information-architecture
+ * section. Input order is preserved so navigation remains predictable.
+ */
+export function groupMobileNavigation<T extends MobileNavigationItem>(
+  items: readonly T[],
+): Array<[string, T[]]> {
+  const groups = new Map<string, T[]>();
+  items.forEach((item) => {
+    const section = item.section?.trim() || "Otros";
+    const current = groups.get(section) ?? [];
+    current.push(item);
+    groups.set(section, current);
+  });
+  return Array.from(groups.entries());
+}
