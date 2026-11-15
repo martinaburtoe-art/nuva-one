@@ -103,7 +103,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     return Array.from(groups.entries());
   }, [visibleNav]);
   const [collapsedSections, setCollapsedSections] = useState<string[]>([
-    "Caja", "Clientes", "Inventario", "Finanzas", "Inteligencia", "Espacio", "Personas",
+    "Operación", "Ventas y clientes", "Compras e inventario", "Finanzas", "Inteligencia", "Ecosistema", "Personas", "Administración",
   ]);
   useEffect(() => {
     const current = visibleNav.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
