@@ -94,14 +94,14 @@ export const Route = createFileRoute("/api/documents/send-quote")({
         const idempotencyKey = `quote:${quoteId}:${tokenHash}:${recipient}`;
         const { data: existing } = await supabaseAdmin
           .from("document_delivery_attempts")
-          .select("id,status,provider_message_id")
+          .select("id,status,provider_message_id,updated_at,attempts")
           .eq("business_id", businessId)
           .eq("idempotency_key", idempotencyKey)
           .maybeSingle();
         if (existing?.status === "sent") {
           return json({ ok: true, duplicate: true, delivery_id: existing.id });
         }
-        if (existing?.status === "sending") {
+        if (existing?.status === "sending" && Date.now() - new Date(existing.updated_at).getTime() < 15 * 60 * 1000) {
           return json({ error: "El envío ya está en curso", code: "DOCUMENT_EMAIL_IN_PROGRESS" }, 409);
         }
 
@@ -116,7 +116,7 @@ export const Route = createFileRoute("/api/documents/send-quote")({
             channel: "email",
             status: "sending",
             idempotency_key: idempotencyKey,
-            attempts: (existing ? 1 : 0) + 1,
+            attempts: Number(existing?.attempts ?? 0) + 1,
             error_code: null,
             error_message: null,
             metadata: { quote_number: quote.quote_number },
@@ -130,21 +130,33 @@ export const Route = createFileRoute("/api/documents/send-quote")({
         const shareUrl = `${origin}/quote/${token}`;
         const quoteLabel = `COT-${String(quote.quote_number ?? "").padStart(4, "0")}`;
         const html = `<!doctype html><html><body style="margin:0;background:#f5f6fa;padding:32px 16px;font-family:Arial,sans-serif;color:#182235"><main style="max-width:600px;margin:auto;background:#fff;border:1px solid #e7e9ef;border-radius:16px;padding:32px"><p style="font-size:12px;letter-spacing:1px;color:#687386;text-transform:uppercase">Nüva One · Propuesta comercial</p><h1 style="font-size:24px;margin:12px 0">Tienes una cotización para revisar</h1><p>Hola,</p><p><strong>${escapeHtml(quote.customer_name)}</strong>, tienes disponible la cotización <strong>${escapeHtml(quoteLabel)}</strong>${quote.subject ? ` para ${escapeHtml(quote.subject)}` : ""}.</p><p style="font-size:22px;font-weight:700">CLP ${Math.round(Number(quote.total)).toLocaleString("es-CL")}</p><p style="margin:28px 0"><a href="${shareUrl}" style="display:inline-block;background:#182741;color:#fff;text-decoration:none;padding:14px 22px;border-radius:9px;font-weight:700">Revisar cotización</a></p><p style="font-size:12px;color:#687386">Este enlace es personal, vence el ${new Date(link.expires_at).toLocaleDateString("es-CL")} y permite aceptar o rechazar la propuesta. La aceptación es comercial simple y no constituye firma electrónica avanzada ni DTE.</p><p style="font-size:12px;color:#9aa2af">Enviado con Nüva One</p></main></body></html>`;
-        const response = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-            "Idempotency-Key": idempotencyKey,
-          },
-          body: JSON.stringify({
-            from,
-            to: [recipient],
-            subject: `Cotización ${quoteLabel} · ${quote.customer_name}`,
-            html,
-          }),
-        });
-        const result = await response.json().catch(() => ({})) as { id?: string; message?: string; name?: string };
+        let response: Response;
+        let result: { id?: string; message?: string; name?: string };
+        try {
+          response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+              "Idempotency-Key": idempotencyKey,
+            },
+            body: JSON.stringify({
+              from,
+              to: [recipient],
+              subject: `Cotización ${quoteLabel} · ${quote.customer_name}`,
+              html,
+            }),
+          });
+          result = await response.json().catch(() => ({})) as { id?: string; message?: string; name?: string };
+        } catch (error) {
+          await supabaseAdmin.from("document_delivery_attempts").update({
+            status: "failed",
+            error_code: "RESEND_NETWORK_ERROR",
+            error_message: String(error instanceof Error ? error.message : "Error de red").slice(0, 500),
+            updated_at: new Date().toISOString(),
+          }).eq("id", attempt.id);
+          return json({ error: "No se pudo contactar al proveedor de correo; puedes reintentar el envío.", code: "DOCUMENT_EMAIL_NETWORK_ERROR" }, 502);
+        }
         if (!response.ok || !result.id) {
           await supabaseAdmin.from("document_delivery_attempts").update({
             status: "failed",
