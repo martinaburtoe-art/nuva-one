@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { PageHeader, EmptyState } from "@/components/page-utils";
+import { PageHeader } from "@/components/page-utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,7 +115,7 @@ const customerAvatarTones = [
 ];
 
 function customerInitials(name: string) {
-  return name.trim().split(/\\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("es-CL") ?? "").join("");
+  return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("es-CL") ?? "").join("");
 }
 
 function customerAvatarTone(id: string) {
