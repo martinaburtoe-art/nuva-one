@@ -24,8 +24,7 @@ BEGIN
 END;
 $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS payment_webhook_events_provider_token_unique
-  ON public.payment_webhook_events(provider, token);
+-- Existing idx_payment_webhook_events_unique already enforces provider/token uniqueness.
 
 CREATE INDEX IF NOT EXISTS payment_intents_invoice_pending_idx
   ON public.payment_intents(invoice_id, created_at DESC)
