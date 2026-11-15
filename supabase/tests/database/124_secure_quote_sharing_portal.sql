@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(24);
+SELECT plan(26);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000aa11'),
@@ -58,6 +58,10 @@ SELECT is(public.get_shared_quote(repeat('a',64))->>'customer_name',
   'Cliente Portal', 'valid public link returns the intended quote');
 SELECT ok(NOT (public.get_shared_quote(repeat('a',64)) ? 'business_id'),
   'public quote payload does not expose internal business identifiers');
+SELECT ok(NOT ((public.get_shared_quote(repeat('a',64))->'customer_snapshot') ? 'email'),
+  'public quote payload omits private customer email');
+SELECT ok(NOT ((public.get_shared_quote(repeat('a',64))->'items'->0) ? 'product_id'),
+  'public quote payload omits internal catalog identifiers');
 SELECT is(public.get_shared_quote(repeat('a',64))->>'status',
   'viewed', 'opening a sent quote records its viewed state');
 SELECT is((SELECT count(*)::int FROM public.document_share_events
