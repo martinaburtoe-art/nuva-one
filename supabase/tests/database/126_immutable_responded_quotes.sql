@@ -24,13 +24,16 @@ INSERT INTO public.quotes (
    1000, 0, 190, 1190, 'draft', 'taxable', 19, 'net');
 
 INSERT INTO public.document_share_links (
-  business_id, quote_id, token_hash, expires_at, response_action, responded_at
+  business_id, quote_id, token_hash, expires_at, response_action, response_name, response_email, consent_text, responded_at
 ) VALUES (
   '00000000-0000-0000-0000-00000000ac02',
   '00000000-0000-0000-0000-00000000ac05',
   repeat('a', 64),
   now() + interval '1 day',
   'accepted',
+  'Cliente de prueba',
+  'cliente@example.test',
+  'Acepto la propuesta comercial de prueba',
   now()
 );
 
