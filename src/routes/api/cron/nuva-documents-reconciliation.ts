@@ -17,7 +17,7 @@ function json(data: Record<string, unknown>, status = 200) {
  * redirects as payment evidence.
  */
 async function reconcileDocuments(request: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
+  const secret = process.env.NUVA_DOCUMENTS_CRON_SECRET?.trim();
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
     return json({ error: "No autorizado" }, 401);
   }
