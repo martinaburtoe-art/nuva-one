@@ -28,7 +28,7 @@ INSERT INTO public.document_share_links (
 ) VALUES (
   '00000000-0000-0000-0000-00000000ac02',
   '00000000-0000-0000-0000-00000000ac05',
-  'immutable-quote-test-token-hash',
+  repeat('a', 64),
   now() + interval '1 day',
   'accepted',
   now()
