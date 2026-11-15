@@ -73,6 +73,12 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         if (!integration) {
           return new Response(JSON.stringify({ error: "No hay pasarela de pago conectada" }), { status: 404 });
         }
+        if (invoiceId && integration.provider !== "flow") {
+          return new Response(JSON.stringify({
+            error: "El cobro online de documentos internos está habilitado actualmente para Flow. El adaptador VSB requiere certificación de su contrato antes de procesar estos documentos.",
+            code: "INVOICE_PAYMENT_PROVIDER_NOT_CERTIFIED",
+          }), { status: 409 });
+        }
 
         const adapter = getPaymentAdapter(integration.provider);
         if (!adapter) return new Response(JSON.stringify({ error: "Proveedor de pago no soportado" }), { status: 400 });
