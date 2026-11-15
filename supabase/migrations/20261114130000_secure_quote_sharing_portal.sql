@@ -49,6 +49,7 @@ CREATE POLICY document_share_events_member_select ON public.document_share_event
   FOR SELECT USING (private.is_business_member(business_id, (SELECT auth.uid())));
 REVOKE ALL ON public.document_share_events FROM PUBLIC, anon;
 GRANT SELECT ON public.document_share_events TO authenticated;
+GRANT SELECT ON public.document_share_events TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.create_quote_share_link(
   p_quote_id UUID, p_token TEXT, p_expires_at TIMESTAMPTZ
@@ -106,9 +107,9 @@ BEGIN
   IF v_quote.status IN ('draft','sent') THEN
     UPDATE public.quotes SET status = 'viewed' WHERE id = v_quote.id;
     v_quote.status := 'viewed';
-    INSERT INTO public.document_share_events (business_id, quote_id, link_id, event_type)
-    VALUES (v_link.business_id, v_quote.id, v_link.id, 'viewed');
   END IF;
+  INSERT INTO public.document_share_events (business_id, quote_id, link_id, event_type)
+  VALUES (v_link.business_id, v_quote.id, v_link.id, 'viewed');
   SELECT jsonb_build_object(
     'name', b.name, 'tax_id', b.tax_id, 'giro', b.giro, 'address', b.address,
     'comuna', b.comuna, 'logo_url', b.logo_url,
@@ -190,14 +191,41 @@ BEGIN
 END;
 $$;
 
+
+CREATE OR REPLACE FUNCTION public.list_quote_share_links(p_quote_id UUID)
+RETURNS TABLE (
+  id UUID, expires_at TIMESTAMPTZ, revoked_at TIMESTAMPTZ,
+  responded_at TIMESTAMPTZ, response_action TEXT, created_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, private, pg_temp
+AS $
+DECLARE v_business_id UUID;
+BEGIN
+  SELECT q.business_id INTO v_business_id FROM public.quotes q WHERE q.id = p_quote_id;
+  IF NOT FOUND OR NOT private.has_business_role(
+    v_business_id, auth.uid(), ARRAY['owner','admin','staff']::public.member_role[]
+  ) THEN
+    RAISE EXCEPTION 'Sin permisos para consultar enlaces de esta cotización';
+  END IF;
+  RETURN QUERY
+    SELECT l.id, l.expires_at, l.revoked_at, l.responded_at, l.response_action, l.created_at
+    FROM public.document_share_links l
+    WHERE l.quote_id = p_quote_id AND l.business_id = v_business_id
+    ORDER BY l.created_at DESC;
+END;
+$;
+
 REVOKE ALL ON FUNCTION public.create_quote_share_link(UUID, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.get_shared_quote(TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.respond_to_shared_quote(TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.revoke_quote_share_link(UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.list_quote_share_links(UUID) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.create_quote_share_link(UUID, TEXT, TIMESTAMPTZ) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_shared_quote(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.respond_to_shared_quote(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.revoke_quote_share_link(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.list_quote_share_links(UUID) TO authenticated;
 
 COMMENT ON TABLE public.document_share_links IS
   'Hashed, revocable, expiring customer links for quote review. Raw tokens are never stored.';
