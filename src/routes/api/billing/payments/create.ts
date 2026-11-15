@@ -67,7 +67,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
               .maybeSingle();
             payerEmail = typeof customer?.email === "string" ? customer.email.trim() : undefined;
           }
-          if (!payerEmail || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(payerEmail)) {
+          if (!payerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payerEmail)) {
             return new Response(JSON.stringify({
               error: "El cliente debe tener un correo válido registrado para iniciar el cobro online.",
               code: "INVOICE_CUSTOMER_EMAIL_REQUIRED",
