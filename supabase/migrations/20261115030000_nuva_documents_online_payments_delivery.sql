@@ -181,7 +181,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
-AS $
+AS $$
 BEGIN
   IF NEW.status = 'confirmed' THEN
     UPDATE public.payment_intents
@@ -190,7 +190,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS invoice_payments_expire_pending_checkout ON public.invoice_payments;
 CREATE TRIGGER invoice_payments_expire_pending_checkout
