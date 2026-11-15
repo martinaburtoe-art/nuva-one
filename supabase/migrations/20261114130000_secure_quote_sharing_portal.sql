@@ -142,7 +142,7 @@ BEGIN
   IF p_action IS NULL OR p_action NOT IN ('accepted','rejected') THEN RAISE EXCEPTION 'Respuesta inválida'; END IF;
   IF length(trim(COALESCE(p_name,''))) NOT BETWEEN 2 AND 160
      OR length(trim(COALESCE(p_email,''))) > 254
-     OR trim(COALESCE(p_email,'')) !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'
+     OR trim(COALESCE(p_email,'')) !~* '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
      OR length(trim(COALESCE(p_consent_text,''))) NOT BETWEEN 20 AND 1000 THEN
     RAISE EXCEPTION 'Completa nombre, correo y consentimiento para registrar la respuesta';
   END IF;
