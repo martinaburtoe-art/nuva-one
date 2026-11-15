@@ -65,7 +65,8 @@ export const Route = createFileRoute("/api/documents/send-quote")({
           return json({ error: "La cotización ya no admite envío" }, 409);
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { supabaseAdmin: adminClient } = await import("@/integrations/supabase/client.server");
+        const supabaseAdmin = adminClient as any;
         const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
         const { data: link } = await supabaseAdmin
           .from("document_share_links")
