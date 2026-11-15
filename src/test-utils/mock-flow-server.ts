@@ -62,6 +62,18 @@ export function startMockFlowServer(port: number) {
       return;
     }
 
+    if (req.method === "GET" && url.pathname === "/api/payment/getPayments") {
+      const params = url.searchParams;
+      if (params.get("apiKey") !== API_KEY || !verifySignature(params)) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ code: 101, message: "Credenciales inválidas" }));
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ total: 0, hasMore: 0, data: "[]" }));
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/payment/getStatus") {
       if (!verifySignature(url.searchParams)) {
         res.writeHead(200, { "Content-Type": "application/json" });

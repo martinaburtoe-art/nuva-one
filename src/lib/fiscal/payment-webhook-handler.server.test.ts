@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import { handlePaymentWebhook } from "./payment-webhook-handler.server";
+import { validateFlowCredentials } from "./adapters/flow.server";
 import { startMockFlowServer } from "@/test-utils/mock-flow-server";
 import crypto from "node:crypto";
 
@@ -203,5 +204,26 @@ describe("handlePaymentWebhook", () => {
     const r = await handlePaymentWebhook(sb, "flow", "token-fantasma");
     expect(r.outcome).toBe("unknown_token");
     expect(sb._tables.payments.length).toBe(0);
+  });
+});
+
+
+describe("validateFlowCredentials", () => {
+  it("valida credenciales Flow con una consulta de solo lectura", async () => {
+    await expect(validateFlowCredentials({
+      apiKey: mock.API_KEY,
+      secretKey: mock.SECRET,
+      environment: "dev",
+    })).resolves.toEqual({ ok: true });
+  });
+
+  it("rechaza credenciales inválidas sin crear un checkout", async () => {
+    const result = await validateFlowCredentials({
+      apiKey: "invalid-api-key",
+      secretKey: mock.SECRET,
+      environment: "dev",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain("Flow rechazó las credenciales");
   });
 });

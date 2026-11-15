@@ -13,6 +13,12 @@ export const Route = createFileRoute("/api/billing/payments/disconnect")({
         const client = await authedUserClient(request);
         if (!client) return new Response("Unauthorized", { status: 401 });
 
+        const { data: membership } = await client.from("business_members")
+          .select("role").eq("business_id", businessId).maybeSingle();
+        if (!membership || !["owner", "admin"].includes(String(membership.role))) {
+          return new Response("Forbidden", { status: 403 });
+        }
+
         const { error } = await client
           .from("billing_integrations")
           .update({ status: "disconnected" })

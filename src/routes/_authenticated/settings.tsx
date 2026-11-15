@@ -18,6 +18,7 @@ import { AuditLogView } from "@/components/audit-log-view";
 import { TeamManagement } from "@/components/team-management";
 import { MAX_BUSINESS_PHOTOS, uploadBusinessPhoto, deleteBusinessPhoto, validateBusinessPhoto } from "@/lib/business-photo";
 import { IndustryProfileSettings } from "@/components/industry-profile-settings";
+import { DocumentProviderSettings } from "@/components/document-provider-settings";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Configuración — Nüva One" }] }),
@@ -125,7 +126,7 @@ function Settings() {
 
         {canManage && <TabsContent value="audit"><Card className="p-4 sm:p-6"><div className="flex items-start gap-3"><ClipboardList className="hidden h-5 w-5 shrink-0 text-primary sm:block" /><div className="min-w-0 flex-1"><h3 className="font-semibold">Registro de auditoría</h3><p className="mt-1 text-sm text-muted-foreground">Quién hizo qué y cuándo — visible solo para propietarios y administradores. Cada venta, cambio de stock, cotización o gasto queda registrado automáticamente y no puede editarse ni borrarse, ni siquiera por un administrador.</p><div className="mt-4"><AuditLogView /></div></div></div></Card></TabsContent>}
 
-        <TabsContent value="billing"><BillingTab /></TabsContent>
+        <TabsContent value="billing" className="space-y-4"><BillingTab /><DocumentProviderSettings /></TabsContent>
       </Tabs>
     </>
   );
