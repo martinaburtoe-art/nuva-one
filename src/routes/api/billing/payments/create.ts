@@ -81,11 +81,11 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         if (invoiceId) {
           const { data: pendingIntent } = await supabaseAdmin
             .from("payment_intents" as any)
-            .select("id,checkout_url,created_at")
+            .select("id,checkout_url,created_at,amount")
             .eq("invoice_id", invoiceId)
             .eq("status", "pending")
             .maybeSingle();
-          if (pendingIntent?.checkout_url && Date.now() - new Date(pendingIntent.created_at).getTime() < 48 * 60 * 60 * 1000) {
+          if (pendingIntent?.checkout_url && Number(pendingIntent.amount) === amount && Date.now() - new Date(pendingIntent.created_at).getTime() < 48 * 60 * 60 * 1000) {
             return new Response(JSON.stringify({
               ok: true,
               payment_url: pendingIntent.checkout_url,
