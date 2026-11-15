@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
 import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
+import { checkRateLimit } from "@/lib/rate-limit.server";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -31,6 +32,8 @@ export const Route = createFileRoute("/api/documents/send-quote")({
 
         const client = await authedUserClient(request);
         if (!client) return json({ error: "No autenticado" }, 401);
+        const rateAllowed = await checkRateLimit(`document-email:${businessId}:${quoteId}`, 5, 3600);
+        if (!rateAllowed) return json({ error: "Se alcanzó el límite de envíos para esta cotización. Intenta más tarde." }, 429);
 
         const { data: membership } = await client
           .from("business_members")
