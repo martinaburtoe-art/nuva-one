@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authedUserClient } from "@/lib/fiscal/fiscal-service.server";
 import { encryptSecret } from "@/lib/fiscal/crypto.server";
+import { validateFlowCredentials } from "@/lib/fiscal/adapters/flow.server";
 
 // El negocio pega sus credenciales de Flow (apiKey + secretKey) o VSB
 // (apiKey + apiUrl) desde Ajustes/Finanzas. Se guardan cifradas
@@ -37,23 +38,41 @@ export const Route = createFileRoute("/api/billing/payments/connect")({
         const client = await authedUserClient(request);
         if (!client) return new Response("Unauthorized", { status: 401 });
 
-        // RLS en `businesses` garantiza que esto solo funcione si el
-        // usuario realmente pertenece al negocio.
-        const { data: biz } = await client
-          .from("businesses")
-          .select("id")
-          .eq("id", businessId)
+        // Only owners/admins may manage payment credentials.
+        const { data: membership } = await client
+          .from("business_members")
+          .select("role")
+          .eq("business_id", businessId)
           .maybeSingle();
-        if (!biz) return new Response("Unauthorized", { status: 401 });
+        if (!membership || !["owner", "admin"].includes(String(membership.role))) {
+          return new Response("Forbidden", { status: 403 });
+        }
+
+        // Validate Flow credentials with a read-only API call BEFORE touching
+        // the existing integration. No test checkout or charge is created.
+        if (provider === "flow") {
+          const validation = await validateFlowCredentials({ apiKey, secretKey, environment });
+          if (!validation.ok) {
+            return new Response(JSON.stringify({
+              error: validation.message ?? "No se pudieron validar las credenciales Flow.",
+              code: "FLOW_CREDENTIALS_INVALID",
+            }), { status: 422, headers: { "Content-Type": "application/json" } });
+          }
+        }
 
         // Nunca deben quedar dos pasarelas de pago "connected" a la vez
         // (el índice parcial de la DB también lo impide, esto es defensivo).
-        await client
+        const { error: disconnectError } = await client
           .from("billing_integrations")
           .update({ status: "disconnected" })
           .eq("business_id", businessId)
           .eq("type", "payment")
           .eq("status", "connected");
+        if (disconnectError) {
+          return new Response(JSON.stringify({ error: "No se pudo reemplazar la integración activa." }), {
+            status: 500, headers: { "Content-Type": "application/json" },
+          });
+        }
 
         const { error: upsertError } = await client.from("billing_integrations").upsert(
           {
