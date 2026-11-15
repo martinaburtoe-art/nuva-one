@@ -42,10 +42,10 @@ function SharedQuotePage() {
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [responseResult, setResponseResult] = useState<"accepted" | "rejected" | null>(null);
-  const { data: quote, isLoading, isError, refetch } = useQuery({
+  const { data: quote, isLoading, isError } = useQuery({
     queryKey: ["shared-quote", token],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_shared_quote", { p_token: token });
+      const { data, error } = await supabase.rpc("get_shared_quote" as any, { p_token: token } as any);
       if (error) throw error;
       return (data ?? null) as unknown as SharedQuote | null;
     },
@@ -54,13 +54,13 @@ function SharedQuotePage() {
   const respond = useMutation({
     mutationFn: async (action: "accepted" | "rejected") => {
       if (!consent) throw new Error("Debes confirmar que revisaste la cotización y su versión.");
-      const { data, error } = await supabase.rpc("respond_to_shared_quote", {
+      const { data, error } = await supabase.rpc("respond_to_shared_quote" as any, {
         p_token: token,
         p_action: action,
         p_name: name.trim(),
         p_email: email.trim(),
         p_consent_text: "Confirmo que revisé esta cotización y respondo sobre la versión presentada en este enlace.",
-      });
+      } as any);
       if (error) throw error;
       return data as { status: string; quote_number: number };
     },
