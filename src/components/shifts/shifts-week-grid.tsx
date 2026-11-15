@@ -106,7 +106,97 @@ export function ShiftsWeekGrid({
   const hours = Array.from({ length: totalHours + 1 }, (_, i) => startHour + i);
 
   return (
-    <Card className="overflow-hidden p-0">
+    <>
+      <div className="space-y-3 md:hidden">
+        {days.map((day, dayIdx) => {
+          const dayShifts = [...(byDay.get(dayIdx) ?? [])].sort(
+            (a, b) => toMinutes(a.start_time) - toMinutes(b.start_time),
+          );
+          return (
+            <Card key={day} className="overflow-hidden p-0">
+              <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
+                <div>
+                  <h3 className="text-sm font-semibold">{day}</h3>
+                  <p className="text-xs text-muted-foreground">{dateForDay(weekStart, dayIdx)}</p>
+                </div>
+                <span className="rounded-full bg-background px-2.5 py-1 text-xs font-medium tabular-nums">
+                  {dayShifts.length} turno{dayShifts.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              {dayShifts.length ? (
+                <div className="divide-y">
+                  {dayShifts.map((shift) => {
+                    const color = colorFor(shift.employee_name);
+                    return (
+                      <div key={shift.id} className="flex items-center gap-3 px-4 py-3">
+                        <span className={`h-10 w-1 shrink-0 rounded-full ${color.bg}`} aria-hidden="true" />
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words text-sm font-semibold">{shift.employee_name}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}</p>
+                        </div>
+                        <button type="button" onClick={() => onDelete(shift.id)} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border text-destructive hover:bg-destructive/10" title="Eliminar turno" aria-label={`Eliminar turno de ${shift.employee_name} el ${day}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="px-4 py-3 text-xs text-muted-foreground">Sin turnos asignados</p>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+      <div className="hidden md:block">
+        <Card className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <div className="min-w-[720px]">
+              <div className="grid border-b bg-muted/40" style={{ gridTemplateColumns: `64px repeat(${days.length}, 1fr)` }}>
+                <div className="p-2" />
+                {days.map((d, i) => (
+                  <div key={d} className="border-l p-2 text-center text-sm font-semibold">
+                    {d}
+                    <div className="text-[11px] font-normal text-muted-foreground">{dateForDay(weekStart, i)}</div>
+                    <div className="text-xs font-normal text-muted-foreground">{byDay.get(i)?.length ?? 0} turno{(byDay.get(i)?.length ?? 0) === 1 ? "" : "s"}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="relative grid" style={{ gridTemplateColumns: `64px repeat(${days.length}, 1fr)` }}>
+                <div className="relative" style={{ height: gridHeight }}>
+                  {hours.map((h, i) => <div key={h} className="absolute right-2 -translate-y-1/2 text-xs text-muted-foreground" style={{ top: i * hourHeight }}>{h.toString().padStart(2, "0")}:00</div>)}
+                </div>
+                {days.map((_, dayIdx) => (
+                  <div key={dayIdx} className="relative border-l" style={{ height: gridHeight }}>
+                    {hours.map((h, i) => <div key={h} className="absolute w-full border-t border-dashed border-muted" style={{ top: i * hourHeight }} />)}
+                    {layoutDayShifts(byDay.get(dayIdx) ?? []).map(({ shift: s, lane, laneCount }) => {
+                      const start = toMinutes(s.start_time);
+                      const end = toMinutes(s.end_time);
+                      const top = ((start - startHour * 60) / 60) * hourHeight;
+                      const height = Math.max(((end - start) / 60) * hourHeight, 32);
+                      const color = colorFor(s.employee_name);
+                      const laneWidth = 100 / laneCount;
+                      const left = `calc(${lane * laneWidth}% + 2px)`;
+                      const width = `calc(${laneWidth}% - 4px)`;
+                      return (
+                        <div key={s.id} className={`group absolute cursor-default overflow-hidden rounded-md px-2 py-1 shadow-sm ${color.bg} ${color.text}`} style={{ top, height, left, width }} title={`${s.employee_name}: ${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)}`}>
+                          <p className="truncate text-xs font-semibold leading-tight">{s.employee_name}</p>
+                          <p className="truncate text-[11px] leading-tight opacity-90">{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</p>
+                          <div className="absolute right-1 top-1 hidden gap-1 group-hover:flex">
+                            <button onClick={() => onDelete(s.id)} className="rounded bg-black/20 p-0.5 hover:bg-black/40" title="Eliminar" aria-label={`Eliminar turno de ${s.employee_name}`}><Trash2 className="h-3 w-3" /></button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </>
+  );
       <div className="overflow-x-auto">
         <div className="min-w-[720px]">
           {/* Header de días */}
