@@ -336,13 +336,14 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
         const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
         const expiryBoundary = new Date(`${quote.valid_until}T23:59:59.999Z`).getTime();
         const expiresAt = new Date(Math.min(Date.now() + 7 * 86400000, expiryBoundary)).toISOString();
-        let { data: link, error: linkLookupError } = await db.from("document_share_links")
+        const { data: existingLink, error: linkLookupError } = await db.from("document_share_links")
           .select("id,expires_at,revoked_at,responded_at")
           .eq("business_id", quote.business_id)
           .eq("quote_id", quote.id)
           .eq("token_hash", tokenHash)
           .maybeSingle();
         if (linkLookupError) throw linkLookupError;
+        let link = existingLink;
         if (!link) {
           const { data: createdLink, error: createLinkError } = await db.from("document_share_links").insert({
             business_id: quote.business_id,
