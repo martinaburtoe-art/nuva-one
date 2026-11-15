@@ -464,3 +464,40 @@
     max-width: 100%;
   }
 }
+
+
+/* Mobile workspace ergonomics: preserve touch targets and keep dense controls navigable. */
+@media (max-width: 639px) {
+  .nuva-app [data-nuva-workspace-header] {
+    gap: 0.75rem;
+  }
+
+  .nuva-app [data-nuva-workspace-header] > div:last-child {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .nuva-app [data-nuva-workspace-header] > div:last-child :where(button, a, [role="button"]) {
+    min-height: 40px;
+    max-width: 100%;
+  }
+
+  .nuva-app main :where([role="tablist"]) {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .nuva-app main :where([role="tablist"])::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nuva-app main :where(input, select, textarea) {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
