@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(8);
+SELECT plan(9);
 
 SELECT has_column('public', 'payment_intents', 'invoice_id',
   'payment intents can reference an internal invoice');
@@ -50,6 +50,16 @@ SELECT ok(
   NOT has_table_privilege('anon', 'public.document_delivery_attempts', 'SELECT')
   AND NOT has_table_privilege('authenticated', 'public.document_delivery_attempts', 'INSERT,UPDATE,DELETE'),
   'delivery ledger does not expose anonymous access or browser-side writes'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid = 'public.invoice_payments'::regclass
+      AND tgname = 'invoice_payments_expire_pending_checkout'
+      AND NOT tgisinternal
+  ),
+  'confirmed manual or provider payments expire outstanding checkout links'
 );
 
 SELECT * FROM finish();
