@@ -90,12 +90,14 @@ SELECT ok((SELECT responded_at IS NOT NULL AND response_email = 'cliente@example
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa11', true);
 SELECT is((SELECT count(*)::int FROM public.list_quote_share_links(
-  '00000000-0000-0000-0000-00000000cc11')), 1, 'business owner can inspect link lifecycle without seeing token hash');
+  '00000000-0000-0000-0000-00000000cc11')), 2, 'business owner can inspect both links without seeing token hashes');
 SELECT ok(public.revoke_quote_share_link((SELECT id FROM public.document_share_links
-  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11')),
+  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'
+    AND token_hash = encode(sha256(convert_to(repeat('a',64),'UTF8')),'hex'))),
   'business owner can revoke a quote link');
 SELECT ok((SELECT revoked_at IS NOT NULL FROM public.document_share_links
-  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'),
+  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'
+    AND token_hash = encode(sha256(convert_to(repeat('a',64),'UTF8')),'hex')),
   'link revocation is timestamped');
 RESET ROLE;
 
