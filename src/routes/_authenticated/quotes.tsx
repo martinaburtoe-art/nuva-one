@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText, Link2 } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness } from "@/lib/use-business";
@@ -439,6 +439,31 @@ function Quotes() {
     } finally {
       convertingQuoteIdsRef.current.delete(quote.id);
       setConvertingId(null);
+    }
+  }
+
+  async function createShareLink(quote: any) {
+    if (!canWrite) return;
+    try {
+      const bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.rpc("create_quote_share_link" as any, {
+        p_quote_id: quote.id,
+        p_token: token,
+        p_expires_at: expiresAt,
+      } as any);
+      if (error) throw error;
+      const shareUrl = `${window.location.origin}/quote/${token}`;
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Enlace seguro copiado. Vence en 7 días; la cotización se marcará como vista cuando el cliente la abra.");
+      } catch {
+        toast.info(`Enlace creado (cópialo manualmente): ${shareUrl}`);
+      }
+    } catch (error: any) {
+      toast.error(error?.message ?? "No se pudo crear el enlace seguro.");
     }
   }
 
@@ -894,6 +919,16 @@ function Quotes() {
                         {q.status === "draft" && (
                           <Button variant="ghost" size="icon" title="Editar borrador" disabled={!canWrite} onClick={() => editDraftQuote(q)}>
                             <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {(q.status === "draft" || q.status === "sent" || q.status === "viewed") && canWrite && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Crear y copiar enlace seguro para el cliente"
+                            onClick={() => void createShareLink(q)}
+                          >
+                            <Link2 className="h-4 w-4" />
                           </Button>
                         )}
                         <Button
