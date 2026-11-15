@@ -119,6 +119,7 @@ export const Route = createFileRoute("/api/documents/send-quote")({
           headers: {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey,
           },
           body: JSON.stringify({
             from,
