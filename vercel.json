@@ -55,10 +55,6 @@
     {
       "path": "/api/cron/nuva-intelligence-worker",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/nuva-documents-reconciliation",
-      "schedule": "0 12 * * *"
     }
   ]
 }
