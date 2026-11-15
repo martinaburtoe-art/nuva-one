@@ -11,7 +11,7 @@ function json(data: Record<string, unknown>, status = 200) {
 }
 
 /**
- * Daily Vercel Cron safety net for invoice-payment reconciliation.
+ * Supabase pg_cron/pg_net reconciliation endpoint for internal invoice payments.
  * The provider webhook remains the primary path; this route only rechecks
  * pending Flow intents and expires stale checkouts. It never trusts browser
  * redirects as payment evidence.
@@ -73,7 +73,7 @@ async function reconcileDocuments(request: Request) {
     expired: expiredCount ?? 0,
     failures,
     outcomes,
-    mode: "daily-vercel-cron-fallback",
+    mode: "supabase-pg-cron-reconciliation",
   });
 }
 
