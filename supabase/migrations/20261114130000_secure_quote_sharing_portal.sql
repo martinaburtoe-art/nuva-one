@@ -49,6 +49,7 @@ CREATE POLICY document_share_events_member_select ON public.document_share_event
   FOR SELECT USING (private.is_business_member(business_id, (SELECT auth.uid())));
 REVOKE ALL ON public.document_share_events FROM PUBLIC, anon;
 GRANT SELECT ON public.document_share_events TO authenticated;
+GRANT SELECT ON public.document_share_events TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.create_quote_share_link(
   p_quote_id UUID, p_token TEXT, p_expires_at TIMESTAMPTZ
@@ -138,7 +139,7 @@ BEGIN
   IF p_token IS NULL OR p_token !~ '^[0-9a-fA-F]{64}$' THEN
     RAISE EXCEPTION 'Enlace inválido o vencido';
   END IF;
-  IF p_action NOT IN ('accepted','rejected') THEN RAISE EXCEPTION 'Respuesta inválida'; END IF;
+  IF p_action IS NULL OR p_action NOT IN ('accepted','rejected') THEN RAISE EXCEPTION 'Respuesta inválida'; END IF;
   IF length(trim(COALESCE(p_name,''))) NOT BETWEEN 2 AND 160
      OR length(trim(COALESCE(p_email,''))) > 254
      OR trim(COALESCE(p_email,'')) !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$'
