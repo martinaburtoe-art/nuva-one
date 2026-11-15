@@ -193,7 +193,7 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
           subject: `Documento interno FAC-${String(invoice.invoice_number).padStart(6, "0")}`,
           commerceOrder,
           email,
-          returnUrl: `${origin}/invoices?payment=${encodeURIComponent(commerceOrder)}`,
+          returnUrl: `${origin}/payment/confirmation`,
           webhookUrl: `${origin}/api/billing/payments/webhook?provider=${encodeURIComponent(integration.provider)}`,
         });
         if (!result.ok || !result.token || !result.paymentUrl) return null;
