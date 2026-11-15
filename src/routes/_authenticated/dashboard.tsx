@@ -562,23 +562,23 @@ function Dashboard() {
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">DOCUMENTOS COMERCIALES</p>
-                <h2 className="mt-1 text-base font-semibold">Generar cotización profesional</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Crea una propuesta, revisa la previsualización A4, calcula IVA y descuentos y descarga el PDF para probar el flujo completo.</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">VENTAS · PROPUESTAS</p>
+                <h2 className="mt-1 text-base font-semibold">Crear cotización</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Prepara una propuesta comercial con productos, precios, impuestos y descuentos. Revisa el documento antes de compartirlo con tu cliente.</p>
               </div>
             </div>
-            <Link to="/quotes" className="w-full sm:w-fit"><Button className="w-full sm:w-auto">Probar generación de cotización <ArrowUpRight className="ml-2 h-4 w-4" /></Button></Link>
+            <Link to="/quotes" className="w-full sm:w-fit"><Button className="w-full sm:w-auto">Nueva cotización <ArrowUpRight className="ml-2 h-4 w-4" /></Button></Link>
           </Card>
           <Card className="flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">DOCUMENTOS DE COBRO</p>
-                <h2 className="mt-1 text-base font-semibold">Generar documento interno</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Convierte una cotización aceptada o crea un documento de cobro manual, personaliza la plantilla y descarga el PDF. No es un DTE del SII.</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">COBRANZA · DOCUMENTOS</p>
+                <h2 className="mt-1 text-base font-semibold">Crear documento de cobro</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Genera un documento de cobro desde una cotización aceptada o registra uno manual. Personaliza la plantilla y comparte el PDF. Este documento interno no reemplaza un DTE del SII.</p>
               </div>
             </div>
-            <Link to="/invoices" className="w-full sm:w-fit"><Button variant="outline" className="w-full sm:w-auto">Probar documento de cobro <ArrowUpRight className="ml-2 h-4 w-4" /></Button></Link>
+            <Link to="/invoices" className="w-full sm:w-fit"><Button variant="outline" className="w-full sm:w-auto">Nuevo documento <ArrowUpRight className="ml-2 h-4 w-4" /></Button></Link>
           </Card>
         </section>
 
