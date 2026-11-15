@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/inventory")({
 function InventoryPage() {
   return (
     <ModuleGuard module="inventory">
-      <div className="space-y-5">
+      <div className="nuva-workspace nuva-workspace--inventory space-y-5">
         <PageHeader
           title="Inventario"
           description="Control de stock, disponibilidad y abastecimiento conectado con ventas y compras."
