@@ -116,6 +116,31 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
 
       const idempotencyKey = `invoice-reminder:${invoice.id}:${kind}:${todayKey}`;
       const attempt = await step.run(`claim-${invoice.id}-${kind}`, async () => {
+        const { data: previous, error: lookupError } = await db.from("document_delivery_attempts")
+          .select("id,status,updated_at,attempts")
+          .eq("business_id", invoice.business_id)
+          .eq("idempotency_key", idempotencyKey)
+          .maybeSingle();
+        if (lookupError) throw lookupError;
+        if (previous?.status === "sent") return null;
+        if (previous?.status === "sending" &&
+          Date.now() - new Date(previous.updated_at).getTime() < 15 * 60 * 1000) return null;
+        if (previous) {
+          const { data, error } = await db.from("document_delivery_attempts")
+            .update({
+              status: "sending",
+              attempts: Number(previous.attempts ?? 0) + 1,
+              error_code: null,
+              error_message: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", previous.id)
+            .neq("status", "sent")
+            .select("id")
+            .maybeSingle();
+          if (error) throw error;
+          return data;
+        }
         const { data, error } = await db.from("document_delivery_attempts").insert({
           business_id: invoice.business_id,
           document_type: "internal_invoice",
