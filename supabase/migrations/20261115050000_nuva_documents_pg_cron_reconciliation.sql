@@ -13,17 +13,17 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Retire legacy jobs whose production routes now return HTTP 404.
+  PERFORM cron.unschedule(jobid)
+  FROM cron.job
+  WHERE jobname IN ('nuva-quotes-followup-daily', 'nuva-check-overdue-daily');
+
   IF NOT EXISTS (
     SELECT 1 FROM vault.secrets WHERE name = 'nuva_documents_cron_secret'
   ) THEN
     RAISE NOTICE 'nuva_documents_cron_secret is not present; skipping document reconciliation schedule.';
     RETURN;
   END IF;
-
-  -- Retire legacy jobs whose production routes now return HTTP 404.
-  PERFORM cron.unschedule(jobid)
-  FROM cron.job
-  WHERE jobname IN ('nuva-quotes-followup-daily', 'nuva-check-overdue-daily');
 
   PERFORM cron.unschedule(jobid)
   FROM cron.job
