@@ -77,6 +77,30 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         const adapter = getPaymentAdapter(integration.provider);
         if (!adapter) return new Response(JSON.stringify({ error: "Proveedor de pago no soportado" }), { status: 400 });
 
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        if (invoiceId) {
+          const { data: pendingIntent } = await supabaseAdmin
+            .from("payment_intents" as any)
+            .select("id,checkout_url,created_at")
+            .eq("invoice_id", invoiceId)
+            .eq("status", "pending")
+            .maybeSingle();
+          if (pendingIntent?.checkout_url && Date.now() - new Date(pendingIntent.created_at).getTime() < 48 * 60 * 60 * 1000) {
+            return new Response(JSON.stringify({
+              ok: true,
+              payment_url: pendingIntent.checkout_url,
+              amount,
+              currency: "CLP",
+              reused: true,
+            }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+          }
+          if (pendingIntent?.id) {
+            await supabaseAdmin.from("payment_intents" as any)
+              .update({ status: "expired" })
+              .eq("id", pendingIntent.id);
+          }
+        }
+
         const { apiKey, secretKey } = decryptPaymentCreds(integration);
         const origin = new URL(request.url).origin;
         const commerceOrder = invoiceId
@@ -107,8 +131,7 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           );
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error: intentError } = await supabaseAdmin.from("payment_intents").insert({
+        const { error: intentError } = await supabaseAdmin.from("payment_intents" as any).insert({
           business_id: businessId,
           sale_id: saleId,
           invoice_id: invoiceId,
@@ -116,9 +139,22 @@ export const Route = createFileRoute("/api/billing/payments/create")({
           token: result.token,
           commerce_order: commerceOrder,
           amount,
+          checkout_url: result.paymentUrl,
           status: "pending",
-        });
+        } as any);
         if (intentError) {
+          if (invoiceId && intentError.code === "23505") {
+            const { data: winner } = await supabaseAdmin.from("payment_intents" as any)
+              .select("checkout_url")
+              .eq("invoice_id", invoiceId)
+              .eq("status", "pending")
+              .maybeSingle();
+            if (winner?.checkout_url) {
+              return new Response(JSON.stringify({ ok: true, payment_url: winner.checkout_url, amount, currency: "CLP", reused: true }), {
+                headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+              });
+            }
+          }
           return new Response(JSON.stringify({ error: "No se pudo registrar el intento de pago" }), { status: 500 });
         }
 
