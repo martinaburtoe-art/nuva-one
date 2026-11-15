@@ -282,7 +282,7 @@ function Invoices() {
     onError: (error: any) => toast.error(error?.message ?? "No se pudo registrar el abono."),
   });
 
-  async function downloadInvoice(invoice: any) {
+  async function downloadInvoice(invoice: any): Promise<boolean> {
     try {
       const { generateInvoicePdf } = await import("@/lib/quote-pdf");
       const customer = invoice.customer_snapshot ?? { name: invoice.customer_name };
@@ -323,8 +323,10 @@ function Invoices() {
           : Math.max(0, Number(invoice.total) - (paidByInvoice.get(invoice.id) ?? 0)),
         documentStatus: invoice.status,
       });
+      return true;
     } catch (error: any) {
       toast.error(error?.message ?? "No se pudo generar el PDF del documento.");
+      return false;
     }
   }
 
