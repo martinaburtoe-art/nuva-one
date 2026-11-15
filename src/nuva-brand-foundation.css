@@ -11,6 +11,16 @@ body[data-nuva-surface="app"] {
   --nuva-gold-muted: #80652E; /* accessible on pearl/white surfaces */
   --nuva-indigo: #6366F1;
 
+  /* Electric module accents: shared identity, distinct workspaces. */
+  --nuva-accent-sales: #FB7185;
+  --nuva-accent-inventory: #22D3EE;
+  --nuva-accent-finance: #A78BFA;
+  --nuva-accent-people: #FB923C;
+  --nuva-accent-intelligence: #C084FC;
+  --nuva-accent-ecosystem: #2DD4BF;
+  --nuva-accent-admin: #A3A3A3;
+  --nuva-accent-success: #A3E635;
+
   --background: #F3F3EF;
   --foreground: #17191B;
   --card: #FFFFFF;
@@ -80,3 +90,12 @@ body[data-nuva-surface="app"] :where(a, button, input, select, textarea, [role="
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* Module identity utilities: use color as navigation and status, never as the only signal. */
+body[data-nuva-surface="app"] .nuva-accent-sales { --nuva-module-accent: var(--nuva-accent-sales); }
+body[data-nuva-surface="app"] .nuva-accent-inventory { --nuva-module-accent: var(--nuva-accent-inventory); }
+body[data-nuva-surface="app"] .nuva-accent-finance { --nuva-module-accent: var(--nuva-accent-finance); }
+body[data-nuva-surface="app"] .nuva-accent-people { --nuva-module-accent: var(--nuva-accent-people); }
+body[data-nuva-surface="app"] .nuva-accent-intelligence { --nuva-module-accent: var(--nuva-accent-intelligence); }
+body[data-nuva-surface="app"] .nuva-accent-ecosystem { --nuva-module-accent: var(--nuva-accent-ecosystem); }
+body[data-nuva-surface="app"] .nuva-accent-admin { --nuva-module-accent: var(--nuva-accent-admin); }
