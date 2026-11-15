@@ -595,7 +595,7 @@ function Quotes() {
 
   return (
     <ModuleGuard module="quotes">
-      <>
+      <div className="nuva-workspace nuva-workspace--quotes">
         <Dialog open={shareLinksOpen} onOpenChange={setShareLinksOpen}>
           <DialogContent className="max-w-xl">
             <DialogHeader><DialogTitle>Enlaces de cliente · {shareLinksQuote?.quote_number ? "COT-" + String(shareLinksQuote.quote_number).padStart(4, "0") : "Cotización"}</DialogTitle></DialogHeader>
@@ -1036,7 +1036,7 @@ function Quotes() {
             </>
           )}
         </Card>
-      </>
+      </div>
     </ModuleGuard>
   );
 }
