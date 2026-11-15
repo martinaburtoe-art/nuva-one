@@ -11,6 +11,16 @@ body[data-nuva-surface="app"] {
   --nuva-gold-muted: #80652E; /* accessible on pearl/white surfaces */
   --nuva-indigo: #6366F1;
 
+  /* Electric module accents: shared identity, distinct workspaces. */
+  --nuva-accent-sales: #FB7185;
+  --nuva-accent-inventory: #22D3EE;
+  --nuva-accent-finance: #A78BFA;
+  --nuva-accent-people: #FB923C;
+  --nuva-accent-intelligence: #C084FC;
+  --nuva-accent-ecosystem: #2DD4BF;
+  --nuva-accent-admin: #A3A3A3;
+  --nuva-accent-success: #A3E635;
+
   --background: #F3F3EF;
   --foreground: #17191B;
   --card: #FFFFFF;
@@ -79,4 +89,48 @@ body[data-nuva-surface="app"] :where(a, button, input, select, textarea, [role="
   body[data-nuva-surface="app"] a {
     -webkit-tap-highlight-color: transparent;
   }
+}
+
+/* Module identity utilities: use color as navigation and status, never as the only signal. */
+body[data-nuva-surface="app"] .nuva-accent-sales { --nuva-module-accent: var(--nuva-accent-sales); }
+body[data-nuva-surface="app"] .nuva-accent-inventory { --nuva-module-accent: var(--nuva-accent-inventory); }
+body[data-nuva-surface="app"] .nuva-accent-finance { --nuva-module-accent: var(--nuva-accent-finance); }
+body[data-nuva-surface="app"] .nuva-accent-people { --nuva-module-accent: var(--nuva-accent-people); }
+body[data-nuva-surface="app"] .nuva-accent-intelligence { --nuva-module-accent: var(--nuva-accent-intelligence); }
+body[data-nuva-surface="app"] .nuva-accent-ecosystem { --nuva-module-accent: var(--nuva-accent-ecosystem); }
+body[data-nuva-surface="app"] .nuva-accent-admin { --nuva-module-accent: var(--nuva-accent-admin); }
+
+
+/* The active workspace section carries its own accent across all modules. */
+.nuva-app[data-nuva-section="General"] { --nuva-page-accent: #818cf8; }
+.nuva-app[data-nuva-section="Operación"] { --nuva-page-accent: #06b6d4; }
+.nuva-app[data-nuva-section="Ventas y clientes"] { --nuva-page-accent: #fb7185; }
+.nuva-app[data-nuva-section="Compras e inventario"] { --nuva-page-accent: #06b6d4; }
+.nuva-app[data-nuva-section="Finanzas"] { --nuva-page-accent: #a78bfa; }
+.nuva-app[data-nuva-section="Inteligencia"] { --nuva-page-accent: #c084fc; }
+.nuva-app[data-nuva-section="Ecosistema"] { --nuva-page-accent: #2dd4bf; }
+.nuva-app[data-nuva-section="Personas"] { --nuva-page-accent: #fb923c; }
+.nuva-app[data-nuva-section="Administración"] { --nuva-page-accent: #a3a3a3; }
+
+.nuva-app[data-nuva-section] .nuva-module-kicker { color: var(--nuva-page-accent); }
+.nuva-app[data-nuva-section] .nuva-nav-item[data-active="true"] {
+  color: color-mix(in oklab, var(--nuva-page-accent) 72%, #17191b);
+  background: color-mix(in oklab, var(--nuva-page-accent) 12%, white);
+  box-shadow: inset 3px 0 0 var(--nuva-page-accent), 0 1px 3px rgb(8 8 9 / .035);
+}
+.nuva-app[data-nuva-section] .nuva-nav-item[data-active="true"] > svg {
+  color: color-mix(in oklab, var(--nuva-page-accent) 82%, #17191b);
+}
+.nuva-app[data-nuva-section] .nuva-module-header {
+  border-bottom: 1px solid color-mix(in oklab, var(--nuva-page-accent) 20%, var(--nuva-line));
+}
+
+.nuva-app[data-nuva-section] > div > main {
+  background-image: radial-gradient(ellipse at 94% 0%, color-mix(in oklab, var(--nuva-page-accent) 8%, transparent), transparent 42%);
+}
+.nuva-app[data-nuva-section] header[aria-label="Contexto del espacio de trabajo"] > span:first-child {
+  color: var(--nuva-page-accent);
+}
+.nuva-app[data-nuva-section] .nuva-module-header {
+  padding-bottom: .85rem;
 }

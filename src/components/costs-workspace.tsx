@@ -57,7 +57,7 @@ export function CostsWorkspace() {
     }
   };
 
-  return <ModuleGuard module="purchases"><div className="space-y-6">
+  return <ModuleGuard module="purchases"><div className="nuva-workspace nuva-workspace--costs space-y-6">
     <PageHeader title="Costos" description="Registra, clasifica y conecta todos los costos de tu negocio con Finanzas, rentabilidad y control financiero inteligente." action={canWrite ? <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button><Plus className="mr-1.5 h-4 w-4" />Registrar costo</Button></DialogTrigger><DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>Registrar costo</DialogTitle></DialogHeader><form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
       <div className="sm:col-span-2"><Label>Descripción</Label><Input value={form.description} onChange={e => update("description", e.target.value)} placeholder="Ej. Arriendo local, publicidad, flete, software..." required /></div>
       <div><Label>Categoría</Label><Input value={form.category} onChange={e => update("category", e.target.value)} placeholder="Ej. Arriendo" required /></div>

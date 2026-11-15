@@ -155,7 +155,7 @@ function Sales() {
 
   return (
     <ModuleGuard module="sales">
-      <>
+      <div className="nuva-workspace nuva-workspace--sales">
         <PageHeader
           title="Ventas"
           description="Convierte cada pedido en operación: cliente, stock, cobro y trazabilidad."
@@ -566,7 +566,7 @@ function Sales() {
             </div>
           )}
         </Card>
-      </>
+      </div>
     </ModuleGuard>
   );
 }

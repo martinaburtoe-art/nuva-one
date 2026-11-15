@@ -55,7 +55,7 @@ function NuvaIntelligence() {
 
   return (
     <ModuleGuard module="dashboard">
-      <div className="space-y-5">
+      <div className="nuva-workspace nuva-workspace--intelligence space-y-5">
         <PageHeader title="Nüva Intelligence" description="Interpreta datos, detecta señales y explica qué está cambiando. Las acciones se ejecutan en los módulos operativos." />
 
         {!activeView ? (

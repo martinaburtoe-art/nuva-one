@@ -401,7 +401,7 @@ function POS() {
 
   return (
     <ModuleGuard module="pos">
-      <>
+      <div className="nuva-workspace nuva-workspace--pos">
         <PageHeader
           title="Caja"
           description="Vende, cobra y controla tu operación en un solo flujo."
@@ -921,7 +921,7 @@ function POS() {
             </div>
           </DialogContent>
         </Dialog>
-      </>
+      </div>
     </ModuleGuard>
   );
 }
