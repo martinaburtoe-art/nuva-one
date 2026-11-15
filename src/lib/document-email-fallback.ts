@@ -32,3 +32,34 @@ export function buildQuoteMailtoUrl(options: QuoteMailtoOptions): string {
 
   return `mailto:${encodeURIComponent(options.recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+
+export type InvoiceMailtoOptions = {
+  recipient: string;
+  invoiceNumber: number | string;
+  customerName: string;
+  totalLabel: string;
+  balanceLabel: string;
+};
+
+/**
+ * Prepares a local email draft after the invoice PDF is downloaded.
+ * The user must attach the PDF and explicitly send the message.
+ */
+export function buildInvoiceMailtoUrl(options: InvoiceMailtoOptions): string {
+  const invoiceLabel = `FAC-${String(options.invoiceNumber).padStart(6, "0")}`;
+  const subject = `Documento de cobro ${invoiceLabel} · ${options.customerName}`;
+  const body = [
+    `Hola ${options.customerName},`,
+    "",
+    `Adjunto el documento comercial de cobro ${invoiceLabel}.`,
+    `Total: ${options.totalLabel}`,
+    `Saldo pendiente: ${options.balanceLabel}`,
+    "",
+    "El PDF se descargó en tu dispositivo. Adjunta ese archivo antes de enviar este correo.",
+    "Este documento es comercial interno y no constituye un DTE ni una factura tributaria del SII.",
+    "",
+    "Saludos.",
+  ].join("\n");
+
+  return `mailto:${encodeURIComponent(options.recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
