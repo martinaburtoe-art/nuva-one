@@ -557,6 +557,31 @@ function Dashboard() {
           </Link>
         </section>
 
+        <section className="mb-5 grid gap-3 lg:grid-cols-2" aria-label="Centro de documentos">
+          <Card className="flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">DOCUMENTOS COMERCIALES</p>
+                <h2 className="mt-1 text-base font-semibold">Generar cotización profesional</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Crea una propuesta, revisa la previsualización A4, calcula IVA y descuentos y descarga el PDF para probar el flujo completo.</p>
+              </div>
+            </div>
+            <Link to="/quotes" className="w-full sm:w-fit"><Button className="w-full sm:w-auto">Probar generación de cotización <ArrowUpRight className="ml-2 h-4 w-4" /></Button></Link>
+          </Card>
+          <Card className="flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">DOCUMENTOS DE COBRO</p>
+                <h2 className="mt-1 text-base font-semibold">Generar documento interno</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Convierte una cotización aceptada o crea un documento de cobro manual, personaliza la plantilla y descarga el PDF. No es un DTE del SII.</p>
+              </div>
+            </div>
+            <Link to="/invoices" className="w-full sm:w-fit"><Button variant="outline" className="w-full sm:w-auto">Probar documento de cobro <ArrowUpRight className="ml-2 h-4 w-4" /></Button></Link>
+          </Card>
+        </section>
+
         <section className="nuva-resumen-panel" aria-label="Análisis comparativo y señales del negocio" style={{ marginBottom: 20 }}>
           <div className="nuva-resumen-panel-heading nuva-resumen-comparison-heading">
             <div className="nuva-resumen-comparison-copy"><p className="nuva-resumen-section-label">ANÁLISIS DE DESEMPEÑO</p><h2>Qué cambió y dónde mirar</h2><p>Compara tus resultados actuales con el período anterior de igual duración.</p></div>
