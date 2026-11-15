@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { FileText, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { FileText, CheckCircle2, XCircle, Loader2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtCLP } from "@/lib/biz-data";
 import { calculateQuoteLineNetAmount } from "@/lib/quote-calculations";
@@ -77,7 +77,7 @@ function SharedQuotePage() {
 
   const money = (value: number) => fmtCLP(Number(value) || 0);
   return (
-    <main className="min-h-screen bg-muted/30 px-4 py-8 sm:px-6">
+    <main className="min-h-screen bg-muted/30 px-4 py-8 print:bg-white print:px-0 print:py-0 sm:px-6">
       <div className="mx-auto max-w-3xl space-y-5">
         <header className="flex items-center gap-3">
           {quote.issuer?.logo_url && <img src={quote.issuer.logo_url} alt="" className="max-h-12 max-w-32 object-contain" />}
@@ -85,7 +85,7 @@ function SharedQuotePage() {
         </header>
         <Card className="overflow-hidden">
           <div className="border-b bg-background p-6 sm:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cotización</p><h2 className="mt-1 text-2xl font-bold">COT-{String(quote.quote_number).padStart(4, "0")}</h2><p className="mt-1 text-sm text-muted-foreground">{quote.subject || "Propuesta comercial"}</p></div><div className="text-right text-sm"><p className="text-muted-foreground">Válida hasta</p><p className="font-semibold">{quote.valid_until ? new Date(quote.valid_until + "T12:00:00").toLocaleDateString("es-CL") : "Sin fecha"}</p></div></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cotización</p><h2 className="mt-1 text-2xl font-bold">COT-{String(quote.quote_number).padStart(4, "0")}</h2><p className="mt-1 text-sm text-muted-foreground">{quote.subject || "Propuesta comercial"}</p></div><div className="text-right text-sm"><p className="text-muted-foreground">Válida hasta</p><p className="font-semibold">{quote.valid_until ? new Date(quote.valid_until + "T12:00:00").toLocaleDateString("es-CL") : "Sin fecha"}</p><Button className="mt-3 print:hidden" size="sm" variant="outline" onClick={() => window.print()}><Download className="mr-2 h-4 w-4" /> Guardar PDF</Button></div></div>
             <div className="mt-6 rounded-xl bg-muted/50 p-4"><p className="text-xs text-muted-foreground">Preparada para</p><p className="font-semibold">{quote.customer_name}</p>{quote.customer_snapshot?.tax_id && <p className="text-xs text-muted-foreground">RUT: {quote.customer_snapshot.tax_id}</p>}</div>
           </div>
           <div className="p-6 sm:p-8">
@@ -96,14 +96,14 @@ function SharedQuotePage() {
             {quote.terms && <section className="mt-5"><h3 className="font-semibold">Condiciones comerciales</h3><p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{quote.terms}</p></section>}
           </div>
         </Card>
-        <Card className="space-y-4 p-6">
+        <Card className="space-y-4 p-6 print:hidden">
           <div><h3 className="text-lg font-semibold">Responder a la cotización</h3><p className="text-sm text-muted-foreground">Tu respuesta quedará asociada a esta cotización y a la versión mostrada. Este registro es una aceptación comercial simple; no es una firma electrónica avanzada.</p></div>
           <div className="grid gap-3 sm:grid-cols-2"><div><Label htmlFor="shared-name">Nombre completo</Label><Input id="shared-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={160} /></div><div><Label htmlFor="shared-email">Correo electrónico</Label><Input id="shared-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} /></div></div>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" /><span>Confirmo que revisé el contenido y las condiciones de esta cotización antes de responder.</span></label>
           <div className="flex flex-wrap gap-2"><Button disabled={respond.isPending || !name.trim() || !email.trim() || !consent} onClick={() => respond.mutate("accepted")}><CheckCircle2 className="mr-2 h-4 w-4" /> Aceptar cotización</Button><Button variant="outline" disabled={respond.isPending || !name.trim() || !email.trim() || !consent} onClick={() => respond.mutate("rejected")}><XCircle className="mr-2 h-4 w-4" /> Rechazar</Button></div>
           <p className="text-xs text-muted-foreground">Documento comercial. No constituye factura ni DTE emitido ante el SII.</p>
         </Card>
-        <footer className="pb-6 text-center text-xs text-muted-foreground">{quote.issuer?.public_contact_email || quote.issuer?.public_contact_phone || ""} · Nüva One</footer>
+        <footer className="pb-6 text-center text-xs text-muted-foreground print:hidden">{quote.issuer?.public_contact_email || quote.issuer?.public_contact_phone || ""} · Nüva One</footer>
       </div>
     </main>
   );
