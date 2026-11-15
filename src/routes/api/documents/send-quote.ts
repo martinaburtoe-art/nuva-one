@@ -43,11 +43,23 @@ export const Route = createFileRoute("/api/documents/send-quote")({
 
         const { data: quote, error: quoteError } = await client
           .from("quotes")
-          .select("id,business_id,quote_number,customer_name,subject,total,status,valid_until")
+          .select("id,business_id,customer_id,customer_snapshot,quote_number,customer_name,subject,total,status,valid_until")
           .eq("id", quoteId)
           .eq("business_id", businessId)
           .maybeSingle();
         if (quoteError || !quote) return json({ error: "Cotización no encontrada" }, 404);
+        let authorizedRecipient = String((quote.customer_snapshot as Record<string, unknown> | null)?.email ?? "").trim().toLowerCase();
+        if (!authorizedRecipient && quote.customer_id) {
+          const { data: customer } = await client.from("customers")
+            .select("email")
+            .eq("id", quote.customer_id)
+            .eq("business_id", businessId)
+            .maybeSingle();
+          authorizedRecipient = String(customer?.email ?? "").trim().toLowerCase();
+        }
+        if (!authorizedRecipient || authorizedRecipient !== recipient) {
+          return json({ error: "El destinatario debe coincidir con el correo registrado del cliente en esta cotización" }, 403);
+        }
         if (!["draft", "sent", "viewed"].includes(quote.status) ||
           (quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10))) {
           return json({ error: "La cotización ya no admite envío" }, 409);
