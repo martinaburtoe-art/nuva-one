@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(19);
+SELECT plan(24);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000aa11'),
@@ -34,6 +34,10 @@ SELECT ok(has_function_privilege('anon', 'public.get_shared_quote(text)', 'EXECU
   'anonymous users can resolve a link only through the scoped quote RPC');
 SELECT ok(has_function_privilege('anon', 'public.respond_to_shared_quote(text,text,text,text,text)', 'EXECUTE'),
   'anonymous users can submit a customer response only through the scoped RPC');
+SELECT ok(has_function_privilege('authenticated', 'public.list_quote_share_links(uuid)', 'EXECUTE'),
+  'business members can list their own quote links');
+SELECT ok(NOT has_function_privilege('anon', 'public.list_quote_share_links(uuid)', 'EXECUTE'),
+  'anonymous users cannot enumerate quote links');
 
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa11', true);
@@ -70,6 +74,17 @@ SELECT is((SELECT status FROM public.quotes WHERE id = '00000000-0000-0000-0000-
 SELECT ok((SELECT responded_at IS NOT NULL AND response_email = 'cliente@example.cl'
   FROM public.document_share_links WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'),
   'acceptance evidence is persisted with timestamp and customer email');
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa11', true);
+SELECT is((SELECT count(*)::int FROM public.list_quote_share_links(
+  '00000000-0000-0000-0000-00000000cc11')), 1, 'business owner can inspect link lifecycle without seeing token hash');
+SELECT ok(public.revoke_quote_share_link((SELECT id FROM public.document_share_links
+  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11')),
+  'business owner can revoke a quote link');
+SELECT ok((SELECT revoked_at IS NOT NULL FROM public.document_share_links
+  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'),
+  'link revocation is timestamped');
+RESET ROLE;
 
 SET LOCAL ROLE anon;
 SELECT is(public.get_shared_quote(repeat('a',64)), NULL::jsonb,
