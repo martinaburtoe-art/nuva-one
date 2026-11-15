@@ -98,3 +98,35 @@ export const flowAdapter: PaymentAdapter = {
     }
   },
 };
+
+/**
+ * Read-only credential check. Queries the merchant's payment list for today
+ * (one row maximum), so connecting Flow never creates a charge or checkout.
+ */
+export async function validateFlowCredentials(
+  credentials: { apiKey: string; secretKey: string; environment: string },
+): Promise<{ ok: boolean; message?: string }> {
+  const params: Record<string, string> = {
+    apiKey: credentials.apiKey,
+    date: new Date().toISOString().slice(0, 10),
+    start: "0",
+    limit: "1",
+  };
+  params.s = sign(params, credentials.secretKey);
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetch(baseUrl(credentials.environment) + "/payment/getPayments?" + query, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    if (response.ok) return { ok: true };
+    return {
+      ok: false,
+      message: response.status === 401
+        ? "Flow rechazó las credenciales. Revisa API Key, Secret Key y ambiente."
+        : "Flow no pudo validar las credenciales. Comprueba que correspondan al ambiente seleccionado.",
+    };
+  } catch {
+    return { ok: false, message: "No se pudo conectar con Flow para validar las credenciales." };
+  }
+}
