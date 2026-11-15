@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(17);
+SELECT plan(18);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000aa11'),
