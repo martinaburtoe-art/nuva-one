@@ -505,7 +505,7 @@ function Sales() {
                 </Table>
               </div>
 
-              <div className="grid gap-3 p-3 md:hidden" aria-label="Ventas en formato móvil">
+              <section className="grid gap-3 p-3 md:hidden" aria-label="Ventas en formato móvil">
                 {sales.map((s) => (
                   <article key={s.id} className="min-w-0 rounded-xl border bg-background p-4 shadow-sm">
                     <div className="flex min-w-0 items-start justify-between gap-3">
@@ -553,7 +553,7 @@ function Sales() {
                     )}
                   </article>
                 ))}
-              </div>
+              </section>
             </>
           )}
           {!isLoading && salesPageData && salesPageData.pageCount > 1 && (
