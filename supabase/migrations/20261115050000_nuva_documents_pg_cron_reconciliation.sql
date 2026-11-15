@@ -5,11 +5,8 @@
 
 DO $migration$
 BEGIN
-  IF to_regclass('cron.job') IS NULL
-     OR to_regclass('vault.secrets') IS NULL
-     OR to_regclass('vault.decrypted_secrets') IS NULL
-     OR to_regprocedure('net.http_get(text,jsonb,jsonb,integer)') IS NULL THEN
-    RAISE NOTICE 'Supabase cron, Vault or pg_net is unavailable; skipping document reconciliation schedule.';
+  IF to_regclass('cron.job') IS NULL THEN
+    RAISE NOTICE 'pg_cron is unavailable; skipping document cron maintenance.';
     RETURN;
   END IF;
 
@@ -17,6 +14,13 @@ BEGIN
   PERFORM cron.unschedule(jobid)
   FROM cron.job
   WHERE jobname IN ('nuva-quotes-followup-daily', 'nuva-check-overdue-daily');
+
+  IF to_regclass('vault.secrets') IS NULL
+     OR to_regclass('vault.decrypted_secrets') IS NULL
+     OR to_regprocedure('net.http_get(text,jsonb,jsonb,integer)') IS NULL THEN
+    RAISE NOTICE 'Vault or pg_net is unavailable; skipping document reconciliation schedule.';
+    RETURN;
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM vault.secrets WHERE name = 'nuva_documents_cron_secret'
