@@ -226,6 +226,32 @@ function Invoices() {
     onError: (error: any) => toast.error(error?.message ?? "No se pudo crear el documento."),
   });
 
+  const onlinePayment = useMutation({
+    mutationFn: async (invoice: any) => {
+      if (!active?.id) throw new Error("No hay un negocio activo.");
+      const { data: authData } = await supabase.auth.getSession();
+      const accessToken = authData.session?.access_token;
+      if (!accessToken) throw new Error("Tu sesión expiró. Vuelve a iniciar sesión.");
+      const response = await fetch("/api/billing/payments/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ business_id: active.id, invoice_id: invoice.id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.payment_url) {
+        throw new Error(payload.error ?? "No se pudo crear el enlace de pago.");
+      }
+      return payload as { payment_url: string; amount: number; commerce_order: string };
+    },
+    onSuccess: (result) => {
+      window.location.assign(result.payment_url);
+    },
+    onError: (error: any) => toast.error(error?.message ?? "No se pudo iniciar el pago online."),
+  });
+
   const recordPayment = useMutation({
     mutationFn: async () => {
       if (!paymentInvoice) throw new Error("Selecciona un documento");
@@ -426,7 +452,14 @@ function Invoices() {
                             <Button size="sm" variant="ghost" onClick={() => setDetailInvoice(invoice)} title="Ver detalle"><Eye className="h-4 w-4" /></Button>
                             {invoice.status === "draft" && canWrite && <Button size="sm" variant="outline" disabled={issue.isPending} onClick={() => issue.mutate({ invoiceId: invoice.id, dueDate: localDate(new Date(Date.now() + 15 * 86400000)) })}>Emitir</Button>}
                             <Button size="sm" variant="ghost" onClick={() => void downloadInvoice(invoice)} title="Descargar PDF"><Download className="h-4 w-4" /></Button>
-                            {["issued", "partially_paid", "overdue"].includes(status) && canWrite && outstanding > 0 && <Button size="sm" variant="outline" onClick={() => openPayment(invoice)}>Registrar abono</Button>}
+                            {["issued", "partially_paid", "overdue"].includes(status) && canWrite && outstanding > 0 && (
+                              <>
+                                <Button size="sm" variant="outline" disabled={onlinePayment.isPending} onClick={() => onlinePayment.mutate(invoice)}>
+                                  {onlinePayment.isPending ? "Conectando…" : "Cobrar online"}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => openPayment(invoice)}>Registrar abono</Button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>

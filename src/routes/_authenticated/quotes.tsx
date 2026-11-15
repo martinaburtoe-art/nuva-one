@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText, Link2, History } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText, Link2, History, Mail } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness } from "@/lib/use-business";
@@ -479,6 +479,43 @@ function Quotes() {
       catch { toast.info("Enlace creado (cópialo manualmente): " + shareUrl); }
       await loadShareLinks(quote);
     } catch (error: any) { toast.error(error?.message ?? "No se pudo crear el enlace seguro."); }
+  }
+
+  async function sendQuoteByEmail(quote: any) {
+    if (!canWrite || !active?.id) return;
+    const linkedCustomer = (customers ?? []).find((entry: any) => entry.id === quote.customer_id);
+    const recipient = String(quote.customer_snapshot?.email || linkedCustomer?.email || "").trim();
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient)) {
+      toast.error("Agrega un correo válido al cliente antes de enviar la cotización.");
+      return;
+    }
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Tu sesión expiró. Vuelve a iniciar sesión.");
+      const bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: linkError } = await supabase.rpc("create_quote_share_link" as any, {
+        p_quote_id: quote.id,
+        p_token: token,
+        p_expires_at: expiresAt,
+      } as any);
+      if (linkError) throw linkError;
+      const response = await fetch("/api/documents/send-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ business_id: active.id, quote_id: quote.id, token, recipient }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) throw new Error(result.error ?? "No se pudo enviar la cotización.");
+      await qc.invalidateQueries({ queryKey: ["quotes", active.id] });
+      toast.success(`Cotización enviada al correo ${recipient}.`);
+      await loadShareLinks(quote);
+    } catch (error: any) {
+      toast.error(error?.message ?? "No se pudo enviar la cotización por correo.");
+    }
   }
 
   async function downloadPdf(quote: any): Promise<boolean> {
@@ -953,7 +990,10 @@ function Quotes() {
                           </Button>
                         )}
                         {(q.status === "draft" || q.status === "sent" || q.status === "viewed") && canWrite && (
-                          <Button variant="ghost" size="icon" title="Crear y copiar enlace seguro para el cliente" onClick={() => void createShareLink(q)}><Link2 className="h-4 w-4" /></Button>
+                          <>
+                            <Button variant="ghost" size="icon" title="Enviar cotización por correo electrónico" onClick={() => void sendQuoteByEmail(q)}><Mail className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" title="Crear y copiar enlace seguro para el cliente" onClick={() => void createShareLink(q)}><Link2 className="h-4 w-4" /></Button>
+                          </>
                         )}
                         {canWrite && <Button variant="ghost" size="icon" title="Administrar enlaces compartidos" onClick={() => void loadShareLinks(q)}><History className="h-4 w-4" /></Button>}
                         <Button
