@@ -6,7 +6,7 @@
 - Seguimiento de cotizaciones: recordatorio 3 días antes del vencimiento y el día de vencimiento.
 - Recordatorios de documentos internos: 3 días antes, el día del vencimiento, y 3 y 7 días después.
 - Cobro online de documentos internos mediante Flow.
-- Conciliación server-to-server: el webhook consulta el estado real en Flow, valida monto y commerce order, registra un abono idempotente y actualiza el saldo.
+- Conciliación server-to-server: el webhook y un proceso de respaldo cada 15 minutos consultan el estado real en Flow, validan monto y commerce order, registran el abono idempotente y actualizan el saldo.
 - Página pública de retorno en `/payment/confirmation`.
 - Ledger auditable de entregas y reintentos.
 
@@ -36,8 +36,8 @@ El endpoint de envío devuelve `503 DOCUMENT_EMAIL_PROVIDER_NOT_CONFIGURED` mien
 1. Abrir el proyecto `nuva-one` en Inngest.
 2. Copiar la signing key del entorno Production.
 3. Guardarla como `INNGEST_SIGNING_KEY` en Vercel.
-4. Desplegar una nueva versión y comprobar que Inngest sincronice la función `nuva-invoice-payment-reminders`.
-5. Confirmar el cron diario `TZ=America/Santiago 0 9 * * *`.
+4. Desplegar una nueva versión y comprobar que Inngest sincronice `nuva-invoice-payment-reminders` y `nuva-invoice-payment-reconciliation`.
+5. Confirmar el cron diario `TZ=America/Santiago 0 9 * * *` y la conciliación cada 15 minutos `*/15 * * * *`.
 
 Sin la signing key, la función está incluida en el código pero no se puede certificar como programada en producción.
 
