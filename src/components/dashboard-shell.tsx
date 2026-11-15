@@ -63,23 +63,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileModuleQuery, setMobileModuleQuery] = useState("");
   const [mobileCollapsedSections, setMobileCollapsedSections] = useState<string[]>([]);
-  const mobileMoreGroups = useMemo(() => {
-    const groups = new Map<string, (typeof nav)[number][]>();
-    mobileMoreNav.forEach((item) => {
-      const section = item.section ?? "Otros";
-      const current = groups.get(section) ?? [];
-      current.push(item);
-      groups.set(section, current);
-    });
-    return Array.from(groups.entries());
-  }, [mobileMoreNav]);
-  useEffect(() => {
-    if (!moreOpen || mobileModuleQuery.trim()) return;
-    const activeSection = mobileMoreNav.find((item) => isNavActive(item.to))?.section;
-    setMobileCollapsedSections(mobileMoreGroups
-      .map(([section]) => section)
-      .filter((section) => section !== activeSection));
-  }, [moreOpen, mobileModuleQuery, mobileMoreGroups, mobileMoreNav, pathname]);
   const playModuleMotion = (to: string) => {
     void navigate({ to });
   };
@@ -110,6 +93,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     () => splitMobileNavigation(visibleNav, mobileModuleQuery),
     [visibleNav, mobileModuleQuery],
   );
+  const mobileMoreGroups = useMemo(() => {
+    const groups = new Map<string, (typeof nav)[number][]>();
+    mobileMoreNav.forEach((item) => {
+      const section = item.section ?? "Otros";
+      const current = groups.get(section) ?? [];
+      current.push(item);
+      groups.set(section, current);
+    });
+    return Array.from(groups.entries());
+  }, [mobileMoreNav]);
+  useEffect(() => {
+    if (!moreOpen || mobileModuleQuery.trim()) return;
+    const activeSection = mobileMoreNav.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))?.section;
+    setMobileCollapsedSections(mobileMoreGroups
+      .map(([section]) => section)
+      .filter((section) => section !== activeSection));
+  }, [moreOpen, mobileModuleQuery, mobileMoreGroups, mobileMoreNav, pathname]);
   const visibleNavGroups = useMemo(() => {
     const groups = new Map<string, (typeof nav)[number][]>();
     visibleNav.forEach((item) => {
