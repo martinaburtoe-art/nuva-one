@@ -1,8 +1,21 @@
 BEGIN;
-SELECT plan(9);
+SELECT plan(11);
 
 SELECT has_column('public', 'payment_intents', 'invoice_id',
   'payment intents can reference an internal invoice');
+
+SELECT has_column('public', 'payment_intents', 'checkout_url',
+  'payment intents persist the provider checkout URL for safe reuse');
+
+SELECT ok(
+  EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE schemaname = 'public'
+      AND tablename = 'payment_intents'
+      AND indexname = 'payment_intents_one_pending_invoice_idx'
+  ),
+  'each internal invoice can have at most one pending checkout'
+);
 
 SELECT has_table('public', 'document_delivery_attempts',
   'document email delivery attempts are auditable');
