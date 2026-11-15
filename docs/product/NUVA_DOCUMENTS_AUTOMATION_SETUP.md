@@ -17,7 +17,7 @@
 | `FISCAL_CREDENTIALS_KEY` | Cifrado AES-256-GCM de credenciales de pasarelas por negocio. Debe ser una clave base64 de 32 bytes y no debe rotarse sin migración. | Generada y configurada en Production, Preview y Development. |
 | `RESEND_API_KEY` | Envío transaccional de correo. | Pendiente: crear una API key en Resend. |
 | `NUVA_DOCUMENTS_FROM_EMAIL` | Remitente verificado, por ejemplo `documentos@tu-dominio.cl`. | Pendiente: verificar el dominio y configurar el remitente. |
-| `INNGEST_SIGNING_KEY` | Firma de la integración Inngest para sincronizar y ejecutar cron jobs de producción. | Pendiente: copiar la signing key del entorno de Nüva One en Inngest. |
+| `INNGEST_SIGNING_KEY` | Firma de la integración Inngest para sincronizar y ejecutar cron jobs de producción. | Presente en Vercel Production. Falta comprobar sincronización del endpoint y ejecución de los cron tras el despliegue de esta fase. |
 
 No incluir estos valores en Git, archivos públicos, variables `VITE_*), logs ni respuestas de API.
 
