@@ -55,7 +55,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
-AS $
+AS $$
 BEGIN
   IF ROW(
     OLD.customer_name, OLD.customer_snapshot, OLD.subject, OLD.items,
@@ -77,7 +77,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS trg_prevent_shared_quote_content_mutation ON public.quotes;
 CREATE TRIGGER trg_prevent_shared_quote_content_mutation
