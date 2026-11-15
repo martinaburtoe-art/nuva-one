@@ -521,9 +521,9 @@ function Quotes() {
             shareUrl,
             expiresAt,
           });
-          window.location.href = mailtoUrl;
-          toast.info("No hay un proveedor de correo conectado. Se preparó el mensaje en tu aplicación de correo con el enlace seguro; envíalo desde allí.");
           await loadShareLinks(quote);
+          toast.info("No hay un proveedor de correo conectado. Se preparó el mensaje en tu aplicación de correo con el enlace seguro; envíalo desde allí.");
+          window.location.href = mailtoUrl;
           return;
         }
         throw new Error(result.error ?? "No se pudo enviar la cotización.");
