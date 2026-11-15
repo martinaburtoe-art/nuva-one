@@ -124,3 +124,13 @@ body[data-nuva-surface="app"] .nuva-accent-admin { --nuva-module-accent: var(--n
 .nuva-app[data-nuva-section] .nuva-module-header {
   border-bottom: 1px solid color-mix(in oklab, var(--nuva-page-accent) 20%, var(--nuva-line));
 }
+
+.nuva-app[data-nuva-section] > div > main {
+  background-image: radial-gradient(ellipse at 94% 0%, color-mix(in oklab, var(--nuva-page-accent) 8%, transparent), transparent 42%);
+}
+.nuva-app[data-nuva-section] header[aria-label="Contexto del espacio de trabajo"] > span:first-child {
+  color: var(--nuva-page-accent);
+}
+.nuva-app[data-nuva-section] .nuva-module-header {
+  padding-bottom: .85rem;
+}
