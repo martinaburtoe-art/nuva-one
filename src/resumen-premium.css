@@ -2183,3 +2183,153 @@
   .nuva-app .nuva-resumen-hero-side { padding: 16px 0 0; border-left: 0; border-top: 1px solid rgb(255 255 255 / .16); }
   .nuva-app .nuva-resumen-kpi { min-height: 132px; padding: 15px; }
 }
+
+/* ── Distinct workspace personalities ────────────────────────────────────
+   Each workspace gets a recognizable accent, surface rhythm and card shape.
+   The common Nüva typography/grid remains shared; data and permissions do not.
+*/
+.nuva-app .nuva-workspace {
+  --workspace-accent: #818cf8;
+  --workspace-accent-soft: rgb(129 140 248 / .10);
+  --workspace-accent-line: rgb(129 140 248 / .32);
+  position: relative;
+  isolation: isolate;
+  border-radius: 22px;
+  background-image: radial-gradient(ellipse at 96% 0%, var(--workspace-accent-soft), transparent 38%);
+}
+.nuva-app .nuva-workspace .nuva-module-header {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 0 17px;
+  border-bottom: 1px solid var(--workspace-accent-line);
+}
+.nuva-app .nuva-workspace .nuva-module-header::before {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 52px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--workspace-accent);
+  box-shadow: 0 0 18px color-mix(in oklab, var(--workspace-accent) 50%, transparent);
+  content: "";
+}
+.nuva-app .nuva-workspace .nuva-module-title {
+  color: color-mix(in oklab, var(--workspace-accent) 38%, #181827);
+  letter-spacing: -.045em;
+}
+.nuva-app .nuva-workspace .nuva-module-description { max-width: 66ch; }
+.nuva-app .nuva-workspace [class*="rounded-2xl"][class*="border"] {
+  border-color: color-mix(in oklab, var(--workspace-accent) 18%, var(--nuva-line, #e7e7ee));
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.nuva-app .nuva-workspace a[class*="rounded-2xl"] {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--workspace-accent-soft), white 70%);
+}
+.nuva-app .nuva-workspace a[class*="rounded-2xl"]:hover {
+  border-color: var(--workspace-accent);
+  box-shadow: 0 12px 28px -22px var(--workspace-accent);
+  transform: translateY(-1px);
+}
+
+.nuva-app .nuva-workspace--sales {
+  --workspace-accent: #f43f5e;
+  --workspace-accent-soft: rgb(251 113 133 / .11);
+  --workspace-accent-line: rgb(251 113 133 / .32);
+}
+.nuva-app .nuva-workspace--sales > [class*="rounded"] {
+  border-radius: 18px;
+}
+.nuva-app .nuva-workspace--sales button[class*="shadow-elegant"] {
+  background: linear-gradient(110deg, #e11d48, #fb7185);
+  box-shadow: 0 9px 24px -12px rgb(225 29 72 / .72);
+}
+.nuva-app .nuva-workspace--sales button[class*="shadow-elegant"]:hover {
+  filter: saturate(1.12) brightness(1.04);
+  box-shadow: 0 12px 28px -12px rgb(225 29 72 / .62);
+}
+
+.nuva-app .nuva-workspace--inventory {
+  --workspace-accent: #0891b2;
+  --workspace-accent-soft: rgb(34 211 238 / .12);
+  --workspace-accent-line: rgb(6 182 212 / .32);
+}
+.nuva-app .nuva-workspace--inventory > div[role="status"] {
+  border: 1px solid rgb(6 182 212 / .3);
+  border-left: 4px solid #06b6d4;
+  border-radius: 14px;
+  background: linear-gradient(105deg, rgb(34 211 238 / .12), rgb(236 254 255 / .8));
+  color: #155e75;
+}
+
+.nuva-app .nuva-workspace--finance {
+  --workspace-accent: #7c3aed;
+  --workspace-accent-soft: rgb(167 139 250 / .12);
+  --workspace-accent-line: rgb(167 139 250 / .36);
+}
+.nuva-app .nuva-workspace--finance [class*="rounded-2xl"][class*="border"] {
+  border-radius: 18px;
+}
+.nuva-app .nuva-workspace--finance [class*="bg-muted"] {
+  background: linear-gradient(135deg, rgb(167 139 250 / .10), rgb(245 243 255 / .78));
+}
+
+.nuva-app .nuva-workspace--people {
+  --workspace-accent: #ea580c;
+  --workspace-accent-soft: rgb(251 146 60 / .12);
+  --workspace-accent-line: rgb(251 146 60 / .34);
+}
+.nuva-app .nuva-workspace--people a[class*="rounded-2xl"] {
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 18px;
+  border-left: 3px solid color-mix(in oklab, #fb923c 70%, white);
+}
+.nuva-app .nuva-workspace--people a[class*="rounded-2xl"]:hover {
+  border-left-color: #ea580c;
+  background: linear-gradient(120deg, rgb(251 146 60 / .16), white 78%);
+}
+.nuva-app .nuva-workspace--people [class*="rounded-xl"][class*="border"] {
+  border-color: rgb(251 146 60 / .24);
+}
+
+.nuva-app .nuva-workspace--analytics {
+  --workspace-accent: #0d9488;
+  --workspace-accent-soft: rgb(45 212 191 / .11);
+  --workspace-accent-line: rgb(45 212 191 / .34);
+}
+.nuva-app .nuva-workspace--analytics [class*="rounded-2xl"][class*="border"] {
+  border-radius: 16px;
+}
+.nuva-app .nuva-workspace--analytics svg.recharts-surface {
+  overflow: visible;
+}
+.nuva-app .nuva-workspace--analytics .recharts-cartesian-grid line {
+  stroke: rgb(148 163 184 / .24);
+}
+.nuva-app .nuva-workspace--analytics .recharts-tooltip-wrapper {
+  filter: drop-shadow(0 10px 20px rgb(15 23 42 / .12));
+}
+
+@media (max-width: 640px) {
+  .nuva-app .nuva-workspace { border-radius: 0; }
+  .nuva-app .nuva-workspace .nuva-module-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+  }
+  .nuva-app .nuva-workspace .nuva-module-header > div:last-child { width: 100%; }
+  .nuva-app .nuva-workspace--people a[class*="rounded-2xl"] { min-height: 88px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-workspace [class*="rounded-2xl"][class*="border"],
+  .nuva-app .nuva-workspace a[class*="rounded-2xl"] { transition: none; }
+}
