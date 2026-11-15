@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useActiveBusiness, useMyRole, canManageBusiness } from "@/lib/use-business";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, Mail, ShieldCheck, Unplug, Wallet } from "lucide-react";
+import { Mail, ShieldCheck, Unplug, Wallet } from "lucide-react";
 
 type ProviderStatus = {
   resend_configured: boolean;
