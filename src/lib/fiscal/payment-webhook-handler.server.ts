@@ -81,14 +81,43 @@ export async function handlePaymentWebhook(
   );
 
   if (statusResult.status === "paid") {
-    if (intent.sale_id) {
-      await supabaseAdmin.from("payments").insert({
+    // A successful provider status is necessary but not sufficient: bind the
+    // payment to the exact order and amount stored before accepting money.
+    if (
+      !statusResult.ok ||
+      statusResult.amount == null ||
+      Number(statusResult.amount) !== Number(intent.amount) ||
+      statusResult.commerceOrder !== intent.commerce_order
+    ) {
+      return { outcome: "provider_payment_mismatch" };
+    }
+
+    if (intent.invoice_id) {
+      const { error: reconcileError } = await supabaseAdmin.rpc(
+        "record_provider_internal_invoice_payment",
+        {
+          p_invoice_id: intent.invoice_id,
+          p_amount: intent.amount,
+          p_provider: provider,
+          p_provider_reference: token,
+          p_commerce_order: intent.commerce_order,
+        },
+      );
+      if (reconcileError) {
+        // Keep the webhook unprocessed so provider retries / operational
+        // reconciliation can safely attempt the same idempotent RPC again.
+        throw reconcileError;
+      }
+    } else if (intent.sale_id) {
+      const { error: paymentError } = await supabaseAdmin.from("payments").insert({
         business_id: intent.business_id,
         sale_id: intent.sale_id,
         amount: intent.amount,
         method: provider,
       });
+      if (paymentError && paymentError.code !== "23505") throw paymentError;
     }
+
     await supabaseAdmin
       .from("payment_intents")
       .update({ status: "paid", resolved_at: new Date().toISOString() })
