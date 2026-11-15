@@ -446,3 +446,21 @@
     animation: none !important;
   }
 }
+
+/* Responsive module workspaces: keep page actions usable instead of squeezing titles. */
+@media (max-width: 639px) {
+  .nuva-app .nuva-module-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .nuva-app .nuva-module-header > div:last-child {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+  }
+  .nuva-app .nuva-module-header > div:last-child > * {
+    max-width: 100%;
+  }
+}

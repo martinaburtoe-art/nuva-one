@@ -25,7 +25,7 @@ export function PageHeader({
           <h1 className="nuva-module-title">{title}</h1>
           {description && <p className="nuva-module-description">{description}</p>}
         </div>
-        {resolvedAction && <div className="flex shrink-0 flex-wrap items-center gap-2 [&>*]:transition-all [&>*]:duration-200">{resolvedAction}</div>}
+        {resolvedAction && <div className="flex min-w-0 flex-wrap items-center gap-2 [&>*]:max-w-full [&>*]:transition-all [&>*]:duration-200">{resolvedAction}</div>}
       </header>
       {showOperatingPulse && <NuvaOperatingPulse />}
     </>
