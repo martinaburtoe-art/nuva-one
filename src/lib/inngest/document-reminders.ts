@@ -61,7 +61,7 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
       month: "2-digit",
       day: "2-digit",
     }).format(today);
-    const startDate = new Date(`${todayKey}T12:00:00-03:00`);
+    const startDate = new Date(`${todayKey}T12:00:00Z`);
     const minDate = new Date(startDate);
     minDate.setDate(minDate.getDate() - 7);
     const maxDate = new Date(startDate);
