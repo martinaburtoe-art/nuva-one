@@ -116,8 +116,16 @@ BEGIN
   ) INTO v_issuer FROM public.businesses b WHERE b.id = v_quote.business_id;
   RETURN jsonb_build_object(
     'quote_number', v_quote.quote_number, 'customer_name', v_quote.customer_name,
-    'customer_snapshot', v_quote.customer_snapshot, 'subject', v_quote.subject,
-    'items', v_quote.items, 'subtotal', v_quote.subtotal,
+    'customer_snapshot', jsonb_strip_nulls(jsonb_build_object('tax_id', v_quote.customer_snapshot->>'tax_id')), 'subject', v_quote.subject,
+    'items', COALESCE((
+      SELECT jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+        'name', item->>'name', 'description', item->>'description',
+        'qty', item->'qty', 'price', item->'price', 'unit', item->>'unit'
+      )))
+      FROM jsonb_array_elements(
+        CASE WHEN jsonb_typeof(v_quote.items) = 'array' THEN v_quote.items ELSE '[]'::jsonb END
+      ) AS item
+    ), '[]'::jsonb), 'subtotal', v_quote.subtotal,
     'discount_pct', v_quote.discount_pct, 'tax', v_quote.tax, 'total', v_quote.total,
     'tax_treatment', v_quote.tax_treatment, 'vat_rate', v_quote.vat_rate,
     'price_basis', v_quote.price_basis, 'valid_until', v_quote.valid_until,
