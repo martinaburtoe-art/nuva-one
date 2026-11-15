@@ -16,6 +16,7 @@ import { useBizList, fmtCLP } from "@/lib/biz-data";
 import { calculateQuoteLineNetAmount, calculateQuoteTotals } from "@/lib/quote-calculations";
 import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
+import { buildInvoiceMailtoUrl } from "@/lib/document-email-fallback";
 
 export const Route = createFileRoute("/_authenticated/invoices")({
   head: () => ({ meta: [{ title: "Documentos de cobro — Nüva One" }] }),
@@ -281,7 +282,7 @@ function Invoices() {
     onError: (error: any) => toast.error(error?.message ?? "No se pudo registrar el abono."),
   });
 
-  async function downloadInvoice(invoice: any) {
+  async function downloadInvoice(invoice: any): Promise<boolean> {
     try {
       const { generateInvoicePdf } = await import("@/lib/quote-pdf");
       const customer = invoice.customer_snapshot ?? { name: invoice.customer_name };
@@ -322,8 +323,10 @@ function Invoices() {
           : Math.max(0, Number(invoice.total) - (paidByInvoice.get(invoice.id) ?? 0)),
         documentStatus: invoice.status,
       });
+      return true;
     } catch (error: any) {
       toast.error(error?.message ?? "No se pudo generar el PDF del documento.");
+      return false;
     }
   }
 
@@ -640,6 +643,24 @@ function Invoices() {
                     <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold"><History className="h-4 w-4" /> Historial de actividad</h3>
                     {detailEvents.length === 0 ? <p className="text-sm text-muted-foreground">Sin eventos registrados.</p> : <ol className="space-y-2">{detailEvents.map((event: any) => <li key={event.id} className="flex gap-3 rounded-lg border p-3"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" /><div><div className="text-sm font-medium">{event.event_type.replaceAll("_", " ")}</div><div className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString("es-CL")}</div></div></li>)}</ol>}
                   </section>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={async () => {
+                      const recipient = String(detailInvoice.customer_snapshot?.email || customers.find((entry: any) => entry.id === detailInvoice.customer_id)?.email || "").trim();
+                      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) { toast.error("Agrega un correo válido al cliente antes de preparar el mensaje."); return; }
+                      const downloaded = await downloadInvoice(detailInvoice);
+                      if (!downloaded) return;
+                      window.location.href = buildInvoiceMailtoUrl({
+                        recipient,
+                        invoiceNumber: detailInvoice.invoice_number,
+                        customerName: detailInvoice.customer_name,
+                        totalLabel: fmtCLP(Number(detailInvoice.total)),
+                        balanceLabel: fmtCLP(Math.max(0, Number(detailInvoice.total) - paid)),
+                      });
+                      toast.info("PDF descargado. Adjunta el archivo en tu correo antes de enviarlo.");
+                    }}>
+                      Preparar correo con PDF
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground">Documento comercial interno. No corresponde a una factura electrónica ni a un DTE emitido ante el SII.</p>
                 </div>
               );

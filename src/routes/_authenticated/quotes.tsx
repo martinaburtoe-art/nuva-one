@@ -39,6 +39,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { calculateQuoteLineNetAmount, calculateQuoteTotals, formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
 // quote-pdf is imported dynamically inside the handler so jspdf never enters the SSR/worker bundle.
 import { toast } from "sonner";
+import { buildQuoteMailtoUrl } from "@/lib/document-email-fallback";
 
 export const Route = createFileRoute("/_authenticated/quotes")({
   head: () => ({ meta: [{ title: "Cotizaciones — Nüva One" }] }),
@@ -509,7 +510,24 @@ function Quotes() {
         body: JSON.stringify({ business_id: active.id, quote_id: quote.id, token, recipient }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.ok) throw new Error(result.error ?? "No se pudo enviar la cotización.");
+      if (!response.ok || !result.ok) {
+        if (result.code === "DOCUMENT_EMAIL_PROVIDER_NOT_CONFIGURED") {
+          const shareUrl = `${window.location.origin}/quote/${token}`;
+          const mailtoUrl = buildQuoteMailtoUrl({
+            recipient,
+            quoteNumber: quote.quote_number,
+            customerName: quote.customer_name,
+            totalLabel: fmtCLP(Number(quote.total)),
+            shareUrl,
+            expiresAt,
+          });
+          await loadShareLinks(quote);
+          toast.info("No hay un proveedor de correo conectado. Se preparó el mensaje en tu aplicación de correo con el enlace seguro; envíalo desde allí.");
+          window.location.href = mailtoUrl;
+          return;
+        }
+        throw new Error(result.error ?? "No se pudo enviar la cotización.");
+      }
       await qc.invalidateQueries({ queryKey: ["quotes", active.id] });
       toast.success(`Cotización enviada al correo ${recipient}.`);
       await loadShareLinks(quote);
