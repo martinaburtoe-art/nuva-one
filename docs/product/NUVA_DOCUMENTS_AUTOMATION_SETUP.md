@@ -14,10 +14,10 @@
 
 | Variable | Uso | Estado de activación |
 |---|---|---|
-| `FISCAL_CREDENTIALS_KEY` | Cifrado AES-256-GCM de credenciales de pasarelas por negocio. Debe ser una clave base64 de 32 bytes y no debe rotarse sin migración. | Generada y configurada en Production, Preview y Development. |
+| `FISCAL_CREDENTIALS_KEY` | Cifrado AES-256-GCM de credenciales de pasarelas por negocio. Debe ser una clave base64 de 32 bytes y no debe rotarse sin migración. | La variable existe en Vercel, pero su valor está vacío; debe configurarse antes de guardar credenciales Flow. |
 | `RESEND_API_KEY` | Envío transaccional de correo. | Pendiente: crear una API key en Resend. |
 | `NUVA_DOCUMENTS_FROM_EMAIL` | Remitente verificado, por ejemplo `documentos@tu-dominio.cl`. | Pendiente: verificar el dominio y configurar el remitente. |
-| `INNGEST_SIGNING_KEY` | Firma de la integración Inngest para sincronizar y ejecutar cron jobs de producción. | Presente en Vercel Production. Falta comprobar sincronización del endpoint y ejecución de los cron tras el despliegue de esta fase. |
+| `INNGEST_SIGNING_KEY` | Firma de la integración Inngest para sincronizar y ejecutar cron jobs de producción. | La variable existe en Vercel Production, pero su valor está vacío; falta copiar la clave real desde Inngest y certificar la sincronización. |
 
 No incluir estos valores en Git, archivos públicos, variables `VITE_*), logs ni respuestas de API.
 
