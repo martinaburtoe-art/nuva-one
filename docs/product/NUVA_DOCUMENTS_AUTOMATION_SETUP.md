@@ -62,3 +62,12 @@ Cada empresa debe conectar sus propias credenciales Flow desde la sección de in
 ## Límites
 
 Los documentos internos no son DTE. Esta etapa no implementa emisión SII, firma electrónica avanzada, OCR ni facturación tributaria. Los recordatorios y envíos automáticos requieren las credenciales externas descritas arriba.
+
+## Fallback operativo sin proveedores externos
+
+- Si `RESEND_API_KEY` o `NUVA_DOCUMENTS_FROM_EMAIL` no están configurados, el envío de cotizaciones prepara un borrador en la aplicación de correo del usuario con el enlace público seguro. El estado de entrega no cambia a `sent`; el usuario debe enviar el mensaje.
+- Para documentos internos de cobro, la interfaz descarga el PDF y prepara un borrador de correo con total, saldo y aclaración tributaria. El usuario debe adjuntar el PDF y enviarlo.
+- El registro de abonos manuales continúa disponible y es la alternativa operativa cuando el negocio no ha conectado Flow.
+- Los cobros online requieren credenciales Flow válidas del negocio. Nunca se simula un checkout ni se marca un pago como confirmado desde el navegador.
+- Los recordatorios automáticos y la conciliación programada siguen dependiendo de que Inngest sincronice las funciones con una signing key válida. No se presentan como activos mientras esa integración no esté certificada.
+- `FISCAL_CREDENTIALS_KEY` se generó y guardó como secreto AES-256-GCM de 32 bytes en Vercel para Production, Preview y Development. La comprobación de producción no encontró credenciales de pasarela de negocio almacenadas al generar la clave; mantenerla estable y no rotarla sin migración.
