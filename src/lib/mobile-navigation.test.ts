@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitMobileNavigation } from "@/lib/mobile-navigation";
+import { groupMobileNavigation, splitMobileNavigation } from "@/lib/mobile-navigation";
 
 const items = [
   { to: "/dashboard", label: "Resumen", section: "Operación" },
@@ -47,5 +47,28 @@ describe("splitMobileNavigation", () => {
     const result = splitMobileNavigation(items);
     const all = [...result.primary, ...result.more];
     expect(new Set(all.map((item) => item.to)).size).toBe(items.length);
+  });
+});
+
+describe("groupMobileNavigation", () => {
+  it("groups secondary modules by section and preserves section and item order", () => {
+    const grouped = groupMobileNavigation([
+      { to: "/customers", label: "Clientes", section: "Ventas y clientes" },
+      { to: "/quotes", label: "Cotizaciones", section: "Ventas y clientes" },
+      { to: "/finance", label: "Finanzas", section: "Finanzas" },
+      { to: "/help", label: "Ayuda" },
+    ]);
+    expect(grouped.map(([section]) => section)).toEqual([
+      "Ventas y clientes", "Finanzas", "Otros",
+    ]);
+    expect(grouped[0][1].map((item) => item.to)).toEqual(["/customers", "/quotes"]);
+    expect(grouped[2][1].map((item) => item.to)).toEqual(["/help"]);
+  });
+
+  it("does not mutate or drop authorized navigation items", () => {
+    const source = [...items];
+    const grouped = groupMobileNavigation(source);
+    expect(grouped.flatMap(([, entries]) => entries)).toEqual(source);
+    expect(source).toEqual(items);
   });
 });
