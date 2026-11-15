@@ -19,8 +19,19 @@ export const nuvaInvoicePaymentReconciliation = inngest.createFunction(
       auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
     }) as any;
 
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    await step.run("expire-stale-invoice-checkouts", async () => {
+      const { error } = await db.from("payment_intents")
+        .update({ status: "expired" })
+        .eq("provider", "flow")
+        .eq("status", "pending")
+        .not("invoice_id", "is", null)
+        .lt("created_at", cutoff);
+      if (error) throw error;
+      return { cutoff };
+    });
+
     const pending = await step.run("load-pending-invoice-payment-intents", async () => {
-      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       const { data, error } = await db
         .from("payment_intents")
         .select("id,provider,token")
