@@ -24,8 +24,6 @@ BEGIN
 END;
 $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS payment_intents_provider_token_unique
-  ON public.payment_intents(provider, token);
 CREATE UNIQUE INDEX IF NOT EXISTS payment_webhook_events_provider_token_unique
   ON public.payment_webhook_events(provider, token);
 
