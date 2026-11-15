@@ -83,7 +83,8 @@ export const Route = createFileRoute("/api/billing/payments/create")({
         const adapter = getPaymentAdapter(integration.provider);
         if (!adapter) return new Response(JSON.stringify({ error: "Proveedor de pago no soportado" }), { status: 400 });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { supabaseAdmin: adminClient } = await import("@/integrations/supabase/client.server");
+        const supabaseAdmin = adminClient as any;
         if (invoiceId) {
           const { data: pendingIntent } = await supabaseAdmin
             .from("payment_intents" as any)
