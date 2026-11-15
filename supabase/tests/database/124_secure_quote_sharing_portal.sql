@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(26);
+SELECT plan(28);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000aa11'),
@@ -52,6 +52,10 @@ SELECT ok(
    FROM public.document_share_links WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'),
   'database stores only a one-way token hash'
 );
+SELECT ok(public.create_quote_share_link(
+  '00000000-0000-0000-0000-00000000cc11',
+  repeat('b',64), now() + interval '7 days'
+) IS NOT NULL, 'a second recipient link can be created after the first view');
 
 SET LOCAL ROLE anon;
 SELECT is(public.get_shared_quote(repeat('a',64))->>'customer_name',
@@ -67,6 +71,11 @@ SELECT is(public.get_shared_quote(repeat('a',64))->>'status',
 SELECT is((SELECT count(*)::int FROM public.document_share_events
   WHERE quote_id = '00000000-0000-0000-0000-00000000cc11' AND event_type = 'viewed'),
   1, 'reopening a viewed quote does not duplicate the view event');
+SELECT is(public.get_shared_quote(repeat('b',64))->>'status',
+  'viewed', 'a second link can be viewed after the quote has already been viewed');
+SELECT is((SELECT count(*)::int FROM public.document_share_events
+  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11' AND event_type = 'viewed'),
+  2, 'each distinct recipient link records its first view exactly once');
 SELECT is(public.respond_to_shared_quote(
   repeat('a',64), 'accepted', 'Cliente Receptor', 'cliente@example.cl',
   'He revisado y acepto esta cotización en su versión compartida.'
