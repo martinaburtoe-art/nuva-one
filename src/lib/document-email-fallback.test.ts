@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildQuoteMailtoUrl } from "./document-email-fallback";
+import { buildInvoiceMailtoUrl, buildQuoteMailtoUrl } from "./document-email-fallback";
 
 describe("buildQuoteMailtoUrl", () => {
   it("prepares a client email with the secure quote link and expiry", () => {
@@ -32,5 +32,27 @@ describe("buildQuoteMailtoUrl", () => {
     });
 
     expect(result).toContain("COT-");
+  });
+});
+
+describe("buildInvoiceMailtoUrl", () => {
+  it("prepares an honest invoice email draft with the PDF attachment reminder", () => {
+    const result = buildInvoiceMailtoUrl({
+      recipient: "cliente@example.cl",
+      invoiceNumber: 123,
+      customerName: "Comercial Ñuble",
+      totalLabel: "$119.000",
+      balanceLabel: "$59.500",
+    });
+    const parsed = new URL(result);
+    const body = parsed.searchParams.get("body") ?? "";
+
+    expect(parsed.protocol).toBe("mailto:");
+    expect(decodeURIComponent(parsed.pathname)).toBe("cliente@example.cl");
+    expect(parsed.searchParams.get("subject")).toContain("FAC-000123");
+    expect(body).toContain("$119.000");
+    expect(body).toContain("$59.500");
+    expect(body).toContain("Adjunta ese archivo");
+    expect(body).toContain("no constituye un DTE");
   });
 });
