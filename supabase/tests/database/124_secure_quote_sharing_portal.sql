@@ -63,9 +63,11 @@ SELECT ok(NOT ((public.get_shared_quote(repeat('a',64))->'items'->0) ? 'product_
   'public quote payload omits internal catalog identifiers');
 SELECT is(public.get_shared_quote(repeat('a',64))->>'status',
   'viewed', 'opening a sent quote records its viewed state');
+RESET ROLE;
 SELECT is((SELECT count(*)::int FROM public.document_share_events
   WHERE quote_id = '00000000-0000-0000-0000-00000000cc11' AND event_type = 'viewed'),
   1, 'reopening a viewed quote does not duplicate the view event');
+SET LOCAL ROLE anon;
 RESET ROLE;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa11', true);
@@ -77,9 +79,11 @@ RESET ROLE;
 SET LOCAL ROLE anon;
 SELECT is(public.get_shared_quote(repeat('b',64))->>'status',
   'viewed', 'a second link can be viewed after the quote has already been viewed');
+RESET ROLE;
 SELECT is((SELECT count(*)::int FROM public.document_share_events
   WHERE quote_id = '00000000-0000-0000-0000-00000000cc11' AND event_type = 'viewed'),
   2, 'each distinct recipient link records its first view exactly once');
+SET LOCAL ROLE anon;
 SELECT is(public.respond_to_shared_quote(
   repeat('a',64), 'accepted', 'Cliente Receptor', 'cliente@example.cl',
   'He revisado y acepto esta cotización en su versión compartida.'
