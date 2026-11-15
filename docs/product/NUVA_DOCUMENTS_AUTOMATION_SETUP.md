@@ -56,7 +56,7 @@ Cada empresa debe conectar sus propias credenciales Flow desde la sección de in
 
 - `document_delivery_attempts.status = sent`: Resend aceptó el mensaje y devolvió un ID. No garantiza que haya llegado a la bandeja de entrada.
 - `payment_intents.status = paid`: el proveedor confirmó el pago y la conciliación del documento terminó.
-- Los intentos pendientes antiguos se expiran al cambiar el saldo o después de 48 horas.
+- Los intentos pendientes se expiran al confirmar un pago y, al solicitar un nuevo checkout, si superan 48 horas o si el saldo cambió.
 - Un pago confirmado invalida los enlaces de checkout pendientes de ese documento.
 
 ## Límites
