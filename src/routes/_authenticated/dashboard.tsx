@@ -415,7 +415,7 @@ function Dashboard() {
             <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">Los indicadores se habilitan según la evidencia disponible en tus módulos. Las funciones aún no implementadas se mantienen identificadas como desarrollo, sin estimaciones ni cifras inventadas.</p>
           </section>
         )}
-        <section className="nuva-resumen-hero" aria-label="Resultado financiero del período">
+        <section className="nuva-resumen-hero" data-accent="intelligence" aria-label="Resultado financiero del período">
           <div className="nuva-resumen-hero-main">
             <div className="nuva-resumen-hero-kicker"><span className="nuva-resumen-hero-spark" aria-hidden="true" /> LECTURA EJECUTIVA <span aria-hidden="true">·</span> {financialPeriodLabel}</div>
             <h2>Resultado del período</h2>
@@ -535,22 +535,22 @@ function Dashboard() {
         )}
 
         <section className="nuva-resumen-kpi-grid" aria-label="Indicadores principales">
-          <article className="nuva-resumen-kpi">
+          <article className="nuva-resumen-kpi" data-accent="success">
             <div className="nuva-resumen-kpi-top"><span>INGRESOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
             <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
             <p>{financialPeriodLabel}</p>
           </article>
-          <article className="nuva-resumen-kpi">
+          <article className="nuva-resumen-kpi" data-accent="sales">
             <div className="nuva-resumen-kpi-top"><span>GASTOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
             <strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong>
             <p>{financialPeriodLabel}</p>
           </article>
-          <article className="nuva-resumen-kpi">
+          <article className="nuva-resumen-kpi" data-accent="inventory">
             <div className="nuva-resumen-kpi-top"><span>INVENTARIO AL COSTO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
             <strong>{inventoryQuery.data?.inventoryValue === null ? "Costo incompleto" : inventoryQuery.data ? fmtCLP(inventoryQuery.data.inventoryValue) : "—"}</strong>
             <p>{inventoryQuery.data?.inventoryValue === null ? "Completa el costo de adquisición y revisa cantidades" : `${inventoryQuery.data?.productsCount ?? "—"} productos registrados`}</p>
           </article>
-          <Link to="/quotes" className="nuva-resumen-kpi nuva-resumen-kpi-action" aria-label="Abrir cotizaciones">
+          <Link to="/quotes" data-accent="intelligence" className="nuva-resumen-kpi nuva-resumen-kpi-action" aria-label="Abrir cotizaciones">
             <div className="nuva-resumen-kpi-top"><span>COTIZACIONES ABIERTAS</span><span className="nuva-resumen-kpi-icon"><FileText className="h-4 w-4" /></span></div>
             <strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "No disponible" : integrations.pendingQuotes ?? 0}</strong>
             <p>{quotesQuery.isError ? "Revisa la conexión de cotizaciones" : "Ver y dar seguimiento"}</p>
@@ -558,7 +558,7 @@ function Dashboard() {
         </section>
 
         <section className="mb-5 grid gap-3 lg:grid-cols-2" aria-label="Centro de documentos">
-          <Card className="flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
+          <Card className="nuva-resumen-document-card nuva-accent-sales flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
               <div className="min-w-0">
@@ -569,7 +569,7 @@ function Dashboard() {
             </div>
             <Link to="/quotes" className="w-full sm:w-fit"><Button className="w-full sm:w-auto">Nueva cotización <ArrowUpRight className="ml-2 h-4 w-4" /></Button></Link>
           </Card>
-          <Card className="flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
+          <Card className="nuva-resumen-document-card nuva-accent-finance flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
               <div className="min-w-0">
