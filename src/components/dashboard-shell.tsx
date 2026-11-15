@@ -14,7 +14,7 @@ import { GlobalSearch } from "@/components/global-search";
 import { ModuleSearch } from "@/components/module-search";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { splitMobileNavigation } from "@/lib/mobile-navigation";
+import { groupMobileNavigation, splitMobileNavigation } from "@/lib/mobile-navigation";
 
 const nav = [
   { to: "/dashboard", label: "Resumen", icon: LayoutDashboard, module: "dashboard", section: "General" },
@@ -93,16 +93,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     () => splitMobileNavigation(visibleNav, mobileModuleQuery),
     [visibleNav, mobileModuleQuery],
   );
-  const mobileMoreGroups = useMemo(() => {
-    const groups = new Map<string, (typeof nav)[number][]>();
-    mobileMoreNav.forEach((item) => {
-      const section = item.section ?? "Otros";
-      const current = groups.get(section) ?? [];
-      current.push(item);
-      groups.set(section, current);
-    });
-    return Array.from(groups.entries());
-  }, [mobileMoreNav]);
+  const mobileMoreGroups = useMemo(
+    () => groupMobileNavigation(mobileMoreNav),
+    [mobileMoreNav],
+  );
   useEffect(() => {
     if (!moreOpen || mobileModuleQuery.trim()) return;
     const activeSection = mobileMoreNav.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))?.section;
