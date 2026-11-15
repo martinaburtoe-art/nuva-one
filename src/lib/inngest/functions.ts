@@ -1,6 +1,7 @@
 import { cron } from "inngest";
 import { inngest } from "./client";
 import { INNGEST_AGENCY_AGENT_IDS, runInngestAgencyWorker } from "./agency-worker";
+import { nuvaInvoicePaymentReminders } from "./document-reminders";
 
 /**
  * Safe connectivity check. It has no side effects outside Inngest.
@@ -38,4 +39,4 @@ export const nuvaAgencyWorkers = INNGEST_AGENCY_AGENT_IDS.map((agentId) =>
   ),
 );
 
-export const inngestFunctions = [nuvaSystemPing, ...nuvaAgencyWorkers];
+export const inngestFunctions = [nuvaSystemPing, nuvaInvoicePaymentReminders, ...nuvaAgencyWorkers];
