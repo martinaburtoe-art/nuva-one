@@ -279,7 +279,36 @@ function CashControl() {
         )}
         <Card className="rounded-2xl border-border/70 p-5 shadow-sm">
           <div className="flex items-center gap-2"><History className="h-5 w-5" /><div><h2 className="text-lg font-semibold">Historial de cierres</h2><p className="text-sm text-muted-foreground">Consulta las últimas jornadas y sus arqueos.</p></div></div>
-          <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[680px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Apertura</th><th className="px-3 py-2">Cierre</th><th className="px-3 py-2 text-right">Fondo</th><th className="px-3 py-2 text-right">Contado</th><th className="px-3 py-2">Estado</th></tr></thead><tbody>{(historyQuery.data ?? []).map((r) => <tr key={r.id} className="border-t"><td className="px-3 py-3">{new Date(r.opened_at).toLocaleString("es-CL")}</td><td className="px-3 py-3">{r.closed_at ? new Date(r.closed_at).toLocaleString("es-CL") : "—"}</td><td className="px-3 py-3 text-right">{fmtCLP(Number(r.opening_amount))}</td><td className="px-3 py-3 text-right">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</td><td className="px-3 py-3"><Badge variant="secondary">Cerrada</Badge></td></tr>)}</tbody></table>{(historyQuery.data ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay jornadas cerradas.</p>}</div>
+          {(historyQuery.data ?? []).length === 0 ? (
+            <p className="mt-4 py-6 text-center text-sm text-muted-foreground">Todavía no hay jornadas cerradas.</p>
+          ) : (
+            <>
+              <div className="mt-4 space-y-2 md:hidden">
+                {(historyQuery.data ?? []).map((r) => (
+                  <article key={r.id} className="rounded-xl border p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{new Date(r.opened_at).toLocaleDateString("es-CL")}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Apertura · {new Date(r.opened_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</p>
+                        <p className="text-xs text-muted-foreground">Cierre · {r.closed_at ? new Date(r.closed_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }) : "—"}</p>
+                      </div>
+                      <Badge variant="secondary">Cerrada</Badge>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3 border-t pt-3">
+                      <div><p className="text-xs text-muted-foreground">Fondo inicial</p><p className="mt-1 text-sm font-semibold tabular-nums">{fmtCLP(Number(r.opening_amount))}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Efectivo contado</p><p className="mt-1 text-sm font-semibold tabular-nums">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</p></div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="mt-4 hidden overflow-x-auto md:block">
+                <table className="w-full text-sm">
+                  <thead className="text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Apertura</th><th className="px-3 py-2">Cierre</th><th className="px-3 py-2 text-right">Fondo</th><th className="px-3 py-2 text-right">Contado</th><th className="px-3 py-2">Estado</th></tr></thead>
+                  <tbody>{(historyQuery.data ?? []).map((r) => <tr key={r.id} className="border-t"><td className="px-3 py-3">{new Date(r.opened_at).toLocaleString("es-CL")}</td><td className="px-3 py-3">{r.closed_at ? new Date(r.closed_at).toLocaleString("es-CL") : "—"}</td><td className="px-3 py-3 text-right">{fmtCLP(Number(r.opening_amount))}</td><td className="px-3 py-3 text-right">{r.counted_cash == null ? "—" : fmtCLP(Number(r.counted_cash))}</td><td className="px-3 py-3"><Badge variant="secondary">Cerrada</Badge></td></tr>)}</tbody>
+                </table>
+              </div>
+            </>
+          )}
         </Card>
         <Dialog open={openDialog} onOpenChange={setOpenDialog}><DialogContent><DialogHeader><DialogTitle>Abrir caja</DialogTitle></DialogHeader><div className="space-y-4"><Label>Fondo inicial</Label><CurrencyInput value={openingAmount} onValueChange={setOpeningAmount} placeholder="$0" /><Button className="w-full" disabled={busy} onClick={openRegister}>Confirmar apertura</Button></div></DialogContent></Dialog>
         <Dialog open={movementDialog !== null} onOpenChange={(open) => !open && setMovementDialog(null)}><DialogContent><DialogHeader><DialogTitle>{movementDialog === "deposit" ? "Registrar ingreso" : "Registrar retiro"}</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>Monto</Label><CurrencyInput value={movementAmount} onValueChange={setMovementAmount} placeholder="$0" /></div><div><Label>Motivo</Label><Input value={movementReason} onChange={(e) => setMovementReason(e.target.value)} placeholder="Ej. depósito bancario" /></div><Button className="w-full" disabled={busy} onClick={addMovement}>Registrar movimiento</Button></div></DialogContent></Dialog>
