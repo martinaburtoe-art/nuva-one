@@ -421,3 +421,28 @@
   .nuva-mobile-filter-sheet,
   .nuva-mobile-calendar-sheet { animation: none !important; }
 }
+
+/* App-shell navigation hierarchy: compact, scannable groups with clear current context. */
+.nuva-app aside > nav[aria-label="Navegación de módulos"] > section > button {
+  letter-spacing: 0.13em;
+  transition: color 160ms var(--nuva-ease), background-color 160ms var(--nuva-ease);
+}
+.nuva-app aside > nav[aria-label="Navegación de módulos"] > section > button:focus-visible {
+  outline: 2px solid var(--nuva-indigo);
+  outline-offset: 2px;
+}
+.nuva-app aside > nav[aria-label="Navegación de módulos"] > section > div {
+  animation: nuva-nav-group-in 160ms var(--nuva-ease) both;
+}
+.nuva-app aside > nav[aria-label="Navegación de módulos"] > section > button[aria-expanded="false"] {
+  color: color-mix(in oklab, var(--color-muted-foreground) 88%, transparent);
+}
+@keyframes nuva-nav-group-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app aside > nav[aria-label="Navegación de módulos"] > section > div {
+    animation: none !important;
+  }
+}
