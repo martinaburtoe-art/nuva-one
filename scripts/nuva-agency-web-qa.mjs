@@ -202,7 +202,7 @@ async function checkPwaAssets() {
     const swText = await swResult.response.text();
     const safeWorker = swResult.response.ok
       && swText.includes("HASHED_ASSET")
-      && swText.includes("Authenticated HTML, API responses and user documents are NEVER cached");
+      && swText.includes("Authenticated HTML, API responses, Supabase data and user documents are NEVER cached");
 
     addCheck(
       "pwa:service-worker",
