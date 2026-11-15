@@ -1,61 +1,72 @@
 import { getPaymentAdapter, decryptPaymentCreds } from "./payment-service.server";
 
-// Subconjunto del cliente de Supabase que esta función necesita -- permite
-// inyectar un mock en tests sin depender del cliente real.
 export type SupabaseLike = {
-  from: (table: string) => any;
+  from: (table: "payment_webhook_events" | "payment_intents" | "billing_integrations") => any;
+  rpc: (
+    fn: "settle_payment_intent",
+    args: {
+      p_provider: string;
+      p_token: string;
+      p_provider_status: string;
+      p_provider_amount: number | null;
+      p_provider_commerce_order: string | null;
+    },
+  ) => PromiseLike<{ data: any; error: any }>;
 };
 
 /**
- * Procesa una notificación de pago (Flow/VSB) de forma idempotente y
- * segura: SIEMPRE verifica el estado real contra el proveedor
- * (server-to-server) antes de aplicar un abono, nunca confía en el POST
- * recibido por sí solo. Puede llamarse repetidas veces con el mismo
- * (provider, token) sin duplicar el abono.
+ * Provider verification remains server-to-server. The verified result is
+ * passed to a service-role-only Postgres RPC which atomically claims the
+ * webhook, locks the intent and sale, and writes the payment exactly once.
  */
 export async function handlePaymentWebhook(
   supabaseAdmin: SupabaseLike,
   provider: string,
   token: string,
 ): Promise<{ outcome: string }> {
-  const { data: existingEvent } = await supabaseAdmin
-    .from("payment_webhook_events")
-    .select("id, processed")
-    .eq("provider", provider)
-    .eq("token", token)
-    .maybeSingle();
-
-  if (existingEvent?.processed) {
-    return { outcome: "already_processed" };
+  if (provider !== "flow" && provider !== "vsb") {
+    return { outcome: "unsupported_provider" };
   }
 
-  if (!existingEvent) {
-    await supabaseAdmin.from("payment_webhook_events").insert({
-      provider,
-      token,
-      received_at: new Date().toISOString(),
-    });
-  }
-
-  const { data: intent } = await supabaseAdmin
+  const { data: intent, error: intentError } = await supabaseAdmin
     .from("payment_intents")
     .select("*")
     .eq("provider", provider)
     .eq("token", token)
     .maybeSingle();
 
+  if (intentError) throw intentError;
+
+  // Unknown tokens are not persisted: the public webhook endpoint must not
+  // become an unbounded event-storage sink for arbitrary provider/token pairs.
   if (!intent) return { outcome: "unknown_token" };
 
-  if (intent.status === "paid") {
-    await supabaseAdmin
-      .from("payment_webhook_events")
-      .update({ processed: true })
-      .eq("provider", provider)
-      .eq("token", token);
-    return { outcome: "already_paid" };
+  const { data: existingEvent, error: eventError } = await supabaseAdmin
+    .from("payment_webhook_events")
+    .select("processed")
+    .eq("provider", provider)
+    .eq("token", token)
+    .maybeSingle();
+
+  if (eventError) throw eventError;
+  // A terminal intent must be rechecked: a late provider confirmation may
+  // require manual reconciliation even after an earlier rejection event.
+  if (
+    existingEvent?.processed &&
+    intent.status !== "rejected" &&
+    intent.status !== "expired"
+  ) {
+    return { outcome: "already_processed" };
   }
 
-  const { data: integration } = await supabaseAdmin
+  // A locally rejected/expired intent is rechecked with the provider before
+  // releasing its sale reservation. Some providers can report a late payment;
+  // those must be quarantined, never treated as a safe retry.
+  if (intent.status === "paid") {
+    return settle(supabaseAdmin, provider, token, "paid", null, null);
+  }
+
+  const { data: integration, error: integrationError } = await supabaseAdmin
     .from("billing_integrations")
     .select("*")
     .eq("business_id", intent.business_id)
@@ -64,10 +75,11 @@ export async function handlePaymentWebhook(
     .eq("status", "connected")
     .maybeSingle();
 
-  if (!integration) return { outcome: "no_integration" };
+  if (integrationError) throw integrationError;
+  if (!integration) throw new Error("No existe una integración activa para verificar este pago");
 
   const adapter = getPaymentAdapter(provider);
-  if (!adapter) return { outcome: "no_adapter" };
+  if (!adapter) throw new Error("No existe un adaptador de pago para verificar este proveedor");
 
   const { apiKey, secretKey } = decryptPaymentCreds(integration as any);
   const statusResult = await adapter.checkStatus(
@@ -80,40 +92,39 @@ export async function handlePaymentWebhook(
     token,
   );
 
-  if (statusResult.status === "paid") {
-    if (intent.sale_id) {
-      await supabaseAdmin.from("payments").insert({
-        business_id: intent.business_id,
-        sale_id: intent.sale_id,
-        amount: intent.amount,
-        method: provider,
-      });
-    }
-    await supabaseAdmin
-      .from("payment_intents")
-      .update({ status: "paid", resolved_at: new Date().toISOString() })
-      .eq("provider", provider)
-      .eq("token", token);
-  } else if (statusResult.status === "rejected") {
-    await supabaseAdmin
-      .from("payment_intents")
-      .update({ status: "rejected", resolved_at: new Date().toISOString() })
-      .eq("provider", provider)
-      .eq("token", token);
-  } else {
-    // "pending"/"unknown": el estado todavía no es definitivo. A propósito
-    // NO marcamos processed=true acá -- si Flow reintenta la notificación
-    // más tarde (o si el pago se confirma después), este mismo token debe
-    // poder volver a verificarse contra el proveedor en vez de quedar
-    // congelado como "ya procesado" sin haberse resuelto nunca.
-    return { outcome: `resolved_${statusResult.status}` };
+  if (!statusResult.ok) {
+    // A transient provider error must produce HTTP 503 at the route so the
+    // provider can retry; never acknowledge a status we could not verify.
+    throw new Error("No se pudo verificar el estado del pago en el proveedor");
   }
 
-  await supabaseAdmin
-    .from("payment_webhook_events")
-    .update({ processed: true })
-    .eq("provider", provider)
-    .eq("token", token);
+  return settle(
+    supabaseAdmin,
+    provider,
+    token,
+    statusResult.status,
+    statusResult.amount,
+    statusResult.commerceOrder,
+  );
+}
 
-  return { outcome: `resolved_${statusResult.status}` };
+async function settle(
+  supabaseAdmin: SupabaseLike,
+  provider: string,
+  token: string,
+  providerStatus: string,
+  providerAmount: number | null,
+  providerCommerceOrder: string | null,
+): Promise<{ outcome: string }> {
+  const { data, error } = await supabaseAdmin.rpc("settle_payment_intent", {
+    p_provider: provider,
+    p_token: token,
+    p_provider_status: providerStatus,
+    p_provider_amount: providerAmount,
+    p_provider_commerce_order: providerCommerceOrder,
+  });
+
+  if (error) throw error;
+  const result = Array.isArray(data) ? data[0] : data;
+  return { outcome: result?.outcome ?? "settlement_unknown" };
 }

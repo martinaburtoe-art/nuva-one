@@ -29,3 +29,8 @@ La tabla de telemetría no está disponible para `anon` ni `authenticated`. Las 
 El diseño sigue minimización, finalidad, confidencialidad y limitación de conservación. La referencia normativa vigente en Chile al momento de esta implementación es la Ley N.º 19.628; la Ley N.º 21.719, publicada en 2024, establece un régimen actualizado cuya entrada en vigencia está fijada para el 1 de diciembre de 2026. Antes de esa fecha y durante la transición deben mantenerse actualizados el aviso de privacidad, las bases de licitud, los procedimientos de derechos de titulares, seguridad y retención conforme a la normativa aplicable.
 
 Este documento describe controles técnicos y no constituye asesoría jurídica. La política pública de privacidad de Nüva One debe reflejar exactamente los tratamientos que efectivamente realice el producto.
+
+
+## Conciliación de pagos
+
+La ruta privada `/owner/payment-recovery` muestra únicamente solicitudes con estado `recovery_required`. El servidor valida `app_metadata.platform_role = owner` antes de leer solicitudes, ventas, negocios, intentos o bitácora. La interfaz nunca recibe tokens de Flow/VSB, claves de integración ni payloads crudos. La consulta a la pasarela y la aplicación de un resultado verificado se ejecutan server-to-server; las RPC de conciliación y auditoría solo conceden EXECUTE a `service_role`. Una discrepancia de importe/orden, una venta no cobrable o un saldo insuficiente conserva el caso en cuarentena. Las acciones de devolución y ajuste contable son marcas auditadas, no ejecutan transferencias ni asientos automáticamente.
