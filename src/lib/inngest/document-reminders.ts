@@ -155,7 +155,7 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
           .eq("type", "payment")
           .eq("status", "connected")
           .maybeSingle();
-        if (!integration) return null;
+        if (!integration || integration.provider !== "flow") return null;
         const adapter = getPaymentAdapter(integration.provider);
         if (!adapter) return null;
         const { apiKey, secretKey } = decryptPaymentCreds(integration);
