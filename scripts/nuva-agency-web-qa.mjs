@@ -2,12 +2,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 
 const baseUrl = (process.env.NUVA_QA_URL ?? "https://nuva-one.vercel.app").replace(/\/$/, "");
 const timeoutMs = Number(process.env.NUVA_QA_TIMEOUT_MS ?? 12000);
-const routes = (process.env.NUVA_QA_ROUTES ?? "/,/foro,/directorio,/news")
+const routes = (process.env.NUVA_QA_ROUTES ?? "/,/dashboard,/sales,/inventory,/customers,/quotes,/invoices,/finance,/finance-accounting,/people,/shifts,/caja-control,/inventario-conteo,/foro,/directorio,/news")
   .split(",")
   .map((route) => route.trim())
   .filter(Boolean);
 
 const checks = [];
+const assetChecks = new Map();
 
 async function fetchWithTimeout(url) {
   const controller = new AbortController();
@@ -75,6 +76,8 @@ async function checkRoute(route) {
     const hasDocument = /<html[\s>]/i.test(html) && /<body[\s>]/i.test(html);
     const title = html.match(/<title[^>]*>(.*?)<\/title>/is)?.[1]?.trim() ?? "";
     const assets = absoluteAssetUrls(html, url);
+    const viewport = html.match(/<meta[^>]+name=["']viewport["'][^>]+content=["']([^"']+)["']/i)?.[1] ?? "";
+    const mobileViewportReady = /width=device-width/i.test(viewport) && /viewport-fit=cover/i.test(viewport);
 
     addCheck(
       `route:${route}`,
@@ -92,21 +95,33 @@ async function checkRoute(route) {
       },
     );
 
+    addCheck(
+      `mobile:viewport:${route}`,
+      mobileViewportReady ? "healthy" : "critical",
+      mobileViewportReady
+        ? "Responsive viewport and safe-area support are declared"
+        : "Missing width=device-width or viewport-fit=cover in the document viewport",
+      { url, viewport },
+    );
+
     if (!validStatus || !hasDocument) return;
 
-    const assetFailures = [];
-    for (const assetUrl of assets) {
-      try {
-        const asset = await fetchWithTimeout(assetUrl);
-        if (!asset.response.ok) {
-          assetFailures.push(`${asset.response.status} ${assetUrl}`);
-        }
-      } catch (error) {
-        assetFailures.push(
-          `${assetUrl}: ${error instanceof Error ? error.message : String(error)}`,
-        );
+    const results = await Promise.all(assets.map(async (assetUrl) => {
+      if (!assetChecks.has(assetUrl)) {
+        assetChecks.set(assetUrl, (async () => {
+          try {
+            const asset = await fetchWithTimeout(assetUrl);
+            return { ok: asset.response.ok, status: asset.response.status };
+          } catch (error) {
+            return { ok: false, error: error instanceof Error ? error.message : String(error) };
+          }
+        })());
       }
-    }
+      return { url: assetUrl, ...(await assetChecks.get(assetUrl)) };
+    }));
+    const assetFailures = results.filter((result) => !result.ok).map((result) =>
+      `${result.status ?? "NETWORK"} ${result.url}: ${result.error ?? "request failed"}`,
+    );
 
     addCheck(
       `assets:${route}`,
@@ -153,8 +168,81 @@ async function checkSecurityHeaders() {
   }
 }
 
+async function checkPwaAssets() {
+  try {
+    const manifestUrl = new URL("/manifest.webmanifest", baseUrl).href;
+    const manifestResult = await fetchWithTimeout(manifestUrl);
+    const manifestText = await manifestResult.response.text();
+    let manifest;
+    try {
+      manifest = JSON.parse(manifestText);
+    } catch {
+      manifest = null;
+    }
+
+    const manifestValid = manifestResult.response.ok
+      && manifest
+      && manifest.display === "standalone"
+      && typeof manifest.start_url === "string"
+      && manifest.start_url.startsWith("/dashboard")
+      && Array.isArray(manifest.icons)
+      && manifest.icons.length >= 2;
+
+    addCheck(
+      "pwa:manifest",
+      manifestValid ? "healthy" : "critical",
+      manifestValid
+        ? "Install manifest declares standalone display, dashboard start URL and app icons"
+        : "PWA manifest is unavailable or missing required install metadata",
+      { url: manifestUrl, status: manifestResult.response.status, display: manifest?.display, startUrl: manifest?.start_url, iconCount: manifest?.icons?.length ?? 0 },
+    );
+
+    const swUrl = new URL("/sw.js", baseUrl).href;
+    const swResult = await fetchWithTimeout(swUrl);
+    const swText = await swResult.response.text();
+    const safeWorker = swResult.response.ok
+      && swText.includes("HASHED_ASSET")
+      && swText.includes("Authenticated HTML, API responses, Supabase data and user documents are NEVER cached");
+
+    addCheck(
+      "pwa:service-worker",
+      safeWorker ? "healthy" : "critical",
+      safeWorker
+        ? "Service worker is available and limits caching to hashed static assets"
+        : "Service worker is unavailable or its cache-safety contract is missing",
+      { url: swUrl, status: swResult.response.status },
+    );
+
+    const iconFailures = [];
+    for (const icon of manifest?.icons ?? []) {
+      if (!icon?.src) {
+        iconFailures.push("Manifest icon is missing a source path");
+        continue;
+      }
+      const iconUrl = new URL(icon.src, manifestUrl).href;
+      try {
+        const iconResult = await fetchWithTimeout(iconUrl);
+        if (!iconResult.response.ok) iconFailures.push(`${iconResult.response.status} ${iconUrl}`);
+      } catch (error) {
+        iconFailures.push(`${iconUrl}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+
+    addCheck(
+      "pwa:icons",
+      manifestValid && iconFailures.length === 0 ? "healthy" : "critical",
+      iconFailures.length === 0 && manifestValid
+        ? `All ${manifest.icons.length} install icons responded successfully`
+        : `${iconFailures.length} icon resources failed or manifest is invalid`,
+      { failures: iconFailures },
+    );
+  } catch (error) {
+    addCheck("pwa:assets", "critical", error instanceof Error ? error.message : String(error));
+  }
+}
+
 async function main() {
-  await Promise.all(routes.map(checkRoute));
+  await Promise.all([...routes.map(checkRoute), checkPwaAssets()]);
   await checkSecurityHeaders();
 
   const critical = checks.filter((check) => check.status === "critical").length;
