@@ -55,7 +55,8 @@ RESET ROLE;
 
 SELECT ok(
   (SELECT token_hash = encode(sha256(convert_to(repeat('a',64),'UTF8')),'hex')
-   FROM public.document_share_links WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'),
+   FROM public.document_share_links WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'
+    AND token_hash = encode(sha256(convert_to(repeat('a',64),'UTF8')),'hex')),
   'database stores only a one-way token hash'
 );
 SET LOCAL ROLE anon;
