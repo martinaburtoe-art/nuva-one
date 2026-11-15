@@ -45,17 +45,25 @@ async function reconcileDocuments(request: Request) {
     .not("invoice_id", "is", null)
     .gte("created_at", cutoff)
     .order("created_at", { ascending: true })
-    .limit(250);
+    .limit(25);
   if (pendingError) return json({ error: "No se pudieron cargar los pagos pendientes" }, 500);
 
   const outcomes: Record<string, number> = {};
   let failures = 0;
-  for (const intent of pending ?? []) {
-    try {
-      const result = await handlePaymentWebhook(db, intent.provider, intent.token);
-      outcomes[result.outcome] = (outcomes[result.outcome] ?? 0) + 1;
-    } catch {
-      failures++;
+  const intents = pending ?? [];
+  for (let offset = 0; offset < intents.length; offset += 5) {
+    const batch = intents.slice(offset, offset + 5);
+    const results = await Promise.all(batch.map(async (intent: any) => {
+      try {
+        const result = await handlePaymentWebhook(db, intent.provider, intent.token);
+        return { outcome: result.outcome, failed: false };
+      } catch {
+        return { outcome: "error", failed: true };
+      }
+    }));
+    for (const result of results) {
+      if (result.failed) failures++;
+      else outcomes[result.outcome] = (outcomes[result.outcome] ?? 0) + 1;
     }
   }
 
