@@ -106,6 +106,24 @@ const activityMeta: Record<Activity["type"], { l: string; icon: any }> = {
   task: { l: "Tarea", icon: Clock },
 };
 
+const customerAvatarTones = [
+  "from-cyan-500/20 to-blue-600/10 text-cyan-700 ring-cyan-500/20",
+  "from-violet-500/20 to-fuchsia-600/10 text-violet-700 ring-violet-500/20",
+  "from-amber-500/20 to-orange-600/10 text-amber-700 ring-amber-500/20",
+  "from-emerald-500/20 to-teal-600/10 text-emerald-700 ring-emerald-500/20",
+  "from-rose-500/20 to-pink-600/10 text-rose-700 ring-rose-500/20",
+];
+
+function customerInitials(name: string) {
+  return name.trim().split(/\\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("es-CL") ?? "").join("");
+}
+
+function customerAvatarTone(id: string) {
+  let hash = 0;
+  for (let index = 0; index < id.length; index += 1) hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
+  return customerAvatarTones[hash % customerAvatarTones.length];
+}
+
 function Customers() {
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
@@ -413,11 +431,21 @@ function Customers() {
             <Skeleton className="h-14 w-full" />
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="Sin clientes todavía"
-            description="Agrega tu primer cliente para empezar a llevar su historial."
-          />
+          search.trim() || statusFilter !== "all" ? (
+            <Card className="rounded-2xl border-dashed bg-card/60 px-6 py-10 text-center">
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary"><Search className="h-5 w-5" /></div>
+              <h3 className="mt-4 text-base font-semibold">No encontramos coincidencias</h3>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">Prueba con otro nombre, correo o RUT, o limpia los filtros para volver a ver tu cartera.</p>
+              <Button variant="outline" className="mt-4" onClick={() => { setSearch(""); setStatusFilter("all"); setCustomerPage(1); }}>Limpiar búsqueda y filtros</Button>
+            </Card>
+          ) : (
+            <Card className="rounded-2xl border-dashed bg-gradient-to-br from-primary/[0.07] via-card to-cyan-500/[0.05] px-6 py-10 text-center">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15"><Users className="h-6 w-6" /></div>
+              <h3 className="mt-4 text-base font-semibold tracking-tight">Tu próxima relación comercial empieza aquí</h3>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">Centraliza contactos, historial de compras, cotizaciones y seguimiento en una sola cartera.</p>
+              {canWrite && <Button className="mt-4" onClick={openNew}><Plus className="mr-1.5 h-4 w-4" />Agregar primer cliente</Button>}
+            </Card>
+          )
         ) : (
           <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
             <div className="flex items-center justify-between border-b border-border/70 bg-muted/20 px-4 py-3">
@@ -433,10 +461,13 @@ function Customers() {
                 return (
                   <article key={c.id} className="min-w-0 rounded-xl border bg-background p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="break-words text-sm font-semibold">{c.name}</h3>
-                        <p className="mt-1 break-all text-xs text-muted-foreground">{c.phone || c.email || "Sin datos de contacto"}</p>
-                        {c.tags?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}
+                      <div className="flex min-w-0 items-start gap-3">
+                        <div aria-hidden="true" className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-xs font-bold ring-1 ring-inset ${customerAvatarTone(c.id)}`}>{customerInitials(c.name)}</div>
+                        <div className="min-w-0">
+                          <h3 className="break-words text-sm font-semibold tracking-tight">{c.name}</h3>
+                          <p className="mt-1 break-all text-xs text-muted-foreground">{c.phone || c.email || "Sin datos de contacto"}</p>
+                          {c.tags?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}
+                        </div>
                       </div>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span>
                     </div>
@@ -468,7 +499,15 @@ function Customers() {
                     const stats = statsByCustomer.get(c.id);
                     return (
                       <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
-                        <TableCell className="font-medium">{c.name}{c.tags?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}</TableCell>
+                        <TableCell>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div aria-hidden="true" className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-[10px] font-bold ring-1 ring-inset ${customerAvatarTone(c.id)}`}>{customerInitials(c.name)}</div>
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-foreground">{c.name}</p>
+                              {c.tags?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{c.tags.slice(0, 2).map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}{c.tags.length > 2 && <span className="text-[10px] text-muted-foreground">+{c.tags.length - 2}</span>}</div>}
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{c.phone || c.email || "—"}</TableCell>
                         <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span></TableCell>
                         <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}>{stageLabel[c.pipeline_stage ?? "new"].l}</span></TableCell>
