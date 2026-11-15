@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText, Link2 } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText, Link2, History } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
 import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness } from "@/lib/use-business";
@@ -207,6 +207,10 @@ function Quotes() {
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
   const [convertingInvoiceId, setConvertingInvoiceId] = useState<string | null>(null);
+  const [shareLinksOpen, setShareLinksOpen] = useState(false);
+  const [shareLinksQuote, setShareLinksQuote] = useState<any>(null);
+  const [shareLinks, setShareLinks] = useState<any[]>([]);
+  const [shareLinksLoading, setShareLinksLoading] = useState(false);
   // Evita dobles solicitudes desde taps consecutivos; la RPC mantiene la garantía transaccional en BD.
   const convertingQuoteIdsRef = useRef(new Set<string>());
   const [discountPct, setDiscountPct] = useState(0);
@@ -442,29 +446,39 @@ function Quotes() {
     }
   }
 
+  async function loadShareLinks(quote: any) {
+    setShareLinksQuote(quote); setShareLinksOpen(true); setShareLinksLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("list_quote_share_links" as any, { p_quote_id: quote.id } as any);
+      if (error) throw error;
+      setShareLinks((data ?? []) as any[]);
+    } catch (error: any) { toast.error(error?.message ?? "No se pudieron cargar los enlaces."); setShareLinks([]); }
+    finally { setShareLinksLoading(false); }
+  }
+
+  async function revokeShareLink(linkId: string) {
+    try {
+      const { data, error } = await supabase.rpc("revoke_quote_share_link" as any, { p_link_id: linkId } as any);
+      if (error) throw error;
+      if (!data) throw new Error("El enlace ya no existe.");
+      toast.success("Enlace revocado. Ya no podrá utilizarse.");
+      if (shareLinksQuote) await loadShareLinks(shareLinksQuote);
+    } catch (error: any) { toast.error(error?.message ?? "No se pudo revocar el enlace."); }
+  }
+
   async function createShareLink(quote: any) {
     if (!canWrite) return;
     try {
-      const bytes = new Uint8Array(32);
-      crypto.getRandomValues(bytes);
+      const bytes = new Uint8Array(32); crypto.getRandomValues(bytes);
       const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { error } = await supabase.rpc("create_quote_share_link" as any, {
-        p_quote_id: quote.id,
-        p_token: token,
-        p_expires_at: expiresAt,
-      } as any);
+      const { error } = await supabase.rpc("create_quote_share_link" as any, { p_quote_id: quote.id, p_token: token, p_expires_at: expiresAt } as any);
       if (error) throw error;
-      const shareUrl = `${window.location.origin}/quote/${token}`;
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success("Enlace seguro copiado. Vence en 7 días; la cotización se marcará como vista cuando el cliente la abra.");
-      } catch {
-        toast.info(`Enlace creado (cópialo manualmente): ${shareUrl}`);
-      }
-    } catch (error: any) {
-      toast.error(error?.message ?? "No se pudo crear el enlace seguro.");
-    }
+      const shareUrl = window.location.origin + "/quote/" + token;
+      try { await navigator.clipboard.writeText(shareUrl); toast.success("Enlace seguro copiado. Vence en 7 días."); }
+      catch { toast.info("Enlace creado (cópialo manualmente): " + shareUrl); }
+      await loadShareLinks(quote);
+    } catch (error: any) { toast.error(error?.message ?? "No se pudo crear el enlace seguro."); }
   }
 
   async function downloadPdf(quote: any): Promise<boolean> {
@@ -527,6 +541,23 @@ function Quotes() {
   return (
     <ModuleGuard module="quotes">
       <>
+        <Dialog open={shareLinksOpen} onOpenChange={setShareLinksOpen}>
+          <DialogContent className="max-w-xl">
+            <DialogHeader><DialogTitle>Enlaces de cliente · {shareLinksQuote?.quote_number ? "COT-" + String(shareLinksQuote.quote_number).padStart(4, "0") : "Cotización"}</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Administra los enlaces de revisión. Los tokens no se muestran ni se almacenan en texto plano.</p>
+            {shareLinksLoading ? <div className="py-8 text-center text-sm text-muted-foreground">Cargando enlaces…</div> : shareLinks.length === 0 ? <div className="py-8 text-center text-sm text-muted-foreground">Todavía no hay enlaces para esta cotización.</div> : (
+              <div className="max-h-[55vh] space-y-3 overflow-y-auto">
+                {shareLinks.map((link) => {
+                  const status = link.revoked_at ? "Revocado" : link.responded_at ? (link.response_action === "accepted" ? "Aceptado" : "Rechazado") : new Date(link.expires_at).getTime() <= Date.now() ? "Vencido" : "Activo";
+                  return <div key={link.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                    <div><p className="text-sm font-medium">{status}</p><p className="text-xs text-muted-foreground">Creado {new Date(link.created_at).toLocaleString("es-CL")} · vence {new Date(link.expires_at).toLocaleDateString("es-CL")}</p></div>
+                    {status === "Activo" && <Button size="sm" variant="outline" onClick={() => void revokeShareLink(link.id)}>Revocar</Button>}
+                  </div>;
+                })}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
         <PageHeader
           title="Cotizaciones"
           description="Prepara propuestas comerciales profesionales con cálculos validados y PDF descargable"
@@ -922,15 +953,9 @@ function Quotes() {
                           </Button>
                         )}
                         {(q.status === "draft" || q.status === "sent" || q.status === "viewed") && canWrite && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Crear y copiar enlace seguro para el cliente"
-                            onClick={() => void createShareLink(q)}
-                          >
-                            <Link2 className="h-4 w-4" />
-                          </Button>
+                          <Button variant="ghost" size="icon" title="Crear y copiar enlace seguro para el cliente" onClick={() => void createShareLink(q)}><Link2 className="h-4 w-4" /></Button>
                         )}
+                        {canWrite && <Button variant="ghost" size="icon" title="Administrar enlaces compartidos" onClick={() => void loadShareLinks(q)}><History className="h-4 w-4" /></Button>}
                         <Button
                           variant="ghost"
                           size="icon"
