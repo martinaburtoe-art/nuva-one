@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,10 +31,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy } from "lucide-react";
+import { Plus, Trash2, FileText, X, Download, ArrowRightCircle, Copy, Eye, Building2, Pencil, ReceiptText, Link2, History } from "lucide-react";
 import { useBizList, useBizInsert, useBizUpdate, useBizDelete, fmtCLP } from "@/lib/biz-data";
+import { useDocumentTemplate } from "@/lib/use-document-template";
 import { useActiveBusiness } from "@/lib/use-business";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { calculateQuoteLineNetAmount, calculateQuoteTotals, formatQuoteNumber, type QuoteTaxTreatment, type QuotePriceBasis } from "@/lib/quote-calculations";
 // quote-pdf is imported dynamically inside the handler so jspdf never enters the SSR/worker bundle.
 import { toast } from "sonner";
 
@@ -43,20 +45,146 @@ export const Route = createFileRoute("/_authenticated/quotes")({
   component: Quotes,
 });
 
+const allowedQuoteStatusTransitions: Record<string, string[]> = {
+  draft: ["accepted", "rejected"],
+  sent: ["accepted", "rejected"],
+  viewed: ["accepted", "rejected"],
+  accepted: [],
+  rejected: [],
+  expired: [],
+};
+
 const statusLabel: Record<string, { l: string; c: string }> = {
   draft: { l: "Borrador", c: "bg-muted text-muted-foreground" },
   sent: { l: "Enviada", c: "bg-primary/15 text-primary" },
   viewed: { l: "Vista", c: "bg-warning/15 text-warning" },
-  accepted: { l: "Aceptada", c: "bg-success/15 text-success" },
+  accepted: { l: "Aceptada · registro interno", c: "bg-success/15 text-success" },
   rejected: { l: "Rechazada", c: "bg-destructive/15 text-destructive" },
   expired: { l: "Expirada", c: "bg-muted text-muted-foreground" },
 };
 
-type Item = { product_id: string | null; name: string; qty: number; price: number };
+type Item = { product_id: string | null; name: string; description?: string; sku?: string; unit?: string; qty: number; price: number };
 
 import { useMyRole, canWriteOperations } from "@/lib/use-business";
 
+function localDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function defaultQuoteValidityDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 15);
+  return localDateString(date);
+}
+
+type QuotePreviewProps = {
+  business: any;
+  customer: any;
+  customerName: string;
+  subject: string;
+  customerDetails: any;
+  items: Item[];
+  totals: { subtotal: number; discountAmount: number; tax: number; total: number };
+  discountPct: number;
+  taxTreatment: QuoteTaxTreatment;
+  priceBasis: QuotePriceBasis | null;
+  notes: string;
+  terms: string;
+  validUntil: string;
+};
+
+function QuoteDocumentPreview({
+  business, customer, customerName, subject, customerDetails, items, totals, discountPct,
+  taxTreatment, priceBasis, notes, terms, validUntil,
+}: QuotePreviewProps) {
+  const vatLabel = taxTreatment === "taxable" ? "IVA (19%)" : taxTreatment === "exempt" ? "Exenta de IVA" : "No afecta a IVA";
+  const unitPriceLabel = taxTreatment === "taxable" ? "Precio unit. neto" : "Precio unitario";
+  const subtotalLabel = taxTreatment === "taxable" ? "Subtotal neto" : "Subtotal";
+  const lineNetAmount = (item: Item) =>
+    calculateQuoteLineNetAmount(item, taxTreatment, 19, priceBasis ?? "net");
+  const displayedUnitPrice = (item: Item) =>
+    Number(item.qty) > 0 ? Math.round(lineNetAmount(item) / Number(item.qty)) : 0;
+  return (
+    <aside className="min-w-0 rounded-2xl border bg-muted/30 p-3 xl:sticky xl:top-0 xl:max-h-[calc(94vh-5rem)] xl:overflow-y-auto">
+      <div className="mb-3 flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2 text-sm font-semibold"><Eye className="h-4 w-4 text-primary" /> Previsualización A4 en vivo</div>
+        <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Documento comercial</span>
+      </div>
+      <div className="mx-auto min-h-[680px] w-full max-w-[470px] bg-white p-7 text-slate-800 shadow-xl ring-1 ring-black/5 sm:p-9">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-5">
+          <div className="min-w-0">
+            {business?.logo_url ? <img src={business.logo_url} alt="" className="mb-2 max-h-12 max-w-32 object-contain object-left" /> : <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Building2 className="h-5 w-5" /></div>}
+            <div className="break-words text-sm font-bold tracking-tight">{business?.name || "Nombre del negocio"}</div>
+            <div className="mt-1 space-y-0.5 text-[9px] leading-relaxed text-slate-500">
+              {business?.tax_id && <div>RUT: {business.tax_id}</div>}
+              {business?.giro && <div>{business.giro}</div>}
+              {[business?.address, business?.comuna].filter(Boolean).join(", ") && <div>{[business?.address, business?.comuna].filter(Boolean).join(", ")}</div>}
+              {business?.public_contact_phone && <div>{business.public_contact_phone}</div>}
+              {business?.public_contact_email && <div>{business.public_contact_email}</div>}
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <div className="text-[19px] font-bold tracking-[0.08em] text-slate-900">COTIZACIÓN</div>
+            <div className="mt-1 text-xs font-semibold text-amber-700">{formatQuoteNumber(null)}</div>
+            <div className="mt-1 text-[9px] text-slate-500">{new Date().toLocaleDateString("es-CL")}</div>
+          </div>
+        </div>
+        {subject && <div className="mb-4"><div className="text-[8px] font-bold tracking-[0.14em] text-slate-400">ASUNTO / PROYECTO</div><div className="mt-1 text-sm font-semibold text-slate-800">{subject}</div></div>}
+        <div className="my-5 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+          <div className="min-w-0">
+            <div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">PREPARADA PARA</div>
+            <div className="break-words text-xs font-semibold">{customerName || customer?.name || "Nombre del cliente"}</div>
+            <div className="mt-1 space-y-0.5 break-words text-[9px] text-slate-500">
+              {(customerDetails.tax_id || customer?.tax_id) && <div>RUT: {customerDetails.tax_id || customer?.tax_id}</div>}
+              {(customerDetails.contact_name || customer?.contact_name) && <div>Contacto: {customerDetails.contact_name || customer?.contact_name}</div>}
+              {(customerDetails.address || customer?.address) && <div>{customerDetails.address || customer?.address}</div>}
+              {([customerDetails.shipping_comuna || customer?.shipping_comuna, customerDetails.shipping_city || customer?.shipping_city].filter(Boolean).join(", ")) && <div>{[customerDetails.shipping_comuna || customer?.shipping_comuna, customerDetails.shipping_city || customer?.shipping_city].filter(Boolean).join(", ")}</div>}
+              {(customerDetails.email || customer?.email) && <div>{customerDetails.email || customer?.email}</div>}
+              {(customerDetails.phone || customer?.phone) && <div>{customerDetails.phone || customer?.phone}</div>}
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">VÁLIDA HASTA</div>
+            <div className="text-xs font-semibold">{validUntil ? new Date(validUntil + "T12:00:00").toLocaleDateString("es-CL") : "No especificada"}</div>
+            <div className="mt-1 text-[9px] text-slate-500">{!priceBasis ? "Selecciona modalidad de precios" : priceBasis === "gross" ? (taxTreatment === "taxable" ? "Valores unitarios con IVA incluido" : "Valores unitarios brutos") : "Valores unitarios netos"}</div>
+          </div>
+        </div>
+        <div className="mb-2 text-[9px] font-bold tracking-[0.14em] text-slate-400">DETALLE DE PRODUCTOS Y SERVICIOS</div>{priceBasis === "gross" && taxTreatment === "taxable" && <div className="mb-2 text-[8px] text-slate-500">Los precios ingresados incluyen IVA; el detalle se presenta en base neta y el impuesto se desglosa al final.</div>}
+        <table className="w-full border-collapse text-[9px]">
+          <thead><tr className="border-y border-slate-200 text-left text-[8px] uppercase tracking-wide text-slate-500"><th className="py-2 pr-2">Descripción</th><th className="py-2 text-right">Cant.</th><th className="py-2 text-right">{unitPriceLabel}</th><th className="py-2 pl-2 text-right">Total</th></tr></thead>
+          <tbody>
+            {items.filter((item) => item.name.trim()).map((item, index) => (
+              <tr key={index} className="border-b border-slate-100 align-top">
+                <td className="max-w-[150px] py-2 pr-2"><div className="font-semibold">{item.name}</div>{(item.sku || item.unit) && <div className="mt-0.5 text-[7px] text-slate-400">{[item.sku ? `SKU ${item.sku}` : null, item.unit ? `Unidad: ${item.unit}` : null].filter(Boolean).join(" · ")}</div>}{item.description && <div className="mt-0.5 whitespace-pre-wrap text-[8px] leading-relaxed text-slate-500">{item.description}</div>}</td>
+                <td className="py-2 text-right tabular-nums">{item.qty || 0}</td>
+                <td className="py-2 text-right tabular-nums">{fmtCLP(displayedUnitPrice(item))}</td>
+                <td className="py-2 pl-2 text-right font-medium tabular-nums">{fmtCLP(lineNetAmount(item))}</td>
+              </tr>
+            ))}
+            {!items.some((item) => item.name.trim()) && <tr><td colSpan={4} className="py-8 text-center text-slate-400">Los productos y servicios aparecerán aquí</td></tr>}
+          </tbody>
+        </table>
+        <div className="ml-auto mt-5 max-w-[230px] space-y-2 text-[9px]">
+          <div className="flex justify-between gap-3"><span className="text-slate-500">{subtotalLabel}</span><span className="tabular-nums">{fmtCLP(totals.subtotal)}</span></div>
+          {discountPct > 0 && <div className="flex justify-between gap-3 text-rose-600"><span>Descuento ({discountPct}%)</span><span>-{fmtCLP(totals.discountAmount)}</span></div>}
+          <div className="flex justify-between gap-3"><span className="text-slate-500">{vatLabel}</span><span className="tabular-nums">{fmtCLP(totals.tax)}</span></div>
+          <div className="flex justify-between rounded-md bg-slate-900 px-3 py-3 text-white"><span className="font-bold tracking-wide">TOTAL</span><span className="text-sm font-bold tabular-nums">{fmtCLP(totals.total)}</span></div>
+        </div>
+        {notes && <div className="mt-6"><div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">ALCANCE Y NOTAS</div><p className="whitespace-pre-wrap break-words text-[9px] leading-relaxed text-slate-600">{notes}</p></div>}
+        {terms && <div className="mt-5"><div className="mb-1 text-[8px] font-bold tracking-[0.14em] text-slate-400">CONDICIONES COMERCIALES</div><p className="whitespace-pre-wrap break-words text-[9px] leading-relaxed text-slate-600">{terms}</p></div>}
+        <div className="mt-8 border-t border-slate-200 pt-3 text-[8px] text-slate-400">Documento comercial. No constituye factura ni documento tributario electrónico.</div>
+      </div>
+      {!priceBasis && <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-2 text-center text-[10px] text-amber-800">Modalidad histórica desconocida: los totales de esta vista son provisionales. Selecciona neto o bruto antes de guardar.</p>}
+      <p className="mt-3 text-center text-[10px] text-muted-foreground">La descarga final genera el PDF A4 con paginación automática y los datos registrados.</p>
+    </aside>
+  );
+}
+
 function Quotes() {
+  const navigate = useNavigate();
   const { data: myRole } = useMyRole();
   const canWrite = canWriteOperations(myRole);
   const { active } = useActiveBusiness();
@@ -64,6 +192,8 @@ function Quotes() {
   const { data, isLoading } = useBizList<any>("quotes", { order: "created_at" });
   const { data: products } = useBizList<any>("products", { order: "name", ascending: true });
   const { data: sales } = useBizList<any>("sales");
+  const { data: invoices } = useBizList<any>("invoices");
+  const { data: documentTemplate = null } = useDocumentTemplate();
   const { data: customers } = useBizList<any>("customers", { order: "name", ascending: true });
   const insert = useBizInsert("quotes");
   const upd = useBizUpdate("quotes");
@@ -72,22 +202,35 @@ function Quotes() {
   const [items, setItems] = useState<Item[]>([{ product_id: null, name: "", qty: 1, price: 0 }]);
   const [customer, setCustomer] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerDetails, setCustomerDetails] = useState({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
+  const [subject, setSubject] = useState("");
+  const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [convertingInvoiceId, setConvertingInvoiceId] = useState<string | null>(null);
+  const [shareLinksOpen, setShareLinksOpen] = useState(false);
+  const [shareLinksQuote, setShareLinksQuote] = useState<any>(null);
+  const [shareLinks, setShareLinks] = useState<any[]>([]);
+  const [shareLinksLoading, setShareLinksLoading] = useState(false);
   // Evita dobles solicitudes desde taps consecutivos; la RPC mantiene la garantía transaccional en BD.
   const convertingQuoteIdsRef = useRef(new Set<string>());
   const [discountPct, setDiscountPct] = useState(0);
-  const [validUntil, setValidUntil] = useState("");
+  const [taxTreatment, setTaxTreatment] = useState<QuoteTaxTreatment>("taxable");
+  const [priceBasis, setPriceBasis] = useState<QuotePriceBasis | null>("net");
+  const [notes, setNotes] = useState("");
+  const [validUntil, setValidUntil] = useState(defaultQuoteValidityDate);
   const [terms, setTerms] = useState(
-    "Cotización válida por 15 días. Precios en pesos chilenos, IVA incluido. Forma de pago a coordinar.",
+    "Cotización válida por 15 días. Precios expresados según modalidad seleccionada (netos o brutos). Los impuestos se desglosan según el tratamiento tributario indicado. Forma de pago a coordinar.",
   );
 
   const convertedQuoteIds = new Set((sales ?? []).map((s: any) => s.quote_id).filter(Boolean));
+  const invoicedQuoteIds = new Set((invoices ?? []).map((invoice: any) => invoice.quote_id).filter(Boolean));
+  const canConvertToDocument = (quoteId: string) => !convertedQuoteIds.has(quoteId) && !invoicedQuoteIds.has(quoteId);
 
-  const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
-  const discountAmount = Math.round(subtotal * (discountPct / 100));
-  const taxable = subtotal - discountAmount;
-  const tax = Math.round(taxable * 0.19);
-  const total = taxable + tax;
+  const vatRate = taxTreatment === "taxable" ? 19 : 0;
+  const previewItems = items.filter((item) => item.name.trim() && Number(item.qty) > 0 && Number(item.price) >= 0 && Number.isFinite(Number(item.qty)) && Number.isFinite(Number(item.price)));
+  const totals = calculateQuoteTotals(previewItems, discountPct, taxTreatment, vatRate, priceBasis ?? "net");
+  const { subtotal, discountAmount, tax, total } = totals;
+  const selectedCustomer = (customers ?? []).find((entry: any) => entry.id === customerId) ?? null;
 
   function pickProduct(idx: number, productId: string) {
     const p = (products ?? []).find((x: any) => x.id === productId);
@@ -98,31 +241,137 @@ function Quotes() {
         name: p.name,
         qty: copy[idx].qty || 1,
         price: Number(p.price),
+        sku: p.sku ?? "",
+        unit: p.unit ?? "",
       };
     setItems(copy);
   }
 
-  async function save(status = "draft") {
-    if (!customer) return;
-    const validItems = items.filter((i) => i.name.trim() !== "");
-    await insert.mutateAsync({
-      customer_name: customer,
-      customer_id: customerId,
-      items: validItems as any,
-      subtotal,
-      discount_pct: discountPct,
-      tax,
-      total,
-      valid_until: validUntil || null,
-      terms: terms.trim() || null,
-      status,
-    });
+  function startNewQuote() {
+    setEditingQuoteId(null);
     setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
     setCustomer("");
     setCustomerId(null);
+    setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
+    setSubject("");
     setDiscountPct(0);
-    setValidUntil("");
-    setOpen(false);
+    setTaxTreatment("taxable");
+    setPriceBasis("net");
+    setNotes("");
+    setValidUntil(defaultQuoteValidityDate());
+    setTerms("Cotización válida por 15 días. Precios expresados según modalidad seleccionada (netos o brutos). Los impuestos se desglosan según el tratamiento tributario indicado. Forma de pago a coordinar.");
+  }
+
+  async function save() {
+    const validItems = items.filter((item) => item.name.trim() !== "");
+    if (!customer.trim()) {
+      toast.error("Selecciona o escribe el nombre del cliente.");
+      return;
+    }
+    if (!validItems.length) {
+      toast.error("Agrega al menos un producto o servicio.");
+      return;
+    }
+    if (!priceBasis) {
+      toast.error("Selecciona si los precios ingresados son netos o incluyen impuestos.");
+      return;
+    }
+    if (!validUntil) {
+      toast.error("Define la fecha de vigencia de la cotización.");
+      return;
+    }
+    if (validUntil < localDateString(new Date())) {
+      toast.error("La fecha de vigencia no puede estar en el pasado.");
+      return;
+    }
+    try {
+      const calculated = calculateQuoteTotals(validItems, discountPct, taxTreatment, vatRate, priceBasis);
+      if (calculated.total <= 0) {
+        toast.error("El total de la cotización debe ser mayor que cero.");
+        return;
+      }
+      const quotePayload = {
+        customer_name: customer.trim(),
+        customer_id: customerId,
+        subject: subject.trim() || null,
+        customer_snapshot: { ...customerDetails, name: customer.trim() },
+        items: validItems as any,
+        subtotal: calculated.subtotal,
+        discount_pct: calculated.discountPct,
+        tax: calculated.tax,
+        total: calculated.total,
+        tax_treatment: taxTreatment,
+        vat_rate: vatRate,
+        price_basis: priceBasis,
+        valid_until: validUntil || null,
+        notes: notes.trim() || null,
+        terms: terms.trim() || null,
+        status: "draft",
+      };
+      const savedQuoteId = editingQuoteId
+        ? (await upd.mutateAsync({ id: editingQuoteId, patch: quotePayload }), editingQuoteId)
+        : await insert.mutateAsync(quotePayload);
+      const { data: savedQuote, error: savedQuoteError } = await supabase
+        .from("quotes")
+        .select("*")
+        .eq("id", savedQuoteId)
+        .eq("business_id", active?.id ?? "")
+        .single();
+      const pdfDownloaded = !savedQuoteError && savedQuote ? await downloadPdf(savedQuote) : false;
+      setItems([{ product_id: null, name: "", qty: 1, price: 0 }]);
+      setCustomer("");
+      setCustomerId(null);
+      setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
+      setSubject("");
+      setEditingQuoteId(null);
+      setDiscountPct(0);
+      setTaxTreatment("taxable");
+      setPriceBasis("net");
+      setNotes("");
+      setValidUntil(defaultQuoteValidityDate());
+      setOpen(false);
+      toast.success(pdfDownloaded ? "Cotización guardada y PDF descargado." : "Cotización guardada. Puedes descargar el PDF desde el listado.");
+    } catch (error: any) {
+      toast.error(error?.message ?? "No se pudo guardar la cotización.");
+    }
+  }
+
+  function editDraftQuote(quote: any) {
+    if (quote.status !== "draft") {
+      toast.error("Solo se pueden editar cotizaciones en borrador. Duplica las demás para crear una nueva versión.");
+      return;
+    }
+    setEditingQuoteId(quote.id);
+    setItems(
+      (quote.items ?? []).length
+        ? quote.items.map((it: any) => ({
+            product_id: it.product_id ?? null,
+            name: it.name,
+            description: it.description ?? "",
+            sku: it.sku ?? "",
+            unit: it.unit ?? "",
+            qty: Number(it.qty) || 1,
+            price: Number(it.price) || 0,
+          }))
+        : [{ product_id: null, name: "", qty: 1, price: 0 }],
+    );
+    setCustomer(quote.customer_name ?? "");
+    setCustomerId(quote.customer_id ?? null);
+    const linkedCustomer = (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+    const snapshot = quote.customer_snapshot && Object.keys(quote.customer_snapshot).length > 0
+      ? quote.customer_snapshot
+      : linkedCustomer
+        ? { tax_id: linkedCustomer.tax_id ?? "", address: linkedCustomer.address ?? "", email: linkedCustomer.email ?? "", phone: linkedCustomer.phone ?? "", contact_name: linkedCustomer.shipping_contact_name ?? "", shipping_comuna: linkedCustomer.shipping_comuna ?? "", shipping_city: linkedCustomer.shipping_city ?? "" }
+        : { tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" };
+    setCustomerDetails(snapshot);
+    setSubject(quote.subject ?? "");
+    setDiscountPct(Number(quote.discount_pct) || 0);
+    setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
+    setPriceBasis((quote.price_basis as QuotePriceBasis) || null);
+    setNotes(quote.notes ?? "");
+    setValidUntil(quote.valid_until ?? "");
+    setTerms(quote.terms ?? terms);
+    setOpen(true);
   }
 
   function duplicateQuote(quote: any) {
@@ -131,6 +380,9 @@ function Quotes() {
         ? quote.items.map((it: any) => ({
             product_id: it.product_id ?? null,
             name: it.name,
+            description: it.description ?? "",
+            sku: it.sku ?? "",
+            unit: it.unit ?? "",
             qty: Number(it.qty) || 1,
             price: Number(it.price) || 0,
           }))
@@ -138,10 +390,42 @@ function Quotes() {
     );
     setCustomer(quote.customer_name ?? "");
     setCustomerId(quote.customer_id ?? null);
+    const linkedCustomer = (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+    const snapshot = quote.customer_snapshot && Object.keys(quote.customer_snapshot).length > 0
+      ? quote.customer_snapshot
+      : linkedCustomer
+        ? { tax_id: linkedCustomer.tax_id ?? "", address: linkedCustomer.address ?? "", email: linkedCustomer.email ?? "", phone: linkedCustomer.phone ?? "", contact_name: linkedCustomer.shipping_contact_name ?? "", shipping_comuna: linkedCustomer.shipping_comuna ?? "", shipping_city: linkedCustomer.shipping_city ?? "" }
+        : { tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" };
+    setCustomerDetails(snapshot);
+    setSubject(quote.subject ?? "");
     setDiscountPct(Number(quote.discount_pct) || 0);
+    setTaxTreatment((quote.tax_treatment as QuoteTaxTreatment) || "taxable");
+    setPriceBasis((quote.price_basis as QuotePriceBasis) || null);
+    setNotes(quote.notes ?? "");
+    setValidUntil(quote.valid_until ?? "");
     setTerms(quote.terms ?? terms);
     setOpen(true);
     toast.info("Cotización duplicada como borrador, revisa y guarda");
+  }
+
+  async function convertToInvoice(quote: any) {
+    if (convertingQuoteIdsRef.current.has(quote.id)) return;
+    convertingQuoteIdsRef.current.add(quote.id);
+    setConvertingInvoiceId(quote.id);
+    try {
+      const { data, error } = await supabase.rpc("convert_accepted_quote_to_invoice", { p_quote_id: quote.id });
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["invoices", active?.id] });
+      await qc.invalidateQueries({ queryKey: ["invoice_payments", active?.id] });
+      toast.success("Documento interno de cobro preparado. Revisa el borrador antes de emitirlo.");
+      navigate({ to: "/invoices" });
+      return data;
+    } catch (e: any) {
+      toast.error(e.message ?? "No se pudo preparar el documento de cobro");
+    } finally {
+      convertingQuoteIdsRef.current.delete(quote.id);
+      setConvertingInvoiceId(null);
+    }
   }
 
   async function convertToSale(quote: any) {
@@ -153,7 +437,7 @@ function Quotes() {
       if (error) throw error;
       await qc.invalidateQueries({ queryKey: ["sales"] });
       await qc.invalidateQueries({ queryKey: ["quotes"] });
-      toast.success("Venta creada a partir de la cotización");
+      toast.success("Borrador de venta creado. Aún no registra cobro ni mueve inventario; confirma la operación desde Ventas.");
     } catch (e: any) {
       toast.error(e.message ?? "No se pudo convertir a venta");
     } finally {
@@ -162,52 +446,174 @@ function Quotes() {
     }
   }
 
-  async function downloadPdf(quote: any) {
-    const { generateQuotePdf } = await import("@/lib/quote-pdf");
-    await generateQuotePdf(quote, {
-      name: active?.name ?? "Nüva One",
-      logo_url: active?.logo_url ?? null,
-      tax_id: (active as any)?.tax_id ?? null,
-    });
+  async function loadShareLinks(quote: any) {
+    setShareLinksQuote(quote); setShareLinksOpen(true); setShareLinksLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("list_quote_share_links" as any, { p_quote_id: quote.id } as any);
+      if (error) throw error;
+      setShareLinks((data ?? []) as any[]);
+    } catch (error: any) { toast.error(error?.message ?? "No se pudieron cargar los enlaces."); setShareLinks([]); }
+    finally { setShareLinksLoading(false); }
+  }
+
+  async function revokeShareLink(linkId: string) {
+    try {
+      const { data, error } = await supabase.rpc("revoke_quote_share_link" as any, { p_link_id: linkId } as any);
+      if (error) throw error;
+      if (!data) throw new Error("El enlace ya no existe.");
+      toast.success("Enlace revocado. Ya no podrá utilizarse.");
+      if (shareLinksQuote) await loadShareLinks(shareLinksQuote);
+    } catch (error: any) { toast.error(error?.message ?? "No se pudo revocar el enlace."); }
+  }
+
+  async function createShareLink(quote: any) {
+    if (!canWrite) return;
+    try {
+      const bytes = new Uint8Array(32); crypto.getRandomValues(bytes);
+      const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.rpc("create_quote_share_link" as any, { p_quote_id: quote.id, p_token: token, p_expires_at: expiresAt } as any);
+      if (error) throw error;
+      const shareUrl = window.location.origin + "/quote/" + token;
+      try { await navigator.clipboard.writeText(shareUrl); toast.success("Enlace seguro copiado. Vence en 7 días."); }
+      catch { toast.info("Enlace creado (cópialo manualmente): " + shareUrl); }
+      await loadShareLinks(quote);
+    } catch (error: any) { toast.error(error?.message ?? "No se pudo crear el enlace seguro."); }
+  }
+
+  async function downloadPdf(quote: any): Promise<boolean> {
+    try {
+      if (!quote.price_basis) {
+        toast.error("Esta cotización histórica no registra si sus precios eran netos o incluían IVA. Duplícala, selecciona la modalidad correcta y descarga la nueva versión.");
+        return false;
+      }
+      const verified = calculateQuoteTotals(
+        quote.items ?? [],
+        Number(quote.discount_pct) || 0,
+        (quote.tax_treatment as QuoteTaxTreatment) || "taxable",
+        Number(quote.vat_rate ?? 19),
+        quote.price_basis as QuotePriceBasis,
+      );
+      const amountsMatch =
+        Math.abs(verified.subtotal - Number(quote.subtotal)) <= 1 &&
+        Math.abs(verified.tax - Number(quote.tax)) <= 1 &&
+        Math.abs(verified.total - Number(quote.total)) <= 1;
+      if (!amountsMatch) {
+        toast.error("No se generó el PDF: esta cotización histórica tiene importes que no cuadran. Duplícala como borrador y revisa sus valores antes de compartirla.");
+        return false;
+      }
+      const { generateQuotePdf } = await import("@/lib/quote-pdf");
+      const hasCustomerSnapshot = quote.customer_snapshot && Object.keys(quote.customer_snapshot).length > 0;
+      const sourceCustomer = hasCustomerSnapshot ? quote.customer_snapshot : (customers ?? []).find((entry: any) => entry.id === quote.customer_id) ?? null;
+      const customerRecord = sourceCustomer
+        ? { ...sourceCustomer, contact_name: sourceCustomer.contact_name ?? sourceCustomer.shipping_contact_name ?? null }
+        : null;
+      await generateQuotePdf(
+        quote,
+        {
+          name: active?.name ?? "Empresa",
+          logo_url: active?.logo_url ?? null,
+          tax_id: (active as any)?.tax_id ?? null,
+          giro: (active as any)?.giro ?? null,
+          address: (active as any)?.address ?? null,
+          comuna: (active as any)?.comuna ?? null,
+          public_contact_email: (active as any)?.public_contact_email ?? null,
+          public_contact_phone: (active as any)?.public_contact_phone ?? null,
+        },
+        customerRecord,
+        (() => {
+          const design = documentTemplate?.design ?? {};
+          return {
+            brandColor: design.brandColor,
+            showLogo: design.showLogo !== false,
+            showTaxId: design.showTaxId !== false,
+            footerNote: design.footerNote,
+          };
+        })(),
+      );
+      return true;
+    } catch (error: any) {
+      toast.error(error?.message ?? "No se pudo generar el PDF.");
+      return false;
+    }
   }
 
   return (
     <ModuleGuard module="quotes">
       <>
+        <Dialog open={shareLinksOpen} onOpenChange={setShareLinksOpen}>
+          <DialogContent className="max-w-xl">
+            <DialogHeader><DialogTitle>Enlaces de cliente · {shareLinksQuote?.quote_number ? "COT-" + String(shareLinksQuote.quote_number).padStart(4, "0") : "Cotización"}</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Administra los enlaces de revisión. Los tokens no se muestran ni se almacenan en texto plano.</p>
+            {shareLinksLoading ? <div className="py-8 text-center text-sm text-muted-foreground">Cargando enlaces…</div> : shareLinks.length === 0 ? <div className="py-8 text-center text-sm text-muted-foreground">Todavía no hay enlaces para esta cotización.</div> : (
+              <div className="max-h-[55vh] space-y-3 overflow-y-auto">
+                {shareLinks.map((link) => {
+                  const status = link.revoked_at ? "Revocado" : link.responded_at ? (link.response_action === "accepted" ? "Aceptado" : "Rechazado") : new Date(link.expires_at).getTime() <= Date.now() ? "Vencido" : "Activo";
+                  return <div key={link.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                    <div><p className="text-sm font-medium">{status}</p><p className="text-xs text-muted-foreground">Creado {new Date(link.created_at).toLocaleString("es-CL")} · vence {new Date(link.expires_at).toLocaleDateString("es-CL")}</p></div>
+                    {status === "Activo" && <Button size="sm" variant="outline" onClick={() => void revokeShareLink(link.id)}>Revocar</Button>}
+                  </div>;
+                })}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
         <PageHeader
           title="Cotizaciones"
-          description="Crea cotizaciones desde tu catálogo y convierte las aceptadas en ventas con un clic"
+          description="Prepara propuestas comerciales profesionales con cálculos validados y PDF descargable"
           action={
             !canWrite ? undefined : (
-              <Dialog open={open} onOpenChange={setOpen}>
+              <Dialog open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setEditingQuoteId(null); }}>
                 <DialogTrigger asChild>
-                  <Button className="shadow-elegant">
+                  <Button className="shadow-elegant" onClick={startNewQuote}>
                     <Plus className="mr-1.5 h-4 w-4" />
                     Nueva cotización
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl rounded-2xl">
+                <DialogContent className="max-w-[min(96vw,1480px)] max-h-[94vh] overflow-y-auto rounded-2xl">
                   <DialogHeader>
-                    <DialogTitle>Nueva cotización</DialogTitle>
+                    <DialogTitle>{editingQuoteId ? "Editar cotización en borrador" : "Nueva cotización"}</DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4">
+                  <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)]">
+                    <div className="space-y-4">
                     <div>
                       <Label htmlFor="customer">Cliente</Label>
                       <Input
                         id="customer"
                         value={customer}
-                        onChange={(e) => setCustomer(e.target.value)}
+                        onChange={(e) => {
+                          const nextName = e.target.value;
+                          setCustomer(nextName);
+                          if (customerId && nextName.trim() !== selectedCustomer?.name) {
+                            setCustomerId(null);
+                            setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
+                          }
+                        }}
+                        placeholder="Nombre o razón social del cliente"
                       />
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div><Label htmlFor="customer-rut">RUT (opcional)</Label><Input id="customer-rut" value={customerDetails.tax_id} onChange={(e) => setCustomerDetails((value) => ({ ...value, tax_id: e.target.value }))} placeholder="12.345.678-9" /></div>
+                        <div><Label htmlFor="customer-contact">Contacto</Label><Input id="customer-contact" value={customerDetails.contact_name} onChange={(e) => setCustomerDetails((value) => ({ ...value, contact_name: e.target.value }))} placeholder="Persona de contacto" /></div>
+                        <div className="col-span-2"><Label htmlFor="customer-address">Dirección</Label><Input id="customer-address" value={customerDetails.address} onChange={(e) => setCustomerDetails((value) => ({ ...value, address: e.target.value }))} placeholder="Dirección comercial o de prestación" /></div>
+                        <div><Label htmlFor="customer-comuna">Comuna</Label><Input id="customer-comuna" value={customerDetails.shipping_comuna} onChange={(e) => setCustomerDetails((value) => ({ ...value, shipping_comuna: e.target.value }))} placeholder="Comuna" /></div>
+                        <div><Label htmlFor="customer-city">Ciudad / región</Label><Input id="customer-city" value={customerDetails.shipping_city} onChange={(e) => setCustomerDetails((value) => ({ ...value, shipping_city: e.target.value }))} placeholder="Ciudad, región" /></div>
+                        <div><Label htmlFor="customer-email">Correo</Label><Input id="customer-email" type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((value) => ({ ...value, email: e.target.value }))} placeholder="cliente@empresa.cl" /></div>
+                        <div><Label htmlFor="customer-phone">Teléfono</Label><Input id="customer-phone" value={customerDetails.phone} onChange={(e) => setCustomerDetails((value) => ({ ...value, phone: e.target.value }))} placeholder="+56 9 ..." /></div>
+                      </div>
                       <Select
                         value={customerId ?? "__none__"}
                         onValueChange={(v) => {
                           if (v === "__none__") {
                             setCustomerId(null);
+                            setCustomerDetails({ tax_id: "", address: "", email: "", phone: "", contact_name: "", shipping_comuna: "", shipping_city: "" });
                             return;
                           }
                           const c = (customers ?? []).find((x: any) => x.id === v);
                           setCustomerId(v);
-                          if (c) setCustomer(c.name);
+                          if (c) {
+                            setCustomer(c.name);
+                            setCustomerDetails({ tax_id: c.tax_id ?? "", address: c.address ?? "", email: c.email ?? "", phone: c.phone ?? "", contact_name: c.shipping_contact_name ?? "", shipping_comuna: c.shipping_comuna ?? "", shipping_city: c.shipping_city ?? "" });
+                          }
                         }}
                       >
                         <SelectTrigger className="mt-1">
@@ -222,6 +628,10 @@ function Quotes() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="quote-subject">Asunto / proyecto</Label>
+                      <Input id="quote-subject" className="mt-1" value={subject} maxLength={240} onChange={(e) => setSubject(e.target.value)} placeholder="Ej. Implementación de sistema de climatización" />
                     </div>
                     <div>
                       <div className="mb-2 flex items-center justify-between">
@@ -244,9 +654,15 @@ function Quotes() {
                             <div className="col-span-6">
                               <Select
                                 value={it.product_id ?? "__free__"}
-                                onValueChange={(v) =>
-                                  v === "__free__" ? null : pickProduct(idx, v)
-                                }
+                                onValueChange={(v) => {
+                                  if (v === "__free__") {
+                                    const next = [...items];
+                                    next[idx] = { ...next[idx], product_id: null, sku: "", unit: "" };
+                                    setItems(next);
+                                  } else {
+                                    pickProduct(idx, v);
+                                  }
+                                }}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecciona un producto" />
@@ -265,7 +681,7 @@ function Quotes() {
                               {it.product_id === null && (
                                 <Input
                                   className="mt-1"
-                                  placeholder="Descripción del producto"
+                                  placeholder="Nombre del producto o servicio"
                                   value={it.name}
                                   onChange={(e) => {
                                     const c = [...items];
@@ -274,11 +690,42 @@ function Quotes() {
                                   }}
                                 />
                               )}
+                              <Input
+                                className="mt-1"
+                                placeholder="Descripción / alcance (opcional)"
+                                value={it.description ?? ""}
+                                onChange={(e) => {
+                                  const c = [...items];
+                                  c[idx].description = e.target.value;
+                                  setItems(c);
+                                }}
+                              />
+                              <div className="mt-1 grid grid-cols-2 gap-1.5">
+                                <Input
+                                  placeholder="SKU / código"
+                                  value={it.sku ?? ""}
+                                  onChange={(e) => {
+                                    const c = [...items];
+                                    c[idx].sku = e.target.value;
+                                    setItems(c);
+                                  }}
+                                />
+                                <Input
+                                  placeholder="Unidad (un, h, m²...)"
+                                  value={it.unit ?? ""}
+                                  onChange={(e) => {
+                                    const c = [...items];
+                                    c[idx].unit = e.target.value;
+                                    setItems(c);
+                                  }}
+                                />
+                              </div>
                             </div>
                             <Input
                               className="col-span-2"
                               type="number"
-                              min={1}
+                              min={it.product_id ? 1 : 0.01}
+                              step={it.product_id ? 1 : "0.01"}
                               value={it.qty}
                               onChange={(e) => {
                                 const c = [...items];
@@ -312,6 +759,29 @@ function Quotes() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
+                        <Label htmlFor="price-basis">Los precios ingresados son</Label>
+                        <Select value={priceBasis ?? undefined} onValueChange={(value) => setPriceBasis(value as QuotePriceBasis)}>
+                          <SelectTrigger id="price-basis"><SelectValue placeholder="Selecciona modalidad" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="net">Netos (sin IVA)</SelectItem>
+                            <SelectItem value="gross">Brutos (impuesto incluido)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="mt-1 text-xs text-muted-foreground">Selecciona cómo están expresados los precios del catálogo o ingresados manualmente.</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="tax-treatment">Tratamiento tributario</Label>
+                        <Select value={taxTreatment} onValueChange={(value) => setTaxTreatment(value as QuoteTaxTreatment)}>
+                          <SelectTrigger id="tax-treatment"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="taxable">Afecta IVA (19%)</SelectItem>
+                            <SelectItem value="exempt">Exenta de IVA</SelectItem>
+                            <SelectItem value="non_taxable">No afecta a IVA</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="mt-1 text-xs text-muted-foreground">El tratamiento se aplica a todas las líneas. Si una operación combina tratamientos distintos, emite cotizaciones separadas.</p>
+                      </div>
+                      <div>
                         <Label htmlFor="discount">Descuento (%)</Label>
                         <Input
                           id="discount"
@@ -319,7 +789,7 @@ function Quotes() {
                           min={0}
                           max={100}
                           value={discountPct}
-                          onChange={(e) => setDiscountPct(Number(e.target.value))}
+                          onChange={(e) => setDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
                         />
                       </div>
                       <div>
@@ -334,7 +804,18 @@ function Quotes() {
                     </div>
 
                     <div>
-                      <Label htmlFor="terms">Condiciones (aparecen en el PDF)</Label>
+                      <Label htmlFor="quote-notes">Alcance y notas</Label>
+                      <textarea
+                        id="quote-notes"
+                        className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+                        rows={3}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Descripción del proyecto, entregables, exclusiones o consideraciones..."
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="terms">Condiciones comerciales (aparecen en el PDF)</Label>
                       <textarea
                         id="terms"
                         className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -356,7 +837,7 @@ function Quotes() {
                         </div>
                       )}
                       <div className="flex justify-between text-sm">
-                        <span>IVA (19%)</span>
+                        <span>{taxTreatment === "taxable" ? "IVA (19%)" : taxTreatment === "exempt" ? "Operación exenta" : "Operación no afecta"}</span>
                         <span>{fmtCLP(tax)}</span>
                       </div>
                       <div className="mt-2 flex justify-between border-t pt-2 text-base font-semibold">
@@ -366,21 +847,30 @@ function Quotes() {
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => save("draft")}
-                        disabled={insert.isPending}
+                        className="w-full"
+                        onClick={save}
+                        disabled={insert.isPending || upd.isPending}
                       >
-                        Guardar borrador
+                        {insert.isPending || upd.isPending ? "Guardando..." : editingQuoteId ? "Guardar cambios y descargar PDF" : "Guardar y descargar PDF"}
                       </Button>
-                      <Button
-                        className="flex-1"
-                        onClick={() => save("sent")}
-                        disabled={insert.isPending}
-                      >
-                        Enviar
-                      </Button>
+                      <p className="text-xs text-muted-foreground">Guardar no envía la cotización. Descarga el PDF y compártelo por el canal que utilices; el estado de envío solo se actualizará cuando exista una integración real.</p>
                     </div>
+                    </div>
+                    <QuoteDocumentPreview
+                      business={active as any}
+                      customer={selectedCustomer}
+                      customerName={customer}
+                      subject={subject}
+                      customerDetails={customerDetails}
+                      items={items}
+                      totals={totals}
+                      discountPct={discountPct}
+                      taxTreatment={taxTreatment}
+                      priceBasis={priceBasis}
+                      notes={notes}
+                      terms={terms}
+                      validUntil={validUntil}
+                    />
                   </div>
                 </DialogContent>
               </Dialog>
@@ -420,22 +910,30 @@ function Quotes() {
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
                     </TableCell>
-                    <TableCell className="font-medium">{q.customer_name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{q.customer_name}</div>
+                      {q.subject && <div className="mt-0.5 max-w-[260px] truncate text-xs font-normal text-muted-foreground">{q.subject}</div>}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(q.created_at).toLocaleDateString("es-CL")}
                     </TableCell>
                     <TableCell>
                       <select
+                        disabled={!canWrite}
                         value={q.status}
-                        onChange={(e) =>
-                          upd.mutate({ id: q.id, patch: { status: e.target.value } })
-                        }
+                        onChange={(e) => {
+                          const allowed = allowedQuoteStatusTransitions[q.status] ?? [];
+                          if (!allowed.includes(e.target.value)) {
+                            toast.info("Ese cambio de estado no está permitido. Los estados enviados o vistos requieren evidencia de entrega real.");
+                            return;
+                          }
+                          upd.mutate({ id: q.id, patch: { status: e.target.value } });
+                        }}
                         className="rounded-md border bg-background px-2 py-1 text-xs"
                       >
-                        {Object.entries(statusLabel).map(([k, v]) => (
-                          <option key={k} value={k}>
-                            {v.l}
-                          </option>
+                        <option value={q.status}>{statusLabel[q.status]?.l ?? q.status}</option>
+                        {(allowedQuoteStatusTransitions[q.status] ?? []).map((k) => (
+                          <option key={k} value={k}>{statusLabel[k]?.l ?? k}</option>
                         ))}
                       </select>
                     </TableCell>
@@ -449,6 +947,15 @@ function Quotes() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {q.status === "draft" && (
+                          <Button variant="ghost" size="icon" title="Editar borrador" disabled={!canWrite} onClick={() => editDraftQuote(q)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {(q.status === "draft" || q.status === "sent" || q.status === "viewed") && canWrite && (
+                          <Button variant="ghost" size="icon" title="Crear y copiar enlace seguro para el cliente" onClick={() => void createShareLink(q)}><Link2 className="h-4 w-4" /></Button>
+                        )}
+                        {canWrite && <Button variant="ghost" size="icon" title="Administrar enlaces compartidos" onClick={() => void loadShareLinks(q)}><History className="h-4 w-4" /></Button>}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -465,7 +972,18 @@ function Quotes() {
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        {q.status === "accepted" && !convertedQuoteIds.has(q.id) && (
+                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Crear documento interno de cobro"
+                            disabled={convertingInvoiceId === q.id || convertingId === q.id}
+                            onClick={() => convertToInvoice(q)}
+                          >
+                            <ReceiptText className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
+                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -476,9 +994,11 @@ function Quotes() {
                             <ArrowRightCircle className="h-4 w-4 text-success" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => del.mutate(q.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {q.status === "draft" && (
+                          <Button variant="ghost" size="icon" disabled={!canWrite} onClick={() => del.mutate(q.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

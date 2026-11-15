@@ -39,6 +39,7 @@ const nav = [
   { to: "/financial-integrity", label: "Integridad financiera", icon: ShieldCheck, module: "finance", section: "Finanzas" },
   { to: "/analytics", label: "Indicadores", icon: BarChart3, module: "analytics", section: "Finanzas" },
   { to: "/quotes", label: "Cotizaciones", icon: FileText, module: "quotes", section: "Finanzas" },
+  { to: "/invoices", label: "Documentos de cobro", icon: FileText, module: "quotes", section: "Finanzas" },
   { to: "/pricing-calculator", label: "Calculadora de precios", icon: Calculator, section: "Finanzas" },
   { to: "/nuva-intelligence", label: "Nüva Intelligence", icon: Brain, module: "dashboard", section: "Inteligencia" },
   { to: "/business-health", label: "Salud del negocio", icon: BarChart3, module: "dashboard", section: "Inteligencia" },
