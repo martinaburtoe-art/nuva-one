@@ -26,9 +26,8 @@ $$;
 
 -- Existing idx_payment_webhook_events_unique already enforces provider/token uniqueness.
 
-CREATE INDEX IF NOT EXISTS payment_intents_invoice_pending_idx
-  ON public.payment_intents(invoice_id, created_at DESC)
-  WHERE invoice_id IS NOT NULL AND status = 'pending';
+-- The unique partial index above also serves pending-invoice lookups;
+-- a second index would duplicate storage and write amplification.
 
 CREATE TABLE IF NOT EXISTS public.document_delivery_attempts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
