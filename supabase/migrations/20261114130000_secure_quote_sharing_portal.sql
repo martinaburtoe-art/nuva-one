@@ -212,7 +212,7 @@ BEGIN
     response_name = trim(p_name), response_email = lower(trim(p_email)),
     consent_text = trim(p_consent_text), responded_at = now()
   WHERE id = v_link.id;
-  UPDATE public.quotes SET status = p_action WHERE id = v_quote.id;
+  UPDATE public.quotes SET status = p_action::public.quote_status WHERE id = v_quote.id;
   INSERT INTO public.document_share_events (business_id, quote_id, link_id, event_type, event_data)
   VALUES (v_link.business_id, v_quote.id, v_link.id, p_action,
     jsonb_build_object('name', trim(p_name), 'email', lower(trim(p_email)),
