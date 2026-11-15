@@ -432,45 +432,73 @@ function Invoices() {
           ) : invoices.length === 0 ? (
             <EmptyState icon={ReceiptText} title="Todavía no hay documentos de cobro" description="Convierte una cotización aceptada para crear el primer borrador." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[780px] text-sm">
-                <thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="p-3">Documento</th><th className="p-3">Cliente</th><th className="p-3">Vencimiento</th><th className="p-3">Estado</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Abonado</th><th className="p-3 text-right">Saldo</th><th className="p-3 text-right">Acciones</th></tr></thead>
-                <tbody>
-                  {invoices.map((invoice: any) => {
-                    const paid = paidByInvoice.get(invoice.id) ?? 0;
-                    const outstanding = Math.max(0, Number(invoice.total) - paid);
-                    const overdue = invoice.due_date && invoice.due_date < today && outstanding > 0 && ["issued", "partially_paid"].includes(invoice.status);
-                    const status = overdue ? "overdue" : invoice.status;
-                    return (
-                      <tr key={invoice.id} className="border-b last:border-0">
-                        <td className="p-3 font-mono text-xs">FAC-{String(invoice.invoice_number).padStart(6, "0")}<div className="mt-1 font-sans text-[10px] text-muted-foreground">Documento interno · no DTE</div></td>
-                        <td className="p-3 font-medium">{invoice.customer_name}</td>
-                        <td className="p-3 text-muted-foreground">{invoice.due_date ? new Date(`${invoice.due_date}T12:00:00`).toLocaleDateString("es-CL") : "—"}</td>
-                        <td className="p-3"><Badge variant={status === "paid" ? "default" : status === "overdue" ? "destructive" : "secondary"}>{labels[status] ?? status}</Badge></td>
-                        <td className="p-3 text-right tabular-nums">{fmtCLP(Number(invoice.total))}</td>
-                        <td className="p-3 text-right tabular-nums">{fmtCLP(paid)}</td>
-                        <td className="p-3 text-right font-semibold tabular-nums">{fmtCLP(outstanding)}</td>
-                        <td className="p-3 text-right">
-                          <div className="flex justify-end gap-1">
+            <>
+              <div className="grid gap-3 p-3 md:hidden">
+                {invoices.map((invoice: any) => {
+                  const paid = paidByInvoice.get(invoice.id) ?? 0;
+                  const outstanding = Math.max(0, Number(invoice.total) - paid);
+                  const overdue = invoice.due_date && invoice.due_date < today && outstanding > 0 && ["issued", "partially_paid"].includes(invoice.status);
+                  const status = overdue ? "overdue" : invoice.status;
+                  return (
+                    <article key={invoice.id} className="min-w-0 rounded-xl border bg-background p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-mono text-xs text-muted-foreground">FAC-{String(invoice.invoice_number).padStart(6, "0")}</p>
+                          <h3 className="mt-1 break-words text-sm font-semibold">{invoice.customer_name}</h3>
+                          <p className="mt-1 text-[11px] text-muted-foreground">Documento interno · no DTE</p>
+                          <p className="mt-1 text-xs text-muted-foreground">Vence: {invoice.due_date ? new Date(`${invoice.due_date}T12:00:00`).toLocaleDateString("es-CL") : "Sin vencimiento"}</p>
+                        </div>
+                        <Badge variant={status === "paid" ? "default" : status === "overdue" ? "destructive" : "secondary"}>{labels[status] ?? status}</Badge>
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3">
+                        <div className="min-w-0"><p className="text-[11px] text-muted-foreground">Total</p><p className="mt-0.5 break-words text-sm font-semibold tabular-nums">{fmtCLP(Number(invoice.total))}</p></div>
+                        <div className="min-w-0"><p className="text-[11px] text-muted-foreground">Abonado</p><p className="mt-0.5 break-words text-sm tabular-nums">{fmtCLP(paid)}</p></div>
+                        <div className="min-w-0"><p className="text-[11px] text-muted-foreground">Saldo</p><p className="mt-0.5 break-words text-sm font-semibold tabular-nums">{fmtCLP(outstanding)}</p></div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
+                        <Button size="sm" variant="outline" className="min-h-10" onClick={() => setDetailInvoice(invoice)}><Eye className="mr-1.5 h-4 w-4" />Detalle</Button>
+                        {invoice.status === "draft" && canWrite && <Button size="sm" variant="outline" className="min-h-10" disabled={issue.isPending} onClick={() => issue.mutate({ invoiceId: invoice.id, dueDate: localDate(new Date(Date.now() + 15 * 86400000)) })}>Emitir</Button>}
+                        <Button size="sm" variant="outline" className="min-h-10" onClick={() => void downloadInvoice(invoice)}><Download className="mr-1.5 h-4 w-4" />PDF</Button>
+                        {["issued", "partially_paid", "overdue"].includes(status) && canWrite && outstanding > 0 && <>
+                          <Button size="sm" variant="outline" className="min-h-10" disabled={onlinePayment.isPending} onClick={() => onlinePayment.mutate(invoice)}>{onlinePayment.isPending ? "Conectando…" : "Cobrar online"}</Button>
+                          <Button size="sm" variant="outline" className="min-h-10" onClick={() => openPayment(invoice)}>Registrar abono</Button>
+                        </>}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full min-w-[780px] text-sm">
+                  <thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="p-3">Documento</th><th className="p-3">Cliente</th><th className="p-3">Vencimiento</th><th className="p-3">Estado</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Abonado</th><th className="p-3 text-right">Saldo</th><th className="p-3 text-right">Acciones</th></tr></thead>
+                  <tbody>
+                    {invoices.map((invoice: any) => {
+                      const paid = paidByInvoice.get(invoice.id) ?? 0;
+                      const outstanding = Math.max(0, Number(invoice.total) - paid);
+                      const overdue = invoice.due_date && invoice.due_date < today && outstanding > 0 && ["issued", "partially_paid"].includes(invoice.status);
+                      const status = overdue ? "overdue" : invoice.status;
+                      return (
+                        <tr key={invoice.id} className="border-b last:border-0">
+                          <td className="p-3 font-mono text-xs">FAC-{String(invoice.invoice_number).padStart(6, "0")}<div className="mt-1 font-sans text-[10px] text-muted-foreground">Documento interno · no DTE</div></td>
+                          <td className="p-3 font-medium">{invoice.customer_name}</td>
+                          <td className="p-3 text-muted-foreground">{invoice.due_date ? new Date(`${invoice.due_date}T12:00:00`).toLocaleDateString("es-CL") : "—"}</td>
+                          <td className="p-3"><Badge variant={status === "paid" ? "default" : status === "overdue" ? "destructive" : "secondary"}>{labels[status] ?? status}</Badge></td>
+                          <td className="p-3 text-right tabular-nums">{fmtCLP(Number(invoice.total))}</td>
+                          <td className="p-3 text-right tabular-nums">{fmtCLP(paid)}</td>
+                          <td className="p-3 text-right font-semibold tabular-nums">{fmtCLP(outstanding)}</td>
+                          <td className="p-3 text-right"><div className="flex justify-end gap-1">
                             <Button size="sm" variant="ghost" onClick={() => setDetailInvoice(invoice)} title="Ver detalle"><Eye className="h-4 w-4" /></Button>
                             {invoice.status === "draft" && canWrite && <Button size="sm" variant="outline" disabled={issue.isPending} onClick={() => issue.mutate({ invoiceId: invoice.id, dueDate: localDate(new Date(Date.now() + 15 * 86400000)) })}>Emitir</Button>}
                             <Button size="sm" variant="ghost" onClick={() => void downloadInvoice(invoice)} title="Descargar PDF"><Download className="h-4 w-4" /></Button>
-                            {["issued", "partially_paid", "overdue"].includes(status) && canWrite && outstanding > 0 && (
-                              <>
-                                <Button size="sm" variant="outline" disabled={onlinePayment.isPending} onClick={() => onlinePayment.mutate(invoice)}>
-                                  {onlinePayment.isPending ? "Conectando…" : "Cobrar online"}
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => openPayment(invoice)}>Registrar abono</Button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            {["issued", "partially_paid", "overdue"].includes(status) && canWrite && outstanding > 0 && <><Button size="sm" variant="outline" disabled={onlinePayment.isPending} onClick={() => onlinePayment.mutate(invoice)}>{onlinePayment.isPending ? "Conectando…" : "Cobrar online"}</Button><Button size="sm" variant="ghost" onClick={() => openPayment(invoice)}>Registrar abono</Button></>}
+                          </div></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
 
