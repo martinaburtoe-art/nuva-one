@@ -119,10 +119,13 @@ export async function validateFlowCredentials(
       method: "GET",
       headers: { Accept: "application/json" },
     });
-    if (response.ok) return { ok: true };
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload?.code == null && payload?.total != null && payload?.data != null) {
+      return { ok: true };
+    }
     return {
       ok: false,
-      message: response.status === 401
+      message: response.status === 401 || payload?.code != null
         ? "Flow rechazó las credenciales. Revisa API Key, Secret Key y ambiente."
         : "Flow no pudo validar las credenciales. Comprueba que correspondan al ambiente seleccionado.",
     };
