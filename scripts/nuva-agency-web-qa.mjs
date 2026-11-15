@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 
 const baseUrl = (process.env.NUVA_QA_URL ?? "https://nuva-one.vercel.app").replace(/\/$/, "");
 const timeoutMs = Number(process.env.NUVA_QA_TIMEOUT_MS ?? 12000);
-const routes = (process.env.NUVA_QA_ROUTES ?? "/,/dashboard,/sales,/inventory,/customers,/quotes,/invoices,/finance,/finance-accounting,/people,/shifts,/caja-control,/inventario-conteo,/foro,/directorio,/news")
+const routes = (process.env.NUVA_QA_ROUTES ?? "/,/dashboard,/sales,/inventory,/customers,/quotes,/invoices,/finance,/finance-professional,/finance-accounting,/financial-dashboard,/analytics,/business-health,/executive-command-center,/pricing-calculator,/people,/people-payroll,/people-attendance,/shifts,/caja-control,/inventario-conteo,/catalog,/pos,/settings,/shipments,/purchases,/nuva-intelligence,/foro,/directorio,/news")
   .split(",")
   .map((route) => route.trim())
   .filter(Boolean);
