@@ -29,6 +29,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SelectBusinessRouteImport } from './routes/select-business'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as QuoteTokenRouteImport } from './routes/quote.$token'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
@@ -498,6 +499,11 @@ const NegociosSlugRoute = NegociosSlugRouteImport.update({
   path: '/negocios/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuoteTokenRoute = QuoteTokenRouteImport.update({
+  id: '/quote/$token',
+  path: '/quote/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OwnerControlTowerRoute = OwnerControlTowerRouteImport.update({
   id: '/control-tower',
   path: '/control-tower',
@@ -639,6 +645,7 @@ export interface FileRoutesByFullPath {
   '/owner': typeof OwnerRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/quote/$token': typeof QuoteTokenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -736,6 +743,7 @@ export interface FileRoutesByTo {
   '/owner': typeof OwnerRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/quote/$token': typeof QuoteTokenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -835,6 +843,7 @@ export interface FileRoutesById {
   '/owner': typeof OwnerRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/quote/$token': typeof QuoteTokenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/select-business': typeof SelectBusinessRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -934,6 +943,7 @@ export interface FileRouteTypes {
     | '/owner'
     | '/pricing'
     | '/privacy'
+  | '/quote/$token'
     | '/reset-password'
     | '/select-business'
     | '/sitemap.xml'
@@ -1030,6 +1040,7 @@ export interface FileRouteTypes {
     | '/owner'
     | '/pricing'
     | '/privacy'
+  | '/quote/$token'
     | '/reset-password'
     | '/select-business'
     | '/sitemap.xml'
@@ -1127,6 +1138,7 @@ export interface FileRouteTypes {
     | '/owner'
     | '/pricing'
     | '/privacy'
+  | '/quote/$token'
     | '/reset-password'
     | '/select-business'
     | '/sitemap.xml'
@@ -1226,6 +1238,7 @@ export interface RootRouteChildren {
   OwnerRoute: typeof OwnerRouteWithChildren
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  QuoteTokenRoute: typeof QuoteTokenRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SelectBusinessRoute: typeof SelectBusinessRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -2067,6 +2080,7 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerRoute: OwnerRouteWithChildren,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  QuoteTokenRoute: QuoteTokenRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SelectBusinessRoute: SelectBusinessRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
