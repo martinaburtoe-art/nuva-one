@@ -70,7 +70,7 @@ BEGIN
   IF NOT private.has_business_role(v_quote.business_id, auth.uid(), ARRAY['owner','admin','staff']::public.member_role[]) THEN
     RAISE EXCEPTION 'Sin permisos para compartir esta cotización';
   END IF;
-  IF v_quote.status NOT IN ('sent','viewed') OR v_quote.price_basis IS NULL THEN
+  IF v_quote.status NOT IN ('draft','sent','viewed') OR v_quote.price_basis IS NULL THEN
     RAISE EXCEPTION 'La cotización debe estar preparada y tener modalidad de precios validada';
   END IF;
   IF v_quote.valid_until IS NOT NULL AND v_quote.valid_until < CURRENT_DATE THEN
@@ -102,9 +102,9 @@ BEGIN
   SELECT q.* INTO v_quote FROM public.quotes q
   WHERE q.id = v_link.quote_id AND q.business_id = v_link.business_id
   FOR UPDATE;
-  IF NOT FOUND OR v_quote.status NOT IN ('sent','viewed') THEN RETURN NULL; END IF;
+  IF NOT FOUND OR v_quote.status NOT IN ('draft','sent','viewed') THEN RETURN NULL; END IF;
   IF v_quote.valid_until IS NOT NULL AND v_quote.valid_until < CURRENT_DATE THEN RETURN NULL; END IF;
-  IF v_quote.status = 'sent' THEN
+  IF v_quote.status IN ('draft','sent') THEN
     UPDATE public.quotes SET status = 'viewed' WHERE id = v_quote.id;
     v_quote.status := 'viewed';
   END IF;
@@ -153,7 +153,7 @@ BEGIN
      OR v_link.responded_at IS NOT NULL THEN RAISE EXCEPTION 'Enlace inválido, vencido o ya utilizado'; END IF;
   SELECT q.* INTO v_quote FROM public.quotes q
   WHERE q.id = v_link.quote_id AND q.business_id = v_link.business_id FOR UPDATE;
-  IF NOT FOUND OR v_quote.status NOT IN ('sent','viewed')
+  IF NOT FOUND OR v_quote.status NOT IN ('draft','sent','viewed')
      OR (v_quote.valid_until IS NOT NULL AND v_quote.valid_until < CURRENT_DATE) THEN
     RAISE EXCEPTION 'La cotización ya no admite respuestas';
   END IF;
