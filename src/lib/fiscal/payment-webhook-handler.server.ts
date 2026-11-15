@@ -4,7 +4,7 @@ import { getPaymentAdapter, decryptPaymentCreds } from "./payment-service.server
 // inyectar un mock en tests sin depender del cliente real.
 export type SupabaseLike = {
   from: (table: string) => any;
-  rpc?: (name: string, args: Record<string, unknown>) => Promise<{ error: any }>;
+  rpc?: any;
 };
 
 /**
