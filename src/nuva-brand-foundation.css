@@ -134,3 +134,50 @@ body[data-nuva-surface="app"] .nuva-accent-admin { --nuva-module-accent: var(--n
 .nuva-app[data-nuva-section] .nuva-module-header {
   padding-bottom: .85rem;
 }
+
+/* Shared craft layer: hierarchy, tactile controls, data legibility and restrained depth. */
+body[data-nuva-surface="app"] .nuva-app {
+  --nuva-radius-panel: 20px;
+  --nuva-shadow-panel: 0 10px 34px -26px rgb(20 24 45 / .34), 0 2px 7px rgb(20 24 45 / .035);
+  --nuva-shadow-hover: 0 18px 42px -28px rgb(39 45 88 / .28), 0 5px 14px rgb(20 24 45 / .055);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+}
+body[data-nuva-surface="app"] .nuva-app main { min-width: 0; }
+body[data-nuva-surface="app"] .nuva-app main h1 { letter-spacing: -.045em; text-wrap: balance; }
+body[data-nuva-surface="app"] .nuva-app main :where(h2,h3) { letter-spacing: -.025em; text-wrap: balance; }
+body[data-nuva-surface="app"] .nuva-app main :where([class*="rounded-2xl"][class*="border"],[class*="rounded-xl"][class*="border"]) { box-shadow: var(--nuva-shadow-panel); }
+body[data-nuva-surface="app"] .nuva-app main :where(button,a,[role="button"]) { -webkit-tap-highlight-color: transparent; }
+body[data-nuva-surface="app"] .nuva-app main :where(button,a,input,select,textarea,[role="combobox"],[tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid color-mix(in oklab,var(--nuva-page-accent,#6366f1) 58%,white);
+  outline-offset: 3px;
+}
+body[data-nuva-surface="app"] .nuva-app main :where(input,select,textarea,[role="combobox"]) {
+  border-radius: 11px;
+  transition: border-color .16s ease,box-shadow .16s ease,background-color .16s ease;
+}
+body[data-nuva-surface="app"] .nuva-app main :where(input,select,textarea,[role="combobox"]):focus {
+  border-color: var(--nuva-page-accent,#6366f1);
+  box-shadow: 0 0 0 4px color-mix(in oklab,var(--nuva-page-accent,#6366f1) 12%,transparent);
+}
+body[data-nuva-surface="app"] .nuva-app main button { transition: transform .16s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease; }
+body[data-nuva-surface="app"] .nuva-app main button:not(:disabled):active { transform: translateY(1px) scale(.99); }
+body[data-nuva-surface="app"] .nuva-app main table { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+body[data-nuva-surface="app"] .nuva-app main th { color: #727887; font-size: 10px; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
+body[data-nuva-surface="app"] .nuva-app main :where(td,th) { border-bottom-color: color-mix(in oklab,var(--nuva-page-accent,#6366f1) 9%,#e6e8ef); }
+body[data-nuva-surface="app"] .nuva-app main tr:hover td { background: color-mix(in oklab,var(--nuva-page-accent,#6366f1) 4%,white); }
+body[data-nuva-surface="app"] .nuva-app :where(aside,nav,main)::-webkit-scrollbar { width: 8px; height: 8px; }
+body[data-nuva-surface="app"] .nuva-app :where(aside,nav,main)::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 99px; background: #c8cbd5; background-clip: padding-box; }
+body[data-nuva-surface="app"] .nuva-app :where(aside,nav,main)::-webkit-scrollbar-thumb:hover { background: #9da3b2; background-clip: padding-box; }
+
+/* Photography is reserved for onboarding/editorial context, not fabricated business records. */
+.nuva-onboarding-page {
+  background: radial-gradient(ellipse at 8% 10%,rgb(129 140 248 / .13),transparent 34%),radial-gradient(ellipse at 90% 88%,rgb(34 211 238 / .10),transparent 36%),#f4f5fa;
+}
+.nuva-onboarding-visual { isolation: isolate; box-shadow: 0 32px 90px -42px rgb(20 28 65 / .58); }
+@media (max-width: 1023px) { .nuva-onboarding-page { min-height: 100svh; align-items: flex-start; } }
+@media (prefers-reduced-motion: reduce) {
+  body[data-nuva-surface="app"] .nuva-app main *,
+  body[data-nuva-surface="app"] .nuva-app main *::before,
+  body[data-nuva-surface="app"] .nuva-app main *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
