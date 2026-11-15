@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(18);
+SELECT plan(19);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000aa11'),
@@ -56,6 +56,9 @@ SELECT ok(NOT (public.get_shared_quote(repeat('a',64)) ? 'business_id'),
   'public quote payload does not expose internal business identifiers');
 SELECT is(public.get_shared_quote(repeat('a',64))->>'status',
   'viewed', 'opening a sent quote records its viewed state');
+SELECT is((SELECT count(*)::int FROM public.document_share_events
+  WHERE quote_id = '00000000-0000-0000-0000-00000000cc11' AND event_type = 'viewed'),
+  1, 'reopening a viewed quote does not duplicate the view event');
 SELECT is(public.respond_to_shared_quote(
   repeat('a',64), 'accepted', 'Cliente Receptor', 'cliente@example.cl',
   'He revisado y acepto esta cotización en su versión compartida.'
