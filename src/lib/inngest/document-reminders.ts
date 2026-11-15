@@ -136,11 +136,11 @@ export const nuvaInvoicePaymentReminders = inngest.createFunction(
 
       const providerResult = await step.run(`prepare-payment-${invoice.id}-${kind}`, async () => {
         const { data: existing } = await db.from("payment_intents")
-          .select("checkout_url,provider,created_at")
+          .select("checkout_url,provider,created_at,amount")
           .eq("invoice_id", invoice.id)
           .eq("status", "pending")
           .maybeSingle();
-        if (existing?.checkout_url && Date.now() - new Date(existing.created_at).getTime() < 48 * 60 * 60 * 1000) {
+        if (existing?.checkout_url && Number(existing.amount) === balance && Date.now() - new Date(existing.created_at).getTime() < 48 * 60 * 60 * 1000) {
           return { url: existing.checkout_url as string, provider: existing.provider as string };
         }
 
