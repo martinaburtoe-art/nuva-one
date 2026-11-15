@@ -947,33 +947,27 @@ function Quotes() {
               description="Crea tu primera cotización profesional."
             />
           ) : (
-            <div className="overflow-x-auto"><Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>N°</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Seguimiento</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              <div className="grid gap-3 p-3 md:hidden">
                 {data.map((q) => (
-                  <TableRow key={q.id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div>{q.customer_name}</div>
-                      {q.subject && <div className="mt-0.5 max-w-[260px] truncate text-xs font-normal text-muted-foreground">{q.subject}</div>}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(q.created_at).toLocaleDateString("es-CL")}
-                    </TableCell>
-                    <TableCell>
+                  <article key={q.id} className="min-w-0 rounded-xl border bg-background p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs text-muted-foreground">{q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "Cotización"}</p>
+                        <h3 className="mt-1 break-words text-sm font-semibold">{q.customer_name || "Cliente sin nombre"}</h3>
+                        {q.subject && <p className="mt-1 break-words text-xs text-muted-foreground">{q.subject}</p>}
+                        <p className="mt-1 text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString("es-CL")}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${statusLabel[q.status]?.c ?? "bg-muted text-muted-foreground"}`}>{statusLabel[q.status]?.l ?? q.status}</span>
+                    </div>
+                    <div className="mt-3 flex items-end justify-between gap-3 border-t pt-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Total cotizado</p>
+                        <p className="mt-0.5 text-lg font-semibold tabular-nums">{fmtCLP(Number(q.total))}</p>
+                        {(q.status === "sent" || q.status === "viewed") && q.sent_at && <p className="mt-1 text-xs text-muted-foreground">{Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta</p>}
+                      </div>
                       <select
+                        aria-label={`Cambiar estado de cotización ${q.quote_number ?? q.id}`}
                         disabled={!canWrite}
                         value={q.status}
                         onChange={(e) => {
@@ -984,85 +978,62 @@ function Quotes() {
                           }
                           upd.mutate({ id: q.id, patch: { status: e.target.value } });
                         }}
-                        className="rounded-md border bg-background px-2 py-1 text-xs"
+                        className="min-h-10 max-w-[150px] rounded-md border bg-background px-2 text-xs"
                       >
                         <option value={q.status}>{statusLabel[q.status]?.l ?? q.status}</option>
                         {(allowedQuoteStatusTransitions[q.status] ?? []).map((k) => (
                           <option key={k} value={k}>{statusLabel[k]?.l ?? k}</option>
                         ))}
                       </select>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {(q.status === "sent" || q.status === "viewed") && q.sent_at
-                        ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta`
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {fmtCLP(Number(q.total))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {q.status === "draft" && (
-                          <Button variant="ghost" size="icon" title="Editar borrador" disabled={!canWrite} onClick={() => editDraftQuote(q)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {(q.status === "draft" || q.status === "sent" || q.status === "viewed") && canWrite && (
-                          <>
-                            <Button variant="ghost" size="icon" title="Enviar cotización por correo electrónico" onClick={() => void sendQuoteByEmail(q)}><Mail className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" title="Crear y copiar enlace seguro para el cliente" onClick={() => void createShareLink(q)}><Link2 className="h-4 w-4" /></Button>
-                          </>
-                        )}
-                        {canWrite && <Button variant="ghost" size="icon" title="Administrar enlaces compartidos" onClick={() => void loadShareLinks(q)}><History className="h-4 w-4" /></Button>}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Descargar PDF"
-                          onClick={() => downloadPdf(q)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Duplicar cotización"
-                          onClick={() => duplicateQuote(q)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Crear documento interno de cobro"
-                            disabled={convertingInvoiceId === q.id || convertingId === q.id}
-                            onClick={() => convertToInvoice(q)}
-                          >
-                            <ReceiptText className="h-4 w-4 text-primary" />
-                          </Button>
-                        )}
-                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Convertir a venta"
-                            disabled={convertingId === q.id}
-                            onClick={() => convertToSale(q)}
-                          >
-                            <ArrowRightCircle className="h-4 w-4 text-success" />
-                          </Button>
-                        )}
-                        {q.status === "draft" && (
-                          <Button variant="ghost" size="icon" disabled={!canWrite} onClick={() => del.mutate(q.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-1 border-t pt-3">
+                      {q.status === "draft" && <Button variant="outline" size="sm" className="min-h-10" title="Editar borrador" disabled={!canWrite} onClick={() => editDraftQuote(q)}><Pencil className="mr-1.5 h-4 w-4" />Editar</Button>}
+                      {(q.status === "draft" || q.status === "sent" || q.status === "viewed") && canWrite && <>
+                        <Button variant="outline" size="sm" className="min-h-10" title="Enviar cotización por correo electrónico" onClick={() => void sendQuoteByEmail(q)}><Mail className="mr-1.5 h-4 w-4" />Correo</Button>
+                        <Button variant="outline" size="sm" className="min-h-10" title="Crear y copiar enlace seguro para el cliente" onClick={() => void createShareLink(q)}><Link2 className="mr-1.5 h-4 w-4" />Enlace</Button>
+                      </>}
+                      {canWrite && <Button variant="outline" size="sm" className="min-h-10" title="Administrar enlaces compartidos" onClick={() => void loadShareLinks(q)}><History className="mr-1.5 h-4 w-4" />Historial</Button>}
+                      <Button variant="outline" size="sm" className="min-h-10" title="Descargar PDF" onClick={() => downloadPdf(q)}><Download className="mr-1.5 h-4 w-4" />PDF</Button>
+                      <Button variant="outline" size="sm" className="min-h-10" title="Duplicar cotización" onClick={() => duplicateQuote(q)}><Copy className="mr-1.5 h-4 w-4" />Duplicar</Button>
+                      {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && <>
+                        <Button variant="outline" size="sm" className="min-h-10" disabled={convertingInvoiceId === q.id || convertingId === q.id} onClick={() => convertToInvoice(q)}><ReceiptText className="mr-1.5 h-4 w-4 text-primary" />Documento interno</Button>
+                        <Button variant="outline" size="sm" className="min-h-10" disabled={convertingId === q.id} onClick={() => convertToSale(q)}><ArrowRightCircle className="mr-1.5 h-4 w-4 text-success" />Crear venta</Button>
+                      </>}
+                      {q.status === "draft" && <Button variant="outline" size="sm" className="min-h-10 text-destructive" disabled={!canWrite} onClick={() => del.mutate(q.id)}><Trash2 className="mr-1.5 h-4 w-4" />Eliminar</Button>}
+                    </div>
+                  </article>
                 ))}
-              </TableBody>
-            </Table></div>
+              </div>
+              <div className="hidden overflow-x-auto md:block"><Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>N°</TableHead><TableHead>Cliente</TableHead><TableHead>Fecha</TableHead><TableHead>Estado</TableHead><TableHead>Seguimiento</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.map((q) => (
+                    <TableRow key={q.id}>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{q.quote_number ? `#${String(q.quote_number).padStart(4, "0")}` : "—"}</TableCell>
+                      <TableCell className="font-medium"><div>{q.customer_name}</div>{q.subject && <div className="mt-0.5 max-w-[260px] truncate text-xs font-normal text-muted-foreground">{q.subject}</div>}</TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(q.created_at).toLocaleDateString("es-CL")}</TableCell>
+                      <TableCell><select disabled={!canWrite} value={q.status} onChange={(e) => { const allowed = allowedQuoteStatusTransitions[q.status] ?? []; if (!allowed.includes(e.target.value)) { toast.info("Ese cambio de estado no está permitido. Los estados enviados o vistos requieren evidencia de entrega real."); return; } upd.mutate({ id: q.id, patch: { status: e.target.value } }); }} className="rounded-md border bg-background px-2 py-1 text-xs"><option value={q.status}>{statusLabel[q.status]?.l ?? q.status}</option>{(allowedQuoteStatusTransitions[q.status] ?? []).map((k) => <option key={k} value={k}>{statusLabel[k]?.l ?? k}</option>)}</select></TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{(q.status === "sent" || q.status === "viewed") && q.sent_at ? `${Math.floor((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)} día(s) sin respuesta` : "—"}</TableCell>
+                      <TableCell className="text-right font-medium">{fmtCLP(Number(q.total))}</TableCell>
+                      <TableCell className="text-right"><div className="flex items-center justify-end gap-1">
+                        {q.status === "draft" && <Button variant="ghost" size="icon" title="Editar borrador" disabled={!canWrite} onClick={() => editDraftQuote(q)}><Pencil className="h-4 w-4" /></Button>}
+                        {(q.status === "draft" || q.status === "sent" || q.status === "viewed") && canWrite && <><Button variant="ghost" size="icon" title="Enviar cotización por correo electrónico" onClick={() => void sendQuoteByEmail(q)}><Mail className="h-4 w-4" /></Button><Button variant="ghost" size="icon" title="Crear y copiar enlace seguro para el cliente" onClick={() => void createShareLink(q)}><Link2 className="h-4 w-4" /></Button></>}
+                        {canWrite && <Button variant="ghost" size="icon" title="Administrar enlaces compartidos" onClick={() => void loadShareLinks(q)}><History className="h-4 w-4" /></Button>}
+                        <Button variant="ghost" size="icon" title="Descargar PDF" onClick={() => downloadPdf(q)}><Download className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" title="Duplicar cotización" onClick={() => duplicateQuote(q)}><Copy className="h-4 w-4" /></Button>
+                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && <Button variant="ghost" size="icon" title="Crear documento interno de cobro" disabled={convertingInvoiceId === q.id || convertingId === q.id} onClick={() => convertToInvoice(q)}><ReceiptText className="h-4 w-4 text-primary" /></Button>}
+                        {q.status === "accepted" && q.price_basis && canWrite && canConvertToDocument(q.id) && <Button variant="ghost" size="icon" title="Convertir a venta" disabled={convertingId === q.id} onClick={() => convertToSale(q)}><ArrowRightCircle className="h-4 w-4 text-success" /></Button>}
+                        {q.status === "draft" && <Button variant="ghost" size="icon" disabled={!canWrite} onClick={() => del.mutate(q.id)}><Trash2 className="h-4 w-4" /></Button>}
+                      </div></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table></div>
+            </>
           )}
         </Card>
       </>
