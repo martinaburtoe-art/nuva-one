@@ -567,40 +567,67 @@ export function ShiftsTable({ businessId }: { businessId: string }) {
           weekStart={weekStart}
         />
       ) : (
-        <Card className="p-0 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Empleado</TableHead>
-                <TableHead>Día</TableHead>
-                <TableHead>Horario</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {shifts.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>{s.employee_name}</TableCell>
-                  <TableCell>{shiftDateLabel(s.week_start, s.day_of_week)}</TableCell>
-                  <TableCell>
-                    {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
-                  </TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteShift(s.id)}
-                      title="Eliminar"
-                      aria-label={`Eliminar turno de ${s.employee_name}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+        <>
+          <div className="grid gap-2 md:hidden">
+            {shifts.map((s) => (
+              <Card key={s.id} className="rounded-xl p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{s.employee_name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{shiftDateLabel(s.week_start, s.day_of_week)}</p>
+                    <p className="mt-2 text-sm font-medium tabular-nums">
+                      {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    onClick={() => deleteShift(s.id)}
+                    title="Eliminar"
+                    aria-label={`Eliminar turno de ${s.employee_name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <Card className="hidden overflow-hidden p-0 md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Empleado</TableHead>
+                  <TableHead>Día</TableHead>
+                  <TableHead>Horario</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {shifts.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell>{s.employee_name}</TableCell>
+                    <TableCell>{shiftDateLabel(s.week_start, s.day_of_week)}</TableCell>
+                    <TableCell>
+                      {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                    </TableCell>
+                    <TableCell className="text-right space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteShift(s.id)}
+                        title="Eliminar"
+                        aria-label={`Eliminar turno de ${s.employee_name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </>
       )}
     </div>
   );
