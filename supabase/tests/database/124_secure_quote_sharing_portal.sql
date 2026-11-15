@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(29);
+SELECT plan(30);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000aa11'),
@@ -45,6 +45,12 @@ SELECT ok(public.create_quote_share_link(
   '00000000-0000-0000-0000-00000000cc11',
   repeat('a',64), now() + interval '7 days'
 ) IS NOT NULL, 'business staff can create an expiring share link');
+SELECT throws_ok(
+  $q$UPDATE public.quotes SET subject = 'Changed after sharing' WHERE id = '00000000-0000-0000-0000-00000000cc11'$q$,
+  '23514',
+  'QUOTE_HAS_ACTIVE_SHARE_LINK',
+  'shared quote content cannot change while an active recipient link exists'
+);
 RESET ROLE;
 
 SELECT ok(
