@@ -100,7 +100,8 @@ RESET ROLE;
 SELECT is((SELECT status FROM public.quotes WHERE id = '00000000-0000-0000-0000-00000000cc11'),
   'accepted', 'customer acceptance updates the quote lifecycle');
 SELECT ok((SELECT responded_at IS NOT NULL AND response_email = 'cliente@example.cl'
-  FROM public.document_share_links WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'),
+  FROM public.document_share_links WHERE quote_id = '00000000-0000-0000-0000-00000000cc11'
+    AND token_hash = encode(sha256(convert_to(repeat('a',64),'UTF8')),'hex')) ,
   'acceptance evidence is persisted with timestamp and customer email');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000aa11', true);
