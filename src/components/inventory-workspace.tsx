@@ -73,7 +73,7 @@ function ProductThumb({ src, name, size = "md" }: { src?: string | null; name?: 
           alt={name ? `Fotografía de ${name}` : "Fotografía del producto"}
           loading="lazy"
           decoding="async"
-          onError={(event) => { event.currentTarget.style.display = "none"; }}
+          onError={(event) => { event.currentTarget.style.display = "none"; const wrapper = event.currentTarget.parentElement; wrapper?.setAttribute("role", "img"); wrapper?.setAttribute("aria-label", `Sin fotografía para ${name || "producto"}`); }}
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : null}
