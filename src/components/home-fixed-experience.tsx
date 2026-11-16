@@ -18,6 +18,7 @@ const BENEFITS = [
 function DeferredDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [showWorkspace, setShowWorkspace] = useState(true);
 
   useEffect(() => {
     const node = containerRef.current;
@@ -39,12 +40,20 @@ function DeferredDemo() {
 
   return (
     <div ref={containerRef} className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-2xl">
-      {shouldLoad ? (
+      {shouldLoad && showWorkspace ? (
         <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-black/55" role="status">Preparando la demo interactiva…</div>}>
           <DemoStateProvider>
-            <DemoWorkspace onExit={() => undefined} />
+            <DemoWorkspace onExit={() => setShowWorkspace(false)} />
           </DemoStateProvider>
         </Suspense>
+      ) : shouldLoad ? (
+        <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 bg-white px-6 text-center">
+          <p className="text-sm font-medium text-[#11131a]">Has salido de la demo.</p>
+          <p className="max-w-md text-sm text-black/55">Puedes volver a explorarla cuando quieras. Se iniciará con datos ficticios limpios.</p>
+          <button type="button" onClick={() => setShowWorkspace(true)} className="min-h-11 rounded-full bg-[#6366F1] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4f46e5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4f46e5]">
+            Volver a explorar la demo
+          </button>
+        </div>
       ) : (
         <div className="flex min-h-[420px] items-center justify-center bg-white px-6 text-center text-sm text-black/55">
           La demo interactiva se cargará al acercarte a esta sección.
@@ -91,7 +100,8 @@ export function HomeFixedExperience() {
         stalledTicks += 1;
         if (stalledTicks >= 3) {
           stalledTicks = 0;
-          video.load();
+          // Resume from the current media position; never force a full resource reload.
+          video.pause();
           play();
         }
       } else {
