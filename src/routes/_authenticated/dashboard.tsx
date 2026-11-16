@@ -24,7 +24,8 @@ import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
-type TransactionAmountRow = { id: string; amount: number | string | null; type?: string | null; tx_date?: string; category?: string | null };
+type AmountRow = { amount: number | string | null };
+type TransactionAmountRow = AmountRow & { id: string; type: string | null; tx_date: string; category: string | null };
 type QuoteSummaryRow = { status: string | null; total: number | string | null };
 type IndustryProfileRow = { industry_profile: string | null; industry_secondary_profiles: string[] | null };
 type IndustryProfileQuery = {
@@ -116,7 +117,7 @@ function Dashboard() {
           return query.order("id").range(from, to);
         }),
       ]);
-      const income = sales.reduce((s: number, r: TransactionAmountRow) => s + Number(r.amount ?? 0), 0);
+      const income = sales.reduce((s: number, r: AmountRow) => s + Number(r.amount ?? 0), 0);
       const expense = expenses.reduce((s: number, r: TransactionAmountRow) => s + Number(r.amount ?? 0), 0);
       return { income, expense, net: income - expense, incomeRecords: sales.length, expenseRecords: expenses.length };
     },
@@ -147,7 +148,7 @@ function Dashboard() {
           return query.order("id").range(from, to);
         }),
       ]);
-      const income = incomeRows.reduce((sum: number, row: TransactionAmountRow) => sum + Number(row.amount ?? 0), 0);
+      const income = incomeRows.reduce((sum: number, row: AmountRow) => sum + Number(row.amount ?? 0), 0);
       const expense = expenseRows.reduce((sum: number, row: TransactionAmountRow) => sum + Number(row.amount ?? 0), 0);
       return { income, expense, net: income - expense };
     },
