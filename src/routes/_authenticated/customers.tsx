@@ -54,7 +54,7 @@ import { formatRut, normalizeRut } from "@/lib/rut";
 import { toast } from "sonner";
 
 function CustomerAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
-  const initials = name.trim().split(/\\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]?.toLocaleUpperCase("es-CL") ?? "").join("") || "CL";
+  const initials = name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]?.toLocaleUpperCase("es-CL") ?? "").join("") || "CL";
   const dimensions = size === "lg" ? "h-14 w-14 text-base rounded-2xl" : size === "sm" ? "h-10 w-10 text-xs rounded-xl" : "h-11 w-11 text-sm rounded-xl";
   return (
     <div
