@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const storageFrom = vi.fn();
+const { storageFrom } = vi.hoisted(() => ({ storageFrom: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { storage: { from: (...args: unknown[]) => storageFrom(...args) } },
+  supabase: { storage: { from: storageFrom } },
 }));
-
-import { supabase } from "@/integrations/supabase/client";
 import { removeProductImage, uploadProductImage, validateProductImage } from "./product-image";
 
 describe("product image validation", () => {
