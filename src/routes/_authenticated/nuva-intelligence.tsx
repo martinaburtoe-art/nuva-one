@@ -67,7 +67,7 @@ function NuvaIntelligence() {
 
   const intelligence = useMemo(() => {
     const income = (transactions ?? []).filter((t) => t.type === "income").reduce((sum, t) => sum + Number(t.amount ?? 0), 0);
-    const expense = (transactions ?? []).filter((t: any) => t.type === "expense").reduce((sum: number, t: any) => sum + Number(t.amount ?? 0), 0);
+    const expense = (transactions ?? []).filter((t) => t.type === "expense").reduce((sum, t) => sum + Number(t.amount ?? 0), 0);
     const lowStock = (products ?? []).filter((p) => {
       const threshold = Number(p.min_stock ?? p.low_stock_threshold ?? 0);
       return Number(p.stock ?? 0) <= threshold;
@@ -94,7 +94,7 @@ function NuvaIntelligence() {
 
   const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
   const active = views.find((view) => view.id === activeView);
-  const latestCouncil = (councilMemory ?? []).filter((memory) => memory.memory_type === "agent_consensus").sort((a: any, b: any) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())[0];
+  const latestCouncil = (councilMemory ?? []).filter((memory) => memory.memory_type === "agent_consensus").sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())[0];
   const councilEvidence = latestCouncil?.evidence && typeof latestCouncil.evidence === "object" ? latestCouncil.evidence : {};
   const rawCouncilConfidence = toFiniteNumber(councilEvidence.confidence) ?? toFiniteNumber(latestCouncil?.confidence);
   const councilConfidence = rawCouncilConfidence == null ? null : Math.max(0, Math.min(100, Math.round(rawCouncilConfidence <= 1 ? rawCouncilConfidence * 100 : rawCouncilConfidence)));
