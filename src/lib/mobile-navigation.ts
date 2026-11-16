@@ -12,8 +12,9 @@ function normalizeSearchText(value: string): string {
 
 /**
  * Splits the authorized desktop navigation into the four persistent mobile
- * destinations and the searchable secondary directory. Every input item is
- * returned exactly once, so mobile cannot silently drop a desktop module.
+ * destinations and the searchable module directory. With no query, primary
+ * and secondary items partition the list; with a query, all authorized items
+ * can appear in results while the persistent dock remains unchanged.
  */
 export function splitMobileNavigation<T extends MobileNavigationItem>(
   items: readonly T[],
