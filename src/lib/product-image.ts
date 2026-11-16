@@ -9,7 +9,7 @@ const EXTENSIONS: Record<string, string> = {
 };
 
 export function validateProductImage(file: File): string | null {
-  if (!Object.hasOwn(EXTENSIONS, file.type)) {
+  if (!Object.prototype.hasOwnProperty.call(EXTENSIONS, file.type)) {
     return "Formato no soportado. Usa JPG, PNG, WEBP o GIF.";
   }
   if (file.size > MAX_BYTES) {
