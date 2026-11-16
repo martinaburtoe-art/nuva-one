@@ -2470,3 +2470,90 @@
 @media (max-width: 720px) {
   .nuva-app .nuva-resumen-hero-side { border-top-color: rgb(23 25 27 / .10); }
 }
+
+
+/* Photo-led editorial experience adapted from the supplied mobile reference. */
+.nuva-app .nuva-resumen-visual-hero {
+  position: relative; isolation: isolate; display: flex; align-items: center;
+  min-height: 292px; margin: 0 0 24px; padding: clamp(26px, 4vw, 48px);
+  overflow: hidden; border: 1px solid rgb(16 43 70 / .16); border-radius: 28px;
+  background: #102b46; box-shadow: 0 20px 48px -30px rgb(16 43 70 / .52);
+}
+.nuva-app .nuva-resumen-visual-hero-image, .nuva-app .nuva-resumen-visual-hero-shade {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.nuva-app .nuva-resumen-visual-hero-image {
+  z-index: -2; object-fit: cover; object-position: center 48%;
+  animation: nuva-hero-image-arrive 900ms cubic-bezier(.22,1,.36,1) both;
+}
+.nuva-app .nuva-resumen-visual-hero-shade {
+  z-index: -1;
+  background: linear-gradient(90deg, rgb(10 28 47 / .92) 0%, rgb(10 28 47 / .78) 42%, rgb(10 28 47 / .28) 100%), linear-gradient(0deg, rgb(10 28 47 / .28), transparent 60%);
+}
+.nuva-app .nuva-resumen-visual-hero-content { width: 100%; align-items: flex-end; }
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-overline,
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-overline span { color: #f2d6a9; }
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-heading h1,
+.nuva-app .nuva-resumen-visual-hero h1 {
+  max-width: 720px; margin: 12px 0 0; color: #fff;
+  font-family: Georgia, "Times New Roman", serif; font-size: clamp(34px, 4.4vw, 58px);
+  font-weight: 500; line-height: 1.02; letter-spacing: -.045em; text-wrap: balance;
+}
+.nuva-app .nuva-resumen-visual-hero h1 em { color: #f0c58f; font-style: normal; }
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-subtitle {
+  max-width: 54ch; margin-top: 14px; color: rgb(255 255 255 / .84); font-size: 14px; line-height: 1.65;
+}
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-demo-button {
+  border-color: rgb(255 255 255 / .4); background: rgb(255 255 255 / .12);
+  color: white; backdrop-filter: blur(12px);
+}
+.nuva-app .nuva-resumen-visual-hero-cta {
+  display: inline-flex; min-height: 46px; align-items: center; gap: 12px;
+  margin-top: 22px; padding: 0 20px; border-radius: 999px; background: #e8bd87;
+  color: #102b46; font-size: 13px; font-weight: 750; box-shadow: 0 8px 24px rgb(5 18 32 / .18);
+  transition: transform 220ms cubic-bezier(.22,1,.36,1), background 220ms ease, box-shadow 220ms ease;
+}
+.nuva-app .nuva-resumen-visual-hero-cta:hover { transform: translateY(-2px); background: #f2d1a7; box-shadow: 0 13px 28px rgb(5 18 32 / .25); }
+.nuva-app .nuva-resumen-visual-hero-cta:focus-visible, .nuva-app .nuva-discovery-card:focus-visible { outline: 3px solid #d8ae75; outline-offset: 4px; }
+
+.nuva-app .nuva-discovery-section { margin: 0 0 24px; }
+.nuva-app .nuva-discovery-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 0 2px 13px; }
+.nuva-app .nuva-discovery-heading h2 { margin: 5px 0 0; color: #172b40; font-size: clamp(19px, 2vw, 24px); font-weight: 700; letter-spacing: -.04em; }
+.nuva-app .nuva-discovery-heading > span { color: #8a8c8e; font-size: 11px; }
+.nuva-app .nuva-discovery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.nuva-app .nuva-discovery-card {
+  position: relative; isolation: isolate; display: flex; min-height: 190px; align-items: flex-end;
+  overflow: hidden; border: 1px solid rgb(16 43 70 / .09); border-radius: 22px;
+  background: #102b46; box-shadow: 0 10px 26px -20px rgb(16 43 70 / .45);
+  text-decoration: none; transition: transform 260ms cubic-bezier(.22,1,.36,1), box-shadow 260ms ease;
+}
+.nuva-app .nuva-discovery-card > img {
+  position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%;
+  object-fit: cover; transition: transform 700ms cubic-bezier(.22,1,.36,1);
+}
+.nuva-app .nuva-discovery-shade {
+  position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(0deg, rgb(8 24 40 / .88) 0%, rgb(8 24 40 / .18) 72%, rgb(8 24 40 / .04) 100%);
+}
+.nuva-app .nuva-discovery-copy { display: flex; flex-direction: column; gap: 6px; padding: 18px; color: white; }
+.nuva-app .nuva-discovery-copy small { color: #f2d6a9; font-size: 9px; font-weight: 800; letter-spacing: .17em; }
+.nuva-app .nuva-discovery-copy strong { font-family: Georgia, "Times New Roman", serif; font-size: clamp(18px, 2vw, 24px); font-weight: 500; line-height: 1.1; }
+.nuva-app .nuva-discovery-copy i { display: inline-flex; align-items: center; gap: 6px; margin-top: 3px; color: rgb(255 255 255 / .84); font-size: 10px; font-style: normal; font-weight: 600; }
+.nuva-app .nuva-discovery-card:hover { transform: translateY(-4px); box-shadow: 0 18px 34px -20px rgb(16 43 70 / .52); }
+.nuva-app .nuva-discovery-card:hover > img { transform: scale(1.06); }
+@keyframes nuva-hero-image-arrive { from { transform: scale(1.035); opacity: .72; } to { transform: scale(1); opacity: 1; } }
+
+@media (max-width: 760px) {
+  .nuva-app .nuva-resumen-visual-hero { min-height: 270px; padding: 24px 20px; border-radius: 23px; }
+  .nuva-app .nuva-resumen-visual-hero-shade { background: linear-gradient(90deg, rgb(10 28 47 / .88), rgb(10 28 47 / .48)), linear-gradient(0deg, rgb(10 28 47 / .3), transparent); }
+  .nuva-app .nuva-resumen-visual-hero .nuva-resumen-heading { flex-direction: row; align-items: flex-end; }
+  .nuva-app .nuva-resumen-visual-hero h1 { font-size: clamp(34px, 9vw, 46px); }
+  .nuva-app .nuva-resumen-visual-hero .nuva-resumen-subtitle { max-width: 34ch; font-size: 12px; }
+  .nuva-app .nuva-discovery-grid { display: flex; overflow-x: auto; gap: 11px; padding: 2px 2px 12px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+  .nuva-app .nuva-discovery-card { flex: 0 0 min(76vw, 250px); min-height: 178px; scroll-snap-align: start; }
+  .nuva-app .nuva-discovery-heading > span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-resumen-visual-hero-image { animation: none; }
+  .nuva-app .nuva-resumen-visual-hero-cta, .nuva-app .nuva-discovery-card, .nuva-app .nuva-discovery-card > img { transition: none; }
+}
