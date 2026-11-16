@@ -52,8 +52,9 @@ Easing: `cubic-bezier(0.2, 0.75, 0.25, 1)`.
 - [ ] No content remains hidden after navigation or during failed requests.
 - [ ] Touch interactions work at 320, 360, 390 and 430 px.
 - [ ] Tablet and desktop hover states are restrained.
-- [ ] Reduced-motion mode removes route, component, icon and decorative motion, including global sweeps.
-- [ ] Reduced-motion mode disables smooth scrolling and hover/press transforms.
+- [ ] Reduced-motion mode removes route, component, icon and decorative motion, including global sweeps and portalled UI such as toasts.
+- [ ] Reduced-motion mode disables smooth scrolling and hover/press transforms, including passive cards and table rows.
+- [ ] Exactly one main landmark exists per authenticated route; module content does not introduce nested main landmarks.
 - [ ] Keyboard focus is visible on links, buttons, fields and navigation.
 - [ ] Tables do not shift horizontally during hover.
 - [ ] Dialogs, sheets and dropdowns remain usable with the new layer.
