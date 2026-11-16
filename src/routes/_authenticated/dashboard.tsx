@@ -21,7 +21,7 @@ import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparabl
 import { getIndustryProfile } from "@/lib/industry-profiles";
 import { buildIndustryDashboardMetrics } from "@/lib/industry-dashboard";
 import { toast } from "sonner";
-import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
