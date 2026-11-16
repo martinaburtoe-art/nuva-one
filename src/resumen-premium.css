@@ -2470,3 +2470,78 @@
 @media (max-width: 720px) {
   .nuva-app .nuva-resumen-hero-side { border-top-color: rgb(23 25 27 / .10); }
 }
+
+
+/* Finance workspace — align authenticated finance surfaces with the pearl,
+   deep-navy and warm-sand product direction without changing finance logic. */
+.nuva-app .nuva-workspace--finance {
+  --workspace-accent: #173653;
+  --workspace-accent-soft: rgb(23 54 83 / .07);
+  --workspace-accent-line: rgb(23 54 83 / .18);
+  color: #202a33;
+}
+
+.nuva-app .nuva-workspace--finance > nav[aria-label="Secciones de Finanzas"] {
+  border: 1px solid rgb(23 54 83 / .09);
+  border-radius: 18px;
+  background: rgb(250 249 246 / .92);
+  box-shadow: 0 10px 28px -24px rgb(18 36 54 / .38);
+  scrollbar-width: thin;
+  scrollbar-color: rgb(23 54 83 / .24) transparent;
+}
+
+.nuva-app .nuva-workspace--finance > nav[aria-label="Secciones de Finanzas"] a {
+  min-height: 40px;
+  border-color: rgb(23 54 83 / .12);
+  background: #fffefa;
+  color: #344454;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+.nuva-app .nuva-workspace--finance > nav[aria-label="Secciones de Finanzas"] a:hover {
+  border-color: rgb(23 54 83 / .34);
+  background: #f4f0e7;
+  color: #142f49;
+  transform: translateY(-1px);
+}
+
+.nuva-app .nuva-workspace--finance > nav[aria-label="Secciones de Finanzas"] a:focus-visible {
+  outline: 3px solid #b9955b;
+  outline-offset: 3px;
+}
+
+.nuva-app .nuva-workspace--finance [class*="rounded-2xl"][class*="border"] {
+  border-color: rgb(23 54 83 / .11);
+  background-color: #fffefa;
+  box-shadow: 0 12px 32px -28px rgb(18 36 54 / .38);
+}
+
+.nuva-app .nuva-workspace--finance [class*="bg-muted"] {
+  background: linear-gradient(135deg, #f8f5ee, #fffefa);
+}
+
+.nuva-app .nuva-workspace--finance button[class*="bg-primary"],
+.nuva-app .nuva-workspace--finance button[class*="shadow-elegant"] {
+  background: linear-gradient(110deg, #173653, #294e6d);
+  box-shadow: 0 10px 24px -16px rgb(23 54 83 / .65);
+}
+
+.nuva-app .nuva-workspace--finance button[class*="bg-primary"]:hover,
+.nuva-app .nuva-workspace--finance button[class*="shadow-elegant"]:hover {
+  filter: brightness(1.08);
+}
+
+@media (max-width: 640px) {
+  .nuva-app .nuva-workspace--finance > nav[aria-label="Secciones de Finanzas"] {
+    margin-inline: -12px;
+    padding-inline: 12px;
+    border-radius: 0;
+    border-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-workspace--finance > nav[aria-label="Secciones de Finanzas"] a {
+    transition: none;
+  }
+}
