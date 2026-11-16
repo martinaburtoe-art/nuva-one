@@ -21,8 +21,20 @@ import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparabl
 import { getIndustryProfile } from "@/lib/industry-profiles";
 import { buildIndustryDashboardMetrics } from "@/lib/industry-dashboard";
 import { toast } from "sonner";
-import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
+
+type AmountRow = { amount: number | string | null };
+type TransactionAmountRow = AmountRow & { id: string; type: string | null; tx_date: string; category: string | null };
+type QuoteSummaryRow = { status: string | null; total: number | string | null };
+type IndustryProfileRow = { industry_profile: string | null; industry_secondary_profiles: string[] | null };
+type IndustryProfileQuery = {
+  select: (columns: string) => {
+    eq: (column: string, value: string) => {
+      maybeSingle: () => Promise<{ data: IndustryProfileRow | null; error: { code?: string; message?: string } | null }>;
+    };
+  };
+};
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Resumen — Nüva One" }] }),
@@ -57,7 +69,7 @@ function Dashboard() {
     const d = new Date(now.getFullYear(), now.getMonth() - 5, 1);
     // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }, [isoFrom, isoTo, todayIso]);
+  }, [isoFrom, isoTo]);
   const dailyChart = Boolean(isoFrom && Date.parse(chartWindowEnd) - Date.parse(isoFrom) <= 62 * 86_400_000);
   const financialPeriodLabel = invalidDateRange
     ? "Fechas por corregir"
@@ -73,7 +85,8 @@ function Dashboard() {
     queryKey: ["dashboard-industry-profile", active?.id],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("businesses") as any)
+      const businesses = supabase.from("businesses") as unknown as IndustryProfileQuery;
+      const { data, error } = await businesses
         .select("industry_profile, industry_secondary_profiles")
         .eq("id", active!.id)
         .maybeSingle();
@@ -104,8 +117,8 @@ function Dashboard() {
           return query.order("id").range(from, to);
         }),
       ]);
-      const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
-      const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      const income = sales.reduce((s: number, r: AmountRow) => s + Number(r.amount ?? 0), 0);
+      const expense = expenses.reduce((s: number, r: TransactionAmountRow) => s + Number(r.amount ?? 0), 0);
       return { income, expense, net: income - expense, incomeRecords: sales.length, expenseRecords: expenses.length };
     },
   });
@@ -135,8 +148,8 @@ function Dashboard() {
           return query.order("id").range(from, to);
         }),
       ]);
-      const income = incomeRows.reduce((sum: number, row: any) => sum + Number(row.amount), 0);
-      const expense = expenseRows.reduce((sum: number, row: any) => sum + Number(row.amount), 0);
+      const income = incomeRows.reduce((sum: number, row: AmountRow) => sum + Number(row.amount ?? 0), 0);
+      const expense = expenseRows.reduce((sum: number, row: TransactionAmountRow) => sum + Number(row.amount ?? 0), 0);
       return { income, expense, net: income - expense };
     },
   });
@@ -189,13 +202,13 @@ function Dashboard() {
         supabase.from("quotes").select("id,status,total")
           .eq("business_id", active!.id).order("id").range(from, to),
       );
-      const pending = data.filter((quote: any) =>
+      const pending = data.filter((quote: QuoteSummaryRow) =>
         ["draft", "sent", "viewed"].includes(String(quote.status).toLowerCase()),
       );
       return {
         count: pending.length,
         totalCount: data.length,
-        value: pending.reduce((sum: number, quote: any) => sum + Number(quote.total ?? 0), 0),
+        value: pending.reduce((sum: number, quote: QuoteSummaryRow) => sum + Number(quote.total ?? 0), 0),
       };
     },
   });
@@ -268,7 +281,7 @@ function Dashboard() {
 
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
-    (allTx ?? []).forEach((t: any) => t.category && set.add(t.category));
+    (allTx ?? []).forEach((t: TransactionAmountRow) => t.category && set.add(t.category));
     return Array.from(set).sort().map((c) => ({ value: c, label: c }));
   }, [allTx]);
 
@@ -284,7 +297,7 @@ function Dashboard() {
   );
 
   const largestExpense = useMemo(() => getLargestExpenseCategory(
-    (allTx ?? []).filter((row: any) => (!isoFrom || row.tx_date >= isoFrom) && (!isoTo || row.tx_date <= isoTo) && (!categories.length || categories.includes(row.category ?? ""))),
+    (allTx ?? []).filter((row: TransactionAmountRow) => (!isoFrom || row.tx_date >= isoFrom) && (!isoTo || row.tx_date <= isoTo) && (!categories.length || categories.includes(row.category ?? ""))),
   ), [allTx, isoFrom, isoTo, categories]);
   const incomeChange = kpis && comparisonQuery.data ? calculatePercentChange(kpis.income, comparisonQuery.data.income) : null;
   const expenseChange = kpis && comparisonQuery.data ? calculatePercentChange(kpis.expense, comparisonQuery.data.expense) : null;
@@ -505,7 +518,7 @@ function Dashboard() {
             <ShieldAlert className="h-5 w-5" />
             <div>
               <strong>Algunos indicadores no están disponibles</strong>
-              <p>{integrationErrors.map((error: any) => String(error?.message ?? "Error desconocido")).join(" · ")}</p>
+              <p>{integrationErrors.map((error: unknown) => error instanceof Error ? error.message : typeof error === "object" && error !== null && "message" in error ? String(error.message) : "Error desconocido").join(" · ")}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {inventoryQuery.isError && <Button size="sm" variant="outline" onClick={() => void inventoryQuery.refetch()}>Reintentar inventario</Button>}
@@ -534,28 +547,6 @@ function Dashboard() {
           </section>
         )}
 
-        <section className="nuva-resumen-kpi-grid" aria-label="Indicadores principales">
-          <article className="nuva-resumen-kpi" data-accent="success">
-            <div className="nuva-resumen-kpi-top"><span>INGRESOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
-            <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
-            <p>{financialPeriodLabel}</p>
-          </article>
-          <article className="nuva-resumen-kpi" data-accent="sales">
-            <div className="nuva-resumen-kpi-top"><span>GASTOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
-            <strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong>
-            <p>{financialPeriodLabel}</p>
-          </article>
-          <article className="nuva-resumen-kpi" data-accent="inventory">
-            <div className="nuva-resumen-kpi-top"><span>INVENTARIO AL COSTO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
-            <strong>{inventoryQuery.data?.inventoryValue === null ? "Costo incompleto" : inventoryQuery.data ? fmtCLP(inventoryQuery.data.inventoryValue) : "—"}</strong>
-            <p>{inventoryQuery.data?.inventoryValue === null ? "Completa el costo de adquisición y revisa cantidades" : `${inventoryQuery.data?.productsCount ?? "—"} productos registrados`}</p>
-          </article>
-          <Link to="/quotes" data-accent="intelligence" className="nuva-resumen-kpi nuva-resumen-kpi-action" aria-label="Abrir cotizaciones">
-            <div className="nuva-resumen-kpi-top"><span>COTIZACIONES ABIERTAS</span><span className="nuva-resumen-kpi-icon"><FileText className="h-4 w-4" /></span></div>
-            <strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "No disponible" : integrations.pendingQuotes ?? 0}</strong>
-            <p>{quotesQuery.isError ? "Revisa la conexión de cotizaciones" : "Ver y dar seguimiento"}</p>
-          </Link>
-        </section>
 
         <section className="mb-5 grid gap-3 lg:grid-cols-2" aria-label="Centro de documentos">
           <Card className="nuva-resumen-document-card nuva-accent-sales flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
@@ -613,6 +604,7 @@ function Dashboard() {
               <div data-metric="customers"><span>Clientes registrados</span><strong>{customersQuery.isLoading ? "—" : customersQuery.isError ? "—" : integrations.customersCount ?? 0}</strong></div>
               <div data-metric="cash-register"><span>Estado de caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "No disponible" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
               <div data-metric="quote-value"><span>Valor cotizado</span><strong>{quotesQuery.isLoading || quotesQuery.isError ? "—" : fmtCLP(integrations.pendingQuoteValue ?? 0)}</strong></div>
+              <div data-metric="inventory-value"><span>Inventario al costo</span><strong>{inventoryQuery.isLoading || inventoryQuery.isError ? "—" : inventoryQuery.data?.inventoryValue === null ? "Costo incompleto" : fmtCLP(inventoryQuery.data?.inventoryValue ?? 0)}</strong></div>
             </div>
             <div className="nuva-resumen-status-copy">
               {operationalStatus.description}
