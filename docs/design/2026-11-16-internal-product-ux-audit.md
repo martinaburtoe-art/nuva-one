@@ -232,3 +232,66 @@ Estos valores son una propuesta de dirección, no una afirmación de que ya est�
 - ERP inventory list pattern: https://dribbble.com/shots/26948473-Inventory-Management-Dashboard-SaaS-UI-Design
 - ERP dashboard references: https://dribbble.com/search/erp-dashboard-ui
 - Finance dashboard references: https://dribbble.com/search/finance-dashboard-ui
+
+
+## Catálogo de ideas visuales para potenciar Nüva One — búsqueda de inspiración
+
+**Aclaración de alcance:** esta sección responde a una búsqueda de ideas de producto e interfaces que puedan adaptarse a Nüva One. Pinterest se usa como fuente de exploración visual y descubrimiento de conceptos; no se propone copiar el estilo visual ni la interfaz de Pinterest.
+
+### Búsquedas temáticas en Pinterest
+
+- SaaS dashboards: https://www.pinterest.com/search/pins/?q=saas%20dashboard%20ui
+- ERP dashboard: https://www.pinterest.com/search/pins/?q=erp%20dashboard%20design
+- CRM workspace: https://www.pinterest.com/search/pins/?q=crm%20dashboard%20design
+- Inventory app: https://www.pinterest.com/search/pins/?q=inventory%20management%20app%20ui
+- Finance dashboard: https://www.pinterest.com/search/pins/?q=finance%20dashboard%20ui
+- Business mobile app: https://www.pinterest.com/search/pins/?q=business%20management%20mobile%20app%20ui
+- Kanban workflows: https://www.pinterest.com/search/pins/?q=kanban%20workflow%20dashboard%20ui
+- AI assistant dashboard: https://www.pinterest.com/search/pins/?q=ai%20assistant%20dashboard%20ui
+- Document management: https://www.pinterest.com/search/pins/?q=document%20management%20dashboard%20ui
+
+### Ideas concretas que merecen prototipo
+
+1. **Workspace configurable por rol:** que cada usuario vea primero las tareas y módulos relevantes para su trabajo, con accesos rápidos editables, sin duplicar la navegación global.
+2. **Centro de mando con bloques reordenables:** resumen de caja, ventas, stock, cuentas por cobrar y tareas; cada bloque debe enlazar al registro que explica el dato.
+3. **Bandeja de trabajo unificada:** cotizaciones por enviar, pagos por revisar, stock bajo, tareas comerciales y aprobaciones en una cola priorizada; filtros por responsable, fecha y estado.
+4. **Fichas 360° de entidades:** producto, cliente, proveedor y documento con resumen, actividad, relaciones, archivos y acciones contextuales en una misma vista.
+5. **Pipeline CRM más visual:** etapas configurables, tarjetas compactas, monto y próxima acción visibles; alternar kanban y tabla, conservar filtros y permisos.
+6. **Inventario híbrido:** catálogo visual para descubrir productos y tabla densa para controlar SKU, stock, costo, ubicación y movimientos; alternancia sin perder filtros.
+7. **Detalle de producto más rico:** galería de fotos reales, variantes, existencias por ubicación, historial de movimientos, proveedor y rentabilidad cuando existan datos.
+8. **Finanzas con narrativa de datos:** flujo de caja por período, cuentas por cobrar/pagar, conciliación y variaciones; cada cifra debe poder abrir el conjunto de transacciones que la compone.
+9. **Cotizaciones como documentos vivos:** preview fiel, timeline de creación/envío/aceptación, estado de seguimiento y acciones primarias claras.
+10. **Calendario operativo:** vencimientos tributarios, cobros, pagos, entregas, renovaciones y tareas comerciales en vistas día/semana/mes.
+11. **Asistente IA contextual:** no solo chat global; permitir preguntar desde una venta, cliente, producto o reporte y responder con contexto autorizado, fuentes y acciones confirmables.
+12. **Paneles de detalle laterales:** abrir una entidad sin abandonar la lista, editar campos rápidos y volver al contexto anterior.
+13. **Command palette universal:** buscar módulos, registros y acciones desde teclado o móvil, con resultados agrupados y filtrados por permisos.
+14. **Onboarding progresivo dentro del producto:** checklist contextual por módulo, ejemplos con datos demo y ayudas que desaparecen al completar tareas.
+15. **Vistas guardadas:** filtros, columnas, agrupaciones y orden guardados por usuario/rol para ventas, inventario, CRM y finanzas.
+16. **Automatizaciones visuales:** constructor simple “cuando ocurra X → si se cumple Y → hacer Z”, con historial, estado y opción de desactivar.
+17. **Centro de notificaciones accionable:** notificaciones reales con entidad, motivo, prioridad, fecha y acción; evitar alertas falsas o genéricas.
+18. **Móvil como experiencia propia:** navegación por tareas, botones de acción accesibles, fichas compactas y operaciones rápidas para ventas, stock y cobranza.
+
+### Priorización recomendada
+
+| Prioridad | Idea | Por qué |
+|---|---|---|
+| P0 | Workspace por rol + centro de mando | Reduce complejidad percibida desde el primer ingreso |
+| P0 | Bandeja de trabajo unificada | Convierte indicadores en acciones concretas |
+| P0 | Fichas 360° + panel lateral | Reduce navegación y pérdida de contexto |
+| P1 | Inventario híbrido + producto enriquecido | Aprovecha fotografías y mejora la operación |
+| P1 | CRM kanban/tabla + próxima acción | Hace visible el seguimiento comercial |
+| P1 | Finanzas con drill-down | Conecta indicadores con movimientos verificables |
+| P2 | Calendario y vistas guardadas | Mejora planificación y productividad recurrente |
+| P2 | IA contextual y automatizaciones | Diferenciación avanzada después de estabilizar flujos base |
+
+### Referencias de exploración visual complementarias
+
+- Galería de 332 dashboards SaaS reales: https://www.saasui.design/saas-dashboard-examples
+- CRM SaaS dashboard explorations: https://dribbble.com/search/saas%20crm%20dashboard
+- ERP dashboard explorations: https://dribbble.com/search/erp-dashboard-design
+- Finance dashboard explorations: https://dribbble.com/search/saas%20finance%20dashboard
+- Mobile ERP explorations: https://dribbble.com/search/mobile%20erp%20dashboard
+
+### Regla de producto
+
+Estas ideas son hipótesis de diseño, no cambios autorizados por sí solas. Antes de implementar cada una se debe revisar el módulo actual, identificar funcionalidades existentes, preservar rutas y permisos, definir el flujo completo y validar desktop + móvil. Priorizar reducción de pasos y claridad antes que decoración.
