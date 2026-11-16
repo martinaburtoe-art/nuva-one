@@ -82,7 +82,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     };
     void supabase.auth.getUser().then(({ data, error }) => {
       if (!error) applyUser(data.user);
-    });
+    }).catch(() => undefined);
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       applyUser(session?.user);
     });
