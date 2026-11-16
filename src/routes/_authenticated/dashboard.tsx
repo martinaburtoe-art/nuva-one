@@ -149,7 +149,7 @@ function Dashboard() {
     staleTime: 60_000,
     queryFn: async () => {
       const products = await fetchAllResumenRows((from, to) =>
-        supabase.from("products").select("id, stock, cost, low_stock_threshold, reorder_point")
+        supabase.from("products").select("id, name, image_url, stock, cost, low_stock_threshold, reorder_point")
           .eq("business_id", active!.id).order("id").range(from, to),
       );
       const lowStockCount = products.filter(isProductLowStock).length;
@@ -157,6 +157,15 @@ function Dashboard() {
         inventoryValue: calculateInventoryValueAtCost(products),
         productsCount: products.length,
         lowStockCount,
+        featuredProducts: products
+          .filter((product: any) => typeof product.image_url === "string" && product.image_url.trim().length > 0)
+          .slice(0, 4)
+          .map((product: any) => ({
+            id: String(product.id),
+            name: String(product.name ?? "Producto"),
+            imageUrl: String(product.image_url),
+            stock: Number(product.stock ?? 0),
+          })),
       };
     },
   });
@@ -442,6 +451,45 @@ function Dashboard() {
             <Link to="/finance" className="nuva-resumen-hero-link">Ver detalle financiero <ArrowUpRight className="h-4 w-4" /></Link>
           </div>
         </section>
+
+        {inventoryQuery.data && inventoryQuery.data.productsCount > 0 && (
+          <section className="nuva-catalog-showcase nuva-enter" aria-label="Catálogo visual del negocio">
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">TU NEGOCIO · CATÁLOGO</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">Tus productos, a primera vista</h2>
+                <p className="mt-1 text-xs text-muted-foreground">Fotografías reales guardadas en el catálogo de tu negocio.</p>
+              </div>
+              <Link to="/inventory" className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/75">
+                Gestionar catálogo <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            {inventoryQuery.data.featuredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {inventoryQuery.data.featuredProducts.map((product: { id: string; name: string; imageUrl: string; stock: number }) => (
+                  <Link key={product.id} to="/inventory" className="group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-indigo-100 via-slate-50 to-amber-100 dark:from-indigo-950 dark:via-slate-900 dark:to-amber-950">
+                      <img src={product.imageUrl} alt={product.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045]" />
+                      <span className="absolute bottom-2 left-2 rounded-full border border-white/30 bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">Stock: {product.stock}</span>
+                    </div>
+                    <div className="p-3">
+                      <p className="line-clamp-1 text-sm font-semibold">{product.name}</p>
+                      <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Ver producto <span aria-hidden="true">↗</span></p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <Link to="/inventory" className="group flex flex-col gap-3 rounded-2xl border border-dashed border-primary/30 bg-gradient-to-r from-primary/[0.07] via-card to-amber-500/[0.06] p-4 transition-colors hover:border-primary/50 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Package className="h-5 w-5" /></span>
+                  <div><p className="text-sm font-semibold">Dale vida a tu catálogo</p><p className="mt-1 text-xs text-muted-foreground">Añade fotografías reales a tus productos para reconocerlos más rápido en Nüva One.</p></div>
+                </div>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">Añadir fotografías <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
+              </Link>
+            )}
+          </section>
+        )}
 
         <section className="nuva-resumen-mobile-brief" aria-label="Pulso del negocio">
           <div className="nuva-resumen-mobile-brief-head">
