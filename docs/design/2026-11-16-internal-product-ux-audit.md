@@ -125,3 +125,110 @@ El shell presenta un estado vacío que informa que las notificaciones automátic
 - `Centro de acción CRM` pasa a llamarse `Seguimiento comercial`, etiqueta orientada a la tarea y más comprensible para usuarios no técnicos. La ruta no cambia.
 - No se han fusionado ni eliminado páginas ni datos. La arquitectura final de Finanzas y CRM requiere todavía mapear acciones exclusivas y enlaces internos antes de una consolidación más profunda.
 - Pendiente: validar que `/finance-professional` siga apareciendo en búsqueda global y módulo móvil con permisos de Finanzas, y que no aparezca a usuarios sin permiso.
+
+
+## Investigación visual — principios de Pinterest adaptados a Nüva One
+
+**Fecha:** 2026-11-16.  
+**Alcance:** solo aplicación autenticada; no se modifica landing, pricing ni páginas públicas.  
+**Objetivo:** incorporar la capacidad de Pinterest para hacer que una interfaz sea visual, atractiva y fácil de explorar, sin sacrificar precisión operativa, densidad de información ni accesibilidad.
+
+### Lectura del referente
+
+Pinterest funciona como una galería visual: el contenido es protagonista y la interfaz de soporte se mantiene discreta. La síntesis de su lenguaje visual apunta a:
+- lienzo claro y cálido, con superficies blanco roto/perla;
+- tipografía con jerarquía marcada por tamaño, peso y espacio, no por múltiples colores;
+- radios amplios y consistentes, con separación generosa entre grupos;
+- controles de búsqueda y filtros fáciles de descubrir;
+- un color de acento reservado para acciones primarias;
+- tarjetas cuyo contenido y proporción visual aportan identidad, en vez de depender de decoración superpuesta.
+
+**Límite de transferencia:** el patrón masonry de Pinterest está optimizado para explorar imágenes de proporciones distintas. No se debe trasladar a tablas de ventas, caja, nómina, contabilidad o inventario transaccional. En Nüva, las listas y tablas deben conservar alineación, ordenación, comparación y escaneo rápido.
+
+### Dirección propuesta: “Nüva Editorial Operations”
+
+Una identidad interna que combina la calidez editorial de Pinterest con la disciplina de un producto financiero/operativo:
+- **Base cromática:** perla cálida y gris niebla para el canvas; blanco para superficies de trabajo; grafito para texto.
+- **Acento:** mantener el índigo de Nüva para acciones y selección; oro apagado solo para información secundaria o énfasis de marca. No introducir el rojo Pinterest como color de marca.
+- **Color semántico:** verde, ámbar y rojo únicamente para estados reales (correcto, atención, crítico), nunca como decoración.
+- **Tipografía:** una familia sans consistente; títulos compactos y expresivos, cifras tabulares, etiquetas secundarias legibles. Evitar texto diminuto y exceso de mayúsculas espaciadas.
+- **Geometría:** radios coherentes por nivel (controles, tarjetas, paneles); evitar que cada módulo invente sus propias esquinas, sombras y alturas.
+- **Superficies:** sombras muy suaves o bordes finos; no aplicar glassmorphism, blur o gradientes a todas las tarjetas.
+- **Movimiento:** microinteracciones cortas y discretas; movimiento solo donde existe interacción. Respetar prefers-reduced-motion.
+
+### Aplicaciones concretas dentro del sistema
+
+| Área | Idea visual aplicable | Restricción funcional |
+|---|---|---|
+| Resumen | Encabezado editorial breve, indicadores principales bien jerarquizados, bloques de análisis con espacio y ritmo | No duplicar KPIs, alertas o accesos ya existentes |
+| Inventario | Foto real como identificador del producto; miniatura consistente, nombre, SKU y stock legibles | No usar fotos decorativas ni imágenes generadas para representar stock real |
+| Catálogo | Cuadrícula visual para descubrir productos, con alternancia de proporciones solo si la imagen aporta valor | Mantener una vista de tabla/lista para gestión masiva y comparación |
+| CRM | Fichas de cliente con avatar/logo si existe, etapa, última actividad y próxima acción | No reemplazar pipeline ni datos tabulares por tarjetas gigantes |
+| Finanzas | Paneles editoriales para flujo, tendencias y resumen; tablas sobrias para movimientos y conciliación | No ocultar fechas, montos, origen, estado ni acciones |
+| Cotizaciones | Vista de documentos con miniatura/preview, estado, cliente y total claramente escaneables | Acciones de enviar, duplicar, descargar y convertir deben seguir explícitas |
+| People | Perfiles y directorio más humanos, con jerarquía clara de datos | Datos salariales y contractuales permanecen restringidos según permisos |
+| Móvil | Tarjetas apiladas, controles compactos y navegación persistente; imágenes solo cuando identifican entidades | Priorizar tareas frecuentes, touch targets y lectura sin zoom |
+
+### Sistema de componentes a normalizar
+
+1. **PageHeader:** título, contexto de negocio, descripción corta y una acción primaria.
+2. **SectionHeader:** título de sección, ayuda contextual y acción secundaria opcional.
+3. **MetricCard:** valor, etiqueta, período/base de comparación y tendencia explicada.
+4. **EntityCard:** imagen/avatar opcional, nombre, metadatos clave y estado; no más de una acción primaria visible.
+5. **FilterChip / FilterBar:** filtros activos legibles, limpiar filtros y conteo de resultados.
+6. **DataTable:** cabecera estable, alineación numérica, estados, acciones por fila y responsive definido.
+7. **EmptyState:** explicación concreta, motivo del vacío y una acción siguiente; no ilustración genérica.
+8. **StatusBadge:** color semántico consistente y texto explícito; nunca depender solo del color.
+9. **CommandSearch:** búsqueda global con resultados agrupados, permisos aplicados y acciones rápidas.
+10. **MobileEntityRow:** alternativa móvil compacta a la tabla, conservando los campos que permiten decidir.
+
+### Tokens visuales iniciales para validar en código
+
+Estos valores son una propuesta de dirección, no una afirmación de que ya estén implementados globalmente:
+- Canvas: `#F6F6F3` o un tono perla equivalente del sistema actual.
+- Surface: `#FFFFFF`.
+- Text primary: grafito de alto contraste (aprox. `#202124`).
+- Text secondary: gris neutro con contraste suficiente; evitar grises demasiado pálidos en texto funcional.
+- Accent: conservar el índigo existente de Nüva.
+- Radius: 12–16 px para controles/tarjetas y 20–24 px solo para paneles destacados; evitar 30–40 px indiscriminadamente.
+- Spacing: escala coherente basada en múltiplos de 4/8 px; reservar 16–24 px entre grupos y más espacio entre secciones.
+- Elevation: borde fino como primera opción; sombra suave solo para separar capas.
+
+### Antipatrones que se deben evitar
+
+- Convertir cada dato en una tarjeta: aumenta scroll y reduce comparación.
+- Usar masonry en información transaccional.
+- Usar fotos, gradientes, emojis o ilustraciones para decorar módulos sin función.
+- Repetir el mismo KPI en varias zonas de la misma pantalla.
+- Ocultar acciones frecuentes dentro de menús de tres puntos.
+- Colorear todos los estados; el color pierde significado.
+- Reducir tipografía y contraste para “hacer caber” más contenido.
+- Aplicar una estética distinta en cada módulo, generando una suite de productos inconexa.
+
+### Orden recomendado de implementación
+
+**Fase V1 — lenguaje visual compartido:** definir tokens, PageHeader, SectionHeader, MetricCard, filtros, estados vacíos y tablas; aplicarlo primero a Resumen e Inventario.  
+**Fase V2 — identidad por entidad:** mejorar fichas de producto, cliente y documento con imágenes reales opcionales y metadatos accionables.  
+**Fase V3 — coherencia de módulos:** llevar los mismos patrones a Finanzas, CRM, Cotizaciones y People sin eliminar funciones.  
+**Fase V4 — responsive y pulido:** validar 320/360/390/430 px, tablet y desktop; comprobar teclado, contraste, reduced motion, estados de carga/error y rendimiento.
+
+### Criterios de aceptación visual
+
+- Un usuario identifica en pocos segundos el título, contexto, acción primaria y estado de la pantalla.
+- La jerarquía visual funciona sin depender del color.
+- Las tablas conservan lectura, alineación y comparación.
+- Las imágenes solo aparecen cuando identifican una entidad real.
+- Los componentes equivalentes se ven y se comportan igual entre módulos.
+- El diseño móvil no es una versión comprimida del desktop.
+- Ninguna mejora visual reduce permisos, visibilidad de datos o acceso a acciones existentes.
+
+### Fuentes de inspiración consultadas
+
+- Pinterest visual language (referencia de estilo): https://geoffreymanda.github.io/design-atlas/styles/pinterest.html
+- Pinterest design system analysis: https://layout.design/gallery/pinterest
+- Pinterest-inspired component analysis: https://www.shadcn.io/design/pinterest
+- Pinterest visual discovery and hybrid search: https://medium.com/pinterest-engineering/hybrid-search-building-a-textual-and-visual-discovery-experience-at-pinterest-8527ba9728a9
+- Real SaaS product UI patterns: https://www.saasui.design/saas-design-inspiration
+- ERP inventory list pattern: https://dribbble.com/shots/26948473-Inventory-Management-Dashboard-SaaS-UI-Design
+- ERP dashboard references: https://dribbble.com/search/erp-dashboard-ui
+- Finance dashboard references: https://dribbble.com/search/finance-dashboard-ui
