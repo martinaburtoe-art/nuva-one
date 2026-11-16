@@ -20,3 +20,9 @@
 - Deben comprobarse foco de teclado, contraste, estado activo de cada ruta y ausencia de movimiento con reducción de movimiento habilitada.
 - Typecheck, tests, lint, build y revisión visual deben ejecutarse sobre el head final del PR.
 - No se afirma despliegue a producción ni finalización funcional hasta disponer de esa evidencia.
+
+## Extensión CRM e inventario
+
+- CRM: `CustomerAvatar` muestra iniciales derivadas del nombre del cliente en tarjetas móviles, tabla de escritorio y cabecera de la ficha lateral. No requiere ni simula fotografías personales.
+- Inventario: la miniatura anuncia el nombre accesible de la foto y, si la carga falla, cambia el contenedor a un fallback accesible con icono de paquete y etiqueta de ausencia de fotografía.
+- Abastecimiento reutiliza las mismas miniaturas del catálogo; no añade consultas ni modifica el modelo de datos.
