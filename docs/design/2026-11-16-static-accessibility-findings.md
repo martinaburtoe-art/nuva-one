@@ -41,6 +41,14 @@ This is a static code review, not a browser-based WCAG audit.
 - Impact: it can falsely imply that a notification system has checked the business and found no alerts.
 - Decision: do not fabricate notification events or claim there are none. This remains a product gap until a real event source and role-aware notification model are implemented; then replace the toast with a real center and meaningful empty/error states.
 
+
+### BUILD-001 — Duplicate dashboard test file was discovered as a route
+- Severity: P3 (build hygiene)
+- Evidence: Vercel's route-generation log warned that `src/routes/_authenticated/dashboard.test.ts` did not export a `Route`.
+- Impact: unnecessary route-discovery warning and ambiguity about test files under the route tree.
+- Correction: removed the duplicate test file; the expanded `-dashboard.test.ts` file already contains the dashboard-related test coverage and is excluded from route discovery by the configured prefix convention.
+- Validation: latest Vercel build is running against the updated head; its final result is still pending.
+
 ## Remaining validation
 
 - Run typecheck, unit tests, lint and production build on the final PR head.
