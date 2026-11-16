@@ -2557,3 +2557,38 @@
   .nuva-app .nuva-resumen-visual-hero-image { animation: none; }
   .nuva-app .nuva-resumen-visual-hero-cta, .nuva-app .nuva-discovery-card, .nuva-app .nuva-discovery-card > img { transition: none; }
 }
+
+
+/* Resilient media fallbacks for the authenticated editorial dashboard.
+   If a remote editorial image or a stored product image fails, the card keeps
+   its navy/pearl surface and readable copy instead of showing a broken-image icon. */
+.nuva-app .nuva-resumen-visual-hero-image,
+.nuva-app .nuva-discovery-card > img,
+.nuva-app .nuva-catalog-showcase img {
+  color: transparent;
+}
+
+.nuva-app .nuva-resumen-visual-hero {
+  background-color: #102b46;
+}
+
+.nuva-app .nuva-discovery-card {
+  background-color: #102b46;
+}
+
+.nuva-app .nuva-catalog-showcase a:focus-visible {
+  outline: 3px solid var(--color-ring);
+  outline-offset: 4px;
+}
+
+@media (forced-colors: active) {
+  .nuva-app .nuva-resumen-visual-hero-shade,
+  .nuva-app .nuva-discovery-shade {
+    display: none;
+  }
+  .nuva-app .nuva-resumen-visual-hero h1,
+  .nuva-app .nuva-resumen-visual-hero .nuva-resumen-subtitle,
+  .nuva-app .nuva-discovery-copy {
+    color: CanvasText;
+  }
+}
