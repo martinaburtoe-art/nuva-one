@@ -23,7 +23,7 @@ const nav = [
   { to: "/mobile-scanner", label: "Scanner móvil", icon: ScanBarcode, module: "pos", section: "Operación" },
   { to: "/sales", label: "Ventas", icon: ShoppingCart, module: "sales", section: "Ventas y clientes" },
   { to: "/customers", label: "Clientes", icon: Users, module: "customers", section: "Ventas y clientes" },
-  { to: "/customer-action-center", label: "Centro de acción CRM", icon: FileText, module: "customers", section: "Ventas y clientes" },
+  { to: "/customer-action-center", label: "Seguimiento comercial", icon: CalendarClock, module: "customers", section: "Ventas y clientes" },
   { to: "/customers-intelligence", label: "Inteligencia de clientes", icon: Brain, module: "customers", section: "Ventas y clientes" },
   { to: "/purchases", label: "Compras", icon: Package, module: "purchases", section: "Compras e inventario" },
   { to: "/catalog", label: "Catálogo", icon: BookOpen, module: "catalog", section: "Compras e inventario" },
@@ -33,7 +33,7 @@ const nav = [
   { to: "/shipments", label: "Envíos & Entregas", icon: Truck, section: "Compras e inventario" },
   { to: "/finance", label: "Finanzas", icon: CreditCard, module: "finance", section: "Finanzas" },
   { to: "/finance-accounting", label: "Contabilidad y tributación", icon: FileText, module: "finance", section: "Finanzas" },
-  { to: "/finance-professional", label: "Centro financiero profesional", icon: Calculator, module: "finance", section: "Finanzas" },
+  { to: "/finance-professional", label: "Herramientas financieras avanzadas", icon: Calculator, module: "finance", section: "Finanzas", quickAccessOnly: true },
   { to: "/financial-dashboard", label: "Panel financiero", icon: BarChart3, module: "finance", section: "Finanzas" },
   { to: "/financial-control", label: "Control financiero", icon: ShieldCheck, module: "finance", section: "Finanzas" },
   { to: "/financial-integrity", label: "Integridad financiera", icon: ShieldCheck, module: "finance", section: "Finanzas" },
@@ -121,16 +121,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     () => splitMobileNavigation(visibleNav, mobileModuleQuery),
     [visibleNav, mobileModuleQuery],
   );
+  const sidebarNav = useMemo(
+    () => visibleNav.filter((item) => !("quickAccessOnly" in item && item.quickAccessOnly)),
+    [visibleNav],
+  );
   const visibleNavGroups = useMemo(() => {
     const groups = new Map<string, (typeof nav)[number][]>();
-    visibleNav.forEach((item) => {
+    sidebarNav.forEach((item) => {
       const section = item.section ?? "Otros";
       const current = groups.get(section) ?? [];
       current.push(item);
       groups.set(section, current);
     });
     return Array.from(groups.entries());
-  }, [visibleNav]);
+  }, [sidebarNav]);
   const [collapsedSections, setCollapsedSections] = useState<string[]>([
     "Operación", "Ventas y clientes", "Compras e inventario", "Finanzas", "Inteligencia", "Ecosistema", "Personas", "Administración",
   ]);
@@ -161,7 +165,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           {membershipLoading && <p role="status" className="px-3 py-3 text-xs text-muted-foreground">Verificando módulos autorizados…</p>}
           {membershipError && <div role="alert" className="px-3 py-3"><p className="text-xs text-muted-foreground">No pudimos verificar tus permisos.</p><button type="button" onClick={() => void refetchMembership()} className="mt-2 min-h-10 text-xs font-semibold text-primary">Reintentar</button></div>}
           {!membershipLoading && !membershipError && !membership && <p className="px-3 py-3 text-xs text-muted-foreground">{active ? "No encontramos permisos para este negocio. Selecciona otro negocio o solicita acceso." : "Selecciona o crea un negocio para ver sus módulos."}</p>}
-          {collapsed ? visibleNav.map((item) => {
+          {collapsed ? sidebarNav.map((item) => {
             const isActive = isNavActive(item.to);
             return <Link key={item.to} to={item.to} aria-label={item.label} title={item.label} aria-current={isActive ? "page" : undefined} data-active={isActive} className={cn("nuva-nav-item group relative flex items-center justify-center px-3 py-2 text-sm overflow-visible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground")}><item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-sidebar-foreground/55 group-hover:text-sidebar-foreground")} /></Link>;
           }) : visibleNavGroups.map(([section, items]) => {
