@@ -24,6 +24,17 @@ import { toast } from "sonner";
 import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
+type TransactionAmountRow = { id: string; amount: number | string | null; type?: string | null; tx_date?: string; category?: string | null };
+type QuoteSummaryRow = { status: string | null; total: number | string | null };
+type IndustryProfileRow = { industry_profile: string | null; industry_secondary_profiles: string[] | null };
+type IndustryProfileQuery = {
+  select: (columns: string) => {
+    eq: (column: string, value: string) => {
+      maybeSingle: () => Promise<{ data: IndustryProfileRow | null; error: { code?: string; message?: string } | null }>;
+    };
+  };
+};
+
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Resumen — Nüva One" }] }),
   component: Dashboard,
@@ -57,7 +68,7 @@ function Dashboard() {
     const d = new Date(now.getFullYear(), now.getMonth() - 5, 1);
     // Fecha local para evitar desplazamientos de día en Chile (UTC-4).
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }, [isoFrom, isoTo, todayIso]);
+  }, [isoFrom, isoTo]);
   const dailyChart = Boolean(isoFrom && Date.parse(chartWindowEnd) - Date.parse(isoFrom) <= 62 * 86_400_000);
   const financialPeriodLabel = invalidDateRange
     ? "Fechas por corregir"
@@ -73,7 +84,8 @@ function Dashboard() {
     queryKey: ["dashboard-industry-profile", active?.id],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("businesses") as any)
+      const businesses = supabase.from("businesses") as unknown as IndustryProfileQuery;
+      const { data, error } = await businesses
         .select("industry_profile, industry_secondary_profiles")
         .eq("id", active!.id)
         .maybeSingle();
@@ -104,8 +116,8 @@ function Dashboard() {
           return query.order("id").range(from, to);
         }),
       ]);
-      const income = sales.reduce((s: number, r: any) => s + Number(r.amount), 0);
-      const expense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      const income = sales.reduce((s: number, r: TransactionAmountRow) => s + Number(r.amount ?? 0), 0);
+      const expense = expenses.reduce((s: number, r: TransactionAmountRow) => s + Number(r.amount ?? 0), 0);
       return { income, expense, net: income - expense, incomeRecords: sales.length, expenseRecords: expenses.length };
     },
   });
@@ -135,8 +147,8 @@ function Dashboard() {
           return query.order("id").range(from, to);
         }),
       ]);
-      const income = incomeRows.reduce((sum: number, row: any) => sum + Number(row.amount), 0);
-      const expense = expenseRows.reduce((sum: number, row: any) => sum + Number(row.amount), 0);
+      const income = incomeRows.reduce((sum: number, row: TransactionAmountRow) => sum + Number(row.amount ?? 0), 0);
+      const expense = expenseRows.reduce((sum: number, row: TransactionAmountRow) => sum + Number(row.amount ?? 0), 0);
       return { income, expense, net: income - expense };
     },
   });
@@ -189,13 +201,13 @@ function Dashboard() {
         supabase.from("quotes").select("id,status,total")
           .eq("business_id", active!.id).order("id").range(from, to),
       );
-      const pending = data.filter((quote: any) =>
+      const pending = data.filter((quote: QuoteSummaryRow) =>
         ["draft", "sent", "viewed"].includes(String(quote.status).toLowerCase()),
       );
       return {
         count: pending.length,
         totalCount: data.length,
-        value: pending.reduce((sum: number, quote: any) => sum + Number(quote.total ?? 0), 0),
+        value: pending.reduce((sum: number, quote: QuoteSummaryRow) => sum + Number(quote.total ?? 0), 0),
       };
     },
   });
@@ -268,7 +280,7 @@ function Dashboard() {
 
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
-    (allTx ?? []).forEach((t: any) => t.category && set.add(t.category));
+    (allTx ?? []).forEach((t: TransactionAmountRow) => t.category && set.add(t.category));
     return Array.from(set).sort().map((c) => ({ value: c, label: c }));
   }, [allTx]);
 
@@ -284,7 +296,7 @@ function Dashboard() {
   );
 
   const largestExpense = useMemo(() => getLargestExpenseCategory(
-    (allTx ?? []).filter((row: any) => (!isoFrom || row.tx_date >= isoFrom) && (!isoTo || row.tx_date <= isoTo) && (!categories.length || categories.includes(row.category ?? ""))),
+    (allTx ?? []).filter((row: TransactionAmountRow) => (!isoFrom || row.tx_date >= isoFrom) && (!isoTo || row.tx_date <= isoTo) && (!categories.length || categories.includes(row.category ?? ""))),
   ), [allTx, isoFrom, isoTo, categories]);
   const incomeChange = kpis && comparisonQuery.data ? calculatePercentChange(kpis.income, comparisonQuery.data.income) : null;
   const expenseChange = kpis && comparisonQuery.data ? calculatePercentChange(kpis.expense, comparisonQuery.data.expense) : null;
@@ -505,7 +517,7 @@ function Dashboard() {
             <ShieldAlert className="h-5 w-5" />
             <div>
               <strong>Algunos indicadores no están disponibles</strong>
-              <p>{integrationErrors.map((error: any) => String(error?.message ?? "Error desconocido")).join(" · ")}</p>
+              <p>{integrationErrors.map((error: unknown) => error instanceof Error ? error.message : typeof error === "object" && error !== null && "message" in error ? String(error.message) : "Error desconocido").join(" · ")}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {inventoryQuery.isError && <Button size="sm" variant="outline" onClick={() => void inventoryQuery.refetch()}>Reintentar inventario</Button>}
