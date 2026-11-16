@@ -378,7 +378,7 @@ function Dashboard() {
     <ModuleGuard module="dashboard">
       <div className="nuva-resumen-canvas">
         <header className="nuva-resumen-header nuva-resumen-visual-hero">
-          <img className="nuva-resumen-visual-hero-image" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=85" alt="" aria-hidden="true" fetchPriority="high" decoding="async" />
+          <img className="nuva-resumen-visual-hero-image" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=85" alt="" aria-hidden="true" fetchPriority="high" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
           <div className="nuva-resumen-visual-hero-shade" aria-hidden="true" />
           <div className="nuva-resumen-heading nuva-resumen-visual-hero-content">
             <div>
@@ -400,17 +400,17 @@ function Dashboard() {
           </div>
           <div className="nuva-discovery-grid">
             <Link to="/pos" className="nuva-discovery-card">
-              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=82" alt="Terminal de pago en una operación comercial" loading="lazy" decoding="async" />
+              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=82" alt="Terminal de pago en una operación comercial" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
               <span className="nuva-discovery-shade" />
               <span className="nuva-discovery-copy"><small>VENTAS</small><strong>Cada venta cuenta</strong><i>Abre tu punto de venta <ArrowUpRight className="h-4 w-4" /></i></span>
             </Link>
             <Link to="/inventory" className="nuva-discovery-card">
-              <img src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=900&q=82" alt="Estanterías organizadas de almacenamiento e inventario" loading="lazy" decoding="async" />
+              <img src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=900&q=82" alt="Estanterías organizadas de almacenamiento e inventario" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
               <span className="nuva-discovery-shade" />
               <span className="nuva-discovery-copy"><small>INVENTARIO</small><strong>Todo en su lugar</strong><i>Gestiona tus productos <ArrowUpRight className="h-4 w-4" /></i></span>
             </Link>
             <Link to="/finance" className="nuva-discovery-card">
-              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=82" alt="Panel de análisis de datos empresariales" loading="lazy" decoding="async" />
+              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=82" alt="Panel de análisis de datos empresariales" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
               <span className="nuva-discovery-shade" />
               <span className="nuva-discovery-copy"><small>FINANZAS</small><strong>Decide con claridad</strong><i>Revisa tus resultados <ArrowUpRight className="h-4 w-4" /></i></span>
             </Link>
@@ -498,7 +498,7 @@ function Dashboard() {
                   return (
                     <>
                       <Link to="/inventory" className="group relative isolate flex min-h-[250px] overflow-hidden rounded-[1.65rem] border border-border/60 bg-slate-900 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-[300px]">
-                        <img src={featured.imageUrl} alt={featured.name} loading="lazy" decoding="async" className="absolute inset-0 -z-20 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+                        <img src={featured.imageUrl} alt={featured.name} loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} className="absolute inset-0 -z-20 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
                         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-slate-950/5" />
                         <div className="mt-auto flex w-full flex-col gap-3 p-5 sm:p-6">
                           <span className="w-fit rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md">Producto destacado · Stock {featured.stock}</span>
@@ -515,7 +515,7 @@ function Dashboard() {
                         {supporting.map((product: { id: string; name: string; imageUrl: string; stock: number }) => (
                           <Link key={product.id} to="/inventory" className="group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                             <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-indigo-100 via-slate-50 to-amber-100 dark:from-indigo-950 dark:via-slate-900 dark:to-amber-950">
-                              <img src={product.imageUrl} alt={product.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045]" />
+                              <img src={product.imageUrl} alt={product.name} loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045]" />
                               <span className="absolute bottom-2 left-2 rounded-full border border-white/30 bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">Stock: {product.stock}</span>
                             </div>
                             <div className="p-3">
