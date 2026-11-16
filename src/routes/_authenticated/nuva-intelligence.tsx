@@ -81,7 +81,7 @@ function NuvaIntelligence() {
   const agentsConsulted = typeof councilEvidence.agent_count === "number"
     ? councilEvidence.agent_count
     : typeof councilEvidence.agents_consulted === "number" ? councilEvidence.agents_consulted : null;
-  const pendingActions = (actionQueue ?? []).filter((action: any) => ["pending", "approved"].includes(String(action.status))).length;
+  const pendingActions = (actionQueue ?? []).filter((action: any) => ["pending", "approved", "executing"].includes(String(action.status))).length;
   const councilTitle = councilQuery.isLoading ? "Consultando consenso…" : councilQuery.isError ? "No se pudo consultar el consenso" : latestCouncil?.title ?? "Aún no hay un consenso registrado";
   const councilContent = councilQuery.isLoading ? "Estamos consultando los registros persistidos del consejo." : councilQuery.isError ? "No es posible verificar el consenso en este momento. Los indicadores de agentes y confianza se mantienen sin datos." : latestCouncil?.content ?? "Cuando exista una deliberación persistida, aquí podrás revisar su conclusión y la evidencia asociada. No se muestran agentes ni niveles de confianza sin registro.";
   const sourceQueries = [salesQuery, transactionsQuery, productsQuery, quotesQuery, activitiesQuery];
