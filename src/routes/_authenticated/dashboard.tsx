@@ -21,7 +21,7 @@ import { calculatePercentChange, getLargestExpenseCategory, getPreviousComparabl
 import { getIndustryProfile } from "@/lib/industry-profiles";
 import { buildIndustryDashboardMetrics } from "@/lib/industry-dashboard";
 import { toast } from "sonner";
-import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, Plus, ArrowDownRight, FileText, Users, Wallet } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Sparkles, ShieldAlert, TrendingUp, Package, ShoppingBag, FileText, Users, Wallet } from "lucide-react";
 const DashboardChart = lazy(() => import("@/components/dashboard-chart").then((m) => ({ default: m.DashboardChart })));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -534,28 +534,6 @@ function Dashboard() {
           </section>
         )}
 
-        <section className="nuva-resumen-kpi-grid" aria-label="Indicadores principales">
-          <article className="nuva-resumen-kpi" data-accent="success">
-            <div className="nuva-resumen-kpi-top"><span>INGRESOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowUpRight className="h-4 w-4" /></span></div>
-            <strong>{kpis ? fmtCLP(kpis.income) : "—"}</strong>
-            <p>{financialPeriodLabel}</p>
-          </article>
-          <article className="nuva-resumen-kpi" data-accent="sales">
-            <div className="nuva-resumen-kpi-top"><span>GASTOS DEL PERÍODO</span><span className="nuva-resumen-kpi-icon"><ArrowDownRight className="h-4 w-4" /></span></div>
-            <strong>{kpis ? fmtCLP(kpis.expense) : "—"}</strong>
-            <p>{financialPeriodLabel}</p>
-          </article>
-          <article className="nuva-resumen-kpi" data-accent="inventory">
-            <div className="nuva-resumen-kpi-top"><span>INVENTARIO AL COSTO</span><span className="nuva-resumen-kpi-icon"><Package className="h-4 w-4" /></span></div>
-            <strong>{inventoryQuery.data?.inventoryValue === null ? "Costo incompleto" : inventoryQuery.data ? fmtCLP(inventoryQuery.data.inventoryValue) : "—"}</strong>
-            <p>{inventoryQuery.data?.inventoryValue === null ? "Completa el costo de adquisición y revisa cantidades" : `${inventoryQuery.data?.productsCount ?? "—"} productos registrados`}</p>
-          </article>
-          <Link to="/quotes" data-accent="intelligence" className="nuva-resumen-kpi nuva-resumen-kpi-action" aria-label="Abrir cotizaciones">
-            <div className="nuva-resumen-kpi-top"><span>COTIZACIONES ABIERTAS</span><span className="nuva-resumen-kpi-icon"><FileText className="h-4 w-4" /></span></div>
-            <strong>{quotesQuery.isLoading ? "—" : quotesQuery.isError ? "No disponible" : integrations.pendingQuotes ?? 0}</strong>
-            <p>{quotesQuery.isError ? "Revisa la conexión de cotizaciones" : "Ver y dar seguimiento"}</p>
-          </Link>
-        </section>
 
         <section className="mb-5 grid gap-3 lg:grid-cols-2" aria-label="Centro de documentos">
           <Card className="nuva-resumen-document-card nuva-accent-sales flex h-full flex-col justify-between gap-4 border-border/70 bg-card/90 p-4 shadow-sm sm:p-5">
@@ -613,6 +591,7 @@ function Dashboard() {
               <div data-metric="customers"><span>Clientes registrados</span><strong>{customersQuery.isLoading ? "—" : customersQuery.isError ? "—" : integrations.customersCount ?? 0}</strong></div>
               <div data-metric="cash-register"><span>Estado de caja</span><strong>{cashRegisterQuery.isLoading ? "—" : cashRegisterQuery.isError ? "No disponible" : integrations.cashRegister ? "Abierta" : "Cerrada"}</strong></div>
               <div data-metric="quote-value"><span>Valor cotizado</span><strong>{quotesQuery.isLoading || quotesQuery.isError ? "—" : fmtCLP(integrations.pendingQuoteValue ?? 0)}</strong></div>
+              <div data-metric="inventory-value"><span>Inventario al costo</span><strong>{inventoryQuery.isLoading || inventoryQuery.isError ? "—" : inventoryQuery.data?.inventoryValue === null ? "Costo incompleto" : fmtCLP(inventoryQuery.data?.inventoryValue ?? 0)}</strong></div>
             </div>
             <div className="nuva-resumen-status-copy">
               {operationalStatus.description}
