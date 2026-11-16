@@ -39,7 +39,8 @@ This is a static code review, not a browser-based WCAG audit.
 - Severity: P2 (feature truthfulness)
 - Evidence: the header button only fires a fixed “No tienes notificaciones nuevas” toast; no notification-center route was found in the inspected authenticated routes.
 - Impact: it can falsely imply that a notification system has checked the business and found no alerts.
-- Decision: do not fabricate notification events or claim there are none. This remains a product gap until a real event source and role-aware notification model are implemented; then replace the toast with a real center and meaningful empty/error states.
+- Correction: replaced the misleading toast with an honest popover empty state that explicitly says automatic notifications are not connected yet and links to Resumen. No fake event data is shown.
+- Remaining product gap: a real event source, role-aware notification model, unread state and delivery/read semantics are still required before this can be called a functional notification center.
 
 
 ### BUILD-001 — Duplicate dashboard test file was discovered as a route
