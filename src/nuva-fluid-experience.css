@@ -147,17 +147,38 @@ body[data-nuva-surface="app"] a[role="button"] {
   }
 }
 
-/* Accessibility and battery/performance: motion is fully opt-in by preference. */
+/* Accessibility and battery/performance: honor reduced motion across the whole app. */
 @media (prefers-reduced-motion: reduce) {
-  body[data-nuva-surface="app"] .nuva-app main,
-  body[data-nuva-surface="app"] .nuva-app main > *,
-  .nuva-app .nuva-workspace > *,
-  .nuva-app nav[aria-label="Navegación principal móvil"] svg {
-    animation: none !important;
+  html {
+    scroll-behavior: auto !important;
   }
 
-  .nuva-app :where(button, a, [role="button"], .nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi, .nuva-nav-item) {
-    transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease !important;
+  body[data-nuva-surface="app"] .nuva-app *,
+  body[data-nuva-surface="app"] .nuva-app *::before,
+  body[data-nuva-surface="app"] .nuva-app *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  body[data-nuva-surface="app"] .nuva-app :where(
+    button,
+    a,
+    [role="button"],
+    .nuva-surface-interactive,
+    .nuva-motion-card,
+    .nuva-resumen-kpi,
+    .nuva-nav-item
+  ):hover,
+  body[data-nuva-surface="app"] .nuva-app :where(
+    button,
+    a,
+    [role="button"],
+    .nuva-surface-interactive,
+    .nuva-motion-card,
+    .nuva-resumen-kpi,
+    .nuva-nav-item
+  ):active {
     transform: none !important;
   }
 }
