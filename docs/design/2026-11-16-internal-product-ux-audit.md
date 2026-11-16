@@ -114,3 +114,14 @@ El shell presenta un estado vacío que informa que las notificaciones automátic
 - Las rutas `/inventory` y `/dashboard` responden HTTP 200 en el preview `https://nuva-qzsg26hw7-martinaburtoe.vercel.app`.
 - Esto confirma build y respuesta HTTP de las rutas, no una sesión autenticada ni prueba de interacción real. La validación de carga con usuario y la inspección visual autenticada siguen pendientes.
 - El build mantiene avisos de chunks mayores de 500 kB (ExcelJS, jsPDF y Recharts). Son artefactos del build; no se ha demostrado que todos se descarguen al inicio.
+
+
+## IA aplicada — simplificación de navegación autenticada
+
+### NAV-IA-002 — Menos entradas repetidas en el menú de escritorio
+- Se identificó que `Centro financiero profesional` repetía elementos centrales ya presentes en `/finance` (control financiero y acceso SII), además de exponer un segundo punto de entrada al mismo conjunto de herramientas.
+- Se conserva la ruta `/finance-professional` y su acceso por búsqueda global, búsqueda de módulos y directorio móvil; se retira solamente de la lista principal del sidebar de escritorio mediante metadato `quickAccessOnly`.
+- El sidebar expandido y contraído usan la misma lista simplificada. La lista autorizada completa sigue alimentando las búsquedas y la navegación móvil; no se elimina ni se bloquea la funcionalidad.
+- `Centro de acción CRM` pasa a llamarse `Seguimiento comercial`, etiqueta orientada a la tarea y más comprensible para usuarios no técnicos. La ruta no cambia.
+- No se han fusionado ni eliminado páginas ni datos. La arquitectura final de Finanzas y CRM requiere todavía mapear acciones exclusivas y enlaces internos antes de una consolidación más profunda.
+- Pendiente: validar que `/finance-professional` siga apareciendo en búsqueda global y módulo móvil con permisos de Finanzas, y que no aparezca a usuarios sin permiso.
