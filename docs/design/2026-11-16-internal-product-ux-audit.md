@@ -43,6 +43,11 @@ La navegación presenta siete destinos dentro de Finanzas: Finanzas, Contabilida
 **Severidad:** media.  
 El shell presenta un estado vacío que informa que las notificaciones automáticas todavía no están conectadas. La interfaz ya no simula alertas. Falta definir el modelo de eventos, preferencias, lectura/no lectura y navegación a la entidad afectada antes de implementar un centro real.
 
+### INT-PERF-001 — Chunks grandes en el build
+**Severidad:** media (rendimiento percibido; requiere análisis de uso real).  
+**Evidencia:** el build Vercel de esta rama termina correctamente, pero emite el aviso de chunks superiores a 500 kB. Entre los assets generados se observan ExcelJS (929,38 kB sin comprimir; 256,38 kB gzip), jspdf (398,92 kB; 129,61 kB gzip) y Recharts (367,50 kB; 97,83 kB gzip). Esto no demuestra que todos se descarguen en el arranque: pueden estar en chunks diferidos.  
+**Acción recomendada:** revisar imports estáticos frente a imports dinámicos y comprobar en navegador autenticado la cascada de red por ruta. Mantener ExcelJS, PDF y gráficos fuera del bundle inicial si solo se usan en acciones/pantallas específicas. Medir LCP, INP y peso transferido antes y después; no dividir chunks a ciegas.
+
 ## Criterios de aceptación para certificar el sistema interno
 1. Todas las rutas autenticadas abren con negocio activo, sin negocio, negocio inválido, membresía pendiente y error de permisos.
 2. Desktop: sidebar expandido/colapsado, navegación activa, búsqueda global, cambio de negocio y retorno desde submódulos.
