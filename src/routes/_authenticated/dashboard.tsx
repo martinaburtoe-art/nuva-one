@@ -377,18 +377,45 @@ function Dashboard() {
   return (
     <ModuleGuard module="dashboard">
       <div className="nuva-resumen-canvas">
-        <header className="nuva-resumen-header">
-          <div className="nuva-resumen-heading">
+        <header className="nuva-resumen-header nuva-resumen-visual-hero">
+          <img className="nuva-resumen-visual-hero-image" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=85" alt="" aria-hidden="true" fetchPriority="high" decoding="async" />
+          <div className="nuva-resumen-visual-hero-shade" aria-hidden="true" />
+          <div className="nuva-resumen-heading nuva-resumen-visual-hero-content">
             <div>
-              <p className="nuva-resumen-overline">VISTA GENERAL <span aria-hidden="true">/</span> NEGOCIO</p>
-              <h1>Resumen</h1>
-              <p className="nuva-resumen-subtitle">Una lectura clara de tus operaciones, resultados y próximos focos de atención.</p>
+              <p className="nuva-resumen-overline">NÜVA ONE <span aria-hidden="true">/</span> TU ESPACIO DE NEGOCIO</p>
+              <h1>Todo tu negocio,<br /><em>en una sola experiencia.</em></h1>
+              <p className="nuva-resumen-subtitle">Conecta tus operaciones, descubre oportunidades y toma decisiones con una visión más clara.</p>
+              <Link to="/sales" className="nuva-resumen-visual-hero-cta">Explorar operaciones <ArrowUpRight className="h-4 w-4" /></Link>
             </div>
             {primaryDataReady && !hasActivity && <Button variant="outline" size="sm" className="nuva-resumen-demo-button" onClick={loadDemoBusiness} disabled={seedingDemo}>
               {seedingDemo ? "Preparando demo…" : "Crear espacio demo"}
             </Button>}
           </div>
         </header>
+
+        <section className="nuva-discovery-section" aria-label="Explora tus áreas principales">
+          <div className="nuva-discovery-heading">
+            <div><p className="nuva-resumen-section-label">TU NEGOCIO, CONECTADO</p><h2>Todo lo importante empieza aquí</h2></div>
+            <span>Accesos destacados</span>
+          </div>
+          <div className="nuva-discovery-grid">
+            <Link to="/pos" className="nuva-discovery-card">
+              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=82" alt="Terminal de pago en una operación comercial" loading="lazy" decoding="async" />
+              <span className="nuva-discovery-shade" />
+              <span className="nuva-discovery-copy"><small>VENTAS</small><strong>Cada venta cuenta</strong><i>Abre tu punto de venta <ArrowUpRight className="h-4 w-4" /></i></span>
+            </Link>
+            <Link to="/inventory" className="nuva-discovery-card">
+              <img src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=900&q=82" alt="Estanterías organizadas de almacenamiento e inventario" loading="lazy" decoding="async" />
+              <span className="nuva-discovery-shade" />
+              <span className="nuva-discovery-copy"><small>INVENTARIO</small><strong>Todo en su lugar</strong><i>Gestiona tus productos <ArrowUpRight className="h-4 w-4" /></i></span>
+            </Link>
+            <Link to="/finance" className="nuva-discovery-card">
+              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=82" alt="Panel de análisis de datos empresariales" loading="lazy" decoding="async" />
+              <span className="nuva-discovery-shade" />
+              <span className="nuva-discovery-copy"><small>FINANZAS</small><strong>Decide con claridad</strong><i>Revisa tus resultados <ArrowUpRight className="h-4 w-4" /></i></span>
+            </Link>
+          </div>
+        </section>
 
         {selectedIndustryProfile && (
           <section className="mb-5 rounded-2xl border border-border/70 bg-card/85 p-4 shadow-sm sm:p-5" aria-label="Resumen adaptado a tu rubro">
