@@ -49,6 +49,17 @@ This is a static code review, not a browser-based WCAG audit.
 - Correction: removed the duplicate test file; the expanded `-dashboard.test.ts` file already contains the dashboard-related test coverage and is excluded from route discovery by the configured prefix convention.
 - Validation: latest Vercel build is running against the updated head; its final result is still pending.
 
+
+## Validation snapshot
+
+- Vercel preview build: PASS on code commit `39e3b882737116ee8a387a6dad77a6c00083ddc5`; deployment `READY`; URL: https://nuva-hzlg5pt69-martinaburtoe.vercel.app
+- Route discovery: no remaining `dashboard.test.ts` route warning in that build.
+- GitHub commit status: Vercel success. No TypeScript, unit-test or lint check is exposed for this head; do not infer those checks passed.
+- GitHub autonomous reviewer: `NEEDS_EVIDENCE` because its configured provider was temporarily unavailable.
+- PostHog connected project: no ingested product events and session recording is disabled; there is no behavioral evidence to interpret yet.
+- Figma MCP: Starter-plan call limit reached before an editable visual concept board could be completed.
+- Live and preview URLs are not accessible to the available web inspection session; authenticated visual QA remains unverified. The Vercel preview is protected by the project's SSO policy.
+
 ## Remaining validation
 
 - Run typecheck, unit tests, lint and production build on the final PR head.
