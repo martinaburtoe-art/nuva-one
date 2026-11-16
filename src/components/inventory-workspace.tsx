@@ -22,7 +22,7 @@ import { InventoryScannerOperations } from "@/components/inventory-scanner-opera
 import { InventoryCountPanel } from "@/components/inventory-count-panel";
 import { getInventoryMetrics, type InventoryStatus } from "@/lib/inventory-metrics";
 import { adjustInventoryStock } from "@/lib/inventory-transactions";
-import { uploadProductImage, validateProductImage } from "@/lib/product-image";
+import { removeProductImage, uploadProductImage, validateProductImage } from "@/lib/product-image";
 
 type Product = { id: string; name: string | null; sku: string | null; image_url: string | null; stock: number | null; reserved_stock: number | null; in_transit_stock: number | null; blocked_stock: number | null; low_stock_threshold: number | null; reorder_point: number | null; max_stock: number | null; cost: number | null; price: number | null; };
 type View = "intelligence" | "stock" | "products" | "replenishment" | "operations" | "count";
@@ -42,9 +42,101 @@ export function InventoryWorkspace() {
   const estimatedMargins = products.reduce((s, p) => s + Math.max(0, Number(p.price ?? 0) - Number(p.cost ?? 0)) * Math.max(0, Number(p.stock ?? 0)), 0);
   const marginRate = products.length ? products.reduce((s,p)=>s + (Number(p.price ?? 0)>0 ? Math.max(0,Number(p.price ?? 0)-Number(p.cost ?? 0))/Number(p.price ?? 0) : 0),0)/products.filter(p=>Number(p.price ?? 0)>0).length : 0;
   const create = () => { setEditing(null); setImageFile(null); setOpen(true); }; const edit = (p: Product) => { setEditing(p); setImageFile(null); setOpen(true); }; const adjust = (p: Product) => { setAdjustProduct(p); setAdjustOpen(true); };
-  async function save(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); if (!canWrite || !businessId) return; const f = new FormData(e.currentTarget); const stock = Math.max(0, Number(f.get("stock") || 0)); const patch = { name: String(f.get("name") || "").trim(), sku: String(f.get("sku") || "").trim() || null, low_stock_threshold: Math.max(0, Number(f.get("minimum") || 0)), reorder_point: Math.max(0, Number(f.get("reorder") || 0)), max_stock: Math.max(0, Number(f.get("target") || 0)), cost: Math.max(0, Number(f.get("cost") || 0)), price: Math.max(0, Number(f.get("price") || 0)) }; if (!patch.name) return toast.error("Ingresa el nombre del producto."); if (imageFile) { const imageError = validateProductImage(imageFile); if (imageError) return toast.error(imageError); } try { const imageUrl = imageFile && businessId ? await uploadProductImage(businessId, imageFile) : editing?.image_url ?? null; if (editing) { await update.mutateAsync({ id: editing.id, patch: { ...patch, image_url: imageUrl } }); const delta = stock - Number(editing.stock || 0); if (delta) await adjustInventoryStock(supabase, { productId: editing.id, delta, reason: "Ajuste desde ficha de producto", sourceType: "product_edit", sourceId: editing.id }); } else { const created = await insert.mutateAsync({ business_id: businessId, ...patch, image_url: imageUrl, stock: 0 }); if (stock) { const id = (created as { id: string }).id; await adjustInventoryStock(supabase, { productId: id, delta: stock, reason: "Stock inicial al crear producto", sourceType: "product_initial_stock", sourceId: id }); } } toast.success(editing ? "Producto actualizado" : "Producto creado"); setImageFile(null); setOpen(false); } catch (err: unknown) { toast.error(errorMessage(err, "No se pudo guardar el producto.")); } }
+  async function save(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!canWrite || !businessId) return;
+
+    const form = new FormData(e.currentTarget);
+    const stock = Math.max(0, Number(form.get("stock") || 0));
+    const patch = {
+      name: String(form.get("name") || "").trim(),
+      sku: String(form.get("sku") || "").trim() || null,
+      low_stock_threshold: Math.max(0, Number(form.get("minimum") || 0)),
+      reorder_point: Math.max(0, Number(form.get("reorder") || 0)),
+      max_stock: Math.max(0, Number(form.get("target") || 0)),
+      cost: Math.max(0, Number(form.get("cost") || 0)),
+      price: Math.max(0, Number(form.get("price") || 0)),
+    };
+    if (!patch.name) return toast.error("Ingresa el nombre del producto.");
+
+    let uploadedImageUrl: string | null = null;
+    let productSaved = false;
+    try {
+      if (imageFile) {
+        const imageError = validateProductImage(imageFile);
+        if (imageError) return toast.error(imageError);
+        uploadedImageUrl = await uploadProductImage(businessId, imageFile);
+      }
+      const imageUrl = uploadedImageUrl ?? editing?.image_url ?? null;
+
+      if (editing) {
+        await update.mutateAsync({ id: editing.id, patch: { ...patch, image_url: imageUrl } });
+        productSaved = true;
+
+        if (uploadedImageUrl && editing.image_url && editing.image_url !== uploadedImageUrl) {
+          try {
+            await removeProductImage(editing.image_url);
+          } catch (cleanupError) {
+            console.warn("No se pudo retirar la fotografía anterior del producto", cleanupError);
+          }
+        }
+
+        const delta = stock - Number(editing.stock || 0);
+        if (delta) {
+          await adjustInventoryStock(supabase, {
+            productId: editing.id,
+            delta,
+            reason: "Ajuste desde ficha de producto",
+            sourceType: "product_edit",
+            sourceId: editing.id,
+          });
+        }
+      } else {
+        const created = await insert.mutateAsync({ business_id: businessId, ...patch, image_url: imageUrl, stock: 0 });
+        productSaved = true;
+        if (stock) {
+          const id = (created as { id: string }).id;
+          await adjustInventoryStock(supabase, {
+            productId: id,
+            delta: stock,
+            reason: "Stock inicial al crear producto",
+            sourceType: "product_initial_stock",
+            sourceId: id,
+          });
+        }
+      }
+
+      toast.success(editing ? "Producto actualizado" : "Producto creado");
+      setImageFile(null);
+      setOpen(false);
+    } catch (err: unknown) {
+      if (uploadedImageUrl && !productSaved) {
+        try {
+          await removeProductImage(uploadedImageUrl);
+        } catch (cleanupError) {
+          console.warn("No se pudo retirar una fotografía sin producto asociado", cleanupError);
+        }
+      }
+      toast.error(errorMessage(err, "No se pudo guardar el producto."));
+    }
+  }
   async function doAdjust(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); if (!adjustProduct || !canWrite) return; const f = new FormData(e.currentTarget); const delta = Number(f.get("delta")); const reason = String(f.get("reason") || "").trim(); if (!Number.isInteger(delta) || delta === 0) return toast.error("Usa un entero distinto de cero."); if (!reason) return toast.error("Indica el motivo."); try { await adjustInventoryStock(supabase, { productId: adjustProduct.id, delta, reason, sourceType: "manual_adjustment" }); toast.success("Stock ajustado y trazado"); setAdjustOpen(false); } catch (err: unknown) { toast.error(errorMessage(err, "No se pudo ajustar el stock.")); } }
-  async function del(p: Product) { if (!canWrite || !window.confirm(`¿Eliminar ${p.name || "este producto"}?`)) return; try { await remove.mutateAsync(p.id); toast.success("Producto eliminado"); } catch { toast.error("No se pudo eliminar el producto"); } }
+  async function del(p: Product) {
+    if (!canWrite || !window.confirm(`¿Eliminar ${p.name || "este producto"}?`)) return;
+    try {
+      await remove.mutateAsync(p.id);
+      if (p.image_url) {
+        try {
+          await removeProductImage(p.image_url);
+        } catch (cleanupError) {
+          console.warn("No se pudo retirar la fotografía del producto eliminado", cleanupError);
+        }
+      }
+      toast.success("Producto eliminado");
+    } catch {
+      toast.error("No se pudo eliminar el producto");
+    }
+  }
   function exportData() { downloadCsv("nuva-inventario.csv", products.map(p => { const m = getInventoryMetrics(p); return { SKU: p.sku || "", Producto: p.name || "", Stock: Number(p.stock || 0), Disponible: m.available, Proyectado: m.projected, Estado: statusText[m.status], Reposicion: m.suggestedReplenishment, Costo: Number(p.cost || 0), Precio: Number(p.price || 0), ValorCosto: Number(p.stock || 0) * Number(p.cost || 0) }; })); }
   function exportReplenishment() { downloadCsv("nuva-abastecimiento.csv", replenishment.map(({ product: p, metrics: m }) => ({ SKU: p.sku || "", Producto: p.name || "", Proyectado: m.projected, Reposicion: m.suggestedReplenishment, CostoUnitario: Number(p.cost || 0), InversionEstimada: m.suggestedReplenishment * Number(p.cost || 0), Estado: statusText[m.status] }))); }
   return <ModuleGuard module="inventory"><div className="space-y-5"><PageHeader title="Inventario" description="Un solo espacio para stock, productos, movimientos, conteo y abastecimiento." actions={<div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportData} disabled={!products.length}><Download className="mr-2 h-4 w-4" />Exportar</Button>{canWrite && <Button onClick={create}><Plus className="mr-2 h-4 w-4" />Nuevo producto</Button>}</div>} />
@@ -67,7 +159,7 @@ function SearchBox({ value, onQuery }: { value: string; onQuery: (v: string) => 
 function StockView({ products, loading, value, query, onQuery, onAdjust }: { products: Product[]; loading: boolean; value: number; query: string; onQuery: (v: string) => void; onAdjust: (p: Product) => void }) {
   return <Card><div className="p-4 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"><div><h2 className="text-lg font-semibold">Stock y disponibilidad</h2><p className="mt-1 text-sm text-muted-foreground">Disponible y proyectado. Valor a costo: {fmtCLP(value)}.</p></div><SearchBox value={query} onQuery={onQuery} /></div>
     {loading ? <Skeleton className="mt-4 h-24 w-full" /> : products.length ? <>
-      <div className="mt-4 grid gap-3 md:hidden">{products.map(p => { const m = getInventoryMetrics(p); return <article key={p.id} className="min-w-0 rounded-xl border bg-background p-4"><div className="flex min-w-0 items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><ProductThumb src={p.image_url} name={p.name} /><div className="flex min-w-0 items-start gap-3"><ProductThumb src={p.image_url} name={p.name} /><div className="min-w-0"><h3 className="break-words text-sm font-semibold">{p.name || "Sin nombre"}</h3><p className="mt-1 text-xs text-muted-foreground">{p.sku || "Sin SKU"}</p></div></div></div><Badge className="shrink-0" variant={m.status === "out_of_stock" || m.status === "critical" ? "destructive" : "outline"}>{statusText[m.status]}</Badge></div><div className="mt-4 grid grid-cols-3 gap-2"><Metric label="Disponible" value={String(m.available)} /><Metric label="Proyectado" value={String(m.projected)} /><Metric label="Reponer" value={String(m.suggestedReplenishment)} /></div><div className="mt-3 flex justify-end border-t pt-3"><Button size="sm" variant="outline" className="min-h-10" onClick={() => onAdjust(p)}><SlidersHorizontal className="mr-1 h-3.5 w-3.5" />Ajustar stock</Button></div></article>; })}</div>
+      <div className="mt-4 grid gap-3 md:hidden">{products.map(p => { const m = getInventoryMetrics(p); return <article key={p.id} className="min-w-0 rounded-xl border bg-background p-4"><div className="flex min-w-0 items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><ProductThumb src={p.image_url} name={p.name} /><div className="min-w-0"><h3 className="break-words text-sm font-semibold">{p.name || "Sin nombre"}</h3><p className="mt-1 text-xs text-muted-foreground">{p.sku || "Sin SKU"}</p></div></div></div><Badge className="shrink-0" variant={m.status === "out_of_stock" || m.status === "critical" ? "destructive" : "outline"}>{statusText[m.status]}</Badge></div><div className="mt-4 grid grid-cols-3 gap-2"><Metric label="Disponible" value={String(m.available)} /><Metric label="Proyectado" value={String(m.projected)} /><Metric label="Reponer" value={String(m.suggestedReplenishment)} /></div><div className="mt-3 flex justify-end border-t pt-3"><Button size="sm" variant="outline" className="min-h-10" onClick={() => onAdjust(p)}><SlidersHorizontal className="mr-1 h-3.5 w-3.5" />Ajustar stock</Button></div></article>; })}</div>
       <div className="mt-4 hidden overflow-x-auto md:block"><Table><TableHeader><TableRow><TableHead>Producto</TableHead><TableHead>Disponible</TableHead><TableHead>Proyectado</TableHead><TableHead>Reposición</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Acción</TableHead></TableRow></TableHeader><TableBody>{products.map(p => { const m = getInventoryMetrics(p); return <TableRow key={p.id}><TableCell><div className="flex items-center gap-3"><ProductThumb src={p.image_url} name={p.name} compact /><div><p className="font-medium">{p.name || "Sin nombre"}</p><p className="text-xs text-muted-foreground">{p.sku || "Sin SKU"}</p></div></div></TableCell><TableCell className="font-semibold">{m.available}</TableCell><TableCell>{m.projected}</TableCell><TableCell>{m.suggestedReplenishment}</TableCell><TableCell><Badge variant={m.status === "out_of_stock" || m.status === "critical" ? "destructive" : "outline"}>{statusText[m.status]}</Badge></TableCell><TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => onAdjust(p)}><SlidersHorizontal className="mr-1 h-3.5 w-3.5" />Ajustar</Button></TableCell></TableRow>; })}</TableBody></Table></div>
     </> : <EmptyState title={query ? "Sin coincidencias" : "Sin productos"} description={query ? "Prueba otro nombre o SKU." : "Agrega tu primer producto para comenzar."} />}</div></Card>;
 }
