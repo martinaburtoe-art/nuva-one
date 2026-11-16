@@ -63,3 +63,37 @@ El shell presenta un estado vacío que informa que las notificaciones automátic
 - Corrección INT-PRIV-001 subida en esta rama.
 - No se declara certificación visual, WCAG ni E2E: aún requiere ejecución de pruebas y navegador autenticado.
 - No se modificó producción.
+
+
+## Iteración UX aplicada — búsqueda de módulos e imágenes de inventario
+
+**Fecha:** 2026-11-16.  
+**Alcance:** solo workspace autenticado.
+
+### UX-SEARCH-001 — Búsqueda de módulos más clara y tolerante al idioma
+- El buscador lateral usa un campo más legible, foco visible, acción explícita para limpiar y resultados con iconografía consistente.
+- La búsqueda ignora mayúsculas y diacríticos; “tributacion” encuentra “Contabilidad y tributación”.
+- Enter abre directamente el único resultado inequívoco; Escape limpia el término.
+- Se eliminó el indicio visual de atajo de teclado en el buscador local, porque el atajo global Cmd/Ctrl+K pertenece a la paleta global y no a este campo.
+- Se añadieron pruebas unitarias para normalización, coincidencias y consultas vacías/no encontradas.
+- La búsqueda sigue recibiendo exclusivamente los destinos ya filtrados por permisos del shell.
+
+### UX-INVENTORY-001 — Fotografía real del producto en las vistas de inventario
+- La consulta de inventario ahora incluye el campo image_url, que ya consume el Catálogo digital.
+- Se muestran miniaturas en las vistas de stock y productos, tanto móvil como desktop.
+- Se mantiene un fallback de icono neutro cuando el producto no tiene fotografía.
+- Las imágenes llevan texto alternativo descriptivo y carga diferida; no se generan ni se asignan imágenes ficticias a productos reales.
+- Esta iteración muestra fotografías que ya estén guardadas en image_url; no implementa todavía un flujo de carga/edición de archivos porque primero se debe verificar el bucket, sus políticas de Storage, límites de tamaño/tipo y estrategia de URL. No se debe adivinar el bucket ni debilitar sus permisos.
+
+### Criterios de diseño adoptados
+- Menos ruido visual: las imágenes se usan cuando identifican un producto; los iconos se reservan para navegación, acciones y estados.
+- Iconografía funcional y consistente, acompañada por texto cuando el significado no es universal.
+- Interacciones reversibles y explícitas; búsqueda con Escape/limpiar y foco visible.
+- No introducir ilustraciones decorativas genéricas en pantallas operativas ni datos de ejemplo que puedan confundirse con información real.
+- Las siguientes fases deben priorizar unificar la jerarquía de Finanzas/CRM/People, estados vacíos con acciones claras y un patrón de ficha de producto con carga de imágenes segura.
+
+### Estado de validación de esta iteración
+- Cambios committeados en la rama de trabajo.
+- Pruebas añadidas, pero su ejecución todavía debe confirmarse mediante CI.
+- Build preview Vercel solicitado para el commit de esta iteración; estado final pendiente de confirmación.
+- Sin promoción a producción y sin cambios de base de datos o políticas RLS.
