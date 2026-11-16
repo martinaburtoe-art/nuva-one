@@ -53,6 +53,21 @@ import { useMyRole, canWriteOperations } from "@/lib/use-business";
 import { formatRut, normalizeRut } from "@/lib/rut";
 import { toast } from "sonner";
 
+function CustomerAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
+  const initials = name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]?.toLocaleUpperCase("es-CL") ?? "").join("") || "CL";
+  const dimensions = size === "lg" ? "h-14 w-14 text-base rounded-2xl" : size === "sm" ? "h-10 w-10 text-xs rounded-xl" : "h-11 w-11 text-sm rounded-xl";
+  return (
+    <div
+      role="img"
+      aria-label={`Iniciales de ${name}`}
+      className={`grid shrink-0 place-items-center border border-primary/10 bg-gradient-to-br from-primary/15 via-primary/10 to-accent/30 font-semibold tracking-wide text-primary shadow-inner ${dimensions}`}
+    >
+      {initials}
+    </div>
+  );
+}
+
+
 export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({ meta: [{ title: "Clientes (CRM) — Nüva One" }] }),
   component: Customers,
@@ -433,10 +448,13 @@ function Customers() {
                 return (
                   <article key={c.id} className="min-w-0 rounded-xl border bg-background p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="break-words text-sm font-semibold">{c.name}</h3>
-                        <p className="mt-1 break-all text-xs text-muted-foreground">{c.phone || c.email || "Sin datos de contacto"}</p>
-                        {c.tags?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}
+                      <div className="flex min-w-0 items-start gap-3">
+                        <CustomerAvatar name={c.name} size="sm" />
+                        <div className="min-w-0">
+                          <h3 className="break-words text-sm font-semibold">{c.name}</h3>
+                          <p className="mt-1 break-all text-xs text-muted-foreground">{c.phone || c.email || "Sin datos de contacto"}</p>
+                          {c.tags?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}
+                        </div>
                       </div>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span>
                     </div>
@@ -468,7 +486,7 @@ function Customers() {
                     const stats = statsByCustomer.get(c.id);
                     return (
                       <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
-                        <TableCell className="font-medium">{c.name}{c.tags?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}</TableCell>
+                        <TableCell><div className="flex min-w-0 items-center gap-3"><CustomerAvatar name={c.name} size="sm" /><div className="min-w-0 font-medium">{c.name}{c.tags?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}</div></div></TableCell>
                         <TableCell className="text-sm text-muted-foreground">{c.phone || c.email || "—"}</TableCell>
                         <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusLabel[c.status].c}`}>{statusLabel[c.status].l}</span></TableCell>
                         <TableCell><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageLabel[c.pipeline_stage ?? "new"].c}`}>{stageLabel[c.pipeline_stage ?? "new"].l}</span></TableCell>
@@ -500,9 +518,12 @@ function Customers() {
               <>
                 <SheetHeader className="rounded-2xl border border-border/70 bg-card/70 p-4 text-left">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-[0.08em] text-primary">Ficha de cliente</p>
-                      <SheetTitle className="mt-1 text-xl tracking-tight">{detail.name}</SheetTitle>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <CustomerAvatar name={detail.name} size="lg" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium uppercase tracking-[0.08em] text-primary">Ficha de cliente</p>
+                        <SheetTitle className="mt-1 break-words text-xl tracking-tight">{detail.name}</SheetTitle>
+                      </div>
                     </div>
                     <Badge className={statusLabel[detail.status].c}>{statusLabel[detail.status].l}</Badge>
                   </div>
