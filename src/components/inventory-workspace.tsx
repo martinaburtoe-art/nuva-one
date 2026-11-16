@@ -59,10 +59,23 @@ export function InventoryWorkspace() {
   </div></ModuleGuard>;
 }
 function ProductThumb({ src, name, size = "md" }: { src?: string | null; name?: string | null; size?: "sm" | "md" }) {
-  const dimensions = size === "sm" ? "h-9 w-9 rounded-lg" : "h-11 w-11 rounded-xl";
+  const dimensions = size === "sm" ? "h-11 w-11 rounded-xl" : "h-14 w-14 rounded-2xl";
   return (
-    <div className={`grid ${dimensions} shrink-0 place-items-center overflow-hidden border border-border/70 bg-muted/50 text-muted-foreground`}>
-      {src ? <img src={src} alt={name ? `Fotografía de ${name}` : "Fotografía del producto"} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <Package className="h-4 w-4" aria-hidden="true" />}
+    <div
+      aria-hidden="true"
+      className={`relative grid ${dimensions} shrink-0 place-items-center overflow-hidden border border-border/70 bg-gradient-to-br from-muted/80 to-muted/30 text-muted-foreground`}
+    >
+      <Package className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={(event) => { event.currentTarget.style.display = "none"; }}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
     </div>
   );
 }
