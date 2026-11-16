@@ -81,11 +81,13 @@ function NuvaIntelligence() {
     ? councilEvidence.agent_count
     : typeof councilEvidence.agents_consulted === "number" ? councilEvidence.agents_consulted : null;
   const pendingActions = (actionQueue ?? []).filter((action: any) => ["pending", "approved"].includes(String(action.status))).length;
+  const councilTitle = councilQuery.isLoading ? "Consultando consenso…" : councilQuery.isError ? "No se pudo consultar el consenso" : latestCouncil?.title ?? "Aún no hay un consenso registrado";
+  const councilContent = councilQuery.isLoading ? "Estamos consultando los registros persistidos del consejo." : councilQuery.isError ? "No es posible verificar el consenso en este momento. Los indicadores de agentes y confianza se mantienen sin datos." : latestCouncil?.content ?? "Cuando exista una deliberación persistida, aquí podrás revisar su conclusión y la evidencia asociada. No se muestran agentes ni niveles de confianza sin registro.";
   const sourceQueries = [salesQuery, transactionsQuery, productsQuery, quotesQuery, activitiesQuery];
   const loadedSources = activeBusiness?.id ? sourceQueries.filter((query) => !query.isLoading && !query.isError).length : 0;
   const sourceErrors = activeBusiness?.id ? sourceQueries.filter((query) => query.isError).length : 0;
   const loadingSources = Boolean(activeBusiness?.id) && sourceQueries.some((query) => query.isLoading);
-  const allSourcesReady = !loadingSources && sourceErrors === 0;
+  const allSourcesReady = Boolean(activeBusiness?.id) && !loadingSources && sourceErrors === 0;
 
   return (
     <ModuleGuard module="dashboard">
@@ -118,18 +120,18 @@ function NuvaIntelligence() {
                     <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.08] p-2.5 text-violet-600 dark:text-violet-400"><UsersRound className="h-5 w-5" /></div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">Nüva Agent Council</p>
-                      <h2 className="mt-1 text-xl font-semibold">{latestCouncil?.title ?? "Aún no hay un consenso registrado"}</h2>
-                      <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{latestCouncil?.content ?? "Cuando exista una deliberación persistida, aquí podrás revisar su conclusión y la evidencia asociada. No se muestran agentes ni niveles de confianza sin registro."}</p>
+                      <h2 className="mt-1 text-xl font-semibold">{councilTitle}</h2>
+                      <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{councilContent}</p>
                     </div>
                   </div>
                   <Link to="/executive-command-center" className="inline-flex min-h-10 items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-muted">Ver acciones <ArrowUpRight className="h-3.5 w-3.5" /></Link>
                 </div>
               </div>
               <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-6">
-                <CouncilMetric label="Agentes consultados" value={agentsConsulted == null ? "Sin registro" : String(agentsConsulted)} detail="Conteo desde la evidencia del consenso" />
-                <CouncilMetric label="Confianza registrada" value={councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Solo si viene en la evidencia persistida" />
-                <CouncilMetric label="Acuerdo registrado" value={councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Solo si viene en la evidencia persistida" />
-                <CouncilMetric label="Acciones abiertas" value={String(pendingActions)} detail="Pendientes o aprobadas; requieren control humano" />
+                <CouncilMetric label="Agentes consultados" value={councilQuery.isLoading ? "—" : councilQuery.isError ? "N/D" : agentsConsulted == null ? "Sin registro" : String(agentsConsulted)} detail="Conteo desde la evidencia del consenso" />
+                <CouncilMetric label="Confianza registrada" value={councilQuery.isLoading || councilQuery.isError || councilConfidence == null ? "—" : `${councilConfidence}%`} detail="Solo si viene en la evidencia persistida" />
+                <CouncilMetric label="Acuerdo registrado" value={councilQuery.isLoading || councilQuery.isError || councilAgreement == null ? "—" : `${councilAgreement}%`} detail="Solo si viene en la evidencia persistida" />
+                <CouncilMetric label="Acciones abiertas" value={actionQueueQuery.isLoading ? "—" : actionQueueQuery.isError ? "N/D" : String(pendingActions)} detail={actionQueueQuery.isError ? "No se pudo consultar la cola de acciones" : "Pendientes o aprobadas; requieren control humano"} />
               </div>
             </Card>
 
@@ -146,7 +148,7 @@ function NuvaIntelligence() {
             <div className="flex items-end justify-between gap-3 border-b pb-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">Nüva Intelligence</p><h2 className="mt-1 text-xl font-semibold">{active?.title}</h2><p className="mt-1 text-sm text-muted-foreground">{active?.description}</p></div></div>
             {activeView === "read" && (
               <div className="space-y-5">
-                <Card className="overflow-hidden border-violet-500/20"><div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:p-8"><div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">Lectura ejecutiva</p><h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{intelligence.signals > 0 ? "Hay señales que merecen una revisión." : "No aparecen señales en las fuentes consultadas."}</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">Esta lectura resume registros operativos disponibles. No reemplaza conciliación bancaria, cierre contable ni una evaluación profesional. Si alguna fuente falla, la cobertura se muestra como parcial.</p></div><div className="min-w-[150px] rounded-2xl border bg-background/80 p-5 text-center"><p className="text-xs text-muted-foreground">Fuentes disponibles</p><p className="mt-1 text-3xl font-bold tabular-nums">{loadedSources}<span className="text-base font-medium text-muted-foreground">/5</span></p><p className="text-xs text-muted-foreground">{sourceErrors > 0 ? `${sourceErrors} con error` : loadingSources ? "Consultando…" : "Consultas completadas"}</p></div></div></Card>
+                <Card className="overflow-hidden border-violet-500/20"><div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:p-8"><div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">Lectura ejecutiva</p><h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{intelligence.signals > 0 ? "Hay señales que merecen una revisión." : "No aparecen señales en las fuentes consultadas."}</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">Esta lectura resume registros operativos disponibles. No reemplaza conciliación bancaria, cierre contable ni una evaluación profesional. Si alguna fuente falla, la cobertura se muestra como parcial.</p></div><div className="min-w-[150px] rounded-2xl border bg-background/80 p-5 text-center"><p className="text-xs text-muted-foreground">Fuentes disponibles</p><p className="mt-1 text-3xl font-bold tabular-nums">{loadedSources}<span className="text-base font-medium text-muted-foreground">/5</span></p><p className="text-xs text-muted-foreground">{!activeBusiness?.id ? "Selecciona un negocio" : sourceErrors > 0 ? `${sourceErrors} con error` : loadingSources ? "Consultando…" : "Consultas completadas"}</p></div></div></Card>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Kpi label="Ingresos registrados" value={money(intelligence.income)} /><Kpi label="Gastos registrados" value={money(intelligence.expense)} /><Kpi label="Resultado neto registrado" value={money(intelligence.net)} /><Kpi label="Pipeline potencial" value={money(intelligence.openPipeline)} /></div>
                 <div className="grid gap-4 lg:grid-cols-3"><InsightTile title="Inventario" value={`${intelligence.lowStock} productos en o bajo mínimo`} detail="Conteo calculado usando el mínimo configurado para cada producto." href="/inventory" /><InsightTile title="Seguimiento comercial" value={`${intelligence.overdue} tareas vencidas`} detail="Tareas marcadas como pendientes cuya fecha de vencimiento ya pasó." href="/customers" /><InsightTile title="Cotizaciones" value={`${intelligence.openQuotes} abiertas`} detail="El valor cotizado es pipeline potencial, no ingreso realizado ni venta comprometida." href="/quotes" /></div>
               </div>
