@@ -107,3 +107,10 @@ El shell presenta un estado vacío que informa que las notificaciones automátic
 - Se usa un nombre aleatorio por carga para evitar sobrescritura y problemas de caché. El archivo anterior no se elimina automáticamente para evitar borrar una imagen aún referenciada si falla la actualización de la ficha.
 - La carga requiere membresía que ya esté autorizada por las políticas existentes. La validación del frontend mejora la experiencia, pero las políticas de Storage siguen siendo la barrera real de autorización.
 - Validación pendiente: probar carga real y lectura con sesión owner/admin/staff, y comprobar que un usuario de otro negocio no pueda escribir en esa carpeta. El build preview de la iteración está en curso; no se declara despliegue final hasta que Vercel lo confirme.
+
+
+### Verificación de preview — fotografía y búsqueda
+- Vercel deployment `dpl_F471KopkGFfQG2bzniWg12qkpmeS` terminó en estado `READY` para el commit de código `bf79e5ccf2e51f8bb72e9324afc846f646d5e9c5`.
+- Las rutas `/inventory` y `/dashboard` responden HTTP 200 en el preview `https://nuva-qzsg26hw7-martinaburtoe.vercel.app`.
+- Esto confirma build y respuesta HTTP de las rutas, no una sesión autenticada ni prueba de interacción real. La validación de carga con usuario y la inspección visual autenticada siguen pendientes.
+- El build mantiene avisos de chunks mayores de 500 kB (ExcelJS, jsPDF y Recharts). Son artefactos del build; no se ha demostrado que todos se descarguen al inicio.
