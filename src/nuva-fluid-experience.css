@@ -48,14 +48,16 @@ body[data-nuva-surface="app"] .nuva-app {
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-/* Cancel the legacy blanket card lift: passive surfaces must not float on hover. */
-body[data-nuva-surface="app"] .nuva-app main :where(.rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-\\[1\\.75rem\\]):hover {
-  transform: none;
-}
+@media (hover: hover) and (pointer: fine) {
+  /* Cancel the legacy blanket card lift: passive surfaces stay still. */
+  body[data-nuva-surface="app"] .nuva-app main :where(.rounded-xl, .rounded-2xl, .rounded-3xl, [class*="rounded-[1.75rem]"]):hover {
+    transform: none;
+  }
 
-/* Only explicit interactive surfaces and workspace links move. */
-body[data-nuva-surface="app"] .nuva-app main :where(.nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi, .nuva-workspace a[class*="rounded-2xl"]):hover {
-  transform: translate3d(0, -2px, 0);
+  /* Only explicit interactive surfaces and workspace links move. */
+  body[data-nuva-surface="app"] .nuva-app main :where(.nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi, .nuva-workspace a[class*="rounded-2xl"]):hover {
+    transform: translate3d(0, -2px, 0);
+  }
 }
 
 body[data-nuva-surface="app"] button:not([disabled]),
