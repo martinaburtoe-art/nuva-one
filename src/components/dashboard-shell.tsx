@@ -127,14 +127,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   );
   const visibleNavGroups = useMemo(() => {
     const groups = new Map<string, (typeof nav)[number][]>();
-    visibleNav.forEach((item) => {
+    sidebarNav.forEach((item) => {
       const section = item.section ?? "Otros";
       const current = groups.get(section) ?? [];
       current.push(item);
       groups.set(section, current);
     });
     return Array.from(groups.entries());
-  }, [visibleNav]);
+  }, [sidebarNav]);
   const [collapsedSections, setCollapsedSections] = useState<string[]>([
     "Operación", "Ventas y clientes", "Compras e inventario", "Finanzas", "Inteligencia", "Ecosistema", "Personas", "Administración",
   ]);
