@@ -62,14 +62,15 @@ function ProductThumb({ src, name, size = "md" }: { src?: string | null; name?: 
   const dimensions = size === "sm" ? "h-11 w-11 rounded-xl" : "h-14 w-14 rounded-2xl";
   return (
     <div
-      aria-hidden="true"
+      role={src ? undefined : "img"}
+      aria-label={src ? undefined : `Sin fotografía para ${name || "producto"}`}
       className={`relative grid ${dimensions} shrink-0 place-items-center overflow-hidden border border-border/70 bg-gradient-to-br from-muted/80 to-muted/30 text-muted-foreground`}
     >
       <Package className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
       {src ? (
         <img
           src={src}
-          alt=""
+          alt={name ? `Fotografía de ${name}` : "Fotografía del producto"}
           loading="lazy"
           decoding="async"
           onError={(event) => { event.currentTarget.style.display = "none"; }}
