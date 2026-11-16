@@ -20,6 +20,14 @@ This is a static code review, not a browser-based WCAG audit.
 - Correction: expanded the reduced-motion animation/transition suppression to the authenticated body surface (including portalled UI); disabled hover/press transforms on interactive controls, rounded cards and table rows while preserving transforms used for layout.
 - Additional correction: table row hover now changes only its background; it no longer slides horizontally.
 
+
+### UX-001 — Mobile module search omitted the four persistent destinations
+- Severity: P2 (navigation discoverability)
+- Evidence: `src/lib/mobile-navigation.ts` excluded the primary mobile destinations before applying the search query, while the UI placeholder promised search across all modules.
+- Impact: a user searching for “Resumen”, “Caja”, “Ventas” or “Inventario” could see no result inside the module directory, despite those modules being authorized and visible in the dock.
+- Correction: keep the four primary destinations fixed in the dock when the query is empty; when the user searches, filter the complete authorized navigation set for the “Más” results.
+- Regression coverage: updated `src/lib/mobile-navigation.test.ts` to verify that a primary destination is returned by search without changing the persistent dock.
+
 ## Remaining validation
 
 - Run typecheck, unit tests, lint and production build on the final PR head.
