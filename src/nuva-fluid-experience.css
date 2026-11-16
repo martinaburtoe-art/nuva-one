@@ -114,6 +114,7 @@ body[data-nuva-surface="app"] a[role="button"] {
 @media (hover: hover) and (pointer: fine) {
   .nuva-app table tbody tr:hover {
     background-color: color-mix(in oklab, var(--nuva-page-accent, var(--nuva-indigo)) 5%, white);
+    transform: none;
   }
 }
 
@@ -147,20 +148,21 @@ body[data-nuva-surface="app"] a[role="button"] {
   }
 }
 
-/* Accessibility and battery/performance: honor reduced motion across the whole app. */
+/* Accessibility and battery/performance: cover app content and portalled UI (e.g. toasts). */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
   }
 
-  body[data-nuva-surface="app"] .nuva-app *,
-  body[data-nuva-surface="app"] .nuva-app *::before,
-  body[data-nuva-surface="app"] .nuva-app *::after {
+  body[data-nuva-surface="app"] *,
+  body[data-nuva-surface="app"] *::before,
+  body[data-nuva-surface="app"] *::after {
     animation: none !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 
+  /* Disable only interaction transforms; preserve transforms used for layout. */
   body[data-nuva-surface="app"] .nuva-app :where(
     button,
     a,
@@ -168,7 +170,12 @@ body[data-nuva-surface="app"] a[role="button"] {
     .nuva-surface-interactive,
     .nuva-motion-card,
     .nuva-resumen-kpi,
-    .nuva-nav-item
+    .nuva-nav-item,
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-3xl,
+    [class*="rounded-[1.75rem]"],
+    table tbody tr
   ):hover,
   body[data-nuva-surface="app"] .nuva-app :where(
     button,
@@ -177,7 +184,12 @@ body[data-nuva-surface="app"] a[role="button"] {
     .nuva-surface-interactive,
     .nuva-motion-card,
     .nuva-resumen-kpi,
-    .nuva-nav-item
+    .nuva-nav-item,
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-3xl,
+    [class*="rounded-[1.75rem]"],
+    table tbody tr
   ):active {
     transform: none !important;
   }
