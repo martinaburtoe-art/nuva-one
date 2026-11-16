@@ -465,19 +465,42 @@ function Dashboard() {
               </Link>
             </div>
             {inventoryQuery.data.featuredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {inventoryQuery.data.featuredProducts.map((product: { id: string; name: string; imageUrl: string; stock: number }) => (
-                  <Link key={product.id} to="/inventory" className="group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-indigo-100 via-slate-50 to-amber-100 dark:from-indigo-950 dark:via-slate-900 dark:to-amber-950">
-                      <img src={product.imageUrl} alt={product.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045]" />
-                      <span className="absolute bottom-2 left-2 rounded-full border border-white/30 bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">Stock: {product.stock}</span>
-                    </div>
-                    <div className="p-3">
-                      <p className="line-clamp-1 text-sm font-semibold">{product.name}</p>
-                      <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Ver producto <span aria-hidden="true">↗</span></p>
-                    </div>
-                  </Link>
-                ))}
+              <div className="grid gap-3 lg:grid-cols-[1.35fr_1fr]">
+                {(() => {
+                  const [featured, ...supporting] = inventoryQuery.data.featuredProducts;
+                  return (
+                    <>
+                      <Link to="/inventory" className="group relative isolate flex min-h-[250px] overflow-hidden rounded-[1.65rem] border border-border/60 bg-slate-900 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-[300px]">
+                        <img src={featured.imageUrl} alt={featured.name} loading="lazy" decoding="async" className="absolute inset-0 -z-20 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+                        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-slate-950/5" />
+                        <div className="mt-auto flex w-full flex-col gap-3 p-5 sm:p-6">
+                          <span className="w-fit rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md">Producto destacado · Stock {featured.stock}</span>
+                          <div className="flex items-end justify-between gap-3">
+                            <div className="min-w-0">
+                              <h3 className="line-clamp-2 text-xl font-semibold tracking-tight sm:text-2xl">{featured.name}</h3>
+                              <p className="mt-1 text-xs text-white/80">Una vista más visual de tu catálogo real</p>
+                            </div>
+                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate-900 transition-transform duration-300 group-hover:translate-x-1"><ArrowUpRight className="h-5 w-5" /></span>
+                          </div>
+                        </div>
+                      </Link>
+                      <div className="grid grid-cols-2 gap-3">
+                        {supporting.map((product: { id: string; name: string; imageUrl: string; stock: number }) => (
+                          <Link key={product.id} to="/inventory" className="group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                            <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-indigo-100 via-slate-50 to-amber-100 dark:from-indigo-950 dark:via-slate-900 dark:to-amber-950">
+                              <img src={product.imageUrl} alt={product.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045]" />
+                              <span className="absolute bottom-2 left-2 rounded-full border border-white/30 bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">Stock: {product.stock}</span>
+                            </div>
+                            <div className="p-3">
+                              <p className="line-clamp-1 text-sm font-semibold">{product.name}</p>
+                              <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Ver producto <span aria-hidden="true">↗</span></p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             ) : (
               <Link to="/inventory" className="group flex flex-col gap-3 rounded-2xl border border-dashed border-primary/30 bg-gradient-to-r from-primary/[0.07] via-card to-amber-500/[0.06] p-4 transition-colors hover:border-primary/50 sm:flex-row sm:items-center sm:justify-between">
