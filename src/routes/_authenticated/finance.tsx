@@ -45,11 +45,28 @@ function Finance() {
           description="Control financiero, contabilidad, tributación y decisiones sobre el dinero del negocio."
         />
         <Suspense fallback={<div className="space-y-3" aria-busy="true"><div className="h-28 animate-pulse rounded-2xl border bg-muted/30" /><div className="h-48 animate-pulse rounded-2xl border bg-muted/30" /></div>}>
-          <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} loading={isLoading} />
-          <CollectionPriorityPanel />
-          <FinanceSiiWorkspace />
-          <FinanceAdvancedTools />
-          <FinanceAccountingWorkspaceV2 />
+          <nav aria-label="Secciones de Finanzas" className="sticky top-16 z-20 -mx-1 flex gap-2 overflow-x-auto bg-background/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+            <a href="#finance-overview" className="shrink-0 rounded-full border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Resumen</a>
+            <a href="#finance-collections" className="shrink-0 rounded-full border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Cobranza</a>
+            <a href="#finance-tax" className="shrink-0 rounded-full border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">SII y tributación</a>
+            <a href="#finance-tools" className="shrink-0 rounded-full border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Herramientas</a>
+            <a href="#finance-accounting" className="shrink-0 rounded-full border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Contabilidad</a>
+          </nav>
+          <section id="finance-overview" aria-label="Resumen financiero" className="scroll-mt-28">
+            <NuvaFinancialControl income={control.income} expense={control.expense} inventoryValue={control.inventoryValue} loading={isLoading} />
+          </section>
+          <section id="finance-collections" aria-label="Cobranza y prioridades" className="scroll-mt-28">
+            <CollectionPriorityPanel />
+          </section>
+          <section id="finance-tax" aria-label="Servicios del SII y tributación" className="scroll-mt-28">
+            <FinanceSiiWorkspace />
+          </section>
+          <section id="finance-tools" aria-label="Herramientas financieras avanzadas" className="scroll-mt-28">
+            <FinanceAdvancedTools />
+          </section>
+          <section id="finance-accounting" aria-label="Contabilidad" className="scroll-mt-28">
+            <FinanceAccountingWorkspaceV2 />
+          </section>
         </Suspense>
       </div>
     </ModuleGuard>
