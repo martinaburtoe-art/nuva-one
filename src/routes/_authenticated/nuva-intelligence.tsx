@@ -50,7 +50,7 @@ function NuvaIntelligence() {
       return Number(p.stock ?? 0) <= threshold;
     }).length;
     const overdue = (activities ?? []).filter((a: any) => a.type === "task" && !a.completed && a.due_date && new Date(a.due_date).getTime() < Date.now()).length;
-    const openQuotes = (quotes ?? []).filter((q: any) => !["won", "lost", "cancelled"].includes(String(q.status ?? "").toLowerCase()));
+    const openQuotes = (quotes ?? []).filter((q: any) => ["draft", "sent", "viewed"].includes(String(q.status ?? "").toLowerCase()));
     const openPipeline = openQuotes.reduce((sum: number, q: any) => sum + Number(q.total ?? 0), 0);
     const net = income - expense;
     const signals = lowStock + overdue + (income > 0 && net < 0 ? 1 : 0);
@@ -73,7 +73,8 @@ function NuvaIntelligence() {
   const active = views.find((view) => view.id === activeView);
   const latestCouncil = (councilMemory ?? []).filter((memory: any) => memory.memory_type === "agent_consensus").sort((a: any, b: any) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())[0];
   const councilEvidence = latestCouncil?.evidence && typeof latestCouncil.evidence === "object" ? latestCouncil.evidence : {};
-  const councilConfidence = typeof councilEvidence.confidence === "number" ? Math.max(0, Math.min(100, Math.round(councilEvidence.confidence <= 1 ? councilEvidence.confidence * 100 : councilEvidence.confidence))) : null;
+  const rawCouncilConfidence = typeof councilEvidence.confidence === "number" ? councilEvidence.confidence : typeof latestCouncil?.confidence === "number" ? latestCouncil.confidence : null;
+  const councilConfidence = rawCouncilConfidence == null ? null : Math.max(0, Math.min(100, Math.round(rawCouncilConfidence <= 1 ? rawCouncilConfidence * 100 : rawCouncilConfidence)));
   const councilAgreement = typeof councilEvidence.agreement === "number"
     ? (councilEvidence.agreement <= 1 ? Math.round(councilEvidence.agreement * 100) : Math.round(councilEvidence.agreement))
     : null;
