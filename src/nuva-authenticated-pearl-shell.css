@@ -70,3 +70,170 @@
     transition: none !important;
   }
 }
+
+
+/* Workspace surfaces: a coherent product UI, not a recolour-only shell. */
+.nuva-app {
+  --nuva-surface: #fffefa;
+  --nuva-surface-muted: #f1eee7;
+  --nuva-line: #e7e1d7;
+  --nuva-text: #20364a;
+  --nuva-muted: #77818a;
+  --nuva-shadow-soft: 0 10px 30px rgb(31 48 61 / .055);
+  --nuva-shadow-lift: 0 16px 38px rgb(31 48 61 / .09);
+  font-feature-settings: "ss01" on;
+}
+.nuva-app > div.flex.min-w-0.flex-1.flex-col > header {
+  min-height: 64px;
+  box-shadow: 0 1px 0 rgb(40 53 63 / .025);
+}
+.nuva-app > div.flex.min-w-0.flex-1.flex-col > main {
+  padding-top: clamp(18px, 2.5vw, 34px);
+}
+.nuva-app main > :where(.space-y-5, .space-y-6, .space-y-4) {
+  width: min(100%, 1600px);
+  margin-inline: auto;
+}
+.nuva-app main :where(h1) {
+  color: #20364a;
+  letter-spacing: -.035em;
+}
+.nuva-app main :where(h2) {
+  letter-spacing: -.022em;
+}
+.nuva-app main :where(.rounded-xl.border, .rounded-2xl.border) {
+  border-color: var(--nuva-line);
+}
+.nuva-app main :where([class*="shadow-sm"], [class*="shadow-soft"]) {
+  box-shadow: var(--nuva-shadow-soft);
+}
+.nuva-app main :where(.rounded-xl.border, .rounded-2xl.border, [class*="rounded-2xl"][class*="bg-card"]) {
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.nuva-app main :where(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+.nuva-app main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: #ded9d0;
+  background-color: #fffefa;
+}
+.nuva-app main :where(input, select, textarea)::placeholder {
+  color: #9aa0a4;
+}
+.nuva-app main :where(table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.nuva-app main :where(thead) {
+  background: #f5f2ec;
+}
+.nuva-app main :where(th) {
+  color: #687580;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+.nuva-app main :where(tbody tr) {
+  transition: background-color .16s ease;
+}
+.nuva-app main :where(tbody tr:hover) {
+  background: #f8f6f1;
+}
+.nuva-app main :where(.rounded-xl.border.bg-background, article.rounded-xl.border) {
+  background: #fffefa;
+}
+.nuva-app main :where(.bg-muted\/20, .bg-muted\/30) {
+  background-color: #f4f1eb;
+}
+.nuva-app main :where(.border-dashed) {
+  border-color: #d9d2c6;
+}
+.nuva-app :where(button, [role="tab"]) {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: .18s;
+}
+.nuva-app :where(button:not(:disabled)):active {
+  transform: translateY(1px);
+}
+.nuva-app aside {
+  box-shadow: 5px 0 24px rgb(31 48 61 / .025);
+}
+.nuva-app aside > div:first-child a > div:first-child,
+.nuva-app header a.lg\:hidden > div:first-child {
+  background: #183b59 !important;
+  box-shadow: 0 5px 12px rgb(24 59 89 / .16);
+}
+.nuva-app .nuva-nav-item {
+  margin-block: 2px;
+  transition: background-color .18s ease, color .18s ease, padding-left .18s ease;
+}
+.nuva-app .nuva-nav-item[data-active="true"] {
+  font-weight: 650;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] {
+  min-height: 72px;
+  padding-top: 5px;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a,
+.nuva-app nav[aria-label="Navegación principal móvil"] > button {
+  min-height: 62px;
+  border-radius: 14px 14px 8px 8px;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] {
+  font-weight: 700;
+}
+.nuva-app [role="dialog"] {
+  border-color: #e6dfd4;
+  box-shadow: 0 24px 80px rgb(22 36 48 / .2);
+}
+.nuva-app :where(.nuva-resumen-canvas) {
+  max-width: 1500px;
+  margin-inline: auto;
+}
+.nuva-app :where(.nuva-resumen-canvas h1) {
+  color: #1b354b;
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 650;
+  line-height: 1.08;
+}
+.nuva-app :where(.nuva-resumen-canvas .nuva-resumen-subtitle) {
+  max-width: 650px;
+  color: #78828a;
+}
+@media (hover: hover) and (pointer: fine) {
+  .nuva-app main :where(.rounded-xl.border, .rounded-2xl.border):hover {
+    border-color: #d8cbb6;
+  }
+  .nuva-app main :where(a.rounded-xl.border, a.rounded-2xl.border):hover {
+    box-shadow: var(--nuva-shadow-lift);
+    transform: translateY(-2px);
+  }
+}
+@media (max-width: 767px) {
+  .nuva-app > div.flex.min-w-0.flex-1.flex-col > main {
+    padding-inline: 12px;
+  }
+  .nuva-app main :where(.rounded-2xl.border) {
+    border-radius: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app *,
+  .nuva-app *::before,
+  .nuva-app *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+@media (forced-colors: active) {
+  .nuva-app :where(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 3px;
+  }
+  .nuva-app .nuva-nav-item[data-active="true"] {
+    outline: 1px solid Highlight;
+  }
+}
