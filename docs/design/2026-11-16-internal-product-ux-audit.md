@@ -97,3 +97,13 @@ El shell presenta un estado vacío que informa que las notificaciones automátic
 - Pruebas añadidas, pero su ejecución todavía debe confirmarse mediante CI.
 - Build preview Vercel solicitado para el commit de esta iteración; estado final pendiente de confirmación.
 - Sin promoción a producción y sin cambios de base de datos o políticas RLS.
+
+
+### UX-INVENTORY-002 — Carga de fotografía desde la ficha del producto
+- Se verificó en Supabase de producción el bucket `product-images`: público para lectura, límite 5 MiB y tipos permitidos JPEG, PNG, WEBP y GIF.
+- Se verificaron las políticas existentes de `storage.objects`: carga, actualización y eliminación restringidas por `private.has_business_role` al ID de negocio contenido en la primera carpeta; no se crearon ni alteraron políticas.
+- El formulario de producto ahora permite seleccionar una fotografía, valida MIME y tamaño antes de guardar y la carga bajo la ruta `{businessId}/{productId}/{uuid}.{ext}` con `upsert: false`.
+- Se obtiene la URL pública del bucket y se guarda en `products.image_url`; el catálogo e inventario pueden reutilizar esa misma fotografía.
+- Se usa un nombre aleatorio por carga para evitar sobrescritura y problemas de caché. El archivo anterior no se elimina automáticamente para evitar borrar una imagen aún referenciada si falla la actualización de la ficha.
+- La carga requiere membresía que ya esté autorizada por las políticas existentes. La validación del frontend mejora la experiencia, pero las políticas de Storage siguen siendo la barrera real de autorización.
+- Validación pendiente: probar carga real y lectura con sesión owner/admin/staff, y comprobar que un usuario de otro negocio no pueda escribir en esa carpeta. El build preview de la iteración está en curso; no se declara despliegue final hasta que Vercel lo confirme.
