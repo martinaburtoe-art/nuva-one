@@ -48,7 +48,21 @@ body[data-nuva-surface="app"] .nuva-app {
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-/* Only interactive surfaces move; ordinary cards stay still and readable. */
+/* Cancel the legacy blanket card lift: passive surfaces must not float on hover. */
+body[data-nuva-surface="app"] .nuva-app main :where(.rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-\\[1\\.75rem\\]):hover {
+  transform: none;
+}
+
+/* Only explicit interactive surfaces and workspace links move. */
+body[data-nuva-surface="app"] .nuva-app main :where(.nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi, .nuva-workspace a[class*="rounded-2xl"]):hover {
+  transform: translate3d(0, -2px, 0);
+}
+
+body[data-nuva-surface="app"] button:not([disabled]),
+body[data-nuva-surface="app"] a[role="button"] {
+  will-change: auto;
+}
+
 .nuva-app :where(.nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi, .nuva-nav-item) {
   transition:
     color var(--nuva-fluid-fast) var(--nuva-fluid-ease),
