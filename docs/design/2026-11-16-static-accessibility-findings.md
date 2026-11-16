@@ -28,6 +28,19 @@ This is a static code review, not a browser-based WCAG audit.
 - Correction: keep the four primary destinations fixed in the dock when the query is empty; when the user searches, filter the complete authorized navigation set for the “Más” results.
 - Regression coverage: updated `src/lib/mobile-navigation.test.ts` to verify that a primary destination is returned by search without changing the persistent dock.
 
+
+### UX-002 — Account avatar used a hard-coded “U”
+- Severity: P2 (personalization and account affordance)
+- Evidence: `src/components/dashboard-shell.tsx` rendered a static “U” for every authenticated user.
+- Impact: the account control did not reflect the signed-in identity and looked like unfinished template UI.
+- Correction: derive up to two initials from the authenticated user's metadata/email, update on auth-state changes, and label the trigger for assistive technology. No full name or email is exposed in the header.
+
+### UX-003 — Notification bell is a placeholder, not a notification center
+- Severity: P2 (feature truthfulness)
+- Evidence: the header button only fires a fixed “No tienes notificaciones nuevas” toast; no notification-center route was found in the inspected authenticated routes.
+- Impact: it can falsely imply that a notification system has checked the business and found no alerts.
+- Decision: do not fabricate notification events or claim there are none. This remains a product gap until a real event source and role-aware notification model are implemented; then replace the toast with a real center and meaningful empty/error states.
+
 ## Remaining validation
 
 - Run typecheck, unit tests, lint and production build on the final PR head.
