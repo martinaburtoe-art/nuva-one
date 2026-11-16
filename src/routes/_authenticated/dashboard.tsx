@@ -367,7 +367,7 @@ function Dashboard() {
 
   return (
     <ModuleGuard module="dashboard">
-      <main className="nuva-resumen-canvas">
+      <div className="nuva-resumen-canvas">
         <header className="nuva-resumen-header">
           <div className="nuva-resumen-heading">
             <div>
@@ -669,7 +669,7 @@ function Dashboard() {
         </section>
 
         <footer className="nuva-resumen-footer"><span>NÜVA ONE <span>·</span> RESUMEN</span><span>Indicadores calculados a partir de los movimientos registrados en tu negocio.</span></footer>
-      </main>
+      </div>
     </ModuleGuard>
   );
 }
