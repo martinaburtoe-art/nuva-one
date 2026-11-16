@@ -1,0 +1,196 @@
+/* Nüva One — fluid interaction layer
+ * Adds a faster, calmer motion cadence over the existing product system.
+ * Scoped to the authenticated application; no route, data, or business logic changes.
+ */
+
+body[data-nuva-surface="app"] .nuva-app {
+  --nuva-fluid-ease: cubic-bezier(0.2, 0.75, 0.25, 1);
+  --nuva-fluid-fast: 140ms;
+  --nuva-fluid-base: 190ms;
+  --nuva-fluid-enter: 230ms;
+}
+
+/* Route changes: short travel, opacity only, no blur or layout animation. */
+@media (prefers-reduced-motion: no-preference) {
+  body[data-nuva-surface="app"] .nuva-app main {
+    animation: nuva-fluid-route-enter var(--nuva-fluid-enter) var(--nuva-fluid-ease) both;
+  }
+
+  body[data-nuva-surface="app"] .nuva-app main > :nth-child(1) {
+    animation: nuva-fluid-content-enter 190ms 0ms var(--nuva-fluid-ease) both;
+  }
+
+  body[data-nuva-surface="app"] .nuva-app main > :nth-child(2) {
+    animation: nuva-fluid-content-enter 190ms 28ms var(--nuva-fluid-ease) both;
+  }
+
+  body[data-nuva-surface="app"] .nuva-app main > :nth-child(3) {
+    animation: nuva-fluid-content-enter 190ms 56ms var(--nuva-fluid-ease) both;
+  }
+
+  body[data-nuva-surface="app"] .nuva-app main > :nth-child(4) {
+    animation: nuva-fluid-content-enter 190ms 84ms var(--nuva-fluid-ease) both;
+  }
+
+  .nuva-app .nuva-workspace > :nth-child(1) { animation: nuva-fluid-content-enter 180ms 0ms var(--nuva-fluid-ease) both; }
+  .nuva-app .nuva-workspace > :nth-child(2) { animation: nuva-fluid-content-enter 180ms 24ms var(--nuva-fluid-ease) both; }
+  .nuva-app .nuva-workspace > :nth-child(3) { animation: nuva-fluid-content-enter 180ms 48ms var(--nuva-fluid-ease) both; }
+  .nuva-app .nuva-workspace > :nth-child(4) { animation: nuva-fluid-content-enter 180ms 72ms var(--nuva-fluid-ease) both; }
+}
+
+@keyframes nuva-fluid-route-enter {
+  from { opacity: 0.88; }
+  to { opacity: 1; }
+}
+
+@keyframes nuva-fluid-content-enter {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* Cancel the legacy blanket card lift: passive surfaces stay still. */
+  body[data-nuva-surface="app"] .nuva-app main :where(.rounded-xl, .rounded-2xl, .rounded-3xl, [class*="rounded-[1.75rem]"]):hover {
+    transform: none;
+  }
+
+  /* Only explicit interactive surfaces and workspace links move. */
+  body[data-nuva-surface="app"] .nuva-app main :where(.nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi, .nuva-workspace a[class*="rounded-2xl"]):hover {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+body[data-nuva-surface="app"] button:not([disabled]),
+body[data-nuva-surface="app"] a[role="button"] {
+  will-change: auto;
+}
+
+.nuva-app :where(.nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi, .nuva-nav-item) {
+  transition:
+    color var(--nuva-fluid-fast) var(--nuva-fluid-ease),
+    background-color var(--nuva-fluid-fast) var(--nuva-fluid-ease),
+    border-color var(--nuva-fluid-fast) var(--nuva-fluid-ease),
+    box-shadow var(--nuva-fluid-base) var(--nuva-fluid-ease),
+    transform var(--nuva-fluid-fast) var(--nuva-fluid-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nuva-app :where(.nuva-surface-interactive, .nuva-motion-card, .nuva-resumen-kpi):hover {
+    transform: translate3d(0, -2px, 0);
+  }
+
+  .nuva-app .nuva-nav-item:hover {
+    transform: translate3d(1px, 0, 0);
+  }
+}
+
+.nuva-app :where(button, a[role="button"], .nuva-surface-interactive):active {
+  transform: translate3d(0, 1px, 0) scale(0.992);
+  transition-duration: 90ms;
+}
+
+.nuva-app :where(button, a, [role="button"]):focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--nuva-page-accent, var(--nuva-indigo)) 72%, white);
+  outline-offset: 3px;
+}
+
+/* Inputs respond immediately without shifting surrounding layout. */
+.nuva-app :where(input, select, textarea, [role="combobox"]) {
+  transition:
+    border-color var(--nuva-fluid-fast) var(--nuva-fluid-ease),
+    box-shadow var(--nuva-fluid-fast) var(--nuva-fluid-ease),
+    background-color var(--nuva-fluid-fast) var(--nuva-fluid-ease);
+}
+
+.nuva-app :where(input, select, textarea, [role="combobox"]):focus {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--nuva-page-accent, var(--nuva-indigo)) 13%, transparent);
+}
+
+/* Dense data remains stable: highlight rows, never slide the table itself. */
+.nuva-app table tbody tr {
+  transition: background-color var(--nuva-fluid-fast) ease, box-shadow var(--nuva-fluid-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nuva-app table tbody tr:hover {
+    background-color: color-mix(in oklab, var(--nuva-page-accent, var(--nuva-indigo)) 5%, white);
+    transform: none;
+  }
+}
+
+/* The mobile dock gets tactile feedback while retaining large touch targets. */
+.nuva-app nav[aria-label="Navegación principal móvil"] > a,
+.nuva-app nav[aria-label="Navegación principal móvil"] > button {
+  min-height: 64px;
+  transition:
+    color var(--nuva-fluid-fast) var(--nuva-fluid-ease),
+    background-color var(--nuva-fluid-fast) var(--nuva-fluid-ease),
+    transform var(--nuva-fluid-fast) var(--nuva-fluid-ease);
+}
+
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] svg {
+  animation: nuva-fluid-icon-arrive 180ms var(--nuva-fluid-ease) both;
+}
+
+@keyframes nuva-fluid-icon-arrive {
+  from { opacity: 0.65; transform: translate3d(0, 2px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+/* Smaller screens use shorter movement and avoid hover-only effects. */
+@media (max-width: 767px) {
+  body[data-nuva-surface="app"] .nuva-app main {
+    animation-duration: 190ms;
+  }
+
+  .nuva-app .nuva-workspace > * {
+    animation-duration: 160ms;
+  }
+}
+
+/* Accessibility and battery/performance: cover app content and portalled UI (e.g. toasts). */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  body[data-nuva-surface="app"] *,
+  body[data-nuva-surface="app"] *::before,
+  body[data-nuva-surface="app"] *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable only interaction transforms; preserve transforms used for layout. */
+  body[data-nuva-surface="app"] .nuva-app :where(
+    button,
+    a,
+    [role="button"],
+    .nuva-surface-interactive,
+    .nuva-motion-card,
+    .nuva-resumen-kpi,
+    .nuva-nav-item,
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-3xl,
+    [class*="rounded-[1.75rem]"],
+    table tbody tr
+  ):hover,
+  body[data-nuva-surface="app"] .nuva-app :where(
+    button,
+    a,
+    [role="button"],
+    .nuva-surface-interactive,
+    .nuva-motion-card,
+    .nuva-resumen-kpi,
+    .nuva-nav-item,
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-3xl,
+    [class*="rounded-[1.75rem]"],
+    table tbody tr
+  ):active {
+    transform: none !important;
+  }
+}

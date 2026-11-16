@@ -23,10 +23,16 @@ describe("splitMobileNavigation", () => {
     expect([...result.primary, ...result.more]).toHaveLength(items.length);
   });
 
-  it("filtra solo el directorio secundario y no oculta los accesos principales", () => {
+  it("busca también entre los accesos principales sin cambiar el dock persistente", () => {
     const result = splitMobileNavigation(items, "finanzas");
     expect(result.primary).toHaveLength(4);
     expect(result.more.map((item) => item.to)).toEqual(["/finance"]);
+  });
+
+  it("incluye un acceso principal en los resultados de búsqueda", () => {
+    const result = splitMobileNavigation(items, "resumen");
+    expect(result.primary.map((item) => item.to)).toContain("/dashboard");
+    expect(result.more.map((item) => item.to)).toEqual(["/dashboard"]);
   });
 
   it("devuelve resultados vacíos para una búsqueda sin coincidencias", () => {

@@ -12,21 +12,22 @@ function normalizeSearchText(value: string): string {
 
 /**
  * Splits the authorized desktop navigation into the four persistent mobile
- * destinations and the searchable secondary directory. Every input item is
- * returned exactly once, so mobile cannot silently drop a desktop module.
+ * destinations and the searchable module directory. With no query, primary
+ * and secondary items partition the list; with a query, all authorized items
+ * can appear in results while the persistent dock remains unchanged.
  */
 export function splitMobileNavigation<T extends MobileNavigationItem>(
   items: readonly T[],
   query = "",
 ): { primary: T[]; more: T[] } {
   const normalizedQuery = normalizeSearchText(query.trim());
-  return {
-    primary: items.filter((item) => MOBILE_PRIMARY_PATHS.has(item.to)),
-    more: items.filter((item) => {
-      if (MOBILE_PRIMARY_PATHS.has(item.to)) return false;
-      if (!normalizedQuery) return true;
-      return normalizeSearchText(item.label).includes(normalizedQuery)
-        || normalizeSearchText(item.section ?? "").includes(normalizedQuery);
-    }),
-  };
+  const primary = items.filter((item) => MOBILE_PRIMARY_PATHS.has(item.to));
+  const more = normalizedQuery
+    ? items.filter((item) => (
+      normalizeSearchText(item.label).includes(normalizedQuery)
+      || normalizeSearchText(item.section ?? "").includes(normalizedQuery)
+    ))
+    : items.filter((item) => !MOBILE_PRIMARY_PATHS.has(item.to));
+
+  return { primary, more };
 }
