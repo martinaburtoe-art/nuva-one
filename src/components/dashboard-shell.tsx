@@ -121,7 +121,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     () => splitMobileNavigation(visibleNav, mobileModuleQuery),
     [visibleNav, mobileModuleQuery],
   );
-  const sidebarNav = useMemo(\n    () => visibleNav.filter((item) => !("quickAccessOnly" in item && item.quickAccessOnly)),\n    [visibleNav],\n  );\n  const visibleNavGroups = useMemo(() => {
+  const sidebarNav = useMemo(
+    () => visibleNav.filter((item) => !("quickAccessOnly" in item && item.quickAccessOnly)),
+    [visibleNav],
+  );
+  const visibleNavGroups = useMemo(() => {
     const groups = new Map<string, (typeof nav)[number][]>();
     visibleNav.forEach((item) => {
       const section = item.section ?? "Otros";
