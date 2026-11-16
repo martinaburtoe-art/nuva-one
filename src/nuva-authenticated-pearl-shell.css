@@ -1,0 +1,72 @@
+/* Nüva One — Pearl & Navy authenticated app shell.
+   Scoped to .nuva-app: public marketing and authentication pages are untouched. */
+.nuva-app {
+  --nuva-ink: #18334b;
+  --nuva-gold: #c4a36b;
+  --nuva-indigo: #183b59;
+  --nuva-radius-surface: 18px;
+  --nuva-radius-panel: 24px;
+  background: #f7f5f0 !important;
+  color: #20364a;
+}
+.nuva-app > aside {
+  background: #f0eee8 !important;
+  border-color: #e4e0d7 !important;
+}
+.nuva-app > aside > div:first-child {
+  border-color: #e4e0d7 !important;
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] {
+  scrollbar-width: thin;
+  scrollbar-color: #c9c3b7 transparent;
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] .nuva-nav-item {
+  min-height: 42px;
+  border-radius: 12px;
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] .nuva-nav-item[data-active="true"] {
+  color: #173b59 !important;
+  background: #e2e8e9 !important;
+  box-shadow: inset 3px 0 0 #c4a36b, 0 2px 8px rgb(25 49 67 / .045);
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] .nuva-nav-item[data-active="true"] svg {
+  color: #173b59 !important;
+}
+.nuva-app > div.flex.min-w-0.flex-1.flex-col > header {
+  background: rgb(249 247 242 / .92) !important;
+  border-color: #e8e3da !important;
+}
+.nuva-app main {
+  background: #f7f5f0;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] {
+  background: rgb(249 247 242 / .94) !important;
+  border-color: #e4e0d7 !important;
+  box-shadow: 0 -10px 34px rgb(24 45 62 / .075);
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] {
+  color: #173b59 !important;
+  background: #e8eceb !important;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"]::before {
+  background: #c4a36b !important;
+  box-shadow: none !important;
+}
+.nuva-app :where(button,a,input,select,textarea):focus-visible {
+  outline-color: #a98750 !important;
+}
+.nuva-app :where(.rounded-xl.border,.rounded-2xl.border) {
+  border-color: #e8e2d8;
+}
+@media (max-width: 1023px) {
+  .nuva-app main {
+    background: #f7f5f0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app > aside,
+  .nuva-app > div > header,
+  .nuva-app nav[aria-label="Navegación principal móvil"] {
+    transition: none !important;
+  }
+}
