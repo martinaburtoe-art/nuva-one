@@ -68,8 +68,8 @@ export async function submitMobileScannerEvent(
   sessionId: string,
   code: string,
   inputType: MobileScannerEvent["input_type"] = "camera",
+  clientEventId = crypto.randomUUID(),
 ) {
-  const clientEventId = crypto.randomUUID();
   const { data, error } = await supabase.rpc("submit_mobile_scanner_event", {
     p_session_id: sessionId,
     p_code: code,
@@ -78,6 +78,126 @@ export async function submitMobileScannerEvent(
   });
   if (error) throw error;
   return (Array.isArray(data) ? data[0] : data) as MobileScannerEvent;
+}
+
+type PendingMobileScannerEvent = {
+  clientEventId: string;
+  sessionId: string;
+  code: string;
+  inputType: MobileScannerEvent["input_type"];
+  queuedAt: string;
+};
+
+const MOBILE_SCANNER_OUTBOX_DB = "nuva-mobile-scanner-outbox";
+const MOBILE_SCANNER_OUTBOX_STORE = "pending-events";
+
+function openMobileScannerOutbox(): Promise<IDBDatabase> {
+  if (typeof indexedDB === "undefined") {
+    return Promise.reject(new Error("Este navegador no permite guardar lecturas sin conexión."));
+  }
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(MOBILE_SCANNER_OUTBOX_DB, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(MOBILE_SCANNER_OUTBOX_STORE)) {
+        const store = db.createObjectStore(MOBILE_SCANNER_OUTBOX_STORE, { keyPath: "clientEventId" });
+        store.createIndex("sessionId", "sessionId", { unique: false });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error("No se pudo abrir la bandeja local."));
+    request.onblocked = () => reject(new Error("La bandeja local está ocupada por otra pestaña."));
+  });
+}
+
+async function writeOutboxEvent(event: PendingMobileScannerEvent): Promise<void> {
+  const db = await openMobileScannerOutbox();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(MOBILE_SCANNER_OUTBOX_STORE, "readwrite");
+      transaction.objectStore(MOBILE_SCANNER_OUTBOX_STORE).put(event);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error ?? new Error("No se pudo guardar la lectura local."));
+      transaction.onabort = () => reject(transaction.error ?? new Error("Se canceló el guardado local."));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+async function readOutboxEvents(sessionId: string): Promise<PendingMobileScannerEvent[]> {
+  const db = await openMobileScannerOutbox();
+  try {
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction(MOBILE_SCANNER_OUTBOX_STORE, "readonly");
+      const request = transaction.objectStore(MOBILE_SCANNER_OUTBOX_STORE)
+        .index("sessionId").getAll(IDBKeyRange.only(sessionId));
+      request.onsuccess = () => resolve((request.result ?? []) as PendingMobileScannerEvent[]);
+      request.onerror = () => reject(request.error ?? new Error("No se pudo leer la bandeja local."));
+      transaction.onabort = () => reject(transaction.error ?? new Error("No se pudo leer la bandeja local."));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+async function removeOutboxEvent(clientEventId: string): Promise<void> {
+  const db = await openMobileScannerOutbox();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(MOBILE_SCANNER_OUTBOX_STORE, "readwrite");
+      transaction.objectStore(MOBILE_SCANNER_OUTBOX_STORE).delete(clientEventId);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error ?? new Error("No se pudo confirmar la lectura local."));
+      transaction.onabort = () => reject(transaction.error ?? new Error("No se pudo confirmar la lectura local."));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export async function enqueueMobileScannerEvent(
+  sessionId: string,
+  code: string,
+  inputType: MobileScannerEvent["input_type"] = "camera",
+  clientEventId = crypto.randomUUID(),
+): Promise<PendingMobileScannerEvent> {
+  const event: PendingMobileScannerEvent = {
+    clientEventId,
+    sessionId,
+    code: code.trim(),
+    inputType,
+    queuedAt: new Date().toISOString(),
+  };
+  if (!event.code) throw new Error("No se puede guardar una lectura vacía.");
+  await writeOutboxEvent(event);
+  return event;
+}
+
+export async function countPendingMobileScannerEvents(sessionId: string): Promise<number> {
+  return (await readOutboxEvents(sessionId)).length;
+}
+
+/**
+ * Delivers queued scans in FIFO order. The original clientEventId is reused so
+ * a response lost after a successful server commit cannot increment inventory twice.
+ * A failed event remains in IndexedDB and blocks later events from overtaking it.
+ */
+export async function flushMobileScannerOutbox(sessionId: string): Promise<number> {
+  const pending = (await readOutboxEvents(sessionId))
+    .sort((a, b) => a.queuedAt.localeCompare(b.queuedAt));
+  let delivered = 0;
+  for (const event of pending) {
+    await submitMobileScannerEvent(
+      event.sessionId,
+      event.code,
+      event.inputType,
+      event.clientEventId,
+    );
+    await removeOutboxEvent(event.clientEventId);
+    delivered += 1;
+  }
+  return delivered;
 }
 
 export function subscribeToMobileScanner(
