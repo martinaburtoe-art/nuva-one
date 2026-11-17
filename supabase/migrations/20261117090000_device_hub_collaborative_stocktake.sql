@@ -365,3 +365,41 @@ begin
     alter publication supabase_realtime add table public.inventory_stocktake_scan_events;
   end if;
 end $$;
+
+
+create or replace function public.associate_product_code_from_scanner(
+  p_business_id uuid,
+  p_product_id uuid,
+  p_code text,
+  p_code_type text default 'barcode'
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = pg_catalog, public, private
+as $$
+declare v_uid uuid := (select auth.uid()); v_code text := regexp_replace(coalesce(p_code, ''), '\\s+', '', 'g'); v_id uuid;
+begin
+  if v_uid is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
+  if not private.has_business_role(p_business_id, v_uid, array['owner'::member_role,'admin'::member_role,'staff'::member_role]) then
+    raise exception 'NOT_AUTHORIZED' using errcode = '42501';
+  end if;
+  if v_code = '' or length(v_code) > 128 then raise exception 'INVALID_CODE' using errcode = '22023'; end if;
+  if lower(coalesce(p_code_type, 'barcode')) not in ('barcode','ean','upc','qr','sku','other') then
+    raise exception 'INVALID_CODE_TYPE' using errcode = '22023';
+  end if;
+  if not exists (select 1 from public.products p where p.id = p_product_id and p.business_id = p_business_id) then
+    raise exception 'PRODUCT_NOT_IN_BUSINESS' using errcode = '42501';
+  end if;
+  insert into public.product_codes(business_id, product_id, code, code_type, is_primary, is_active, created_by)
+  values(p_business_id, p_product_id, v_code, lower(coalesce(p_code_type, 'barcode')), false, true, v_uid)
+  returning id into v_id;
+  return v_id;
+exception
+  when unique_violation then
+    raise exception 'CODE_ALREADY_ASSOCIATED' using errcode = '23505';
+end;
+$$;
+
+revoke all on function public.associate_product_code_from_scanner(uuid,uuid,text,text) from public, anon;
+grant execute on function public.associate_product_code_from_scanner(uuid,uuid,text,text) to authenticated;
