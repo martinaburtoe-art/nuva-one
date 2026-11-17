@@ -77,7 +77,19 @@ function MobileScannerContent() {
       try {
         const expiresAt = await heartbeatMobileScannerSession(session.sessionId);
         if (!active) return;
-        const next = { ...session, expiresAt };
+        // Read the latest persisted context: the heartbeat effect is keyed by session ID,
+        // so its closure may outlive a module/operation change made on this device.
+        let current = session;
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored) as MobileScannerSession;
+            if (parsed.sessionId === session.sessionId) current = parsed;
+          }
+        } catch {
+          // Keep the in-memory session if local storage is unavailable or malformed.
+        }
+        const next = { ...current, expiresAt };
         setSession(next);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch {
