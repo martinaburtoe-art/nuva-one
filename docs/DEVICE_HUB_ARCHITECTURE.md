@@ -154,7 +154,7 @@ This branch is an implementation plan, not a production change. No production sc
 The following first implementation slice is present in this branch:
 - A migration draft adds durable paired-device leases (10-minute pairing token, 30-day renewable paired lease), device label and module/operation context.
 - A mobile scanner event now carries the assigned module and operation ID.
-- A stocktake scan-event ledger and `record_inventory_stocktake_scan` RPC persist each count event atomically and idempotently, aggregating into the existing stocktake line.
+- An atomic start-or-join RPC serializes stocktake creation per business; a stocktake scan-event ledger and `record_inventory_stocktake_scan` RPC persist each count event idempotently, aggregating into the existing stocktake line.
 - Secure code association RPC is included alongside the existing product-creation RPC.
 - The Inventory count panel now loads the latest open count, persists every accepted scan, subscribes to shared count events, supports unit and batch-quantity modes, and exposes unknown-code create/associate flows.
 - Caja now creates a per-tab register context and exposes an operation-bound mobile pairing code. Mobile scan events are routed only to that register's operation ID; separate POS tabs do not share the same register context.
