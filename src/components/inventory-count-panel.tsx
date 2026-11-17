@@ -205,7 +205,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       await refreshLines(sid);
       setCode("");
       setCountQuantity("1");
-      setUnknownCode("");\n      setPendingMobileEvent(null);
+      setUnknownCode("");
+      setPendingMobileEvent(null);
       inputRef.current?.focus();
       if (!result.inserted) toast.info("Esta lectura ya estaba registrada; no se duplicó");
       else toast.success(countMode === "unit" ? "Unidad contabilizada" : `${quantity} unidades contabilizadas`);
