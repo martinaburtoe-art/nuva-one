@@ -299,8 +299,8 @@ function Sales() {
                       </div>
                       <div className="space-y-2">
                         {items.map((it, idx) => (
-                          <div key={idx} className="grid grid-cols-12 gap-2">
-                            <div className="col-span-5">
+                          <div key={idx} className="grid grid-cols-1 gap-2 sm:grid-cols-12">
+                            <div className="col-span-12 sm:col-span-5">
                               <Select
                                 value={it.product_id ?? "__free__"}
                                 onValueChange={(v) =>
@@ -333,7 +333,7 @@ function Sales() {
                               )}
                             </div>
                             <Input
-                              className="col-span-2"
+                              className="col-span-12 sm:col-span-2"
                               type="number"
                               min={1}
                               value={it.qty}
@@ -347,7 +347,7 @@ function Sales() {
                               }}
                             />
                             <CurrencyInput
-                              wrapperClassName="col-span-3"
+                              wrapperClassName="col-span-12 sm:col-span-3"
                               value={it.price}
                               onValueChange={(value) => {
                                 const c = [...items];
@@ -360,7 +360,7 @@ function Sales() {
                               type="button"
                               size="icon"
                               variant="ghost"
-                              className="col-span-1"
+                              className="col-span-12 w-full sm:col-span-1 sm:w-auto"
                               onClick={() => setItems(items.filter((_, i) => i !== idx))}
                             >
                               <X className="h-4 w-4" />
