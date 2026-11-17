@@ -144,9 +144,12 @@ begin
     raise exception 'STOCKTAKE_NOT_OPEN' using errcode = '55000';
   end if;
 
+  -- Serialize the baseline read with sales, receipts and other stock writers.
+  -- The count baseline is the product stock at this transaction's accepted scan point.
   select * into v_product
   from public.products
-  where id = p_product_id and business_id = v_stocktake.business_id;
+  where id = p_product_id and business_id = v_stocktake.business_id
+  for update;
   if not found then
     raise exception 'PRODUCT_NOT_IN_BUSINESS' using errcode = '42501';
   end if;
