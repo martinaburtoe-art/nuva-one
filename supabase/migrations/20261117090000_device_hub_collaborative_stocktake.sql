@@ -539,3 +539,46 @@ grant execute on function public.set_mobile_scanner_context(uuid,text,uuid,text)
 grant execute on function public.heartbeat_mobile_scanner_session(uuid) to authenticated;
 grant execute on function public.associate_product_code_from_scanner(uuid,uuid,text,text) to authenticated;
 grant execute on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) to authenticated;
+
+
+create or replace function private.start_or_join_inventory_stocktake(p_business_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = pg_catalog, public, private
+as $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_stocktake_id uuid;
+begin
+  if v_uid is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
+  if not private.has_business_role(p_business_id, v_uid, array['owner'::member_role,'admin'::member_role,'staff'::member_role]) then
+    raise exception 'NOT_AUTHORIZED' using errcode = '42501';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(p_business_id::text, 0));
+
+  select st.id into v_stocktake_id
+  from public.inventory_stocktakes st
+  where st.business_id = p_business_id and st.status = 'counting'
+  order by st.created_at desc
+  limit 1;
+
+  if v_stocktake_id is null then
+    insert into public.inventory_stocktakes(business_id, status, created_by)
+    values(p_business_id, 'counting', v_uid)
+    returning id into v_stocktake_id;
+  end if;
+
+  return v_stocktake_id;
+end;
+$$;
+
+create or replace function public.start_or_join_inventory_stocktake(p_business_id uuid)
+returns uuid
+language sql
+set search_path = public, private
+as $$ select private.start_or_join_inventory_stocktake($1); $$;
+
+revoke all on function public.start_or_join_inventory_stocktake(uuid) from public, anon;
+grant execute on function public.start_or_join_inventory_stocktake(uuid) to authenticated;
