@@ -167,7 +167,7 @@ export function HomeFixedExperience() {
         </div>
       </section>
 
-      <section aria-label="Para quién es Nüva One" className="relative overflow-hidden bg-[#f5f3ee] px-6 py-20 text-[#101820] md:px-10 md:py-28">
+      <section id="para-quien" aria-label="Para quién es Nüva One" className="relative overflow-hidden bg-[#f5f3ee] px-6 py-20 text-[#101820] md:px-10 md:py-28">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#8a6a3e]">EL FOCO INICIAL</p>
