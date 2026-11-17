@@ -55,6 +55,8 @@ function MobileScannerContent() {
   const [deviceName, setDeviceName] = useState("Mi celular");
   const [contextSaved, setContextSaved] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const pendingCountRef = useRef(0);
+  pendingCountRef.current = pendingCount;
   const flushingOutbox = useRef(false);
   const heartbeatWarningShown = useRef(false);
 
@@ -127,6 +129,7 @@ function MobileScannerContent() {
         const expiresAt = await heartbeatMobileScannerSession(session.sessionId);
         if (!active) return;
         heartbeatWarningShown.current = false;
+        setOnline(true);
         // Read the latest persisted context: the heartbeat effect is keyed by session ID,
         // so its closure may outlive a module/operation change made on this device.
         let current = session;
@@ -153,8 +156,8 @@ function MobileScannerContent() {
         if (sessionInvalid) {
           localStorage.removeItem(STORAGE_KEY);
           setSession(null);
-          toast.error(pendingCount > 0
-            ? `La sesión fue revocada. Quedaron ${pendingCount} lectura(s) locales sin sincronizar; no se descartaron.`
+          toast.error(pendingCountRef.current > 0
+            ? `La sesión fue revocada. Quedaron ${pendingCountRef.current} lectura(s) locales sin sincronizar; no se descartaron.`
             : "La sesión del dispositivo venció o fue revocada. Vuelve a vincularlo.");
           return;
         }
@@ -170,7 +173,7 @@ function MobileScannerContent() {
     void beat();
     const timer = window.setInterval(() => void beat(), 60_000);
     return () => { active = false; window.clearInterval(timer); };
-  }, [session?.sessionId, pendingCount]);
+  }, [session?.sessionId]);
 
   async function pair() {
     if (!/^\d{6}$/.test(pairCode))
