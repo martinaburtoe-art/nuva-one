@@ -225,6 +225,8 @@ select ok(
   and position('inventory_stocktake_scan_events' in lower(
     pg_get_functiondef('private.guard_inventory_stocktake_pending_scanner_events()'::regprocedure)
   )) > 0
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='private' and p.proname='guard_inventory_stocktake_pending_scanner_events' and p.prosecdef)
   and not has_function_privilege('anon',
     'private.guard_inventory_stocktake_pending_scanner_events()', 'EXECUTE'),
   'stocktake finalization is blocked until every persisted mobile scan is accepted into the count ledger; guard is not directly callable by anon'
