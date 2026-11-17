@@ -186,8 +186,7 @@ function MobileScannerContent() {
             <div className="flex items-start gap-2">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <span>
-                La vinculación dura 10 minutos, requiere una cuenta autorizada en el mismo negocio y
-                no entrega acceso a otros negocios.
+                El código de vinculación dura 10 minutos. Después, la sesión se renueva mientras el dispositivo esté activo y autorizado.
               </span>
             </div>
           </Card>
