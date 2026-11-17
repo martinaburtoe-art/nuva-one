@@ -342,7 +342,7 @@ function MobileScannerContent() {
         open={scannerOpen}
         onOpenChange={setScannerOpen}
         onScan={handleScan}
-        title="Nüva Scanner · Caja"
+        title={`Nüva Scanner · ${activeModule === "pos" ? "Caja" : activeModule === "inventory" ? "Inventario" : activeModule}`}
       />
     </div>
   );
