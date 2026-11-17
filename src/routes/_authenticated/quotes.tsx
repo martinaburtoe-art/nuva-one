@@ -614,6 +614,7 @@ function Quotes() {
           </DialogContent>
         </Dialog>
         <PageHeader
+          eyebrow="PROPUESTAS Y CIERRE COMERCIAL"
           title="Cotizaciones"
           description="Prepara propuestas comerciales profesionales con cálculos validados y PDF descargable"
           action={
@@ -649,7 +650,7 @@ function Quotes() {
                       <div className="mt-3 grid grid-cols-2 gap-2">
                         <div><Label htmlFor="customer-rut">RUT (opcional)</Label><Input id="customer-rut" value={customerDetails.tax_id} onChange={(e) => setCustomerDetails((value) => ({ ...value, tax_id: e.target.value }))} placeholder="12.345.678-9" /></div>
                         <div><Label htmlFor="customer-contact">Contacto</Label><Input id="customer-contact" value={customerDetails.contact_name} onChange={(e) => setCustomerDetails((value) => ({ ...value, contact_name: e.target.value }))} placeholder="Persona de contacto" /></div>
-                        <div className="col-span-2"><Label htmlFor="customer-address">Dirección</Label><Input id="customer-address" value={customerDetails.address} onChange={(e) => setCustomerDetails((value) => ({ ...value, address: e.target.value }))} placeholder="Dirección comercial o de prestación" /></div>
+                        <div className="col-span-12 sm:col-span-2"><Label htmlFor="customer-address">Dirección</Label><Input id="customer-address" value={customerDetails.address} onChange={(e) => setCustomerDetails((value) => ({ ...value, address: e.target.value }))} placeholder="Dirección comercial o de prestación" /></div>
                         <div><Label htmlFor="customer-comuna">Comuna</Label><Input id="customer-comuna" value={customerDetails.shipping_comuna} onChange={(e) => setCustomerDetails((value) => ({ ...value, shipping_comuna: e.target.value }))} placeholder="Comuna" /></div>
                         <div><Label htmlFor="customer-city">Ciudad / región</Label><Input id="customer-city" value={customerDetails.shipping_city} onChange={(e) => setCustomerDetails((value) => ({ ...value, shipping_city: e.target.value }))} placeholder="Ciudad, región" /></div>
                         <div><Label htmlFor="customer-email">Correo</Label><Input id="customer-email" type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((value) => ({ ...value, email: e.target.value }))} placeholder="cliente@empresa.cl" /></div>
@@ -705,8 +706,8 @@ function Quotes() {
                       </div>
                       <div className="space-y-2">
                         {items.map((it, idx) => (
-                          <div key={idx} className="grid grid-cols-12 gap-2">
-                            <div className="col-span-6">
+                          <div key={idx} className="grid grid-cols-1 gap-2 sm:grid-cols-12">
+                            <div className="col-span-12 sm:col-span-6">
                               <Select
                                 value={it.product_id ?? "__free__"}
                                 onValueChange={(v) => {
@@ -789,7 +790,7 @@ function Quotes() {
                               }}
                             />
                             <CurrencyInput
-                              wrapperClassName="col-span-3"
+                              wrapperClassName="col-span-12 sm:col-span-3"
                               placeholder="Precio"
                               value={it.price}
                               onValueChange={(n) => {
@@ -802,7 +803,7 @@ function Quotes() {
                               type="button"
                               size="icon"
                               variant="ghost"
-                              className="col-span-1"
+                              className="col-span-12 w-full sm:col-span-1 sm:w-auto"
                               onClick={() => setItems(items.filter((_, i) => i !== idx))}
                             >
                               <X className="h-4 w-4" />
