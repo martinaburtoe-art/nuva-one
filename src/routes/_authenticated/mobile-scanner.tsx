@@ -50,11 +50,12 @@ function MobileScannerContent() {
   const [activeModule, setActiveModule] = useState("pos");
   const [operationId, setOperationId] = useState("");
   const [deviceName, setDeviceName] = useState("Mi celular");
+  const [contextSaved, setContextSaved] = useState(false);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) { const restored = JSON.parse(saved) as MobileScannerSession; setSession(restored); setActiveModule(restored.activeModule ?? "pos"); setOperationId(restored.operationId ?? ""); setDeviceName(restored.deviceName ?? "Mi celular"); }
+      if (saved) { const restored = JSON.parse(saved) as MobileScannerSession; setSession(restored); setActiveModule(restored.activeModule ?? "pos"); setOperationId(restored.operationId ?? ""); setDeviceName(restored.deviceName ?? "Mi celular"); setContextSaved(Boolean(restored.operationId)); }
     } catch {
       /* ignore stale local session */
     }
@@ -103,6 +104,7 @@ function MobileScannerContent() {
       setActiveModule(paired.activeModule ?? "pos");
       setOperationId(paired.operationId ?? "");
       setDeviceName(paired.deviceName ?? "Mi celular");
+      setContextSaved(Boolean(paired.operationId));
       setSession(paired);
       setPairCode("");
       toast.success("Celular vinculado a Nüva One");
@@ -124,7 +126,7 @@ function MobileScannerContent() {
 
   async function handleScan(result: { rawValue: string }) {
     if (!session) return;
-    if (!operationId.trim()) return toast.error("Primero asigna el dispositivo a una operación de Caja o Inventario.");
+    if (!operationId.trim() || !contextSaved) return toast.error("Guarda primero el contexto de Caja o Inventario antes de escanear.");
     const code = result.rawValue.trim();
     if (!code) return;
     setLastCode(code);
@@ -261,7 +263,7 @@ function MobileScannerContent() {
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="space-y-1 text-xs font-medium">Módulo
-            <select value={activeModule} onChange={e => setActiveModule(e.target.value)}
+            <select value={activeModule} onChange={e => { setActiveModule(e.target.value); setContextSaved(false); }}
               className="h-10 w-full rounded-md border bg-background px-3 text-sm">
               <option value="pos">Caja</option>
               <option value="inventory">Inventario</option>
@@ -273,11 +275,11 @@ function MobileScannerContent() {
             </select>
           </label>
           <label className="space-y-1 text-xs font-medium">Nombre del dispositivo
-            <Input value={deviceName} onChange={e => setDeviceName(e.target.value)} maxLength={80} />
+            <Input value={deviceName} onChange={e => { setDeviceName(e.target.value); setContextSaved(false); }} maxLength={80} />
           </label>
         </div>
         <label className="block space-y-1 text-xs font-medium">Identificador de operación
-          <Input value={operationId} onChange={e => setOperationId(e.target.value)} placeholder="Se asigna al vincular desde el módulo" />
+          <Input value={operationId} onChange={e => { setOperationId(e.target.value); setContextSaved(false); }} placeholder="Se asigna al vincular desde el módulo" />
         </label>
         <Button className="w-full" variant="outline" disabled={!online || !operationId.trim()}
           onClick={async () => {
@@ -286,6 +288,7 @@ function MobileScannerContent() {
               const next = { ...session, activeModule, operationId: operationId.trim(), deviceName };
               setSession(next);
               localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+              setContextSaved(true);
               toast.success("Contexto del dispositivo actualizado");
             } catch (error) {
               toast.error(error instanceof Error ? error.message : "No se pudo cambiar el contexto");
@@ -311,7 +314,7 @@ function MobileScannerContent() {
       </Card>
       <Button
         className="h-14 w-full text-base"
-        disabled={!online || !cameraAvailable || !operationId.trim()}
+        disabled={!online || !cameraAvailable || !operationId.trim() || !contextSaved}
         onClick={() => setScannerOpen(true)}
       >
         <ScanBarcode className="mr-2 h-5 w-5" />
@@ -319,8 +322,8 @@ function MobileScannerContent() {
           ? "Cámara no disponible"
           : !online
             ? "Esperando conexión"
-            : !operationId.trim()
-              ? "Asigna una operación"
+            : !operationId.trim() || !contextSaved
+              ? "Guarda el contexto de operación"
               : "Abrir cámara y escanear"}
       </Button>
       <Card className="p-4">
