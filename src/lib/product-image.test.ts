@@ -14,12 +14,12 @@ describe("product image validation", () => {
     },
   );
 
-  it("accepts a file at the 5 MB limit", () => {
-    expect(validateProductImage({ type: "image/webp", size: 5 * 1024 * 1024 } as File)).toBeNull();
+  it("accepts original camera photos up to 20 MB for optimization", () => {
+    expect(validateProductImage({ type: "image/jpeg", size: 20 * 1024 * 1024 } as File)).toBeNull();
   });
 
-  it("rejects files larger than 5 MB", () => {
-    expect(validateProductImage({ type: "image/jpeg", size: 5 * 1024 * 1024 + 1 } as File)).toContain("5MB");
+  it("rejects original photos larger than 20 MB", () => {
+    expect(validateProductImage({ type: "image/jpeg", size: 20 * 1024 * 1024 + 1 } as File)).toContain("20MB");
   });
 
   it("rejects unsupported formats", () => {
