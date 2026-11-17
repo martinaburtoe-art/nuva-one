@@ -141,6 +141,7 @@ begin
     and (
       d.created_by = auth.uid()
       or d.last_paired_by = auth.uid()
+      or exists (select 1 from public.mobile_scanner_sessions s where s.device_id = d.id and s.created_by = auth.uid())
       or private.has_business_role(d.business_id, auth.uid(), array['owner'::member_role,'admin'::member_role])
     )
   returning d.business_id into v_business_id;
