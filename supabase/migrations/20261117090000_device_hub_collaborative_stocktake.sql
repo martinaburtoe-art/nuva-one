@@ -87,6 +87,7 @@ set search_path = pg_catalog, public, private
 as $$
 declare
   v_uid uuid := (select auth.uid());
+  v_actor_id uuid;
   v_stocktake public.inventory_stocktakes%rowtype;
   v_product public.products%rowtype;
   v_event_id uuid;
@@ -132,17 +133,20 @@ begin
     raise exception 'PRODUCT_NOT_IN_BUSINESS' using errcode = '42501';
   end if;
 
-  if p_source_session_id is not null and not exists (
-    select 1 from public.mobile_scanner_sessions s
+  v_actor_id := v_uid;
+  if p_source_session_id is not null then
+    select s.paired_by into v_actor_id
+    from public.mobile_scanner_sessions s
     where s.id = p_source_session_id
       and s.business_id = v_stocktake.business_id
       and s.status = 'paired'
       and s.expires_at > now()
       and s.active_module = 'inventory'
       and s.active_operation_id = p_stocktake_id
-      and private.has_business_role(s.business_id, s.paired_by, array['owner'::member_role,'admin'::member_role,'staff'::member_role])
-  ) then
-    raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501';
+      and private.has_business_role(s.business_id, s.paired_by, array['owner'::member_role,'admin'::member_role,'staff'::member_role]);
+    if not found then
+      raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501';
+    end if;
   end if;
 
   insert into public.inventory_stocktake_scan_events(
@@ -150,7 +154,7 @@ begin
     mode, quantity_delta, code, source_session_id, actor_id
   ) values (
     v_stocktake.id, v_stocktake.business_id, v_product.id, p_client_event_id,
-    p_mode, v_quantity, nullif(btrim(p_code), ''), p_source_session_id, v_uid
+    p_mode, v_quantity, nullif(btrim(p_code), ''), p_source_session_id, v_actor_id
   )
   on conflict (stocktake_id, client_event_id) do nothing
   returning id into v_event_id;
