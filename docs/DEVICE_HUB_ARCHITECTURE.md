@@ -158,6 +158,7 @@ The following first implementation slice is present in this branch:
 - Secure code association RPC is included alongside the existing product-creation RPC.
 - The Inventory count panel now loads the latest open count, persists every accepted scan, subscribes to shared count events, supports unit and batch-quantity modes, and exposes unknown-code create/associate flows.
 - Caja now creates a stable local register context and exposes an operation-bound mobile pairing code. Mobile scan events are routed only to that register's operation ID.
+- A live Device Hub roster is surfaced in Caja and Inventario, showing session state, active module, last activity, and authorized revoke controls. Session lifecycle changes are published through Realtime.
 - The mobile scanner route is no longer POS-only, persists its paired session in local storage, supports module/context changes, and renews its lease by heartbeat.
 
 **Not certified yet:** this branch has not had CI/build verification; the SQL migration has not been applied to Supabase; no live Android/iOS multi-device test has been performed. Inventory operation routing depends on pairing/context being created for the active stocktake. Offline scan queuing and a full Device Hub device-management roster remain subsequent work.
