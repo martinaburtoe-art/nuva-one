@@ -1,6 +1,6 @@
 begin;
 
-select plan(16);
+select plan(20);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -110,6 +110,38 @@ select ok(
   exists(select 1 from pg_publication_tables where pubname='supabase_realtime'
     and schemaname='public' and tablename='mobile_scanner_sessions'),
   'device session lifecycle changes are available through Realtime'
+);
+
+select ok(
+  exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='record_inventory_stocktake_scan' and not p.prosecdef)
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='private' and p.proname='record_inventory_stocktake_scan' and p.prosecdef),
+  'stocktake scan RPC uses a SECURITY INVOKER public wrapper over a private definer'
+);
+
+select ok(
+  exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='set_mobile_scanner_context' and not p.prosecdef)
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='private' and p.proname='set_mobile_scanner_context' and p.prosecdef),
+  'device context RPC keeps privileged logic private'
+);
+
+select ok(
+  exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='create_mobile_scanner_session_for_operation' and not p.prosecdef)
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='private' and p.proname='create_mobile_scanner_session_for_operation' and p.prosecdef),
+  'operation-bound pairing uses an invoker wrapper and private implementation'
+);
+
+select ok(
+  exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='associate_product_code_from_scanner' and not p.prosecdef)
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='private' and p.proname='associate_product_code_from_scanner' and p.prosecdef),
+  'code association uses an invoker wrapper and private implementation'
 );
 
 select * from finish();
