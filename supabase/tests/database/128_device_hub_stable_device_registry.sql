@@ -30,6 +30,7 @@ select ok(
 
 select ok(
   has_table_privilege('authenticated','public.mobile_scanner_devices','SELECT')
+  and not has_table_privilege('anon','public.mobile_scanner_devices','SELECT')
   and not has_table_privilege('authenticated','public.mobile_scanner_devices','INSERT')
   and not has_table_privilege('authenticated','public.mobile_scanner_devices','UPDATE'),
   'authenticated users can read member-visible devices but cannot mutate the registry directly'
