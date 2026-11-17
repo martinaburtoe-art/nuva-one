@@ -403,6 +403,7 @@ function POS() {
     <ModuleGuard module="pos">
       <>
         <PageHeader
+          eyebrow="PUNTO DE VENTA"
           title="Caja"
           description="Vende, cobra y controla tu operación en un solo flujo."
           action={
