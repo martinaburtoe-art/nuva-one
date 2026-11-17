@@ -80,8 +80,10 @@ export async function submitMobileScannerEvent(
   return (Array.isArray(data) ? data[0] : data) as MobileScannerEvent;
 }
 
+type MobileScannerClientEventId = `${string}-${string}-${string}-${string}-${string}`;
+
 type PendingMobileScannerEvent = {
-  clientEventId: string;
+  clientEventId: MobileScannerClientEventId;
   sessionId: string;
   code: string;
   inputType: MobileScannerEvent["input_type"];
