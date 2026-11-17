@@ -1,6 +1,6 @@
 begin;
 
-select plan(25);
+select plan(26);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -184,6 +184,16 @@ select ok(
     'private.pair_mobile_scanner(text)'::regprocedure
   )) > 0,
   'pairing uses cryptographic codes and rate-limited private storage behind an invoker wrapper'
+);
+
+select ok(
+  has_function_privilege('authenticated',
+    'private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid)', 'EXECUTE')
+  and not has_function_privilege('anon',
+    'private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid)', 'EXECUTE')
+  and not has_function_privilege('anon',
+    'private.pair_mobile_scanner(text)', 'EXECUTE'),
+  'private SECURITY DEFINER routines are callable by authenticated users only, never anon'
 );
 
 select * from finish();
