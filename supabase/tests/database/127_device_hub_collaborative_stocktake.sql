@@ -383,8 +383,12 @@ select ok(
   exists(select 1 from pg_publication_tables
     where pubname='supabase_realtime'
       and schemaname='public'
+      and tablename='mobile_scanner_sessions')
+  and exists(select 1 from pg_publication_tables
+    where pubname='supabase_realtime'
+      and schemaname='public'
       and tablename='mobile_scanner_devices'),
-  'stable device roster changes are published for realtime dashboard updates'
+  'session and stable device roster changes are published for realtime dashboard updates'
 );
 
 select * from finish();
