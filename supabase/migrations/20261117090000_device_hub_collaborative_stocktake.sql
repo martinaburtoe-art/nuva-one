@@ -46,6 +46,10 @@ alter table public.mobile_scanner_sessions
 create index if not exists idx_mobile_scanner_sessions_business_module
   on public.mobile_scanner_sessions(business_id, active_module, status, last_seen_at desc);
 
+create index if not exists idx_mobile_scanner_events_operation_created
+  on public.mobile_scanner_events(operation_id, module, created_at)
+  where operation_id is not null;
+
 create table if not exists public.inventory_stocktake_scan_events (
   id uuid primary key default gen_random_uuid(),
   stocktake_id uuid not null references public.inventory_stocktakes(id) on delete cascade,
