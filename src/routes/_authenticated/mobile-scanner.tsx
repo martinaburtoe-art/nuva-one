@@ -106,12 +106,8 @@ function MobileScannerContent() {
       setSession(paired);
       setPairCode("");
       toast.success("Celular vinculado a Nüva One");
-    } catch (error: any) {
-      toast.error(
-        String(error?.message ?? "").includes("PAIR_CODE")
-          ? "Código inválido o vencido"
-          : "No se pudo vincular el celular",
-      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo vincular el celular");
     } finally {
       setBusy(false);
     }
