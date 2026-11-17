@@ -317,7 +317,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       if (error) throw error;
       setProducts(current => [...current, data]);
       await addProduct(data, unknownCode, pendingMobileEvent);
-      toast.success("Producto creado con stock inicial cero y agregado al conteo");
+      toast.success("Producto creado con stock inicial cero");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo crear el producto");
     } finally {
