@@ -124,6 +124,11 @@ function Footer() {
   return (
     <footer className="cinematic-footer">
       <span>Nüva One</span>
+      <nav aria-label="Enlaces legales y comerciales" className="flex flex-wrap items-center gap-4 text-xs">
+        <Link to="/pricing">Planes</Link>
+        <Link to="/privacy">Privacidad</Link>
+        <Link to="/terms">Términos</Link>
+      </nav>
       <span>© {new Date().getFullYear()} Nüva One. Todos los derechos reservados.</span>
     </footer>
   );
