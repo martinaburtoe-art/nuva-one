@@ -8,6 +8,16 @@ This checklist defines the production acceptance criteria for using a mobile pho
 
 `camera/HID/native input -> normalize -> product resolver -> operation -> stock/cash/audit`
 
+## Current release slice
+
+- Operational modules in this PR: **Caja and Inventario**. Receiving, picking, dispatch, returns, and transfers remain disabled in the UI and are not certified.
+- The phone-side IndexedDB outbox is implemented with FIFO replay and stable idempotency UUIDs. Automated build/type checks pass; physical offline/reconnect testing on Android/iOS is still required.
+- Full CI passed on commit `64808118d735879764761bd905998a90faba77ba`: 33 pgTAP assertions, migration reset/recovery, dependency audit, lint, typecheck, unit tests, build, and release-evidence generation.
+- The Vercel preview is READY, but the database migration is not applied to production and the PR is not merged.
+- A separate durable device registry and zone assignment/overlap reconciliation are not included in this slice. The current device model is a renewable, revocable session lease; the current stocktake is business-wide because the production schema has no warehouse/location dimension.
+- The automated Gemini reviewer was unavailable due provider quota; its result is `NEEDS_EVIDENCE`, not an approval.
+
+
 ## Product onboarding
 
 - [ ] Unknown scanned code opens the new-product flow with the scanned code prefilled.
