@@ -308,8 +308,8 @@ function MobileScannerContent() {
           <div className="flex items-start gap-2 text-sm">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <span>
-              <strong>Scanner pausado.</strong> Nüva no enviará lecturas mientras no haya conexión
-              para evitar duplicados o ventas incompletas.
+              <strong>Sin conexión.</strong> Las lecturas se guardan en este celular y se enviarán
+              al recuperar internet. No se marcarán como confirmadas hasta recibir respuesta del servidor.
             </span>
           </div>
         </Card>
