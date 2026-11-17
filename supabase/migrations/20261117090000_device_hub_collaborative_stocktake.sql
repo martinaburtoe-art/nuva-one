@@ -270,7 +270,7 @@ language plpgsql
 security definer
 set search_path = public, private, extensions
 as $$
-declare v_code text; v_id uuid; v_pair_expires timestamptz := now() + interval '10 minutes';
+declare v_code text; v_id uuid; v_random bytea; v_pair_expires timestamptz := now() + interval '10 minutes';
 begin
   if auth.uid() is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
   if not private.has_business_role(p_business_id, auth.uid(), array['owner'::member_role,'admin'::member_role,'staff'::member_role]) then
@@ -282,7 +282,11 @@ begin
     and status = 'pending'
     and pair_code_expires_at <= now();
   loop
-    v_code := lpad((('x' || encode(gen_random_bytes(4), 'hex'))::bit(32)::bigint % 1000000)::text, 6, '0');
+    v_random := gen_random_bytes(4);
+    v_code := lpad(((get_byte(v_random, 0)::bigint * 16777216
+      + get_byte(v_random, 1)::bigint * 65536
+      + get_byte(v_random, 2)::bigint * 256
+      + get_byte(v_random, 3)::bigint) % 1000000)::text, 6, '0');
     exit when not exists (
       select 1 from public.mobile_scanner_sessions s
       where s.status = 'pending'
@@ -475,7 +479,7 @@ language plpgsql
 security definer
 set search_path = public, private, extensions
 as $$
-declare v_code text; v_id uuid; v_pair_expires timestamptz := now() + interval '10 minutes';
+declare v_code text; v_id uuid; v_random bytea; v_pair_expires timestamptz := now() + interval '10 minutes';
 begin
   if auth.uid() is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
   if not private.has_business_role(p_business_id, auth.uid(), array['owner'::member_role,'admin'::member_role,'staff'::member_role]) then
@@ -494,7 +498,11 @@ begin
     raise exception 'OPERATION_CONTEXT_REQUIRED' using errcode = '22023';
   end if;
   loop
-    v_code := lpad((('x' || encode(gen_random_bytes(4), 'hex'))::bit(32)::bigint % 1000000)::text, 6, '0');
+    v_random := gen_random_bytes(4);
+    v_code := lpad(((get_byte(v_random, 0)::bigint * 16777216
+      + get_byte(v_random, 1)::bigint * 65536
+      + get_byte(v_random, 2)::bigint * 256
+      + get_byte(v_random, 3)::bigint) % 1000000)::text, 6, '0');
     exit when not exists (
       select 1 from public.mobile_scanner_sessions s
       where s.status = 'pending'
