@@ -55,7 +55,7 @@ The server validates the lease, membership, module permission, operation ownersh
 - PostgreSQL RPC/transactions: authoritative writes, uniqueness, row locking, idempotency, inventory movements, product creation.
 - Supabase Realtime Presence: ephemeral connected/active status and participant roster; do not use it as a durable activity log.
 - Supabase Realtime Broadcast or filtered Postgres Changes: notify clients that persisted state changed. On reconnect, clients reload canonical rows from PostgreSQL.
-- Client outbox: persist unacknowledged scan envelopes in IndexedDB; retry with the same `client_event_id`. Do not apply stock changes optimistically as confirmed.
+- Client outbox: persist unacknowledged scan envelopes in IndexedDB; retry with the same `client_event_id`. The first mobile scanner implementation now includes a FIFO IndexedDB outbox, idempotent replay, pending-count UI, and retry after heartbeat/reconnect. Do not apply stock changes optimistically as confirmed.
 - UI state: show pending / saved / conflict / failed distinctly.
 
 For moderate traffic, filtered Postgres Changes can be the first integration step. For broader fan-out, use private Broadcast channels with explicit Realtime Authorization. Never use public channels for business inventory.
@@ -123,7 +123,7 @@ When a code is not found:
 - Ensure no stock is invented; initial stock is explicit and auditable.
 
 ### P2 — resilience and certification
-- IndexedDB outbox, retry/backoff, reconnect reconciliation.
+- Validate the IndexedDB outbox, retry behavior, and reconnect reconciliation on real devices; add bounded backoff and recovery UX for revoked sessions.
 - Real-device camera tests on Android/iOS browsers and Capacitor.
 - Concurrent multi-device, tenant-isolation, duplicate-event, offline, revocation, and stock-movement-during-count tests.
 - Production acceptance only after deployed build + database migrations + end-to-end evidence.
@@ -162,7 +162,11 @@ The following first implementation slice is present in this branch:
 - Caja now creates a per-tab register context and exposes an operation-bound mobile pairing code. Mobile scan events are routed only to that register's operation ID; separate POS tabs do not share the same register context.
 - A live Device Hub roster is surfaced in Caja and Inventario, showing lease state, active module, heartbeat freshness, last activity, and authorized revoke controls. Session lifecycle changes are published through Realtime.
 - The mobile scanner route is no longer POS-only, persists its paired session in local storage, supports module/context changes, and renews its lease by heartbeat.
+- The phone now stores unacknowledged scans in an IndexedDB FIFO outbox. Each scan keeps its original UUID through retries; a successful heartbeat/reconnect triggers replay, the pending count is visible, and disconnect is disabled while the outbox contains unacknowledged scans.
+- Operational consumers in this slice are **Caja and Inventario only**. Receiving, picking, dispatch, returns, and transfers are explicitly disabled and labeled as upcoming rather than being presented as working modules.
 
-**Not certified yet:** this branch must rerun CI/build verification after the latest FIFO, replay, and function-privilege changes; the SQL migration has not been applied to Supabase; no live Android/iOS multi-device test has been performed. This first slice stores a paired session/lease, not yet a separate durable device registry with a stable device ID across re-pairing. Inventory operation routing depends on pairing/context being created for the active stocktake. A phone-side offline outbox, zone assignment/overlap reconciliation, and a full stable device registry remain subsequent work.
+**Automated verification:** latest branch head `64808118d735879764761bd905998a90faba77ba` passed the full GitHub CI workflow: migration integrity, 33 pgTAP assertions, clean-schema recovery drill, dependency audit, lint, TypeScript, unit tests, build, and Factory release evidence. CI Fast, Nüva People build, Web QA, Production Smoke, and Vercel preview build also passed. The autonomous Gemini reviewer did not produce an independent review because its free-tier quota was exhausted; its status is `NEEDS_EVIDENCE`, not approval.
+
+**Not certified for production yet:** the SQL migration has not been applied to Supabase and the PR has not been merged. No live Android/iOS multi-device test has been performed. This first slice stores a paired session/lease, not yet a separate durable device registry with a stable device ID across re-pairing. Inventory has no production warehouse/location dimension, so zone assignment and overlap reconciliation remain out of scope until that model exists. Inventory operation routing depends on pairing/context being created for the active stocktake. The offline outbox is implemented but still requires real-device validation.
 
 **Stock movement semantics:** each product line captures `system_qty` at the first accepted count event. Finalization applies `counted_qty - system_qty` as an adjustment to the product stock that exists at finalization time. This delta-on-current-stock pattern preserves intervening sales/receipts/transfers that have already changed `products.stock`; it is not equivalent to replacing current stock with the counted quantity. This is safe only if every inventory movement path updates `products.stock` transactionally and the physical count is interpreted at the first scan for that product. That invariant still requires end-to-end tests across POS, receiving, transfers, returns, and manual adjustments before production certification.
