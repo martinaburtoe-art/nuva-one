@@ -479,6 +479,7 @@ function POS() {
                       onClick={() => addToCart(p)}
                       className="flex flex-col items-start rounded-lg border bg-primary/5 p-3 text-left transition hover:bg-primary/10"
                     >
+                      <div className="mb-2 h-20 w-full overflow-hidden rounded-md bg-muted">{p.image_url ? <img src={p.image_url} alt={p.name || "Producto"} loading="lazy" className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = "none"; }} /> : <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">Sin fotografía</div>}</div>
                       <span className="text-sm font-medium leading-tight">{p.name}</span>
                       <span className="mt-1 text-sm font-bold">{fmtCLP(Number(p.price))}</span>
                       <span className="text-[10px] text-muted-foreground">Stock: {p.stock}</span>
@@ -515,6 +516,9 @@ function POS() {
                           stock <= 0 ? "opacity-50" : "hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-elegant",
                         )}
                       >
+                        <div className="mb-1 h-24 w-full overflow-hidden rounded-lg bg-muted">
+                          {p.image_url ? <img src={p.image_url} alt={p.name || "Producto"} loading="lazy" className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = "none"; }} /> : <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">Sin fotografía</div>}
+                        </div>
                         <div className="flex w-full items-start justify-between gap-1">
                           <span className="line-clamp-2 text-sm font-medium leading-tight">
                             {p.name}
