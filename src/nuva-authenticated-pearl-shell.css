@@ -569,3 +569,85 @@
     border-radius: 18px;
   }
 }
+
+
+/* Commercial module headers — clear context, hierarchy and action placement. */
+.nuva-app main .nuva-module-header[data-nuva-workspace-header] {
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 2px 18px;
+  border-bottom: 1px solid #e8e1d6;
+}
+.nuva-app .nuva-module-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #9a8057;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .17em;
+  line-height: 1.2;
+}
+.nuva-app .nuva-module-eyebrow::before {
+  width: 18px;
+  height: 1px;
+  border-radius: 2px;
+  background: #c4a36b;
+  content: "";
+}
+.nuva-app .nuva-module-title {
+  color: #18344b !important;
+  font-size: clamp(29px, 3vw, 39px) !important;
+  font-weight: 620 !important;
+  letter-spacing: -.045em !important;
+  line-height: 1.04 !important;
+}
+.nuva-app .nuva-module-description {
+  max-width: 64ch;
+  margin-top: 7px;
+  color: #74808a !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+}
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child {
+  flex-shrink: 0;
+}
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child > button,
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child a[role="button"] {
+  min-height: 42px;
+  border-radius: 12px;
+  font-weight: 650;
+  box-shadow: 0 5px 14px rgb(24 52 75 / .09);
+}
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child > button:focus-visible,
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child a:focus-visible {
+  outline: 2px solid #a98750;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .nuva-app main .nuva-module-header[data-nuva-workspace-header] {
+    align-items: stretch;
+    gap: 14px;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  .nuva-app .nuva-module-title {
+    font-size: clamp(27px, 8vw, 34px) !important;
+  }
+  .nuva-app .nuva-module-description {
+    max-width: 48ch;
+    font-size: 12px !important;
+  }
+  .nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child > button,
+  .nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child a {
+    transition: none !important;
+  }
+}
