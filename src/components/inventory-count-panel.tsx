@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ClipboardCheck, FileDown, PackagePlus, ScanBarcode, Search, Users, Plus } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
@@ -41,17 +41,6 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   const [existingProductId, setExistingProductId] = useState("");
   const [pendingMobileEvent, setPendingMobileEvent] = useState<Pick<MobileScannerEvent, "client_event_id" | "session_id" | "code"> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const refreshProducts = useCallback(async () => {
-    if (!active?.id) return;
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("business_id", active.id)
-      .order("name");
-    if (error) throw error;
-    setProducts(data ?? []);
-  }, [active?.id]);
 
   const refreshLines = useCallback(async (id = stocktakeId) => {
     if (!id) return;
@@ -147,14 +136,6 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
     });
     return unsubscribe;
   }, [stocktakeId, countMode]);
-
-  const matched = useMemo(() => {
-    const q = code.trim().toLowerCase();
-    return q ? products.find(p =>
-      String(p.barcode ?? "").toLowerCase() === q ||
-      String(p.sku ?? "").toLowerCase() === q
-    ) ?? null : null;
-  }, [products, code]);
 
   async function startCount() {
     if (!active || !canWrite) return null;
