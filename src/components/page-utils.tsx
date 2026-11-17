@@ -5,12 +5,14 @@ import { NuvaOperatingPulse } from "@/components/nuva-operating-pulse";
 
 export function PageHeader({
   title,
+  eyebrow,
   description,
   action,
   actions,
   showOperatingPulse = false,
 }: {
   title: string;
+  eyebrow?: string;
   description?: string;
   action?: ReactNode;
   actions?: ReactNode;
@@ -22,6 +24,7 @@ export function PageHeader({
     <>
       <header className="nuva-module-header mb-7 sm:mb-8" data-nuva-workspace-header>
         <div className="min-w-0 space-y-1.5">
+          {eyebrow && <p className="nuva-module-eyebrow">{eyebrow}</p>}
           <h1 className="nuva-module-title">{title}</h1>
           {description && <p className="nuva-module-description">{description}</p>}
         </div>
