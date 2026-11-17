@@ -1,11 +1,17 @@
 begin;
 
-select plan(24);
+select plan(25);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
    where n.nspname='public' and c.relname='inventory_stocktake_scan_events'),
   'collaborative stocktake event ledger has RLS enabled'
+);
+
+select ok(
+  exists(select 1 from information_schema.columns where table_schema='public'
+    and table_name='inventory_stocktake_lines' and column_name='scanned_at'),
+  'stocktake line scan timestamp exists in clean database migrations'
 );
 
 select ok(
