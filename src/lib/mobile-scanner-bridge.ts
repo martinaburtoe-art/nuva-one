@@ -179,3 +179,28 @@ export function subscribeToMobileScannerOperation(
     .subscribe();
   return () => { void supabase.removeChannel(channel); };
 }
+
+/**
+ * Replays inventory scanner events that were persisted by the phone but have not
+ * yet been accepted into the stocktake ledger. The ledger's client_event_id is
+ * the durable acknowledgement; Realtime is only a low-latency notification.
+ */
+export async function loadUnprocessedInventoryScannerEvents(
+  stocktakeId: string,
+): Promise<MobileScannerEvent[]> {
+  const [eventResult, ledgerResult] = await Promise.all([
+    supabase.from("mobile_scanner_events")
+      .select("id,session_id,business_id,code,normalized_code,input_type,client_event_id,created_at,module,operation_id")
+      .eq("module", "inventory")
+      .eq("operation_id", stocktakeId)
+      .order("created_at", { ascending: true }),
+    supabase.from("inventory_stocktake_scan_events")
+      .select("client_event_id")
+      .eq("stocktake_id", stocktakeId),
+  ]);
+  if (eventResult.error) throw eventResult.error;
+  if (ledgerResult.error) throw ledgerResult.error;
+  const accepted = new Set((ledgerResult.data ?? []).map(row => row.client_event_id));
+  return ((eventResult.data ?? []) as MobileScannerEvent[])
+    .filter(event => !accepted.has(event.client_event_id));
+}
