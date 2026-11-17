@@ -8,6 +8,8 @@ export type MobileScannerSession = {
   activeModule?: string;
   operationId?: string | null;
   deviceName?: string;
+  deviceId?: string;
+  deviceKey?: string;
 };
 
 export type MobileScannerEvent = {
@@ -42,12 +44,22 @@ export async function createMobileScannerSession(
 }
 
 export async function pairMobileScanner(pairCode: string): Promise<MobileScannerSession> {
-  const { data, error } = await supabase.rpc("pair_mobile_scanner", {
+  const deviceKeyStorage = "nuva.mobile-scanner.device-key";
+  const deviceNameStorage = "nuva.mobile-scanner.device-name";
+  let deviceKey = localStorage.getItem(deviceKeyStorage);
+  if (!deviceKey || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deviceKey)) {
+    deviceKey = crypto.randomUUID();
+    localStorage.setItem(deviceKeyStorage, deviceKey);
+  }
+  const deviceName = localStorage.getItem(deviceNameStorage) || "Mi celular";
+  const { data, error } = await supabase.rpc("pair_mobile_scanner_device", {
     p_pair_code: pairCode.trim(),
+    p_device_key: deviceKey,
+    p_device_name: deviceName,
   });
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
-  if (!row?.session_id || !row?.business_id)
+  if (!row?.session_id || !row?.business_id || !row?.device_id)
     throw new Error("Código de vinculación inválido o vencido");
   const { data: context } = await (supabase as any)
     .from("mobile_scanner_sessions")
@@ -60,7 +72,9 @@ export async function pairMobileScanner(pairCode: string): Promise<MobileScanner
     expiresAt: row.expires_at,
     activeModule: context?.active_module ?? "pos",
     operationId: context?.active_operation_id ?? null,
-    deviceName: context?.device_name ?? "Nüva Mobile",
+    deviceName: context?.device_name ?? deviceName,
+    deviceId: row.device_id,
+    deviceKey,
   };
 }
 
