@@ -204,6 +204,17 @@ begin
   if p_module not in ('pos','inventory','receiving','picking','dispatch','returns','transfers') then
     raise exception 'INVALID_DEVICE_MODULE' using errcode = '22023';
   end if;
+  if p_operation_id is null then
+    raise exception 'OPERATION_CONTEXT_REQUIRED' using errcode = '22023';
+  end if;
+  if p_module = 'inventory' and not exists (
+    select 1 from public.inventory_stocktakes st
+    join public.mobile_scanner_sessions current_session on current_session.business_id = st.business_id
+    where current_session.id = p_session_id
+      and st.id = p_operation_id and st.status = 'counting'
+  ) then
+    raise exception 'STOCKTAKE_NOT_OPEN' using errcode = '22023';
+  end if;
   update public.mobile_scanner_sessions
   set active_module = p_module,
       active_operation_id = p_operation_id,
@@ -444,8 +455,8 @@ begin
   ) then
     raise exception 'STOCKTAKE_NOT_OPEN' using errcode = '22023';
   end if;
-  if p_module = 'pos' and p_operation_id is null then
-    raise exception 'POS_REGISTER_CONTEXT_REQUIRED' using errcode = '22023';
+  if p_operation_id is null then
+    raise exception 'OPERATION_CONTEXT_REQUIRED' using errcode = '22023';
   end if;
   v_code := lpad((floor(random() * 1000000))::int::text, 6, '0');
   insert into public.mobile_scanner_sessions(
