@@ -245,6 +245,13 @@ export async function revokeMobileScannerSession(sessionId: string) {
   if (error) throw error;
 }
 
+export async function revokeMobileScannerDevice(deviceId: string) {
+  const { error } = await supabase.rpc("revoke_mobile_scanner_device", {
+    p_device_id: deviceId,
+  });
+  if (error) throw error;
+}
+
 
 export async function createMobileScannerSessionForOperation(
   businessId: string,
