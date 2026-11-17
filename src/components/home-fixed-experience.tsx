@@ -67,6 +67,10 @@ export function HomeFixedExperience() {
     video.playsInline = true;
 
     const play = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        video.pause();
+        return;
+      }
       if (video.paused) {
         void video.play().catch(() => {
           // Reintentos adicionales en eventos de carga/visibilidad.
@@ -82,6 +86,10 @@ export function HomeFixedExperience() {
     let lastTime = video.currentTime;
     let stalledTicks = 0;
     const watchdog = window.setInterval(() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        video.pause();
+        return;
+      }
       if (video.paused || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
         play();
         return;
@@ -116,7 +124,7 @@ export function HomeFixedExperience() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           video.muted = true;
           void video.play().catch(() => undefined);
         }
