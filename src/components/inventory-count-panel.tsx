@@ -138,7 +138,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   async function addProduct(product: Product | {
     id: string; name: string; stock: number; barcode?: string | null; sku?: string | null;
   }, scannedCode?: string) {
-    if (!canWrite || busy) return;
+    if (!canWrite) return;
     setBusy(true);
     try {
       const sid = await startCount();
