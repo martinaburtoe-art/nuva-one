@@ -141,25 +141,16 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   async function startCount() {
     if (!active || !canWrite) return null;
     if (stocktakeId) return stocktakeId;
-    const { data: existing, error: lookupError } = await supabase
-      .from("inventory_stocktakes").select("id")
-      .eq("business_id", active.id).eq("status", "counting")
-      .order("created_at", { ascending: false }).limit(1).maybeSingle();
-    if (lookupError) throw lookupError;
-    if (existing?.id) {
-      setStocktakeId(existing.id);
-      await refreshLines(existing.id);
-      return existing.id;
-    }
-    const { data: auth } = await supabase.auth.getUser();
-    const { data, error } = await supabase.from("inventory_stocktakes")
-      .insert({ business_id: active.id, status: "counting", created_by: auth.user?.id ?? null })
-      .select("id").single();
+    const { data, error } = await (supabase as any).rpc("start_or_join_inventory_stocktake", {
+      p_business_id: active.id,
+    });
     if (error) throw error;
-    setStocktakeId(data.id);
-    setLines([]);
-    toast.success("Conteo compartido iniciado");
-    return data.id;
+    const id = String(data);
+    if (!id || id === "null") throw new Error("No se pudo iniciar o recuperar el conteo compartido");
+    setStocktakeId(id);
+    await refreshLines(id);
+    toast.success("Conteo compartido listo para todos los dispositivos");
+    return id;
   }
 
   async function addProduct(product: Product | {
