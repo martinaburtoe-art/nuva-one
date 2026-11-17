@@ -1,6 +1,6 @@
 begin;
 
-select plan(27);
+select plan(28);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -201,6 +201,16 @@ select ok(
     and indexname='idx_mobile_scanner_events_operation_created'
     and indexdef ilike '%(operation_id, module, created_at)%'),
   'operation-scoped event replay has a supporting partial index'
+);
+
+select ok(
+  position('for update' in substring(
+    lower(pg_get_functiondef('private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid)'::regprocedure))
+    from position('from public.products' in lower(
+      pg_get_functiondef('private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid)'::regprocedure)
+    ))
+  )) > 0,
+  'stocktake baseline reads lock the product row against concurrent stock writers'
 );
 
 select * from finish();
