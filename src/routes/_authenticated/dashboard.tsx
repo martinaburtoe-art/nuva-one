@@ -148,7 +148,7 @@ function Dashboard() {
     queryKey: ["dashboard-inventory", active?.id],
     staleTime: 60_000,
     queryFn: async () => {
-      const products = await fetchAllResumenRows((from, to) =>
+      const products = await fetchAllResumenRows<any>((from, to) =>
         (supabase.from("products") as any).select("id, name, image_url, stock, cost, low_stock_threshold, reorder_point")
           .eq("business_id", active!.id).order("id").range(from, to),
       );
