@@ -52,7 +52,7 @@ export async function pairMobileScanner(pairCode: string): Promise<MobileScanner
     localStorage.setItem(deviceKeyStorage, deviceKey);
   }
   const deviceName = localStorage.getItem(deviceNameStorage) || "Mi celular";
-  const { data, error } = await supabase.rpc("pair_mobile_scanner_device", {
+  const { data, error } = await (supabase as any).rpc("pair_mobile_scanner_device", {
     p_pair_code: pairCode.trim(),
     p_device_key: deviceKey,
     p_device_name: deviceName,
@@ -246,7 +246,7 @@ export async function revokeMobileScannerSession(sessionId: string) {
 }
 
 export async function revokeMobileScannerDevice(deviceId: string) {
-  const { error } = await supabase.rpc("revoke_mobile_scanner_device", {
+  const { error } = await (supabase as any).rpc("revoke_mobile_scanner_device", {
     p_device_id: deviceId,
   });
   if (error) throw error;
