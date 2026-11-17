@@ -48,6 +48,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   const pendingMobileEvent = pendingMobileEvents[0] ?? null;
   const [mobileQueueRetry, setMobileQueueRetry] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const productsRef = useRef(products);
+  productsRef.current = products;
 
   const refreshLines = useCallback(async (id = stocktakeId) => {
     if (!id) return;
@@ -132,7 +134,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
         setNewProductCategory("");
         setNewProductPrice("0");
         setNewProductCost("0");
-        setExistingProductId(products[0]?.id ?? "");
+        setExistingProductId(productsRef.current[0]?.id ?? "");
         toast.info(`Código nuevo ${event.code}: crea el producto o asócialo para registrar esta unidad.`);
         return;
       }
@@ -199,7 +201,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       if (!cancelled) toast.error(error instanceof Error ? error.message : "Falló la resolución de la lectura móvil");
     });
     return () => { cancelled = true; };
-  }, [countMode, pendingMobileEvent?.client_event_id, products]);
+  }, [countMode, pendingMobileEvent?.client_event_id]);
 
   async function startCount() {
     if (!active || !canWrite) return null;
