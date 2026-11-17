@@ -89,10 +89,16 @@ export function MobileScannerPairingCard({
         {session?.pairCode && !paired ? (
           <>
             <div className="mt-0.5 font-mono text-lg font-bold tracking-[0.18em]">{session.pairCode}</div>
-            <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">Código válido por 10 minutos · {moduleLabels[module]}<Button size="sm" variant="ghost" className="h-5 px-1 text-[10px]" onClick={() => void navigator.clipboard.writeText(operationId).then(() => toast.success("Identificador de operación copiado")).catch(() => toast.error("No se pudo copiar el identificador"))}><Copy className="mr-1 h-3 w-3" />Copiar ID</Button></div>
+            <div className="text-[10px] text-muted-foreground">Código válido por 10 minutos · {moduleLabels[module]}</div>
           </>
         ) : (
           <div className="text-xs text-muted-foreground">{paired ? "Celular vinculado y listo para escanear" : loading ? "Preparando código…" : "Genera un código para vincular"}</div>
+        )}
+        {session?.operationId && (
+          <Button size="sm" variant="ghost" className="mt-0.5 h-5 px-1 text-[10px]"
+            onClick={() => void navigator.clipboard.writeText(operationId).then(() => toast.success("Identificador de operación copiado")).catch(() => toast.error("No se pudo copiar el identificador"))}>
+            <Copy className="mr-1 h-3 w-3" />Copiar ID de operación
+          </Button>
         )}
       </div>
       <Button size="icon" variant="outline" aria-label="Generar nuevo código" disabled={loading} onClick={() => void generate()}>
