@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { LiveScannerView } from "@/components/scanner/LiveScannerView";
 import { MobileScannerBridge } from "@/components/scanner/MobileScannerBridge";
 import { MobileScannerPairingCard } from "@/components/scanner/MobileScannerPairingCard";
+import { DeviceHubPanel } from "@/components/scanner/DeviceHubPanel";
 import {
   resolveProductCode,
   normalizeProductCode,
@@ -477,6 +478,7 @@ function POS() {
             </Button>
           </Card>
         </div>
+        {active?.id && <div className="mb-5"><DeviceHubPanel businessId={active.id} /></div>}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
           <div className="space-y-4">
             <div className="relative">
