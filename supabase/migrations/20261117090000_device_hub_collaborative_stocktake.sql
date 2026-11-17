@@ -509,3 +509,14 @@ language sql
 set search_path = public, private
 as $$ select * from private.create_mobile_scanner_session_for_operation($1,$2,$3); $$;
 
+
+revoke all on function public.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) from public, anon;
+revoke all on function public.set_mobile_scanner_context(uuid,text,uuid,text) from public, anon;
+revoke all on function public.heartbeat_mobile_scanner_session(uuid) from public, anon;
+revoke all on function public.associate_product_code_from_scanner(uuid,uuid,text,text) from public, anon;
+revoke all on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) from public, anon;
+grant execute on function public.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) to authenticated;
+grant execute on function public.set_mobile_scanner_context(uuid,text,uuid,text) to authenticated;
+grant execute on function public.heartbeat_mobile_scanner_session(uuid) to authenticated;
+grant execute on function public.associate_product_code_from_scanner(uuid,uuid,text,text) to authenticated;
+grant execute on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) to authenticated;
