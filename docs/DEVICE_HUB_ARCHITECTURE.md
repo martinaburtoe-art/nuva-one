@@ -1,6 +1,6 @@
 # Nüva One Device Hub — Architecture and implementation plan
 
-**Status:** Architecture approved; implementation not yet certified.  
+**Status:** Architecture approved; first implementation slice committed; database migration not applied; functional certification pending.  
 **Branch:** `feat/device-hub-multimodule-20261117`  
 **Decisions:** count mode = unit + entered quantity; unknown codes = create/associate directly from scanner; device policy = shared across modules.
 
@@ -147,3 +147,17 @@ When a code is not found:
 ## 8. Safety boundary
 
 This branch is an implementation plan, not a production change. No production schema, data, RLS policy, or deployed frontend is changed by this document. Do not mark Device Hub as complete until the acceptance matrix has evidence.
+
+
+## 9. Implementation slice committed on the feature branch
+
+The following first implementation slice is present in this branch:
+- A migration draft adds durable paired-device leases (10-minute pairing token, 30-day renewable paired lease), device label and module/operation context.
+- A mobile scanner event now carries the assigned module and operation ID.
+- A stocktake scan-event ledger and `record_inventory_stocktake_scan` RPC persist each count event atomically and idempotently, aggregating into the existing stocktake line.
+- Secure code association RPC is included alongside the existing product-creation RPC.
+- The Inventory count panel now loads the latest open count, persists every accepted scan, subscribes to shared count events, supports unit and batch-quantity modes, and exposes unknown-code create/associate flows.
+- Caja now creates a stable local register context and exposes an operation-bound mobile pairing code. Mobile scan events are routed only to that register's operation ID.
+- The mobile scanner route is no longer POS-only, persists its paired session in local storage, supports module/context changes, and renews its lease by heartbeat.
+
+**Not certified yet:** this branch has not had CI/build verification; the SQL migration has not been applied to Supabase; no live Android/iOS multi-device test has been performed. Inventory operation routing depends on pairing/context being created for the active stocktake. Offline scan queuing and a full Device Hub device-management roster remain subsequent work.
