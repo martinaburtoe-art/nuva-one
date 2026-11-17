@@ -651,3 +651,33 @@
     transition: none !important;
   }
 }
+
+
+/* Dense operational surfaces remain navigable on touch devices. */
+.nuva-app .nuva-sales-workspace > :where(.rounded-xl.border, .rounded-2xl.border) > .hidden.min-w-0.md\\:block,
+.nuva-app .nuva-crm-workspace .hidden.overflow-x-auto.md\\:block {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+.nuva-app .nuva-sales-workspace [role="dialog"],
+.nuva-app .nuva-crm-workspace [role="dialog"] {
+  max-height: min(90dvh, 860px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.nuva-app .nuva-sales-workspace form > .grid.grid-cols-1.sm\\:grid-cols-2 > button {
+  min-height: 44px;
+}
+@media (max-width: 639px) {
+  .nuva-app .nuva-sales-workspace [role="dialog"],
+  .nuva-app .nuva-crm-workspace [role="dialog"] {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    border-radius: 19px;
+  }
+  .nuva-app .nuva-sales-workspace form > .grid.grid-cols-1.sm\\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
