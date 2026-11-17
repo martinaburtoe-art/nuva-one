@@ -147,7 +147,7 @@ select ok(
 select ok(
   exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname='start_or_join_inventory_stocktake' and not p.prosecdef)
-  and exists(select 1 from pg_proc p join pg_namespace n on n.nspname=p.pronamespace
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='private' and p.proname='start_or_join_inventory_stocktake' and p.prosecdef),
   'shared stocktake creation uses a private definer behind an invoker wrapper'
 );
