@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Link2,
   ScanBarcode,
@@ -21,6 +21,9 @@ import {
   heartbeatMobileScannerSession,
   revokeMobileScannerSession,
   setMobileScannerContext,
+  countPendingMobileScannerEvents,
+  enqueueMobileScannerEvent,
+  flushMobileScannerOutbox,
   type MobileScannerSession,
 } from "@/lib/mobile-scanner-bridge";
 import { toast } from "sonner";
@@ -51,6 +54,33 @@ function MobileScannerContent() {
   const [operationId, setOperationId] = useState("");
   const [deviceName, setDeviceName] = useState("Mi celular");
   const [contextSaved, setContextSaved] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const flushingOutbox = useRef(false);
+
+  const flushPendingScans = useCallback(async () => {
+    if (!session?.sessionId || !online || flushingOutbox.current) return;
+    flushingOutbox.current = true;
+    try {
+      const delivered = await flushMobileScannerOutbox(session.sessionId);
+      const remaining = await countPendingMobileScannerEvents(session.sessionId);
+      setPendingCount(remaining);
+      if (delivered > 0) {
+        setSent(current => current + delivered);
+        toast.success(`${delivered} lectura(s) pendiente(s) sincronizada(s)`);
+      }
+    } catch (error) {
+      try {
+        setPendingCount(await countPendingMobileScannerEvents(session.sessionId));
+      } catch {
+        // Keep the last visible pending count if IndexedDB is temporarily unavailable.
+      }
+      toast.error(error instanceof Error
+        ? `Hay lecturas pendientes sin confirmar: ${error.message}`
+        : "No se pudieron sincronizar las lecturas pendientes. Se conservaron en este dispositivo.");
+    } finally {
+      flushingOutbox.current = false;
+    }
+  }, [session?.sessionId, online]);
 
   useEffect(() => {
     try {
@@ -69,6 +99,24 @@ function MobileScannerContent() {
       window.removeEventListener("offline", onOffline);
     };
   }, []);
+
+  useEffect(() => {
+    if (!session?.sessionId) {
+      setPendingCount(0);
+      return;
+    }
+    let active = true;
+    void countPendingMobileScannerEvents(session.sessionId)
+      .then(count => { if (active) setPendingCount(count); })
+      .catch(error => {
+        if (active) toast.error(error instanceof Error ? error.message : "No se pudo leer la bandeja local");
+      });
+    return () => { active = false; };
+  }, [session?.sessionId]);
+
+  useEffect(() => {
+    if (session?.sessionId && online) void flushPendingScans();
+  }, [session?.sessionId, online, flushPendingScans]);
 
   useEffect(() => {
     if (!session) return;
@@ -145,15 +193,32 @@ function MobileScannerContent() {
     const code = result.rawValue.trim();
     if (!code) return;
     setLastCode(code);
+    const clientEventId = crypto.randomUUID();
     if (!online) {
-      toast.error("Sin conexión: la lectura no se enviará para evitar una operación incompleta.");
+      try {
+        await enqueueMobileScannerEvent(session.sessionId, code, "camera", clientEventId);
+        setPendingCount(await countPendingMobileScannerEvents(session.sessionId));
+        toast.info("Lectura guardada en el celular. Se enviará al recuperar la conexión.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "No se pudo guardar la lectura sin conexión.");
+      }
       return;
     }
     try {
-      await submitMobileScannerEvent(session.sessionId, code, "camera");
+      await submitMobileScannerEvent(session.sessionId, code, "camera", clientEventId);
       setSent((n) => n + 1);
-    } catch {
-      toast.error("No se pudo enviar el escaneo al módulo activo. Revisa la conexión y vuelve a intentar.");
+    } catch (error) {
+      try {
+        // Reuse the same UUID: the server may have committed the event even if
+        // the response was lost. The RPC's unique key makes the retry idempotent.
+        await enqueueMobileScannerEvent(session.sessionId, code, "camera", clientEventId);
+        setPendingCount(await countPendingMobileScannerEvents(session.sessionId));
+        toast.info("No llegó la confirmación. La lectura quedó guardada y se reintentará sin duplicarla.");
+      } catch (queueError) {
+        toast.error(queueError instanceof Error
+          ? queueError.message
+          : error instanceof Error ? error.message : "No se pudo enviar ni guardar la lectura.");
+      }
     }
   }
 
@@ -266,8 +331,8 @@ function MobileScannerContent() {
             <div className="text-xs text-muted-foreground">Sesión</div>
             <div className="font-mono text-xs">{session.sessionId.slice(0, 8)}…</div>
           </div>
-          <Button variant="outline" size="sm" aria-label="Desconectar escáner móvil" onClick={disconnect}>
-            Desconectar
+          <Button variant="outline" size="sm" aria-label="Desconectar escáner móvil" disabled={pendingCount > 0} onClick={disconnect}>
+            {pendingCount > 0 ? `${pendingCount} pendientes` : "Desconectar"}
           </Button>
         </div>
       </Card>
@@ -350,6 +415,17 @@ function MobileScannerContent() {
           <span className="text-sm text-muted-foreground">Lecturas enviadas</span>
           <strong className="text-2xl">{sent}</strong>
         </div>
+        {pendingCount > 0 && (
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium">{pendingCount} lectura(s) pendiente(s)</div>
+              <div className="text-xs text-muted-foreground">Guardadas en este celular; se conservan hasta recibir confirmación del servidor.</div>
+            </div>
+            <Button size="sm" variant="outline" disabled={!online} onClick={() => void flushPendingScans()}>
+              Reintentar
+            </Button>
+          </div>
+        )}
         {lastCode && (
           <div className="mt-2 truncate rounded-lg bg-muted/50 p-2 font-mono text-xs" aria-live="polite">
             {lastCode}
