@@ -48,6 +48,7 @@ create policy mobile_scanner_devices_select_member
   on public.mobile_scanner_devices
   for select to authenticated
   using (private.is_business_member(business_id, (select auth.uid())));
+revoke all on table public.mobile_scanner_devices from public, anon, authenticated;
 grant select on public.mobile_scanner_devices to authenticated;
 
 create or replace function private.pair_mobile_scanner_device(
