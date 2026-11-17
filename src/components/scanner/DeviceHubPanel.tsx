@@ -67,6 +67,11 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
   useEffect(() => { void refresh(); }, [refresh]);
 
   useEffect(() => {
+    const timer = window.setInterval(() => void refresh(), 30_000);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
+
+  useEffect(() => {
     if (!businessId) return;
     const channel = supabase.channel(`device-hub:${businessId}`)
       .on("postgres_changes", {
@@ -115,7 +120,8 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
       ) : (
         <div className="space-y-2">
           {devices.map(device => {
-            const active = device.status === "paired" && new Date(device.expires_at).getTime() > Date.now();
+            const leased = device.status === "paired" && new Date(device.expires_at).getTime() > Date.now();
+            const active = leased && !!device.last_seen_at && Date.now() - new Date(device.last_seen_at).getTime() < 120_000;
             const pendingExpired = device.status === "pending" && !!device.pair_code_expires_at && new Date(device.pair_code_expires_at).getTime() <= Date.now();
             const canRevoke = isAdmin || device.created_by === userId || device.paired_by === userId;
             return (
