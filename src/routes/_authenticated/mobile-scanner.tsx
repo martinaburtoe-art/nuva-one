@@ -55,6 +55,7 @@ function MobileScannerContent() {
   const [deviceName, setDeviceName] = useState("Mi celular");
   const [contextSaved, setContextSaved] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [heartbeatVersion, setHeartbeatVersion] = useState(0);
   const pendingCountRef = useRef(0);
   pendingCountRef.current = pendingCount;
   const flushingOutbox = useRef(false);
@@ -119,7 +120,7 @@ function MobileScannerContent() {
 
   useEffect(() => {
     if (session?.sessionId && online) void flushPendingScans();
-  }, [session?.sessionId, online, flushPendingScans]);
+  }, [session?.sessionId, online, flushPendingScans, heartbeatVersion]);
 
   useEffect(() => {
     if (!session) return;
@@ -130,6 +131,7 @@ function MobileScannerContent() {
         if (!active) return;
         heartbeatWarningShown.current = false;
         setOnline(true);
+        setHeartbeatVersion(version => version + 1);
         // Read the latest persisted context: the heartbeat effect is keyed by session ID,
         // so its closure may outlive a module/operation change made on this device.
         let current = session;
