@@ -109,8 +109,8 @@ function POS() {
   useEffect(() => {
     if (!active?.id) { setRegisterId(null); return; }
     const key = `nuva.device.pos-register.${active.id}`;
-    let id = localStorage.getItem(key);
-    if (!id) { id = crypto.randomUUID(); localStorage.setItem(key, id); }
+    let id = sessionStorage.getItem(key);
+    if (!id) { id = crypto.randomUUID(); sessionStorage.setItem(key, id); }
     setRegisterId(id);
   }, [active?.id]);
 
