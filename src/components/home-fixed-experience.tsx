@@ -7,12 +7,12 @@ const DemoWorkspace = lazy(() => import("@/components/demo/demo-workspace").then
 const DemoStateProvider = lazy(() => import("@/lib/demo/demo-state").then((module) => ({ default: module.DemoStateProvider })));
 
 const BENEFITS = [
-  { icon: ShoppingCart, title: "Ventas conectadas", text: "Registra ventas y mantén el resto de la operación actualizado." },
-  { icon: Boxes, title: "Inventario en contexto", text: "Controla stock, productos y movimientos sin trabajar a ciegas." },
-  { icon: CircleDollarSign, title: "Finanzas claras", text: "Entiende ingresos, gastos, caja y resultados desde un mismo lugar." },
-  { icon: Users, title: "Clientes y CRM", text: "Conserva historial y contexto para atender mejor y vender con información." },
-  { icon: BarChart3, title: "Reportes útiles", text: "Convierte los datos operacionales en información que puedas usar." },
-  { icon: Brain, title: "Inteligencia para decidir", text: "Nüva One ayuda a interpretar lo que está pasando en tu negocio." },
+  { icon: ShoppingCart, title: "Ventas con continuidad", text: "Mantén el registro comercial conectado con el resto de la operación." },
+  { icon: Boxes, title: "Stock bajo control", text: "Consulta productos, existencias y movimientos desde un mismo espacio." },
+  { icon: CircleDollarSign, title: "Caja y finanzas", text: "Ordena ingresos, gastos y movimientos para entender mejor tu operación." },
+  { icon: Users, title: "Clientes con historial", text: "Conserva el contexto comercial y da seguimiento a tus relaciones." },
+  { icon: BarChart3, title: "Información accionable", text: "Lee la actividad del negocio con reportes y vistas operacionales." },
+  { icon: Brain, title: "Inteligencia contextual", text: "Interpreta la información disponible y úsala para orientar tus decisiones." },
 ];
 
 function DeferredDemo() {
@@ -67,6 +67,10 @@ export function HomeFixedExperience() {
     video.playsInline = true;
 
     const play = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        video.pause();
+        return;
+      }
       if (video.paused) {
         void video.play().catch(() => {
           // Reintentos adicionales en eventos de carga/visibilidad.
@@ -82,6 +86,10 @@ export function HomeFixedExperience() {
     let lastTime = video.currentTime;
     let stalledTicks = 0;
     const watchdog = window.setInterval(() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        video.pause();
+        return;
+      }
       if (video.paused || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
         play();
         return;
@@ -116,7 +124,7 @@ export function HomeFixedExperience() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           video.muted = true;
           void video.play().catch(() => undefined);
         }
@@ -135,9 +143,9 @@ export function HomeFixedExperience() {
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 mx-auto flex min-h-[min(860px,100vh)] max-w-7xl items-end px-6 pb-16 pt-32 md:px-10 md:pb-20">
           <div className="max-w-4xl">
-            <p className="mb-5 text-xs font-bold uppercase tracking-[0.28em] text-[#E6C687]">NÜVA ONE · TODO CONECTADO</p>
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.94] tracking-[-0.045em] sm:text-7xl lg:text-[clamp(5rem,8vw,8.5rem)]">La inteligencia de tu negocio, en un solo lugar.</h1>
-            <p className="mt-7 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">Ventas, inventario, finanzas, clientes e inteligencia conectados para que puedas gestionar y entender tu negocio.</p>
+            <p className="mb-5 text-xs font-bold uppercase tracking-[0.28em] text-[#E6C687]">NÜVA ONE · PARA DISTRIBUIDORAS Y COMERCIOS EN CRECIMIENTO</p>
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.94] tracking-[-0.045em] sm:text-7xl lg:text-[clamp(5rem,8vw,8.5rem)]">Controla la operación. <span className="text-[#E6C687]">Decide con contexto.</span></h1>
+            <p className="mt-7 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">Conecta ventas, inventario, clientes, cotizaciones y finanzas para dejar de gestionar cada parte del negocio por separado.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#E6C687] px-6 py-3 text-sm font-bold text-[#080809]">Empezar gratis <ArrowRight size={15} /></Link>
               <a href="#demo" className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold backdrop-blur">Probar Nüva One</a>
@@ -151,8 +159,8 @@ export function HomeFixedExperience() {
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#E6C687]">¿QUÉ ES NÜVA ONE?</p>
-              <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Todo lo que tu negocio necesita. Sin fragmentarlo.</h2>
-              <p className="mt-6 max-w-xl text-base leading-7 text-white/65">Nüva One reúne la operación de tu empresa en una sola plataforma. Menos información dispersa, menos trabajo duplicado y más contexto para decidir.</p>
+              <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Cuando cada área trabaja por separado, pierdes el hilo.</h2>
+              <p className="mt-6 max-w-xl text-base leading-7 text-white/65">Una venta afecta el stock. Una reposición afecta la caja. Una cotización puede convertirse en ingreso. Nüva One reúne esas piezas para que puedas seguir la operación con mayor claridad.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {BENEFITS.map(({ icon: Icon, title, text }) => (
@@ -167,12 +175,40 @@ export function HomeFixedExperience() {
         </div>
       </section>
 
+      <section id="para-quien" aria-label="Para quién es Nüva One" className="relative overflow-hidden bg-[#f5f3ee] px-6 py-20 text-[#101820] md:px-10 md:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#8a6a3e]">EL FOCO INICIAL</p>
+            <h2 className="mt-4 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-5xl">Para negocios que venden, reponen y necesitan cuidar su margen.</h2>
+            <p className="mt-6 max-w-xl text-base leading-7 text-black/60">Nüva One parte por distribuidoras y comercios con inventario, pedidos, proveedores y clientes recurrentes: equipos que necesitan saber qué se vendió, qué queda, qué deben reponer y qué está pendiente de cobro.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/pricing" className="inline-flex items-center gap-2 rounded-full bg-[#142d40] px-5 py-3 text-sm font-bold text-white">Ver planes <ArrowRight size={15} /></Link>
+              <a href="#demo" className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white/70 px-5 py-3 text-sm font-semibold text-[#142d40]">Explorar la demo</a>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <article className="rounded-[24px] border border-black/10 bg-white p-6 shadow-[0_18px_50px_-38px_rgba(15,31,43,.35)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#142d40]/[0.07] text-[#142d40]"><Boxes className="h-5 w-5" /></div>
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-[#8a6a3e]">Distribución B2B</p>
+              <h3 className="mt-2 text-xl font-semibold">Pedidos, productos y reposición.</h3>
+              <p className="mt-2 text-sm leading-6 text-black/55">Mantén el contexto entre clientes, cotizaciones, ventas, stock y compras.</p>
+            </article>
+            <article className="rounded-[24px] border border-black/10 bg-white p-6 shadow-[0_18px_50px_-38px_rgba(15,31,43,.35)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#142d40]/[0.07] text-[#142d40]"><ShoppingCart className="h-5 w-5" /></div>
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-[#8a6a3e]">Comercio con inventario</p>
+              <h3 className="mt-2 text-xl font-semibold">Ventas y stock en el mismo flujo.</h3>
+              <p className="mt-2 text-sm leading-6 text-black/55">Consulta tus productos y movimientos sin depender de varias planillas desconectadas.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section id="demo" className="bg-[#f5f3ee] px-4 py-20 text-[#080809] md:px-8 md:py-28">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#6366F1]">DEMO INTERACTIVA</p>
             <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Ahora pruébalo aquí mismo.</h2>
-            <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación completa de Nüva One con datos ficticios. Navega por los módulos y entiende cómo se conecta la operación, sin salir de la homepage.</p>
+            <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación interactiva con datos ficticios. Recorre los módulos y observa cómo se organiza la operación, sin salir de esta página.</p>
           </div>
           <DeferredDemo />
         </div>
@@ -224,7 +260,7 @@ export function HomeFixedExperience() {
                   <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none" /> CELULAR
                 </div>
                 <div className="rounded-full border border-white/70 bg-[#11131a]/90 px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-lg backdrop-blur">
-                  Live Scan
+                  Vista ilustrativa
                 </div>
               </div>
             </div>
@@ -265,63 +301,41 @@ export function HomeFixedExperience() {
         </div>
       </section>
 
-      <section aria-label="Comparativa Nüva One" className="relative overflow-hidden bg-[#080809] px-5 py-24 text-white md:px-10 md:py-36">
+      <section aria-label="Cómo se conecta tu operación" className="relative overflow-hidden bg-[#080809] px-5 py-24 text-white md:px-10 md:py-36">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#E6C687]/50 to-transparent" />
-        <div className="absolute -left-40 top-24 h-96 w-96 rounded-full bg-[#6366F1]/10 blur-3xl" />
-        <div className="absolute -right-40 bottom-10 h-96 w-96 rounded-full bg-[#E6C687]/10 blur-3xl" />
+        <div className="absolute -right-40 top-20 h-96 w-96 rounded-full bg-[#E6C687]/[0.08] blur-3xl" />
         <div className="relative mx-auto max-w-7xl">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#E6C687]">NÜVA ONE · FRENTE A LA FRAGMENTACIÓN</p>
-            <h2 className="mt-5 text-4xl font-semibold leading-[0.98] tracking-[-0.04em] sm:text-6xl">Todo lo que tu negocio necesita. <span className="text-[#E6C687]">Sin fragmentarlo.</span></h2>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">Mientras otras soluciones resuelven una parte de la operación, Nüva One conecta el contexto para que ventas, inventario, clientes, caja e inteligencia trabajen juntos.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#E6C687]">UNA OPERACIÓN CON CONTEXTO</p>
+            <h2 className="mt-5 text-4xl font-semibold leading-[0.98] tracking-[-0.04em] sm:text-6xl">No necesitas más pantallas. <span className="text-[#E6C687]">Necesitas ver cómo se relaciona todo.</span></h2>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">El trabajo comercial no ocurre en módulos aislados. Sigue el recorrido de tus clientes, productos y dinero con información que conserva su contexto.</p>
           </div>
-
-          <div className="mt-14 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20">
-            <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 bg-white/[0.025] text-sm">
-              <div className="px-5 py-5 font-semibold text-white/55 md:px-7">Lo que necesita tu negocio</div>
-              <div className="border-l border-white/10 px-4 py-5 text-center font-bold text-[#E6C687]">Nüva One</div>
-              <div className="border-l border-white/10 px-4 py-5 text-center font-semibold text-white/55">ERP / Contabilidad</div>
-              <div className="border-l border-white/10 px-4 py-5 text-center font-semibold text-white/55">POS / Inventario</div>
-            </div>
-                          <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
-                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Ventas + inventario conectados</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
-                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Caja y finanzas en contexto</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
-                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Clientes + CRM</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
-                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Reportes para decidir</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
-                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Inteligencia sobre tu operación</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-              </div>              <div className="grid min-w-[760px] grid-cols-[1.35fr_repeat(3,1fr)] border-b border-white/10 last:border-b-0">
-                <div className="px-5 py-5 text-sm font-medium text-white/80 md:px-7">Una sola experiencia</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5"><span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E6C687]/12 text-[#E6C687]"><CheckCircle2 size={15} /></span></div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-                <div className="flex items-center justify-center border-l border-white/10 px-4 py-5 text-white/35">Parcial</div>
-              </div>
+          <div className="mt-14 grid gap-3 md:grid-cols-4">
+            {[
+              { n: "01", title: "Oportunidad", text: "Un cliente consulta, solicita precio o necesita una propuesta." },
+              { n: "02", title: "Venta", text: "La cotización avanza y se convierte en una operación comercial." },
+              { n: "03", title: "Inventario", text: "El movimiento se refleja en productos, existencias y reposición." },
+              { n: "04", title: "Finanzas", text: "Ingresos, gastos y cobros ayudan a entender el resultado." },
+            ].map((item, index) => (
+              <article key={item.n} className="relative rounded-2xl border border-white/10 bg-white/[0.045] p-6 transition-colors duration-300 hover:border-[#E6C687]/40 hover:bg-white/[0.07]">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold tracking-[0.2em] text-[#E6C687]">{item.n}</span>
+                  {index < 3 && <ArrowRight className="hidden h-4 w-4 text-white/35 md:block" />}
+                </div>
+                <h3 className="mt-8 text-2xl font-semibold">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-white/55">{item.text}</p>
+              </article>
+            ))}
           </div>
-
           <div className="mt-8 flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-[#E6C687]/20 bg-[#E6C687]/[0.06] px-6 py-5 md:px-8">
             <div>
-              <p className="text-sm font-semibold text-white">Una plataforma. Un contexto. Una operación conectada.</p>
-              <p className="mt-1 text-sm text-white/50">Nüva One está diseñada para que no tengas que saltar entre herramientas para entender tu negocio.</p>
+              <p className="text-sm font-semibold text-white">Empieza por el flujo que más importa a tu negocio.</p>
+              <p className="mt-1 text-sm text-white/50">Explora la demostración con datos ficticios o revisa los planes disponibles.</p>
             </div>
-            <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-full bg-[#E6C687] px-5 py-2.5 text-sm font-bold text-[#080809]">Empezar gratis <ArrowRight size={15} /></Link>
+            <div className="flex flex-wrap gap-2">
+              <a href="#demo" className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-sm font-semibold text-white">Ver demo</a>
+              <Link to="/pricing" className="inline-flex items-center gap-2 rounded-full bg-[#E6C687] px-5 py-2.5 text-sm font-bold text-[#080809]">Ver planes <ArrowRight size={15} /></Link>
+            </div>
           </div>
         </div>
       </section>

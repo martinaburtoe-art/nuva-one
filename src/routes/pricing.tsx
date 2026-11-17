@@ -38,7 +38,7 @@ export const Route = createFileRoute("/pricing")({
 const plans = [
   {
     ...NUVA_PLANS.starter,
-    description: "Para ordenar y controlar la operación diaria de tu PYME.",
+    description: "Para ordenar ventas, inventario y clientes en la operación diaria.",
     cta: "Comenzar con Start",
     featured: false,
     highlights: [
@@ -62,7 +62,7 @@ const plans = [
   },
   {
     ...NUVA_PLANS.pro,
-    description: "Para analizar, anticipar y tomar mejores decisiones con inteligencia.",
+    description: "Para equipos que necesitan más capacidad, análisis y herramientas avanzadas.",
     cta: "Elegir Pro",
     featured: true,
     highlights: [
@@ -206,18 +206,16 @@ function PricingPage() {
             variant="secondary"
             className="rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5"
           >
-            <Sparkles className="mr-1.5 h-3 w-3" /> Planes Nüva One
+            <Sparkles className="mr-1.5 h-3 w-3" /> Planes en pesos chilenos
           </Badge>
           <h1 className="mt-5 text-balance text-4xl font-bold tracking-tight sm:text-6xl">
-            Elige cómo quieres gestionar tu negocio.
+            El plan correcto para la operación que tienes hoy.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
-            No estás eligiendo solo funciones. Estás eligiendo cuánto control, inteligencia y
-            acompañamiento quieres tener sobre tu empresa.
+            Comienza con lo esencial para ordenar ventas, inventario y clientes. Pasa a Pro cuando tu equipo necesite más capacidad y análisis avanzado.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-xs text-muted-foreground shadow-sm">
-            <ShieldCheck className="h-4 w-4 text-primary" /> 15 días gratis · Sin tarjeta · Cancela
-            cuando quieras
+          <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-full border bg-card px-4 py-2 text-xs text-muted-foreground shadow-sm">
+            <ShieldCheck className="h-4 w-4 text-primary" /> Prueba de 15 días · Sin tarjeta · Precios en CLP
           </div>
         </div>
       </section>
