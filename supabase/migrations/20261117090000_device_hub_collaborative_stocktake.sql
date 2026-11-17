@@ -57,7 +57,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = pg_catalog, public, private
-as $
+as $$
 begin
   if old.status = 'counting' and new.status = 'completed' and exists (
     select 1
