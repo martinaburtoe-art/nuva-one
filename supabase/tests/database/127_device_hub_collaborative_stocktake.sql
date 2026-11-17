@@ -1,6 +1,6 @@
 begin;
 
-select plan(22);
+select plan(23);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -156,6 +156,13 @@ select ok(
   has_function_privilege('authenticated', 'public.start_or_join_inventory_stocktake(uuid)', 'EXECUTE')
   and not has_function_privilege('anon', 'public.start_or_join_inventory_stocktake(uuid)', 'EXECUTE'),
   'only authenticated operators can start or join a shared stocktake'
+);
+
+select ok(
+  exists(select 1 from pg_indexes where schemaname='public'
+    and indexname='uq_inventory_stocktakes_one_counting_per_business'
+    and indexdef ilike '%unique%business_id%status%counting%'),
+  'database enforces at most one open stocktake per business'
 );
 
 select * from finish();
