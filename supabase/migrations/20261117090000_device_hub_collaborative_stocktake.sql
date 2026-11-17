@@ -63,7 +63,7 @@ create policy inventory_stocktake_scan_events_select_member
   using (private.is_business_member(business_id, (select auth.uid())));
 grant select on public.inventory_stocktake_scan_events to authenticated;
 
-create or replace function public.record_inventory_stocktake_scan(
+create or replace function private.record_inventory_stocktake_scan(
   p_stocktake_id uuid,
   p_product_id uuid,
   p_client_event_id uuid,
@@ -188,7 +188,7 @@ $$;
 revoke all on function public.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) from public, anon;
 grant execute on function public.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) to authenticated;
 
-create or replace function public.set_mobile_scanner_context(
+create or replace function private.set_mobile_scanner_context(
   p_session_id uuid,
   p_module text,
   p_operation_id uuid default null,
@@ -218,7 +218,7 @@ begin
 end;
 $$;
 
-create or replace function public.heartbeat_mobile_scanner_session(p_session_id uuid)
+create or replace function private.heartbeat_mobile_scanner_session(p_session_id uuid)
 returns timestamptz
 language plpgsql
 security definer
@@ -239,7 +239,7 @@ begin
 end;
 $$;
 
-create or replace function public.create_mobile_scanner_session(p_business_id uuid)
+create or replace function private.create_mobile_scanner_session(p_business_id uuid)
 returns table(session_id uuid, pair_code text, expires_at timestamptz)
 language plpgsql
 security definer
@@ -268,7 +268,7 @@ begin
 end;
 $$;
 
-create or replace function public.pair_mobile_scanner(p_pair_code text)
+create or replace function private.pair_mobile_scanner(p_pair_code text)
 returns table(session_id uuid, business_id uuid, expires_at timestamptz)
 language plpgsql
 security definer
@@ -297,7 +297,7 @@ begin
 end;
 $$;
 
-create or replace function public.submit_mobile_scanner_event(
+create or replace function private.submit_mobile_scanner_event(
   p_session_id uuid, p_code text, p_client_event_id uuid, p_input_type text default 'camera'
 )
 returns public.mobile_scanner_events
@@ -335,7 +335,7 @@ begin
 end;
 $$;
 
-create or replace function public.revoke_mobile_scanner_session(p_session_id uuid)
+create or replace function private.revoke_mobile_scanner_session(p_session_id uuid)
 returns void
 language plpgsql
 security definer
@@ -375,7 +375,7 @@ begin
 end $$;
 
 
-create or replace function public.associate_product_code_from_scanner(
+create or replace function private.associate_product_code_from_scanner(
   p_business_id uuid,
   p_product_id uuid,
   p_code text,
@@ -413,7 +413,7 @@ revoke all on function public.associate_product_code_from_scanner(uuid,uuid,text
 grant execute on function public.associate_product_code_from_scanner(uuid,uuid,text,text) to authenticated;
 
 
-create or replace function public.create_mobile_scanner_session_for_operation(
+create or replace function private.create_mobile_scanner_session_for_operation(
   p_business_id uuid,
   p_module text,
   p_operation_id uuid
@@ -466,3 +466,56 @@ begin
     alter publication supabase_realtime add table public.mobile_scanner_sessions;
   end if;
 end $$;
+
+
+-- Public API wrappers remain SECURITY INVOKER; authorization and privileged work live in private functions.
+create or replace function public.record_inventory_stocktake_scan(
+  p_stocktake_id uuid, p_product_id uuid, p_client_event_id uuid,
+  p_mode text default 'unit', p_quantity numeric default 1,
+  p_code text default null, p_source_session_id uuid default null
+)
+returns table(event_id uuid, stocktake_id uuid, product_id uuid, system_qty numeric, counted_qty numeric, difference numeric, inserted boolean)
+language sql
+set search_path = public, private
+as $$ select * from private.record_inventory_stocktake_scan($1,$2,$3,$4,$5,$6,$7); $$;
+
+create or replace function public.set_mobile_scanner_context(
+  p_session_id uuid, p_module text, p_operation_id uuid default null, p_device_name text default null
+)
+returns void
+language sql
+set search_path = public, private
+as $$ select private.set_mobile_scanner_context($1,$2,$3,$4); $$;
+
+create or replace function public.heartbeat_mobile_scanner_session(p_session_id uuid)
+returns timestamptz
+language sql
+set search_path = public, private
+as $$ select private.heartbeat_mobile_scanner_session($1); $$;
+
+create or replace function public.associate_product_code_from_scanner(
+  p_business_id uuid, p_product_id uuid, p_code text, p_code_type text default 'barcode'
+)
+returns uuid
+language sql
+set search_path = public, private
+as $$ select private.associate_product_code_from_scanner($1,$2,$3,$4); $$;
+
+create or replace function public.create_mobile_scanner_session_for_operation(
+  p_business_id uuid, p_module text, p_operation_id uuid
+)
+returns table(session_id uuid, pair_code text, expires_at timestamptz)
+language sql
+set search_path = public, private
+as $$ select * from private.create_mobile_scanner_session_for_operation($1,$2,$3); $$;
+
+revoke all on function public.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) from public, anon;
+revoke all on function public.set_mobile_scanner_context(uuid,text,uuid,text) from public, anon;
+revoke all on function public.heartbeat_mobile_scanner_session(uuid) from public, anon;
+revoke all on function public.associate_product_code_from_scanner(uuid,uuid,text,text) from public, anon;
+revoke all on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) from public, anon;
+grant execute on function public.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) to authenticated;
+grant execute on function public.set_mobile_scanner_context(uuid,text,uuid,text) to authenticated;
+grant execute on function public.heartbeat_mobile_scanner_session(uuid) to authenticated;
+grant execute on function public.associate_product_code_from_scanner(uuid,uuid,text,text) to authenticated;
+grant execute on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) to authenticated;
