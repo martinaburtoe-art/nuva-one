@@ -254,7 +254,7 @@ function Customers() {
 
   return (
     <ModuleGuard module="customers">
-      <div className="p-4 md:p-6">
+      <div className="nuva-crm-workspace p-4 md:p-6">
         <PageHeader
           title="Clientes"
           showOperatingPulse
