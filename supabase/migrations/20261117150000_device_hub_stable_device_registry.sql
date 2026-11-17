@@ -30,7 +30,7 @@ begin
       add constraint mobile_scanner_sessions_device_business_fk
       foreign key (device_id, business_id)
       references public.mobile_scanner_devices(id, business_id)
-      on delete set null;
+      on delete set null (device_id);
   end if;
 end
 $$;
