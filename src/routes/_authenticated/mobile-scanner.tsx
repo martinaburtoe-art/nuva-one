@@ -303,8 +303,11 @@ function MobileScannerContent() {
           <div>
             <div className="font-semibold">Listo para escanear</div>
             <div className="text-sm text-muted-foreground">
-              Apunta al código. La lectura se envía al instante al carrito de Caja del computador,
-              incluso si el código todavía no está registrado.
+              {activeModule === "pos"
+                ? "Apunta al código. La lectura se envía al carrito de Caja asignado a este dispositivo."
+                : activeModule === "inventory"
+                  ? "Apunta al código. La lectura se envía al conteo de Inventario asignado a este dispositivo."
+                  : "Apunta al código. La lectura se envía a la operación asignada en Nüva One."}
             </div>
           </div>
         </div>
