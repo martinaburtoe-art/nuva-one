@@ -43,6 +43,8 @@ create index if not exists idx_mobile_scanner_sessions_device
   where device_id is not null;
 
 alter table public.mobile_scanner_devices enable row level security;
+revoke all on table public.mobile_scanner_devices from public, anon, authenticated;
+grant select on table public.mobile_scanner_devices to authenticated;
 drop policy if exists mobile_scanner_devices_select_member on public.mobile_scanner_devices;
 create policy mobile_scanner_devices_select_member
   on public.mobile_scanner_devices
