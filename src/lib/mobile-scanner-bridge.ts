@@ -128,7 +128,7 @@ async function writeOutboxEvent(event: PendingMobileScannerEvent): Promise<void>
 async function readOutboxEvents(sessionId: string): Promise<PendingMobileScannerEvent[]> {
   const db = await openMobileScannerOutbox();
   try {
-    return await new Promise((resolve, reject) => {
+    return await new Promise<PendingMobileScannerEvent[]>((resolve, reject) => {
       const transaction = db.transaction(MOBILE_SCANNER_OUTBOX_STORE, "readonly");
       const request = transaction.objectStore(MOBILE_SCANNER_OUTBOX_STORE)
         .index("sessionId").getAll(IDBKeyRange.only(sessionId));
