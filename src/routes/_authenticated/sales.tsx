@@ -157,6 +157,7 @@ function Sales() {
     <ModuleGuard module="sales">
       <div className="nuva-sales-workspace">
         <PageHeader
+          eyebrow="OPERACIÓN COMERCIAL"
           title="Ventas"
           description="Convierte cada pedido en operación: cliente, stock, cobro y trazabilidad."
           action={
