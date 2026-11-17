@@ -1,6 +1,6 @@
 begin;
 
-select plan(20);
+select plan(22);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -142,6 +142,20 @@ select ok(
   and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='private' and p.proname='associate_product_code_from_scanner' and p.prosecdef),
   'code association uses an invoker wrapper and private implementation'
+);
+
+select ok(
+  exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='start_or_join_inventory_stocktake' and not p.prosecdef)
+  and exists(select 1 from pg_proc p join pg_namespace n on n.nspname=p.pronamespace
+    where n.nspname='private' and p.proname='start_or_join_inventory_stocktake' and p.prosecdef),
+  'shared stocktake creation uses a private definer behind an invoker wrapper'
+);
+
+select ok(
+  has_function_privilege('authenticated', 'public.start_or_join_inventory_stocktake(uuid)', 'EXECUTE')
+  and not has_function_privilege('anon', 'public.start_or_join_inventory_stocktake(uuid)', 'EXECUTE'),
+  'only authenticated operators can start or join a shared stocktake'
 );
 
 select * from finish();
