@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(29);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -211,6 +211,21 @@ select ok(
     ))
   )) > 0,
   'stocktake baseline reads lock the product row against concurrent stock writers'
+);
+
+select ok(
+  exists(select 1 from pg_trigger t
+    where t.tgrelid='public.inventory_stocktakes'::regclass
+      and t.tgname='trg_guard_stocktake_pending_scanner_events'
+      and not t.tgisinternal
+      and position('before update of status' in lower(pg_get_triggerdef(t.oid))) > 0)
+  and position('mobile_scanner_events' in lower(
+    pg_get_functiondef('private.guard_inventory_stocktake_pending_scanner_events()'::regprocedure)
+  )) > 0
+  and position('inventory_stocktake_scan_events' in lower(
+    pg_get_functiondef('private.guard_inventory_stocktake_pending_scanner_events()'::regprocedure)
+  )) > 0,
+  'stocktake finalization is blocked until every persisted mobile scan is accepted into the count ledger'
 );
 
 select * from finish();
