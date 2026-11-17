@@ -34,6 +34,7 @@ export const Route = createFileRoute("/_authenticated/mobile-scanner")({
 });
 
 const STORAGE_KEY = "nuva.mobile-scanner.session";
+const DEVICE_NAME_KEY = "nuva.mobile-scanner.device-name";
 
 function MobileScanner() {
   return <MobileScannerContent />;
@@ -185,6 +186,7 @@ function MobileScannerContent() {
     try {
       const paired = await pairMobileScanner(pairCode);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(paired));
+      localStorage.setItem(DEVICE_NAME_KEY, paired.deviceName ?? "Mi celular");
       setActiveModule(paired.activeModule ?? "pos");
       setOperationId(paired.operationId ?? "");
       setDeviceName(paired.deviceName ?? "Mi celular");
@@ -354,6 +356,7 @@ function MobileScannerContent() {
           <div>
             <div className="text-xs text-muted-foreground">Sesión</div>
             <div className="font-mono text-xs">{session.sessionId.slice(0, 8)}…</div>
+            {session.deviceId && <div className="mt-0.5 text-[10px] text-muted-foreground">ID estable · {session.deviceId.slice(0, 8)}…</div>}
           </div>
           <Button variant="outline" size="sm" aria-label="Desconectar escáner móvil" disabled={pendingCount > 0} onClick={disconnect}>
             {pendingCount > 0 ? `${pendingCount} pendientes` : "Desconectar"}
@@ -381,7 +384,7 @@ function MobileScannerContent() {
             </select>
           </label>
           <label className="space-y-1 text-xs font-medium">Nombre del dispositivo
-            <Input value={deviceName} onChange={e => { setDeviceName(e.target.value); setContextSaved(false); }} maxLength={80} />
+            <Input value={deviceName} onChange={e => { setDeviceName(e.target.value); localStorage.setItem(DEVICE_NAME_KEY, e.target.value); setContextSaved(false); }} maxLength={80} />
           </label>
         </div>
         <label className="block space-y-1 text-xs font-medium">Identificador de operación
@@ -394,6 +397,7 @@ function MobileScannerContent() {
               const next = { ...session, activeModule, operationId: operationId.trim(), deviceName };
               setSession(next);
               localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+              localStorage.setItem(DEVICE_NAME_KEY, deviceName);
               setContextSaved(true);
               toast.success("Contexto del dispositivo actualizado");
             } catch (error) {
