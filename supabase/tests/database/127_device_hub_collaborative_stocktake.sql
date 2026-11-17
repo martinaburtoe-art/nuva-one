@@ -1,6 +1,6 @@
 begin;
 
-select plan(42);
+select plan(43);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -376,6 +376,15 @@ select ok(
     pg_get_functiondef('private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid)'::regprocedure)
   )) > 0,
   'inventory count writes hold the scanner session row lock so device revocation serializes before or after the count event'
+);
+
+
+select ok(
+  exists(select 1 from pg_publication_tables
+    where pubname='supabase_realtime'
+      and schemaname='public'
+      and tablename='mobile_scanner_devices'),
+  'stable device roster changes are published for realtime dashboard updates'
 );
 
 select * from finish();
