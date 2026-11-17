@@ -681,3 +681,32 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Quote editor — preserve the proposal preview while keeping the form usable on phones. */
+.nuva-app .nuva-quote-editor {
+  max-height: min(92dvh, 920px);
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.nuva-app .nuva-quote-editor :where(input, textarea, select) {
+  min-width: 0;
+  border-radius: 10px;
+}
+.nuva-app .nuva-quote-editor > div.grid {
+  min-width: 0;
+}
+@media (max-width: 639px) {
+  .nuva-app .nuva-quote-editor {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    padding: 16px;
+    border-radius: 18px;
+  }
+  .nuva-app .nuva-quote-editor .grid.grid-cols-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nuva-app .nuva-quote-editor .grid.grid-cols-2 > .col-span-2 {
+    grid-column: span 1 / span 1;
+  }
+}
