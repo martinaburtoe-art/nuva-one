@@ -76,7 +76,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists trg_guard_stocktake_pending_scanner_events on public.inventory_stocktakes;
 create trigger trg_guard_stocktake_pending_scanner_events
