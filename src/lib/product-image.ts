@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const MAX_BYTES = 5 * 1024 * 1024; // Mirrors the product-images bucket limit.
+const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
+const MAX_STORAGE_BYTES = 5 * 1024 * 1024; // Mirrors the product-images bucket limit.
 const EXTENSIONS: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -12,23 +13,52 @@ export function validateProductImage(file: File): string | null {
   if (!Object.prototype.hasOwnProperty.call(EXTENSIONS, file.type)) {
     return "Formato no soportado. Usa JPG, PNG, WEBP o GIF.";
   }
-  if (file.size > MAX_BYTES) {
-    return "La imagen no puede superar 5MB.";
+  if (file.size > MAX_SOURCE_BYTES) {
+    return "La imagen original no puede superar 20MB.";
   }
   return null;
 }
 
-// Storage policies scope the first path segment to the uploader's business membership.
-export async function uploadProductImage(businessId: string, file: File): Promise<string> {
+export async function optimizeProductImage(file: File): Promise<File> {
   const validationError = validateProductImage(file);
   if (validationError) throw new Error(validationError);
+  if (file.type === "image/gif") {
+    if (file.size > MAX_STORAGE_BYTES) throw new Error("Los GIF deben pesar 5MB o menos.");
+    return file;
+  }
+  if (file.size <= MAX_STORAGE_BYTES) return file;
 
-  const extension = EXTENSIONS[file.type];
+  if (typeof createImageBitmap !== "function" || typeof document === "undefined") {
+    throw new Error("Este dispositivo no permite optimizar la imagen. Usa una fotografía de hasta 5MB.");
+  }
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("No se pudo procesar la fotografía.");
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.84));
+    if (!blob) throw new Error("No se pudo convertir la fotografía a WEBP.");
+    if (blob.size > MAX_STORAGE_BYTES) throw new Error("La fotografía optimizada supera 5MB. Usa una imagen más pequeña.");
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "producto";
+    return new File([blob], baseName + ".webp", { type: "image/webp", lastModified: Date.now() });
+  } finally {
+    bitmap.close();
+  }
+}
+
+// Storage policies scope the first path segment to the uploader's business membership.
+export async function uploadProductImage(businessId: string, file: File): Promise<string> {
+  const optimizedFile = await optimizeProductImage(file);
+  const extension = EXTENSIONS[optimizedFile.type];
   const path = `${businessId}/${crypto.randomUUID()}.${extension}`;
-  const { error } = await supabase.storage.from("product-images").upload(path, file, {
+  const { error } = await supabase.storage.from("product-images").upload(path, optimizedFile, {
     cacheControl: "3600",
     upsert: false,
-    contentType: file.type,
+    contentType: optimizedFile.type,
   });
   if (error) throw error;
 
