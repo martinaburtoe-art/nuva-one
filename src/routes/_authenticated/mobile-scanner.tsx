@@ -90,7 +90,7 @@ function MobileScannerContent() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) { const restored = JSON.parse(saved) as MobileScannerSession; setSession(restored); setActiveModule(restored.activeModule ?? "pos"); setOperationId(restored.operationId ?? ""); setDeviceName(restored.deviceName ?? "Mi celular"); setContextSaved(Boolean(restored.operationId)); }
+      if (saved) { const restored = JSON.parse(saved) as MobileScannerSession; setSession(restored); setActiveModule(restored.activeModule ?? "pos"); setOperationId(restored.operationId ?? ""); setDeviceName(restored.deviceName ?? "Mi celular"); localStorage.setItem(DEVICE_NAME_KEY, restored.deviceName ?? "Mi celular"); setContextSaved(Boolean(restored.operationId)); }
     } catch {
       /* ignore stale local session */
     }
