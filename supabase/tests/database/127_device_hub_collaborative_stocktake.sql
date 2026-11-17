@@ -170,8 +170,14 @@ select ok(
   and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='private' and p.proname='pair_mobile_scanner' and p.prosecdef)
   and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and p.proname='pair_mobile_scanner' and not p.prosecdef),
-  'pairing attempts are rate-limited in private storage behind an invoker wrapper'
+    where n.nspname='public' and p.proname='pair_mobile_scanner' and not p.prosecdef)
+  and position('gen_random_bytes' in pg_get_functiondef(
+    'private.create_mobile_scanner_session(uuid)'::regprocedure
+  )) > 0
+  and position('mobile_scanner_pair_limits' in pg_get_functiondef(
+    'private.pair_mobile_scanner(text)'::regprocedure
+  )) > 0,
+  'pairing uses cryptographic codes and rate-limited private storage behind an invoker wrapper'
 );
 
 select * from finish();
