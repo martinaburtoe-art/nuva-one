@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { LiveProductScanner } from "@/components/scanner/LiveProductScanner";
+import { MobileScannerPairingCard } from "@/components/scanner/MobileScannerPairingCard";
+import { subscribeToMobileScannerOperation, type MobileScannerEvent } from "@/lib/mobile-scanner-bridge";
 import { resolveProductCode } from "@/lib/product-resolver";
 import { createProductFromScanner } from "@/lib/scanner-product-onboarding";
 import {
@@ -37,6 +39,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   const [unknownCode, setUnknownCode] = useState("");
   const [newProductName, setNewProductName] = useState("");
   const [existingProductId, setExistingProductId] = useState("");
+  const [pendingMobileEvent, setPendingMobileEvent] = useState<Pick<MobileScannerEvent, "client_event_id" | "session_id" | "code"> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const refreshProducts = useCallback(async () => {
@@ -103,6 +106,48 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
     return () => { cancelled = true; unsubscribe(); };
   }, [stocktakeId, refreshLines]);
 
+  useEffect(() => {
+    if (!stocktakeId) return;
+    const unsubscribe = subscribeToMobileScannerOperation(stocktakeId, "inventory", async event => {
+      try {
+        const resolution = await resolveProductCode(event.code);
+        if (resolution.status === "FOUND" && resolution.product) {
+          const product = {
+            id: resolution.product.product_id,
+            name: resolution.product.name ?? "Producto",
+            stock: Number(resolution.product.stock ?? 0),
+            barcode: resolution.product.barcode,
+            sku: resolution.product.sku,
+          };
+          if (countMode === "unit") {
+            await addProduct(product, event.code, event);
+          } else {
+            setCode(event.code);
+            setPendingMobileEvent({
+              client_event_id: event.client_event_id,
+              session_id: event.session_id,
+              code: event.code,
+            });
+            toast.info("Código recibido desde el celular. Ingresa la cantidad y pulsa Agregar.");
+          }
+        } else if (resolution.status === "NOT_FOUND") {
+          setUnknownCode(event.code);
+          setPendingMobileEvent({
+            client_event_id: event.client_event_id,
+            session_id: event.session_id,
+            code: event.code,
+          });
+          toast.info("Código desconocido recibido desde el celular.");
+        } else {
+          toast.error("No se pudo resolver el código recibido desde el celular.");
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Falló la lectura móvil");
+      }
+    });
+    return unsubscribe;
+  }, [stocktakeId, countMode]);
+
   const matched = useMemo(() => {
     const q = code.trim().toLowerCase();
     return q ? products.find(p =>
@@ -158,7 +203,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       await refreshLines(sid);
       setCode("");
       setCountQuantity("1");
-      setUnknownCode("");
+      setUnknownCode("");\n      setPendingMobileEvent(null);
       inputRef.current?.focus();
       if (!result.inserted) toast.info("Esta lectura ya estaba registrada; no se duplicó");
       else toast.success(countMode === "unit" ? "Unidad contabilizada" : `${quantity} unidades contabilizadas`);
@@ -182,7 +227,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
           stock: Number(resolution.product.stock ?? 0),
           barcode: resolution.product.barcode,
           sku: resolution.product.sku,
-        }, value);
+        }, value, pendingMobileEvent?.code === value ? pendingMobileEvent : null);
       } else if (resolution.status === "NOT_FOUND") {
         setUnknownCode(value);
         setNewProductName("");
@@ -215,7 +260,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
         .eq("business_id", active.id).eq("id", created.product_id).single();
       if (error) throw error;
       setProducts(current => [...current, data]);
-      await addProduct(data, unknownCode);
+      await addProduct(data, unknownCode, pendingMobileEvent);
       toast.success("Producto creado con stock inicial cero y agregado al conteo");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo crear el producto");
@@ -238,7 +283,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       if (error) throw error;
       const product = products.find(p => p.id === existingProductId);
       if (!product) throw new Error("Producto seleccionado no encontrado");
-      await addProduct(product, unknownCode);
+      await addProduct(product, unknownCode, pendingMobileEvent);
       toast.success("Código asociado al producto existente");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo asociar el código");
@@ -321,6 +366,15 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
             <ScanBarcode className="mr-2 h-4 w-4" />Escanear
           </Button>
         </div>
+        {stocktakeId && active?.id && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">Conteo sincronizado con móviles</div>
+              <div className="truncate font-mono text-[10px] text-muted-foreground">Operación {stocktakeId}</div>
+            </div>
+            <MobileScannerPairingCard businessId={active.id} module="inventory" operationId={stocktakeId} title="Vincular móvil a este conteo" />
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Modo de conteo</span>
           <Button size="sm" variant={countMode === "unit" ? "default" : "outline"} onClick={() => setCountMode("unit")}>
