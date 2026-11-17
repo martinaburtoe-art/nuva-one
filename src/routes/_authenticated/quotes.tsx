@@ -626,7 +626,7 @@ function Quotes() {
                     Nueva cotización
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[min(96vw,1480px)] max-h-[94vh] overflow-y-auto rounded-2xl">
+                <DialogContent className="nuva-quote-editor max-w-[min(96vw,1480px)] max-h-[94vh] overflow-y-auto rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>{editingQuoteId ? "Editar cotización en borrador" : "Nueva cotización"}</DialogTitle>
                   </DialogHeader>
