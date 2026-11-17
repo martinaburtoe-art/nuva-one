@@ -56,6 +56,7 @@ function MobileScannerContent() {
   const [contextSaved, setContextSaved] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const flushingOutbox = useRef(false);
+  const heartbeatWarningShown = useRef(false);
 
   const flushPendingScans = useCallback(async () => {
     if (!session?.sessionId || !online || flushingOutbox.current) return;
@@ -125,6 +126,7 @@ function MobileScannerContent() {
       try {
         const expiresAt = await heartbeatMobileScannerSession(session.sessionId);
         if (!active) return;
+        heartbeatWarningShown.current = false;
         // Read the latest persisted context: the heartbeat effect is keyed by session ID,
         // so its closure may outlive a module/operation change made on this device.
         let current = session;
@@ -140,18 +142,35 @@ function MobileScannerContent() {
         const next = { ...current, expiresAt };
         setSession(next);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        if (active) {
+      } catch (error) {
+        if (!active) return;
+        const failure = error as { code?: string; status?: number; message?: string };
+        const message = String(failure?.message ?? error ?? "");
+        const sessionInvalid = failure?.status === 401
+          || failure?.status === 403
+          || failure?.code === "42501"
+          || /SCANNER_SESSION_INVALID|UNAUTHENTICATED|JWT expired/i.test(message);
+        if (sessionInvalid) {
           localStorage.removeItem(STORAGE_KEY);
           setSession(null);
-          toast.error("La sesión del dispositivo venció o fue revocada. Vuelve a vincularlo.");
+          toast.error(pendingCount > 0
+            ? `La sesión fue revocada. Quedaron ${pendingCount} lectura(s) locales sin sincronizar; no se descartaron.`
+            : "La sesión del dispositivo venció o fue revocada. Vuelve a vincularlo.");
+          return;
+        }
+        // A transient network failure must not erase the local session: the
+        // IndexedDB outbox needs it to retry the same event IDs after reconnect.
+        setOnline(false);
+        if (!heartbeatWarningShown.current) {
+          heartbeatWarningShown.current = true;
+          toast.warning("Conexión interrumpida. La sesión local se conserva y las lecturas quedarán en cola.");
         }
       }
     };
     void beat();
     const timer = window.setInterval(() => void beat(), 60_000);
     return () => { active = false; window.clearInterval(timer); };
-  }, [session?.sessionId]);
+  }, [session?.sessionId, pendingCount]);
 
   async function pair() {
     if (!/^\d{6}$/.test(pairCode))
