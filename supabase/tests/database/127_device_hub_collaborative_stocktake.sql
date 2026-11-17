@@ -1,6 +1,6 @@
 begin;
 
-select plan(29);
+select plan(33);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -228,6 +228,64 @@ select ok(
   and not has_function_privilege('anon',
     'private.guard_inventory_stocktake_pending_scanner_events()', 'EXECUTE'),
   'stocktake finalization is blocked until every persisted mobile scan is accepted into the count ledger; guard is not directly callable by anon'
+);
+
+
+select ok(
+  (select count(distinct p.proname) = 4
+   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='public'
+     and p.proname = any(array[
+       'create_mobile_scanner_session',
+       'pair_mobile_scanner',
+       'submit_mobile_scanner_event',
+       'revoke_mobile_scanner_session'
+     ])
+     and not p.prosecdef)
+  and
+  (select count(distinct p.proname) = 4
+   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='private'
+     and p.proname = any(array[
+       'create_mobile_scanner_session',
+       'pair_mobile_scanner',
+       'submit_mobile_scanner_event',
+       'revoke_mobile_scanner_session'
+     ])
+     and p.prosecdef),
+  'all legacy scanner entrypoints are SECURITY INVOKER wrappers over private SECURITY DEFINER implementations'
+);
+
+select ok(
+  has_function_privilege('authenticated','public.create_mobile_scanner_session(uuid)','EXECUTE')
+  and has_function_privilege('authenticated','public.pair_mobile_scanner(text)','EXECUTE')
+  and has_function_privilege('authenticated','public.submit_mobile_scanner_event(uuid,text,uuid,text)','EXECUTE')
+  and has_function_privilege('authenticated','public.revoke_mobile_scanner_session(uuid)','EXECUTE')
+  and not has_function_privilege('anon','public.create_mobile_scanner_session(uuid)','EXECUTE')
+  and not has_function_privilege('anon','public.pair_mobile_scanner(text)','EXECUTE')
+  and not has_function_privilege('anon','public.submit_mobile_scanner_event(uuid,text,uuid,text)','EXECUTE')
+  and not has_function_privilege('anon','public.revoke_mobile_scanner_session(uuid)','EXECUTE'),
+  'all public scanner entrypoints are authenticated-only'
+);
+
+select ok(
+  has_function_privilege('authenticated','private.create_mobile_scanner_session(uuid)','EXECUTE')
+  and has_function_privilege('authenticated','private.pair_mobile_scanner(text)','EXECUTE')
+  and has_function_privilege('authenticated','private.submit_mobile_scanner_event(uuid,text,uuid,text)','EXECUTE')
+  and has_function_privilege('authenticated','private.revoke_mobile_scanner_session(uuid)','EXECUTE')
+  and not has_function_privilege('anon','private.create_mobile_scanner_session(uuid)','EXECUTE')
+  and not has_function_privilege('anon','private.pair_mobile_scanner(text)','EXECUTE')
+  and not has_function_privilege('anon','private.submit_mobile_scanner_event(uuid,text,uuid,text)','EXECUTE')
+  and not has_function_privilege('anon','private.revoke_mobile_scanner_session(uuid)','EXECUTE'),
+  'private scanner implementations are callable by authenticated wrappers but never anon'
+);
+
+select ok(
+  position('pair_code_expires_at' in pg_get_functiondef('private.pair_mobile_scanner(text)'::regprocedure)) > 0
+  and position('active_module' in pg_get_functiondef('private.submit_mobile_scanner_event(uuid,text,uuid,text)'::regprocedure)) > 0
+  and position('active_operation_id' in pg_get_functiondef('private.submit_mobile_scanner_event(uuid,text,uuid,text)'::regprocedure)) > 0
+  and position('paired_by' in pg_get_functiondef('private.revoke_mobile_scanner_session(uuid)'::regprocedure)) > 0,
+  'pairing expiry, event routing and paired-device revocation use the hardened private implementations'
 );
 
 select * from finish();
