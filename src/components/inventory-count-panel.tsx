@@ -106,10 +106,23 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
     const unsubscribe = subscribeToMobileScannerOperation(stocktakeId, "inventory", event => {
       if (countMode === "unit") {
         void resolveProductCode(event.code).then(async resolution => {
+          if (resolution.status === "NOT_FOUND") {
+            const queued = { client_event_id: event.client_event_id, session_id: event.session_id, code: event.code };
+            setPendingMobileEvents(current => current.some(item => item.client_event_id === queued.client_event_id)
+              ? current
+              : [...current, queued]);
+            setUnknownCode(event.code);
+            setNewProductName("");
+            setNewProductSku("");
+            setNewProductCategory("");
+            setNewProductPrice("0");
+            setNewProductCost("0");
+            setExistingProductId(products[0]?.id ?? "");
+            toast.info(`Código nuevo ${event.code}: crea el producto o asócialo para registrar esta unidad.`);
+            return;
+          }
           if (resolution.status !== "FOUND" || !resolution.product) {
-            toast.error(resolution.status === "NOT_FOUND"
-              ? `Código ${event.code} no registrado. Cambia a modo cantidad para resolverlo sin perder la lectura.`
-              : "No se pudo resolver el código recibido desde el celular.");
+            toast.error("No se pudo resolver el código recibido desde el celular.");
             return;
           }
           await addProduct({
@@ -392,10 +405,10 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
         )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Modo de conteo</span>
-          <Button size="sm" variant={countMode === "unit" ? "default" : "outline"} onClick={() => setCountMode("unit")}>
+          <Button size="sm" variant={countMode === "unit" ? "default" : "outline"} disabled={Boolean(pendingMobileEvents.length)} onClick={() => setCountMode("unit")}>
             <Plus className="mr-1 h-3 w-3" />Cada lectura = 1
           </Button>
-          <Button size="sm" variant={countMode === "quantity" ? "default" : "outline"} onClick={() => setCountMode("quantity")}>
+          <Button size="sm" variant={countMode === "quantity" ? "default" : "outline"} disabled={Boolean(pendingMobileEvents.length)} onClick={() => setCountMode("quantity")}>
             Escanear + cantidad
           </Button>
           {countMode === "quantity" && (
@@ -403,6 +416,25 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
               onChange={e => setCountQuantity(e.target.value)} className="h-9 w-28" aria-label="Cantidad contada" />
           )}
         </div>
+        {pendingMobileEvent && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+            <div className="min-w-0">
+              <div className="font-medium">Lectura móvil pendiente</div>
+              <div className="font-mono text-xs text-muted-foreground">{pendingMobileEvent.code}</div>
+              <div className="text-xs text-muted-foreground">
+                {pendingMobileEvents.length} lectura(s) en cola. Se procesan en orden; las siguientes esperan tu confirmación.
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => {
+              setPendingMobileEvents(current => current.slice(1));
+              setUnknownCode("");
+              setCode("");
+              setCountQuantity("1");
+            }}>
+              Omitir esta lectura
+            </Button>
+          </div>
+        )}
         {unknownCode && (
           <div className="space-y-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
             <div>
