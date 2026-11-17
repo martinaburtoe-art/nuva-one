@@ -68,7 +68,7 @@ export function MobileScannerPairingCard({
   }, [session?.sessionId]);
 
   useEffect(() => {
-    if (!onScan) return;
+    if (!onScanRef.current) return;
     const unsubscribe = subscribeToMobileScannerOperation(operationId, module, event => {
       onScanRef.current?.(event.code, event);
     });
