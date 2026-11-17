@@ -634,3 +634,28 @@ as $$ select private.start_or_join_inventory_stocktake($1); $$;
 
 revoke all on function public.start_or_join_inventory_stocktake(uuid) from public, anon;
 grant execute on function public.start_or_join_inventory_stocktake(uuid) to authenticated;
+
+-- Private SECURITY DEFINER implementations are callable only by authenticated users.
+-- The public SECURITY INVOKER wrappers require authenticated EXECUTE on these routines;
+-- anon/PUBLIC must not be able to invoke the privileged implementation directly.
+revoke all on function private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) from public, anon, authenticated;
+revoke all on function private.set_mobile_scanner_context(uuid,text,uuid,text) from public, anon, authenticated;
+revoke all on function private.heartbeat_mobile_scanner_session(uuid) from public, anon, authenticated;
+revoke all on function private.create_mobile_scanner_session(uuid) from public, anon, authenticated;
+revoke all on function private.pair_mobile_scanner(text) from public, anon, authenticated;
+revoke all on function private.submit_mobile_scanner_event(uuid,text,uuid,text) from public, anon, authenticated;
+revoke all on function private.revoke_mobile_scanner_session(uuid) from public, anon, authenticated;
+revoke all on function private.associate_product_code_from_scanner(uuid,uuid,text,text) from public, anon, authenticated;
+revoke all on function private.create_mobile_scanner_session_for_operation(uuid,text,uuid) from public, anon, authenticated;
+revoke all on function private.start_or_join_inventory_stocktake(uuid) from public, anon, authenticated;
+
+grant execute on function private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid) to authenticated;
+grant execute on function private.set_mobile_scanner_context(uuid,text,uuid,text) to authenticated;
+grant execute on function private.heartbeat_mobile_scanner_session(uuid) to authenticated;
+grant execute on function private.create_mobile_scanner_session(uuid) to authenticated;
+grant execute on function private.pair_mobile_scanner(text) to authenticated;
+grant execute on function private.submit_mobile_scanner_event(uuid,text,uuid,text) to authenticated;
+grant execute on function private.revoke_mobile_scanner_session(uuid) to authenticated;
+grant execute on function private.associate_product_code_from_scanner(uuid,uuid,text,text) to authenticated;
+grant execute on function private.create_mobile_scanner_session_for_operation(uuid,text,uuid) to authenticated;
+grant execute on function private.start_or_join_inventory_stocktake(uuid) to authenticated;
