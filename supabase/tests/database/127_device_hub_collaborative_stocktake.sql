@@ -1,6 +1,6 @@
 begin;
 
-select plan(40);
+select plan(41);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -357,6 +357,17 @@ select ok(
   position('status = ''revoked''' in pg_get_functiondef('private.revoke_mobile_scanner_device(uuid)'::regprocedure)) > 0
   and position('device_id' in pg_get_functiondef('private.revoke_mobile_scanner_device(uuid)'::regprocedure)) > 0,
   'revoking a stable device revokes every paired session attached to it'
+);
+
+
+select ok(
+  has_table_privilege('authenticated','public.mobile_scanner_devices','SELECT')
+  and not has_table_privilege('authenticated','public.mobile_scanner_devices','INSERT')
+  and not has_table_privilege('authenticated','public.mobile_scanner_devices','UPDATE')
+  and not has_table_privilege('authenticated','public.mobile_scanner_devices','DELETE')
+  and not has_table_privilege('anon','public.mobile_scanner_devices','SELECT')
+  and not has_table_privilege('anon','public.mobile_scanner_devices','INSERT'),
+  'stable device registry exposes member reads only; clients cannot mutate registry rows directly'
 );
 
 select * from finish();
