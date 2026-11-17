@@ -1,6 +1,6 @@
 begin;
 
-select plan(41);
+select plan(42);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -368,6 +368,14 @@ select ok(
   and not has_table_privilege('anon','public.mobile_scanner_devices','SELECT')
   and not has_table_privilege('anon','public.mobile_scanner_devices','INSERT'),
   'stable device registry exposes member reads only; clients cannot mutate registry rows directly'
+);
+
+
+select ok(
+  position('for share' in lower(
+    pg_get_functiondef('private.record_inventory_stocktake_scan(uuid,uuid,uuid,text,numeric,text,uuid)'::regprocedure)
+  )) > 0,
+  'inventory count writes hold the scanner session row lock so device revocation serializes before or after the count event'
 );
 
 select * from finish();
