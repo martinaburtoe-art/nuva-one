@@ -411,14 +411,14 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[220px] flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input ref={inputRef} value={code} onChange={e => setCode(e.target.value)}
+            <Input ref={inputRef} value={code} disabled={Boolean(pendingMobileEvent)} onChange={e => setCode(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") void resolveTypedCode(); }}
               placeholder="Escanea o ingresa SKU / código de barras" className="pl-9" />
           </div>
           <Button onClick={() => void resolveTypedCode()} disabled={!canWrite || busy || !code.trim()}>
             {busy ? "Guardando…" : "Agregar"}
           </Button>
-          <Button variant="outline" onClick={() => setScannerOpen(true)} disabled={!canWrite || busy}>
+          <Button variant="outline" onClick={() => setScannerOpen(true)} disabled={!canWrite || busy || Boolean(pendingMobileEvent)}>
             <ScanBarcode className="mr-2 h-4 w-4" />Escanear
           </Button>
         </div>
