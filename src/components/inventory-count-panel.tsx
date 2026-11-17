@@ -39,6 +39,10 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   const [countQuantity, setCountQuantity] = useState("1");
   const [unknownCode, setUnknownCode] = useState("");
   const [newProductName, setNewProductName] = useState("");
+  const [newProductSku, setNewProductSku] = useState("");
+  const [newProductCategory, setNewProductCategory] = useState("");
+  const [newProductPrice, setNewProductPrice] = useState("0");
+  const [newProductCost, setNewProductCost] = useState("0");
   const [existingProductId, setExistingProductId] = useState("");
   const [pendingMobileEvent, setPendingMobileEvent] = useState<Pick<MobileScannerEvent, "client_event_id" | "session_id" | "code"> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -207,6 +211,10 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       } else if (resolution.status === "NOT_FOUND") {
         setUnknownCode(value);
         setNewProductName("");
+        setNewProductSku("");
+        setNewProductCategory("");
+        setNewProductPrice("0");
+        setNewProductCost("0");
         setExistingProductId(products[0]?.id ?? "");
         toast.info("Código no registrado. Puedes crear el producto o asociarlo a uno existente.");
       } else if (resolution.status === "DUPLICATE") {
@@ -223,6 +231,12 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
 
   async function createUnknownProduct() {
     if (!active?.id || !unknownCode || !newProductName.trim() || busy) return;
+    const price = Number(newProductPrice || 0);
+    const cost = Number(newProductCost || 0);
+    if (!Number.isFinite(price) || !Number.isFinite(cost) || price < 0 || cost < 0) {
+      toast.error("Precio y costo deben ser números iguales o mayores que cero");
+      return;
+    }
     setBusy(true);
     try {
       const created = await createProductFromScanner(supabase, {
@@ -230,6 +244,10 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
         name: newProductName.trim(),
         code: unknownCode,
         codeType: "barcode",
+        sku: newProductSku.trim() || undefined,
+        category: newProductCategory.trim() || undefined,
+        price,
+        cost,
         initialStock: 0,
       });
       const { data, error } = await supabase.from("products").select("*")
@@ -375,6 +393,10 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <Input value={newProductName} onChange={e => setNewProductName(e.target.value)} placeholder="Nombre del producto" />
+              <Input value={newProductSku} onChange={e => setNewProductSku(e.target.value)} placeholder="SKU (opcional)" />
+              <Input value={newProductCategory} onChange={e => setNewProductCategory(e.target.value)} placeholder="Categoría (opcional)" />
+              <Input type="number" min="0" step="1" value={newProductCost} onChange={e => setNewProductCost(e.target.value)} placeholder="Costo" />
+              <Input type="number" min="0" step="1" value={newProductPrice} onChange={e => setNewProductPrice(e.target.value)} placeholder="Precio de venta" />
               <Button onClick={() => void createUnknownProduct()} disabled={!canWrite || busy || !newProductName.trim()}>
                 <PackagePlus className="mr-2 h-4 w-4" />Crear y contar
               </Button>
