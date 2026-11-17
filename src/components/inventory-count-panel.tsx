@@ -349,7 +349,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   }
 
   async function finish() {
-    if (!stocktakeId || !active || !lines.length || !canWrite || busy) return;
+    if (!stocktakeId || !active || !lines.length || !canWrite || busy || pendingMobileEvents.length > 0) return;
     setBusy(true);
     try {
       const { data, error } = await (supabase as any).rpc("finalize_inventory_stocktake", {
@@ -530,7 +530,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
             <div className="flex justify-between"><span>Diferencia</span><strong>{lines.reduce((s,l) => s + Number(l.difference ?? 0), 0)}</strong></div>
           </div>
           <div className="mt-5 grid gap-2">
-            <Button disabled={!lines.length || !canWrite || busy} onClick={() => void finish()}>
+            <Button disabled={!lines.length || !canWrite || busy || pendingMobileEvents.length > 0} onClick={() => void finish()}>
               <ClipboardCheck className="mr-2 h-4 w-4" />Finalizar y ajustar
             </Button>
             <Button variant="outline" disabled={!lines.length} onClick={exportPdf}>
