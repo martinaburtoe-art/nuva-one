@@ -345,7 +345,14 @@ begin
   if auth.uid() is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
   update public.mobile_scanner_sessions
   set status = 'revoked'
-  where id = p_session_id and (created_by = auth.uid() or paired_by = auth.uid());
+  where id = p_session_id
+    and (
+      created_by = auth.uid()
+      or paired_by = auth.uid()
+      or private.has_business_role(
+        business_id, auth.uid(), array['owner'::member_role,'admin'::member_role]
+      )
+    );
   if not found then raise exception 'NOT_AUTHORIZED' using errcode = '42501'; end if;
 end;
 $$;
@@ -447,3 +454,15 @@ end;
 $$;
 revoke all on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) from public, anon;
 grant execute on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) to authenticated;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'mobile_scanner_sessions'
+  ) then
+    alter publication supabase_realtime add table public.mobile_scanner_sessions;
+  end if;
+end $$;
