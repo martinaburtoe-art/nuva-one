@@ -182,7 +182,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
 
   async function addProduct(product: Product | {
     id: string; name: string; stock: number; barcode?: string | null; sku?: string | null;
-  }, scannedCode?: string) {
+  }, scannedCode?: string, mobileEvent?: Pick<MobileScannerEvent, "client_event_id" | "session_id" | "code"> | null) {
     if (!canWrite) return;
     setBusy(true);
     try {
@@ -199,6 +199,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
         code: scannedCode ?? product.barcode ?? product.sku ?? null,
         mode: countMode,
         quantity: countMode === "unit" ? 1 : quantity,
+        clientEventId: mobileEvent?.client_event_id,
+        sourceSessionId: mobileEvent?.session_id,
       });
       await refreshLines(sid);
       setCode("");
