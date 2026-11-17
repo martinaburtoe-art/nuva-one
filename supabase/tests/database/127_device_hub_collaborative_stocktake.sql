@@ -1,6 +1,6 @@
 begin;
 
-select plan(26);
+select plan(27);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -194,6 +194,13 @@ select ok(
   and not has_function_privilege('anon',
     'private.pair_mobile_scanner(text)', 'EXECUTE'),
   'private SECURITY DEFINER routines are callable by authenticated users only, never anon'
+);
+
+select ok(
+  exists(select 1 from pg_indexes where schemaname='public'
+    and indexname='idx_mobile_scanner_events_operation_created'
+    and indexdef ilike '%(operation_id, module, created_at)%'),
+  'operation-scoped event replay has a supporting partial index'
 );
 
 select * from finish();
