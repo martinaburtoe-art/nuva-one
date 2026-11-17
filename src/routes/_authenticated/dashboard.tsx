@@ -419,6 +419,7 @@ function Dashboard() {
           </div>
         </section>
 
+        {inventoryQuery.data && inventoryQuery.data.productsCount > 0 && (
           <section className="nuva-catalog-showcase nuva-enter" aria-label="Catálogo visual del negocio">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
               <div>
