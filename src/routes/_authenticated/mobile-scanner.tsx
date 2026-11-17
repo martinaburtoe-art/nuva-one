@@ -127,6 +127,7 @@ function MobileScannerContent() {
 
   async function handleScan(result: { rawValue: string }) {
     if (!session) return;
+    if (!operationId.trim()) return toast.error("Primero asigna el dispositivo a una operación de Caja o Inventario.");
     const code = result.rawValue.trim();
     if (!code) return;
     setLastCode(code);
@@ -160,7 +161,7 @@ function MobileScannerContent() {
             Vincular dispositivo
           </div>
           <p className="text-sm text-muted-foreground">
-            En el computador abre Caja → <strong>Usar celular como escáner</strong>. Introduce aquí
+            En el computador abre Caja o Inventario y genera un código en <strong>Vincular lector móvil</strong>. Introduce aquí
             el código de 6 dígitos.
           </p>
           <Input
@@ -310,7 +311,7 @@ function MobileScannerContent() {
       </Card>
       <Button
         className="h-14 w-full text-base"
-        disabled={!online || !cameraAvailable}
+        disabled={!online || !cameraAvailable || !operationId.trim()}
         onClick={() => setScannerOpen(true)}
       >
         <ScanBarcode className="mr-2 h-5 w-5" />
@@ -318,7 +319,9 @@ function MobileScannerContent() {
           ? "Cámara no disponible"
           : !online
             ? "Esperando conexión"
-            : "Abrir cámara y escanear"}
+            : !operationId.trim()
+              ? "Asigna una operación"
+              : "Abrir cámara y escanear"}
       </Button>
       <Card className="p-4">
         <div className="flex items-center justify-between">
