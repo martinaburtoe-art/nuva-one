@@ -140,6 +140,7 @@ begin
       and s.expires_at > now()
       and s.active_module = 'inventory'
       and s.active_operation_id = p_stocktake_id
+      and private.has_business_role(s.business_id, s.paired_by, array['owner'::member_role,'admin'::member_role,'staff'::member_role])
   ) then
     raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501';
   end if;
@@ -211,7 +212,8 @@ begin
   where id = p_session_id
     and status = 'paired'
     and expires_at > now()
-    and paired_by = v_uid;
+    and paired_by = v_uid
+    and private.has_business_role(business_id, v_uid, array['owner'::member_role,'admin'::member_role,'staff'::member_role]);
   if not found then raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501'; end if;
 end;
 $$;
@@ -231,6 +233,7 @@ begin
     and status = 'paired'
     and expires_at > now()
     and paired_by = auth.uid()
+    and private.has_business_role(business_id, auth.uid(), array['owner'::member_role,'admin'::member_role,'staff'::member_role])
   returning expires_at into v_expires;
   if v_expires is null then raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501'; end if;
   return v_expires;
@@ -315,6 +318,7 @@ begin
   from public.mobile_scanner_sessions s
   where s.id = p_session_id and s.status = 'paired'
     and s.expires_at > now() and s.paired_by = auth.uid()
+    and private.has_business_role(s.business_id, auth.uid(), array['owner'::member_role,'admin'::member_role,'staff'::member_role])
   for update;
   if not found then raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501'; end if;
   insert into public.mobile_scanner_events(
