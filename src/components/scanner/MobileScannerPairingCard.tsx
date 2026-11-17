@@ -92,7 +92,7 @@ export function MobileScannerPairingCard({
             <div className="text-[10px] text-muted-foreground">Código válido por 10 minutos · {moduleLabels[module]}</div>
           </>
         ) : (
-          <div className="text-xs text-muted-foreground">{paired ? "Celular vinculado y listo para escanear" : loading ? "Preparando código…" : "Genera un código para vincular"}</div>
+          <div className="text-xs text-muted-foreground">{paired ? "Dispositivo vinculado · contexto visible en Device Hub" : loading ? "Preparando código…" : "Genera un código para vincular"}</div>
         )}
         {session?.operationId && (
           <Button size="sm" variant="ghost" className="mt-0.5 h-5 px-1 text-[10px]"
