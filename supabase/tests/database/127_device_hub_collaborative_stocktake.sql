@@ -1,6 +1,6 @@
 begin;
 
-select plan(33);
+select plan(40);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -288,6 +288,75 @@ select ok(
   and position('active_operation_id' in pg_get_functiondef('private.submit_mobile_scanner_event(uuid,text,uuid,text)'::regprocedure)) > 0
   and position('paired_by' in pg_get_functiondef('private.revoke_mobile_scanner_session(uuid)'::regprocedure)) > 0,
   'pairing expiry, event routing and paired-device revocation use the hardened private implementations'
+);
+
+
+select ok(
+  exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and c.relname='mobile_scanner_devices' and c.relrowsecurity)
+  and exists(select 1 from pg_policies where schemaname='public'
+    and tablename='mobile_scanner_devices' and policyname='mobile_scanner_devices_select_member'),
+  'stable mobile device registry exists with member-scoped RLS'
+);
+
+select ok(
+  exists(select 1 from pg_indexes where schemaname='public'
+    and tablename='mobile_scanner_devices'
+    and indexdef ilike '%unique%business_id, device_key%'),
+  'stable device keys are unique within each business'
+);
+
+select ok(
+  exists(select 1 from information_schema.columns where table_schema='public'
+    and table_name='mobile_scanner_sessions' and column_name='device_id')
+  and exists(select 1 from pg_constraint
+    where conrelid='public.mobile_scanner_sessions'::regclass
+      and conname='mobile_scanner_sessions_device_business_fk'
+      and confdeltype='n'
+      and pg_get_constraintdef(oid) ilike '%device_id%'),
+  'session leases reference a stable device without nulling the business scope on device deletion'
+);
+
+select ok(
+  (select not p.prosecdef from pg_proc p
+    where p.oid='public.pair_mobile_scanner_device(text,uuid,text)'::regprocedure)
+  and
+  (select p.prosecdef from pg_proc p
+    where p.oid='private.pair_mobile_scanner_device(text,uuid,text)'::regprocedure)
+  and has_function_privilege('authenticated','public.pair_mobile_scanner_device(text,uuid,text)','EXECUTE')
+  and has_function_privilege('authenticated','private.pair_mobile_scanner_device(text,uuid,text)','EXECUTE')
+  and not has_function_privilege('anon','public.pair_mobile_scanner_device(text,uuid,text)','EXECUTE')
+  and not has_function_privilege('anon','private.pair_mobile_scanner_device(text,uuid,text)','EXECUTE'),
+  'stable device pairing is an authenticated invoker wrapper over a private definer function'
+);
+
+select ok(
+  (select not p.prosecdef from pg_proc p
+    where p.oid='public.revoke_mobile_scanner_device(uuid)'::regprocedure)
+  and
+  (select p.prosecdef from pg_proc p
+    where p.oid='private.revoke_mobile_scanner_device(uuid)'::regprocedure)
+  and has_function_privilege('authenticated','public.revoke_mobile_scanner_device(uuid)','EXECUTE')
+  and has_function_privilege('authenticated','private.revoke_mobile_scanner_device(uuid)','EXECUTE')
+  and not has_function_privilege('anon','public.revoke_mobile_scanner_device(uuid)','EXECUTE')
+  and not has_function_privilege('anon','private.revoke_mobile_scanner_device(uuid)','EXECUTE'),
+  'stable device revocation is an authenticated invoker wrapper over a private definer function'
+);
+
+select ok(
+  position('mobile_scanner_devices' in pg_get_functiondef('private.heartbeat_mobile_scanner_session(uuid)'::regprocedure)) > 0
+  and position('revoked_at' in pg_get_functiondef('private.heartbeat_mobile_scanner_session(uuid)'::regprocedure)) > 0
+  and position('mobile_scanner_devices' in pg_get_functiondef('private.set_mobile_scanner_context(uuid,text,uuid,text)'::regprocedure)) > 0
+  and position('revoked_at' in pg_get_functiondef('private.set_mobile_scanner_context(uuid,text,uuid,text)'::regprocedure)) > 0
+  and position('mobile_scanner_devices' in pg_get_functiondef('private.submit_mobile_scanner_event(uuid,text,uuid,text)'::regprocedure)) > 0
+  and position('revoked_at' in pg_get_functiondef('private.submit_mobile_scanner_event(uuid,text,uuid,text)'::regprocedure)) > 0,
+  'heartbeat, context changes and scan writes reject revoked stable devices server-side'
+);
+
+select ok(
+  position('status = ''revoked''' in pg_get_functiondef('private.revoke_mobile_scanner_device(uuid)'::regprocedure)) > 0
+  and position('device_id' in pg_get_functiondef('private.revoke_mobile_scanner_device(uuid)'::regprocedure)) > 0,
+  'revoking a stable device revokes every paired session attached to it'
 );
 
 select * from finish();
