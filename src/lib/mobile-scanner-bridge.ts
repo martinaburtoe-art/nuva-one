@@ -201,7 +201,7 @@ export async function loadUnprocessedInventoryScannerEvents(
   ]);
   if (eventResult.error) throw eventResult.error;
   if (ledgerResult.error) throw ledgerResult.error;
-  const accepted = new Set((ledgerResult.data ?? []).map(row => row.client_event_id));
+  const accepted = new Set<string>((ledgerResult.data ?? []).map((row: { client_event_id: string }) => row.client_event_id));
   return ((eventResult.data ?? []) as MobileScannerEvent[])
     .filter(event => !accepted.has(event.client_event_id));
 }
