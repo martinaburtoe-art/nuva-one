@@ -1,6 +1,11 @@
 -- Device Hub foundation: durable mobile leases and idempotent collaborative stocktake events.
 -- This migration is committed to a feature branch only; it is not applied to production.
 
+-- Keep stocktake line timestamps explicit across clean CI databases and existing deployments.
+-- Some legacy schema snapshots omit this column even though production already has it.
+alter table public.inventory_stocktake_lines
+  add column if not exists scanned_at timestamptz not null default now();
+
 create table if not exists private.mobile_scanner_pair_limits (
   user_id uuid primary key references auth.users(id) on delete cascade,
   window_started_at timestamptz not null default now(),
