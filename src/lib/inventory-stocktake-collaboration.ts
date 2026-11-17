@@ -12,13 +12,12 @@ export type StocktakeLine = {
   system_qty: number;
   counted_qty: number;
   difference: number | null;
-  scanned_at: string;
 };
 
 export async function loadStocktakeLines(stocktakeId: string): Promise<StocktakeLine[]> {
   const { data, error } = await supabase
     .from("inventory_stocktake_lines")
-    .select("id,stocktake_id,business_id,product_id,barcode,product_name,system_qty,counted_qty,difference,scanned_at")
+    .select("id,stocktake_id,business_id,product_id,barcode,product_name,system_qty,counted_qty,difference")
     .eq("stocktake_id", stocktakeId)
     .order("product_name");
   if (error) throw error;
