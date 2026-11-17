@@ -21,7 +21,7 @@ import {
   type MobileScannerSession,
 } from "@/lib/mobile-scanner-bridge";
 import { toast } from "sonner";
-import { ModuleGuard } from "@/components/module-guard";
+import { heartbeatMobileScannerSession, revokeMobileScannerSession, setMobileScannerContext } from "@/lib/mobile-scanner-bridge";
 
 export const Route = createFileRoute("/_authenticated/mobile-scanner")({
   head: () => ({ meta: [{ title: "Nüva Scanner Móvil" }] }),
@@ -31,11 +31,7 @@ export const Route = createFileRoute("/_authenticated/mobile-scanner")({
 const STORAGE_KEY = "nuva.mobile-scanner.session";
 
 function MobileScanner() {
-  return (
-    <ModuleGuard module="pos">
-      <MobileScannerContent />
-    </ModuleGuard>
-  );
+  return <MobileScannerContent />;
 }
 
 function MobileScannerContent() {
@@ -49,11 +45,14 @@ function MobileScannerContent() {
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
   const [cameraAvailable, setCameraAvailable] = useState(true);
+  const [activeModule, setActiveModule] = useState("pos");
+  const [operationId, setOperationId] = useState("");
+  const [deviceName, setDeviceName] = useState("Mi celular");
 
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      if (saved) setSession(JSON.parse(saved) as MobileScannerSession);
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) { const restored = JSON.parse(saved) as MobileScannerSession; setSession(restored); setActiveModule(restored.activeModule ?? "pos"); setOperationId(restored.operationId ?? ""); setDeviceName(restored.deviceName ?? "Mi celular"); }
     } catch {
       /* ignore stale local session */
     }
@@ -68,6 +67,29 @@ function MobileScannerContent() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    const beat = async () => {
+      try {
+        const expiresAt = await heartbeatMobileScannerSession(session.sessionId);
+        if (!active) return;
+        const next = { ...session, expiresAt };
+        setSession(next);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        if (active) {
+          localStorage.removeItem(STORAGE_KEY);
+          setSession(null);
+          toast.error("La sesión del dispositivo venció o fue revocada. Vuelve a vincularlo.");
+        }
+      }
+    };
+    void beat();
+    const timer = window.setInterval(() => void beat(), 60_000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [session?.sessionId]);
+
   async function pair() {
     if (!/^\d{6}$/.test(pairCode))
       return toast.error("Ingresa el código de 6 dígitos que aparece en Caja");
@@ -75,10 +97,12 @@ function MobileScannerContent() {
     setBusy(true);
     try {
       const paired = await pairMobileScanner(pairCode);
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(paired));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(paired));
+      setActiveModule(paired.activeModule ?? "pos");
+      setOperationId(paired.operationId ?? "");
       setSession(paired);
       setPairCode("");
-      toast.success("Celular vinculado a Caja");
+      toast.success("Celular vinculado a Nüva One");
     } catch (error: any) {
       toast.error(
         String(error?.message ?? "").includes("PAIR_CODE")
@@ -91,7 +115,8 @@ function MobileScannerContent() {
   }
 
   function disconnect() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    if (session) void revokeMobileScannerSession(session.sessionId).catch(() => {});
+    localStorage.removeItem(STORAGE_KEY);
     setSession(null);
     setScannerOpen(false);
     setLastCode("");
@@ -189,7 +214,7 @@ function MobileScannerContent() {
         <div>
           <h1 className="text-xl font-bold">Escáner conectado</h1>
           <p className="text-xs text-muted-foreground">
-            Este celular funciona como la pistola lectora de Caja.
+            Este celular es un dispositivo compartido de Nüva One y puede cambiar de módulo sin volver a vincularse.
           </p>
         </div>
         <Badge variant={online ? "default" : "destructive"} className="gap-1">
@@ -229,6 +254,46 @@ function MobileScannerContent() {
             Desconectar
           </Button>
         </div>
+      </Card>
+      <Card className="space-y-3 p-4">
+        <div>
+          <div className="font-semibold">Contexto de trabajo</div>
+          <p className="text-xs text-muted-foreground">El escáner envía las lecturas solo al módulo y operación seleccionados.</p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="space-y-1 text-xs font-medium">Módulo
+            <select value={activeModule} onChange={e => setActiveModule(e.target.value)}
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+              <option value="pos">Caja</option>
+              <option value="inventory">Inventario</option>
+              <option value="receiving">Recepción</option>
+              <option value="picking">Preparación</option>
+              <option value="dispatch">Despacho</option>
+              <option value="returns">Devoluciones</option>
+              <option value="transfers">Traslados</option>
+            </select>
+          </label>
+          <label className="space-y-1 text-xs font-medium">Nombre del dispositivo
+            <Input value={deviceName} onChange={e => setDeviceName(e.target.value)} maxLength={80} />
+          </label>
+        </div>
+        <label className="block space-y-1 text-xs font-medium">Identificador de operación
+          <Input value={operationId} onChange={e => setOperationId(e.target.value)} placeholder="Se asigna al vincular desde el módulo" />
+        </label>
+        <Button className="w-full" variant="outline" disabled={!online || !operationId.trim()}
+          onClick={async () => {
+            try {
+              await setMobileScannerContext(session.sessionId, activeModule as any, operationId.trim(), deviceName);
+              const next = { ...session, activeModule, operationId: operationId.trim(), deviceName };
+              setSession(next);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+              toast.success("Contexto del dispositivo actualizado");
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : "No se pudo cambiar el contexto");
+            }
+          }}>
+          Guardar contexto de trabajo
+        </Button>
       </Card>
       <Card className="border-primary/20 bg-primary/5 p-4">
         <div className="flex items-start gap-3">
