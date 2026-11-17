@@ -208,7 +208,7 @@ export function HomeFixedExperience() {
           <div className="mb-10 max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#6366F1]">DEMO INTERACTIVA</p>
             <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Ahora pruébalo aquí mismo.</h2>
-            <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación completa de Nüva One con datos ficticios. Navega por los módulos y entiende cómo se conecta la operación, sin salir de la homepage.</p>
+            <p className="mt-5 text-base leading-7 text-black/60">Explora una simulación interactiva con datos ficticios. Recorre los módulos y observa cómo se organiza la operación, sin salir de esta página.</p>
           </div>
           <DeferredDemo />
         </div>
@@ -260,7 +260,7 @@ export function HomeFixedExperience() {
                   <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none" /> CELULAR
                 </div>
                 <div className="rounded-full border border-white/70 bg-[#11131a]/90 px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-lg backdrop-blur">
-                  Live Scan
+                  Vista ilustrativa
                 </div>
               </div>
             </div>
