@@ -55,6 +55,9 @@ create index if not exists idx_stocktake_scan_events_stocktake_created
 create index if not exists idx_stocktake_scan_events_business_product
   on public.inventory_stocktake_scan_events(business_id, product_id, created_at desc);
 
+create unique index if not exists uq_inventory_stocktakes_one_counting_per_business
+  on public.inventory_stocktakes(business_id) where status = 'counting';
+
 alter table public.inventory_stocktake_scan_events enable row level security;
 drop policy if exists inventory_stocktake_scan_events_select_member on public.inventory_stocktake_scan_events;
 create policy inventory_stocktake_scan_events_select_member
