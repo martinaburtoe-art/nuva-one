@@ -224,8 +224,10 @@ select ok(
   )) > 0
   and position('inventory_stocktake_scan_events' in lower(
     pg_get_functiondef('private.guard_inventory_stocktake_pending_scanner_events()'::regprocedure)
-  )) > 0,
-  'stocktake finalization is blocked until every persisted mobile scan is accepted into the count ledger'
+  )) > 0
+  and not has_function_privilege('anon',
+    'private.guard_inventory_stocktake_pending_scanner_events()', 'EXECUTE'),
+  'stocktake finalization is blocked until every persisted mobile scan is accepted into the count ledger; guard is not directly callable by anon'
 );
 
 select * from finish();
