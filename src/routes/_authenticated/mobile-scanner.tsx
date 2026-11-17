@@ -18,10 +18,12 @@ import { LiveProductScanner } from "@/components/scanner/LiveProductScanner";
 import {
   pairMobileScanner,
   submitMobileScannerEvent,
+  heartbeatMobileScannerSession,
+  revokeMobileScannerSession,
+  setMobileScannerContext,
   type MobileScannerSession,
 } from "@/lib/mobile-scanner-bridge";
 import { toast } from "sonner";
-import { heartbeatMobileScannerSession, revokeMobileScannerSession, setMobileScannerContext } from "@/lib/mobile-scanner-bridge";
 
 export const Route = createFileRoute("/_authenticated/mobile-scanner")({
   head: () => ({ meta: [{ title: "Nüva Scanner Móvil" }] }),
