@@ -188,13 +188,14 @@ export function subscribeToMobileScannerOperation(
 export async function loadUnprocessedInventoryScannerEvents(
   stocktakeId: string,
 ): Promise<MobileScannerEvent[]> {
+  const client = supabase as any;
   const [eventResult, ledgerResult] = await Promise.all([
-    supabase.from("mobile_scanner_events")
+    client.from("mobile_scanner_events")
       .select("id,session_id,business_id,code,normalized_code,input_type,client_event_id,created_at,module,operation_id")
       .eq("module", "inventory")
       .eq("operation_id", stocktakeId)
       .order("created_at", { ascending: true }),
-    supabase.from("inventory_stocktake_scan_events")
+    client.from("inventory_stocktake_scan_events")
       .select("client_event_id")
       .eq("stocktake_id", stocktakeId),
   ]);
