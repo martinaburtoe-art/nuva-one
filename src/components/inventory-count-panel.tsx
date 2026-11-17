@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { LiveProductScanner } from "@/components/scanner/LiveProductScanner";
 import { MobileScannerPairingCard } from "@/components/scanner/MobileScannerPairingCard";
 import { DeviceHubPanel } from "@/components/scanner/DeviceHubPanel";
-import { subscribeToMobileScannerOperation, type MobileScannerEvent } from "@/lib/mobile-scanner-bridge";
+import { loadUnprocessedInventoryScannerEvents, subscribeToMobileScannerOperation, type MobileScannerEvent } from "@/lib/mobile-scanner-bridge";
 import { resolveProductCode } from "@/lib/product-resolver";
 import { createProductFromScanner } from "@/lib/scanner-product-onboarding";
 import {
@@ -46,6 +46,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   const [existingProductId, setExistingProductId] = useState("");
   const [pendingMobileEvents, setPendingMobileEvents] = useState<Pick<MobileScannerEvent, "client_event_id" | "session_id" | "code">[]>([]);
   const pendingMobileEvent = pendingMobileEvents[0] ?? null;
+  const [mobileQueueRetry, setMobileQueueRetry] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const refreshLines = useCallback(async (id = stocktakeId) => {
@@ -105,38 +106,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
 
   useEffect(() => {
     if (!stocktakeId) return;
-    const unsubscribe = subscribeToMobileScannerOperation(stocktakeId, "inventory", event => {
-      if (countMode === "unit") {
-        void resolveProductCode(event.code).then(async resolution => {
-          if (resolution.status === "NOT_FOUND") {
-            const queued = { client_event_id: event.client_event_id, session_id: event.session_id, code: event.code };
-            setPendingMobileEvents(current => current.some(item => item.client_event_id === queued.client_event_id)
-              ? current
-              : [...current, queued]);
-            setUnknownCode(event.code);
-            setNewProductName("");
-            setNewProductSku("");
-            setNewProductCategory("");
-            setNewProductPrice("0");
-            setNewProductCost("0");
-            setExistingProductId(products[0]?.id ?? "");
-            toast.info(`Código nuevo ${event.code}: crea el producto o asócialo para registrar esta unidad.`);
-            return;
-          }
-          if (resolution.status !== "FOUND" || !resolution.product) {
-            toast.error("No se pudo resolver el código recibido desde el celular.");
-            return;
-          }
-          await addProduct({
-            id: resolution.product.product_id,
-            name: resolution.product.name ?? "Producto",
-            stock: Number(resolution.product.stock ?? 0),
-            barcode: resolution.product.barcode,
-            sku: resolution.product.sku,
-          }, event.code, event);
-        }).catch(error => toast.error(error instanceof Error ? error.message : "Falló la lectura móvil"));
-        return;
-      }
+    let active = true;
+    const enqueue = (event: MobileScannerEvent) => {
       const queued = {
         client_event_id: event.client_event_id,
         session_id: event.session_id,
@@ -145,9 +116,61 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       setPendingMobileEvents(current => current.some(item => item.client_event_id === queued.client_event_id)
         ? current
         : [...current, queued]);
+    };
+    const handleEvent = async (event: MobileScannerEvent) => {
+      if (countMode === "quantity") {
+        enqueue(event);
+        return;
+      }
+      const resolution = await resolveProductCode(event.code);
+      if (!active) return;
+      if (resolution.status === "NOT_FOUND") {
+        enqueue(event);
+        setUnknownCode(event.code);
+        setNewProductName("");
+        setNewProductSku("");
+        setNewProductCategory("");
+        setNewProductPrice("0");
+        setNewProductCost("0");
+        setExistingProductId(products[0]?.id ?? "");
+        toast.info(`Código nuevo ${event.code}: crea el producto o asócialo para registrar esta unidad.`);
+        return;
+      }
+      if (resolution.status !== "FOUND" || !resolution.product) {
+        enqueue(event);
+        toast.error(`No se pudo resolver ${event.code}. La lectura permanece pendiente; reintenta después de corregir el catálogo.`);
+        return;
+      }
+      await addProduct({
+        id: resolution.product.product_id,
+        name: resolution.product.name ?? "Producto",
+        stock: Number(resolution.product.stock ?? 0),
+        barcode: resolution.product.barcode,
+        sku: resolution.product.sku,
+      }, event.code, event);
+    };
+    const unsubscribe = subscribeToMobileScannerOperation(stocktakeId, "inventory", event => {
+      void handleEvent(event).catch(error => {
+        enqueue(event);
+        toast.error(error instanceof Error ? error.message : "Falló la lectura móvil; quedó pendiente para reintentar");
+      });
     });
-    return unsubscribe;
-  }, [stocktakeId, countMode]);
+    // Recover events persisted while this tab was closed, disconnected or reconnecting.
+    void loadUnprocessedInventoryScannerEvents(stocktakeId).then(async events => {
+      for (const event of events) {
+        if (!active) break;
+        try {
+          await handleEvent(event);
+        } catch (error) {
+          enqueue(event);
+          toast.error(error instanceof Error ? error.message : "No se pudo recuperar una lectura móvil pendiente");
+        }
+      }
+    }).catch(error => {
+      if (active) toast.error(error instanceof Error ? error.message : "No se pudo recuperar la cola de lecturas móviles");
+    });
+    return () => { active = false; unsubscribe(); };
+  }, [stocktakeId, countMode, mobileQueueRetry]);
 
   // In quantity mode, resolve only the head of the FIFO queue. Later mobile scans
   // remain queued until the operator confirms or resolves the current scan.
@@ -427,13 +450,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
                 {pendingMobileEvents.length} lectura(s) en cola. Se procesan en orden; las siguientes esperan tu confirmación.
               </div>
             </div>
-            <Button size="sm" variant="outline" onClick={() => {
-              setPendingMobileEvents(current => current.slice(1));
-              setUnknownCode("");
-              setCode("");
-              setCountQuantity("1");
-            }}>
-              Omitir esta lectura
+            <Button size="sm" variant="outline" onClick={() => setMobileQueueRetry(value => value + 1)}>
+              Reintentar lectura
             </Button>
           </div>
         )}
