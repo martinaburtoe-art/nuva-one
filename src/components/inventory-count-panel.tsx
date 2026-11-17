@@ -57,6 +57,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   useEffect(() => {
     let cancelled = false;
     async function initialize() {
+      setPendingMobileEvents([]);
+      setUnknownCode("");
       if (!active?.id) {
         setProducts([]);
         setLines([]);
