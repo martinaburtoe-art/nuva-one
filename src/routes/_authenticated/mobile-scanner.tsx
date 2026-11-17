@@ -136,7 +136,7 @@ function MobileScannerContent() {
       await submitMobileScannerEvent(session.sessionId, code, "camera");
       setSent((n) => n + 1);
     } catch {
-      toast.error("No se pudo enviar el escaneo a Caja. Revisa la conexión y vuelve a intentar.");
+      toast.error("No se pudo enviar el escaneo al módulo activo. Revisa la conexión y vuelve a intentar.");
     }
   }
 
@@ -149,13 +149,13 @@ function MobileScannerContent() {
           </div>
           <h1 className="text-2xl font-bold">Nüva Scanner Móvil</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Usa tu celular como lector de códigos para la Caja abierta en otro equipo.
+            Usa tu celular como lector de códigos para la operación abierta en otro equipo.
           </p>
         </div>
         <Card className="space-y-4 p-5">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Link2 className="h-4 w-4 text-primary" />
-            Vincular con Caja
+            Vincular dispositivo
           </div>
           <p className="text-sm text-muted-foreground">
             En el computador abre Caja → <strong>Usar celular como escáner</strong>. Introduce aquí
