@@ -50,6 +50,41 @@ create index if not exists idx_mobile_scanner_events_operation_created
   on public.mobile_scanner_events(operation_id, module, created_at)
   where operation_id is not null;
 
+-- Never close a collaborative count while persisted mobile scans are still unacknowledged.
+-- This server-side guard closes the race between Realtime delivery and the operator clicking Finalize.
+create or replace function private.guard_inventory_stocktake_pending_scanner_events()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public, private
+as $
+begin
+  if old.status = 'counting' and new.status = 'completed' and exists (
+    select 1
+    from public.mobile_scanner_events e
+    where e.module = 'inventory'
+      and e.operation_id = old.id
+      and not exists (
+        select 1
+        from public.inventory_stocktake_scan_events accepted
+        where accepted.stocktake_id = old.id
+          and accepted.client_event_id = e.client_event_id
+      )
+  ) then
+    raise exception 'STOCKTAKE_HAS_PENDING_SCANNER_EVENTS'
+      using errcode = '55000';
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists trg_guard_stocktake_pending_scanner_events on public.inventory_stocktakes;
+create trigger trg_guard_stocktake_pending_scanner_events
+before update of status on public.inventory_stocktakes
+for each row execute function private.guard_inventory_stocktake_pending_scanner_events();
+
+revoke all on function private.guard_inventory_stocktake_pending_scanner_events() from public, anon, authenticated;
+
 create table if not exists public.inventory_stocktake_scan_events (
   id uuid primary key default gen_random_uuid(),
   stocktake_id uuid not null references public.inventory_stocktakes(id) on delete cascade,
