@@ -1,6 +1,12 @@
 -- Device Hub foundation: durable mobile leases and idempotent collaborative stocktake events.
 -- This migration is committed to a feature branch only; it is not applied to production.
 
+create table if not exists private.mobile_scanner_pair_limits (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  window_started_at timestamptz not null default now(),
+  attempt_count integer not null default 0 check (attempt_count >= 0)
+);
+
 alter table public.mobile_scanner_sessions
   add column if not exists pair_code_expires_at timestamptz,
   add column if not exists device_name text not null default 'Nüva Mobile',
@@ -275,7 +281,15 @@ begin
   where business_id = p_business_id
     and status = 'pending'
     and pair_code_expires_at <= now();
-  v_code := lpad((floor(random() * 1000000))::int::text, 6, '0');
+  loop
+    v_code := lpad((('x' || encode(gen_random_bytes(4), 'hex'))::bit(32)::bigint % 1000000)::text, 6, '0');
+    exit when not exists (
+      select 1 from public.mobile_scanner_sessions s
+      where s.status = 'pending'
+        and s.pair_code_expires_at > now()
+        and crypt(v_code, s.pair_code_hash) = s.pair_code_hash
+    );
+  end loop;
   insert into public.mobile_scanner_sessions(
     id, business_id, created_by, pair_code_hash, status,
     expires_at, pair_code_expires_at, active_module
@@ -293,9 +307,22 @@ language plpgsql
 security definer
 set search_path = public, private, extensions
 as $$
-declare v_session public.mobile_scanner_sessions%rowtype; v_uid uuid := auth.uid(); v_expires timestamptz;
+declare v_session public.mobile_scanner_sessions%rowtype; v_uid uuid := auth.uid(); v_expires timestamptz; v_attempt_count integer;
 begin
   if v_uid is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
+  insert into private.mobile_scanner_pair_limits(user_id, window_started_at, attempt_count)
+  values(v_uid, now(), 1)
+  on conflict (user_id) do update set
+    window_started_at = case
+      when private.mobile_scanner_pair_limits.window_started_at < now() - interval '10 minutes' then now()
+      else private.mobile_scanner_pair_limits.window_started_at
+    end,
+    attempt_count = case
+      when private.mobile_scanner_pair_limits.window_started_at < now() - interval '10 minutes' then 1
+      else private.mobile_scanner_pair_limits.attempt_count + 1
+    end
+  returning attempt_count into v_attempt_count;
+  if v_attempt_count > 10 then return; end if;
   select * into v_session
   from public.mobile_scanner_sessions s
   where s.status = 'pending'
@@ -305,7 +332,8 @@ begin
   order by s.created_at desc
   limit 1
   for update;
-  if not found then raise exception 'PAIR_CODE_INVALID_OR_EXPIRED' using errcode = '22023'; end if;
+  if not found then return; end if;
+  update private.mobile_scanner_pair_limits set attempt_count = 0, window_started_at = now() where user_id = v_uid;
   v_expires := now() + interval '30 days';
   update public.mobile_scanner_sessions
   set status = 'paired', paired_at = now(), paired_by = v_uid,
@@ -465,7 +493,15 @@ begin
   if p_operation_id is null then
     raise exception 'OPERATION_CONTEXT_REQUIRED' using errcode = '22023';
   end if;
-  v_code := lpad((floor(random() * 1000000))::int::text, 6, '0');
+  loop
+    v_code := lpad((('x' || encode(gen_random_bytes(4), 'hex'))::bit(32)::bigint % 1000000)::text, 6, '0');
+    exit when not exists (
+      select 1 from public.mobile_scanner_sessions s
+      where s.status = 'pending'
+        and s.pair_code_expires_at > now()
+        and crypt(v_code, s.pair_code_hash) = s.pair_code_hash
+    );
+  end loop;
   insert into public.mobile_scanner_sessions(
     id, business_id, created_by, pair_code_hash, status,
     expires_at, pair_code_expires_at, active_module, active_operation_id
