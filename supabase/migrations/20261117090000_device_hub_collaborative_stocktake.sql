@@ -138,7 +138,8 @@ begin
       and s.business_id = v_stocktake.business_id
       and s.status = 'paired'
       and s.expires_at > now()
-      and s.paired_by = v_uid
+      and s.active_module = 'inventory'
+      and s.active_operation_id = p_stocktake_id
   ) then
     raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501';
   end if;
@@ -403,3 +404,46 @@ $$;
 
 revoke all on function public.associate_product_code_from_scanner(uuid,uuid,text,text) from public, anon;
 grant execute on function public.associate_product_code_from_scanner(uuid,uuid,text,text) to authenticated;
+
+
+create or replace function public.create_mobile_scanner_session_for_operation(
+  p_business_id uuid,
+  p_module text,
+  p_operation_id uuid
+)
+returns table(session_id uuid, pair_code text, expires_at timestamptz)
+language plpgsql
+security definer
+set search_path = public, private, extensions
+as $$
+declare v_code text; v_id uuid; v_pair_expires timestamptz := now() + interval '10 minutes';
+begin
+  if auth.uid() is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
+  if not private.has_business_role(p_business_id, auth.uid(), array['owner'::member_role,'admin'::member_role,'staff'::member_role]) then
+    raise exception 'NOT_AUTHORIZED' using errcode = '42501';
+  end if;
+  if p_module not in ('pos','inventory','receiving','picking','dispatch','returns','transfers') then
+    raise exception 'INVALID_DEVICE_MODULE' using errcode = '22023';
+  end if;
+  if p_module = 'inventory' and not exists (
+    select 1 from public.inventory_stocktakes st
+    where st.id = p_operation_id and st.business_id = p_business_id and st.status = 'counting'
+  ) then
+    raise exception 'STOCKTAKE_NOT_OPEN' using errcode = '22023';
+  end if;
+  if p_module = 'pos' and p_operation_id is null then
+    raise exception 'POS_REGISTER_CONTEXT_REQUIRED' using errcode = '22023';
+  end if;
+  v_code := lpad((floor(random() * 1000000))::int::text, 6, '0');
+  insert into public.mobile_scanner_sessions(
+    id, business_id, created_by, pair_code_hash, status,
+    expires_at, pair_code_expires_at, active_module, active_operation_id
+  ) values (
+    gen_random_uuid(), p_business_id, auth.uid(), crypt(v_code, gen_salt('bf')),
+    'pending', now() + interval '30 days', v_pair_expires, p_module, p_operation_id
+  ) returning id into v_id;
+  return query select v_id, v_code, v_pair_expires;
+end;
+$$;
+revoke all on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) from public, anon;
+grant execute on function public.create_mobile_scanner_session_for_operation(uuid,text,uuid) to authenticated;
