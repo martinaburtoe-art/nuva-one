@@ -1,6 +1,6 @@
 begin;
 
-select plan(23);
+select plan(24);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -163,6 +163,15 @@ select ok(
     and indexname='uq_inventory_stocktakes_one_counting_per_business'
     and indexdef ilike '%unique%business_id%status%counting%'),
   'database enforces at most one open stocktake per business'
+);
+
+select ok(
+  to_regclass('private.mobile_scanner_pair_limits') is not null
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='private' and p.proname='pair_mobile_scanner' and p.prosecdef)
+  and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='pair_mobile_scanner' and not p.prosecdef),
+  'pairing attempts are rate-limited in private storage behind an invoker wrapper'
 );
 
 select * from finish();
