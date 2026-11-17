@@ -308,7 +308,7 @@ as $$
 declare
   v_session public.mobile_scanner_sessions%rowtype;
   v_event public.mobile_scanner_events%rowtype;
-  v_code text := trim(regexp_replace(coalesce(p_code, ''), '\\s+', '', 'g'));
+  v_code text := trim(regexp_replace(coalesce(p_code, ''), '[[:space:]]+', '', 'g'));
 begin
   if auth.uid() is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
   if length(v_code) = 0 or length(v_code) > 128 then raise exception 'INVALID_CODE' using errcode = '22023'; end if;
@@ -379,7 +379,7 @@ language plpgsql
 security definer
 set search_path = pg_catalog, public, private
 as $$
-declare v_uid uuid := (select auth.uid()); v_code text := regexp_replace(coalesce(p_code, ''), '\\s+', '', 'g'); v_id uuid;
+declare v_uid uuid := (select auth.uid()); v_code text := regexp_replace(coalesce(p_code, ''), '[[:space:]]+', '', 'g'); v_id uuid;
 begin
   if v_uid is null then raise exception 'UNAUTHENTICATED' using errcode = '42501'; end if;
   if not private.has_business_role(p_business_id, v_uid, array['owner'::member_role,'admin'::member_role,'staff'::member_role]) then
