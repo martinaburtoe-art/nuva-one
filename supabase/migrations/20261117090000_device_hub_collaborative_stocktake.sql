@@ -393,6 +393,16 @@ begin
   if not exists (select 1 from public.products p where p.id = p_product_id and p.business_id = p_business_id) then
     raise exception 'PRODUCT_NOT_IN_BUSINESS' using errcode = '42501';
   end if;
+  if exists (
+    select 1 from public.products p
+    where p.business_id = p_business_id and p.id <> p_product_id
+      and (
+        lower(btrim(coalesce(p.barcode, ''))) = lower(v_code)
+        or lower(btrim(coalesce(p.sku, ''))) = lower(v_code)
+      )
+  ) then
+    raise exception 'CODE_ALREADY_ASSOCIATED' using errcode = '23505';
+  end if;
   insert into public.product_codes(business_id, product_id, code, code_type, is_primary, is_active, created_by)
   values(p_business_id, p_product_id, v_code, lower(coalesce(p_code_type, 'barcode')), false, true, v_uid)
   returning id into v_id;
