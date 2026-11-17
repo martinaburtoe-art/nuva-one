@@ -68,7 +68,7 @@ export async function submitMobileScannerEvent(
   sessionId: string,
   code: string,
   inputType: MobileScannerEvent["input_type"] = "camera",
-  clientEventId = crypto.randomUUID(),
+  clientEventId: string = crypto.randomUUID(),
 ) {
   const { data, error } = await supabase.rpc("submit_mobile_scanner_event", {
     p_session_id: sessionId,
