@@ -53,7 +53,7 @@ export function MobileScannerPairingCard({
       onScanRef.current?.(event.code, event);
     });
     return unsubscribe;
-  }, [module, operationId, onScan]);
+  }, [module, operationId]);
 
   return (
     <Card className="flex min-w-[220px] items-center gap-3 border-primary/20 bg-primary/5 p-3">
