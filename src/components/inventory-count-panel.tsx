@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { LiveProductScanner } from "@/components/scanner/LiveProductScanner";
 import { MobileScannerPairingCard } from "@/components/scanner/MobileScannerPairingCard";
+import { DeviceHubPanel } from "@/components/scanner/DeviceHubPanel";
 import { subscribeToMobileScannerOperation, type MobileScannerEvent } from "@/lib/mobile-scanner-bridge";
 import { resolveProductCode } from "@/lib/product-resolver";
 import { createProductFromScanner } from "@/lib/scanner-product-onboarding";
@@ -452,6 +453,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
           </div>
         </Card>
       </div>
+
+      {active?.id && <DeviceHubPanel businessId={active.id} />}
 
       <LiveProductScanner
         open={scannerOpen}
