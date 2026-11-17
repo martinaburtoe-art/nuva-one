@@ -94,7 +94,7 @@ function MobileScannerContent() {
 
   async function pair() {
     if (!/^\d{6}$/.test(pairCode))
-      return toast.error("Ingresa el código de 6 dígitos que aparece en Caja");
+      return toast.error("Ingresa el código de 6 dígitos que aparece en Caja o Inventario");
     if (!online) return toast.error("Necesitas conexión para vincular el celular");
     setBusy(true);
     try {
@@ -102,6 +102,7 @@ function MobileScannerContent() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(paired));
       setActiveModule(paired.activeModule ?? "pos");
       setOperationId(paired.operationId ?? "");
+      setDeviceName(paired.deviceName ?? "Mi celular");
       setSession(paired);
       setPairCode("");
       toast.success("Celular vinculado a Nüva One");
