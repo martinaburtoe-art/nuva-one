@@ -128,14 +128,6 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       if (!active) return;
       if (resolution.status === "NOT_FOUND") {
         enqueue(event);
-        setUnknownCode(event.code);
-        setNewProductName("");
-        setNewProductSku("");
-        setNewProductCategory("");
-        setNewProductPrice("0");
-        setNewProductCost("0");
-        setExistingProductId(productsRef.current[0]?.id ?? "");
-        toast.info(`Código nuevo ${event.code}: crea el producto o asócialo para registrar esta unidad.`);
         return;
       }
       if (resolution.status !== "FOUND" || !resolution.product) {
@@ -174,13 +166,12 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
     return () => { active = false; unsubscribe(); };
   }, [stocktakeId, countMode, mobileQueueRetry]);
 
-  // In quantity mode, resolve only the head of the FIFO queue. Later mobile scans
-  // remain queued until the operator confirms or resolves the current scan.
+  // Resolve only the head of the FIFO queue. Later mobile scans cannot replace it.
   useEffect(() => {
-    if (countMode !== "quantity" || !pendingMobileEvent) return;
+    if (!pendingMobileEvent) return;
     let cancelled = false;
     setCode(pendingMobileEvent.code);
-    void resolveProductCode(pendingMobileEvent.code).then(resolution => {
+    void resolveProductCode(pendingMobileEvent.code).then(async resolution => {
       if (cancelled) return;
       if (resolution.status === "NOT_FOUND") {
         setUnknownCode(pendingMobileEvent.code);
@@ -189,19 +180,29 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
         setNewProductCategory("");
         setNewProductPrice("0");
         setNewProductCost("0");
-        setExistingProductId(products[0]?.id ?? "");
+        setExistingProductId(productsRef.current[0]?.id ?? "");
         toast.info(`Código ${pendingMobileEvent.code} sin registrar. Resuelve este elemento para continuar la cola.`);
-      } else if (resolution.status === "FOUND") {
+      } else if (resolution.status === "FOUND" && resolution.product) {
         setUnknownCode("");
-        toast.info(`Lectura recibida: ${pendingMobileEvent.code}. Confirma la cantidad para continuar.`);
+        if (countMode === "unit") {
+          await addProduct({
+            id: resolution.product.product_id,
+            name: resolution.product.name ?? "Producto",
+            stock: Number(resolution.product.stock ?? 0),
+            barcode: resolution.product.barcode,
+            sku: resolution.product.sku,
+          }, pendingMobileEvent.code, pendingMobileEvent);
+        } else {
+          toast.info(`Lectura recibida: ${pendingMobileEvent.code}. Confirma la cantidad para continuar.`);
+        }
       } else {
-        toast.error(`No se pudo validar ${pendingMobileEvent.code}. Puedes reintentar o cancelar la lectura.`);
+        toast.error(`No se pudo validar ${pendingMobileEvent.code}. Corrige el catálogo y pulsa Reintentar lectura.`);
       }
     }).catch(error => {
       if (!cancelled) toast.error(error instanceof Error ? error.message : "Falló la resolución de la lectura móvil");
     });
     return () => { cancelled = true; };
-  }, [countMode, pendingMobileEvent?.client_event_id]);
+  }, [countMode, pendingMobileEvent?.client_event_id, mobileQueueRetry]);
 
   async function startCount() {
     if (!active || !canWrite) return null;
