@@ -73,19 +73,25 @@ export function InventoryWorkspace() {
         productId = (created as { id: string }).id;
         if (stock) await adjustInventoryStock(supabase, { productId, delta: stock, reason: "Stock inicial al crear producto", sourceType: "product_initial_stock", sourceId: productId });
       }
+      let photoUploadFailed = false;
       if (imageFile && productId) {
-        const extension = imageFile.type === "image/jpeg" ? "jpg" : imageFile.type.split("/")[1];
-        const objectPath = `${businessId}/${productId}/${crypto.randomUUID()}.${extension}`;
-        const { error: uploadError } = await supabase.storage.from("product-images").upload(objectPath, imageFile, {
-          cacheControl: "31536000",
-          contentType: imageFile.type,
-          upsert: false,
-        });
-        if (uploadError) throw uploadError;
-        const { data: publicImage } = supabase.storage.from("product-images").getPublicUrl(objectPath);
-        await update.mutateAsync({ id: productId, patch: { image_url: publicImage.publicUrl } });
+        try {
+          const extension = imageFile.type === "image/jpeg" ? "jpg" : imageFile.type.split("/")[1];
+          const objectPath = `${businessId}/${productId}/${crypto.randomUUID()}.${extension}`;
+          const { error: uploadError } = await supabase.storage.from("product-images").upload(objectPath, imageFile, {
+            cacheControl: "31536000",
+            contentType: imageFile.type,
+            upsert: false,
+          });
+          if (uploadError) throw uploadError;
+          const { data: publicImage } = supabase.storage.from("product-images").getPublicUrl(objectPath);
+          await update.mutateAsync({ id: productId, patch: { image_url: publicImage.publicUrl } });
+        } catch {
+          photoUploadFailed = true;
+        }
       }
-      toast.success(editing ? "Producto actualizado" : "Producto creado");
+      if (photoUploadFailed) toast.error("Producto guardado, pero no se pudo subir la foto. Puedes reintentarlo desde Editar.");
+      else toast.success(editing ? "Producto actualizado" : "Producto creado");
       setOpen(false);
       setImageFile(null);
       setImagePreview("");
