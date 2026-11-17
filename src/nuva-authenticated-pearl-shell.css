@@ -427,3 +427,145 @@
   .nuva-app .nuva-resumen-visual-hero-image { animation: none; }
   .nuva-app .nuva-resumen-visual-hero-cta, .nuva-app .nuva-discovery-card, .nuva-app .nuva-discovery-card > img { transition: none; }
 }
+
+
+/* Sales workspace — clear commercial flow and legible transaction history. */
+.nuva-app .nuva-sales-workspace {
+  width: min(100%, 1500px);
+  margin-inline: auto;
+}
+.nuva-app .nuva-sales-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+  overflow: hidden;
+  border-color: #e6dfd4;
+  border-radius: 22px;
+  background: #fffefa;
+  box-shadow: 0 10px 30px rgb(31 48 61 / .055);
+}
+.nuva-app .nuva-sales-workspace :where(thead) {
+  background: #f3f0e9;
+}
+.nuva-app .nuva-sales-workspace :where(tbody tr) {
+  min-height: 58px;
+}
+.nuva-app .nuva-sales-workspace :where(tbody td) {
+  padding-block: 13px;
+}
+.nuva-app .nuva-sales-workspace :where(article.rounded-xl.border) {
+  border-color: #e7e0d5;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #fffefa, #faf8f3);
+}
+.nuva-app .nuva-sales-workspace [role="dialog"] {
+  border-radius: 24px;
+}
+.nuva-app .nuva-sales-workspace form :where(input, select, textarea) {
+  min-height: 42px;
+  border-radius: 11px;
+}
+.nuva-app .nuva-sales-workspace form > .sticky {
+  border-color: #d9c9ae;
+  background: rgb(255 254 250 / .96);
+  box-shadow: 0 12px 30px rgb(24 45 62 / .09);
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-sales-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+    border-radius: 18px;
+  }
+  .nuva-app .nuva-sales-workspace :where(tbody td) { padding-block: 10px; }
+}
+
+/* CRM workspace — relationship-centric portfolio and client records. */
+.nuva-app .nuva-crm-workspace {
+  width: min(100%, 1500px);
+  margin-inline: auto;
+}
+.nuva-app .nuva-crm-workspace > div.mb-5.grid > div {
+  min-height: 112px;
+  padding: 17px;
+  border: 1px solid #e7e1d7;
+  border-radius: 19px;
+  background: linear-gradient(150deg, #fffefa 0%, #f5f2eb 100%);
+  box-shadow: 0 8px 24px rgb(31 48 61 / .045);
+}
+.nuva-app .nuva-crm-workspace > div.mb-5.grid > div > div:nth-child(2) {
+  color: #1d374d;
+  font-size: clamp(25px, 2.4vw, 31px);
+  letter-spacing: -.05em;
+}
+.nuva-app .nuva-crm-workspace > div.mb-4 {
+  border-color: #e7e1d7;
+  border-radius: 18px;
+  background: rgb(255 254 250 / .86);
+  box-shadow: 0 5px 18px rgb(31 48 61 / .035);
+}
+.nuva-app .nuva-crm-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+  border-color: #e7e1d7;
+  border-radius: 21px;
+  background: #fffefa;
+  box-shadow: 0 10px 30px rgb(31 48 61 / .05);
+}
+.nuva-app .nuva-crm-workspace article.rounded-xl.border {
+  border-color: #e8e2d8;
+  background: linear-gradient(145deg, #fffefa, #faf8f3);
+}
+.nuva-app .nuva-crm-workspace [role="dialog"],
+.nuva-app .nuva-crm-workspace [data-state="open"][role="dialog"] {
+  border-radius: 23px;
+}
+.nuva-app .nuva-crm-workspace [role="dialog"] :where(input, textarea, select) {
+  border-radius: 11px;
+}
+.nuva-app .nuva-crm-workspace [data-radix-scroll-area-viewport] {
+  scrollbar-color: #c9c3b7 transparent;
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-crm-workspace { padding-inline: 12px; }
+  .nuva-app .nuva-crm-workspace > div.mb-5.grid > div {
+    min-height: 98px;
+    padding: 13px;
+    border-radius: 16px;
+  }
+}
+
+/* Finance workspace — executive reading order and restrained financial emphasis. */
+.nuva-app .nuva-finance-workspace {
+  width: min(100%, 1500px);
+  margin-inline: auto;
+}
+.nuva-app .nuva-finance-workspace > :first-child {
+  margin-bottom: 2px;
+}
+.nuva-app .nuva-finance-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+  border-color: #e5ded2;
+  border-radius: 23px;
+  box-shadow: 0 12px 34px rgb(31 48 61 / .06);
+}
+.nuva-app .nuva-finance-workspace > :first-child h2 {
+  color: #1c354a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(21px, 2.2vw, 27px);
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+.nuva-app .nuva-finance-workspace > :first-child > div > div.grid > div {
+  min-height: 92px;
+  border-color: #e8e1d6;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fffefa, #f6f3ed);
+  box-shadow: 0 5px 16px rgb(31 48 61 / .035);
+}
+.nuva-app .nuva-finance-workspace > :first-child > div > div.grid > div > div:last-child {
+  color: #1d374d;
+  font-size: clamp(17px, 1.8vw, 21px);
+  letter-spacing: -.035em;
+}
+.nuva-app .nuva-finance-workspace > :first-child > div > div.rounded-xl.border {
+  border-color: #e5ded2;
+  border-radius: 15px;
+  background: #f8f6f1;
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-finance-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+    border-radius: 18px;
+  }
+}
