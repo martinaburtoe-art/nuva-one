@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Boxes, ClipboardCheck, Download, History, ImagePlus, Package, PackagePlus, Pencil, Plus, Search, ShoppingCart, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
+import { Boxes, ClipboardCheck, Download, History, Camera, ImagePlus, Package, PackagePlus, Pencil, Plus, Search, ShoppingCart, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/page-utils";
 import { ModuleGuard } from "@/components/module-guard";
 import { Card } from "@/components/ui/card";
@@ -32,7 +32,7 @@ const statusText: Record<InventoryStatus, string> = { out_of_stock: "Sin stock",
 export function InventoryWorkspace() {
   const { data: role } = useMyRole(); const canWrite = canWriteOperations(role); const [businessId] = useActiveBusinessId();
   const { data, isLoading } = useBizList<Product>("products", { order: "created_at", select: "id,name,sku,image_url,stock,reserved_stock,in_transit_stock,blocked_stock,low_stock_threshold,reorder_point,max_stock,cost,price" }); const insert = useBizInsert("products"); const update = useBizUpdate("products"); const remove = useBizDelete("products");
-  const products = useMemo(() => data ?? [], [data]); const [view, setView] = useState<View>("intelligence"); const [query, setQuery] = useState(""); const [open, setOpen] = useState(false); const [editing, setEditing] = useState<Product | null>(null); const [imageFile, setImageFile] = useState<File | null>(null); const [adjustOpen, setAdjustOpen] = useState(false); const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
+  const products = useMemo(() => data ?? [], [data]); const [view, setView] = useState<View>("intelligence"); const [query, setQuery] = useState(""); const [open, setOpen] = useState(false); const [editing, setEditing] = useState<Product | null>(null); const [imageFile, setImageFile] = useState<File | null>(null); const [imageUrlDraft, setImageUrlDraft] = useState(""); const [adjustOpen, setAdjustOpen] = useState(false); const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
   const imagePreviewUrl = useMemo(() => imageFile ? URL.createObjectURL(imageFile) : null, [imageFile]);
   useEffect(() => () => { if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl); }, [imagePreviewUrl]);
   const filtered = useMemo(() => { const q = query.trim().toLowerCase(); return q ? products.filter(p => `${p.name ?? ""} ${p.sku ?? ""}`.toLowerCase().includes(q)) : products; }, [products, query]);
@@ -41,13 +41,22 @@ export function InventoryWorkspace() {
   const replenishmentUnits = replenishment.reduce((s, item) => s + item.metrics.suggestedReplenishment, 0); const replenishmentValue = replenishment.reduce((s, item) => s + item.metrics.suggestedReplenishment * Number(item.product.cost ?? 0), 0);
   const estimatedMargins = products.reduce((s, p) => s + Math.max(0, Number(p.price ?? 0) - Number(p.cost ?? 0)) * Math.max(0, Number(p.stock ?? 0)), 0);
   const marginRate = products.length ? products.reduce((s,p)=>s + (Number(p.price ?? 0)>0 ? Math.max(0,Number(p.price ?? 0)-Number(p.cost ?? 0))/Number(p.price ?? 0) : 0),0)/products.filter(p=>Number(p.price ?? 0)>0).length : 0;
-  const create = () => { setEditing(null); setImageFile(null); setOpen(true); }; const edit = (p: Product) => { setEditing(p); setImageFile(null); setOpen(true); }; const adjust = (p: Product) => { setAdjustProduct(p); setAdjustOpen(true); };
+  const create = () => { setEditing(null); setImageFile(null); setImageUrlDraft(""); setOpen(true); }; const edit = (p: Product) => { setEditing(p); setImageFile(null); setImageUrlDraft(p.image_url ?? ""); setOpen(true); }; const adjust = (p: Product) => { setAdjustProduct(p); setAdjustOpen(true); };
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canWrite || !businessId) return;
 
     const form = new FormData(e.currentTarget);
     const stock = Math.max(0, Number(form.get("stock") || 0));
+    const externalImageUrl = String(form.get("image_url") || "").trim();
+    if (externalImageUrl) {
+      try {
+        const parsed = new URL(externalImageUrl);
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error("URL no permitida");
+      } catch {
+        return toast.error("La imagen debe usar una URL HTTP o HTTPS válida.");
+      }
+    }
     const patch = {
       name: String(form.get("name") || "").trim(),
       sku: String(form.get("sku") || "").trim() || null,
@@ -67,13 +76,13 @@ export function InventoryWorkspace() {
         if (imageError) return toast.error(imageError);
         uploadedImageUrl = await uploadProductImage(businessId, imageFile);
       }
-      const imageUrl = uploadedImageUrl ?? editing?.image_url ?? null;
+      const imageUrl = uploadedImageUrl ?? (externalImageUrl || null);
 
       if (editing) {
         await update.mutateAsync({ id: editing.id, patch: { ...patch, image_url: imageUrl } });
         productSaved = true;
 
-        if (uploadedImageUrl && editing.image_url && editing.image_url !== uploadedImageUrl) {
+        if (editing.image_url && editing.image_url !== imageUrl) {
           try {
             await removeProductImage(editing.image_url);
           } catch (cleanupError) {
@@ -108,6 +117,7 @@ export function InventoryWorkspace() {
 
       toast.success(editing ? "Producto actualizado" : "Producto creado");
       setImageFile(null);
+      setImageUrlDraft("");
       setOpen(false);
     } catch (err: unknown) {
       if (uploadedImageUrl && !productSaved) {
