@@ -1,6 +1,6 @@
 begin;
 
-select plan(15);
+select plan(16);
 
 select ok(
   (select c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -104,6 +104,12 @@ select ok(
         'p_stocktake_id uuid, p_product_id uuid, p_client_event_id uuid, p_mode text, p_quantity numeric, p_code text, p_source_session_id uuid'
       and exists(select 1 from unnest(coalesce(p.proconfig,'{}'::text[])) cfg where cfg like 'search_path=%')),
   'stocktake scan RPC pins a safe search_path'
+);
+
+select ok(
+  exists(select 1 from pg_publication_tables where pubname='supabase_realtime'
+    and schemaname='public' and tablename='mobile_scanner_sessions'),
+  'device session lifecycle changes are available through Realtime'
 );
 
 select * from finish();
