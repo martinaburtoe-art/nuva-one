@@ -199,7 +199,8 @@ begin
       and s.expires_at > now()
       and s.active_module = 'inventory'
       and s.active_operation_id = p_stocktake_id
-      and private.has_business_role(s.business_id, s.paired_by, array['owner'::member_role,'admin'::member_role,'staff'::member_role]);
+      and private.has_business_role(s.business_id, s.paired_by, array['owner'::member_role,'admin'::member_role,'staff'::member_role])
+    for share;
     if not found then
       raise exception 'SCANNER_SESSION_INVALID' using errcode = '42501';
     end if;
