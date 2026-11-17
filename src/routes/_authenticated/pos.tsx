@@ -65,7 +65,7 @@ function POS() {
   const { data: products, isLoading } = useBizList<any>("products", {
     order: "name",
     ascending: true,
-    select: "id,name,sku,barcode,category,stock,price",
+    select: "id,name,image_url,sku,barcode,category,stock,price",
   });
   const { data: sales } = useBizList<any>("sales", {
     order: "created_at",
