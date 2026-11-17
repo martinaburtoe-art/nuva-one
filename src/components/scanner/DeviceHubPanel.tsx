@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyRole } from "@/lib/use-business";
-import { revokeMobileScannerSession } from "@/lib/mobile-scanner-bridge";
+import { revokeMobileScannerDevice, revokeMobileScannerSession } from "@/lib/mobile-scanner-bridge";
 import { toast } from "sonner";
 
 type DeviceSession = {
   id: string;
+  device_id: string | null;
   device_name: string;
   status: "pending" | "paired" | "revoked" | "expired";
   active_module: string;
@@ -47,7 +48,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
     try {
       const client = supabase as any;
       const { data, error } = await client.from("mobile_scanner_sessions")
-        .select("id,device_name,status,active_module,active_operation_id,paired_by,created_by,created_at,paired_at,last_seen_at,expires_at,pair_code_expires_at")
+        .select("id,device_id,device_name,status,active_module,active_operation_id,paired_by,created_by,created_at,paired_at,last_seen_at,expires_at,pair_code_expires_at")
         .eq("business_id", businessId)
         .order("created_at", { ascending: false })
         .limit(30);
@@ -88,7 +89,8 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
     if (revoking) return;
     setRevoking(device.id);
     try {
-      await revokeMobileScannerSession(device.id);
+      if (device.device_id) await revokeMobileScannerDevice(device.device_id);
+      else await revokeMobileScannerSession(device.id);
       toast.success(`Dispositivo "${device.device_name}" revocado`);
       await refresh();
     } catch (error) {
@@ -139,7 +141,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                     <span>{moduleLabels[device.active_module] ?? device.active_module}</span>
                     <span>{device.last_seen_at ? `Última actividad ${new Date(device.last_seen_at).toLocaleString("es-CL")}` : "Sin actividad registrada"}</span>
-                    <span className="font-mono">{device.id.slice(0, 8)}…</span>
+                    <span className="font-mono">{(device.device_id ?? device.id).slice(0, 8)}…</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
