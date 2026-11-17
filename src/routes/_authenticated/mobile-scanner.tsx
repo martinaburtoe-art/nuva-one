@@ -136,8 +136,11 @@ function MobileScannerContent() {
     setSent(0);
   }
 
+  const moduleOperational = activeModule === "pos" || activeModule === "inventory";
+
   async function handleScan(result: { rawValue: string }) {
     if (!session) return;
+    if (!moduleOperational) return toast.error("Este módulo todavía está en integración. El escáner está habilitado en Caja e Inventario.");
     if (!operationId.trim() || !contextSaved) return toast.error("Guarda primero el contexto de Caja o Inventario antes de escanear.");
     const code = result.rawValue.trim();
     if (!code) return;
@@ -279,11 +282,13 @@ function MobileScannerContent() {
               className="h-10 w-full rounded-md border bg-background px-3 text-sm">
               <option value="pos">Caja</option>
               <option value="inventory">Inventario</option>
-              <option value="receiving">Recepción</option>
-              <option value="picking">Preparación</option>
-              <option value="dispatch">Despacho</option>
-              <option value="returns">Devoluciones</option>
-              <option value="transfers">Traslados</option>
+              <optgroup label="En integración">
+                <option value="receiving" disabled>Recepción · Próximamente</option>
+                <option value="picking" disabled>Preparación · Próximamente</option>
+                <option value="dispatch" disabled>Despacho · Próximamente</option>
+                <option value="returns" disabled>Devoluciones · Próximamente</option>
+                <option value="transfers" disabled>Traslados · Próximamente</option>
+              </optgroup>
             </select>
           </label>
           <label className="space-y-1 text-xs font-medium">Nombre del dispositivo
@@ -293,7 +298,7 @@ function MobileScannerContent() {
         <label className="block space-y-1 text-xs font-medium">Identificador de operación
           <Input value={operationId} onChange={e => { setOperationId(e.target.value); setContextSaved(false); }} placeholder="Se asigna al vincular desde el módulo" />
         </label>
-        <Button className="w-full" variant="outline" disabled={!online || !operationId.trim()}
+        <Button className="w-full" variant="outline" disabled={!online || !operationId.trim() || !moduleOperational}
           onClick={async () => {
             try {
               await setMobileScannerContext(session.sessionId, activeModule as any, operationId.trim(), deviceName);
@@ -319,14 +324,14 @@ function MobileScannerContent() {
                 ? "Apunta al código. La lectura se envía al carrito de Caja asignado a este dispositivo."
                 : activeModule === "inventory"
                   ? "Apunta al código. La lectura se envía al conteo de Inventario asignado a este dispositivo."
-                  : "Apunta al código. La lectura se envía a la operación asignada en Nüva One."}
+                  : "Este módulo está en integración. Por ahora, el lector funciona en Caja e Inventario."}
             </div>
           </div>
         </div>
       </Card>
       <Button
         className="h-14 w-full text-base"
-        disabled={!online || !cameraAvailable || !operationId.trim() || !contextSaved}
+        disabled={!online || !cameraAvailable || !operationId.trim() || !contextSaved || !moduleOperational}
         onClick={() => setScannerOpen(true)}
       >
         <ScanBarcode className="mr-2 h-5 w-5" />
@@ -334,9 +339,11 @@ function MobileScannerContent() {
           ? "Cámara no disponible"
           : !online
             ? "Esperando conexión"
-            : !operationId.trim() || !contextSaved
-              ? "Guarda el contexto de operación"
-              : "Abrir cámara y escanear"}
+            : !moduleOperational
+              ? "Módulo en integración"
+              : !operationId.trim() || !contextSaved
+                ? "Guarda el contexto de operación"
+                : "Abrir cámara y escanear"}
       </Button>
       <Card className="p-4">
         <div className="flex items-center justify-between">
