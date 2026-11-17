@@ -49,8 +49,22 @@ create policy mobile_scanner_devices_select_member
   on public.mobile_scanner_devices
   for select to authenticated
   using (private.is_business_member(business_id, (select auth.uid())));
-revoke all on table public.mobile_scanner_devices from public, anon, authenticated;
 grant select on public.mobile_scanner_devices to authenticated;
+
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+    and not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public'
+        and tablename = 'mobile_scanner_devices'
+    )
+  then
+    alter publication supabase_realtime add table public.mobile_scanner_devices;
+  end if;
+end
+$$;
 
 create or replace function private.pair_mobile_scanner_device(
   p_pair_code text,
