@@ -103,7 +103,7 @@ begin
     raise exception 'INVALID_COUNT_MODE' using errcode = '22023';
   end if;
   v_quantity := coalesce(p_quantity, 1);
-  if v_quantity <= 0 or (p_mode = 'unit' and v_quantity <> 1) then
+  if v_quantity <= 0 or v_quantity <> trunc(v_quantity) or (p_mode = 'unit' and v_quantity <> 1) then
     raise exception 'INVALID_COUNT_QUANTITY' using errcode = '22023';
   end if;
 
