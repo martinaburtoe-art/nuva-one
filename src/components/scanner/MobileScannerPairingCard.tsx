@@ -88,7 +88,7 @@ export function MobileScannerPairingCard({
         {session?.pairCode && !paired ? (
           <>
             <div className="mt-0.5 font-mono text-lg font-bold tracking-[0.18em]">{session.pairCode}</div>
-            <div className="text-[10px] text-muted-foreground">Código válido por 10 minutos · solo para esta operación</div>
+            <div className="text-[10px] text-muted-foreground">Código válido por 10 minutos · operación {operationId.slice(0, 8)}…</div>
           </>
         ) : (
           <div className="text-xs text-muted-foreground">{paired ? "Celular vinculado y listo para escanear" : loading ? "Preparando código…" : "Genera un código para vincular"}</div>
