@@ -93,7 +93,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
     }
   }
 
-  const activeCount = devices.filter(d => d.status === "paired" && new Date(d.expires_at).getTime() > Date.now()).length;
+  const onlineCount = devices.filter(d => d.status === "paired" && new Date(d.expires_at).getTime() > Date.now() && !!d.last_seen_at && Date.now() - new Date(d.last_seen_at).getTime() < 120_000).length;
 
   return (
     <Card className="space-y-3 p-4">
@@ -104,7 +104,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
             <h3 className="font-semibold">Device Hub</h3>
             <p className="text-xs text-muted-foreground">Dispositivos vinculados a este negocio</p>
           </div>
-          <Badge variant="secondary">{activeCount} activos</Badge>
+          <Badge variant="secondary">{onlineCount} en línea</Badge>
         </div>
         <Button size="sm" variant="outline" onClick={() => void refresh()} disabled={loading}>
           <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />Actualizar
@@ -127,7 +127,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold">{device.device_name || "Nüva Mobile"}</span>
                     <Badge variant={active ? "default" : device.status === "pending" ? "secondary" : "outline"}>
-                      {active ? "Conectado" : pendingExpired ? "Expirado" : device.status === "pending" ? "Pendiente" : device.status === "revoked" ? "Revocado" : "Expirado"}
+                      {active ? "En línea" : leased ? "Vinculado" : pendingExpired ? "Expirado" : device.status === "pending" ? "Pendiente" : device.status === "revoked" ? "Revocado" : "Expirado"}
                     </Badge>
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
