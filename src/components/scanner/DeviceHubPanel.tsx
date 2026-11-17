@@ -20,6 +20,7 @@ type DeviceSession = {
   paired_at: string | null;
   last_seen_at: string | null;
   expires_at: string;
+  pair_code_expires_at: string | null;
 };
 
 const moduleLabels: Record<string, string> = {
@@ -46,7 +47,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
     try {
       const client = supabase as any;
       const { data, error } = await client.from("mobile_scanner_sessions")
-        .select("id,device_name,status,active_module,active_operation_id,paired_by,created_by,created_at,paired_at,last_seen_at,expires_at")
+        .select("id,device_name,status,active_module,active_operation_id,paired_by,created_by,created_at,paired_at,last_seen_at,expires_at,pair_code_expires_at")
         .eq("business_id", businessId)
         .order("created_at", { ascending: false })
         .limit(30);
@@ -115,6 +116,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
         <div className="space-y-2">
           {devices.map(device => {
             const active = device.status === "paired" && new Date(device.expires_at).getTime() > Date.now();
+            const pendingExpired = device.status === "pending" && !!device.pair_code_expires_at && new Date(device.pair_code_expires_at).getTime() <= Date.now();
             const canRevoke = isAdmin || device.created_by === userId || device.paired_by === userId;
             return (
               <div key={device.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
@@ -125,7 +127,7 @@ export function DeviceHubPanel({ businessId }: { businessId: string }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold">{device.device_name || "Nüva Mobile"}</span>
                     <Badge variant={active ? "default" : device.status === "pending" ? "secondary" : "outline"}>
-                      {active ? "Conectado" : device.status === "pending" ? "Pendiente" : device.status === "revoked" ? "Revocado" : "Expirado"}
+                      {active ? "Conectado" : pendingExpired ? "Expirado" : device.status === "pending" ? "Pendiente" : device.status === "revoked" ? "Revocado" : "Expirado"}
                     </Badge>
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
