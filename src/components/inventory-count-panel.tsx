@@ -44,7 +44,8 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
   const [newProductPrice, setNewProductPrice] = useState("0");
   const [newProductCost, setNewProductCost] = useState("0");
   const [existingProductId, setExistingProductId] = useState("");
-  const [pendingMobileEvent, setPendingMobileEvent] = useState<Pick<MobileScannerEvent, "client_event_id" | "session_id" | "code"> | null>(null);
+  const [pendingMobileEvents, setPendingMobileEvents] = useState<Pick<MobileScannerEvent, "client_event_id" | "session_id" | "code">[]>([]);
+  const pendingMobileEvent = pendingMobileEvents[0] ?? null;
   const inputRef = useRef<HTMLInputElement>(null);
 
   const refreshLines = useCallback(async (id = stocktakeId) => {
@@ -102,45 +103,65 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
 
   useEffect(() => {
     if (!stocktakeId) return;
-    const unsubscribe = subscribeToMobileScannerOperation(stocktakeId, "inventory", async event => {
-      try {
-        const resolution = await resolveProductCode(event.code);
-        if (resolution.status === "FOUND" && resolution.product) {
-          const product = {
+    const unsubscribe = subscribeToMobileScannerOperation(stocktakeId, "inventory", event => {
+      if (countMode === "unit") {
+        void resolveProductCode(event.code).then(async resolution => {
+          if (resolution.status !== "FOUND" || !resolution.product) {
+            toast.error(resolution.status === "NOT_FOUND"
+              ? `Código ${event.code} no registrado. Cambia a modo cantidad para resolverlo sin perder la lectura.`
+              : "No se pudo resolver el código recibido desde el celular.");
+            return;
+          }
+          await addProduct({
             id: resolution.product.product_id,
             name: resolution.product.name ?? "Producto",
             stock: Number(resolution.product.stock ?? 0),
             barcode: resolution.product.barcode,
             sku: resolution.product.sku,
-          };
-          if (countMode === "unit") {
-            await addProduct(product, event.code, event);
-          } else {
-            setCode(event.code);
-            setPendingMobileEvent({
-              client_event_id: event.client_event_id,
-              session_id: event.session_id,
-              code: event.code,
-            });
-            toast.info("Código recibido desde el celular. Ingresa la cantidad y pulsa Agregar.");
-          }
-        } else if (resolution.status === "NOT_FOUND") {
-          setUnknownCode(event.code);
-          setPendingMobileEvent({
-            client_event_id: event.client_event_id,
-            session_id: event.session_id,
-            code: event.code,
-          });
-          toast.info("Código desconocido recibido desde el celular.");
-        } else {
-          toast.error("No se pudo resolver el código recibido desde el celular.");
-        }
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falló la lectura móvil");
+          }, event.code, event);
+        }).catch(error => toast.error(error instanceof Error ? error.message : "Falló la lectura móvil"));
+        return;
       }
+      const queued = {
+        client_event_id: event.client_event_id,
+        session_id: event.session_id,
+        code: event.code,
+      };
+      setPendingMobileEvents(current => current.some(item => item.client_event_id === queued.client_event_id)
+        ? current
+        : [...current, queued]);
     });
     return unsubscribe;
   }, [stocktakeId, countMode]);
+
+  // In quantity mode, resolve only the head of the FIFO queue. Later mobile scans
+  // remain queued until the operator confirms or resolves the current scan.
+  useEffect(() => {
+    if (countMode !== "quantity" || !pendingMobileEvent) return;
+    let cancelled = false;
+    setCode(pendingMobileEvent.code);
+    void resolveProductCode(pendingMobileEvent.code).then(resolution => {
+      if (cancelled) return;
+      if (resolution.status === "NOT_FOUND") {
+        setUnknownCode(pendingMobileEvent.code);
+        setNewProductName("");
+        setNewProductSku("");
+        setNewProductCategory("");
+        setNewProductPrice("0");
+        setNewProductCost("0");
+        setExistingProductId(products[0]?.id ?? "");
+        toast.info(`Código ${pendingMobileEvent.code} sin registrar. Resuelve este elemento para continuar la cola.`);
+      } else if (resolution.status === "FOUND") {
+        setUnknownCode("");
+        toast.info(`Lectura recibida: ${pendingMobileEvent.code}. Confirma la cantidad para continuar.`);
+      } else {
+        toast.error(`No se pudo validar ${pendingMobileEvent.code}. Puedes reintentar o cancelar la lectura.`);
+      }
+    }).catch(error => {
+      if (!cancelled) toast.error(error instanceof Error ? error.message : "Falló la resolución de la lectura móvil");
+    });
+    return () => { cancelled = true; };
+  }, [countMode, pendingMobileEvent?.client_event_id, products]);
 
   async function startCount() {
     if (!active || !canWrite) return null;
@@ -183,7 +204,7 @@ export function InventoryCountPanel({ onOpenProducts }: { onOpenProducts?: () =>
       setCode("");
       setCountQuantity("1");
       setUnknownCode("");
-      setPendingMobileEvent(null);
+      if (mobileEvent) setPendingMobileEvents(current => current.filter(item => item.client_event_id !== mobileEvent.client_event_id));
       inputRef.current?.focus();
       if (!result.inserted) toast.info("Esta lectura ya estaba registrada; no se duplicó");
       else toast.success(countMode === "unit" ? "Unidad contabilizada" : `${quantity} unidades contabilizadas`);
