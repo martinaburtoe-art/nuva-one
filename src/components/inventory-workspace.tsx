@@ -28,6 +28,37 @@ type View = "intelligence" | "stock" | "products" | "replenishment" | "operation
 const views = [["intelligence", "Intelligence", "Entiende qué pasa y qué atender.", Sparkles], ["stock", "Stock", "Disponibilidad, reservas y reposición.", Boxes], ["products", "Productos", "Administra catálogo y parámetros.", PackagePlus], ["replenishment", "Abastecimiento", "Convierte alertas en una compra accionable.", ShoppingCart], ["operations", "Movimientos", "Entradas, salidas y ajustes trazables.", History], ["count", "Conteo", "Compara físico vs. sistema y ajusta.", ClipboardCheck]] as const;
 const statusText: Record<InventoryStatus, string> = { out_of_stock: "Sin stock", critical: "Crítico", reorder: "Reponer", healthy: "Saludable" };
 
+async function optimizeProductImage(file: File): Promise<File> {
+  if (file.type === "image/gif") {
+    if (file.size > 5 * 1024 * 1024) throw new Error("Los GIF deben pesar 5 MB o menos.");
+    return file;
+  }
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    if (file.size <= 5 * 1024 * 1024) return file;
+    throw new Error("No se pudo optimizar esta imagen. Prueba con JPG, PNG o WEBP de hasta 5 MB.");
+  }
+  try {
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("No se pudo procesar la fotografía.");
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/webp", 0.84));
+    if (!blob) throw new Error("No se pudo convertir la fotografía.");
+    if (blob.size > 5 * 1024 * 1024) throw new Error("La imagen optimizada todavía supera los 5 MB. Usa una imagen más pequeña.");
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "producto";
+    return new File([blob], baseName + ".webp", { type: "image/webp", lastModified: Date.now() });
+  } finally {
+    bitmap.close();
+  }
+}
+
 export function InventoryWorkspace() {
   const { data: role } = useMyRole(); const canWrite = canWriteOperations(role); const [businessId] = useActiveBusinessId();
   const { data, isLoading } = useBizList<Product>("products", { order: "created_at", select: "id,name,image_url,sku,stock,reserved_stock,in_transit_stock,blocked_stock,low_stock_threshold,reorder_point,max_stock,cost,price" }); const insert = useBizInsert("products"); const update = useBizUpdate("products"); const remove = useBizDelete("products");
@@ -76,9 +107,10 @@ export function InventoryWorkspace() {
       let photoUploadFailed = false;
       if (imageFile && productId) {
         try {
-          const extension = imageFile.type === "image/jpeg" ? "jpg" : imageFile.type.split("/")[1];
+          const optimizedImage = await optimizeProductImage(imageFile);
+          const extension = optimizedImage.type === "image/jpeg" ? "jpg" : optimizedImage.type.split("/")[1];
           const objectPath = `${businessId}/${productId}/${crypto.randomUUID()}.${extension}`;
-          const { error: uploadError } = await supabase.storage.from("product-images").upload(objectPath, imageFile, {
+          const { error: uploadError } = await supabase.storage.from("product-images").upload(objectPath, optimizedImage, {
             cacheControl: "31536000",
             contentType: imageFile.type,
             upsert: false,
@@ -113,7 +145,7 @@ export function InventoryWorkspace() {
     {view === "operations" && <InventoryScannerOperations />}
     {view === "count" && <InventoryCountPanel />}
     <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground"><strong className="text-foreground">Flujo:</strong> Intelligence = decidir · Stock = consultar · Movimientos = operar · Conteo = verificar · Productos = administrar · Abastecimiento = preparar compra.</div>
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>{editing ? "Editar producto" : "Nuevo producto"}</DialogTitle></DialogHeader><form onSubmit={save} className="max-h-[78vh] space-y-4 overflow-y-auto pr-1"><Field label="Producto"><Input name="name" defaultValue={editing?.name ?? ""} required /></Field><div className="space-y-2"><Label>Fotografía del producto</Label><div className="overflow-hidden rounded-xl border bg-muted/20">{imagePreview ? <img src={imagePreview} alt="Vista previa del producto" className="h-44 w-full object-contain" /> : <div className="flex h-36 flex-col items-center justify-center gap-2 text-sm text-muted-foreground"><PackagePlus className="h-7 w-7" /><span>Sin fotografía todavía</span></div>}</div><div className="grid grid-cols-2 gap-2"><label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium hover:bg-muted/50"><span>Tomar foto</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" capture="environment" className="sr-only" onChange={e => { const file = e.target.files?.[0]; if (!file) return; if (!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type) || file.size > 5 * 1024 * 1024) { toast.error("Usa JPG, PNG, WEBP o GIF de hasta 5 MB."); e.currentTarget.value = ""; return; } setImageFile(file); setImagePreview(URL.createObjectURL(file)); }} /></label><label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium hover:bg-muted/50"><span>Subir imagen</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => { const file = e.target.files?.[0]; if (!file) return; if (!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type) || file.size > 5 * 1024 * 1024) { toast.error("Usa JPG, PNG, WEBP o GIF de hasta 5 MB."); e.currentTarget.value = ""; return; } setImageFile(file); setImagePreview(URL.createObjectURL(file)); }} /></label></div><Field label="O pega una URL de imagen"><Input name="image_url" type="url" placeholder="https://…" defaultValue={editing?.image_url ?? ""} /></Field><p className="text-xs text-muted-foreground">JPG, PNG, WEBP o GIF · máximo 5 MB. La foto subida se guarda en el espacio de imágenes de Nüva One.</p></div><div className="grid grid-cols-2 gap-3"><Field label="SKU"><Input name="sku" defaultValue={editing?.sku ?? ""} /></Field><Field label="Stock"><Input name="stock" type="number" min="0" defaultValue={editing?.stock ?? 0} /></Field></div><div className="grid grid-cols-2 gap-3"><Field label="Mínimo"><Input name="minimum" type="number" min="0" defaultValue={editing?.low_stock_threshold ?? 0} /></Field><Field label="Reposición"><Input name="reorder" type="number" min="0" defaultValue={editing?.reorder_point ?? 0} /></Field></div><div className="grid grid-cols-2 gap-3"><Field label="Costo"><CurrencyInput name="cost" defaultValue={editing?.cost ?? 0} /></Field><Field label="Precio"><CurrencyInput name="price" defaultValue={editing?.price ?? 0} /></Field></div><Field label="Stock objetivo"><Input name="target" type="number" min="0" defaultValue={editing?.max_stock ?? 0} /></Field><Button className="w-full" type="submit" disabled={!canWrite}>{editing ? "Guardar cambios" : "Crear producto"}</Button></form></DialogContent></Dialog>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>{editing ? "Editar producto" : "Nuevo producto"}</DialogTitle></DialogHeader><form onSubmit={save} className="max-h-[78vh] space-y-4 overflow-y-auto pr-1"><Field label="Producto"><Input name="name" defaultValue={editing?.name ?? ""} required /></Field><div className="space-y-2"><Label>Fotografía del producto</Label><div className="overflow-hidden rounded-xl border bg-muted/20">{imagePreview ? <img src={imagePreview} alt="Vista previa del producto" className="h-44 w-full object-contain" /> : <div className="flex h-36 flex-col items-center justify-center gap-2 text-sm text-muted-foreground"><PackagePlus className="h-7 w-7" /><span>Sin fotografía todavía</span></div>}</div><div className="grid grid-cols-2 gap-2"><label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium hover:bg-muted/50"><span>Tomar foto</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" capture="environment" className="sr-only" onChange={e => { const file = e.target.files?.[0]; if (!file) return; if (!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type) || file.size > 20 * 1024 * 1024) { toast.error("Usa JPG, PNG, WEBP o GIF de hasta 20 MB. La foto se optimizará antes de subirla."); e.currentTarget.value = ""; return; } setImageFile(file); setImagePreview(URL.createObjectURL(file)); }} /></label><label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium hover:bg-muted/50"><span>Subir imagen</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => { const file = e.target.files?.[0]; if (!file) return; if (!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type) || file.size > 5 * 1024 * 1024) { toast.error("Usa JPG, PNG, WEBP o GIF de hasta 5 MB."); e.currentTarget.value = ""; return; } setImageFile(file); setImagePreview(URL.createObjectURL(file)); }} /></label></div><Field label="O pega una URL de imagen"><Input name="image_url" type="url" placeholder="https://…" defaultValue={editing?.image_url ?? ""} /></Field><p className="text-xs text-muted-foreground">Nüva One optimiza las fotos a WEBP y máximo 1600 px antes de guardarlas (hasta 20 MB originales y 5 MB finales).</p></div><div className="grid grid-cols-2 gap-3"><Field label="SKU"><Input name="sku" defaultValue={editing?.sku ?? ""} /></Field><Field label="Stock"><Input name="stock" type="number" min="0" defaultValue={editing?.stock ?? 0} /></Field></div><div className="grid grid-cols-2 gap-3"><Field label="Mínimo"><Input name="minimum" type="number" min="0" defaultValue={editing?.low_stock_threshold ?? 0} /></Field><Field label="Reposición"><Input name="reorder" type="number" min="0" defaultValue={editing?.reorder_point ?? 0} /></Field></div><div className="grid grid-cols-2 gap-3"><Field label="Costo"><CurrencyInput name="cost" defaultValue={editing?.cost ?? 0} /></Field><Field label="Precio"><CurrencyInput name="price" defaultValue={editing?.price ?? 0} /></Field></div><Field label="Stock objetivo"><Input name="target" type="number" min="0" defaultValue={editing?.max_stock ?? 0} /></Field><Button className="w-full" type="submit" disabled={!canWrite}>{editing ? "Guardar cambios" : "Crear producto"}</Button></form></DialogContent></Dialog>
     <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}><DialogContent><DialogHeader><DialogTitle>Ajustar stock · {adjustProduct?.name || "Producto"}</DialogTitle></DialogHeader><form onSubmit={doAdjust} className="space-y-4"><p className="text-sm text-muted-foreground">Positivo = entrada · negativo = salida. El movimiento queda trazado.</p><Field label="Cantidad (+ / -)"><Input name="delta" type="number" step="1" required /></Field><Field label="Motivo"><Input name="reason" placeholder="Recepción, merma, corrección…" required /></Field><Button className="w-full" type="submit" disabled={!canWrite}>Registrar ajuste</Button></form></DialogContent></Dialog>
   </div></ModuleGuard>;
 }
