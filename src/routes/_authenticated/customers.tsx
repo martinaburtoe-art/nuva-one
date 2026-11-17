@@ -256,6 +256,7 @@ function Customers() {
     <ModuleGuard module="customers">
       <div className="nuva-crm-workspace p-4 md:p-6">
         <PageHeader
+          eyebrow="RELACIONES Y CRECIMIENTO"
           title="Clientes"
           showOperatingPulse
           description="Tu cartera, su actividad y la próxima acción. Todo el contexto en una sola vista."
