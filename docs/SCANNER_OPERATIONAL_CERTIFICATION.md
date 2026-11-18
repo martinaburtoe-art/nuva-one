@@ -8,6 +8,16 @@ This checklist defines the production acceptance criteria for using a mobile pho
 
 `camera/HID/native input -> normalize -> product resolver -> operation -> stock/cash/audit`
 
+## Current release slice
+
+- Operational modules in this PR: **Caja and Inventario**. Receiving, picking, dispatch, returns, and transfers remain disabled in the UI and are not certified.
+- The phone-side IndexedDB outbox is implemented with FIFO replay and stable idempotency UUIDs. Automated build/type checks pass; physical offline/reconnect testing on Android/iOS is still required.
+- Full CI passed on commit `64808118d735879764761bd905998a90faba77ba`: 33 pgTAP assertions, migration reset/recovery, dependency audit, lint, typecheck, unit tests, build, and release-evidence generation.
+- The Vercel preview is READY, but the database migration is not applied to production and the PR is not merged.
+- A separate durable device registry and zone assignment/overlap reconciliation are not included in this slice. The current device model is a renewable, revocable session lease; the current stocktake is business-wide because the production schema has no warehouse/location dimension.
+- The automated Gemini reviewer was unavailable due provider quota; its result is `NEEDS_EVIDENCE`, not an approval.
+
+
 ## Product onboarding
 
 - [ ] Unknown scanned code opens the new-product flow with the scanned code prefilled.
@@ -51,3 +61,34 @@ This checklist defines the production acceptance criteria for using a mobile pho
 ## Production acceptance
 
 A feature is not certified by a successful build alone. It must have a passing automated test where practical, a successful deployment, and a verified production flow. The status must remain **NOT CERTIFIED** until every applicable checkbox above has evidence.
+
+## Device Hub — multi-device / multi-module acceptance
+
+- [ ] A stable registered device can be reused across modules without re-pairing.
+- [ ] A device connection is separate from the one-time pairing token lifetime.
+- [ ] Multiple devices can be connected to one business concurrently.
+- [ ] Every device has its own authenticated user, business scope, label, last-seen time, and revocation state.
+- [ ] Device registration never grants access by itself; all RPCs re-check Auth, business membership, module permission, and operation context.
+- [ ] A scan is bound to exactly one active POS cart/register or one inventory/receiving task.
+- [ ] Two POS carts never consume each other's scanner events.
+- [ ] Revocation is enforced by the database on every subsequent write, including stale clients.
+- [ ] Reconnection reloads canonical PostgreSQL state and replays pending outbox events with the same idempotency UUID.
+
+## Collaborative inventory stocktake acceptance
+
+- [ ] Count sessions are visible to all authorized participants in the same business.
+- [ ] Every scan is persisted immediately; no client-only count array is authoritative.
+- [ ] Unit mode increments one unit per unique scan event.
+- [ ] Quantity mode records an explicit quantity event and never silently overwrites another participant's absolute count.
+- [ ] The event ledger is append-only and has a unique constraint on stocktake + client event UUID.
+- [ ] Each event records user, device, location/zone, code, mode, and server timestamp.
+- [ ] Overlapping product/zone assignments are detected and require reconciliation where necessary.
+- [ ] Finalization is atomic, repeat-safe, and produces auditable inventory movements exactly once.
+- [ ] Stock changes (sales, receipts, transfers, adjustments) during a count are reconciled against a defined snapshot/cut-off; no movement is lost or double-applied.
+
+## Unknown codes in every supported workflow
+
+- [ ] Unknown code opens a create/associate flow in Caja, Inventory, and receiving.
+- [ ] Creating from a count defaults opening stock to zero; physical quantity is recorded only in the count.
+- [ ] Associating a code to an existing product does not create a duplicate product.
+- [ ] The new code resolves immediately through the canonical tenant-safe resolver.
