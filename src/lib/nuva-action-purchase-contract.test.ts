@@ -22,6 +22,7 @@ describe("parsePurchaseActionPayload", () => {
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: true, unit_cost: 100 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 1.5, unit_cost: 100 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 1, unit_cost: 100.5 }] })).toMatchObject({ ok: false });
+    expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 1000000000, unit_cost: 1000000000 }] })).toMatchObject({ ok: false, reason: expect.stringContaining("rango numérico") });
   });
 
   it("rejects duplicate product lines to avoid ambiguous totals", () => {
