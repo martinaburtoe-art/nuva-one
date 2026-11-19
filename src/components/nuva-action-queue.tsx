@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { CheckCircle2, Clock3, XCircle, RefreshCw, Play, ArrowUpRight } from "lucide-react";
@@ -204,10 +204,18 @@ export function NuvaActionQueue() {
         const details = typeof payload.details === "string" ? ` ${payload.details}` : "";
         throw new Error(`${payload.error ?? "No se pudo ejecutar la acción"}${details}`);
       }
-      await query.refetch();
+      await Promise.all([
+        query.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["purchases", active?.id] }),
+        queryClient.invalidateQueries({ queryKey: ["nuva_action_queue", active?.id] }),
+      ]);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "No se pudo ejecutar la acción");
-      await query.refetch();
+      await Promise.all([
+        query.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["purchases", active?.id] }),
+        queryClient.invalidateQueries({ queryKey: ["nuva_action_queue", active?.id] }),
+      ]);
     } finally {
       setExecuting(null);
     }
