@@ -62,7 +62,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
         let result: Record<string, unknown>;
         if (actionType === "low-stock" || actionType === "purchase-pressure") {
           if (!purchasePayload?.ok) throw new Error("La compra no superó la validación de datos.");
-          const supplier = await session.supabase.from("suppliers").select("id").eq("business_id", businessId).eq("id", purchasePayload.value.supplier_id).maybeSingle();
+          const supplier = await session.supabase.from("suppliers").select("id,name").eq("business_id", businessId).eq("id", purchasePayload.value.supplier_id).maybeSingle();
           if (supplier.error) throw supplier.error;
           if (!supplier.data) throw new Error("El proveedor seleccionado no existe en esta empresa.");
           const productIds = purchasePayload.value.items.map((item) => item.product_id);
@@ -73,6 +73,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           const items = purchasePayload.value.items.map((item) => ({
             product_id: item.product_id,
             name: productNames.get(item.product_id) ?? "Producto",
+            qty: item.quantity,
             quantity: item.quantity,
             unit_cost: item.unit_cost,
             total: item.quantity * item.unit_cost,
@@ -82,6 +83,10 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           const { data: purchaseData, error: purchaseError } = await session.supabase.from("purchases").insert({
             business_id: businessId,
             supplier_id: purchasePayload.value.supplier_id,
+            supplier_name: supplier.data.name,
+            category: "inventario",
+            tax_treatment: "pending",
+            vat_rate: 19,
             status: "pending",
             total,
             purchase_date: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()),
