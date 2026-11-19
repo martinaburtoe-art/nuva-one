@@ -4,8 +4,12 @@ export type PurchaseActionLine = {
   unit_cost: number;
 };
 
+export type PurchaseTaxTreatment = "taxable" | "exempt" | "non_taxable";
+
 export type PurchaseActionPayload = {
   supplier_id: string;
+  tax_treatment: PurchaseTaxTreatment;
+  vat_rate: 0 | 19;
   items: PurchaseActionLine[];
 };
 
@@ -26,6 +30,15 @@ export function parsePurchaseActionPayload(payload: unknown): PurchaseActionPayl
   const supplierId = typeof candidate.supplier_id === "string" ? candidate.supplier_id.trim() : "";
   if (!supplierId) {
     return { ok: false, reason: "Selecciona un proveedor real antes de ejecutar la compra." };
+  }
+
+  const taxTreatment = candidate.tax_treatment;
+  const vatRate = Number(candidate.vat_rate);
+  if (taxTreatment !== "taxable" && taxTreatment !== "exempt" && taxTreatment !== "non_taxable") {
+    return { ok: false, reason: "Selecciona el tratamiento tributario indicado en el documento del proveedor." };
+  }
+  if ((taxTreatment === "taxable" && vatRate !== 19) || (taxTreatment !== "taxable" && vatRate !== 0)) {
+    return { ok: false, reason: "La tasa IVA no coincide con el tratamiento tributario seleccionado." };
   }
 
   if (!Array.isArray(candidate.items) || candidate.items.length === 0) {
@@ -70,7 +83,7 @@ export function parsePurchaseActionPayload(payload: unknown): PurchaseActionPayl
     items.push({ product_id: productId, quantity, unit_cost: unitCost });
   }
 
-  return { ok: true, value: { supplier_id: supplierId, items } };
+  return { ok: true, value: { supplier_id: supplierId, tax_treatment: taxTreatment, vat_rate: vatRate as 0 | 19, items } };
 }
 
 export type PurchaseRecordItem = {
