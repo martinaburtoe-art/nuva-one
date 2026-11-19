@@ -78,12 +78,12 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
             supplier_id: purchasePayload.value.supplier_id,
             supplier_name: supplier.data.name,
             category: "Mercadería para reventa",
-            tax_treatment: "pending",
-            vat_rate: 19,
+            tax_treatment: purchasePayload.value.tax_treatment,
+            vat_rate: purchasePayload.value.vat_rate,
             status: "pending",
             total,
             purchase_date: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()),
-            notes: `Acción Nüva: ${action.title}. ${action.description ?? ""}`,
+            notes: `Acción Nüva: ${action.title}. ${action.description ?? ""} Tratamiento tributario declarado: ${purchasePayload.value.tax_treatment} (${purchasePayload.value.vat_rate}% IVA); verificar contra documento tributario al recibir.`,
             items,
           }).select("id").single();
           if (purchaseError) throw purchaseError;
