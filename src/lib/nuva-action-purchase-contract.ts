@@ -78,6 +78,9 @@ export function parsePurchaseActionPayload(payload: unknown): PurchaseActionPayl
     if (!Number.isSafeInteger(unitCost) || unitCost <= 0) {
       return { ok: false, reason: `El costo unitario de la línea ${index + 1} debe ser un entero positivo en CLP.` };
     }
+    if (!Number.isSafeInteger(quantity * unitCost)) {
+      return { ok: false, reason: `El total de la línea ${index + 1} supera el rango numérico seguro.` };
+    }
 
     seenProducts.add(productId);
     items.push({ product_id: productId, quantity, unit_cost: unitCost });
