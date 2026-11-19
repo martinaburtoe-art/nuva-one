@@ -42,8 +42,16 @@ export function parsePurchaseActionPayload(payload: unknown): PurchaseActionPayl
 
     const item = rawItem as Record<string, unknown>;
     const productId = typeof item.product_id === "string" ? item.product_id.trim() : "";
-    const quantity = Number(item.quantity);
-    const unitCost = Number(item.unit_cost);
+    const quantityInput = item.quantity;
+    const unitCostInput = item.unit_cost;
+    if ((typeof quantityInput !== "number" && typeof quantityInput !== "string") || String(quantityInput).trim() === "") {
+      return { ok: false, reason: `La cantidad de la línea ${index + 1} no es válida.` };
+    }
+    if ((typeof unitCostInput !== "number" && typeof unitCostInput !== "string") || String(unitCostInput).trim() === "") {
+      return { ok: false, reason: `El costo unitario de la línea ${index + 1} no es válido.` };
+    }
+    const quantity = Number(quantityInput);
+    const unitCost = Number(unitCostInput);
 
     if (!productId) {
       return { ok: false, reason: `Selecciona un producto válido en la línea ${index + 1}.` };
