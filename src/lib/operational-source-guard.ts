@@ -1,17 +1,21 @@
 export type OperationalSourceCheck = {
   name: string;
+  data: unknown[] | null;
   error: { message: string } | null;
 };
 
 /**
  * Prevents Nüva Intelligence from presenting a partial data snapshot as a
- * complete business assessment. Missing sources must be surfaced as an error
- * and retried, not silently converted into empty datasets.
+ * complete business assessment. Query errors and null payloads are unavailable;
+ * an empty array is a valid, successfully fetched source.
  */
 export function assertOperationalSourcesAvailable(sources: OperationalSourceCheck[]): void {
   const failures = sources
-    .filter((source) => source.error)
-    .map((source) => `${source.name}: ${source.error?.message ?? "Error desconocido"}`);
+    .filter((source) => source.error !== null || source.data === null)
+    .map((source) => {
+      const detail = source.error?.message ?? "respuesta sin datos";
+      return `${source.name}: ${detail}`;
+    });
 
   if (failures.length > 0) {
     throw new Error(
