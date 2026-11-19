@@ -134,7 +134,7 @@ export function NuvaActionQueue() {
       setActionError("Selecciona un proveedor antes de continuar.");
       return;
     }
-    if (purchaseLines.length === 0 || purchaseLines.some((line) => !line.productId || !Number.isFinite(Number(line.quantity)) || Number(line.quantity) <= 0 || !Number.isFinite(Number(line.unitCost)) || Number(line.unitCost) <= 0)) {
+    if (purchaseLines.length === 0 || purchaseLines.some((line) => !line.productId || !Number.isSafeInteger(Number(line.quantity)) || Number(line.quantity) <= 0 || !Number.isSafeInteger(Number(line.unitCost)) || Number(line.unitCost) <= 0)) {
       setActionError("Cada línea necesita producto, cantidad mayor que cero y costo unitario mayor que cero.");
       return;
     }
@@ -308,7 +308,7 @@ export function NuvaActionQueue() {
                             </div>
                             <div className="space-y-1">
                               <Label htmlFor={`purchase-quantity-${item.id}-${index}`}>Cantidad</Label>
-                              <Input id={`purchase-quantity-${item.id}-${index}`} type="number" min="0.01" step="0.01" value={line.quantity} onChange={(event) => updatePurchaseLine(index, { quantity: event.target.value })} required />
+                              <Input id={`purchase-quantity-${item.id}-${index}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updatePurchaseLine(index, { quantity: event.target.value })} required />
                             </div>
                             <div className="space-y-1">
                               <Label htmlFor={`purchase-cost-${item.id}-${index}`}>Costo unitario (CLP)</Label>
