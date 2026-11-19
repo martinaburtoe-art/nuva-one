@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { learnFromNuvaActionOutcome } from "@/lib/nuva-learning/nuva-server-outcome";
-import { parsePurchaseActionPayload } from "@/lib/nuva-action-purchase-contract";
+import { buildPurchaseRecordItems, parsePurchaseActionPayload } from "@/lib/nuva-action-purchase-contract";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -70,14 +70,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           if (products.error) throw products.error;
           if ((products.data ?? []).length !== productIds.length) throw new Error("Uno o más productos no pertenecen a esta empresa o ya no existen.");
           const productNames = new Map((products.data ?? []).map((product) => [product.id, product.name]));
-          const items = purchasePayload.value.items.map((item) => ({
-            product_id: item.product_id,
-            name: productNames.get(item.product_id) ?? "Producto",
-            qty: item.quantity,
-            quantity: item.quantity,
-            unit_cost: item.unit_cost,
-            total: item.quantity * item.unit_cost,
-          }));
+          const items = buildPurchaseRecordItems(purchasePayload.value.items, productNames);
           const total = items.reduce((sum, item) => sum + item.total, 0);
           if (!Number.isFinite(total) || total <= 0) throw new Error("El total calculado de la compra no es válido.");
           const { data: purchaseData, error: purchaseError } = await session.supabase.from("purchases").insert({
