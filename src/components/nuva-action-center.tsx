@@ -6,6 +6,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBusiness } from "@/lib/use-business";
 import { buildNuvaOperationalResult } from "@/lib/nuva-operational-orchestrator";
+import { assertOperationalSourcesAvailable } from "@/lib/operational-source-guard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -30,9 +31,12 @@ export function NuvaActionCenter() {
         supabase.from("transactions").select("amount,type,tx_date").eq("business_id", bid),
         supabase.from("products").select("stock,low_stock_threshold,reorder_point,price,name,sku").eq("business_id", bid),
       ])) as [QueryResult<any>, QueryResult<any>, QueryResult<any>, QueryResult<any>];
-      const failures = [salesResult, purchasesResult, transactionsResult, productsResult].map((query, index) => query.error ? `${["ventas", "compras", "caja", "inventario"][index]}: ${query.error.message}` : null).filter(Boolean) as string[];
-      if (failures.length === 4) throw new Error(`No se pudieron cargar los datos del negocio. ${failures.join(" · ")}`);
-      if (failures.length) console.warn("Nüva Intelligence: análisis parcial por datos no disponibles", failures);
+      assertOperationalSourcesAvailable([
+        { name: "ventas", error: salesResult.error },
+        { name: "compras", error: purchasesResult.error },
+        { name: "caja y finanzas", error: transactionsResult.error },
+        { name: "inventario", error: productsResult.error },
+      ]);
       return buildNuvaOperationalResult({ sales: salesResult.data ?? [], purchases: purchasesResult.data ?? [], transactions: transactionsResult.data ?? [], products: productsResult.data ?? [] });
     },
   });
