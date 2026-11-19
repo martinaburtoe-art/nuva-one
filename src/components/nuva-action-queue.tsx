@@ -51,7 +51,7 @@ export function NuvaActionQueue() {
   const [executing, setExecuting] = useState<string | null>(null);
   const query = useQuery({
     enabled: !!active?.id,
-    queryKey: ["nuva-action-queue", active?.id],
+    queryKey: ["nuva_action_queue", active?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("nuva_action_queue")
@@ -83,15 +83,24 @@ export function NuvaActionQueue() {
     },
   });
 
-  const openPurchaseDraft = (id: string) => {
+  const openPurchaseDraft = (item: QueueItem) => {
+    const payloadObject = item.payload && typeof item.payload === "object" && !Array.isArray(item.payload)
+      ? item.payload as { [key: string]: Json | undefined }
+      : {};
+    const suggestedQuantity = Number(payloadObject.suggested_quantity);
+    const referenceCost = Number(payloadObject.unit_cost_reference);
     setActionError(null);
-    setPurchaseActionId(id);
+    setPurchaseActionId(item.id);
     setSupplierId("");
     setShowNewSupplier(false);
     setNewSupplierName("");
     setNewSupplierEmail("");
     setNewSupplierPhone("");
-    setPurchaseLines([{ productId: "", quantity: "1", unitCost: "" }]);
+    setPurchaseLines([{
+      productId: typeof payloadObject.product_id === "string" ? payloadObject.product_id : "",
+      quantity: Number.isSafeInteger(suggestedQuantity) && suggestedQuantity > 0 ? String(suggestedQuantity) : "1",
+      unitCost: Number.isSafeInteger(referenceCost) && referenceCost > 0 ? String(referenceCost) : "",
+    }]);
   };
 
   const updatePurchaseLine = (index: number, patch: Partial<(typeof purchaseLines)[number]>) => {
@@ -351,7 +360,7 @@ export function NuvaActionQueue() {
                   </>
                 )}
                 {item.status === "approved" && item.mode === "prepare" && canApprove && (item.action_type === "low-stock" || item.action_type === "purchase-pressure") && purchaseActionId !== item.id && (
-                  <Button size="sm" onClick={() => openPurchaseDraft(item.id)}><Play className="mr-1 h-3.5 w-3.5" /> Completar compra</Button>
+                  <Button size="sm" onClick={() => openPurchaseDraft(item)}><Play className="mr-1 h-3.5 w-3.5" /> Completar compra</Button>
                 )}
                 {item.status === "approved" && item.mode === "prepare" && canApprove && item.action_type !== "low-stock" && item.action_type !== "purchase-pressure" && (
                   <Button size="sm" onClick={() => execute(item.id)} disabled={executing === item.id}>
