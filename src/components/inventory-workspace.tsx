@@ -55,8 +55,8 @@ export function InventoryWorkspace() {
     if (pendingPurchaseProductIds.has(product.id)) return toast.info("Este producto ya tiene una orden de compra pendiente de recepción.");
     const m = getInventoryMetrics(product);
     if (!Number.isSafeInteger(suggestedQuantity) || suggestedQuantity <= 0) return toast.error("La cantidad sugerida no es válida.");
-    const priority = m.health === "out_of_stock" ? "critical" : m.health === "critical" ? "high" : "medium";
-    const impact = m.health === "out_of_stock" ? 90 : m.health === "critical" ? 75 : 60;
+    const priority = m.status === "out_of_stock" ? "critical" : m.status === "critical" ? "high" : "medium";
+    const impact = m.status === "out_of_stock" ? 90 : m.status === "critical" ? 75 : 60;
     const businessDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     try {
       await insertQueueAction.mutateAsync({
