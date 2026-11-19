@@ -88,7 +88,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           }).select("id").single();
           if (purchaseError) throw purchaseError;
           businessMutationCommitted = true;
-          result = { operation: "purchase_created", record_id: purchaseData.id, total, currency: "CLP", line_count: items.length };
+          result = { operation: "purchase_draft_created", record_id: purchaseData.id, total, currency: "CLP", line_count: items.length, status: "pending" };
         } else if (actionType === "receivables-overdue" || actionType === "growth-opportunity") {
           const activityPayload = { business_id: businessId, type: "task", content: `Acción Nüva: ${action.title}. ${action.description ?? ""}`, completed: false, created_by: session.userId } as unknown as Database["public"]["Tables"]["customer_activities"]["Insert"];
           const { data: activityData, error: activityError } = await session.supabase.from("customer_activities").insert(activityPayload).select("id").single();
