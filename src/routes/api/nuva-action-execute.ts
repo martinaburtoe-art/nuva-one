@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
             business_id: businessId,
             supplier_id: purchasePayload.value.supplier_id,
             supplier_name: supplier.data.name,
-            category: "inventario",
+            category: "Mercadería para reventa",
             tax_treatment: "pending",
             vat_rate: 19,
             status: "pending",
