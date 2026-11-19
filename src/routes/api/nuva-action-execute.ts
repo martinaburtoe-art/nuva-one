@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { learnFromNuvaActionOutcome } from "@/lib/nuva-learning/nuva-server-outcome";
+import { parsePurchaseActionPayload } from "@/lib/nuva-action-purchase-contract";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -36,6 +37,17 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
       if (!action) return json({ error: "Acción no encontrada" }, 404);
       if (action.status !== "approved") return json({ error: `La acción debe estar aprobada. Estado actual: ${action.status}` }, 409);
       if (action.mode === "review") return json({ error: "Esta acción requiere revisión en el módulo correspondiente y no admite ejecución automática." }, 409);
+      const actionType = String(action.action_type ?? "");
+      const purchasePayload = actionType === "low-stock" || actionType === "purchase-pressure"
+        ? parsePurchaseActionPayload(action.payload)
+        : null;
+      if (purchasePayload && !purchasePayload.ok) {
+        return json({
+          error: "La recomendación todavía no contiene una compra operable. No se creó ningún registro financiero.",
+          code: "NUVA_PURCHASE_DETAILS_REQUIRED",
+          details: purchasePayload.reason,
+        }, 422);
+      }
       const { data: claimedAction, error: startError } = await session.supabase
         .from("nuva_action_queue")
         .update({ status: "executing", error_message: null, updated_at: new Date().toISOString() })
@@ -45,30 +57,51 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
         .select("id")
         .maybeSingle();
       if (startError || !claimedAction) return json({ error: "La acción ya fue tomada por otra ejecución o no sigue aprobada" }, 409);
+      let businessMutationCommitted = false;
       try {
         let result: Record<string, unknown>;
-        const actionType = String(action.action_type ?? "");
         if (actionType === "low-stock" || actionType === "purchase-pressure") {
-          const purchasePayload = {
+          if (!purchasePayload?.ok) throw new Error("La compra no superó la validación de datos.");
+          const supplier = await session.supabase.from("suppliers").select("id").eq("business_id", businessId).eq("id", purchasePayload.value.supplier_id).maybeSingle();
+          if (supplier.error) throw supplier.error;
+          if (!supplier.data) throw new Error("El proveedor seleccionado no existe en esta empresa.");
+          const productIds = purchasePayload.value.items.map((item) => item.product_id);
+          const products = await session.supabase.from("products").select("id,name").eq("business_id", businessId).in("id", productIds);
+          if (products.error) throw products.error;
+          if ((products.data ?? []).length !== productIds.length) throw new Error("Uno o más productos no pertenecen a esta empresa o ya no existen.");
+          const productNames = new Map((products.data ?? []).map((product) => [product.id, product.name]));
+          const items = purchasePayload.value.items.map((item) => ({
+            product_id: item.product_id,
+            name: productNames.get(item.product_id) ?? "Producto",
+            quantity: item.quantity,
+            unit_cost: item.unit_cost,
+            total: item.quantity * item.unit_cost,
+          }));
+          const total = items.reduce((sum, item) => sum + item.total, 0);
+          if (!Number.isFinite(total) || total <= 0) throw new Error("El total calculado de la compra no es válido.");
+          const { data: purchaseData, error: purchaseError } = await session.supabase.from("purchases").insert({
             business_id: businessId,
-            supplier_name: "Nüva — sugerencia",
+            supplier_id: purchasePayload.value.supplier_id,
             status: "pending",
-            total: 0,
+            total,
             purchase_date: new Date().toISOString().slice(0, 10),
             notes: `Acción Nüva: ${action.title}. ${action.description ?? ""}`,
-            items: action.payload ?? {},
-          } as never;
-          const { data: purchaseData, error: purchaseError } = await session.supabase.from("purchases").insert(purchasePayload).select("id").single();
+            items,
+          }).select("id").single();
           if (purchaseError) throw purchaseError;
-          result = { operation: "purchase_created", record_id: purchaseData.id };
+          businessMutationCommitted = true;
+          result = { operation: "purchase_created", record_id: purchaseData.id, total, currency: "CLP", line_count: items.length };
         } else if (actionType === "receivables-overdue" || actionType === "growth-opportunity") {
           const activityPayload = { business_id: businessId, type: "task", content: `Acción Nüva: ${action.title}. ${action.description ?? ""}`, completed: false, created_by: session.userId } as unknown as Database["public"]["Tables"]["customer_activities"]["Insert"];
           const { data: activityData, error: activityError } = await session.supabase.from("customer_activities").insert(activityPayload).select("id").single();
           if (activityError) throw activityError;
+          businessMutationCommitted = true;
           result = { operation: "customer_task_created", record_id: activityData.id };
         } else {
           throw new Error(`Acción no ejecutable: ${actionType}`);
         }
+        const { error: outcomeError } = await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: JSON.parse(JSON.stringify(result)), observed_at: new Date().toISOString() });
+        if (outcomeError) throw outcomeError;
         const { error: completeError } = await session.supabase
           .from("nuva_action_queue")
           .update({ status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), error_message: null })
@@ -76,13 +109,18 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           .eq("business_id", businessId)
           .eq("status", "executing");
         if (completeError) throw completeError;
-        await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: JSON.parse(JSON.stringify(result)), observed_at: new Date().toISOString() });
         await learnFromNuvaActionOutcome(session.supabase, action, result, true);
         return json({ ok: true, action_id: action.id, result });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Error de ejecución";
-        await session.supabase.from("nuva_action_queue").update({ status: "failed", error_message: message.slice(0, 1000), updated_at: new Date().toISOString() }).eq("id", action.id).eq("business_id", businessId);
-        await learnFromNuvaActionOutcome(session.supabase, action, { error: message }, false);
+        if (businessMutationCommitted) {
+          // Never make a committed business mutation retryable just because a later
+          // audit/state write failed. Keep it executing for explicit reconciliation.
+          await session.supabase.from("nuva_action_queue").update({ error_message: `RECONCILIATION_REQUIRED: ${message}`.slice(0, 1000), updated_at: new Date().toISOString() }).eq("id", action.id).eq("business_id", businessId).eq("status", "executing");
+        } else {
+          await session.supabase.from("nuva_action_queue").update({ status: "failed", error_message: message.slice(0, 1000), updated_at: new Date().toISOString() }).eq("id", action.id).eq("business_id", businessId).eq("status", "executing");
+          await learnFromNuvaActionOutcome(session.supabase, action, { error: message }, false);
+        }
         return json({ error: "La acción falló y quedó registrada", code: "NUVA_ACTION_EXECUTION_FAILED" }, 500);
       }
     },
