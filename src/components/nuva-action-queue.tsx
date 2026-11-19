@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Json } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 type QueueItem = {
   id: string;
@@ -203,6 +204,13 @@ export function NuvaActionQueue() {
       if (!response.ok) {
         const details = typeof payload.details === "string" ? ` ${payload.details}` : "";
         throw new Error(`${payload.error ?? "No se pudo ejecutar la acción"}${details}`);
+      }
+      if (payload.result?.operation === "purchase_draft_created") {
+        const total = Number(payload.result.total);
+        const formattedTotal = Number.isFinite(total) ? new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(total) : "total pendiente";
+        toast.success(`Borrador de compra creado (${formattedTotal}). Pendiente de recepción y revisión documental.`);
+      } else {
+        toast.success("Acción ejecutada correctamente.");
       }
       await Promise.all([
         query.refetch(),
