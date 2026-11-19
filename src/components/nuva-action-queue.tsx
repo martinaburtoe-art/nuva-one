@@ -92,15 +92,27 @@ export function NuvaActionQueue() {
       : {};
     const suggestedQuantity = Number(payloadObject.suggested_quantity);
     const referenceCost = Number(payloadObject.unit_cost_reference);
+    const savedLines = Array.isArray(payloadObject.items)
+      ? payloadObject.items.map((rawLine) => {
+          const line = rawLine && typeof rawLine === "object" && !Array.isArray(rawLine)
+            ? rawLine as { [key: string]: Json | undefined }
+            : {};
+          return {
+            productId: typeof line.product_id === "string" ? line.product_id : "",
+            quantity: String(line.quantity ?? ""),
+            unitCost: String(line.unit_cost ?? ""),
+          };
+        }).filter((line) => line.productId && Number.isSafeInteger(Number(line.quantity)) && Number(line.quantity) > 0 && Number.isSafeInteger(Number(line.unitCost)) && Number(line.unitCost) > 0)
+      : [];
     setActionError(null);
     setPurchaseActionId(item.id);
-    setSupplierId("");
-    setTaxTreatment("");
+    setSupplierId(typeof payloadObject.supplier_id === "string" ? payloadObject.supplier_id : "");
+    setTaxTreatment(payloadObject.tax_treatment === "taxable" || payloadObject.tax_treatment === "exempt" || payloadObject.tax_treatment === "non_taxable" ? payloadObject.tax_treatment : "");
     setShowNewSupplier(false);
     setNewSupplierName("");
     setNewSupplierEmail("");
     setNewSupplierPhone("");
-    setPurchaseLines([{
+    setPurchaseLines(savedLines.length ? savedLines : [{
       productId: typeof payloadObject.product_id === "string" ? payloadObject.product_id : "",
       quantity: Number.isSafeInteger(suggestedQuantity) && suggestedQuantity > 0 ? String(suggestedQuantity) : "1",
       unitCost: Number.isSafeInteger(referenceCost) && referenceCost > 0 ? String(referenceCost) : "",
