@@ -2,7 +2,8 @@
 
 > **Estado:** BORRADOR TÉCNICO — NO ES CERTIFICACIÓN LEGAL NI SIGN-OFF.
 > **Fecha de revisión:** 19 de noviembre de 2026.
-> **Fecha de entrada en vigor verificada:** 1 de diciembre de 2026 (BCN, Ley 21.719; versión con vigencia diferida).
+> **Fecha de entrada en vigor verificada:** 1 de diciembre de 2026 (BCN, Ley 21.719; versión con vigencia diferida; última modificación indicada por BCN: Ley 21.806, 5 de febrero de 2026).  
+**Fuente oficial:** https://www.bcn.cl/leychile/Navegar?idNorma=1209272
 > **Alcance:** evidencia observable en el repositorio `main`. Las configuraciones reales de producción, contratos de proveedores, regiones y prácticas operacionales deben confirmarse con el responsable del servicio y asesoría jurídica chilena.
 
 ## 1. Conclusión ejecutiva
