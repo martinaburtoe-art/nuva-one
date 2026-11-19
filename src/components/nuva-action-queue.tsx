@@ -7,9 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { canManageBusiness, useActiveBusiness, useMyRole } from "@/lib/use-business";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { Json } from "@/integrations/supabase/types";
 
 type QueueItem = {
   id: string;
+  action_type: string;
+  payload: Json;
   title: string;
   description: string | null;
   priority: string;
@@ -36,6 +41,9 @@ export function NuvaActionQueue() {
   const canApprove = canManageBusiness(role);
   const [actionError, setActionError] = useState<string | null>(null);
   const [needsPurchaseDetails, setNeedsPurchaseDetails] = useState(false);
+  const [purchaseActionId, setPurchaseActionId] = useState<string | null>(null);
+  const [supplierId, setSupplierId] = useState("");
+  const [purchaseLines, setPurchaseLines] = useState([{ productId: "", quantity: "1", unitCost: "" }]);
   const [executing, setExecuting] = useState<string | null>(null);
   const query = useQuery({
     enabled: !!active?.id,
@@ -43,7 +51,7 @@ export function NuvaActionQueue() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("nuva_action_queue")
-        .select("id,title,description,priority,status,impact,destination,mode,created_at,error_message")
+        .select("id,action_type,payload,title,description,priority,status,impact,destination,mode,created_at,error_message")
         .eq("business_id", active!.id)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -51,6 +59,76 @@ export function NuvaActionQueue() {
       return (data ?? []) as QueueItem[];
     },
   });
+
+  const suppliersQuery = useQuery({
+    enabled: !!active?.id && !!purchaseActionId,
+    queryKey: ["nuva-purchase-suppliers", active?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("id,name").eq("business_id", active!.id).order("name").limit(300);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const productsQuery = useQuery({
+    enabled: !!active?.id && !!purchaseActionId,
+    queryKey: ["nuva-purchase-products", active?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("id,name,sku,cost").eq("business_id", active!.id).order("name").limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const openPurchaseDraft = (id: string) => {
+    setActionError(null);
+    setPurchaseActionId(id);
+    setSupplierId("");
+    setPurchaseLines([{ productId: "", quantity: "1", unitCost: "" }]);
+  };
+
+  const updatePurchaseLine = (index: number, patch: Partial<(typeof purchaseLines)[number]>) => {
+    setPurchaseLines((current) => current.map((line, lineIndex) => lineIndex === index ? { ...line, ...patch } : line));
+  };
+
+  const submitPurchaseDraft = async (item: QueueItem) => {
+    if (!canApprove || !active?.id) return;
+    if (!supplierId) {
+      setActionError("Selecciona un proveedor antes de continuar.");
+      return;
+    }
+    if (purchaseLines.length === 0 || purchaseLines.some((line) => !line.productId || !Number.isFinite(Number(line.quantity)) || Number(line.quantity) <= 0 || !Number.isFinite(Number(line.unitCost)) || Number(line.unitCost) <= 0)) {
+      setActionError("Cada línea necesita producto, cantidad mayor que cero y costo unitario mayor que cero.");
+      return;
+    }
+    const productIds = purchaseLines.map((line) => line.productId);
+    if (new Set(productIds).size !== productIds.length) {
+      setActionError("No repitas el mismo producto; consolida sus cantidades en una sola línea.");
+      return;
+    }
+    const payloadObject = item.payload && typeof item.payload === "object" && !Array.isArray(item.payload)
+      ? item.payload as { [key: string]: Json | undefined }
+      : {};
+    const payload: Json = {
+      ...payloadObject,
+      supplier_id: supplierId,
+      items: purchaseLines.map((line) => ({
+        product_id: line.productId,
+        quantity: Number(line.quantity),
+        unit_cost: Number(line.unitCost),
+      })),
+    };
+    const { error } = await supabase.from("nuva_action_queue")
+      .update({ payload })
+      .eq("id", item.id)
+      .eq("business_id", active.id)
+      .eq("status", "approved");
+    if (error) {
+      setActionError("No se pudieron guardar los datos de la compra. No se ejecutó ninguna operación.");
+      return;
+    }
+    setPurchaseActionId(null);
+    await execute(item.id);
+  };
 
   const updateStatus = async (id: string, status: "approved" | "dismissed") => {
     if (!canApprove || !active?.id) return;
@@ -125,6 +203,89 @@ export function NuvaActionQueue() {
                   {item.error_message?.startsWith("RECONCILIATION_REQUIRED:") ? "Requiere conciliación" : labels[item.status] ?? item.status}
                 </span>
               </div>
+              {purchaseActionId === item.id && (
+                <form
+                  className="mt-4 space-y-3 rounded-xl border border-primary/20 bg-muted/30 p-4"
+                  onSubmit={(event) => { event.preventDefault(); void submitPurchaseDraft(item); }}
+                >
+                  <div>
+                    <p className="text-sm font-semibold">Completar compra sugerida</p>
+                    <p className="mt-1 text-xs text-muted-foreground">La recomendación no es una orden de compra. Confirma proveedor, productos, cantidades y costos reales antes de ejecutar.</p>
+                  </div>
+                  {suppliersQuery.isLoading || productsQuery.isLoading ? (
+                    <p className="text-xs text-muted-foreground">Cargando proveedores y productos…</p>
+                  ) : suppliersQuery.isError || productsQuery.isError ? (
+                    <p className="text-xs text-destructive" role="alert">No se pudieron cargar los datos del negocio. Reintenta o abre Compras.</p>
+                  ) : (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`purchase-supplier-${item.id}`}>Proveedor</Label>
+                        <select
+                          id={`purchase-supplier-${item.id}`}
+                          value={supplierId}
+                          onChange={(event) => setSupplierId(event.target.value)}
+                          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                          required
+                        >
+                          <option value="">Seleccionar proveedor…</option>
+                          {(suppliersQuery.data ?? []).map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
+                        </select>
+                        {!suppliersQuery.data?.length && <p className="text-xs text-muted-foreground">No hay proveedores registrados. <Link to="/purchases" className="text-primary underline">Gestionar proveedores en Compras</Link>.</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Label>Productos y costos</Label>
+                          <Button type="button" size="sm" variant="outline" onClick={() => setPurchaseLines((current) => [...current, { productId: "", quantity: "1", unitCost: "" }])}>Agregar línea</Button>
+                        </div>
+                        {purchaseLines.map((line, index) => (
+                          <div key={index} className="grid grid-cols-1 gap-2 rounded-lg border bg-background p-3 sm:grid-cols-[minmax(0,1fr)_90px_130px_auto]">
+                            <div className="space-y-1">
+                              <Label htmlFor={`purchase-product-${item.id}-${index}`}>Producto</Label>
+                              <select
+                                id={`purchase-product-${item.id}-${index}`}
+                                value={line.productId}
+                                onChange={(event) => {
+                                  const product = productsQuery.data?.find((candidate) => candidate.id === event.target.value);
+                                  updatePurchaseLine(index, { productId: event.target.value, unitCost: product && product.cost > 0 ? String(product.cost) : line.unitCost });
+                                }}
+                                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                                required
+                              >
+                                <option value="">Seleccionar producto…</option>
+                                {(productsQuery.data ?? []).map((product) => <option key={product.id} value={product.id}>{product.name}{product.sku ? ` · ${product.sku}` : ""}</option>)}
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor={`purchase-quantity-${item.id}-${index}`}>Cantidad</Label>
+                              <Input id={`purchase-quantity-${item.id}-${index}`} type="number" min="0.01" step="0.01" value={line.quantity} onChange={(event) => updatePurchaseLine(index, { quantity: event.target.value })} required />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor={`purchase-cost-${item.id}-${index}`}>Costo unitario (CLP)</Label>
+                              <Input id={`purchase-cost-${item.id}-${index}`} type="number" min="1" step="1" value={line.unitCost} onChange={(event) => updatePurchaseLine(index, { unitCost: event.target.value })} placeholder="Confirmar costo" required />
+                            </div>
+                            <div className="flex items-end">
+                              <Button type="button" size="icon" variant="ghost" aria-label={`Eliminar línea ${index + 1}`} disabled={purchaseLines.length === 1} onClick={() => setPurchaseLines((current) => current.filter((_, lineIndex) => lineIndex !== index))}>
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Total estimado de la compra</p>
+                          <p className="text-base font-semibold tabular-nums">{new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(purchaseLines.reduce((sum, line) => sum + Math.max(0, Number(line.quantity) || 0) * Math.max(0, Number(line.unitCost) || 0), 0))}</p>
+                          <p className="text-[11px] text-muted-foreground">El costo del catálogo es una referencia; confirma el precio acordado con el proveedor.</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="button" size="sm" variant="outline" onClick={() => setPurchaseActionId(null)}>Cancelar</Button>
+                          <Button type="submit" size="sm" disabled={!supplierId || !productsQuery.data?.length || executing === item.id}>Confirmar datos y ejecutar</Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </form>
+              )}
               {item.error_message?.startsWith("RECONCILIATION_REQUIRED:") && (
                 <p className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive" role="alert">
                   La operación de negocio pudo haberse confirmado, pero falta conciliar su resultado. No vuelvas a ejecutarla; solicita revisión administrativa.
@@ -138,7 +299,10 @@ export function NuvaActionQueue() {
                     <Button size="sm" variant="outline" onClick={() => updateStatus(item.id, "dismissed")}><XCircle className="mr-1 h-3.5 w-3.5" /> Descartar</Button>
                   </>
                 )}
-                {item.status === "approved" && item.mode === "prepare" && canApprove && (
+                {item.status === "approved" && item.mode === "prepare" && canApprove && (item.action_type === "low-stock" || item.action_type === "purchase-pressure") && purchaseActionId !== item.id && (
+                  <Button size="sm" onClick={() => openPurchaseDraft(item.id)}><Play className="mr-1 h-3.5 w-3.5" /> Completar compra</Button>
+                )}
+                {item.status === "approved" && item.mode === "prepare" && canApprove && item.action_type !== "low-stock" && item.action_type !== "purchase-pressure" && (
                   <Button size="sm" onClick={() => execute(item.id)} disabled={executing === item.id}>
                     <Play className="mr-1 h-3.5 w-3.5" /> {executing === item.id ? "Ejecutando…" : "Ejecutar"}
                   </Button>
