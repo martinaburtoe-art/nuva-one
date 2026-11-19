@@ -35,6 +35,7 @@ export function NuvaActionQueue() {
   const { data: role } = useMyRole();
   const canApprove = canManageBusiness(role);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [needsPurchaseDetails, setNeedsPurchaseDetails] = useState(false);
   const [executing, setExecuting] = useState<string | null>(null);
   const query = useQuery({
     enabled: !!active?.id,
@@ -61,6 +62,7 @@ export function NuvaActionQueue() {
   const execute = async (id: string) => {
     if (!canApprove || !active?.id) return;
     setActionError(null);
+    setNeedsPurchaseDetails(false);
     setExecuting(id);
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -75,6 +77,7 @@ export function NuvaActionQueue() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (payload.code === "NUVA_PURCHASE_DETAILS_REQUIRED") setNeedsPurchaseDetails(true);
         const details = typeof payload.details === "string" ? ` ${payload.details}` : "";
         throw new Error(`${payload.error ?? "No se pudo ejecutar la acción"}${details}`);
       }
@@ -96,7 +99,7 @@ export function NuvaActionQueue() {
         </div>
         <span className="text-xs text-muted-foreground">{query.data?.length ?? 0} recientes</span>
       </div>
-      {actionError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert">No se pudo procesar la acción: {actionError}</div>}
+      {actionError && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm" role="alert"><p>No se pudo procesar la acción: {actionError}</p>{needsPurchaseDetails && <Link to="/purchases" className="mt-2 inline-flex items-center font-semibold text-primary underline-offset-4 hover:underline">Abrir Compras y completar los datos <ArrowUpRight className="ml-1 h-3.5 w-3.5" /></Link>}</div>}
       {query.isLoading ? (
         <p className="mt-4 text-sm text-muted-foreground">Cargando acciones…</p>
       ) : query.isError ? (
