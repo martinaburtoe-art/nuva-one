@@ -178,13 +178,15 @@ export function NuvaActionQueue() {
         unit_cost: Number(line.unitCost),
       })),
     };
-    const { error } = await supabase.from("nuva_action_queue")
+    const { data: updatedAction, error } = await supabase.from("nuva_action_queue")
       .update({ payload })
       .eq("id", item.id)
       .eq("business_id", active.id)
-      .eq("status", "approved");
-    if (error) {
-      setActionError("No se pudieron guardar los datos de la compra. No se ejecutó ninguna operación.");
+      .eq("status", "approved")
+      .select("id")
+      .maybeSingle();
+    if (error || !updatedAction) {
+      setActionError(error?.message ?? "La acción cambió de estado. Actualiza la cola y vuelve a intentarlo.");
       return;
     }
     setPurchaseActionId(null);
