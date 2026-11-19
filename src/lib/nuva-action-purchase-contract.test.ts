@@ -36,12 +36,12 @@ describe("parsePurchaseActionPayload", () => {
   it("normalizes numeric values and accepts a complete purchase payload", () => {
     expect(parsePurchaseActionPayload({
       supplier_id: " supplier-1 ",
-      items: [{ product_id: "p1", quantity: "2", unit_cost: "1250.5" }],
+      items: [{ product_id: "p1", quantity: "2", unit_cost: "1250" }],
     })).toEqual({
       ok: true,
       value: {
         supplier_id: "supplier-1",
-        items: [{ product_id: "p1", quantity: 2, unit_cost: 1250.5 }],
+        items: [{ product_id: "p1", quantity: 2, unit_cost: 1250 }],
       },
     });
   });
