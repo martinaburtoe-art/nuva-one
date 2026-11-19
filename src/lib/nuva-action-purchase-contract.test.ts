@@ -7,14 +7,15 @@ describe("parsePurchaseActionPayload", () => {
       ok: false,
       reason: expect.stringContaining("proveedor"),
     });
+});
   });
 
   it("rejects a missing or empty product list", () => {
-    expect(parsePurchaseActionPayload({ supplier_id: "supplier-1", items: [] })).toMatchObject({ ok: false });
+    expect(parsePurchaseActionPayload({ supplier_id: "supplier-1", tax_treatment: "taxable", vat_rate: 19, items: [] })).toMatchObject({ ok: false });
   });
 
   it("rejects missing product identity, invalid quantities and invalid costs", () => {
-    const base = { supplier_id: "supplier-1" };
+    const base = { supplier_id: "supplier-1", tax_treatment: "taxable", vat_rate: 19 };
     expect(parsePurchaseActionPayload({ ...base, items: [{ quantity: 2, unit_cost: 100 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 0, unit_cost: 100 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 2, unit_cost: 0 }] })).toMatchObject({ ok: false });
@@ -26,6 +27,8 @@ describe("parsePurchaseActionPayload", () => {
   it("rejects duplicate product lines to avoid ambiguous totals", () => {
     expect(parsePurchaseActionPayload({
       supplier_id: "supplier-1",
+      tax_treatment: "taxable",
+      vat_rate: 19,
       items: [
         { product_id: "p1", quantity: 2, unit_cost: 100 },
         { product_id: "p1", quantity: 3, unit_cost: 100 },
@@ -68,6 +71,7 @@ describe("buildPurchaseRecordItems", () => {
   });
 });
 
+describe("purchase tax treatment", () => {
   it("rejects missing or inconsistent tax treatment", () => {
     const base = { supplier_id: "supplier-1", items: [{ product_id: "p1", quantity: 1, unit_cost: 1000 }] };
     expect(parsePurchaseActionPayload(base)).toMatchObject({ ok: false, reason: expect.stringContaining("tributario") });
