@@ -107,10 +107,18 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           .update({ status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), error_message: null })
           .eq("id", action.id)
           .eq("business_id", businessId)
-          .eq("status", "executing");
+          .eq("status", "executing")
+          .select("id")
+          .maybeSingle();
         if (completeError) throw completeError;
-        await learnFromNuvaActionOutcome(session.supabase, action, result, true);
-        return json({ ok: true, action_id: action.id, result });
+        if (!completedAction) throw new Error("La mutación existe, pero la acción no pudo confirmar su estado final.");
+        let learningWarning: string | undefined;
+        try {
+          await learnFromNuvaActionOutcome(session.supabase, action, result, true);
+        } catch (learningError) {
+          learningWarning = learningError instanceof Error ? learningError.message : "No se pudo actualizar el aprendizaje de Nüva.";
+        }
+        return json({ ok: true, action_id: action.id, result, ...(learningWarning ? { learning_warning: learningWarning } : {}) });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Error de ejecución";
         if (businessMutationCommitted) {
@@ -119,7 +127,11 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           await session.supabase.from("nuva_action_queue").update({ error_message: `RECONCILIATION_REQUIRED: ${message}`.slice(0, 1000), updated_at: new Date().toISOString() }).eq("id", action.id).eq("business_id", businessId).eq("status", "executing");
         } else {
           await session.supabase.from("nuva_action_queue").update({ status: "failed", error_message: message.slice(0, 1000), updated_at: new Date().toISOString() }).eq("id", action.id).eq("business_id", businessId).eq("status", "executing");
-          await learnFromNuvaActionOutcome(session.supabase, action, { error: message }, false);
+          try {
+            await learnFromNuvaActionOutcome(session.supabase, action, { error: message }, false);
+          } catch {
+            // The execution error remains the primary failure; learning is secondary.
+          }
         }
         return json({ error: "La acción falló y quedó registrada", code: "NUVA_ACTION_EXECUTION_FAILED" }, 500);
       }
