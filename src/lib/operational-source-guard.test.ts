@@ -5,10 +5,10 @@ describe("assertOperationalSourcesAvailable", () => {
   it("accepts a complete operational snapshot", () => {
     expect(() =>
       assertOperationalSourcesAvailable([
-        { name: "ventas", error: null },
-        { name: "compras", error: null },
-        { name: "caja y finanzas", error: null },
-        { name: "inventario", error: null },
+        { name: "ventas", data: [], error: null },
+        { name: "compras", data: [], error: null },
+        { name: "caja y finanzas", data: [], error: null },
+        { name: "inventario", data: [], error: null },
       ]),
     ).not.toThrow();
   });
@@ -16,15 +16,23 @@ describe("assertOperationalSourcesAvailable", () => {
   it("fails closed and names every unavailable source", () => {
     expect(() =>
       assertOperationalSourcesAvailable([
-        { name: "ventas", error: null },
-        { name: "compras", error: { message: "timeout" } },
-        { name: "caja y finanzas", error: null },
-        { name: "inventario", error: { message: "permission denied" } },
+        { name: "ventas", data: [], error: null },
+        { name: "compras", data: null, error: { message: "timeout" } },
+        { name: "caja y finanzas", data: [], error: null },
+        { name: "inventario", data: null, error: { message: "permission denied" } },
       ]),
     ).toThrow(/compras: timeout.*inventario: permission denied/);
   });
 
-  it("does not treat an empty but successfully fetched source as an error", () => {
-    expect(() => assertOperationalSourcesAvailable([{ name: "ventas", error: null }])).not.toThrow();
+  it("rejects a null payload even when the query reports no error", () => {
+    expect(() =>
+      assertOperationalSourcesAvailable([{ name: "ventas", data: null, error: null }]),
+    ).toThrow(/ventas: respuesta sin datos/);
+  });
+
+  it("accepts an empty array as a valid successful result", () => {
+    expect(() =>
+      assertOperationalSourcesAvailable([{ name: "ventas", data: [], error: null }]),
+    ).not.toThrow();
   });
 });
