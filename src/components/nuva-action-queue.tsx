@@ -316,6 +316,22 @@ export function NuvaActionQueue() {
                           </select>
                         )}
                       </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`purchase-tax-treatment-${item.id}`}>Tratamiento tributario del documento</Label>
+                        <select
+                          id={`purchase-tax-treatment-${item.id}`}
+                          value={taxTreatment}
+                          onChange={(event) => setTaxTreatment(event.target.value as PurchaseTaxTreatment | "")}
+                          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                          required
+                        >
+                          <option value="">Seleccionar según factura…</option>
+                          <option value="taxable">Afecta IVA (19%)</option>
+                          <option value="exempt">Exenta de IVA (0%)</option>
+                          <option value="non_taxable">No afecta IVA (0%)</option>
+                        </select>
+                        <p className="text-[11px] text-muted-foreground">El precio unitario debe corresponder al total del documento (IVA incluido si es afecto). Confirma el tratamiento con la factura; no lo inferimos del producto.</p>
+                      </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <Label>Productos y costos</Label>
@@ -345,7 +361,7 @@ export function NuvaActionQueue() {
                               <Input id={`purchase-quantity-${item.id}-${index}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updatePurchaseLine(index, { quantity: event.target.value })} required />
                             </div>
                             <div className="space-y-1">
-                              <Label htmlFor={`purchase-cost-${item.id}-${index}`}>Costo unitario (CLP)</Label>
+                              <Label htmlFor={`purchase-cost-${item.id}-${index}`}>Precio unitario total (CLP)</Label>
                               <Input id={`purchase-cost-${item.id}-${index}`} type="number" min="1" step="1" value={line.unitCost} onChange={(event) => updatePurchaseLine(index, { unitCost: event.target.value })} placeholder="Confirmar costo" required />
                             </div>
                             <div className="flex items-end">
@@ -360,11 +376,11 @@ export function NuvaActionQueue() {
                         <div>
                           <p className="text-xs text-muted-foreground">Total estimado de la compra</p>
                           <p className="text-base font-semibold tabular-nums">{new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(purchaseLines.reduce((sum, line) => sum + Math.max(0, Number(line.quantity) || 0) * Math.max(0, Number(line.unitCost) || 0), 0))}</p>
-                          <p className="text-[11px] text-muted-foreground">El costo del catálogo es una referencia; confirma el precio acordado con el proveedor.</p>
+                          <p className="text-[11px] text-muted-foreground">El costo del catálogo es una referencia editable; confirma el total unitario y el IVA contra el documento del proveedor.</p>
                         </div>
                         <div className="flex gap-2">
                           <Button type="button" size="sm" variant="outline" onClick={() => setPurchaseActionId(null)}>Cancelar</Button>
-                          <Button type="submit" size="sm" disabled={!supplierId || !productsQuery.data?.length || executing === item.id}>Confirmar datos y ejecutar</Button>
+                          <Button type="submit" size="sm" disabled={!supplierId || !taxTreatment || !productsQuery.data?.length || executing === item.id}>Confirmar datos y ejecutar</Button>
                         </div>
                       </div>
                     </>
