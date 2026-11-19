@@ -40,6 +40,7 @@ const labels: Record<string, string> = {
 export function NuvaActionQueue() {
   const { active } = useActiveBusiness();
   const { data: role } = useMyRole();
+  const queryClient = useQueryClient();
   const canApprove = canManageBusiness(role);
   const [actionError, setActionError] = useState<string | null>(null);
   const [purchaseActionId, setPurchaseActionId] = useState<string | null>(null);
