@@ -10,6 +10,32 @@ describe("buildNuvaIntelligence", () => {
     expect(signals[0].id).toBe("receivables-overdue");
   });
 
+
+  it("does not mark a date-only deadline tomorrow in Chile as overdue after 21:00 UTC boundary", () => {
+    const signals = buildNuvaIntelligence({
+      now: new Date("2026-11-19T01:00:00.000Z"),
+      sales: [{ total: 100000, paid_amount: 0, due_date: "2026-11-19" }],
+    });
+    expect(signals.some((signal) => signal.id === "receivables-overdue")).toBe(false);
+  });
+
+  it("marks a date-only deadline overdue after the business-local calendar day changes", () => {
+    const signals = buildNuvaIntelligence({
+      now: new Date("2026-11-19T03:00:00.000Z"),
+      sales: [{ total: 100000, paid_amount: 0, due_date: "2026-11-18" }],
+    });
+    expect(signals.some((signal) => signal.id === "receivables-overdue")).toBe(true);
+  });
+
+  it("accepts an explicit business timezone for date-only deadlines", () => {
+    const signals = buildNuvaIntelligence({
+      now: new Date("2026-11-19T01:00:00.000Z"),
+      businessTimeZone: "UTC",
+      sales: [{ total: 100000, paid_amount: 0, due_date: "2026-11-19" }],
+    });
+    expect(signals.some((signal) => signal.id === "receivables-overdue")).toBe(false);
+  });
+
   it("flags low stock", () => {
     const signals = buildNuvaIntelligence({
       stock: [{ sku: "ABC", name: "Producto", quantity: 2, reorder_point: 5 }],

@@ -1,3 +1,5 @@
+import { isBusinessDateOverdue } from "./business-date";
+
 export type IntelligenceSeverity = "critical" | "warning" | "opportunity" | "info";
 
 export type IntelligenceSignal = {
@@ -37,6 +39,7 @@ export function buildNuvaIntelligence(input: {
   transactions?: Transaction[];
   stock?: Stock[];
   now?: Date;
+  businessTimeZone?: string;
 }): IntelligenceSignal[] {
   const sales = (input.sales ?? []).filter((x) => active(x.status));
   const purchases = (input.purchases ?? []).filter((x) => active(x.status));
@@ -56,7 +59,7 @@ export function buildNuvaIntelligence(input: {
 
   const overdue = sales.filter((x) => {
     if (!x.due_date) return false;
-    return new Date(x.due_date) < now && amount(x.paid_amount) < amount(x.total);
+    return isBusinessDateOverdue(x.due_date, now, input.businessTimeZone) && amount(x.paid_amount) < amount(x.total);
   });
   const overdueAmount = overdue.reduce(
     (s, x) => s + Math.max(0, amount(x.total) - amount(x.paid_amount)),
