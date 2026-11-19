@@ -1,10 +1,10 @@
 name: Nüva One — Durable Autonomous Agent Worker
 
 on:
-  push:
-    branches: [main]
+  # Keep autonomous coding within provider quotas: at most four scheduled runs/day.
+  # Use workflow_dispatch for an urgent manual cycle; deploy commits must not spend model tokens.
   schedule:
-    - cron: '7,27,47 * * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
