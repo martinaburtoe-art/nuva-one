@@ -2,20 +2,20 @@ import { describe, expect, it } from "vitest";
 import { buildPurchaseRecordItems, parsePurchaseActionPayload } from "./nuva-action-purchase-contract";
 
 describe("parsePurchaseActionPayload", () => {
+  const base = { supplier_id: "supplier-1", tax_treatment: "taxable", vat_rate: 19 };
+
   it("rejects a generic recommendation payload", () => {
     expect(parsePurchaseActionPayload({ action: "Reponer stock", cta: "Preparar compra" })).toMatchObject({
       ok: false,
       reason: expect.stringContaining("proveedor"),
     });
-});
   });
 
   it("rejects a missing or empty product list", () => {
-    expect(parsePurchaseActionPayload({ supplier_id: "supplier-1", tax_treatment: "taxable", vat_rate: 19, items: [] })).toMatchObject({ ok: false });
+    expect(parsePurchaseActionPayload({ ...base, items: [] })).toMatchObject({ ok: false });
   });
 
   it("rejects missing product identity, invalid quantities and invalid costs", () => {
-    const base = { supplier_id: "supplier-1", tax_treatment: "taxable", vat_rate: 19 };
     expect(parsePurchaseActionPayload({ ...base, items: [{ quantity: 2, unit_cost: 100 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 0, unit_cost: 100 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 2, unit_cost: 0 }] })).toMatchObject({ ok: false });
@@ -26,9 +26,7 @@ describe("parsePurchaseActionPayload", () => {
 
   it("rejects duplicate product lines to avoid ambiguous totals", () => {
     expect(parsePurchaseActionPayload({
-      supplier_id: "supplier-1",
-      tax_treatment: "taxable",
-      vat_rate: 19,
+      ...base,
       items: [
         { product_id: "p1", quantity: 2, unit_cost: 100 },
         { product_id: "p1", quantity: 3, unit_cost: 100 },
@@ -72,9 +70,11 @@ describe("buildPurchaseRecordItems", () => {
 });
 
 describe("purchase tax treatment", () => {
+  const base = { supplier_id: "supplier-1", items: [{ product_id: "p1", quantity: 1, unit_cost: 1000 }] };
+
   it("rejects missing or inconsistent tax treatment", () => {
-    const base = { supplier_id: "supplier-1", items: [{ product_id: "p1", quantity: 1, unit_cost: 1000 }] };
     expect(parsePurchaseActionPayload(base)).toMatchObject({ ok: false, reason: expect.stringContaining("tributario") });
     expect(parsePurchaseActionPayload({ ...base, tax_treatment: "taxable", vat_rate: 0 })).toMatchObject({ ok: false, reason: expect.stringContaining("IVA") });
     expect(parsePurchaseActionPayload({ ...base, tax_treatment: "exempt", vat_rate: 19 })).toMatchObject({ ok: false, reason: expect.stringContaining("IVA") });
   });
+});
