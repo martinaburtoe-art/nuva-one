@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePurchaseActionPayload } from "./nuva-action-purchase-contract";
+import { buildPurchaseRecordItems, parsePurchaseActionPayload } from "./nuva-action-purchase-contract";
 
 describe("parsePurchaseActionPayload", () => {
   it("rejects a generic recommendation payload", () => {
@@ -44,5 +44,22 @@ describe("parsePurchaseActionPayload", () => {
         items: [{ product_id: "p1", quantity: 2, unit_cost: 1250 }],
       },
     });
+  });
+});
+
+describe("buildPurchaseRecordItems", () => {
+  it("maps validated units to the qty field required by the stock lifecycle trigger", () => {
+    const items = buildPurchaseRecordItems(
+      [{ product_id: "p1", quantity: 3, unit_cost: 1250 }],
+      new Map([["p1", "Producto real"]]),
+    );
+    expect(items).toEqual([{
+      product_id: "p1",
+      name: "Producto real",
+      qty: 3,
+      quantity: 3,
+      unit_cost: 1250,
+      total: 3750,
+    }]);
   });
 });
