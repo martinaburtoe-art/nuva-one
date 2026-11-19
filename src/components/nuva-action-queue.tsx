@@ -155,6 +155,10 @@ export function NuvaActionQueue() {
       setActionError("Cada línea necesita producto, cantidad mayor que cero y costo unitario mayor que cero.");
       return;
     }
+    if (purchaseLines.some((line) => !Number.isSafeInteger(Number(line.quantity) * Number(line.unitCost)))) {
+      setActionError("El total de una línea supera el rango numérico seguro.");
+      return;
+    }
     const productIds = purchaseLines.map((line) => line.productId);
     if (new Set(productIds).size !== productIds.length) {
       setActionError("No repitas el mismo producto; consolida sus cantidades en una sola línea.");
