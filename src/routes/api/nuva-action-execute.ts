@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
             supplier_id: purchasePayload.value.supplier_id,
             status: "pending",
             total,
-            purchase_date: new Date().toISOString().slice(0, 10),
+            purchase_date: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()),
             notes: `Acción Nüva: ${action.title}. ${action.description ?? ""}`,
             items,
           }).select("id").single();
