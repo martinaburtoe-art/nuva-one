@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Json } from "@/integrations/supabase/types";
+import type { PurchaseTaxTreatment } from "@/lib/nuva-action-purchase-contract";
 import { toast } from "sonner";
 
 type QueueItem = {
@@ -43,6 +44,7 @@ export function NuvaActionQueue() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [purchaseActionId, setPurchaseActionId] = useState<string | null>(null);
   const [supplierId, setSupplierId] = useState("");
+  const [taxTreatment, setTaxTreatment] = useState<PurchaseTaxTreatment | "">("");
   const [showNewSupplier, setShowNewSupplier] = useState(false);
   const [newSupplierName, setNewSupplierName] = useState("");
   const [newSupplierEmail, setNewSupplierEmail] = useState("");
@@ -93,6 +95,7 @@ export function NuvaActionQueue() {
     setActionError(null);
     setPurchaseActionId(item.id);
     setSupplierId("");
+    setTaxTreatment("");
     setShowNewSupplier(false);
     setNewSupplierName("");
     setNewSupplierEmail("");
@@ -144,6 +147,10 @@ export function NuvaActionQueue() {
       setActionError("Selecciona un proveedor antes de continuar.");
       return;
     }
+    if (!taxTreatment) {
+      setActionError("Selecciona el tratamiento tributario que indica el documento del proveedor.");
+      return;
+    }
     if (purchaseLines.length === 0 || purchaseLines.some((line) => !line.productId || !Number.isSafeInteger(Number(line.quantity)) || Number(line.quantity) <= 0 || !Number.isSafeInteger(Number(line.unitCost)) || Number(line.unitCost) <= 0)) {
       setActionError("Cada línea necesita producto, cantidad mayor que cero y costo unitario mayor que cero.");
       return;
@@ -159,6 +166,8 @@ export function NuvaActionQueue() {
     const payload: Json = {
       ...payloadObject,
       supplier_id: supplierId,
+      tax_treatment: taxTreatment,
+      vat_rate: taxTreatment === "taxable" ? 19 : 0,
       items: purchaseLines.map((line) => ({
         product_id: line.productId,
         quantity: Number(line.quantity),
