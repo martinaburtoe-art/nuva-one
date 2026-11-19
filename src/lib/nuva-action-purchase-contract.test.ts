@@ -36,11 +36,15 @@ describe("parsePurchaseActionPayload", () => {
   it("normalizes numeric values and accepts a complete purchase payload", () => {
     expect(parsePurchaseActionPayload({
       supplier_id: " supplier-1 ",
+      tax_treatment: "taxable",
+      vat_rate: 19,
       items: [{ product_id: "p1", quantity: "2", unit_cost: "1250" }],
     })).toEqual({
       ok: true,
       value: {
         supplier_id: "supplier-1",
+        tax_treatment: "taxable",
+        vat_rate: 19,
         items: [{ product_id: "p1", quantity: 2, unit_cost: 1250 }],
       },
     });
@@ -63,3 +67,10 @@ describe("buildPurchaseRecordItems", () => {
     }]);
   });
 });
+
+  it("rejects missing or inconsistent tax treatment", () => {
+    const base = { supplier_id: "supplier-1", items: [{ product_id: "p1", quantity: 1, unit_cost: 1000 }] };
+    expect(parsePurchaseActionPayload(base)).toMatchObject({ ok: false, reason: expect.stringContaining("tributario") });
+    expect(parsePurchaseActionPayload({ ...base, tax_treatment: "taxable", vat_rate: 0 })).toMatchObject({ ok: false, reason: expect.stringContaining("IVA") });
+    expect(parsePurchaseActionPayload({ ...base, tax_treatment: "exempt", vat_rate: 19 })).toMatchObject({ ok: false, reason: expect.stringContaining("IVA") });
+  });
