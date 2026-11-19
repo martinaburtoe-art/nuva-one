@@ -72,7 +72,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           const productNames = new Map((products.data ?? []).map((product) => [product.id, product.name]));
           const items = buildPurchaseRecordItems(purchasePayload.value.items, productNames);
           const total = items.reduce((sum, item) => sum + item.total, 0);
-          if (!Number.isFinite(total) || total <= 0) throw new Error("El total calculado de la compra no es válido.");
+          if (!Number.isSafeInteger(total) || total <= 0) throw new Error("El total calculado de la compra no es válido.");
           const { data: purchaseData, error: purchaseError } = await session.supabase.from("purchases").insert({
             business_id: businessId,
             supplier_id: purchasePayload.value.supplier_id,
