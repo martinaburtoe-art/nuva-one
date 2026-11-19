@@ -181,7 +181,7 @@ export function NuvaActionQueue() {
     if (!canApprove || !active?.id) return;
     setActionError(null);
     const { error } = await supabase.from("nuva_action_queue").update({ status }).eq("id", id).eq("business_id", active.id);
-    if (error) setActionError(error.message); else await query.refetch();
+    if (error) setActionError(error.message); else await Promise.all([query.refetch(), queryClient.invalidateQueries({ queryKey: ["nuva_action_queue", active.id] })]);
   };
 
   const execute = async (id: string) => {
