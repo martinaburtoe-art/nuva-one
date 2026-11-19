@@ -32,10 +32,10 @@ export function NuvaActionCenter() {
         supabase.from("products").select("stock,low_stock_threshold,reorder_point,price,name,sku").eq("business_id", bid),
       ])) as [QueryResult<any>, QueryResult<any>, QueryResult<any>, QueryResult<any>];
       assertOperationalSourcesAvailable([
-        { name: "ventas", error: salesResult.error },
-        { name: "compras", error: purchasesResult.error },
-        { name: "caja y finanzas", error: transactionsResult.error },
-        { name: "inventario", error: productsResult.error },
+        { name: "ventas", data: salesResult.data, error: salesResult.error },
+        { name: "compras", data: purchasesResult.data, error: purchasesResult.error },
+        { name: "caja y finanzas", data: transactionsResult.data, error: transactionsResult.error },
+        { name: "inventario", data: productsResult.data, error: productsResult.error },
       ]);
       return buildNuvaOperationalResult({ sales: salesResult.data ?? [], purchases: purchasesResult.data ?? [], transactions: transactionsResult.data ?? [], products: productsResult.data ?? [] });
     },
