@@ -79,8 +79,8 @@ export function InventoryWorkspace() {
           source: "inventory-replenishment",
         },
       });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo preparar la acción de compra.");
+    } catch {
+      // useBizInsert already surfaces mutation errors to the user.
     }
   }
 
