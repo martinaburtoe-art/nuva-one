@@ -72,3 +72,27 @@ export function parsePurchaseActionPayload(payload: unknown): PurchaseActionPayl
 
   return { ok: true, value: { supplier_id: supplierId, items } };
 }
+
+export type PurchaseRecordItem = {
+  product_id: string;
+  name: string;
+  qty: number;
+  quantity: number;
+  unit_cost: number;
+  total: number;
+};
+
+/** Match the JSON contract consumed by the purchase stock lifecycle trigger. */
+export function buildPurchaseRecordItems(
+  items: PurchaseActionLine[],
+  productNames: ReadonlyMap<string, string>,
+): PurchaseRecordItem[] {
+  return items.map((item) => ({
+    product_id: item.product_id,
+    name: productNames.get(item.product_id) ?? "Producto",
+    qty: item.quantity,
+    quantity: item.quantity,
+    unit_cost: item.unit_cost,
+    total: item.quantity * item.unit_cost,
+  }));
+}
