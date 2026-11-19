@@ -18,6 +18,7 @@ type QueueItem = {
   destination: ActionDestination | null;
   mode: "review" | "prepare";
   created_at: string;
+  error_message: string | null;
 };
 
 const labels: Record<string, string> = {
@@ -41,7 +42,7 @@ export function NuvaActionQueue() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("nuva_action_queue")
-        .select("id,title,description,priority,status,impact,destination,mode,created_at")
+        .select("id,title,description,priority,status,impact,destination,mode,created_at,error_message")
         .eq("business_id", active!.id)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -73,10 +74,14 @@ export function NuvaActionQueue() {
         body: JSON.stringify({ action_id: id }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error ?? "No se pudo ejecutar la acción");
+      if (!response.ok) {
+        const details = typeof payload.details === "string" ? ` ${payload.details}` : "";
+        throw new Error(`${payload.error ?? "No se pudo ejecutar la acción"}${details}`);
+      }
       await query.refetch();
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "No se pudo ejecutar la acción");
+      await query.refetch();
     } finally {
       setExecuting(null);
     }
@@ -113,8 +118,15 @@ export function NuvaActionQueue() {
                   <p className="font-medium">{item.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
                 </div>
-                <span className="rounded-full bg-accent px-2 py-1 text-[11px] font-medium">{labels[item.status] ?? item.status}</span>
+                <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${item.error_message?.startsWith("RECONCILIATION_REQUIRED:") ? "bg-destructive/10 text-destructive" : "bg-accent"}`}>
+                  {item.error_message?.startsWith("RECONCILIATION_REQUIRED:") ? "Requiere conciliación" : labels[item.status] ?? item.status}
+                </span>
               </div>
+              {item.error_message?.startsWith("RECONCILIATION_REQUIRED:") && (
+                <p className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive" role="alert">
+                  La operación de negocio pudo haberse confirmado, pero falta conciliar su resultado. No vuelvas a ejecutarla; solicita revisión administrativa.
+                </p>
+              )}
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>Impacto {item.impact}/100</span><span>•</span><span>{item.priority}</span>
                 {item.status === "pending" && canApprove && (
