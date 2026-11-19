@@ -102,7 +102,7 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
         }
         const { error: outcomeError } = await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: JSON.parse(JSON.stringify(result)), observed_at: new Date().toISOString() });
         if (outcomeError) throw outcomeError;
-        const { error: completeError } = await session.supabase
+        const { data: completedAction, error: completeError } = await session.supabase
           .from("nuva_action_queue")
           .update({ status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), error_message: null })
           .eq("id", action.id)
