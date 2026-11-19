@@ -59,11 +59,11 @@ export function parsePurchaseActionPayload(payload: unknown): PurchaseActionPayl
     if (seenProducts.has(productId)) {
       return { ok: false, reason: `El producto de la línea ${index + 1} está duplicado.` };
     }
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      return { ok: false, reason: `La cantidad de la línea ${index + 1} debe ser mayor que cero.` };
+    if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+      return { ok: false, reason: `La cantidad de la línea ${index + 1} debe ser un entero mayor que cero.` };
     }
-    if (!Number.isFinite(unitCost) || unitCost <= 0) {
-      return { ok: false, reason: `El costo unitario de la línea ${index + 1} debe ser mayor que cero.` };
+    if (!Number.isSafeInteger(unitCost) || unitCost <= 0) {
+      return { ok: false, reason: `El costo unitario de la línea ${index + 1} debe ser un entero positivo en CLP.` };
     }
 
     seenProducts.add(productId);
