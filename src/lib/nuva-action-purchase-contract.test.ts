@@ -19,6 +19,8 @@ describe("parsePurchaseActionPayload", () => {
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 0, unit_cost: 100 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 2, unit_cost: 0 }] })).toMatchObject({ ok: false });
     expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: true, unit_cost: 100 }] })).toMatchObject({ ok: false });
+    expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 1.5, unit_cost: 100 }] })).toMatchObject({ ok: false });
+    expect(parsePurchaseActionPayload({ ...base, items: [{ product_id: "p1", quantity: 1, unit_cost: 100.5 }] })).toMatchObject({ ok: false });
   });
 
   it("rejects duplicate product lines to avoid ambiguous totals", () => {
