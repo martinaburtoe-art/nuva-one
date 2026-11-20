@@ -112,3 +112,51 @@ export function buildPurchaseRecordItems(
     total: item.quantity * item.unit_cost,
   }));
 }
+
+
+export type PurchaseExecutionFingerprint = {
+  supplier_id: string;
+  tax_treatment: PurchaseTaxTreatment;
+  vat_rate: 0 | 19;
+  total: number;
+  items: PurchaseRecordItem[];
+};
+
+/**
+ * Compare a persisted purchase with the action payload before treating a
+ * retry as an idempotent replay. Display names are intentionally ignored;
+ * tenant, supplier, tax treatment, quantities and CLP amounts are not.
+ */
+export function purchaseRecordMatchesAction(
+  record: unknown,
+  expected: PurchaseExecutionFingerprint,
+): boolean {
+  if (!record || typeof record !== "object" || Array.isArray(record)) return false;
+  const candidate = record as Record<string, unknown>;
+  if (
+    candidate.supplier_id !== expected.supplier_id ||
+    Number(candidate.total) !== expected.total ||
+    candidate.tax_treatment !== expected.tax_treatment ||
+    Number(candidate.vat_rate) !== expected.vat_rate
+  ) return false;
+
+  const normalizeItems = (value: unknown) => {
+    if (!Array.isArray(value)) return null;
+    const normalized: Array<{ product_id: string; qty: number; unit_cost: number; total: number }> = [];
+    for (const rawItem of value) {
+      if (!rawItem || typeof rawItem !== "object" || Array.isArray(rawItem)) return null;
+      const item = rawItem as Record<string, unknown>;
+      const productId = typeof item.product_id === "string" ? item.product_id : "";
+      const qty = Number(item.qty ?? item.quantity);
+      const unitCost = Number(item.unit_cost);
+      const lineTotal = Number(item.total);
+      if (!productId || !Number.isSafeInteger(qty) || qty <= 0 || !Number.isSafeInteger(unitCost) || unitCost <= 0 || !Number.isSafeInteger(lineTotal) || lineTotal !== qty * unitCost) return null;
+      normalized.push({ product_id: productId, qty, unit_cost: unitCost, total: lineTotal });
+    }
+    return normalized.sort((left, right) => left.product_id.localeCompare(right.product_id));
+  };
+
+  const actualItems = normalizeItems(candidate.items);
+  const expectedItems = normalizeItems(expected.items);
+  return actualItems !== null && expectedItems !== null && JSON.stringify(actualItems) === JSON.stringify(expectedItems);
+}

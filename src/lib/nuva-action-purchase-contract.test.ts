@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPurchaseRecordItems, parsePurchaseActionPayload } from "./nuva-action-purchase-contract";
+import { buildPurchaseRecordItems, parsePurchaseActionPayload, purchaseRecordMatchesAction } from "./nuva-action-purchase-contract";
 
 describe("parsePurchaseActionPayload", () => {
   const base = { supplier_id: "supplier-1", tax_treatment: "taxable", vat_rate: 19 };
@@ -89,5 +89,41 @@ describe("purchase tax treatment", () => {
     expect(parsePurchaseActionPayload(base)).toMatchObject({ ok: false, reason: expect.stringContaining("tributario") });
     expect(parsePurchaseActionPayload({ ...base, tax_treatment: "taxable", vat_rate: 0 })).toMatchObject({ ok: false, reason: expect.stringContaining("IVA") });
     expect(parsePurchaseActionPayload({ ...base, tax_treatment: "exempt", vat_rate: 19 })).toMatchObject({ ok: false, reason: expect.stringContaining("IVA") });
+  });
+});
+
+
+describe("purchaseRecordMatchesAction", () => {
+  const expected = {
+    supplier_id: "supplier-1",
+    tax_treatment: "taxable" as const,
+    vat_rate: 19 as const,
+    total: 2500,
+    items: [{ product_id: "p1", name: "Producto", qty: 2, quantity: 2, unit_cost: 1250, total: 2500 }],
+  };
+
+  it("accepts the same persisted purchase even if its display name changed", () => {
+    expect(purchaseRecordMatchesAction({
+      ...expected,
+      items: [{ product_id: "p1", name: "Nombre actualizado", qty: 2, quantity: 2, unit_cost: 1250, total: 2500 }],
+    }, expected)).toBe(true);
+  });
+
+  it("rejects a replay whose supplier, tax treatment or amounts changed", () => {
+    expect(purchaseRecordMatchesAction({ ...expected, supplier_id: "supplier-2" }, expected)).toBe(false);
+    expect(purchaseRecordMatchesAction({ ...expected, vat_rate: 0 }, expected)).toBe(false);
+    expect(purchaseRecordMatchesAction({ ...expected, total: 2600 }, expected)).toBe(false);
+  });
+
+  it("rejects a replay whose product quantities or unit costs changed", () => {
+    expect(purchaseRecordMatchesAction({
+      ...expected,
+      items: [{ product_id: "p1", qty: 3, unit_cost: 1250, total: 3750 }],
+    }, expected)).toBe(false);
+  });
+
+  it("rejects malformed or missing persisted item data", () => {
+    expect(purchaseRecordMatchesAction({ ...expected, items: null }, expected)).toBe(false);
+    expect(purchaseRecordMatchesAction(null, expected)).toBe(false);
   });
 });

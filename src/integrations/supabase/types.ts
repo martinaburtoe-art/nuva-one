@@ -8232,7 +8232,6 @@ export type Database = {
           },
         ]
       }
-      purchases: {
         Row: {
           accounting_journal_id: string | null
           accounting_posting_error: string | null
@@ -8248,6 +8247,7 @@ export type Database = {
           stock_applied: boolean
           supplier_id: string | null
           supplier_name: string | null
+          source_action_id: string | null
           tax_treatment: string
           total: number
           transaction_id: string | null
@@ -8268,6 +8268,7 @@ export type Database = {
           stock_applied?: boolean
           supplier_id?: string | null
           supplier_name?: string | null
+          source_action_id?: string | null
           tax_treatment?: string
           total?: number
           transaction_id?: string | null
@@ -8288,6 +8289,7 @@ export type Database = {
           stock_applied?: boolean
           supplier_id?: string | null
           supplier_name?: string | null
+          source_action_id?: string | null
           tax_treatment?: string
           total?: number
           transaction_id?: string | null
