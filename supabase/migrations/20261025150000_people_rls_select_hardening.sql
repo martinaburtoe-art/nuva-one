@@ -20,6 +20,7 @@ BEGIN
         FROM pg_policy p
         JOIN pg_class c ON c.oid = p.polrelid
         WHERE c.relnamespace = 'public'::regnamespace
+          AND p.polcmd = 'r' -- SELECT only; preserve INSERT/UPDATE/DELETE/ALL policies
           AND c.relname IN (
             'people_employees','people_contracts','people_documents','people_payroll_items',
             'people_payroll_periods','people_payroll_postings','people_payroll_runs',
