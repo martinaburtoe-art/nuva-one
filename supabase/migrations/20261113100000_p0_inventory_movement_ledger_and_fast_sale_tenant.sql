@@ -375,7 +375,7 @@ BEGIN
     END IF;
   END IF;
 
-  IF NEW.status IN ('received', 'paid') AND NOT NEW.stock_applied THEN  IF NEW.status IN ('received', 'paid') AND NOT NEW.stock_applied THEN
+  IF NEW.status IN ('received', 'paid') AND NOT NEW.stock_applied THEN
     FOR item IN
       SELECT value FROM jsonb_array_elements(COALESCE(NEW.items, '[]'::jsonb))
     LOOP
