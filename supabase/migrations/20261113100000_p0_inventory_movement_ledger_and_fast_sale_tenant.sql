@@ -20,17 +20,48 @@ DECLARE
   stock_after INTEGER;
   reserved_qty INTEGER;
   blocked_qty INTEGER;
+  old_stock_items JSONB;
+  new_stock_items JSONB;
+  transaction_updated BOOLEAN := false;
   old_effect_must_be_reverted BOOLEAN := false;
 BEGIN
+  -- Compare only the physical stock projection. Commercial metadata must not
+  -- manufacture compensating inventory events.
+  IF TG_OP = 'UPDATE' THEN
+    SELECT COALESCE(
+      jsonb_agg(jsonb_build_object('product_id', stock_line.product_id, 'qty', stock_line.qty) ORDER BY stock_line.product_id),
+      '[]'::jsonb
+    )
+      INTO old_stock_items
+    FROM (
+      SELECT (entry.value->>'product_id')::UUID AS product_id,
+             SUM(COALESCE((entry.value->>'qty')::INTEGER, 0))::INTEGER AS qty
+      FROM jsonb_array_elements(COALESCE(OLD.items, '[]'::jsonb)) AS entry(value)
+      WHERE NULLIF(entry.value->>'product_id', '') IS NOT NULL
+      GROUP BY 1
+    ) AS stock_line;
+
+    SELECT COALESCE(
+      jsonb_agg(jsonb_build_object('product_id', stock_line.product_id, 'qty', stock_line.qty) ORDER BY stock_line.product_id),
+      '[]'::jsonb
+    )
+      INTO new_stock_items
+    FROM (
+      SELECT (entry.value->>'product_id')::UUID AS product_id,
+             SUM(COALESCE((entry.value->>'qty')::INTEGER, 0))::INTEGER AS qty
+      FROM jsonb_array_elements(COALESCE(NEW.items, '[]'::jsonb)) AS entry(value)
+      WHERE NULLIF(entry.value->>'product_id', '') IS NOT NULL
+      GROUP BY 1
+    ) AS stock_line;
+  END IF;
+
   -- Revert the previously applied sale effect before applying a changed version.
   IF TG_OP = 'UPDATE' AND OLD.stock_applied THEN
     old_effect_must_be_reverted :=
       OLD.business_id IS DISTINCT FROM NEW.business_id
-      OR OLD.status IS DISTINCT FROM NEW.status
-      OR OLD.items IS DISTINCT FROM NEW.items
-      OR OLD.total IS DISTINCT FROM NEW.total
-      OR OLD.sale_date IS DISTINCT FROM NEW.sale_date
-      OR OLD.customer_name IS DISTINCT FROM NEW.customer_name;
+      OR old_stock_items IS DISTINCT FROM new_stock_items
+      OR (OLD.status IN ('paid', 'pending'))
+         IS DISTINCT FROM (NEW.status IN ('paid', 'pending'));
 
     IF old_effect_must_be_reverted THEN
       FOR item IN
@@ -87,7 +118,40 @@ BEGIN
     END IF;
   END IF;
 
-  -- Apply the new sale version. Validate available stock here because this
+  -- Commercial metadata can change without changing physical stock.
+  -- Preserve the ledger and synchronize only the generated transaction.
+  IF TG_OP = 'UPDATE'
+     AND OLD.stock_applied
+     AND NOT old_effect_must_be_reverted
+  THEN
+    IF NEW.total > 0 THEN
+      IF OLD.transaction_id IS NOT NULL THEN
+        UPDATE public.transactions
+        SET amount = NEW.total,
+            description = 'Venta: ' || COALESCE(NEW.customer_name, 'Cliente'),
+            tx_date = NEW.sale_date
+        WHERE id = OLD.transaction_id
+          AND business_id = NEW.business_id
+        RETURNING id INTO tx_id;
+        transaction_updated := FOUND;
+      END IF;
+
+      IF NOT transaction_updated THEN
+        INSERT INTO public.transactions (
+          business_id, type, category, amount, description, tx_date
+        ) VALUES (
+          NEW.business_id, 'income', 'Ventas', NEW.total,
+          'Venta: ' || COALESCE(NEW.customer_name, 'Cliente'), NEW.sale_date
+        )
+        RETURNING id INTO tx_id;
+      END IF;
+      NEW.transaction_id := tx_id;
+    ELSE
+      NEW.transaction_id := NULL;
+    END IF;
+  END IF;
+
+  -- Apply the new sale version.  -- Apply the new sale version. Validate available stock here because this
   -- trigger runs before the separate validation trigger alphabetically.
   IF NEW.status IN ('paid', 'pending') AND NOT NEW.stock_applied THEN
     FOR item IN
@@ -170,19 +234,50 @@ DECLARE
   stock_after INTEGER;
   reserved_qty INTEGER;
   blocked_qty INTEGER;
+  old_stock_items JSONB;
+  new_stock_items JSONB;
+  transaction_updated BOOLEAN := false;
   old_effect_must_be_reverted BOOLEAN := false;
 BEGIN
+  -- Compare only the physical stock projection. Commercial metadata must not
+  -- manufacture compensating inventory events.
+  IF TG_OP = 'UPDATE' THEN
+    SELECT COALESCE(
+      jsonb_agg(jsonb_build_object('product_id', stock_line.product_id, 'qty', stock_line.qty) ORDER BY stock_line.product_id),
+      '[]'::jsonb
+    )
+      INTO old_stock_items
+    FROM (
+      SELECT (entry.value->>'product_id')::UUID AS product_id,
+             SUM(COALESCE((entry.value->>'qty')::INTEGER, 0))::INTEGER AS qty
+      FROM jsonb_array_elements(COALESCE(OLD.items, '[]'::jsonb)) AS entry(value)
+      WHERE NULLIF(entry.value->>'product_id', '') IS NOT NULL
+      GROUP BY 1
+    ) AS stock_line;
+
+    SELECT COALESCE(
+      jsonb_agg(jsonb_build_object('product_id', stock_line.product_id, 'qty', stock_line.qty) ORDER BY stock_line.product_id),
+      '[]'::jsonb
+    )
+      INTO new_stock_items
+    FROM (
+      SELECT (entry.value->>'product_id')::UUID AS product_id,
+             SUM(COALESCE((entry.value->>'qty')::INTEGER, 0))::INTEGER AS qty
+      FROM jsonb_array_elements(COALESCE(NEW.items, '[]'::jsonb)) AS entry(value)
+      WHERE NULLIF(entry.value->>'product_id', '') IS NOT NULL
+      GROUP BY 1
+    ) AS stock_line;
+  END IF;
+
   -- Revert the previous receipt as a compensating ledger entry. Never clamp
   -- stock to zero: if the goods have already been consumed, reject the edit
   -- and preserve the previous, internally consistent state.
   IF TG_OP = 'UPDATE' AND OLD.stock_applied THEN
     old_effect_must_be_reverted :=
       OLD.business_id IS DISTINCT FROM NEW.business_id
-      OR OLD.status IS DISTINCT FROM NEW.status
-      OR OLD.items IS DISTINCT FROM NEW.items
-      OR OLD.total IS DISTINCT FROM NEW.total
-      OR OLD.purchase_date IS DISTINCT FROM NEW.purchase_date
-      OR OLD.supplier_name IS DISTINCT FROM NEW.supplier_name;
+      OR old_stock_items IS DISTINCT FROM new_stock_items
+      OR (OLD.status IN ('received', 'paid'))
+         IS DISTINCT FROM (NEW.status IN ('received', 'paid'));
 
     IF old_effect_must_be_reverted THEN
       FOR item IN
@@ -247,7 +342,40 @@ BEGIN
     END IF;
   END IF;
 
-  IF NEW.status IN ('received', 'paid') AND NOT NEW.stock_applied THEN
+  -- Supplier/date/total changes do not alter received quantities.
+  -- Preserve the inventory ledger and synchronize only the generated transaction.
+  IF TG_OP = 'UPDATE'
+     AND OLD.stock_applied
+     AND NOT old_effect_must_be_reverted
+  THEN
+    IF NEW.total > 0 THEN
+      IF OLD.transaction_id IS NOT NULL THEN
+        UPDATE public.transactions
+        SET amount = NEW.total,
+            description = 'Compra: ' || COALESCE(NEW.supplier_name, 'Proveedor'),
+            tx_date = NEW.purchase_date
+        WHERE id = OLD.transaction_id
+          AND business_id = NEW.business_id
+        RETURNING id INTO tx_id;
+        transaction_updated := FOUND;
+      END IF;
+
+      IF NOT transaction_updated THEN
+        INSERT INTO public.transactions (
+          business_id, type, category, amount, description, tx_date
+        ) VALUES (
+          NEW.business_id, 'expense', 'Compras', NEW.total,
+          'Compra: ' || COALESCE(NEW.supplier_name, 'Proveedor'), NEW.purchase_date
+        )
+        RETURNING id INTO tx_id;
+      END IF;
+      NEW.transaction_id := tx_id;
+    ELSE
+      NEW.transaction_id := NULL;
+    END IF;
+  END IF;
+
+  IF NEW.status IN ('received', 'paid') AND NOT NEW.stock_applied THEN  IF NEW.status IN ('received', 'paid') AND NOT NEW.stock_applied THEN
     FOR item IN
       SELECT value FROM jsonb_array_elements(COALESCE(NEW.items, '[]'::jsonb))
     LOOP

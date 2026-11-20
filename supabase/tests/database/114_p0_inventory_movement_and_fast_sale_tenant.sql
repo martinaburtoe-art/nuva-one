@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(31);
+SELECT plan(39);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000a901'),
@@ -103,6 +103,45 @@ SELECT is(
   'sale movement net equals the currently applied sale quantity'
 );
 
+-- Commercial-only edits and paid/pending transitions must not create stock events.
+UPDATE public.sales
+SET status = 'pending',
+    total = 2500,
+    sale_date = '2026-11-20',
+    customer_name = 'Updated Customer',
+    items = jsonb_build_array(jsonb_build_object(
+      'product_id', '00000000-0000-0000-0000-00000000c901',
+      'qty', 2, 'name', 'Renamed Product', 'unit_price', 1250
+    ))
+WHERE id = '00000000-0000-0000-0000-00000000d901';
+
+SELECT is(
+  (SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-00000000c901'),
+  8,
+  'sale metadata and active-to-active status changes preserve physical stock'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.inventory_movements
+   WHERE source_type IN ('sale', 'sale_reversal')
+     AND source_id = '00000000-0000-0000-0000-00000000d901'),
+  3,
+  'sale metadata changes append no inventory movement'
+);
+SELECT is(
+  (SELECT amount FROM public.transactions
+   WHERE id = (SELECT transaction_id FROM public.sales
+               WHERE id = '00000000-0000-0000-0000-00000000d901')),
+  2500::numeric,
+  'sale metadata changes synchronize the generated transaction amount'
+);
+SELECT is(
+  (SELECT description || '|' || tx_date::text FROM public.transactions
+   WHERE id = (SELECT transaction_id FROM public.sales
+               WHERE id = '00000000-0000-0000-0000-00000000d901')),
+  'Venta: Updated Customer|2026-11-20',
+  'sale metadata changes synchronize transaction description and date'
+);
+
 -- Purchase receipt and cancellation use the same append-only compensating model.
 INSERT INTO public.purchases (id, business_id, status, total, items)
 VALUES (
@@ -131,6 +170,44 @@ SELECT is(
    WHERE source_type = 'purchase' AND source_id = '00000000-0000-0000-0000-00000000e901'),
   4::numeric,
   'purchase movement records the positive stock delta'
+);
+
+-- Supplier/date/total and received/paid transitions do not change physical stock.
+UPDATE public.purchases
+SET status = 'paid',
+    total = 4500,
+    purchase_date = '2026-11-20',
+    supplier_name = 'Updated Supplier',
+    items = jsonb_build_array(jsonb_build_object(
+      'product_id', '00000000-0000-0000-0000-00000000c901',
+      'qty', 4, 'name', 'Renamed Product', 'unit_cost', 1125
+    ))
+WHERE id = '00000000-0000-0000-0000-00000000e901';
+
+SELECT is(
+  (SELECT stock FROM public.products WHERE id = '00000000-0000-0000-0000-00000000c901'),
+  12,
+  'purchase metadata and active-to-active status changes preserve physical stock'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.inventory_movements
+   WHERE source_type = 'purchase' AND source_id = '00000000-0000-0000-0000-00000000e901'),
+  1,
+  'purchase metadata changes append no inventory movement'
+);
+SELECT is(
+  (SELECT amount FROM public.transactions
+   WHERE id = (SELECT transaction_id FROM public.purchases
+               WHERE id = '00000000-0000-0000-0000-00000000e901')),
+  4500::numeric,
+  'purchase metadata changes synchronize the generated transaction amount'
+);
+SELECT is(
+  (SELECT description || '|' || tx_date::text FROM public.transactions
+   WHERE id = (SELECT transaction_id FROM public.purchases
+               WHERE id = '00000000-0000-0000-0000-00000000e901')),
+  'Compra: Updated Supplier|2026-11-20',
+  'purchase metadata changes synchronize transaction description and date'
 );
 
 UPDATE public.purchases SET status = 'cancelled'
