@@ -8232,6 +8232,7 @@ export type Database = {
           },
         ]
       }
+      purchases: {
         Row: {
           accounting_journal_id: string | null
           accounting_posting_error: string | null
