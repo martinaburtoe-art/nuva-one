@@ -103,7 +103,9 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
             },
           });
         }
-        return json({ error: "La acción figura completada, pero no se encontró su compra vinculada.", code: "NUVA_ACTION_STATE_INCONSISTENT" }, 409);
+        return isPurchaseAction
+          ? json({ error: "La acción figura completada, pero no se encontró su compra vinculada.", code: "NUVA_ACTION_STATE_INCONSISTENT" }, 409)
+          : json({ error: "La acción ya fue completada y no admite una segunda ejecución.", code: "NUVA_ACTION_ALREADY_COMPLETED" }, 409);
       }
 
       const retryablePurchase = isPurchaseAction && (action.status === "failed" || action.status === "executing");
