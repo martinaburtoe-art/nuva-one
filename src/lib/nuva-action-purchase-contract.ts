@@ -160,3 +160,28 @@ export function purchaseRecordMatchesAction(
   const expectedItems = normalizeItems(expected.items);
   return actualItems !== null && expectedItems !== null && JSON.stringify(actualItems) === JSON.stringify(expectedItems);
 }
+
+
+/**
+ * A unique-conflict retry may reuse an executed outcome only when it points
+ * to the same immutable business mutation. Mutable status and replay flags are
+ * deliberately ignored; record identity and purchase amount/lines are not.
+ */
+export function actionOutcomeMatchesResult(
+  evidence: unknown,
+  expected: Record<string, unknown>,
+): boolean {
+  if (!evidence || typeof evidence !== "object" || Array.isArray(evidence)) return false;
+  const actual = evidence as Record<string, unknown>;
+  if (
+    typeof expected.operation !== "string" ||
+    typeof expected.record_id !== "string" ||
+    actual.operation !== expected.operation ||
+    actual.record_id !== expected.record_id
+  ) return false;
+
+  for (const key of ["total", "currency", "line_count"] as const) {
+    if (expected[key] !== undefined && actual[key] !== expected[key]) return false;
+  }
+  return true;
+}

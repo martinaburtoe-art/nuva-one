@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPurchaseRecordItems, parsePurchaseActionPayload, purchaseRecordMatchesAction } from "./nuva-action-purchase-contract";
+import { actionOutcomeMatchesResult, buildPurchaseRecordItems, parsePurchaseActionPayload, purchaseRecordMatchesAction } from "./nuva-action-purchase-contract";
 
 describe("parsePurchaseActionPayload", () => {
   const base = { supplier_id: "supplier-1", tax_treatment: "taxable", vat_rate: 19 };
@@ -125,5 +125,45 @@ describe("purchaseRecordMatchesAction", () => {
   it("rejects malformed or missing persisted item data", () => {
     expect(purchaseRecordMatchesAction({ ...expected, items: null }, expected)).toBe(false);
     expect(purchaseRecordMatchesAction(null, expected)).toBe(false);
+  });
+});
+
+
+describe("actionOutcomeMatchesResult", () => {
+  const expected = {
+    operation: "purchase_draft_created",
+    record_id: "purchase-1",
+    total: 2500,
+    currency: "CLP",
+    line_count: 1,
+    status: "pending",
+    idempotent_replay: false,
+  };
+
+  it("accepts the same immutable purchase evidence after status or replay metadata changes", () => {
+    expect(actionOutcomeMatchesResult({
+      ...expected,
+      status: "received",
+      idempotent_replay: true,
+    }, expected)).toBe(true);
+  });
+
+  it("rejects a conflicting record, operation, amount, currency or line count", () => {
+    expect(actionOutcomeMatchesResult({ ...expected, record_id: "purchase-2" }, expected)).toBe(false);
+    expect(actionOutcomeMatchesResult({ ...expected, operation: "purchase_created" }, expected)).toBe(false);
+    expect(actionOutcomeMatchesResult({ ...expected, total: 2600 }, expected)).toBe(false);
+    expect(actionOutcomeMatchesResult({ ...expected, currency: "USD" }, expected)).toBe(false);
+    expect(actionOutcomeMatchesResult({ ...expected, line_count: 2 }, expected)).toBe(false);
+  });
+
+  it("supports activity outcomes without purchase-specific fields", () => {
+    const activity = { operation: "customer_task_created", record_id: "activity-1" };
+    expect(actionOutcomeMatchesResult(activity, activity)).toBe(true);
+  });
+
+  it("rejects missing or malformed evidence", () => {
+    expect(actionOutcomeMatchesResult(null, expected)).toBe(false);
+    expect(actionOutcomeMatchesResult([], expected)).toBe(false);
+    expect(actionOutcomeMatchesResult({ operation: "purchase_draft_created" }, expected)).toBe(false);
   });
 });

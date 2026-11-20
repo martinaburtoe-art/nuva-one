@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { Database } from "@/integrations/supabase/types";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
 import { learnFromNuvaActionOutcome } from "@/lib/nuva-learning/nuva-server-outcome";
-import { buildPurchaseRecordItems, parsePurchaseActionPayload, purchaseRecordMatchesAction } from "@/lib/nuva-action-purchase-contract";
+import { actionOutcomeMatchesResult, buildPurchaseRecordItems, parsePurchaseActionPayload, purchaseRecordMatchesAction } from "@/lib/nuva-action-purchase-contract";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -224,7 +224,21 @@ export const Route = createFileRoute("/api/nuva-action-execute")({
           throw new Error(`Acción no ejecutable: ${actionType}`);
         }
         const { error: outcomeError } = await session.supabase.from("nuva_action_outcomes").insert({ business_id: businessId, action_id: action.id, outcome_type: "executed", expected_impact: action.impact, actual_impact: null, evidence: JSON.parse(JSON.stringify(result)), observed_at: new Date().toISOString() });
-        if (outcomeError && outcomeError.code !== "23505") throw outcomeError;
+        if (outcomeError?.code === "23505") {
+          const { data: existingOutcome, error: readOutcomeError } = await session.supabase
+            .from("nuva_action_outcomes")
+            .select("evidence")
+            .eq("business_id", businessId)
+            .eq("action_id", action.id)
+            .eq("outcome_type", "executed")
+            .maybeSingle();
+          if (readOutcomeError) throw readOutcomeError;
+          if (!existingOutcome || !actionOutcomeMatchesResult(existingOutcome.evidence, result)) {
+            throw new Error("NUVA_ACTION_OUTCOME_CONFLICT: existe evidencia ejecutada incompatible; requiere conciliación manual.");
+          }
+        } else if (outcomeError) {
+          throw outcomeError;
+        }
         const { data: completedAction, error: completeError } = await session.supabase
           .from("nuva_action_queue")
           .update({ status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), error_message: null })
