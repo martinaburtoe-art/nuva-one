@@ -14,6 +14,7 @@ function InventoryPage() {
     <ModuleGuard module="inventory">
       <div className="space-y-5">
         <PageHeader
+          eyebrow="PRODUCTOS Y EXISTENCIAS"
           title="Inventario"
           description="Control de stock, disponibilidad y abastecimiento conectado con ventas y compras."
         />

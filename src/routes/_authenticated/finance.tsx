@@ -39,8 +39,9 @@ function Finance() {
 
   return (
     <ModuleGuard module="finance">
-      <div className="space-y-5">
+      <div className="nuva-finance-workspace space-y-5">
         <PageHeader
+          eyebrow="CONTROL Y DECISIÓN"
           title="Finanzas"
           description="Control financiero, contabilidad, tributación y decisiones sobre el dinero del negocio."
         />

@@ -62,9 +62,9 @@ export function NuvaFinancialControl({ income, expense, inventoryValue, loading 
         <ControlMetric
           icon={control.net >= 0 ? <TrendingUp /> : <TrendingDown />}
           label="Margen estimado"
-          value={`${control.margin.toFixed(1)}%`}
+          value={loading || income <= 0 ? "—" : `${control.margin.toFixed(1)}%`}
         />
-        <ControlMetric icon={<TrendingDown />} label="Gasto / ingreso" value={loading ? "—" : `${control.expenseRatio.toFixed(1)}%`} />
+        <ControlMetric icon={<TrendingDown />} label="Gasto / ingreso" value={loading || income <= 0 ? "—" : `${control.expenseRatio.toFixed(1)}%`} />
         <ControlMetric icon={<Wallet />} label="Capital en inventario" value={loading ? "—" : fmtCLP(inventoryValue)} />
       </div>
 

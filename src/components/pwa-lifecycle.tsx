@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { getPwaNoticeKind } from "@/lib/pwa-notice";
+import { applyWaitingServiceWorkerUpdate } from "@/lib/pwa-update";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -31,6 +32,7 @@ export function PwaLifecycle() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [installDismissed, setInstallDismissed] = useState(false);
   const [updateDismissed, setUpdateDismissed] = useState(false);
+  const activeUpdateAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setIsInstalled(isStandalone());
@@ -80,6 +82,8 @@ export function PwaLifecycle() {
 
     return () => {
       disposed = true;
+      activeUpdateAbort.current?.abort();
+      activeUpdateAbort.current = null;
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
       window.removeEventListener("focus", checkForUpdate);
@@ -114,24 +118,30 @@ export function PwaLifecycle() {
   async function applyUpdate() {
     if (updateApplying) return;
     setUpdateApplying(true);
+    const abortController = new AbortController();
+    activeUpdateAbort.current = abortController;
     try {
-      const registration = await navigator.serviceWorker?.getRegistration("/");
-      const worker = registration?.waiting;
-      if (!worker) {
+      const result = await applyWaitingServiceWorkerUpdate({
+        serviceWorker: "serviceWorker" in navigator ? navigator.serviceWorker : undefined,
+        reload: () => window.location.reload(),
+        signal: abortController.signal,
+      });
+      if (abortController.signal.aborted) return;
+      if (result === "no-update") {
         setUpdateReady(false);
-        setUpdateApplying(false);
         toast.info("Nüva One ya está actualizada.");
-        return;
+      } else if (result === "timeout") {
+        toast.error("La actualización no respondió. Puedes volver a intentarlo.");
+      } else if (result === "unavailable") {
+        toast.error("Este navegador no permite aplicar la actualización. Recarga la página.");
       }
-      const onChange = () => {
-        navigator.serviceWorker.removeEventListener("controllerchange", onChange);
-        window.location.reload();
-      };
-      navigator.serviceWorker.addEventListener("controllerchange", onChange, { once: true });
-      worker.postMessage({ type: "SKIP_WAITING" });
     } catch {
-      setUpdateApplying(false);
-      toast.error("No se pudo aplicar la actualización. Vuelve a intentarlo.");
+      if (!abortController.signal.aborted) {
+        toast.error("No se pudo aplicar la actualización. Vuelve a intentarlo.");
+      }
+    } finally {
+      if (activeUpdateAbort.current === abortController) activeUpdateAbort.current = null;
+      if (!abortController.signal.aborted) setUpdateApplying(false);
     }
   }
 

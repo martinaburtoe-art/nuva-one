@@ -1,0 +1,712 @@
+/* Nüva One — Pearl & Navy authenticated app shell.
+   Scoped to .nuva-app: public marketing and authentication pages are untouched. */
+.nuva-app {
+  --nuva-ink: #18334b;
+  --nuva-gold: #c4a36b;
+  --nuva-indigo: #183b59;
+  --nuva-radius-surface: 18px;
+  --nuva-radius-panel: 24px;
+  background: #f7f5f0 !important;
+  color: #20364a;
+}
+.nuva-app > aside {
+  background: #f0eee8 !important;
+  border-color: #e4e0d7 !important;
+}
+.nuva-app > aside > div:first-child {
+  border-color: #e4e0d7 !important;
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] {
+  scrollbar-width: thin;
+  scrollbar-color: #c9c3b7 transparent;
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] .nuva-nav-item {
+  min-height: 42px;
+  border-radius: 12px;
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] .nuva-nav-item[data-active="true"] {
+  color: #173b59 !important;
+  background: #e2e8e9 !important;
+  box-shadow: inset 3px 0 0 #c4a36b, 0 2px 8px rgb(25 49 67 / .045);
+}
+.nuva-app > aside nav[aria-label="Navegación de módulos"] .nuva-nav-item[data-active="true"] svg {
+  color: #173b59 !important;
+}
+.nuva-app > div.flex.min-w-0.flex-1.flex-col > header {
+  background: rgb(249 247 242 / .92) !important;
+  border-color: #e8e3da !important;
+}
+.nuva-app main {
+  background: #f7f5f0;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] {
+  background: rgb(249 247 242 / .94) !important;
+  border-color: #e4e0d7 !important;
+  box-shadow: 0 -10px 34px rgb(24 45 62 / .075);
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] {
+  color: #173b59 !important;
+  background: #e8eceb !important;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"]::before {
+  background: #c4a36b !important;
+  box-shadow: none !important;
+}
+.nuva-app :where(button,a,input,select,textarea):focus-visible {
+  outline-color: #a98750 !important;
+}
+.nuva-app :where(.rounded-xl.border,.rounded-2xl.border) {
+  border-color: #e8e2d8;
+}
+@media (max-width: 1023px) {
+  .nuva-app main {
+    background: #f7f5f0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app > aside,
+  .nuva-app > div > header,
+  .nuva-app nav[aria-label="Navegación principal móvil"] {
+    transition: none !important;
+  }
+}
+
+
+/* Workspace surfaces: a coherent product UI, not a recolour-only shell. */
+.nuva-app {
+  --nuva-surface: #fffefa;
+  --nuva-surface-muted: #f1eee7;
+  --nuva-line: #e7e1d7;
+  --nuva-text: #20364a;
+  --nuva-muted: #77818a;
+  --nuva-shadow-soft: 0 10px 30px rgb(31 48 61 / .055);
+  --nuva-shadow-lift: 0 16px 38px rgb(31 48 61 / .09);
+  font-feature-settings: "ss01" on;
+}
+.nuva-app > div.flex.min-w-0.flex-1.flex-col > header {
+  min-height: 64px;
+  box-shadow: 0 1px 0 rgb(40 53 63 / .025);
+}
+.nuva-app > div.flex.min-w-0.flex-1.flex-col > main {
+  padding-top: clamp(18px, 2.5vw, 34px);
+}
+.nuva-app main > :where(.space-y-5, .space-y-6, .space-y-4) {
+  width: min(100%, 1600px);
+  margin-inline: auto;
+}
+.nuva-app main :where(h1) {
+  color: #20364a;
+  letter-spacing: -.035em;
+}
+.nuva-app main :where(h2) {
+  letter-spacing: -.022em;
+}
+.nuva-app main :where(.rounded-xl.border, .rounded-2xl.border) {
+  border-color: var(--nuva-line);
+}
+.nuva-app main :where([class*="shadow-sm"], [class*="shadow-soft"]) {
+  box-shadow: var(--nuva-shadow-soft);
+}
+.nuva-app main :where(.rounded-xl.border, .rounded-2xl.border, [class*="rounded-2xl"][class*="bg-card"]) {
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.nuva-app main :where(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+.nuva-app main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: #ded9d0;
+  background-color: #fffefa;
+}
+.nuva-app main :where(input, select, textarea)::placeholder {
+  color: #9aa0a4;
+}
+.nuva-app main :where(table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.nuva-app main :where(thead) {
+  background: #f5f2ec;
+}
+.nuva-app main :where(th) {
+  color: #687580;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+.nuva-app main :where(tbody tr) {
+  transition: background-color .16s ease;
+}
+.nuva-app main :where(tbody tr:hover) {
+  background: #f8f6f1;
+}
+.nuva-app main :where(.rounded-xl.border.bg-background, article.rounded-xl.border) {
+  background: #fffefa;
+}
+.nuva-app main :where(.bg-muted\/20, .bg-muted\/30) {
+  background-color: #f4f1eb;
+}
+.nuva-app main :where(.border-dashed) {
+  border-color: #d9d2c6;
+}
+.nuva-app :where(button, [role="tab"]) {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: .18s;
+}
+.nuva-app :where(button:not(:disabled)):active {
+  transform: translateY(1px);
+}
+.nuva-app aside {
+  box-shadow: 5px 0 24px rgb(31 48 61 / .025);
+}
+.nuva-app aside > div:first-child a > div:first-child,
+.nuva-app header a.lg\:hidden > div:first-child {
+  background: #183b59 !important;
+  box-shadow: 0 5px 12px rgb(24 59 89 / .16);
+}
+.nuva-app .nuva-nav-item {
+  margin-block: 2px;
+  transition: background-color .18s ease, color .18s ease, padding-left .18s ease;
+}
+.nuva-app .nuva-nav-item[data-active="true"] {
+  font-weight: 650;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] {
+  min-height: 72px;
+  padding-top: 5px;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a,
+.nuva-app nav[aria-label="Navegación principal móvil"] > button {
+  min-height: 62px;
+  border-radius: 14px 14px 8px 8px;
+}
+.nuva-app nav[aria-label="Navegación principal móvil"] > a[aria-current="page"] {
+  font-weight: 700;
+}
+.nuva-app [role="dialog"] {
+  border-color: #e6dfd4;
+  box-shadow: 0 24px 80px rgb(22 36 48 / .2);
+}
+.nuva-app :where(.nuva-resumen-canvas) {
+  max-width: 1500px;
+  margin-inline: auto;
+}
+.nuva-app :where(.nuva-resumen-canvas h1) {
+  color: #1b354b;
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 650;
+  line-height: 1.08;
+}
+.nuva-app :where(.nuva-resumen-canvas .nuva-resumen-subtitle) {
+  max-width: 650px;
+  color: #78828a;
+}
+@media (hover: hover) and (pointer: fine) {
+  .nuva-app main :where(.rounded-xl.border, .rounded-2xl.border):hover {
+    border-color: #d8cbb6;
+  }
+  .nuva-app main :where(a.rounded-xl.border, a.rounded-2xl.border):hover {
+    box-shadow: var(--nuva-shadow-lift);
+    transform: translateY(-2px);
+  }
+}
+@media (max-width: 767px) {
+  .nuva-app > div.flex.min-w-0.flex-1.flex-col > main {
+    padding-inline: 12px;
+  }
+  .nuva-app main :where(.rounded-2xl.border) {
+    border-radius: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app *,
+  .nuva-app *::before,
+  .nuva-app *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+@media (forced-colors: active) {
+  .nuva-app :where(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 3px;
+  }
+  .nuva-app .nuva-nav-item[data-active="true"] {
+    outline: 1px solid Highlight;
+  }
+}
+
+
+/* Inventory workspace — deliberate hierarchy for daily operational work. */
+.nuva-app .nuva-inventory-workspace {
+  --inventory-ink: #1d374d;
+  --inventory-muted: #7b858c;
+}
+.nuva-app .nuva-inventory-workspace > :first-child {
+  margin-bottom: 2px;
+}
+.nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden {
+  border-radius: 20px;
+  background: #fffefa;
+  box-shadow: 0 8px 26px rgb(31 48 61 / .045);
+}
+.nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid > button {
+  position: relative;
+  min-height: 88px;
+  border-color: #eee9e0;
+  background: transparent;
+  transition: background-color .18s ease, color .18s ease;
+}
+.nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid > button[data-active="true"] {
+  color: #183b59;
+  background: linear-gradient(145deg, #eef1ef 0%, #f8f6f1 100%);
+}
+.nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid > button[data-active="true"]::after {
+  position: absolute;
+  right: 16px;
+  bottom: 0;
+  left: 16px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: #c4a36b;
+  content: "";
+}
+.nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid > button > div {
+  color: inherit;
+  letter-spacing: -.01em;
+}
+.nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid > button > p {
+  max-width: 26ch;
+  line-height: 1.45;
+}
+.nuva-app .nuva-inventory-workspace > div.grid.grid-cols-3 > div {
+  min-height: 92px;
+  border: 1px solid #e9e3d9;
+  border-radius: 17px;
+  background: linear-gradient(150deg, #fffefa 0%, #f8f6f1 100%);
+  box-shadow: 0 6px 18px rgb(31 48 61 / .035);
+}
+.nuva-app .nuva-inventory-workspace > div.grid.grid-cols-3 > div p:first-child {
+  color: #78838b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .035em;
+}
+.nuva-app .nuva-inventory-workspace > div.grid.grid-cols-3 > div p:last-child {
+  color: #1d374d;
+  font-size: clamp(21px, 2vw, 27px);
+  letter-spacing: -.045em;
+}
+.nuva-app .nuva-inventory-workspace article.rounded-xl.border {
+  border-color: #e8e2d8;
+  border-radius: 17px;
+  background: #fffefa;
+  box-shadow: 0 5px 18px rgb(31 48 61 / .035);
+}
+.nuva-app .nuva-inventory-workspace article.rounded-xl.border h3 {
+  color: #20364a;
+  letter-spacing: -.015em;
+}
+.nuva-app .nuva-inventory-workspace :where(input:not([type="checkbox"]), select) {
+  min-height: 42px;
+  border-radius: 11px;
+}
+.nuva-app .nuva-inventory-workspace :where(button[aria-pressed="true"]):focus-visible {
+  outline-offset: -3px;
+}
+.nuva-app .nuva-inventory-workspace > div.border-dashed {
+  border-color: #ddd4c6;
+  border-radius: 16px;
+  background: #f3f0e9;
+  color: #687580;
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid {
+    gap: 0;
+  }
+  .nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid > button {
+    min-height: 82px;
+    padding: 12px;
+  }
+  .nuva-app .nuva-inventory-workspace > div.grid.grid-cols-3 > div {
+    min-height: 82px;
+    padding: 12px;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .nuva-app .nuva-inventory-workspace > div.rounded-xl.border.overflow-hidden > div.grid > button:not([data-active="true"]):hover {
+    background: #f8f6f1;
+  }
+}
+
+
+/* Editorial Resumen: visual storytelling + genuine catalog media. */
+.nuva-app .nuva-resumen-visual-hero {
+  position: relative; isolation: isolate; display: flex; align-items: center;
+  min-height: 292px; margin: 0 0 24px; padding: clamp(26px, 4vw, 48px);
+  overflow: hidden; border: 1px solid rgb(16 43 70 / .16); border-radius: 28px;
+  background: #102b46; box-shadow: 0 20px 48px -30px rgb(16 43 70 / .52);
+}
+.nuva-app .nuva-resumen-visual-hero-image, .nuva-app .nuva-resumen-visual-hero-shade {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.nuva-app .nuva-resumen-visual-hero-image {
+  z-index: -2; object-fit: cover; object-position: center 48%;
+  animation: nuva-hero-image-arrive 900ms cubic-bezier(.22,1,.36,1) both;
+}
+.nuva-app .nuva-resumen-visual-hero-shade {
+  z-index: -1;
+  background: linear-gradient(90deg, rgb(10 28 47 / .92) 0%, rgb(10 28 47 / .78) 42%, rgb(10 28 47 / .28) 100%), linear-gradient(0deg, rgb(10 28 47 / .28), transparent 60%);
+}
+.nuva-app .nuva-resumen-visual-hero-content { width: 100%; align-items: flex-end; }
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-overline,
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-overline span { color: #f2d6a9; }
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-heading h1,
+.nuva-app .nuva-resumen-visual-hero h1 {
+  max-width: 720px; margin: 12px 0 0; color: #fff;
+  font-family: Georgia, "Times New Roman", serif; font-size: clamp(34px, 4.4vw, 58px);
+  font-weight: 500; line-height: 1.02; letter-spacing: -.045em; text-wrap: balance;
+}
+.nuva-app .nuva-resumen-visual-hero h1 em { color: #f0c58f; font-style: normal; }
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-subtitle {
+  max-width: 54ch; margin-top: 14px; color: rgb(255 255 255 / .84); font-size: 14px; line-height: 1.65;
+}
+.nuva-app .nuva-resumen-visual-hero .nuva-resumen-demo-button {
+  border-color: rgb(255 255 255 / .4); background: rgb(255 255 255 / .12);
+  color: white; backdrop-filter: blur(12px);
+}
+.nuva-app .nuva-resumen-visual-hero-cta {
+  display: inline-flex; min-height: 46px; align-items: center; gap: 12px;
+  margin-top: 22px; padding: 0 20px; border-radius: 999px; background: #e8bd87;
+  color: #102b46; font-size: 13px; font-weight: 750; box-shadow: 0 8px 24px rgb(5 18 32 / .18);
+  transition: transform 220ms cubic-bezier(.22,1,.36,1), background 220ms ease, box-shadow 220ms ease;
+}
+.nuva-app .nuva-resumen-visual-hero-cta:hover { transform: translateY(-2px); background: #f2d1a7; box-shadow: 0 13px 28px rgb(5 18 32 / .25); }
+.nuva-app .nuva-resumen-visual-hero-cta:focus-visible, .nuva-app .nuva-discovery-card:focus-visible { outline: 3px solid #d8ae75; outline-offset: 4px; }
+
+.nuva-app .nuva-discovery-section { margin: 0 0 24px; }
+.nuva-app .nuva-discovery-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 0 2px 13px; }
+.nuva-app .nuva-discovery-heading h2 { margin: 5px 0 0; color: #172b40; font-size: clamp(19px, 2vw, 24px); font-weight: 700; letter-spacing: -.04em; }
+.nuva-app .nuva-discovery-heading > span { color: #8a8c8e; font-size: 11px; }
+.nuva-app .nuva-discovery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.nuva-app .nuva-discovery-card {
+  position: relative; isolation: isolate; display: flex; min-height: 190px; align-items: flex-end;
+  overflow: hidden; border: 1px solid rgb(16 43 70 / .09); border-radius: 22px;
+  background: #102b46; box-shadow: 0 10px 26px -20px rgb(16 43 70 / .45);
+  text-decoration: none; transition: transform 260ms cubic-bezier(.22,1,.36,1), box-shadow 260ms ease;
+}
+.nuva-app .nuva-discovery-card > img {
+  position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%;
+  object-fit: cover; transition: transform 700ms cubic-bezier(.22,1,.36,1);
+}
+.nuva-app .nuva-discovery-shade {
+  position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(0deg, rgb(8 24 40 / .88) 0%, rgb(8 24 40 / .18) 72%, rgb(8 24 40 / .04) 100%);
+}
+.nuva-app .nuva-discovery-copy { display: flex; flex-direction: column; gap: 6px; padding: 18px; color: white; }
+.nuva-app .nuva-discovery-copy small { color: #f2d6a9; font-size: 9px; font-weight: 800; letter-spacing: .17em; }
+.nuva-app .nuva-discovery-copy strong { font-family: Georgia, "Times New Roman", serif; font-size: clamp(18px, 2vw, 24px); font-weight: 500; line-height: 1.1; }
+.nuva-app .nuva-discovery-copy i { display: inline-flex; align-items: center; gap: 6px; margin-top: 3px; color: rgb(255 255 255 / .84); font-size: 10px; font-style: normal; font-weight: 600; }
+.nuva-app .nuva-discovery-card:hover { transform: translateY(-4px); box-shadow: 0 18px 34px -20px rgb(16 43 70 / .52); }
+.nuva-app .nuva-discovery-card:hover > img { transform: scale(1.06); }
+@keyframes nuva-hero-image-arrive { from { transform: scale(1.035); opacity: .72; } to { transform: scale(1); opacity: 1; } }
+
+@media (max-width: 760px) {
+  .nuva-app .nuva-resumen-visual-hero { min-height: 270px; padding: 24px 20px; border-radius: 23px; }
+  .nuva-app .nuva-resumen-visual-hero-shade { background: linear-gradient(90deg, rgb(10 28 47 / .88), rgb(10 28 47 / .48)), linear-gradient(0deg, rgb(10 28 47 / .3), transparent); }
+  .nuva-app .nuva-resumen-visual-hero .nuva-resumen-heading { flex-direction: row; align-items: flex-end; }
+  .nuva-app .nuva-resumen-visual-hero h1 { font-size: clamp(34px, 9vw, 46px); }
+  .nuva-app .nuva-resumen-visual-hero .nuva-resumen-subtitle { max-width: 34ch; font-size: 12px; }
+  .nuva-app .nuva-discovery-grid { display: flex; overflow-x: auto; gap: 11px; padding: 2px 2px 12px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+  .nuva-app .nuva-discovery-card { flex: 0 0 min(76vw, 250px); min-height: 178px; scroll-snap-align: start; }
+  .nuva-app .nuva-discovery-heading > span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-resumen-visual-hero-image { animation: none; }
+  .nuva-app .nuva-resumen-visual-hero-cta, .nuva-app .nuva-discovery-card, .nuva-app .nuva-discovery-card > img { transition: none; }
+}
+
+
+/* Sales workspace — clear commercial flow and legible transaction history. */
+.nuva-app .nuva-sales-workspace {
+  width: min(100%, 1500px);
+  margin-inline: auto;
+}
+.nuva-app .nuva-sales-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+  overflow: hidden;
+  border-color: #e6dfd4;
+  border-radius: 22px;
+  background: #fffefa;
+  box-shadow: 0 10px 30px rgb(31 48 61 / .055);
+}
+.nuva-app .nuva-sales-workspace :where(thead) {
+  background: #f3f0e9;
+}
+.nuva-app .nuva-sales-workspace :where(tbody tr) {
+  min-height: 58px;
+}
+.nuva-app .nuva-sales-workspace :where(tbody td) {
+  padding-block: 13px;
+}
+.nuva-app .nuva-sales-workspace :where(article.rounded-xl.border) {
+  border-color: #e7e0d5;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #fffefa, #faf8f3);
+}
+.nuva-app .nuva-sales-workspace [role="dialog"] {
+  border-radius: 24px;
+}
+.nuva-app .nuva-sales-workspace form :where(input, select, textarea) {
+  min-height: 42px;
+  border-radius: 11px;
+}
+.nuva-app .nuva-sales-workspace form > .sticky {
+  border-color: #d9c9ae;
+  background: rgb(255 254 250 / .96);
+  box-shadow: 0 12px 30px rgb(24 45 62 / .09);
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-sales-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+    border-radius: 18px;
+  }
+  .nuva-app .nuva-sales-workspace :where(tbody td) { padding-block: 10px; }
+}
+
+/* CRM workspace — relationship-centric portfolio and client records. */
+.nuva-app .nuva-crm-workspace {
+  width: min(100%, 1500px);
+  margin-inline: auto;
+}
+.nuva-app .nuva-crm-workspace > div.mb-5.grid > div {
+  min-height: 112px;
+  padding: 17px;
+  border: 1px solid #e7e1d7;
+  border-radius: 19px;
+  background: linear-gradient(150deg, #fffefa 0%, #f5f2eb 100%);
+  box-shadow: 0 8px 24px rgb(31 48 61 / .045);
+}
+.nuva-app .nuva-crm-workspace > div.mb-5.grid > div > div:nth-child(2) {
+  color: #1d374d;
+  font-size: clamp(25px, 2.4vw, 31px);
+  letter-spacing: -.05em;
+}
+.nuva-app .nuva-crm-workspace > div.mb-4 {
+  border-color: #e7e1d7;
+  border-radius: 18px;
+  background: rgb(255 254 250 / .86);
+  box-shadow: 0 5px 18px rgb(31 48 61 / .035);
+}
+.nuva-app .nuva-crm-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+  border-color: #e7e1d7;
+  border-radius: 21px;
+  background: #fffefa;
+  box-shadow: 0 10px 30px rgb(31 48 61 / .05);
+}
+.nuva-app .nuva-crm-workspace article.rounded-xl.border {
+  border-color: #e8e2d8;
+  background: linear-gradient(145deg, #fffefa, #faf8f3);
+}
+.nuva-app .nuva-crm-workspace [role="dialog"],
+.nuva-app .nuva-crm-workspace [data-state="open"][role="dialog"] {
+  border-radius: 23px;
+}
+.nuva-app .nuva-crm-workspace [role="dialog"] :where(input, textarea, select) {
+  border-radius: 11px;
+}
+.nuva-app .nuva-crm-workspace [data-radix-scroll-area-viewport] {
+  scrollbar-color: #c9c3b7 transparent;
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-crm-workspace { padding-inline: 12px; }
+  .nuva-app .nuva-crm-workspace > div.mb-5.grid > div {
+    min-height: 98px;
+    padding: 13px;
+    border-radius: 16px;
+  }
+}
+
+/* Finance workspace — executive reading order and restrained financial emphasis. */
+.nuva-app .nuva-finance-workspace {
+  width: min(100%, 1500px);
+  margin-inline: auto;
+}
+.nuva-app .nuva-finance-workspace > :first-child {
+  margin-bottom: 2px;
+}
+.nuva-app .nuva-finance-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+  border-color: #e5ded2;
+  border-radius: 23px;
+  box-shadow: 0 12px 34px rgb(31 48 61 / .06);
+}
+.nuva-app .nuva-finance-workspace > :nth-child(2) h2 {
+  color: #1c354a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(21px, 2.2vw, 27px);
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+.nuva-app .nuva-finance-workspace > :nth-child(2) > div > div.grid > div {
+  min-height: 92px;
+  border-color: #e8e1d6;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fffefa, #f6f3ed);
+  box-shadow: 0 5px 16px rgb(31 48 61 / .035);
+}
+.nuva-app .nuva-finance-workspace > :nth-child(2) > div > div.grid > div > div:last-child {
+  color: #1d374d;
+  font-size: clamp(17px, 1.8vw, 21px);
+  letter-spacing: -.035em;
+}
+.nuva-app .nuva-finance-workspace > :nth-child(2) > div > div.rounded-xl.border {
+  border-color: #e5ded2;
+  border-radius: 15px;
+  background: #f8f6f1;
+}
+@media (max-width: 767px) {
+  .nuva-app .nuva-finance-workspace > :where(.rounded-xl.border, .rounded-2xl.border) {
+    border-radius: 18px;
+  }
+}
+
+
+/* Commercial module headers — clear context, hierarchy and action placement. */
+.nuva-app main .nuva-module-header[data-nuva-workspace-header] {
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 2px 18px;
+  border-bottom: 1px solid #e8e1d6;
+}
+.nuva-app .nuva-module-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #9a8057;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .17em;
+  line-height: 1.2;
+}
+.nuva-app .nuva-module-eyebrow::before {
+  width: 18px;
+  height: 1px;
+  border-radius: 2px;
+  background: #c4a36b;
+  content: "";
+}
+.nuva-app .nuva-module-title {
+  color: #18344b !important;
+  font-size: clamp(29px, 3vw, 39px) !important;
+  font-weight: 620 !important;
+  letter-spacing: -.045em !important;
+  line-height: 1.04 !important;
+}
+.nuva-app .nuva-module-description {
+  max-width: 64ch;
+  margin-top: 7px;
+  color: #74808a !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+}
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child {
+  flex-shrink: 0;
+}
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child > button,
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child a[role="button"] {
+  min-height: 42px;
+  border-radius: 12px;
+  font-weight: 650;
+  box-shadow: 0 5px 14px rgb(24 52 75 / .09);
+}
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child > button:focus-visible,
+.nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child a:focus-visible {
+  outline: 2px solid #a98750;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .nuva-app main .nuva-module-header[data-nuva-workspace-header] {
+    align-items: stretch;
+    gap: 14px;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  .nuva-app .nuva-module-title {
+    font-size: clamp(27px, 8vw, 34px) !important;
+  }
+  .nuva-app .nuva-module-description {
+    max-width: 48ch;
+    font-size: 12px !important;
+  }
+  .nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child > button,
+  .nuva-app .nuva-module-header[data-nuva-workspace-header] > div:last-child a {
+    transition: none !important;
+  }
+}
+
+
+/* Dense operational surfaces remain navigable on touch devices. */
+.nuva-app .nuva-sales-workspace > :where(.rounded-xl.border, .rounded-2xl.border) > .hidden.min-w-0.md\:block,
+.nuva-app .nuva-crm-workspace .hidden.overflow-x-auto.md\:block {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+.nuva-app .nuva-sales-workspace [role="dialog"],
+.nuva-app .nuva-crm-workspace [role="dialog"] {
+  max-height: min(90dvh, 860px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.nuva-app .nuva-sales-workspace form > .grid.grid-cols-1.sm\:grid-cols-2 > button {
+  min-height: 44px;
+}
+@media (max-width: 639px) {
+  .nuva-app .nuva-sales-workspace [role="dialog"],
+  .nuva-app .nuva-crm-workspace [role="dialog"] {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    border-radius: 19px;
+  }
+  .nuva-app .nuva-sales-workspace form > .grid.grid-cols-1.sm\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Quote editor — preserve the proposal preview while keeping the form usable on phones. */
+.nuva-app .nuva-quote-editor {
+  max-height: min(92dvh, 920px);
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.nuva-app .nuva-quote-editor :where(input, textarea, select) {
+  min-width: 0;
+  border-radius: 10px;
+}
+.nuva-app .nuva-quote-editor > div.grid {
+  min-width: 0;
+}
+@media (max-width: 639px) {
+  .nuva-app .nuva-quote-editor {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    padding: 16px;
+    border-radius: 18px;
+  }
+  .nuva-app .nuva-quote-editor .grid.grid-cols-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nuva-app .nuva-quote-editor .grid.grid-cols-2 > .col-span-2 {
+    grid-column: span 1 / span 1;
+  }
+}

@@ -25,6 +25,7 @@ import {
   Link2,
   Copy,
   ScanBarcode,
+  Package,
 } from "lucide-react";
 import { useBizList, useBizInsert, fmtCLP } from "@/lib/biz-data";
 import { useActiveBusiness, useMyRole, canWriteOperations } from "@/lib/use-business";
@@ -65,7 +66,7 @@ function POS() {
   const { data: products, isLoading } = useBizList<any>("products", {
     order: "name",
     ascending: true,
-    select: "id,name,sku,barcode,category,stock,price",
+    select: "id,name,sku,barcode,category,stock,price,image_url",
   });
   const { data: sales } = useBizList<any>("sales", {
     order: "created_at",
@@ -403,6 +404,7 @@ function POS() {
     <ModuleGuard module="pos">
       <>
         <PageHeader
+          eyebrow="PUNTO DE VENTA"
           title="Caja"
           description="Vende, cobra y controla tu operación en un solo flujo."
           action={
@@ -511,10 +513,22 @@ function POS() {
                         onClick={() => addToCart(p)}
                         disabled={stock <= 0}
                         className={cn(
-                          "flex min-h-[118px] h-full w-full flex-col items-start gap-1.5 rounded-2xl border border-border/70 bg-card p-3.5 text-left shadow-sm transition-[border-color,box-shadow,transform] duration-200 active:scale-[0.98]",
+                          "flex min-h-[178px] h-full w-full flex-col items-start gap-2 rounded-2xl border border-border/70 bg-card p-3.5 text-left shadow-sm transition-[border-color,box-shadow,transform] duration-200 active:scale-[0.98]",
                           stock <= 0 ? "opacity-50" : "hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-elegant",
                         )}
                       >
+                        <div className="relative flex h-16 w-full items-center justify-center overflow-hidden rounded-xl bg-[#f2efe8]">
+                          <Package className="h-6 w-6 text-[#9b9a91]" aria-hidden="true" />
+                          {p.image_url && (
+                            <img
+                              src={p.image_url}
+                              alt=""
+                              loading="lazy"
+                              className="absolute inset-0 h-full w-full bg-[#f2efe8] object-contain p-1.5"
+                              onError={(event) => { event.currentTarget.style.display = "none"; }}
+                            />
+                          )}
+                        </div>
                         <div className="flex w-full items-start justify-between gap-1">
                           <span className="line-clamp-2 text-sm font-medium leading-tight">
                             {p.name}
