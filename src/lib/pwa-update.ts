@@ -31,12 +31,12 @@ export async function applyWaitingServiceWorkerUpdate(input: {
 
   return new Promise<PwaUpdateResult>((resolve, reject) => {
     let settled = false;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const timeout: { handle?: ReturnType<typeof setTimeout> } = {};
 
     const cleanup = () => {
       serviceWorker.removeEventListener("controllerchange", onControllerChange);
       signal?.removeEventListener("abort", onAbort);
-      if (timeout !== undefined) clearTimeout(timeout);
+      if (timeout.handle !== undefined) clearTimeout(timeout.handle);
     };
 
     const finish = (result: PwaUpdateResult) => {
@@ -66,7 +66,7 @@ export async function applyWaitingServiceWorkerUpdate(input: {
 
     serviceWorker.addEventListener("controllerchange", onControllerChange);
     signal?.addEventListener("abort", onAbort, { once: true });
-    timeout = setTimeout(() => finish("timeout"), Math.max(0, timeoutMs));
+    timeout.handle = setTimeout(() => finish("timeout"), Math.max(0, timeoutMs));
 
     if (signal?.aborted) {
       onAbort();
