@@ -24,6 +24,6 @@ export function isTrustedAgencyWorkerRun(run: unknown, runId: string): boolean {
     && candidate.status === "in_progress"
     && workflowPath === AGENCY_DURABLE_WORKER_WORKFLOW_PATH
     && candidate.head_branch === "main"
-    && ["schedule", "workflow_dispatch"].includes(candidate.event ?? "")
+    && ["schedule", "workflow_dispatch", "push"].includes(candidate.event ?? "")
     && candidate.actor?.login === "martinaburtoe-art";
 }
