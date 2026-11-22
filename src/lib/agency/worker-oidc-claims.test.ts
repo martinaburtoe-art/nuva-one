@@ -1,4 +1,6 @@
+import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
+import { AGENCY_DURABLE_WORKER_WORKFLOW_PATH } from "./worker-auth";
 import {
   AGENCY_WORKER_AUDIENCE,
   AGENCY_WORKER_OWNER,
@@ -20,6 +22,19 @@ const validClaims = () => ({
 });
 
 describe("legacy Agency worker OIDC claims", () => {
+  it("pins the OIDC workflow ref to the actual scheduled worker workflow", async () => {
+    const workflow = await readFile(
+      new URL("../../../.github/workflows/nuva-agency-durable-worker.yml", import.meta.url),
+      "utf8",
+    );
+
+    expect(AGENCY_DURABLE_WORKER_WORKFLOW_PATH).toBe(".github/workflows/nuva-agency-durable-worker.yml");
+    expect(AGENCY_WORKER_WORKFLOW_REF).toBe(
+      `${AGENCY_WORKER_REPO}/${AGENCY_DURABLE_WORKER_WORKFLOW_PATH}@refs/heads/main`,
+    );
+    expect(workflow).toContain("name: Nüva Agency — Durable Specialist Worker");
+  });
+
   it("accepts the exact scheduled owner workflow on main", () => {
     expect(isTrustedAgencyWorkerClaims(validClaims(), "41030396490", "people")).toBe(true);
   });
