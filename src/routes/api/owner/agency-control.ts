@@ -50,7 +50,12 @@ async function worker(request: Request) {
   if (!agentId) return denied("missing_agent_id", 401);
   if (!AGENTS.includes(agentId)) return denied("agent_not_allowlisted", 401);
 
-  const run = await githubRun(token, runId);
+  let run: unknown;
+  try {
+    run = await githubRun(token, runId);
+  } catch {
+    return denied("github_run_lookup_failed", 502);
+  }
   const denialReason = agencyWorkerRunDenialReason(run, runId);
   if (denialReason) {
     return denied("untrusted_github_run", 403, {
