@@ -22,11 +22,61 @@ export type TrustedAgencyWorkerRunDenialReason =
   | "event_not_allowed"
   | "actor_mismatch";
 
+export type AgencyWorkerRunDiagnosticDetails = {
+  runStatus: string | null;
+  workflowPath: string | null;
+  event: string | null;
+  headBranch: string | null;
+  repository: string | null;
+  actor: string | null;
+  returnedRunId: number | null;
+};
+
+const emptyRunDiagnostics: AgencyWorkerRunDiagnosticDetails = {
+  runStatus: null,
+  workflowPath: null,
+  event: null,
+  headBranch: null,
+  repository: null,
+  actor: null,
+  returnedRunId: null,
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+/**
+ * Extract only bounded, non-secret GitHub run metadata for denial logs.
+ * Malformed API payloads must remain diagnosable without throwing.
+ */
+export function agencyWorkerRunDiagnosticDetails(run: unknown): AgencyWorkerRunDiagnosticDetails {
+  const candidate = asRecord(run);
+  if (!candidate) return { ...emptyRunDiagnostics };
+
+  const repository = asRecord(candidate.repository);
+  const actor = asRecord(candidate.actor);
+
+  return {
+    runStatus: typeof candidate.status === "string" ? candidate.status : null,
+    workflowPath: typeof candidate.path === "string" ? candidate.path : null,
+    event: typeof candidate.event === "string" ? candidate.event : null,
+    headBranch: typeof candidate.head_branch === "string" ? candidate.head_branch : null,
+    repository: typeof repository?.full_name === "string" ? repository.full_name : null,
+    actor: typeof actor?.login === "string" ? actor.login : null,
+    returnedRunId: typeof candidate.id === "number" && Number.isSafeInteger(candidate.id)
+      ? candidate.id
+      : null,
+  };
+}
+
 export function agencyWorkerRunDenialReason(
   run: unknown,
   runId: string,
 ): TrustedAgencyWorkerRunDenialReason | null {
-  if (!run || typeof run !== "object") return "invalid_run_payload";
+  if (!run || typeof run !== "object" || Array.isArray(run)) return "invalid_run_payload";
   if (!/^[0-9]+$/.test(runId)) return "invalid_run_id";
 
   const candidate = run as TrustedAgencyWorkerRun;
