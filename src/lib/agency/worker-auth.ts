@@ -76,21 +76,27 @@ export function agencyWorkerRunDenialReason(
   run: unknown,
   runId: string,
 ): TrustedAgencyWorkerRunDenialReason | null {
-  if (!run || typeof run !== "object" || Array.isArray(run)) return "invalid_run_payload";
+  const candidate = asRecord(run);
+  if (!candidate) return "invalid_run_payload";
   if (!/^[0-9]+$/.test(runId)) return "invalid_run_id";
 
-  const candidate = run as TrustedAgencyWorkerRun;
   const expectedId = Number(runId);
   if (!Number.isSafeInteger(expectedId) || expectedId <= 0) return "invalid_run_id";
   if (candidate.id !== expectedId) return "run_id_mismatch";
-  if (candidate.repository?.full_name !== AGENCY_WORKER_REPOSITORY) return "repository_mismatch";
+  const repository = asRecord(candidate.repository);
+  if (repository?.full_name !== AGENCY_WORKER_REPOSITORY) return "repository_mismatch";
   if (candidate.status !== "in_progress") return "run_not_in_progress";
 
-  const workflowPath = (candidate.path ?? "").split("@", 1)[0];
+  const workflowPath = typeof candidate.path === "string"
+    ? candidate.path.split("@", 1)[0]
+    : "";
   if (workflowPath !== AGENCY_DURABLE_WORKER_WORKFLOW_PATH) return "workflow_path_mismatch";
   if (candidate.head_branch !== "main") return "head_branch_mismatch";
-  if (!["schedule", "workflow_dispatch"].includes(candidate.event ?? "")) return "event_not_allowed";
-  if (candidate.actor?.login !== "martinaburtoe-art") return "actor_mismatch";
+  if (typeof candidate.event !== "string" || !["schedule", "workflow_dispatch"].includes(candidate.event)) {
+    return "event_not_allowed";
+  }
+  const actor = asRecord(candidate.actor);
+  if (actor?.login !== "martinaburtoe-art") return "actor_mismatch";
   return null;
 }
 
