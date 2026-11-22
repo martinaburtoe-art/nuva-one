@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
-import { isTrustedAgencyWorkerRun, type TrustedAgencyWorkerRun } from "@/lib/agency/worker-auth";
+import { agencyWorkerRunDenialReason, type TrustedAgencyWorkerRun } from "@/lib/agency/worker-auth";
 
 const REPO = "martinaburtoe-art/nuva-one";
 const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release"];
@@ -11,7 +11,10 @@ async function githubRun(token: string, runId: string) {
     headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2026-03-10", Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
-  if (!r.ok) throw new Error("WORKER_GITHUB_AUTH_FAILED");
+  if (!r.ok) {
+    console.warn("Agency worker GitHub run lookup failed", { runId, status: r.status });
+    throw new Error("WORKER_GITHUB_AUTH_FAILED");
+  }
   return r.json() as Promise<TrustedAgencyWorkerRun>;
 }
 
@@ -28,11 +31,38 @@ async function worker(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const runId = request.headers.get("x-agency-run-id");
   const agentId = request.headers.get("x-agency-agent-id");
-  if (!token || !runId || !/^[0-9]+$/.test(runId) || !agentId || !AGENTS.includes(agentId)) {
-    return { ok: false as const, status: 401 };
-  }
+  const safeRunId = runId && /^\d{1,20}$/.test(runId) ? runId : null;
+  const safeAgentId = agentId && AGENTS.includes(agentId) ? agentId : null;
+  const denied = (reason: string, status: number, details: Record<string, unknown> = {}) => {
+    console.warn("Agency worker authorization denied", {
+      reason,
+      runId: safeRunId,
+      agentId: safeAgentId,
+      ...details,
+    });
+    return { ok: false as const, status };
+  };
+
+  if (!token) return denied("missing_bearer_token", 401);
+  if (!runId || !/^[0-9]+$/.test(runId)) return denied("invalid_run_id", 401);
+  if (!agentId) return denied("missing_agent_id", 401);
+  if (!AGENTS.includes(agentId)) return denied("agent_not_allowlisted", 401);
+
   const run = await githubRun(token, runId);
-  if (!isTrustedAgencyWorkerRun(run, runId)) return { ok: false as const, status: 403 };
+  const denialReason = agencyWorkerRunDenialReason(run, runId);
+  if (denialReason) {
+    const candidate = run as TrustedAgencyWorkerRun;
+    return denied("untrusted_github_run", 403, {
+      denialReason,
+      runStatus: candidate.status ?? null,
+      workflowPath: candidate.path ?? null,
+      event: candidate.event ?? null,
+      headBranch: candidate.head_branch ?? null,
+      repository: candidate.repository?.full_name ?? null,
+      actor: candidate.actor?.login ?? null,
+      returnedRunId: candidate.id ?? null,
+    });
+  }
   return { ok: true as const, agentId, runId };
 }
 
