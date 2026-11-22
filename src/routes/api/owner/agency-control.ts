@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSupabaseEnv } from "@/lib/supabase-env.server";
-import { agencyWorkerRunDenialReason, type TrustedAgencyWorkerRun } from "@/lib/agency/worker-auth";
+import { agencyWorkerRunDenialReason, agencyWorkerRunDiagnosticDetails, type TrustedAgencyWorkerRun } from "@/lib/agency/worker-auth";
 
 const REPO = "martinaburtoe-art/nuva-one";
 const AGENTS = ["orchestrator","constructor","finance","sales","supply","people","compliance","growth","security","qa","sentinel","ux","release"];
@@ -44,23 +44,16 @@ async function worker(request: Request) {
   };
 
   if (!token) return denied("missing_bearer_token", 401);
-  if (!runId || !/^[0-9]+$/.test(runId)) return denied("invalid_run_id", 401);
+  if (!runId || !/^[0-9]+$/.test(runId) || !Number.isSafeInteger(Number(runId)) || Number(runId) <= 0) {\n    return denied("invalid_run_id", 401);\n  }
   if (!agentId) return denied("missing_agent_id", 401);
   if (!AGENTS.includes(agentId)) return denied("agent_not_allowlisted", 401);
 
   const run = await githubRun(token, runId);
   const denialReason = agencyWorkerRunDenialReason(run, runId);
   if (denialReason) {
-    const candidate = run as TrustedAgencyWorkerRun;
     return denied("untrusted_github_run", 403, {
       denialReason,
-      runStatus: candidate.status ?? null,
-      workflowPath: candidate.path ?? null,
-      event: candidate.event ?? null,
-      headBranch: candidate.head_branch ?? null,
-      repository: candidate.repository?.full_name ?? null,
-      actor: candidate.actor?.login ?? null,
-      returnedRunId: candidate.id ?? null,
+      ...agencyWorkerRunDiagnosticDetails(run),
     });
   }
   return { ok: true as const, agentId, runId };
