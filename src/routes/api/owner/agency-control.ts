@@ -44,7 +44,9 @@ async function worker(request: Request) {
   };
 
   if (!token) return denied("missing_bearer_token", 401);
-  if (!runId || !/^[0-9]+$/.test(runId) || !Number.isSafeInteger(Number(runId)) || Number(runId) <= 0) {\n    return denied("invalid_run_id", 401);\n  }
+  if (!runId || !/^[0-9]+$/.test(runId) || !Number.isSafeInteger(Number(runId)) || Number(runId) <= 0) {
+    return denied("invalid_run_id", 401);
+  }
   if (!agentId) return denied("missing_agent_id", 401);
   if (!AGENTS.includes(agentId)) return denied("agent_not_allowlisted", 401);
 
