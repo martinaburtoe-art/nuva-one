@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AGENCY_DURABLE_WORKER_WORKFLOW_PATH,
+  agencyWorkerRunDenialReason,
   isTrustedAgencyWorkerRun,
   type TrustedAgencyWorkerRun,
 } from "./worker-auth";
@@ -32,5 +33,20 @@ describe("durable agency worker identity", () => {
     expect(isTrustedAgencyWorkerRun({ ...validRun, status: "completed" }, "123456")).toBe(false);
     expect(isTrustedAgencyWorkerRun(validRun, "123457")).toBe(false);
     expect(isTrustedAgencyWorkerRun(validRun, "not-a-run-id")).toBe(false);
+  });
+
+  it("reports a stable reason for each rejected worker identity without weakening the gate", () => {
+    expect(agencyWorkerRunDenialReason(validRun, "123457")).toBe("run_id_mismatch");
+    expect(agencyWorkerRunDenialReason({ ...validRun, repository: { full_name: "someone/else" } }, "123456")).toBe("repository_mismatch");
+    expect(agencyWorkerRunDenialReason({ ...validRun, status: "completed" }, "123456")).toBe("run_not_in_progress");
+    expect(agencyWorkerRunDenialReason({ ...validRun, path: ".github/workflows/ci.yml@refs/heads/main" }, "123456")).toBe("workflow_path_mismatch");
+    expect(agencyWorkerRunDenialReason({ ...validRun, head_branch: "feature/test" }, "123456")).toBe("head_branch_mismatch");
+    expect(agencyWorkerRunDenialReason({ ...validRun, event: "pull_request" }, "123456")).toBe("event_not_allowed");
+    expect(agencyWorkerRunDenialReason({ ...validRun, actor: { login: "contributor" } }, "123456")).toBe("actor_mismatch");
+  });
+
+  it("distinguishes malformed run payloads and IDs", () => {
+    expect(agencyWorkerRunDenialReason(null, "123456")).toBe("invalid_run_payload");
+    expect(agencyWorkerRunDenialReason(validRun, "not-a-run-id")).toBe("invalid_run_id");
   });
 });
