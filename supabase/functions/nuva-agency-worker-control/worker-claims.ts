@@ -2,7 +2,7 @@ export const AGENCY_WORKER_REPO = "martinaburtoe-art/nuva-one";
 export const AGENCY_WORKER_OWNER = "martinaburtoe-art";
 export const AGENCY_WORKER_AUDIENCE = "nuva-one-agency";
 export const AGENCY_WORKER_WORKFLOW_REF =
-  "martinaburtoe-art/nuva-one/.github/workflows/nuva-agent-durable-worker.yml@refs/heads/main";
+  "martinaburtoe-art/nuva-one/.github/workflows/nuva-agency-durable-worker.yml@refs/heads/main";
 
 export const AGENCY_WORKER_AGENT_IDS = [
   "orchestrator",
