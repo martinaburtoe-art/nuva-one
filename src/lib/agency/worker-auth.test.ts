@@ -86,4 +86,12 @@ describe("durable agency worker identity", () => {
       id: "123456",
     })).toEqual(empty);
   });
+  it("rejects malformed GitHub field types without throwing", () => {
+    expect(agencyWorkerRunDenialReason({ ...validRun, path: {} }, "123456")).toBe("workflow_path_mismatch");
+    expect(agencyWorkerRunDenialReason({ ...validRun, repository: [] }, "123456")).toBe("repository_mismatch");
+    expect(agencyWorkerRunDenialReason({ ...validRun, actor: [] }, "123456")).toBe("actor_mismatch");
+    expect(agencyWorkerRunDenialReason({ ...validRun, event: 42 }, "123456")).toBe("event_not_allowed");
+    expect(agencyWorkerRunDenialReason({ ...validRun, status: 42 }, "123456")).toBe("run_not_in_progress");
+  });
+
 });
