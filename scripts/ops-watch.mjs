@@ -127,9 +127,8 @@ async function main() {
   for (const r of results) console.log(`${r.ok ? 'OK  ' : 'FAIL'} ${r.name} — ${r.summary}`);
   if (DRY) { for (const r of results.filter((x) => !x.ok)) await notify(`${icon[r.severity]} [DRY] ${r.name}: ${r.summary}`); return; }
 
-  // Alimenta al Equipo ML con series de tiempo (latencia por check, tasa de error global).
-  for (const r of results) if (typeof r.details?.ms === 'number') await recordMetric(`latency_${r.name}`, r.details.ms);
-  await recordMetric('error_rate', results.length ? results.filter((x) => !x.ok).length / results.length : 0);
+  // Metrics persistence is intentionally omitted until the ops_metrics schema
+  // and retention contract are installed; never call an undefined writer here.
 
   let open = null;
   if (SB_URL && SB_KEY) {
