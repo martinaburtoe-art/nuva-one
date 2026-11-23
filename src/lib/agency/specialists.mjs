@@ -679,8 +679,9 @@ export const security = {
         && /const auth = internal\s*\?\s*await worker\(request\)\s*:\s*await owner\(request\)/.test(source);
 
       evidence.push(`agency-control.ts: ${source.length} bytes`);
-      evidence.push(`owner gate: ${ownerGateVerified ? "verificado" : "no verificado"}`);
-      evidence.push(`worker gate: ${workerGateVerified ? "verificado" : "no verificado"}`);
+      evidence.push(`owner gate (static): ${ownerGateVerified ? "detectado" : "no detectado"}`);
+      evidence.push(`worker gate (static): ${workerGateVerified ? "detectado" : "no detectado"}`);
+      evidence.push("autorización runtime: UNKNOWN (este especialista no ejecuta pruebas autenticadas)");
     } else {
       evidence.push("agency-control.ts: no legible; autorización UNKNOWN");
     }
@@ -695,6 +696,7 @@ export const security = {
       endpointReadable: agencyControl.ok,
       ownerGateVerified,
       workerGateVerified,
+      runtimeAuthorizationTestsVerified: false,
     });
     return makeResult("security", task.id, result, evidence, errors, start);
   },
@@ -778,10 +780,10 @@ export function classifyReleaseResult({ packageReadable, gitStatusOk, buildArtif
   return "PASS";
 }
 
-export function classifySecurityResult({ secretFilesFound, secretScanComplete, endpointReadable, ownerGateVerified, workerGateVerified }) {
+export function classifySecurityResult({ secretFilesFound, secretScanComplete, endpointReadable, ownerGateVerified, workerGateVerified, runtimeAuthorizationTestsVerified }) {
   if (endpointReadable && (!ownerGateVerified || !workerGateVerified)) return "FAIL";
   if (!endpointReadable || !secretScanComplete) return "UNKNOWN";
-  if (secretFilesFound > 0) return "WARN";
+  if (secretFilesFound > 0 || !runtimeAuthorizationTestsVerified) return "WARN";
   return "PASS";
 }
 
