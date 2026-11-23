@@ -416,11 +416,13 @@ export const people = {
 
     const docs = ["docs/nuva-agency/AGENT_BACKLOG.md", "docs/factory/BLOCKERS.md", "docs/factory/PROJECT_STATE.md"];
     let piiFound = 0;
+    let scanComplete = true;
 
     for (const doc of docs) {
       const file = await readLocalFile(doc);
       if (!file.ok) {
-        evidence.push(`${doc}: no encontrado`);
+        scanComplete = false;
+        evidence.push(`${doc}: no legible; cobertura PII incompleta`);
         continue;
       }
       const redacted = redactPII(file.content);
@@ -433,11 +435,14 @@ export const people = {
       const redacted = redactPII(pkg.content);
       piiFound += redacted.count;
       evidence.push(`package.json revisado: ${pkg.content.length} bytes (PII redactado: ${redacted.count})`);
+    } else {
+      scanComplete = false;
+      evidence.push("package.json: no legible; cobertura PII incompleta");
     }
 
-    evidence.push(`PII scan: ${piiFound} coincidencia(s) encontrada(s) y redactada(s) en documentos escaneados`);
+    evidence.push(`PII scan: ${piiFound} coincidencia(s) encontrada(s) y redactada(s); cobertura completa: ${scanComplete ? "sí" : "no"}`);
 
-    return makeResult("people", task.id, piiFound > 0 ? "WARN" : "PASS", evidence, errors, start);
+    return makeResult("people", task.id, classifyPeopleScanResult({ scanComplete, piiFound }), evidence, errors, start);
   },
 };
 
@@ -785,6 +790,11 @@ export function classifySecurityResult({ secretFilesFound, secretScanComplete, e
   if (!endpointReadable || !secretScanComplete) return "UNKNOWN";
   if (secretFilesFound > 0 || !runtimeAuthorizationTestsVerified) return "WARN";
   return "PASS";
+}
+
+export function classifyPeopleScanResult({ scanComplete, piiFound }) {
+  if (!scanComplete) return "UNKNOWN";
+  return piiFound > 0 ? "WARN" : "PASS";
 }
 
 /* ── SENTINEL ── */
