@@ -117,6 +117,80 @@ describe("agency durable worker", () => {
     expect(finishPayloads[0].status).toBe("blocked");
   });
 
+  it("blocks PASS when the specialist returns no non-empty evidence", async () => {
+    const finishPayloads = [];
+    const fetchImpl = vi.fn(async (_url, init) => {
+      const body = JSON.parse(init.body);
+      if (body.action === "claim_task") return claimResponse();
+      if (body.action === "finish_task") {
+        finishPayloads.push(body);
+        return jsonResponse({ ok: true });
+      }
+      throw new Error("unexpected_action");
+    });
+
+    const result = await runDurableWorker({
+      ...baseOptions,
+      fetchImpl,
+      executeSpecialist: async () => ({
+        specialist: "finance",
+        taskId: "task-1",
+        result: "PASS",
+        evidence: ["", "   "],
+        errors: [],
+      }),
+    });
+
+    expect(result.verdict).toBe("UNKNOWN");
+    expect(result.taskStatus).toBe("blocked");
+    expect(finishPayloads[0].status).toBe("blocked");
+    expect(finishPayloads[0].summary).toContain("AGENCY_SPECIALIST_EVIDENCE_REQUIRED");
+    expect(finishPayloads[0].result.errors).toContain("AGENCY_SPECIALIST_EVIDENCE_REQUIRED");
+  });
+
+  it("blocks a verdict whose specialist/task identity does not match the claimed task", async () => {
+    const finishPayloads = [];
+    const fetchImpl = vi.fn(async (_url, init) => {
+      const body = JSON.parse(init.body);
+      if (body.action === "claim_task") return claimResponse();
+      if (body.action === "finish_task") {
+        finishPayloads.push(body);
+        return jsonResponse({ ok: true });
+      }
+      throw new Error("unexpected_action");
+    });
+
+    const result = await runDurableWorker({
+      ...baseOptions,
+      fetchImpl,
+      executeSpecialist: async () => ({
+        specialist: "sales",
+        taskId: "another-task",
+        result: "PASS",
+        evidence: ["Resultado de prueba"],
+        errors: [],
+      }),
+    });
+
+    expect(result.verdict).toBe("UNKNOWN");
+    expect(result.taskStatus).toBe("blocked");
+    expect(finishPayloads[0].result.errors).toContain("AGENCY_SPECIALIST_RESULT_IDENTITY_MISMATCH");
+  });
+
+  it("rejects HTTP 200 when finish_task returns ok=false", async () => {
+    const fetchImpl = vi.fn(async (_url, init) => {
+      const body = JSON.parse(init.body);
+      if (body.action === "claim_task") return claimResponse();
+      if (body.action === "finish_task") return jsonResponse({ ok: false });
+      throw new Error("unexpected_action");
+    });
+
+    await expect(runDurableWorker({
+      ...baseOptions,
+      fetchImpl,
+    })).rejects.toThrow("AGENCY_TASK_FINISH_REJECTED");
+  });
+
   it("fails closed when the claim has no valid lease token", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({
       claimed: { task: { id: "task-1" }, lease: { token: "short" } },

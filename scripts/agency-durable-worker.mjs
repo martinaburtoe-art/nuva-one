@@ -84,19 +84,33 @@ export async function runDurableWorker(options = {}) {
     };
   }
 
-  const verdict = ALLOWED_VERDICTS.has(result?.result) ? result.result : "UNKNOWN";
+  const rawVerdict = ALLOWED_VERDICTS.has(result?.result) ? result.result : "UNKNOWN";
+  const evidence = Array.isArray(result?.evidence)
+    ? result.evidence
+      .filter((item) => typeof item === "string" && item.trim().length > 0)
+      .slice(0, 30)
+      .map((item) => item.trim().slice(0, 1000))
+    : [];
+  const errors = Array.isArray(result?.errors)
+    ? result.errors.filter((item) => typeof item === "string" && item.trim().length > 0).slice(0, 20).map((item) => item.trim().slice(0, 500))
+    : [];
+
+  const identityMatchesTask = result?.specialist === agentId && result?.taskId === task.id;
+  const evidenceRequired = rawVerdict === "PASS" || rawVerdict === "WARN";
+  const evidenceMissing = evidenceRequired && evidence.length === 0;
+  const verdict = identityMatchesTask && !evidenceMissing ? rawVerdict : "UNKNOWN";
+  if (!identityMatchesTask) errors.push("AGENCY_SPECIALIST_RESULT_IDENTITY_MISMATCH");
+  if (evidenceMissing) errors.push("AGENCY_SPECIALIST_EVIDENCE_REQUIRED");
+
   const taskStatus = verdict === "PASS" || verdict === "WARN"
     ? "completed"
     : verdict === "BLOCKED" || verdict === "UNKNOWN"
       ? "blocked"
       : "failed";
-  const evidence = Array.isArray(result?.evidence)
-    ? result.evidence.filter((item) => typeof item === "string").slice(0, 30).map((item) => item.slice(0, 1000))
-    : [];
-  const errors = Array.isArray(result?.errors)
-    ? result.errors.filter((item) => typeof item === "string").slice(0, 20).map((item) => item.slice(0, 500))
-    : [];
-  const summary = evidence.join(" | ").slice(0, 4000);
+  const summary = (evidence.length > 0
+    ? evidence.join(" | ")
+    : `Worker verdict ${verdict}; ${errors.length > 0 ? errors.join(", ") : "no non-empty evidence was provided"}.`
+  ).slice(0, 4000);
 
   const finished = await postAgencyAction(endpoint, headers, {
     action: "finish_task",
