@@ -48,9 +48,18 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function boundedDiagnosticText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value
+    .replace(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/g, " ")
+    .trim();
+  return normalized ? normalized.slice(0, maxLength) : null;
+}
+
 /**
  * Extract only bounded, non-secret GitHub run metadata for denial logs.
- * Malformed API payloads must remain diagnosable without throwing.
+ * Malformed or oversized API fields must remain diagnosable without allowing
+ * control-character log injection or unbounded log payloads.
  */
 export function agencyWorkerRunDiagnosticDetails(run: unknown): AgencyWorkerRunDiagnosticDetails {
   const candidate = asRecord(run);
@@ -60,12 +69,12 @@ export function agencyWorkerRunDiagnosticDetails(run: unknown): AgencyWorkerRunD
   const actor = asRecord(candidate.actor);
 
   return {
-    runStatus: typeof candidate.status === "string" ? candidate.status : null,
-    workflowPath: typeof candidate.path === "string" ? candidate.path : null,
-    event: typeof candidate.event === "string" ? candidate.event : null,
-    headBranch: typeof candidate.head_branch === "string" ? candidate.head_branch : null,
-    repository: typeof repository?.full_name === "string" ? repository.full_name : null,
-    actor: typeof actor?.login === "string" ? actor.login : null,
+    runStatus: boundedDiagnosticText(candidate.status, 32),
+    workflowPath: boundedDiagnosticText(candidate.path, 256),
+    event: boundedDiagnosticText(candidate.event, 64),
+    headBranch: boundedDiagnosticText(candidate.head_branch, 256),
+    repository: boundedDiagnosticText(repository?.full_name, 256),
+    actor: boundedDiagnosticText(actor?.login, 128),
     returnedRunId: typeof candidate.id === "number" && Number.isSafeInteger(candidate.id)
       ? candidate.id
       : null,
