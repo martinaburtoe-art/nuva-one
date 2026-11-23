@@ -105,6 +105,13 @@ describe("durable agency worker identity", () => {
       repository: { full_name: `org/${"r".repeat(300)}` },
       actor: { login: `bot\t${"x".repeat(200)}` },
     });
+    const hasControlCharacter = (value: string) => [...value].some((character) => {
+      const codePoint = character.codePointAt(0) ?? 0;
+      return codePoint <= 0x1f
+        || (codePoint >= 0x7f && codePoint <= 0x9f)
+        || codePoint === 0x2028
+        || codePoint === 0x2029;
+    });
 
     expect(details.runStatus).toBe(`completed ${"x".repeat(22)}`);
     expect(details.workflowPath).toHaveLength(256);
@@ -114,9 +121,7 @@ describe("durable agency worker identity", () => {
     expect(details.actor).toHaveLength(128);
 
     for (const value of Object.values(details)) {
-      if (typeof value === "string") {
-        expect(value).not.toMatch(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/);
-      }
+      if (typeof value === "string") expect(hasControlCharacter(value)).toBe(false);
     }
   });
 });
