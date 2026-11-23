@@ -86,6 +86,7 @@ describe("durable agency worker identity", () => {
       id: "123456",
     })).toEqual(empty);
   });
+
   it("rejects malformed GitHub field types without throwing", () => {
     expect(agencyWorkerRunDenialReason({ ...validRun, path: {} }, "123456")).toBe("workflow_path_mismatch");
     expect(agencyWorkerRunDenialReason({ ...validRun, repository: [] }, "123456")).toBe("repository_mismatch");
@@ -94,4 +95,28 @@ describe("durable agency worker identity", () => {
     expect(agencyWorkerRunDenialReason({ ...validRun, status: 42 }, "123456")).toBe("run_not_in_progress");
   });
 
+  it("bounds and strips control characters from denial-log metadata", () => {
+    const details = agencyWorkerRunDiagnosticDetails({
+      id: 123456,
+      status: `completed\n${"x".repeat(80)}`,
+      path: "p".repeat(300),
+      event: "schedule\u0000workflow",
+      head_branch: "release\r\nbranch",
+      repository: { full_name: `org/${"r".repeat(300)}` },
+      actor: { login: `bot\t${"x".repeat(200)}` },
+    });
+
+    expect(details.runStatus).toBe(`completed ${"x".repeat(22)}`);
+    expect(details.workflowPath).toHaveLength(256);
+    expect(details.event).toBe("schedule workflow");
+    expect(details.headBranch).toBe("release  branch");
+    expect(details.repository).toHaveLength(256);
+    expect(details.actor).toHaveLength(128);
+
+    for (const value of Object.values(details)) {
+      if (typeof value === "string") {
+        expect(value).not.toMatch(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/);
+      }
+    }
+  });
 });
