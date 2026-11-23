@@ -105,17 +105,20 @@ describe("Nüva Agency specialist evidence integrity", () => {
       endpointReadable: true,
       ownerGateVerified: true,
       workerGateVerified: true,
+      runtimeAuthorizationTestsVerified: true,
     };
     expect(classifySecurityResult(verified)).toBe("PASS");
+    expect(classifySecurityResult({ ...verified, runtimeAuthorizationTestsVerified: false })).toBe("WARN");
     expect(classifySecurityResult({ ...verified, secretFilesFound: 1 })).toBe("WARN");
   });
 
   it("the live security specialist inspects the effective agency-control endpoint", async () => {
     const result = await SPECIALISTS.security(task("security"));
     expect(result.evidence.some((entry) => entry.includes("agency-control.ts"))).toBe(true);
-    expect(result.evidence.some((entry) => entry.includes("owner gate: verificado"))).toBe(true);
-    expect(result.evidence.some((entry) => entry.includes("worker gate: verificado"))).toBe(true);
-    expect(["PASS", "WARN"]).toContain(result.result);
+    expect(result.evidence.some((entry) => entry.includes("owner gate (static): detectado"))).toBe(true);
+    expect(result.evidence.some((entry) => entry.includes("worker gate (static): detectado"))).toBe(true);
+    expect(result.evidence.some((entry) => entry.includes("autorización runtime: UNKNOWN"))).toBe(true);
+    expect(result.result).toBe("WARN");
   });
 
   it("the live release specialist does not claim PASS without GitHub PR evidence", async () => {
