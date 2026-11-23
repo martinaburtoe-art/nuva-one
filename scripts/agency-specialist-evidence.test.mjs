@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyReleaseResult,
   classifySecurityResult,
+  classifyPeopleScanResult,
   classifySentinelResult,
   SPECIALISTS,
 } from "../src/lib/agency/specialists.mjs";
@@ -110,6 +111,12 @@ describe("Nüva Agency specialist evidence integrity", () => {
     expect(classifySecurityResult(verified)).toBe("PASS");
     expect(classifySecurityResult({ ...verified, runtimeAuthorizationTestsVerified: false })).toBe("WARN");
     expect(classifySecurityResult({ ...verified, secretFilesFound: 1 })).toBe("WARN");
+  });
+
+  it("People returns UNKNOWN when any required source cannot be scanned", () => {
+    expect(classifyPeopleScanResult({ scanComplete: false, piiFound: 0 })).toBe("UNKNOWN");
+    expect(classifyPeopleScanResult({ scanComplete: true, piiFound: 0 })).toBe("PASS");
+    expect(classifyPeopleScanResult({ scanComplete: true, piiFound: 2 })).toBe("WARN");
   });
 
   it("the live security specialist inspects the effective agency-control endpoint", async () => {
