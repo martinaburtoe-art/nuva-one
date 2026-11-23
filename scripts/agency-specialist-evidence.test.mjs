@@ -115,6 +115,7 @@ describe("Nüva Agency specialist evidence integrity", () => {
 
   it("People returns UNKNOWN when any required source cannot be scanned", () => {
     expect(classifyPeopleScanResult({ scanComplete: false, piiFound: 0 })).toBe("UNKNOWN");
+    expect(classifyPeopleScanResult({ scanComplete: false, piiFound: 2 })).toBe("WARN");
     expect(classifyPeopleScanResult({ scanComplete: true, piiFound: 0 })).toBe("PASS");
     expect(classifyPeopleScanResult({ scanComplete: true, piiFound: 2 })).toBe("WARN");
   });
