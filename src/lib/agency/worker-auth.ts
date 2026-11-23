@@ -50,10 +50,22 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 function boundedDiagnosticText(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") return null;
-  const normalized = value
-    .replace(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/g, " ")
-    .trim();
-  return normalized ? normalized.slice(0, maxLength) : null;
+
+  let normalized = "";
+  let length = 0;
+  for (const character of value) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    const isControl = codePoint <= 0x1f
+      || (codePoint >= 0x7f && codePoint <= 0x9f)
+      || codePoint === 0x2028
+      || codePoint === 0x2029;
+    normalized += isControl ? " " : character;
+    length += 1;
+    if (length >= maxLength) break;
+  }
+
+  const bounded = normalized.trim();
+  return bounded || null;
 }
 
 /**
