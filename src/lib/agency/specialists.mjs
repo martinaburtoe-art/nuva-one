@@ -793,8 +793,9 @@ export function classifySecurityResult({ secretFilesFound, secretScanComplete, e
 }
 
 export function classifyPeopleScanResult({ scanComplete, piiFound }) {
+  if (piiFound > 0) return "WARN";
   if (!scanComplete) return "UNKNOWN";
-  return piiFound > 0 ? "WARN" : "PASS";
+  return "PASS";
 }
 
 /* ── SENTINEL ── */
