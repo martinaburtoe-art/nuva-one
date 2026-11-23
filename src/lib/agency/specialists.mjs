@@ -82,6 +82,7 @@ const REMOTE_SOURCE_ALLOWLIST = new Set([
   "docs/factory/PROJECT_STATE.md",
   "docs/factory/DECISIONS.md",
   "src/routes/api/owner/agency-status.ts",
+  "src/routes/api/owner/agency-control.ts",
   "src/routes/owner/control-tower.tsx",
 ]);
 
@@ -631,7 +632,7 @@ export const security = {
   responsabilidades: [
     "Escanear archivos expuestos con secretos (.env, .env.local)",
     "Detectar patrones prohibidos (service_role, deploy production)",
-    "Verificar autorización server-side en endpoints de agency",
+    "Verificar autorización server-side en el endpoint efectivo de Agency",
   ],
   limites: [
     "No muestra secretos en logs ni salidas",
@@ -648,26 +649,54 @@ export const security = {
 
     const envFiles = [".env", ".env.local", ".env.production"];
     let secretosEncontrados = 0;
-    for (const ef of envFiles) {
-      const f = await readLocalFile(ef);
-      if (f.ok) {
-        secretosEncontrados++;
-        evidence.push(`${ef}: EXISTE (posible secreto expuesto — [REDACTED])`);
+    let secretScanComplete = true;
+    for (const envFile of envFiles) {
+      const file = await readLocalFile(envFile);
+      if (file.ok) {
+        secretosEncontrados += 1;
+        evidence.push(`${envFile}: EXISTE (posible secreto expuesto — [REDACTED])`);
+      } else if (/ENOENT/.test(file.error ?? "")) {
+        evidence.push(`${envFile}: no encontrado`);
       } else {
-        evidence.push(`${ef}: no encontrado (correcto)`);
+        secretScanComplete = false;
+        evidence.push(`${envFile}: estado no verificable`);
       }
     }
 
-    const agencyControl = await readLocalFile("src/routes/api/owner/agency-status.ts");
+    const agencyControl = await readLocalFile("src/routes/api/owner/agency-control.ts");
+    let ownerGateVerified = false;
+    let workerGateVerified = false;
     if (agencyControl.ok) {
-      const hasAuth = /authoriz|owner|worker|verify/i.test(agencyControl.content);
-      evidence.push(`agency-status.ts: ${agencyControl.content.length} bytes, autorización server-side: ${hasAuth ? "sí" : "no detectada"}`);
-      if (!hasAuth) errors.push("agency-status.ts sin verificación de autorización server-side");
+      const source = agencyControl.content;
+      ownerGateVerified =
+        /async function owner\(request: Request\)/.test(source)
+        && /platform_role === "owner"/.test(source)
+        && /GET:\s*async\s*\(\{\s*request\s*\}\)\s*=>\s*\{\s*const auth = await owner\(request\)/.test(source);
+
+      workerGateVerified =
+        /async function worker\(request: Request\)/.test(source)
+        && /(isTrustedAgencyWorkerRun|agencyWorkerRunDenialReason)\s*\(/.test(source)
+        && /const auth = internal\s*\?\s*await worker\(request\)\s*:\s*await owner\(request\)/.test(source);
+
+      evidence.push(`agency-control.ts: ${source.length} bytes`);
+      evidence.push(`owner gate: ${ownerGateVerified ? "verificado" : "no verificado"}`);
+      evidence.push(`worker gate: ${workerGateVerified ? "verificado" : "no verificado"}`);
     } else {
-      evidence.push("agency-status.ts: no encontrado");
+      evidence.push("agency-control.ts: no legible; autorización UNKNOWN");
     }
 
-    return makeResult("security", task.id, secretosEncontrados === 0 ? "PASS" : "WARN", evidence, errors, start);
+    evidence.push(`archivos .env encontrados: ${secretosEncontrados}`);
+    if (agencyControl.ok && !ownerGateVerified) errors.push("El endpoint efectivo no demuestra el gate owner esperado.");
+    if (agencyControl.ok && !workerGateVerified) errors.push("El endpoint efectivo no demuestra el gate de identidad worker esperado.");
+
+    const result = classifySecurityResult({
+      secretFilesFound: secretosEncontrados,
+      secretScanComplete,
+      endpointReadable: agencyControl.ok,
+      ownerGateVerified,
+      workerGateVerified,
+    });
+    return makeResult("security", task.id, result, evidence, errors, start);
   },
 };
 
@@ -737,6 +766,25 @@ export const qa = {
   },
 };
 
+export function classifySentinelResult({ logsAvailable, validLogFiles, invalidLogFiles, nonPassResults, paused, pauseStateKnown }) {
+  if (!logsAvailable || validLogFiles <= 0 || invalidLogFiles > 0 || !pauseStateKnown) return "UNKNOWN";
+  if (nonPassResults > 0 || paused) return "WARN";
+  return "PASS";
+}
+
+export function classifyReleaseResult({ packageReadable, gitStatusOk, buildArtifactPresent, pullRequestVerified }) {
+  if (!packageReadable || !gitStatusOk) return "FAIL";
+  if (!buildArtifactPresent || !pullRequestVerified) return "UNKNOWN";
+  return "PASS";
+}
+
+export function classifySecurityResult({ secretFilesFound, secretScanComplete, endpointReadable, ownerGateVerified, workerGateVerified }) {
+  if (endpointReadable && (!ownerGateVerified || !workerGateVerified)) return "FAIL";
+  if (!endpointReadable || !secretScanComplete) return "UNKNOWN";
+  if (secretFilesFound > 0) return "WARN";
+  return "PASS";
+}
+
 /* ── SENTINEL ── */
 export const sentinel = {
   id: "sentinel",
@@ -762,34 +810,67 @@ export const sentinel = {
     let fails = 0;
     let blocked = 0;
     let total = 0;
+    let validLogFiles = 0;
+    let invalidLogFiles = 0;
+    let nonPassResults = 0;
+    let logsAvailable = false;
+
     try {
-      const fsPromises = await import("node:fs/promises");
       const entries = await fsPromises.readdir("logs/executions");
-      const jsonFiles = entries.filter((e) => e.endsWith(".json") && !e.startsWith("."));
-      for (const f of jsonFiles) {
-        const data = await readLocalFile(join("logs/executions", f));
-        if (data.ok) {
-          try {
-            const parsed = JSON.parse(data.content);
-            if (parsed.result) {
-              total++;
-              if (parsed.result === "FAIL") fails++;
-              if (parsed.result === "BLOCKED") blocked++;
-            }
-          } catch { /* ignorar JSON inválido */ }
+      logsAvailable = true;
+      const jsonFiles = entries.filter((entry) => entry.endsWith(".json") && !entry.startsWith("."));
+
+      for (const name of jsonFiles) {
+        const data = await readLocalFile(join("logs/executions", name));
+        if (!data.ok) {
+          invalidLogFiles += 1;
+          continue;
+        }
+
+        try {
+          const parsed = JSON.parse(data.content);
+          const result = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+            ? parsed.result
+            : null;
+          if (!["PASS", "FAIL", "BLOCKED", "WARN", "UNKNOWN"].includes(result)) {
+            invalidLogFiles += 1;
+            continue;
+          }
+
+          validLogFiles += 1;
+          total += 1;
+          if (result !== "PASS") nonPassResults += 1;
+          if (result === "FAIL") fails += 1;
+          if (result === "BLOCKED") blocked += 1;
+        } catch {
+          invalidLogFiles += 1;
         }
       }
-      evidence.push(`ejecuciones en logs: ${total}`);
-      evidence.push(`resultados FAIL: ${fails}`);
-      evidence.push(`resultados BLOCKED: ${blocked}`);
+
+      evidence.push(`archivos JSON de logs: ${jsonFiles.length}`);
     } catch {
-      evidence.push("logs/executions: directorio no encontrado o vacío");
+      evidence.push("logs/executions: directorio no disponible");
     }
 
-    const pauseFile = await readLocalFile(".agency-pause");
-    evidence.push(`.agency-pause: ${pauseFile.ok ? "PRESENTE (sistema pausado)" : "ausente (sistema activo)"}`);
+    evidence.push(`ejecuciones con resultado válido: ${total}`);
+    evidence.push(`logs inválidos/no legibles: ${invalidLogFiles}`);
+    evidence.push(`resultados FAIL: ${fails}`);
+    evidence.push(`resultados BLOCKED: ${blocked}`);
 
-    return makeResult("sentinel", task.id, fails === 0 ? "PASS" : "WARN", evidence, errors, start);
+    const pauseFile = await readLocalFile(".agency-pause");
+    const pauseStateKnown = pauseFile.ok || /ENOENT/.test(pauseFile.error ?? "");
+    const paused = pauseFile.ok;
+    evidence.push(`.agency-pause: ${paused ? "PRESENTE (sistema pausado)" : pauseStateKnown ? "ausente (sistema no pausado)" : "estado no verificable"}`);
+
+    const result = classifySentinelResult({
+      logsAvailable,
+      validLogFiles,
+      invalidLogFiles,
+      nonPassResults,
+      paused,
+      pauseStateKnown,
+    });
+    return makeResult("sentinel", task.id, result, evidence, errors, start);
   },
 };
 
@@ -841,9 +922,9 @@ export const release = {
   id: "release",
   nombre: "Release",
   responsabilidades: [
-    "Verificar estado de git y rama de trabajo",
-    "Confirmar que PR permanece abierto sin merge",
-    "Reportar artefactos de build generados",
+    "Verificar estado local de git y existencia de artefactos de build",
+    "Confirmar que PR permanece abierto sin merge solo con evidencia autenticada de GitHub",
+    "No declarar PASS cuando el estado remoto del PR no se puede verificar",
   ],
   limites: [
     "No hace merge a main",
@@ -857,26 +938,36 @@ export const release = {
     const start = nowMs();
     const evidence = [];
     const errors = [];
+    let packageReadable = false;
 
     try {
-      const c = await fsPromises.readFile("package.json", "utf8");
-      evidence.push(`package.json: ${c.length} bytes`);
-    } catch (e) {
-      errors.push(e.message);
+      const packageJson = await fsPromises.readFile("package.json", "utf8");
+      packageReadable = true;
+      evidence.push(`package.json: ${packageJson.length} bytes`);
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+      evidence.push("package.json: no legible");
     }
 
-    const hasDist = fs.existsSync("dist") || fs.existsSync(".vercel/output");
-    evidence.push(`artefactos de build: ${hasDist ? "presentes" : "no detectados"}`);
+    const buildArtifactPresent = fs.existsSync("dist") || fs.existsSync(".vercel/output");
+    evidence.push(`artefactos de build: ${buildArtifactPresent ? "presentes" : "no detectados"}`);
+    evidence.push("estado PR: UNKNOWN (este especialista local no dispone de evidencia autenticada de GitHub)");
 
     return new Promise((resolve) => {
-      execFile("git", ["status", "--short"], { cwd: process.cwd(), timeout: 30000 }, (error, stdout, stderr) => {
-        const duration = Date.now() - start;
+      execFile("git", ["status", "--short"], { cwd: process.cwd(), timeout: 30000 }, (error, stdout) => {
         const output = stdout || "";
         const modifiedFiles = output.trim().split("\n").filter(Boolean).length;
         evidence.push(`git status: ${modifiedFiles} archivo(s) sin staged`);
         evidence.push(output.slice(0, 500));
+        if (error) errors.push(error.message);
 
-        resolve(makeResult("release", task.id, error ? "FAIL" : "PASS", evidence, errors, start));
+        const result = classifyReleaseResult({
+          packageReadable,
+          gitStatusOk: !error,
+          buildArtifactPresent,
+          pullRequestVerified: false,
+        });
+        resolve(makeResult("release", task.id, result, evidence, errors, start));
       });
     });
   },
