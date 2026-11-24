@@ -774,8 +774,9 @@ export const qa = {
 };
 
 export function classifySentinelResult({ logsAvailable, validLogFiles, invalidLogFiles, nonPassResults, paused, pauseStateKnown }) {
-  if (!logsAvailable || validLogFiles <= 0 || invalidLogFiles > 0 || !pauseStateKnown) return "UNKNOWN";
+  // Preserve confirmed adverse evidence even when another source is incomplete.
   if (nonPassResults > 0 || paused) return "WARN";
+  if (!logsAvailable || validLogFiles <= 0 || invalidLogFiles > 0 || !pauseStateKnown) return "UNKNOWN";
   return "PASS";
 }
 
