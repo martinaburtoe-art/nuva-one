@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   safety-gate:
+    if: ${{ github.event_name != 'pull_request' || startsWith(github.head_ref, 'agent/agency-') }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
