@@ -59,6 +59,8 @@ describe("Nüva Agency specialist evidence integrity", () => {
     };
     expect(classifySentinelResult(clean)).toBe("PASS");
     expect(classifySentinelResult({ ...clean, nonPassResults: 1 })).toBe("WARN");
+    expect(classifySentinelResult({ ...clean, invalidLogFiles: 1, nonPassResults: 1 })).toBe("WARN");
+    expect(classifySentinelResult({ ...clean, pauseStateKnown: false, nonPassResults: 1 })).toBe("WARN");
     expect(classifySentinelResult({ ...clean, paused: true })).toBe("WARN");
   });
 
