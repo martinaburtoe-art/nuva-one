@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(39);
+SELECT plan(43);
 
 INSERT INTO auth.users (id) VALUES
   ('00000000-0000-0000-0000-00000000a901'),
@@ -358,7 +358,7 @@ SELECT is(
   10,
   'additional purchase receipt increases stock before reserved-stock reversal test'
 );
-UPDATE public.products SET reserved_stock=9
+UPDATE public.products SET reserved_stock=4, blocked_stock=5
 WHERE id='00000000-0000-0000-0000-00000000c901';
 SELECT throws_ok(
   $$UPDATE public.purchases SET status='cancelled'
@@ -378,6 +378,33 @@ SELECT is(
      AND source_id='00000000-0000-0000-0000-00000000d902'),
   0,
   'rejected purchase reversal appends no compensating movement'
+);
+
+
+SELECT throws_ok(
+  $$DELETE FROM public.purchases
+    WHERE id='00000000-0000-0000-0000-00000000d902'$$,
+  '23514',
+  'PURCHASE_REVERSAL_STOCK_RESERVED',
+  'deleting a received purchase is rejected when it would consume reserved or blocked stock'
+);
+SELECT is(
+  (SELECT stock FROM public.products WHERE id='00000000-0000-0000-0000-00000000c901'),
+  10,
+  'rejected purchase deletion leaves physical stock unchanged'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.purchases
+   WHERE id='00000000-0000-0000-0000-00000000d902'),
+  1,
+  'rejected purchase deletion preserves the purchase row'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.inventory_movements
+   WHERE source_type='purchase_reversal'
+     AND source_id='00000000-0000-0000-0000-00000000d902'),
+  0,
+  'rejected purchase deletion appends no compensating movement'
 );
 
 SELECT * FROM finish();

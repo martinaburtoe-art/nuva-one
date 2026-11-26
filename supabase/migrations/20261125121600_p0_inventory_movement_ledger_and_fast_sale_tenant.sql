@@ -600,3 +600,81 @@ COMMENT ON FUNCTION public.create_fast_sale(
 COMMENT ON FUNCTION public.create_fast_sale(
   uuid, text, text, text, boolean, date, jsonb, text
 ) IS 'Deprecated fail-closed compatibility shim. Clients must pass p_business_id.';
+
+-- Apply the same reserved/blocked-stock protection to physical purchase deletion.
+-- The BEFORE DELETE trigger remains the canonical path for deleting a received
+-- purchase, so it must enforce the same invariant as status/content reversals.
+CREATE OR REPLACE FUNCTION public.revert_purchase_effects()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public, private, extensions
+AS $$
+DECLARE
+  item JSONB;
+  v_before INTEGER;
+  v_after INTEGER;
+  v_product_id UUID;
+  v_qty INTEGER;
+  v_reserved INTEGER;
+  v_blocked INTEGER;
+BEGIN
+  IF OLD.stock_applied THEN
+    FOR item IN
+      SELECT value
+      FROM jsonb_array_elements(COALESCE(OLD.items, '[]'::jsonb)) AS entry(value)
+    LOOP
+      IF NULLIF(item->>'product_id', '') IS NOT NULL THEN
+        v_product_id := (item->>'product_id')::UUID;
+        v_qty := COALESCE((item->>'qty')::INTEGER, 0);
+
+        IF v_qty <= 0 THEN
+          RAISE EXCEPTION 'PURCHASE_REVERSAL_ITEM_QUANTITY_INVALID'
+            USING ERRCODE = '22023';
+        END IF;
+
+        SELECT p.stock, p.reserved_stock, p.blocked_stock
+          INTO v_before, v_reserved, v_blocked
+        FROM public.products AS p
+        WHERE p.id = v_product_id
+          AND p.business_id = OLD.business_id
+        FOR UPDATE;
+
+        IF NOT FOUND THEN
+          RAISE EXCEPTION 'PURCHASE_REVERSAL_PRODUCT_NOT_FOUND'
+            USING ERRCODE = '23503';
+        END IF;
+
+        IF v_before - v_qty < COALESCE(v_reserved, 0) + COALESCE(v_blocked, 0) THEN
+          RAISE EXCEPTION 'PURCHASE_REVERSAL_STOCK_RESERVED'
+            USING ERRCODE = '23514';
+        END IF;
+
+        UPDATE public.products
+        SET stock = v_before - v_qty
+        WHERE id = v_product_id
+          AND business_id = OLD.business_id
+        RETURNING stock INTO v_after;
+
+        INSERT INTO public.inventory_movements (
+          business_id, product_id, quantity_delta, stock_before, stock_after,
+          movement_type, reason, source_type, source_id, created_by
+        ) VALUES (
+          OLD.business_id, v_product_id, -v_qty, v_before, v_after,
+          'purchase_reversal', 'Reversión de compra por eliminación',
+          'purchase_reversal', OLD.id, auth.uid()
+        );
+      END IF;
+    END LOOP;
+
+    IF OLD.transaction_id IS NOT NULL THEN
+      DELETE FROM public.transactions
+      WHERE id = OLD.transaction_id
+        AND business_id = OLD.business_id;
+    END IF;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
