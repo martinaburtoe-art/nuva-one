@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -35,7 +36,52 @@ function parseLocalFilename(filename) {
   };
 }
 
-export function reconcileMigrationHistory(remoteMigrations, localFilenames) {
+function getLocalContent(localContents, filename) {
+  if (localContents instanceof Map) return localContents.get(filename);
+  if (localContents && typeof localContents === 'object') return localContents[filename];
+  return undefined;
+}
+
+function compareSqlChecksum(remoteEntry, localEntry, localContents, mappingBasis, fallbackReason = null) {
+  const base = {
+    remoteVersion: remoteEntry.version,
+    remoteName: remoteEntry.rawName,
+    localVersion: localEntry?.version ?? null,
+    localFilename: localEntry?.filename ?? null,
+    mappingBasis: mappingBasis ?? null,
+    remoteStatementCount: remoteEntry.statementCount,
+    remoteMd5: remoteEntry.statementsMd5,
+  };
+
+  if (!localEntry) return { ...base, outcome: 'unknown', reason: fallbackReason ?? 'no_local_candidate' };
+  if (remoteEntry.statementCount == null) {
+    return { ...base, outcome: 'unknown', reason: 'remote_statement_count_unavailable' };
+  }
+  if (remoteEntry.statementCount !== 1) {
+    return { ...base, outcome: 'unknown', reason: 'remote_statement_count_not_one' };
+  }
+  if (!remoteEntry.statementsMd5) {
+    return { ...base, outcome: 'unknown', reason: 'remote_checksum_unavailable' };
+  }
+
+  const localContent = getLocalContent(localContents, localEntry.filename);
+  if (typeof localContent !== 'string') {
+    return { ...base, outcome: 'unknown', reason: 'local_content_unavailable' };
+  }
+  if (localContent.includes('\\r')) {
+    return { ...base, outcome: 'unknown', reason: 'local_line_endings_not_canonical' };
+  }
+
+  const localMd5 = createHash('md5').update(localContent, 'utf8').digest('hex');
+  return {
+    ...base,
+    localMd5,
+    outcome: localMd5 === remoteEntry.statementsMd5 ? 'match' : 'mismatch',
+    reason: null,
+  };
+}
+
+export function reconcileMigrationHistory(remoteMigrations, localFilenames, localContents = {}) {
   if (!Array.isArray(remoteMigrations)) {
     throw new TypeError('Remote migration history must be an array.');
   }
@@ -49,7 +95,22 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames) {
       throw new TypeError('Remote migration at index ' + index + ' has an invalid 14-digit version.');
     }
     const rawName = typeof entry?.name === 'string' ? entry.name.trim() : '';
-    return { version, rawName, name: normalizeMigrationName(rawName) };
+    const rawStatementCount = entry?.statement_count ?? entry?.statementCount;
+    const parsedStatementCount = rawStatementCount == null ? null : Number(rawStatementCount);
+    const statementCount =
+      Number.isInteger(parsedStatementCount) && parsedStatementCount >= 0 ? parsedStatementCount : null;
+    const rawStatementsMd5 = entry?.statements_md5 ?? entry?.statementsMd5;
+    const statementsMd5 =
+      typeof rawStatementsMd5 === 'string' && /^[a-f0-9]{32}$/i.test(rawStatementsMd5)
+        ? rawStatementsMd5.toLowerCase()
+        : null;
+    return {
+      version,
+      rawName,
+      name: normalizeMigrationName(rawName),
+      statementCount,
+      statementsMd5,
+    };
   });
 
   const sqlFilenames = localFilenames.filter((filename) => String(filename).toLowerCase().endsWith('.sql'));
@@ -123,6 +184,34 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames) {
     .filter((entry) => !entry.name)
     .map((entry) => ({ version: entry.version, name: entry.rawName }));
 
+  const sqlChecksumComparisons = remote.map((remoteEntry) => {
+    const remoteVersionEntries = remoteByVersion.get(remoteEntry.version) ?? [];
+    const localVersionEntries = localByVersion.get(remoteEntry.version) ?? [];
+    if (remoteVersionEntries.length === 1 && localVersionEntries.length === 1) {
+      return compareSqlChecksum(remoteEntry, localVersionEntries[0], localContents, 'version');
+    }
+
+    if (remoteEntry.name) {
+      const remoteNameEntries = remoteByName.get(remoteEntry.name) ?? [];
+      const localNameEntries = localByName.get(remoteEntry.name) ?? [];
+      if (remoteNameEntries.length === 1 && localNameEntries.length === 1) {
+        return compareSqlChecksum(remoteEntry, localNameEntries[0], localContents, 'unique_name');
+      }
+      if (remoteNameEntries.length > 1 || localNameEntries.length > 1) {
+        return compareSqlChecksum(remoteEntry, null, localContents, null, 'ambiguous_name_mapping');
+      }
+    }
+
+    const reason =
+      remoteVersionEntries.length > 1 || localVersionEntries.length > 1
+        ? 'ambiguous_version_mapping'
+        : 'no_local_candidate';
+    return compareSqlChecksum(remoteEntry, null, localContents, null, reason);
+  });
+  const sqlChecksumMatches = sqlChecksumComparisons.filter((entry) => entry.outcome === 'match').length;
+  const sqlChecksumMismatches = sqlChecksumComparisons.filter((entry) => entry.outcome === 'mismatch').length;
+  const sqlChecksumUnknown = sqlChecksumComparisons.filter((entry) => entry.outcome === 'unknown').length;
+
   const versionIntersection = [...remoteByVersion.keys()].filter((version) => localByVersion.has(version));
   const hasDrift =
     invalidLocalFilenames.length > 0 ||
@@ -133,7 +222,8 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames) {
     localOnlyVersions.length > 0 ||
     sameVersionDifferentName.length > 0 ||
     sameNameDifferentVersion.length > 0 ||
-    ambiguousNameMatches.length > 0;
+    ambiguousNameMatches.length > 0 ||
+    sqlChecksumMismatches > 0;
 
   return {
     status: hasDrift ? 'drift' : 'aligned',
@@ -153,6 +243,10 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames) {
       duplicateLocalVersions: duplicateLocalVersions.length,
       invalidLocalFilenames: invalidLocalFilenames.length,
       ambiguousNameMatches: ambiguousNameMatches.length,
+      sqlChecksumComparisons: sqlChecksumComparisons.length,
+      sqlChecksumMatches,
+      sqlChecksumMismatches,
+      sqlChecksumUnknown,
     },
     exactNameAndVersion,
     sameVersionDifferentName,
@@ -164,11 +258,13 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames) {
     duplicateLocalVersions,
     invalidLocalFilenames,
     ambiguousNameMatches,
+    sqlChecksumComparisons,
     limitations: [
-      'This audit compares migration version/name metadata only; it does not compare SQL contents or checksums.',
-      'A matching version/name does not prove the remote schema equals the local SQL result.',
-      'A mismatch does not prove a missing schema change; renames, squashes, and reviewed history repairs may explain it.',
-      'This tool is read-only and never emits migration repair, push, or backfill commands.',
+      'A SQL checksum is compared only when the remote snapshot has one stored statement and a unique local file candidate.',
+      'The SQL snapshot fingerprints the stored migration payload; a match does not prove the current schema still equals that migration result.',
+      'Multiple stored statements, missing checksums, ambiguous mappings, or non-canonical local line endings remain UNKNOWN rather than being guessed.',
+      'A metadata mismatch does not prove a missing schema change; renames, squashes, and reviewed history repairs may explain it.',
+      'This audit is read-only and never emits migration repair, push, or backfill commands.',
     ],
   };
 }
@@ -202,23 +298,41 @@ async function main() {
   const options = parseArguments(process.argv.slice(2));
   if (options.help) {
     console.log(
-      'Usage: node scripts/audit-migration-history.mjs --remote-json <list-migrations.json> [--local-dir <path>] [--format text|json] [--fail-on-drift]',
+      'Usage: node scripts/audit-migration-history.mjs --remote-json <list-migrations.json|sql-checksum-snapshot.json> [--local-dir <path>] [--format text|json] [--fail-on-drift]\\n' +
+        'For SQL fingerprints, save the JSON rows produced by scripts/audit-migration-history-snapshot.sql.',
     );
     return;
   }
   if (!options.remoteJson) {
-    throw new Error('--remote-json is required. Supply a saved, read-only Supabase list_migrations response.');
+    throw new Error('--remote-json is required. Supply a saved, read-only list_migrations or SQL checksum snapshot.');
   }
 
   const parsedRemote = JSON.parse(await readFile(resolve(options.remoteJson), 'utf8'));
-  const remoteMigrations = Array.isArray(parsedRemote) ? parsedRemote : parsedRemote?.migrations;
+  const remoteMigrations = Array.isArray(parsedRemote)
+    ? parsedRemote
+    : Array.isArray(parsedRemote?.migrations)
+      ? parsedRemote.migrations
+      : Array.isArray(parsedRemote?.result)
+        ? parsedRemote.result
+        : null;
   if (!Array.isArray(remoteMigrations)) {
-    throw new TypeError('Remote JSON must be an array or an object containing a migrations array.');
+    throw new TypeError('Remote JSON must be an array or contain a migrations/result array.');
   }
 
   const entries = await readdir(options.localDir, { withFileTypes: true });
-  const localFilenames = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
-  const report = reconcileMigrationHistory(remoteMigrations, localFilenames);
+  const localSqlEntries = entries.filter(
+    (entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.sql'),
+  );
+  const localFilenames = localSqlEntries.map((entry) => entry.name);
+  const localContents = Object.fromEntries(
+    await Promise.all(
+      localSqlEntries.map(async (entry) => [
+        entry.name,
+        await readFile(resolve(options.localDir, entry.name), 'utf8'),
+      ]),
+    ),
+  );
+  const report = reconcileMigrationHistory(remoteMigrations, localFilenames, localContents);
 
   if (options.format === 'json') {
     console.log(JSON.stringify(report, null, 2));
@@ -237,7 +351,15 @@ async function main() {
     console.log('Duplicate remote/local versions: ' + summary.duplicateRemoteVersions + '/' + summary.duplicateLocalVersions);
     console.log('Invalid local filenames: ' + summary.invalidLocalFilenames);
     console.log('Ambiguous name matches: ' + summary.ambiguousNameMatches);
-    console.log('Diagnostic only: review SQL checksums and applied schema state separately.');
+    console.log(
+      'SQL checksum match/mismatch/unknown: ' +
+        summary.sqlChecksumMatches +
+        '/' +
+        summary.sqlChecksumMismatches +
+        '/' +
+        summary.sqlChecksumUnknown,
+    );
+    console.log('A checksum match verifies stored migration payload bytes, not the current schema state.');
   }
 
   if (options.failOnDrift && report.status !== 'aligned') process.exitCode = 2;

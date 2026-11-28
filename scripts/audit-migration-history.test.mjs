@@ -1,4 +1,7 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+
+const md5 = (value) => createHash('md5').update(value, 'utf8').digest('hex');
 import { reconcileMigrationHistory } from './audit-migration-history.mjs';
 
 describe('reconcileMigrationHistory', () => {
@@ -87,5 +90,125 @@ describe('reconcileMigrationHistory', () => {
     expect(() =>
       reconcileMigrationHistory([{ version: 'latest', name: 'create_table' }], []),
     ).toThrow(/invalid 14-digit version/i);
+  });
+
+  it('matches stored SQL fingerprints for exact version mappings', () => {
+    const filename = '20260101000000_create_table.sql';
+    const sql = 'create table public.example (id uuid primary key);\\n';
+    const report = reconcileMigrationHistory(
+      [
+        {
+          version: '20260101000000',
+          name: 'create_table',
+          statement_count: 1,
+          statements_md5: md5(sql),
+        },
+      ],
+      [filename],
+      { [filename]: sql },
+    );
+
+    expect(report.sqlChecksumComparisons[0]).toMatchObject({
+      mappingBasis: 'version',
+      outcome: 'match',
+      localFilename: filename,
+    });
+    expect(report.summary.sqlChecksumMatches).toBe(1);
+    expect(report.summary.sqlChecksumMismatches).toBe(0);
+  });
+
+  it('uses a unique migration name to compare SQL when timestamps drift', () => {
+    const filename = '20260101000000_create_table.sql';
+    const sql = 'create table public.example (id uuid primary key);\\n';
+    const report = reconcileMigrationHistory(
+      [
+        {
+          version: '20260102000000',
+          name: 'create_table',
+          statement_count: 1,
+          statements_md5: md5(sql),
+        },
+      ],
+      [filename],
+      { [filename]: sql },
+    );
+
+    expect(report.status).toBe('drift');
+    expect(report.sqlChecksumComparisons[0]).toMatchObject({
+      mappingBasis: 'unique_name',
+      outcome: 'match',
+      localVersion: '20260101000000',
+    });
+  });
+
+  it('reports a SQL checksum mismatch without treating it as a match', () => {
+    const filename = '20260101000000_create_table.sql';
+    const localSql = 'create table public.example (id uuid primary key);\\n';
+    const report = reconcileMigrationHistory(
+      [
+        {
+          version: '20260101000000',
+          name: 'create_table',
+          statement_count: 1,
+          statements_md5: md5('create table public.example (id text primary key);\\n'),
+        },
+      ],
+      [filename],
+      { [filename]: localSql },
+    );
+
+    expect(report.status).toBe('drift');
+    expect(report.sqlChecksumComparisons[0].outcome).toBe('mismatch');
+    expect(report.summary.sqlChecksumMismatches).toBe(1);
+  });
+
+  it('keeps multi-statement snapshots UNKNOWN instead of guessing', () => {
+    const filename = '20260101000000_create_table.sql';
+    const sql = 'create table public.example (id uuid primary key);\\n';
+    const report = reconcileMigrationHistory(
+      [
+        {
+          version: '20260101000000',
+          name: 'create_table',
+          statement_count: 2,
+          statements_md5: md5(sql),
+        },
+      ],
+      [filename],
+      { [filename]: sql },
+    );
+
+    expect(report.sqlChecksumComparisons[0]).toMatchObject({
+      outcome: 'unknown',
+      reason: 'remote_statement_count_not_one',
+    });
+    expect(report.summary.sqlChecksumUnknown).toBe(1);
+  });
+
+  it('does not checksum ambiguous same-name mappings', () => {
+    const filename = '20260103000000_shared_name.sql';
+    const sql = 'select 1;\\n';
+    const report = reconcileMigrationHistory(
+      [
+        {
+          version: '20260101000000',
+          name: 'shared_name',
+          statement_count: 1,
+          statements_md5: md5(sql),
+        },
+        {
+          version: '20260102000000',
+          name: 'shared_name',
+          statement_count: 1,
+          statements_md5: md5(sql),
+        },
+      ],
+      [filename],
+      { [filename]: sql },
+    );
+
+    expect(report.sqlChecksumComparisons).toHaveLength(2);
+    expect(report.sqlChecksumComparisons.every((entry) => entry.outcome === 'unknown')).toBe(true);
+    expect(report.sqlChecksumComparisons.every((entry) => entry.reason === 'ambiguous_name_mapping')).toBe(true);
   });
 });
