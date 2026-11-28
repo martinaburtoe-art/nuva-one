@@ -51,6 +51,7 @@ function compareSqlChecksum(remoteEntry, localEntry, localContents, mappingBasis
     mappingBasis: mappingBasis ?? null,
     remoteStatementCount: remoteEntry.statementCount,
     remoteMd5: remoteEntry.statementsMd5,
+    remoteCompactMd5: remoteEntry.statementsCompactMd5,
   };
 
   if (!localEntry) return { ...base, outcome: 'unknown', reason: fallbackReason ?? 'no_local_candidate' };
@@ -73,11 +74,24 @@ function compareSqlChecksum(remoteEntry, localEntry, localContents, mappingBasis
   }
 
   const localMd5 = createHash('md5').update(localContent, 'utf8').digest('hex');
+  const localCompactMd5 = createHash('md5')
+    .update(localContent.replace(/\s+/g, ''), 'utf8')
+    .digest('hex');
+  const outcome =
+    localMd5 === remoteEntry.statementsMd5
+      ? 'match'
+      : remoteEntry.statementsCompactMd5 && localCompactMd5 === remoteEntry.statementsCompactMd5
+        ? 'whitespace_only_candidate'
+        : 'mismatch';
   return {
     ...base,
     localMd5,
-    outcome: localMd5 === remoteEntry.statementsMd5 ? 'match' : 'mismatch',
-    reason: null,
+    localCompactMd5,
+    outcome,
+    reason:
+      outcome === 'whitespace_only_candidate'
+        ? 'Whitespace-insensitive fingerprints match; SQL string literals and tokens still require manual review.'
+        : null,
   };
 }
 
@@ -104,12 +118,18 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames, loca
       typeof rawStatementsMd5 === 'string' && /^[a-f0-9]{32}$/i.test(rawStatementsMd5)
         ? rawStatementsMd5.toLowerCase()
         : null;
+    const rawStatementsCompactMd5 = entry?.statements_compact_md5 ?? entry?.statementsCompactMd5;
+    const statementsCompactMd5 =
+      typeof rawStatementsCompactMd5 === 'string' && /^[a-f0-9]{32}$/i.test(rawStatementsCompactMd5)
+        ? rawStatementsCompactMd5.toLowerCase()
+        : null;
     return {
       version,
       rawName,
       name: normalizeMigrationName(rawName),
       statementCount,
       statementsMd5,
+      statementsCompactMd5,
     };
   });
 
@@ -209,6 +229,9 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames, loca
     return compareSqlChecksum(remoteEntry, null, localContents, null, reason);
   });
   const sqlChecksumMatches = sqlChecksumComparisons.filter((entry) => entry.outcome === 'match').length;
+  const sqlChecksumWhitespaceCandidates = sqlChecksumComparisons.filter(
+    (entry) => entry.outcome === 'whitespace_only_candidate',
+  ).length;
   const sqlChecksumMismatches = sqlChecksumComparisons.filter((entry) => entry.outcome === 'mismatch').length;
   const sqlChecksumUnknown = sqlChecksumComparisons.filter((entry) => entry.outcome === 'unknown').length;
 
@@ -245,6 +268,7 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames, loca
       ambiguousNameMatches: ambiguousNameMatches.length,
       sqlChecksumComparisons: sqlChecksumComparisons.length,
       sqlChecksumMatches,
+      sqlChecksumWhitespaceCandidates,
       sqlChecksumMismatches,
       sqlChecksumUnknown,
     },
@@ -261,7 +285,8 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames, loca
     sqlChecksumComparisons,
     limitations: [
       'A SQL checksum is compared only when the remote snapshot has one stored statement and a unique local file candidate.',
-      'The SQL snapshot fingerprints the stored migration payload; a match does not prove the current schema still equals that migration result.',
+      'An exact MD5 match verifies stored migration payload bytes, not the current schema state.',
+      'A whitespace-insensitive match is only a review candidate: whitespace inside SQL string literals can change behavior, so it is never reported as an exact match.',
       'Multiple stored statements, missing checksums, ambiguous mappings, or non-canonical local line endings remain UNKNOWN rather than being guessed.',
       'A metadata mismatch does not prove a missing schema change; renames, squashes, and reviewed history repairs may explain it.',
       'This audit is read-only and never emits migration repair, push, or backfill commands.',
@@ -352,10 +377,12 @@ async function main() {
     console.log('Invalid local filenames: ' + summary.invalidLocalFilenames);
     console.log('Ambiguous name matches: ' + summary.ambiguousNameMatches);
     console.log(
-      'SQL checksum match/mismatch/unknown: ' +
+      'SQL checksum exact/mismatch/whitespace-candidate/unknown: ' +
         summary.sqlChecksumMatches +
         '/' +
         summary.sqlChecksumMismatches +
+        '/' +
+        summary.sqlChecksumWhitespaceCandidates +
         '/' +
         summary.sqlChecksumUnknown,
     );

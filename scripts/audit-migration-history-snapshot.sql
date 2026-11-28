@@ -7,6 +7,14 @@ select
   name,
   coalesce(cardinality(statements), 0) as statement_count,
   coalesce(octet_length(array_to_string(statements, E'\n')), 0) as statement_bytes,
-  md5(coalesce(array_to_string(statements, E'\n'), '')) as statements_md5
+  md5(coalesce(array_to_string(statements, E'\n'), '')) as statements_md5,
+  md5(
+    regexp_replace(
+      coalesce(array_to_string(statements, E'\n'), ''),
+      '[[:space:]]+',
+      '',
+      'g'
+    )
+  ) as statements_compact_md5
 from supabase_migrations.schema_migrations
 order by version;

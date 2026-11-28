@@ -162,6 +162,35 @@ describe('reconcileMigrationHistory', () => {
     expect(report.summary.sqlChecksumMismatches).toBe(1);
   });
 
+  it('classifies whitespace-insensitive matches as candidates, not exact matches', () => {
+    const filename = '20260101000000_create_table.sql';
+    const localSql = 'create table public.example (id uuid primary key);\n';
+    const remoteSql = 'create table public.example ( id uuid primary key );\n';
+    const compactMd5 = (value) => md5(value.replace(/\s+/g, ''));
+
+    const report = reconcileMigrationHistory(
+      [
+        {
+          version: '20260101000000',
+          name: 'create_table',
+          statement_count: 1,
+          statements_md5: md5(remoteSql),
+          statements_compact_md5: compactMd5(remoteSql),
+        },
+      ],
+      [filename],
+      { [filename]: localSql },
+    );
+
+    expect(report.sqlChecksumComparisons[0]).toMatchObject({
+      outcome: 'whitespace_only_candidate',
+      reason: 'Whitespace-insensitive fingerprints match; SQL string literals and tokens still require manual review.',
+    });
+    expect(report.summary.sqlChecksumMatches).toBe(0);
+    expect(report.summary.sqlChecksumWhitespaceCandidates).toBe(1);
+    expect(report.summary.sqlChecksumMismatches).toBe(0);
+  });
+
   it('keeps multi-statement snapshots UNKNOWN instead of guessing', () => {
     const filename = '20260101000000_create_table.sql';
     const sql = 'create table public.example (id uuid primary key);\n';
