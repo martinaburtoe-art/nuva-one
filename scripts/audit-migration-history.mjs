@@ -236,6 +236,24 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames, loca
   const sqlChecksumUnknown = sqlChecksumComparisons.filter((entry) => entry.outcome === 'unknown').length;
 
   const versionIntersection = [...remoteByVersion.keys()].filter((version) => localByVersion.has(version));
+  // Preserve metadata-only behavior, but do not call a fingerprint snapshot fully aligned
+  // while any checksum row remains UNKNOWN or only whitespace-insensitively comparable.
+  const hasChecksumSnapshot = remote.some(
+    (entry) =>
+      entry.statementCount !== null ||
+      entry.statementsMd5 !== null ||
+      entry.statementsCompactMd5 !== null,
+  );
+  const checksumStatus = !hasChecksumSnapshot
+    ? 'not_provided'
+    : sqlChecksumMismatches > 0
+      ? 'mismatch'
+      : sqlChecksumWhitespaceCandidates > 0 || sqlChecksumUnknown > 0
+        ? 'incomplete'
+        : 'complete';
+  const hasChecksumReviewRequired =
+    hasChecksumSnapshot && (sqlChecksumWhitespaceCandidates > 0 || sqlChecksumUnknown > 0);
+
   const hasDrift =
     invalidLocalFilenames.length > 0 ||
     duplicateRemoteVersions.length > 0 ||
@@ -249,7 +267,8 @@ export function reconcileMigrationHistory(remoteMigrations, localFilenames, loca
     sqlChecksumMismatches > 0;
 
   return {
-    status: hasDrift ? 'drift' : 'aligned',
+    status: hasDrift ? 'drift' : hasChecksumReviewRequired ? 'review_required' : 'aligned',
+    checksumStatus,
     summary: {
       remoteRows: remote.length,
       remoteUniqueVersions: remoteByVersion.size,
@@ -364,6 +383,7 @@ async function main() {
   } else {
     const { summary } = report;
     console.log('Migration history status: ' + report.status.toUpperCase());
+    console.log('SQL payload checksum status: ' + report.checksumStatus.toUpperCase());
     console.log('Remote rows: ' + summary.remoteRows + ' (' + summary.remoteUniqueVersions + ' unique versions)');
     console.log('Local SQL files: ' + summary.localSqlFiles + ' (' + summary.localUniqueVersions + ' unique versions)');
     console.log('Version intersection: ' + summary.versionIntersection);
