@@ -269,7 +269,7 @@ describe('reconcileMigrationHistory', () => {
     expect(report.sqlChecksumComparisons).toHaveLength(2);
     expect(report.sqlChecksumComparisons.every((entry) => entry.outcome === 'unknown')).toBe(true);
     expect(report.sqlChecksumComparisons.every((entry) => entry.reason === 'ambiguous_name_mapping')).toBe(true);
-    expect(report.status).toBe('review_required');
+    expect(report.status).toBe('drift');
     expect(report.checksumStatus).toBe('incomplete');
   });
 });
