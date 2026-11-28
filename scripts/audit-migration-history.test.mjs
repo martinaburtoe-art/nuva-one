@@ -12,6 +12,7 @@ describe('reconcileMigrationHistory', () => {
     );
 
     expect(report.status).toBe('aligned');
+    expect(report.checksumStatus).toBe('not_provided');
     expect(report.summary).toMatchObject({
       remoteRows: 1,
       localSqlFiles: 1,
@@ -115,6 +116,8 @@ describe('reconcileMigrationHistory', () => {
     });
     expect(report.summary.sqlChecksumMatches).toBe(1);
     expect(report.summary.sqlChecksumMismatches).toBe(0);
+    expect(report.status).toBe('aligned');
+    expect(report.checksumStatus).toBe('complete');
   });
 
   it('uses a unique migration name to compare SQL when timestamps drift', () => {
@@ -160,6 +163,7 @@ describe('reconcileMigrationHistory', () => {
     expect(report.status).toBe('drift');
     expect(report.sqlChecksumComparisons[0].outcome).toBe('mismatch');
     expect(report.summary.sqlChecksumMismatches).toBe(1);
+    expect(report.checksumStatus).toBe('mismatch');
   });
 
   it('classifies whitespace-insensitive matches as candidates, not exact matches', () => {
@@ -189,6 +193,8 @@ describe('reconcileMigrationHistory', () => {
     expect(report.summary.sqlChecksumMatches).toBe(0);
     expect(report.summary.sqlChecksumWhitespaceCandidates).toBe(1);
     expect(report.summary.sqlChecksumMismatches).toBe(0);
+    expect(report.status).toBe('review_required');
+    expect(report.checksumStatus).toBe('incomplete');
   });
 
   it('keeps multi-statement snapshots UNKNOWN instead of guessing', () => {
@@ -212,6 +218,30 @@ describe('reconcileMigrationHistory', () => {
       reason: 'remote_statement_count_not_one',
     });
     expect(report.summary.sqlChecksumUnknown).toBe(1);
+    expect(report.status).toBe('review_required');
+    expect(report.checksumStatus).toBe('incomplete');
+  });
+
+  it('requires review when a checksum snapshot omits a row fingerprint', () => {
+    const filename = '20260101000000_create_table.sql';
+    const report = reconcileMigrationHistory(
+      [
+        {
+          version: '20260101000000',
+          name: 'create_table',
+          statement_count: 1,
+        },
+      ],
+      [filename],
+      { [filename]: 'create table public.example (id uuid primary key);\\n' },
+    );
+
+    expect(report.sqlChecksumComparisons[0]).toMatchObject({
+      outcome: 'unknown',
+      reason: 'remote_checksum_unavailable',
+    });
+    expect(report.status).toBe('review_required');
+    expect(report.checksumStatus).toBe('incomplete');
   });
 
   it('does not checksum ambiguous same-name mappings', () => {
@@ -239,5 +269,7 @@ describe('reconcileMigrationHistory', () => {
     expect(report.sqlChecksumComparisons).toHaveLength(2);
     expect(report.sqlChecksumComparisons.every((entry) => entry.outcome === 'unknown')).toBe(true);
     expect(report.sqlChecksumComparisons.every((entry) => entry.reason === 'ambiguous_name_mapping')).toBe(true);
+    expect(report.status).toBe('review_required');
+    expect(report.checksumStatus).toBe('incomplete');
   });
 });
