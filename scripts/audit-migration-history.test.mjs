@@ -94,7 +94,7 @@ describe('reconcileMigrationHistory', () => {
 
   it('matches stored SQL fingerprints for exact version mappings', () => {
     const filename = '20260101000000_create_table.sql';
-    const sql = 'create table public.example (id uuid primary key);\\n';
+    const sql = 'create table public.example (id uuid primary key);\n';
     const report = reconcileMigrationHistory(
       [
         {
@@ -119,7 +119,7 @@ describe('reconcileMigrationHistory', () => {
 
   it('uses a unique migration name to compare SQL when timestamps drift', () => {
     const filename = '20260101000000_create_table.sql';
-    const sql = 'create table public.example (id uuid primary key);\\n';
+    const sql = 'create table public.example (id uuid primary key);\n';
     const report = reconcileMigrationHistory(
       [
         {
@@ -143,14 +143,14 @@ describe('reconcileMigrationHistory', () => {
 
   it('reports a SQL checksum mismatch without treating it as a match', () => {
     const filename = '20260101000000_create_table.sql';
-    const localSql = 'create table public.example (id uuid primary key);\\n';
+    const localSql = 'create table public.example (id uuid primary key);\n';
     const report = reconcileMigrationHistory(
       [
         {
           version: '20260101000000',
           name: 'create_table',
           statement_count: 1,
-          statements_md5: md5('create table public.example (id text primary key);\\n'),
+          statements_md5: md5('create table public.example (id text primary key);\n'),
         },
       ],
       [filename],
@@ -164,7 +164,7 @@ describe('reconcileMigrationHistory', () => {
 
   it('keeps multi-statement snapshots UNKNOWN instead of guessing', () => {
     const filename = '20260101000000_create_table.sql';
-    const sql = 'create table public.example (id uuid primary key);\\n';
+    const sql = 'create table public.example (id uuid primary key);\n';
     const report = reconcileMigrationHistory(
       [
         {
@@ -187,7 +187,7 @@ describe('reconcileMigrationHistory', () => {
 
   it('does not checksum ambiguous same-name mappings', () => {
     const filename = '20260103000000_shared_name.sql';
-    const sql = 'select 1;\\n';
+    const sql = 'select 1;\n';
     const report = reconcileMigrationHistory(
       [
         {

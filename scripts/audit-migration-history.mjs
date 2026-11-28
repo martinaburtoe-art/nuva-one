@@ -68,7 +68,7 @@ function compareSqlChecksum(remoteEntry, localEntry, localContents, mappingBasis
   if (typeof localContent !== 'string') {
     return { ...base, outcome: 'unknown', reason: 'local_content_unavailable' };
   }
-  if (localContent.includes('\\r')) {
+  if (localContent.includes('\r')) {
     return { ...base, outcome: 'unknown', reason: 'local_line_endings_not_canonical' };
   }
 
@@ -298,7 +298,7 @@ async function main() {
   const options = parseArguments(process.argv.slice(2));
   if (options.help) {
     console.log(
-      'Usage: node scripts/audit-migration-history.mjs --remote-json <list-migrations.json|sql-checksum-snapshot.json> [--local-dir <path>] [--format text|json] [--fail-on-drift]\\n' +
+      'Usage: node scripts/audit-migration-history.mjs --remote-json <list-migrations.json|sql-checksum-snapshot.json> [--local-dir <path>] [--format text|json] [--fail-on-drift]\n' +
         'For SQL fingerprints, save the JSON rows produced by scripts/audit-migration-history-snapshot.sql.',
     );
     return;
